@@ -80,10 +80,8 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25000),
 
 		// asset/nft
-		MsgToMsgURL(&assetnfttypes.MsgBurn{}): constantGasFunc(16000 * 1.64),
-		// FIXME (v47-deterministic): Gas should depend on the size of data attached to the message
-		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
-		// FIXME (v47-deterministic): Gas should depend on the size of data attached to the message
+		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(16000 * 1.64),
+		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):          constantGasFunc(16000),
 		MsgToMsgURL(&assetnfttypes.MsgMint{}):                constantGasFunc(39000),
 		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):              constantGasFunc(7000 * 1.19),
 		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
