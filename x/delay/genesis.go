@@ -3,8 +3,8 @@ package delay
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/CoreumFoundation/coreum/v2/x/delay/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v3/x/delay/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/delay/types"
 )
 
 // DefaultGenesis returns the default genesis state.
@@ -19,7 +19,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 }
 
-// ExportGenesis returns the asset module's exported genesis.
+// ExportGenesis returns the module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	delayedItems, err := k.ExportDelayedItems(ctx)
 	if err != nil {

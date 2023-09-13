@@ -23,6 +23,7 @@ const (
 	TypeMsgGloballyUnfreeze    = "globally-unfreeze"
 	TypeMsgSetWhitelistedLimit = "set-whitelisted-limit"
 	TypeMsgUpgradeTokenV1      = "upgrade-token-v1"
+	TypeMsgUpdateParams        = "update-params"
 )
 
 var (
@@ -44,6 +45,8 @@ var (
 	_ legacytx.LegacyMsg = &MsgSetWhitelistedLimit{}
 	_ sdk.Msg            = &MsgUpgradeTokenV1{}
 	_ legacytx.LegacyMsg = &MsgUpgradeTokenV1{}
+	_ sdk.Msg            = &MsgUpdateParams{}
+	_ legacytx.LegacyMsg = &MsgUpdateParams{}
 )
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
@@ -55,8 +58,9 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUnfreeze{}, fmt.Sprintf("%s/MsgUnfreeze", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgGloballyFreeze{}, fmt.Sprintf("%s/MsgGloballyFreeze", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgGloballyUnfreeze{}, fmt.Sprintf("%s/MsgGloballyUnfreeze", ModuleName), nil)
-	cdc.RegisterConcrete(&MsgSetWhitelistedLimit{}, fmt.Sprintf("%s/MsgUnMsgSetWhitelistedLimitfreeze", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgSetWhitelistedLimit{}, fmt.Sprintf("%s/MsgSetWhitelistedLimit", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgUpgradeTokenV1{}, fmt.Sprintf("%s/MsgUpgradeTokenV1", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName), nil)
 }
 
 // ValidateBasic validates the message.
@@ -431,6 +435,36 @@ func (m MsgUpgradeTokenV1) Route() string {
 // Type returns message type for LegacyMsg.
 func (m MsgUpgradeTokenV1) Type() string {
 	return TypeMsgUpgradeTokenV1
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return cosmoserrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", err)
+	}
+
+	return m.Params.ValidateBasic()
+}
+
+// GetSigners returns the required signers of this message type.
+func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgUpdateParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgUpdateParams) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgUpdateParams) Type() string {
+	return TypeMsgUpdateParams
 }
 
 var (

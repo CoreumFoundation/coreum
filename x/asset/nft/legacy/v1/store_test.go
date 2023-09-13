@@ -8,10 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/pkg/store"
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	v1 "github.com/CoreumFoundation/coreum/v2/x/asset/nft/legacy/v1"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/pkg/store"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/legacy/v1"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
 func TestMigrateStore(t *testing.T) {

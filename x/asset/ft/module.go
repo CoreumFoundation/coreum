@@ -16,10 +16,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/client/cli"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/keeper"
-	v1 "github.com/CoreumFoundation/coreum/v2/x/asset/ft/legacy/v1"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/keeper"
+	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/ft/legacy/v1"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 var (
@@ -134,8 +134,10 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper, am.bankKeeper))
 
 	m := keeper.NewMigrator(am.keeper, am.paramsKeeper)
-	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
-	if err != nil {
+	if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
+		panic(err)
+	}
+	if err := cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3); err != nil {
 		panic(err)
 	}
 }
@@ -164,7 +166,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 2 }
+func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 // AppModuleSimulation functions
 

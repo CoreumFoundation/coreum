@@ -9,7 +9,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 // ImportPendingTokenUpgrades imports pending version upgrades from genesis state.

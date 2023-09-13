@@ -4,8 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.
@@ -15,7 +15,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic(err)
 		}
 	}
-	k.SetParams(ctx, genState.Params)
+	if err := k.SetParams(ctx, genState.Params); err != nil {
+		panic(err)
+	}
 
 	for _, frozen := range genState.FrozenNFTs {
 		if err := frozen.Validate(); err != nil {

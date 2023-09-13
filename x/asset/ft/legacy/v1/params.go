@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 // InitialTokenUpgradeDecisionPeriod is the period applied on top of the current block time to produce initial value of upgrade decision timeout.
@@ -23,6 +23,10 @@ func MigrateParams(ctx sdk.Context, paramsKeeper ParamsKeeper) error {
 	ftSubspace, ok := paramsKeeper.GetSubspace(types.ModuleName)
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidState, "params subspace does not exist")
+	}
+	// set KeyTable if it has not already been set
+	if !ftSubspace.HasKeyTable() {
+		ftSubspace.WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&types.Params{}))
 	}
 
 	ftSubspace.Set(ctx, types.KeyTokenUpgradeDecisionTimeout, ctx.BlockTime().Add(InitialTokenUpgradeDecisionPeriod))

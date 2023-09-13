@@ -105,43 +105,43 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 
-	"github.com/CoreumFoundation/coreum/v2/app/openapi"
-	appupgrade "github.com/CoreumFoundation/coreum/v2/app/upgrade"
-	appupgradev1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v1"
-	appupgradev2 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2"
-	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2/v2patch1"
-	appupgradev3 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v3"
-	"github.com/CoreumFoundation/coreum/v2/docs"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	assetft "github.com/CoreumFoundation/coreum/v2/x/asset/ft"
-	assetftkeeper "github.com/CoreumFoundation/coreum/v2/x/asset/ft/keeper"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	assetnft "github.com/CoreumFoundation/coreum/v2/x/asset/nft"
-	assetnftkeeper "github.com/CoreumFoundation/coreum/v2/x/asset/nft/keeper"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v2/x/auth/ante"
-	"github.com/CoreumFoundation/coreum/v2/x/customparams"
-	customparamskeeper "github.com/CoreumFoundation/coreum/v2/x/customparams/keeper"
-	customparamstypes "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
-	"github.com/CoreumFoundation/coreum/v2/x/delay"
-	delaykeeper "github.com/CoreumFoundation/coreum/v2/x/delay/keeper"
-	delaytypes "github.com/CoreumFoundation/coreum/v2/x/delay/types"
-	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
-	deterministicgastypes "github.com/CoreumFoundation/coreum/v2/x/deterministicgas/types"
-	"github.com/CoreumFoundation/coreum/v2/x/feemodel"
-	feemodelkeeper "github.com/CoreumFoundation/coreum/v2/x/feemodel/keeper"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
-	"github.com/CoreumFoundation/coreum/v2/x/nft"
-	nftkeeper "github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
-	wasmcustomhandler "github.com/CoreumFoundation/coreum/v2/x/wasm/handler"
-	"github.com/CoreumFoundation/coreum/v2/x/wbank"
-	wbankkeeper "github.com/CoreumFoundation/coreum/v2/x/wbank/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/wibctransfer"
-	wibctransferkeeper "github.com/CoreumFoundation/coreum/v2/x/wibctransfer/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/wnft"
-	wnftkeeper "github.com/CoreumFoundation/coreum/v2/x/wnft/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/wstaking"
+	"github.com/CoreumFoundation/coreum/v3/app/openapi"
+	appupgrade "github.com/CoreumFoundation/coreum/v3/app/upgrade"
+	appupgradev1 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v1"
+	appupgradev2 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v2"
+	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v2/v2patch1"
+	appupgradev3 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3"
+	"github.com/CoreumFoundation/coreum/v3/docs"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	assetft "github.com/CoreumFoundation/coreum/v3/x/asset/ft"
+	assetftkeeper "github.com/CoreumFoundation/coreum/v3/x/asset/ft/keeper"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	assetnft "github.com/CoreumFoundation/coreum/v3/x/asset/nft"
+	assetnftkeeper "github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/auth/ante"
+	"github.com/CoreumFoundation/coreum/v3/x/customparams"
+	customparamskeeper "github.com/CoreumFoundation/coreum/v3/x/customparams/keeper"
+	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v3/x/delay"
+	delaykeeper "github.com/CoreumFoundation/coreum/v3/x/delay/keeper"
+	delaytypes "github.com/CoreumFoundation/coreum/v3/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v3/x/deterministicgas"
+	deterministicgastypes "github.com/CoreumFoundation/coreum/v3/x/deterministicgas/types"
+	"github.com/CoreumFoundation/coreum/v3/x/feemodel"
+	feemodelkeeper "github.com/CoreumFoundation/coreum/v3/x/feemodel/keeper"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	nftkeeper "github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
+	wasmcustomhandler "github.com/CoreumFoundation/coreum/v3/x/wasm/handler"
+	"github.com/CoreumFoundation/coreum/v3/x/wbank"
+	wbankkeeper "github.com/CoreumFoundation/coreum/v3/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/wibctransfer"
+	wibctransferkeeper "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/wnft"
+	wnftkeeper "github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/wstaking"
 )
 
 const (
@@ -322,7 +322,7 @@ func New(
 		distrtypes.StoreKey, slashingtypes.StoreKey, govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
 		feegrant.StoreKey, evidencetypes.StoreKey, capabilitytypes.StoreKey, consensusparamtypes.StoreKey, wasmtypes.StoreKey, feemodeltypes.StoreKey,
 		assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey,
-		delaytypes.StoreKey,
+		delaytypes.StoreKey, customparamstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -391,13 +391,13 @@ func New(
 	)
 	app.AssetFTKeeper = assetftkeeper.NewKeeper(
 		appCodec,
-		app.GetSubspace(assetfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetfttypes.Params{})),
 		keys[assetfttypes.StoreKey],
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
 		app.DelayKeeper,
 		// pointer is used here because there is cycle in keeper dependencies: AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	err := delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))
@@ -479,12 +479,17 @@ func New(
 	)
 
 	app.FeeModelKeeper = feemodelkeeper.NewKeeper(
-		app.GetSubspace(feemodeltypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&feemodeltypes.Params{})),
 		keys[feemodeltypes.StoreKey],
 		tkeys[feemodeltypes.TransientStoreKey],
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
+	app.CustomParamsKeeper = customparamskeeper.NewKeeper(
+		keys[customparamstypes.StoreKey],
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
 
 	app.IBCKeeper = ibckeeper.NewKeeper(appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName),
 		app.StakingKeeper, app.UpgradeKeeper, app.ScopedIBCKeeper)
@@ -492,11 +497,11 @@ func New(
 	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
 	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
 		appCodec,
-		app.GetSubspace(assetnfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetnfttypes.Params{})),
 		keys[assetnfttypes.StoreKey],
 		nftKeeper,
 		// for the assetnft we use the clear bank keeper without the assets integration because it interacts only with native token.
 		originalBankKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
@@ -624,12 +629,12 @@ func New(
 		app.BankKeeper.BaseKeeper,
 		app.ParamsKeeper,
 	)
-	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper, app.NFTKeeper.Keeper, app.WasmKeeper)
-	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
+	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper, app.NFTKeeper.Keeper, app.WasmKeeper, app.ParamsKeeper)
+	feeModule := feemodel.NewAppModule(app.FeeModelKeeper, app.ParamsKeeper)
 
 	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
 
-	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper)
+	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper, app.ParamsKeeper)
 	wstakingModule := wstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName), app.CustomParamsKeeper)
 
 	delayModule := delay.NewAppModule(app.DelayKeeper)

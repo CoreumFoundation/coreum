@@ -15,10 +15,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v2/testutil/event"
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v3/testutil/event"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
 func TestKeeper_IssueClass(t *testing.T) {
@@ -161,7 +161,7 @@ func TestKeeper_Mint(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
 	}
-	nftKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(nftKeeper.SetParams(ctx, nftParams))
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(nftParams.MintFee)))
@@ -376,7 +376,7 @@ func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewCoin(constant.DenomDev, sdkmath.ZeroInt()),
 	}
-	nftKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(nftKeeper.SetParams(ctx, nftParams))
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	classSettings := types.IssueClassSettings{
@@ -411,7 +411,7 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
 	}
-	nftKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(nftKeeper.SetParams(ctx, nftParams))
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	classSettings := types.IssueClassSettings{
@@ -446,7 +446,7 @@ func TestKeeper_DisableSending(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
 	}
-	assetNFTKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	classSettings := types.IssueClassSettings{
@@ -495,7 +495,7 @@ func TestKeeper_Freeze(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
 	}
-	assetNFTKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	classSettings := types.IssueClassSettings{
@@ -559,7 +559,7 @@ func TestKeeper_Freeze_Unfreezable(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
 	}
-	assetNFTKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	classSettings := types.IssueClassSettings{
@@ -600,7 +600,7 @@ func TestKeeper_Freeze_Nonexistent(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
 	}
-	assetNFTKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
 
 	// try to freeze NFT when Class does not exists
 	err := assetNFTKeeper.Freeze(ctx, issuer, types.BuildClassID("symbol", issuer), "random-id")
@@ -635,7 +635,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 1000_000),
 	}
-	assetNFTKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	requireT.NoError(testApp.FundAccount(ctx, issuer, sdk.NewCoins(nftParams.MintFee)))
@@ -718,7 +718,7 @@ func TestKeeper_Whitelist_Unwhitelistable(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
 	}
-	assetNFTKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	classSettings := types.IssueClassSettings{
@@ -759,7 +759,7 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 	nftParams := types.Params{
 		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
 	}
-	assetNFTKeeper.SetParams(ctx, nftParams)
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	classSettings := types.IssueClassSettings{

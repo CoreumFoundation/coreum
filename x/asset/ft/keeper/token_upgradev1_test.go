@@ -11,10 +11,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/app"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/app"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 func TestTokenUpgradeV1(t *testing.T) {
@@ -29,7 +29,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 
 	params := ftKeeper.GetParams(ctxSDK)
 	params.TokenUpgradeDecisionTimeout = time.Date(2023, 2, 13, 1, 2, 3, 0, time.UTC)
-	ftKeeper.SetParams(ctxSDK, params)
+	requireT.NoError(ftKeeper.SetParams(ctxSDK, params))
 
 	issuer1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	issuer2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())

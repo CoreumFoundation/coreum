@@ -9,8 +9,8 @@ import (
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v2/app"
-	"github.com/CoreumFoundation/coreum/v2/cmd/cored/cosmoscmd"
+	"github.com/CoreumFoundation/coreum/v3/app"
+	"github.com/CoreumFoundation/coreum/v3/cmd/cored/cosmoscmd"
 )
 
 const coreumEnvPrefix = "CORED"

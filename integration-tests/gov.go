@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/coreum/v2/testutil/event"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/event"
 )
 
 const submitProposalGas = 400_000
@@ -90,6 +90,31 @@ func (g Governance) ProposeAndVote(
 	}
 
 	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
+}
+
+// ProposalFromMsgAndVote creates a new proposal from list of sdk.Msg, votes from all staker accounts and awaits for the final status.
+func (g Governance) ProposalFromMsgAndVote(
+	ctx context.Context,
+	t *testing.T,
+	proposer sdk.AccAddress,
+	metadata, title, summary string,
+	option govtypesv1.VoteOption,
+	msgs ...sdk.Msg,
+) {
+	t.Helper()
+
+	if len(proposer) == 0 {
+		proposer = g.chainCtx.GenAccount()
+	}
+
+	proposerBalance, err := g.ComputeProposerBalance(ctx)
+	require.NoError(t, err)
+	g.faucet.FundAccounts(ctx, t, NewFundedAccount(proposer, proposerBalance))
+
+	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, msgs, metadata, title, summary)
+	require.NoError(t, err)
+
+	g.ProposeAndVote(ctx, t, proposalMsg, option)
 }
 
 // Propose creates a new proposal.

@@ -6,11 +6,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	assetnftkeeper "github.com/CoreumFoundation/coreum/v2/x/asset/nft/keeper"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v2/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/app/upgrade"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	assetnftkeeper "github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // Name defines the upgrade name.
@@ -31,7 +31,9 @@ func New(mm *module.Manager, configurator module.Configurator, chosenNetwork con
 
 			params := assetNFTKeeper.GetParams(ctx)
 			params.MintFee = sdk.NewInt64Coin(chosenNetwork.Denom(), 0)
-			assetNFTKeeper.SetParams(ctx, params)
+			if err := assetNFTKeeper.SetParams(ctx, params); err != nil {
+				return nil, err
+			}
 
 			return afterVM, nil
 		},

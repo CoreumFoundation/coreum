@@ -8,7 +8,7 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdknetwork "github.com/cosmos/cosmos-sdk/testutil/network"
 
-	"github.com/CoreumFoundation/coreum/v2/x/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/v3/x/nft/client/cli"
 )
 
 func ExecSend(val *sdknetwork.Validator, args []string) (testutil.BufferWriter, error) { //nolint:revive // test helper

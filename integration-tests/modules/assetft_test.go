@@ -10,22 +10,23 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/v2/integration-tests/contracts/modules"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/coreum/v2/testutil/event"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/event"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 // TestAssetFTQueryParams queries parameters of asset/ft module.
@@ -163,19 +164,19 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
-	origIssueFee := chain.QueryAssetFTParams(ctx, t).IssueFee
-
-	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(
-				assetfttypes.ModuleName,
-				string(assetfttypes.KeyIssueFee),
-				string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origIssueFee.Denom, sdkmath.ZeroInt())))),
-			),
-		})
+	origParams := chain.QueryAssetFTParams(ctx, t)
+	newParams := origParams
+	newParams.IssueFee.Amount = sdk.ZeroInt()
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateParams{
+			Params:    newParams,
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		},
+	)
 
 	issuer := chain.GenAccount()
-
 	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
@@ -203,14 +204,14 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT.NoError(err)
 
 	// Revert to original issue fee
-	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(
-				assetfttypes.ModuleName,
-				string(assetfttypes.KeyIssueFee),
-				string(must.Bytes(tmjson.Marshal(origIssueFee))),
-			),
-		})
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateParams{
+			Params:    origParams,
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		},
+	)
 }
 
 // TestAssetIssueAndQueryTokens checks that tokens query works as expected.

@@ -18,12 +18,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v2/testutil/event"
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	wbankkeeper "github.com/CoreumFoundation/coreum/v2/x/wbank/keeper"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v3/testutil/event"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	wbankkeeper "github.com/CoreumFoundation/coreum/v3/x/wbank/keeper"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
 
 func TestKeeper_Issue(t *testing.T) {
@@ -37,7 +37,7 @@ func TestKeeper_Issue(t *testing.T) {
 
 	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
-	ftKeeper.SetParams(ctx, ftParams)
+	requireT.NoError(ftKeeper.SetParams(ctx, ftParams))
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(sdk.NewCoin(ftParams.IssueFee.Denom, ftParams.IssueFee.Amount.MulRaw(5)))))
@@ -148,7 +148,7 @@ func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
 
 	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
-	ftKeeper.SetParams(ctx, ftParams)
+	requireT.NoError(ftKeeper.SetParams(ctx, ftParams))
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(ftParams.IssueFee)))
@@ -304,7 +304,7 @@ func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
 
 	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewCoin(constant.DenomDev, sdkmath.ZeroInt())
-	ftKeeper.SetParams(ctx, ftParams)
+	requireT.NoError(ftKeeper.SetParams(ctx, ftParams))
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
@@ -332,7 +332,7 @@ func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 
 	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
-	ftKeeper.SetParams(ctx, ftParams)
+	requireT.NoError(ftKeeper.SetParams(ctx, ftParams))
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	settings := types.IssueSettings{

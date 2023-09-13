@@ -4,7 +4,7 @@ package coreum.asset.ft.v1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
 
 // Feature defines possible features of fungible token.
 enum Feature {

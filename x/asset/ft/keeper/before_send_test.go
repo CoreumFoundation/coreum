@@ -13,10 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	assetftkeeper "github.com/CoreumFoundation/coreum/v2/x/asset/ft/keeper"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	assetftkeeper "github.com/CoreumFoundation/coreum/v3/x/asset/ft/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
 
 func TestMain(m *testing.M) {
@@ -58,7 +59,8 @@ func TestCalculateRateShares(t *testing.T) {
 
 	issuer := genAccount()
 	dummyAddress := genAccount()
-	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, nil, wasmKeeper)
+	key := sdk.NewKVStoreKey(types.StoreKey)
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, key, nil, nil, wasmKeeper, "")
 	pow10 := func(ex int64) sdkmath.Int {
 		return sdkmath.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
 	}
