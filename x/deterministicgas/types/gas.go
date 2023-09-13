@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	googlegrpc "google.golang.org/grpc"
 
-	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
+	"github.com/CoreumFoundation/coreum/v3/x/deterministicgas"
 )
 
 const (

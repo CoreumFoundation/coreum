@@ -22,9 +22,9 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v2/app"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v3/app"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
 )
 
 // Option represents simapp customisations.

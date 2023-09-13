@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/pkg/store"
+	"github.com/CoreumFoundation/coreum/v3/pkg/store"
 )
 
 func TestJoinKeys(t *testing.T) {

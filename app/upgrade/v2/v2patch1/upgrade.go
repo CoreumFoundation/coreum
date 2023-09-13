@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
+	"github.com/CoreumFoundation/coreum/v3/app/upgrade"
 )
 
 // Name defines the upgrade name.

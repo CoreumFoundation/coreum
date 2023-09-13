@@ -4,7 +4,7 @@ package coreum.customparams.v1;
 import "gogoproto/gogo.proto";
 import "coreum/customparams/v1/params.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v2/x/customparams/types";
+option go_package = "github.com/CoreumFoundation/coreum/v3/x/customparams/types";
 
 // GenesisState defines the module's genesis state.
 message GenesisState {

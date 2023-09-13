@@ -8,7 +8,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/v2/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 var _ nft.QueryServer = Keeper{}

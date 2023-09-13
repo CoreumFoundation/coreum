@@ -9,7 +9,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
 // Keeper is a fee model keeper.

@@ -17,9 +17,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v2/x/feemodel/client/cli"
-	"github.com/CoreumFoundation/coreum/v2/x/feemodel/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v3/x/feemodel/client/cli"
+	"github.com/CoreumFoundation/coreum/v3/x/feemodel/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
 var (

@@ -3,7 +3,7 @@ package v1
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
 // MigrateClassFeatures migrates asset nft class features state from v1 to v2.

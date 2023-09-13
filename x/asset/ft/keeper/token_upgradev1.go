@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 const tokenUpgradeV1Version = 1

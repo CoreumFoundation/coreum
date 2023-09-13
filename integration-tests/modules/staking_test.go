@@ -18,9 +18,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	customparamstypes "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
 // TestStakingProposalParamChange checks that staking param change proposal works correctly.

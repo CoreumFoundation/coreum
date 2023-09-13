@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v2/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // GetTxCmd returns the transaction commands for this module.

@@ -22,9 +22,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/app"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v3/app"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
 )
 
 type (
