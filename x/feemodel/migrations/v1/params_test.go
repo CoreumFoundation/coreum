@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	v1 "github.com/CoreumFoundation/coreum/v2/x/feemodel/migrations/v1"
-	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	v1 "github.com/CoreumFoundation/coreum/v3/x/feemodel/migrations/v1"
+	"github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
 func TestMigrateParams(t *testing.T) {

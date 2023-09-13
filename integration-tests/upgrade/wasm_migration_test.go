@@ -11,8 +11,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/v2/integration-tests/contracts/modules"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
 )
 
 type wasmMigrationTest struct {

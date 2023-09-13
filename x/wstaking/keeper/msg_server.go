@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	wstakingtypes "github.com/CoreumFoundation/coreum/v2/x/wstaking/types"
+	wstakingtypes "github.com/CoreumFoundation/coreum/v3/x/wstaking/types"
 )
 
 // MsgServer is wrapper staking customParamsKeeper message server.

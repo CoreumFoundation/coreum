@@ -13,8 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/CoreumFoundation/coreum/v2/x/nft"
-	"github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
 )
 
 const (
