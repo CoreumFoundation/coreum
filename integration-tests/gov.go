@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/coreum/v2/testutil/event"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/event"
 )
 
 const submitProposalGas = 400_000

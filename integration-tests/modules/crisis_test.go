@@ -10,8 +10,8 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 )
 
 // TestVerifyInvariantMessageIsDenied verifies that transactions containing crisis.MsgVerifyInvariant message are rejected.

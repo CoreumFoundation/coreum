@@ -21,9 +21,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 func TestIBCFailsIfNotEnabled(t *testing.T) {

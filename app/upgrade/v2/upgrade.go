@@ -11,8 +11,8 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
-	delaytypes "github.com/CoreumFoundation/coreum/v2/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v3/app/upgrade"
+	delaytypes "github.com/CoreumFoundation/coreum/v3/x/delay/types"
 )
 
 // Name defines the upgrade name.

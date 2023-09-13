@@ -16,9 +16,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/client/cli"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
 var (

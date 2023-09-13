@@ -10,7 +10,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/CoreumFoundation/coreum/v2/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/wbank/keeper"
 )
 
 // AppModuleBasic defines the basic application module used by the wrapped bank module.

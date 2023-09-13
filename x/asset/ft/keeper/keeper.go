@@ -16,9 +16,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
 
 // Keeper is the asset module keeper.
