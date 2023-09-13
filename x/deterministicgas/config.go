@@ -154,21 +154,21 @@ func DefaultConfig() Config {
 		&cfg,
 		[]sdk.Msg{
 			// auth
-			&authtypes.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&authtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// bank
-			&banktypes.MsgSetSendEnabled{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
-			&banktypes.MsgUpdateParams{},   // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&banktypes.MsgSetSendEnabled{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+			&banktypes.MsgUpdateParams{},   // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// consensus
-			&consensustypes.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&consensustypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// crisis
-			&crisistypes.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&crisistypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// distribution
-			&distributiontypes.MsgUpdateParams{},       // This is non-deterministic because all the goc proposals are non-deterministic anyway
-			&distributiontypes.MsgCommunityPoolSpend{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&distributiontypes.MsgUpdateParams{},       // This is non-deterministic because all the gov proposals are non-deterministic anyway
+			&distributiontypes.MsgCommunityPoolSpend{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// gov
 			// MsgSubmitProposal is defined as nondeterministic because it runs a proposal handler function
@@ -178,7 +178,7 @@ func DefaultConfig() Config {
 			// FIXME(v47-deterministic): check that if we want to support both go types
 			&govtypesv1.MsgSubmitProposal{},
 			&govtypesv1.MsgExecLegacyContent{},
-			&govtypesv1.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&govtypesv1.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// crisis
 			// MsgVerifyInvariant is defined as nondeterministic since fee
@@ -192,22 +192,22 @@ func DefaultConfig() Config {
 			&evidencetypes.MsgSubmitEvidence{},
 
 			// mint
-			&minttypes.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&minttypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// staking
-			&stakingtypes.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&stakingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
 			&stakingtypes.MsgCancelUnbondingDelegation{},
 
 			// slashing
-			&slashingtypes.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&slashingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// slashing
-			&slashingtypes.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&slashingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// upgrade
-			&upgradetypes.MsgCancelUpgrade{},   // This is non-deterministic because all the goc proposals are non-deterministic anyway
-			&upgradetypes.MsgSoftwareUpgrade{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&upgradetypes.MsgCancelUpgrade{},   // This is non-deterministic because all the gov proposals are non-deterministic anyway
+			&upgradetypes.MsgSoftwareUpgrade{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// vesting
 			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
@@ -224,7 +224,7 @@ func DefaultConfig() Config {
 			&wasmtypes.MsgIBCSend{},
 			&wasmtypes.MsgIBCCloseChannel{},
 			&wasmtypes.MsgUpdateInstantiateConfig{},
-			&wasmtypes.MsgUpdateParams{}, // This is non-deterministic because all the goc proposals are non-deterministic anyway
+			&wasmtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 			&wasmtypes.MsgUnpinCodes{},
 			&wasmtypes.MsgPinCodes{},
 			&wasmtypes.MsgSudoContract{},
