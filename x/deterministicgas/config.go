@@ -32,8 +32,8 @@ import (
 
 // These constants define gas for messages which have custom calculation logic.
 const (
-	BankSendPerCoinGas            = 24000
-	BankMultiSendPerOperationsGas = 11000
+	BankSendPerCoinGas            = 50000
+	BankMultiSendPerOperationsGas = 35000
 	AuthzExecOverhead             = 2000
 )
 
@@ -76,11 +76,14 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000 * 1.04),
 		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000 * 1.76),
-		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):      constantGasFunc(25000), // TODO: Reestimate when next token upgrade is prepared
+		// TODO: Reestimate when next token upgrade is prepared
+		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25000),
 
 		// asset/nft
-		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(16000 * 1.64),
-		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):          constantGasFunc(16000),
+		MsgToMsgURL(&assetnfttypes.MsgBurn{}): constantGasFunc(16000 * 1.64),
+		// FIXME (v47-deterministic): Gas should depend on the size of data attached to the message
+		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
+		// FIXME (v47-deterministic): Gas should depend on the size of data attached to the message
 		MsgToMsgURL(&assetnfttypes.MsgMint{}):                constantGasFunc(39000),
 		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):              constantGasFunc(7000 * 1.19),
 		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
@@ -88,7 +91,12 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}): constantGasFunc(3500),
 
 		// authz
-		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead), // how to do this?
+		// FIXME (v47-deterministic): We need a procedure to estimate the overhead of the authz. Proposal:
+		// 1. Estimate normal message
+		// 2. Estimate the same message executed using authz
+		// 3. Subtract one from the other
+		// We should have an integration test doing this.
+		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
 		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(7000 * 3.95),
 		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(2500 * 3.19),
 
@@ -114,13 +122,15 @@ func DefaultConfig() Config {
 
 		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(7000 * 0.88),
 		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(9000 * 0.72),
-		MsgToMsgURL(&govtypesv1.MsgDeposit{}):      constantGasFunc(52000), // missing
+		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
+		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52000),
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(16000 * 1.55),
 
 		// slashing
-		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(25000), // missing
+		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
+		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
 		// staking
 		MsgToMsgURL(&stakingtypes.MsgDelegate{}):        constantGasFunc(69000 * 1.21),
