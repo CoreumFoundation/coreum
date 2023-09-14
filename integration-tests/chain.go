@@ -261,7 +261,7 @@ func NewChain(grpcClient *grpc.ClientConn, rpcClient *rpchttp.HTTP, chainSetting
 		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
 		WithBroadcastMode(flags.BroadcastSync).
 		WithGRPCClient(grpcClient).
-		WithRPCClient(rpcClient).
+		WithClient(rpcClient).
 		WithAwaitTx(true)
 
 	chainCtx := NewChainContext(encodingConfig, clientCtx, chainSettings)
