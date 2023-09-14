@@ -16,10 +16,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v2/x/nft"
-	"github.com/CoreumFoundation/coreum/v2/x/nft/client/cli"
-	"github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/nft/simulation"
+	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/x/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/nft/simulation"
 )
 
 var (

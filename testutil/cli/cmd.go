@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v2/testutil/network"
+	"github.com/CoreumFoundation/coreum/v3/testutil/network"
 )
 
 // ExecTxCmd is a func to execute tx cmd.

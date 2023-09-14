@@ -15,10 +15,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	customparamstypes "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
 // TestVestingAccountCreationAndBankSend tests vesting account can be created, and it's send limits are applied.

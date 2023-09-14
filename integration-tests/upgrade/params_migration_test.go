@@ -26,11 +26,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
-	customparams "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	customparams "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
 type paramsMigrationTest struct {

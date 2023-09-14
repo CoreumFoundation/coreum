@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	v2 "github.com/CoreumFoundation/coreum/v2/x/asset/nft/legacy/v2"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	v2 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/legacy/v2"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
 func TestMigrateParams(t *testing.T) {
