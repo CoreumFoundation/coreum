@@ -61,7 +61,7 @@ type Config struct {
 //nolint:funlen
 func DefaultConfig() Config {
 	cfg := Config{
-		FixedGas:       50000,
+		FixedGas:       65000,
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 	}
@@ -95,8 +95,8 @@ func DefaultConfig() Config {
 		// 3. Subtract one from the other
 		// We should have an integration test doing this.
 		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
-		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(7000 * 3.95),
-		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(2500 * 3.19),
+		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(28000),
+		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(8000),
 
 		// bank
 		MsgToMsgURL(&banktypes.MsgSend{}):      bankSendMsgGasFunc(BankSendPerCoinGas),
