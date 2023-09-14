@@ -32,7 +32,7 @@ GasForExtraSignatures = max(0, NumOfSigs-FreeSigs) * SigVerifyCost
 
 Currently, we have values for the above variables as follows:
 
-- `FixedGas`: 50000
+- `FixedGas`: 65000
 - `SigVerifyCost`: 1000
 - `TxSizeCostPerByte`: 10
 - `FreeSignatures`: 1
@@ -50,7 +50,7 @@ Let's say we have a transaction with 1 messages of type
 signatures and the tx size is 1000 bytes, total will be:
 
 `
-TotalGas = 50000 +  1 * 50000 + 1 * 1000 + max(0, 1000-2048) * 10
+TotalGas = 65000 +  1 * 50000 + 1 * 1000 + max(0, 1000-2048) * 10
 `
 
 #### Example 2
@@ -59,7 +59,7 @@ Let's say we have a transaction with 2 messages of type
 signatures and the tx size is 2050 bytes, total will be:
 
 `
-TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
+TotalGas = 65000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 `
 
 ## Gas Tables
@@ -88,8 +88,8 @@ TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/coreum.asset.nft.v1.MsgRemoveFromWhitelist`                          | 3500                           |
 | `/coreum.asset.nft.v1.MsgUnfreeze`                                     | 5000                           |
 | `/coreum.nft.v1beta1.MsgSend`                                          | 25000                          |
-| `/cosmos.authz.v1beta1.MsgGrant`                                       | 27650                          |
-| `/cosmos.authz.v1beta1.MsgRevoke`                                      | 7975                           |
+| `/cosmos.authz.v1beta1.MsgGrant`                                       | 28000                          |
+| `/cosmos.authz.v1beta1.MsgRevoke`                                      | 8000                           |
 | `/cosmos.distribution.v1beta1.MsgFundCommunityPool`                    | 17000                          |
 | `/cosmos.distribution.v1beta1.MsgSetWithdrawAddress`                   | 5000                           |
 | `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward`              | 79000                          |
