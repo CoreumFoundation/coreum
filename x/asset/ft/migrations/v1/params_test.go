@@ -1,4 +1,4 @@
-package v2_test
+package v1_test
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
-	v2 "github.com/CoreumFoundation/coreum/v3/x/asset/ft/legacy/v2"
+	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/ft/migrations/v1"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
@@ -20,25 +20,25 @@ func TestMigrateParams(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	ctx := testApp.NewContext(false, tmproto.Header{}).WithBlockTime(blockTime)
 
-	testParams := types.Params{
-		IssueFee:                    sdk.NewCoin("test-coin", sdk.NewInt(10)),
-		TokenUpgradeDecisionTimeout: time.Now().UTC(),
-		TokenUpgradeGracePeriod:     time.Second,
-	}
-	keeper := testApp.AssetFTKeeper
 	paramsKeeper := testApp.ParamsKeeper
+
 	sp, ok := paramsKeeper.GetSubspace(types.ModuleName)
 	requireT.True(ok)
 	// set KeyTable if it has not already been set
 	if !sp.HasKeyTable() {
 		sp.WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&types.Params{}))
 	}
+	sp.Set(ctx, types.KeyIssueFee, sdk.NewCoin("stake", sdk.ZeroInt()))
 
-	sp.SetParamSet(ctx, &testParams)
+	requireT.NoError(v1.MigrateParams(ctx, paramsKeeper))
 
-	requireT.NoError(v2.MigrateParams(ctx, keeper, paramsKeeper))
-	params := keeper.GetParams(ctx)
-	assertT.EqualValues(params, testParams)
+	var params types.Params
+	sp.GetParamSet(ctx, &params)
+
+	assertT.Equal("0stake", params.IssueFee.String())
+	assertT.Equal(blockTime.Add(v1.InitialTokenUpgradeDecisionPeriod), params.TokenUpgradeDecisionTimeout)
+	assertT.Equal(types.DefaultTokenUpgradeGracePeriod, params.TokenUpgradeGracePeriod)
 }

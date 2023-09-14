@@ -18,7 +18,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/client/cli"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/keeper"
-	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/ft/legacy/v1"
+	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/ft/migrations/v1"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
