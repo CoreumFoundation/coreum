@@ -10,7 +10,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/v3/pkg/store"
 	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
-	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/legacy/v1"
+	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/migrations/v1"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 

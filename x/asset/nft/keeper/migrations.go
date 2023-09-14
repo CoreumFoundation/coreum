@@ -3,8 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/legacy/v1"
-	v2 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/legacy/v2"
+	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/migrations/v1"
+	v2 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/migrations/v2"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
