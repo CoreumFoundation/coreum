@@ -165,7 +165,6 @@ var (
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
-		// FIXME(v47-genutil) check how new genutil works
 		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		wbank.AppModuleBasic{},
 		capability.AppModuleBasic{},
