@@ -145,6 +145,13 @@ func (csk concurrentSafeKeyring) ImportPrivKey(uid, armor, passphrase string) er
 	return csk.kr.ImportPrivKey(uid, armor, passphrase)
 }
 
+func (csk concurrentSafeKeyring) ImportPrivKeyHex(uid, privKey, algoStr string) error {
+	csk.mu.Lock()
+	defer csk.mu.Unlock()
+
+	return csk.kr.ImportPrivKeyHex(uid, privKey, algoStr)
+}
+
 func (csk concurrentSafeKeyring) ImportPubKey(uid, armor string) error {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
