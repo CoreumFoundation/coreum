@@ -173,8 +173,8 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	receiveCoinGaia := sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
-	receiveCoinOsmosis := sdk.NewCoin(convertToIBCDenom(osmosisToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
+	receiveCoinGaia := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
+	receiveCoinOsmosis := sdk.NewCoin(ConvertToIBCDenom(osmosisToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
 	// ********** Coreum to Gaia **********
 	// IBC transfer from FT issuer address.
@@ -406,7 +406,7 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumIssuer, sendCoin, gaiaChain.ChainContext, gaiaRecipient)
 	requireT.NoError(err)
 
-	ibcDenom := convertToIBCDenom(gaiaToCoreumChannelID, denom)
+	ibcDenom := ConvertToIBCDenom(gaiaToCoreumChannelID, denom)
 	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sdk.NewCoin(ibcDenom, sendCoin.Amount)))
 
 	// send coins back to two accounts, one blocked, one whitelisted
@@ -521,7 +521,7 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 	assertT.Contains(err.Error(), cosmoserrors.ErrInsufficientFunds.Error())
 
 	// send up to the limit, should succeed
-	ibcCoin := sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, denom), halfCoin.Amount)
+	ibcCoin := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, denom), halfCoin.Amount)
 	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, halfCoin, gaiaChain.ChainContext, gaiaRecipient)
 	requireT.NoError(err)
 	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, ibcCoin))
@@ -590,7 +590,7 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumIssuer, sendCoin, gaiaChain.ChainContext, gaiaRecipient)
 	requireT.NoError(err)
 
-	ibcDenom := convertToIBCDenom(gaiaToCoreumChannelID, denom)
+	ibcDenom := ConvertToIBCDenom(gaiaToCoreumChannelID, denom)
 	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sdk.NewCoin(ibcDenom, sendCoin.Amount)))
 
 	// freeze escrow account
@@ -672,9 +672,9 @@ func TestIBCGlobalFreeze(t *testing.T) {
 	require.NoError(t, err)
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
 	sendCoin := sdk.NewCoin(denom, issueMsg.InitialAmount.QuoRaw(2))
-	ibcSendCoin := sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, denom), sendCoin.Amount)
+	ibcSendCoin := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, denom), sendCoin.Amount)
 	sendCoinBack := sdk.NewCoin(denom, issueMsg.InitialAmount.QuoRaw(10))
-	ibcSendCoinBack := sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, denom), sendCoinBack.Amount)
+	ibcSendCoinBack := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, denom), sendCoinBack.Amount)
 
 	// set global freeze
 	freezeMsg := &assetfttypes.MsgGloballyFreeze{
@@ -842,7 +842,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 			// In this goroutine we check if funds were delivered to the other chain.
 			// If this happens it means timeout didn't occur and we must try again.
 
-			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
+			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
 				select {
 				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
 					parallelCancel()
@@ -866,7 +866,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 		bankClient := banktypes.NewQueryClient(gaiaChain.ClientContext)
 		resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: gaiaChain.MustConvertToBech32Address(gaiaRecipient),
-			Denom:   convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom),
+			Denom:   ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom),
 		})
 		requireT.NoError(err)
 		requireT.Equal("0", resp.Balance.Amount.String())
@@ -933,7 +933,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendToGaiaCoin))
 
 	// funds should not be received on gaia
-	ibcGaiaDenom := convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom)
+	ibcGaiaDenom := ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom)
 	bankClient := banktypes.NewQueryClient(gaiaChain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: gaiaChain.MustConvertToBech32Address(moduleAddress),
@@ -1243,7 +1243,7 @@ func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 			// In this goroutine we check if funds were delivered to the other chain.
 			// If this happens it means timeout didn't occur and we must try again.
 
-			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
+			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
 				select {
 				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
 					parallelCancel()
@@ -1460,7 +1460,7 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 			// In this goroutine we check if funds were delivered to the other chain.
 			// If this happens it means timeout didn't occur and we must try again.
 
-			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)); err == nil {
+			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)); err == nil {
 				select {
 				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
 					parallelCancel()

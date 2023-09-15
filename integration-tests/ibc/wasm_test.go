@@ -152,7 +152,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(sdk.ZeroInt().String(), contractBalance.Balance.Amount.String())
 
-	expectedOsmosisRecipientBalance := sdk.NewCoin(convertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom), sendToOsmosisCoin.Amount)
+	expectedOsmosisRecipientBalance := sdk.NewCoin(ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom), sendToOsmosisCoin.Amount)
 	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisRecipient, expectedOsmosisRecipientBalance))
 }
 
