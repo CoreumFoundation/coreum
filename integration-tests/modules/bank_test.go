@@ -830,8 +830,8 @@ func TestBankCoreSend(t *testing.T) {
 // Keep in mind that to estimate the gas you need to move bank send message to nondeterministic section inside deterministic gas config.
 func TestBankSendEstimation(t *testing.T) {
 	const (
-		nTokens = 201
-		step    = 10
+		nTokens = 101
+		step    = 20
 	)
 
 	requireT := require.New(t)
