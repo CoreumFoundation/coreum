@@ -93,7 +93,9 @@ func (gmt *govMigrationTest) After(t *testing.T) {
 	proposal, err := chain.Governance.GetProposal(ctx, gmt.onDepositProposalId)
 	requireT.NoError(err)
 	requireT.Equal(govtypesv1.StatusDepositPeriod, proposal.Status)
-	requireT.Equal("", proposal.Proposer) // question here
+	// Proposer could be set as optional step during the upgrade, but we decided to not implement it
+	// since proposal fails anyway.
+	requireT.Equal("", proposal.Proposer)
 
 	depositor := chain.GenAccount()
 	requireT.NoError(err)
@@ -121,14 +123,6 @@ func (gmt *govMigrationTest) After(t *testing.T) {
 	proposalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, gmt.onDepositProposalId)
 	requireT.NoError(err)
 	requireT.Equal(govtypesv1.StatusFailed, proposalStatus)
-
-	// 11:31AM INF proposal tallied module=x/gov proposal=1 results="passed, but msg 0 (/cosmos.gov.v1.MsgExecLegacyContent) failed on execution: distribution: no handler exists for proposal type"
-
-	//bankClient := banktypes.NewQueryClient(chain.ClientContext)
-	//balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-	//	Address: gmt.communityPoolRecipient.String(),
-	//	Denom:   chain.ChainSettings.Denom,
-	//})
-	//requireT.NoError(err)
-	//requireT.True(balance.Balance.Amount.Equal(fundAmount))
+	// Logs produced inside cored for such a proposal:
+	// "proposal tallied module=x/gov proposal=1 results="passed, but msg 0 (/cosmos.gov.v1.MsgExecLegacyContent) failed on execution: distribution: no handler exists for proposal type"
 }
