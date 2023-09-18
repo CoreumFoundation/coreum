@@ -35,6 +35,11 @@ type NftIDRequest struct {
 	ID string `json:"id"`
 }
 
+// BurntNftIDRequest is used to query burnt nfts with nft_id.
+type BurntNftIDRequest struct {
+	NFT_ID string `json:"nft_id"`
+}
+
 // NftIssuerRequest is used to query NFT with issuer.
 type NftIssuerRequest struct {
 	Issuer string `json:"issuer"`
@@ -77,6 +82,8 @@ const (
 	NftMethodFrozen                    NftMethod = "frozen"
 	NftMethodWhitelisted               NftMethod = "whitelisted"
 	NftMethodWhitelistedAccountsForNft NftMethod = "whitelisted_accounts_for_nft"
+	NftMethodBurntNft                  NftMethod = "burnt_nft"
+	NftMethodBurntNftInClass           NftMethod = "burnt_nfts_in_class"
 	NftMethodBalance                   NftMethod = "balance"
 	NftMethodOwner                     NftMethod = "owner"
 	NftMethodSupply                    NftMethod = "supply"
