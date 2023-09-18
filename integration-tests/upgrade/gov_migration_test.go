@@ -22,7 +22,7 @@ var (
 )
 
 type govMigrationTest struct {
-	onDepositProposalId    uint64
+	onDepositProposalID    uint64
 	proposer               sdk.AccAddress
 	communityPoolRecipient sdk.AccAddress
 }
@@ -63,7 +63,7 @@ func (gmt *govMigrationTest) Before(t *testing.T) {
 	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposalV1Beta1(
 		ctx,
 		proposer,
-		&distributiontypes.CommunityPoolSpendProposal{
+		&distributiontypes.CommunityPoolSpendProposal{ //nolint:staticcheck
 			Title:       "Community pool spend created before upgrade",
 			Description: "Community pool spend created before upgrade",
 			Recipient:   communityPoolRecipient.String(),
@@ -81,7 +81,7 @@ func (gmt *govMigrationTest) Before(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(govtypesv1beta1.StatusDepositPeriod, proposal.Status)
 
-	gmt.onDepositProposalId = proposalID
+	gmt.onDepositProposalID = proposalID
 	gmt.proposer = proposer
 	gmt.communityPoolRecipient = communityPoolRecipient
 }
@@ -90,7 +90,7 @@ func (gmt *govMigrationTest) After(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
-	proposal, err := chain.Governance.GetProposal(ctx, gmt.onDepositProposalId)
+	proposal, err := chain.Governance.GetProposal(ctx, gmt.onDepositProposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypesv1.StatusDepositPeriod, proposal.Status)
 	// Proposer could be set as optional step during the upgrade, but we decided to not implement it
@@ -105,7 +105,7 @@ func (gmt *govMigrationTest) After(t *testing.T) {
 		Amount:   missingDepositAmount,
 	})
 
-	depositMsg := govtypesv1.NewMsgDeposit(depositor, gmt.onDepositProposalId, sdk.NewCoins(chain.NewCoin(missingDepositAmount)))
+	depositMsg := govtypesv1.NewMsgDeposit(depositor, gmt.onDepositProposalID, sdk.NewCoins(chain.NewCoin(missingDepositAmount)))
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(depositor),
@@ -114,13 +114,13 @@ func (gmt *govMigrationTest) After(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	proposal, err = chain.Governance.GetProposal(ctx, gmt.onDepositProposalId)
+	proposal, err = chain.Governance.GetProposal(ctx, gmt.onDepositProposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
-	requireT.NoError(chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, gmt.onDepositProposalId))
+	requireT.NoError(chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, gmt.onDepositProposalID))
 
-	proposalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, gmt.onDepositProposalId)
+	proposalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, gmt.onDepositProposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypesv1.StatusFailed, proposalStatus)
 	// Logs produced inside cored for such a proposal:
