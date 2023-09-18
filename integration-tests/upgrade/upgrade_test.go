@@ -43,9 +43,9 @@ func TestUpgrade(t *testing.T) {
 
 func upgradeV3(t *testing.T) {
 	tests := []upgradeTest{
-		//&paramsMigrationTest{},
-		//&wasmMigrationTest{},
-		//&ibcUpgradeTest{},
+		&paramsMigrationTest{},
+		&wasmMigrationTest{},
+		&ibcUpgradeTest{},
 		&govMigrationTest{},
 	}
 
@@ -53,7 +53,7 @@ func upgradeV3(t *testing.T) {
 		test.Before(t)
 	}
 
-	runUpgrade(t, "v2.0.2", appupgradev3.Name, 20)
+	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
 
 	for _, test := range tests {
 		test.After(t)
