@@ -63,15 +63,12 @@ func TestAuthFeeLimits(t *testing.T) {
 	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
 
 	// more gas than MaxBlockGas
-	// FIXME(v47-max-block-gas) check why the transaction pass
-	/*
-		_, err = client.BroadcastTx(ctx,
-			chain.ClientContext.WithFromAddress(sender),
-			chain.TxFactory().
-				WithGas(uint64(maxBlockGas+1)),
-			msg)
-		require.Error(t, err)
-	*/
+	_, err = client.BroadcastTx(ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(uint64(maxBlockGas+1)),
+		msg)
+	require.Error(t, err)
 
 	// gas equal MaxBlockGas, the tx should pass
 	_, err = client.BroadcastTx(ctx,
