@@ -1476,7 +1476,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	burntNFTPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.BurntNftIDRequest{
 		moduleswasm.NftMethodBurntNft: {
-			NFT_ID: "id-1",
+			NftID: "id-1",
 		},
 	})
 	requireT.NoError(err)

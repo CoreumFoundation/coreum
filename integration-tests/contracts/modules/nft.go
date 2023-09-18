@@ -36,8 +36,10 @@ type NftIDRequest struct {
 }
 
 // BurntNftIDRequest is used to query burnt nfts with nft_id.
+//
+//nolint:tagliatelle
 type BurntNftIDRequest struct {
-	NFT_ID string `json:"nft_id"`
+	NftID string `json:"nft_id"`
 }
 
 // NftIssuerRequest is used to query NFT with issuer.
