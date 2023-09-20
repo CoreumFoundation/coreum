@@ -29,16 +29,12 @@ func (a MintAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authz.AcceptRes
 
 	limitLeft, err := a.MintLimit.SafeSub(mMint.Coin)
 	if err != nil {
-		return authz.AcceptResponse{}, sdkerrors.ErrInsufficientFunds.Wrapf("requested amount is more than mint limit")
-	}
-
-	if limitLeft.IsZero() {
-		return authz.AcceptResponse{Accept: true, Delete: true}, nil
+		return authz.AcceptResponse{}, sdkerrors.ErrUnauthorized.Wrapf("requested amount is more than mint limit")
 	}
 
 	return authz.AcceptResponse{
 		Accept:  true,
-		Delete:  false,
+		Delete:  limitLeft.IsZero(),
 		Updated: &MintAuthorization{MintLimit: limitLeft},
 	}, nil
 }

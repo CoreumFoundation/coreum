@@ -2694,6 +2694,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 		&execMsg,
 	)
 	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// minting the entire limit should remove the grant
 	msgMint = &assetfttypes.MsgMint{
