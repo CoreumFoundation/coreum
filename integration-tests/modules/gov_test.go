@@ -15,6 +15,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/pkg/znet"
 )
 
 // TestGovProposalWithDepositAndWeightedVotes - is a complex governance test which tests:
@@ -36,7 +37,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	requireT.NoError(err)
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.FundedAccount{
+		znet.FundedAccount{
 			Address: proposer,
 			Amount:  proposerBalance,
 		},
@@ -44,7 +45,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, depositor, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, depositor, znet.BalancesOptions{
 		Messages: []sdk.Msg{&govtypesv1beta1.MsgDeposit{}},
 		Amount:   missingDepositAmount.Amount,
 	})

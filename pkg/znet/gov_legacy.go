@@ -1,4 +1,4 @@
-package integrationtests
+package znet
 
 import (
 	"context"
@@ -103,7 +103,7 @@ func (g GovernanceLegacy) ProposeAndVote(ctx context.Context, t *testing.T, prop
 
 // Propose creates a new proposal.
 func (g GovernanceLegacy) Propose(ctx context.Context, t *testing.T, msg *govtypesv1beta1.MsgSubmitProposal) (uint64, error) {
-	SkipUnsafe(t)
+	SkipUnsafe(ctx, t)
 
 	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
 	result, err := client.BroadcastTx(
