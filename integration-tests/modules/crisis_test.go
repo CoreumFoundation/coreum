@@ -12,7 +12,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/pkg/znet"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 // TestVerifyInvariantMessageIsDenied verifies that transactions containing crisis.MsgVerifyInvariant message are rejected.
@@ -28,7 +28,7 @@ func TestVerifyInvariantMessageIsDenied(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, sender, znet.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Amount: sdkmath.NewIntFromUint64(invariantFee),
 	})
 

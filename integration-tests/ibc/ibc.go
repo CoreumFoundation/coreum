@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/CoreumFoundation/coreum/v3/pkg/znet"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 // ConvertToIBCDenom returns the IBC denom based on the channelID and denom.
@@ -33,9 +33,9 @@ func ConvertToIBCDenom(channelID, denom string) string {
 func CreateIBCChannelsAndConnect(
 	ctx context.Context,
 	t *testing.T,
-	srcChain znet.Chain,
+	srcChain integration.Chain,
 	srcChainPort string,
-	dstChain znet.Chain,
+	dstChain integration.Chain,
 	dstChainPort string,
 	channelVersion string,
 	channelOrder ibcchanneltypes.Order,
@@ -84,7 +84,7 @@ func setupRelayerChain(
 	ctx context.Context,
 	t *testing.T,
 	log *zap.Logger,
-	chain znet.Chain,
+	chain integration.Chain,
 	relayerKeyName string,
 	clientID, connectionID string,
 ) *cosmosrelayer.Chain {
@@ -113,7 +113,7 @@ func setupRelayerChain(
 	_, relayerKeyBytes, err := bech32.DecodeAndConvert(relayerSrcChainKeyInfo.Address)
 	require.NoError(t, err)
 
-	chain.Faucet.FundAccounts(ctx, t, znet.FundedAccount{
+	chain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: relayerKeyBytes,
 		Amount:  chain.NewCoin(sdkmath.NewInt(2000000)),
 	})

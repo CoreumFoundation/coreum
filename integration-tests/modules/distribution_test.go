@@ -18,7 +18,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/pkg/znet"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
@@ -42,7 +42,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 		Depositor: communityPoolFunder.String(),
 	}
 
-	chain.FundAccountWithOptions(ctx, t, communityPoolFunder, znet.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, communityPoolFunder, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgFundCommunityPool,
 		},
@@ -76,7 +76,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 
 	communityPoolRecipient := chain.GenAccount()
 
-	chain.Faucet.FundAccounts(ctx, t, znet.NewFundedAccount(proposer, proposerBalance))
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
 	msgPoolSpend := &distributiontypes.MsgCommunityPoolSpend{
@@ -138,7 +138,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	requireT := require.New(t)
 	// the amount of the delegation should be big enough to get at least some reward for the few blocks
 	amountToDelegate := sdkmath.NewInt(1_000_000_000)
-	chain.FundAccountWithOptions(ctx, t, delegator, znet.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, delegator, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&distributiontypes.MsgWithdrawDelegatorReward{},
@@ -221,7 +221,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	requireT.NoError(err)
 	delegatorBalanceAfterWithdrawal := delegatorBalanceRes.Balance
 
-	feeSpentOnWithdrawReward := chain.ComputeNeededBalanceFromOptions(znet.BalancesOptions{
+	feeSpentOnWithdrawReward := chain.ComputeNeededBalanceFromOptions(integration.BalancesOptions{
 		Messages: []sdk.Msg{withdrawRewardMsg},
 	})
 
@@ -273,7 +273,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	chain.FundAccountWithOptions(ctx, t, validatorStakerAddress, znet.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, validatorStakerAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
 
@@ -294,7 +294,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	requireT.NoError(err)
 	validatorStakerBalanceAfterWithdrawal := validatorStakerBalanceRes.Balance
 
-	feeSpentOnWithdrawCommission := chain.ComputeNeededBalanceFromOptions(znet.BalancesOptions{
+	feeSpentOnWithdrawCommission := chain.ComputeNeededBalanceFromOptions(integration.BalancesOptions{
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
 

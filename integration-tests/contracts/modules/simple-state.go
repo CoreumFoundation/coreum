@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	integrationtests "github.com/CoreumFoundation/coreum/v3/pkg/znet"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 // SimpleState is a structure used to initizlize the simple state contract

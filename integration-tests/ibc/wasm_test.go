@@ -23,7 +23,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	ibcwasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/ibc"
-	"github.com/CoreumFoundation/coreum/v3/pkg/znet"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 type ibcTimeoutBlock struct {
@@ -79,7 +79,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	coreumAdmin := coreumChain.GenAccount()
 	osmosisRecipient := osmosisChain.GenAccount()
 
-	coreumChain.Faucet.FundAccounts(ctx, t, znet.FundedAccount{
+	coreumChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: coreumAdmin,
 		Amount:  coreumChain.NewCoin(sdkmath.NewInt(2000000)),
 	})
@@ -95,7 +95,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 		coreumChain.TxFactory().WithSimulateAndExecute(true),
 		coreumAdmin,
 		ibcwasm.IBCTransferWASM,
-		znet.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
 			Amount:     sendToOsmosisCoin,
@@ -178,12 +178,12 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	coreumCaller := coreumChain.GenAccount()
 	osmosisCaller := osmosisChain.GenAccount()
 
-	coreumChain.Faucet.FundAccounts(ctx, t, znet.FundedAccount{
+	coreumChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: coreumCaller,
 		Amount:  coreumChain.NewCoin(sdkmath.NewInt(2000000)),
 	})
 
-	osmosisChain.Faucet.FundAccounts(ctx, t, znet.FundedAccount{
+	osmosisChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: osmosisCaller,
 		Amount:  osmosisChain.NewCoin(sdkmath.NewInt(2000000)),
 	})
@@ -196,7 +196,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		coreumChain.TxFactory().WithSimulateAndExecute(true),
 		coreumCaller,
 		ibcwasm.IBCCallWASM,
-		znet.InstantiateConfig{
+		integration.InstantiateConfig{
 			Admin:      coreumCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -210,7 +210,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		osmosisChain.TxFactory().WithSimulateAndExecute(true),
 		osmosisCaller,
 		ibcwasm.IBCCallWASM,
-		znet.InstantiateConfig{
+		integration.InstantiateConfig{
 			Admin:      osmosisCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -279,7 +279,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 func executeWasmIncrement(
 	ctx context.Context,
 	requireT *require.Assertions,
-	chain znet.Chain,
+	chain integration.Chain,
 	caller sdk.AccAddress,
 	channelID, contractAddr string,
 ) {
@@ -305,7 +305,7 @@ func executeWasmIncrement(
 func awaitWasmCounterValue(
 	ctx context.Context,
 	t *testing.T,
-	chain znet.Chain,
+	chain integration.Chain,
 	channelID, contractAddress string,
 	expectedCount uint32,
 ) {

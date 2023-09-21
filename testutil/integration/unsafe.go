@@ -1,4 +1,4 @@
-package znet
+package integration
 
 import (
 	"context"

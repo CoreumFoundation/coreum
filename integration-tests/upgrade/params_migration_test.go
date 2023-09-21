@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
-	"github.com/CoreumFoundation/coreum/v3/pkg/znet"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 	customparams "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
@@ -227,7 +227,7 @@ func (pmt *paramsMigrationTest) After(t *testing.T) {
 	assertT.Equal(pmt.wasmParamsBeforeMigration, wasmResp.Params)
 }
 
-func querySubspaceParamsValue(ctx context.Context, t *testing.T, chain znet.CoreumChain, subspace, key string) string {
+func querySubspaceParamsValue(ctx context.Context, t *testing.T, chain integration.CoreumChain, subspace, key string) string {
 	res, err := paramstypesproposal.NewQueryClient(chain.ClientContext).Params(
 		ctx,
 		&paramstypesproposal.QueryParamsRequest{Subspace: subspace, Key: key},
@@ -236,7 +236,7 @@ func querySubspaceParamsValue(ctx context.Context, t *testing.T, chain znet.Core
 	return res.Param.Value
 }
 
-func queryConsensusParams(ctx context.Context, t *testing.T, chain znet.CoreumChain) tmtypes.ConsensusParams {
+func queryConsensusParams(ctx context.Context, t *testing.T, chain integration.CoreumChain) tmtypes.ConsensusParams {
 	requireT := require.New(t)
 
 	blockParamsJSONStr := querySubspaceParamsValue(ctx, t, chain, "baseapp", "BlockParams")

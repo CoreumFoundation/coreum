@@ -20,7 +20,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/pkg/znet"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
@@ -37,7 +37,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	chain.Faucet.FundAccounts(ctx, t, znet.NewFundedAccount(proposer, proposerBalance))
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 	paramsBeforeUpgrade, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
@@ -119,7 +119,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 
 	delegator := chain.GenAccount()
 	delegateAmount := sdkmath.NewInt(100)
-	chain.FundAccountWithOptions(ctx, t, delegator, znet.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, delegator, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&stakingtypes.MsgUndelegate{},
@@ -141,7 +141,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	chain.FundAccountWithOptions(ctx, t, validatorAccAddress, znet.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, validatorAccAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
 
@@ -308,7 +308,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 		},
 		ValidatorAddress: validatorAddress.String(),
 	}
-	chain.FundAccountWithOptions(ctx, t, validatorAccAddress, znet.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, validatorAccAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
 
@@ -331,7 +331,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 func changeMinSelfDelegationCustomParam(
 	ctx context.Context,
 	t *testing.T,
-	chain znet.CoreumChain,
+	chain integration.CoreumChain,
 	customParamsClient customparamstypes.QueryClient,
 	newMinSelfDelegation sdkmath.Int,
 ) {
@@ -356,7 +356,7 @@ func changeMinSelfDelegationCustomParam(
 	requireT.Equal(newMinSelfDelegation.String(), customStakingParams.Params.MinSelfDelegation.String())
 }
 
-func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain znet.CoreumChain, unbondingTime time.Duration) {
+func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain integration.CoreumChain, unbondingTime time.Duration) {
 	requireT := require.New(t)
 
 	// Create new proposer.
@@ -364,7 +364,7 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain znet
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	chain.Faucet.FundAccounts(ctx, t, znet.NewFundedAccount(proposer, proposerBalance))
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 	paramsBeforeUpgrade, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
@@ -401,7 +401,7 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain znet
 	requireT.Equal(unbondingTime, stakingParams.Params.UnbondingTime)
 }
 
-func getBalance(ctx context.Context, t *testing.T, chain znet.CoreumChain, addr sdk.AccAddress) sdk.Coin {
+func getBalance(ctx context.Context, t *testing.T, chain integration.CoreumChain, addr sdk.AccAddress) sdk.Coin {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: addr.String(),

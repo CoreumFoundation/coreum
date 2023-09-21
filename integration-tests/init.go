@@ -16,7 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
 	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v3/pkg/znet"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
@@ -37,9 +37,9 @@ func (m *stringsFlag) Set(val string) error {
 
 // Chains defines the all chains used for the tests.
 type Chains struct {
-	Coreum  znet.CoreumChain
-	Gaia    znet.Chain
-	Osmosis znet.Chain
+	Coreum  integration.CoreumChain
+	Gaia    integration.Chain
+	Osmosis integration.Chain
 }
 
 var (
@@ -87,7 +87,7 @@ func init() {
 
 	ctx = context.Background()
 	if !runUnsafe {
-		ctx = znet.WithSkipUnsafe(ctx)
+		ctx = integration.WithSkipUnsafe(ctx)
 	}
 
 	// set the default staker mnemonic used in the dev znet by default
@@ -104,8 +104,8 @@ func init() {
 
 	// ********** Coreum **********
 
-	coreumGRPCClient := znet.DialGRPCClient(coreumGRPCAddress)
-	coreumSettings := znet.QueryChainSettings(queryCtx, coreumGRPCClient)
+	coreumGRPCClient := integration.DialGRPCClient(coreumGRPCAddress)
+	coreumSettings := integration.QueryChainSettings(queryCtx, coreumGRPCClient)
 
 	coreumClientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
@@ -125,7 +125,7 @@ func init() {
 		panic(errors.WithStack(err))
 	}
 
-	chains.Coreum = znet.NewCoreumChain(znet.NewChain(
+	chains.Coreum = integration.NewCoreumChain(integration.NewChain(
 		coreumGRPCClient,
 		coreumRPCClient,
 		coreumSettings,
@@ -133,7 +133,7 @@ func init() {
 }
 
 // NewCoreumTestingContext returns the configured coreum chain and new context for the integration tests.
-func NewCoreumTestingContext(t *testing.T) (context.Context, znet.CoreumChain) {
+func NewCoreumTestingContext(t *testing.T) (context.Context, integration.CoreumChain) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 
@@ -150,8 +150,8 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		defer queryCtxCancel()
 		// ********** Gaia **********
 
-		gaiaGRPClient := znet.DialGRPCClient(gaiaGRPCAddress)
-		gaiaSettings := znet.QueryChainSettings(queryCtx, gaiaGRPClient)
+		gaiaGRPClient := integration.DialGRPCClient(gaiaGRPCAddress)
+		gaiaSettings := integration.QueryChainSettings(queryCtx, gaiaGRPClient)
 		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		gaiaSettings.GasAdjustment = 1.5
 		gaiaSettings.CoinType = sdk.CoinType // gaia coin type
@@ -162,7 +162,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 			panic(errors.WithStack(err))
 		}
 
-		chains.Gaia = znet.NewChain(
+		chains.Gaia = integration.NewChain(
 			gaiaGRPClient,
 			gaiaRPClient,
 			gaiaSettings,
@@ -170,8 +170,8 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 
 		// ********** Osmosis **********
 
-		osmosisGRPClient := znet.DialGRPCClient(osmosisGRPCAddress)
-		osmosisChainSettings := znet.QueryChainSettings(queryCtx, osmosisGRPClient)
+		osmosisGRPClient := integration.DialGRPCClient(osmosisGRPCAddress)
+		osmosisChainSettings := integration.QueryChainSettings(queryCtx, osmosisGRPClient)
 		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		osmosisChainSettings.GasAdjustment = 1.5
 		osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
@@ -182,7 +182,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 			panic(errors.WithStack(err))
 		}
 
-		chains.Osmosis = znet.NewChain(
+		chains.Osmosis = integration.NewChain(
 			osmosisGRPClient,
 			osmosisRPClient,
 			osmosisChainSettings,
