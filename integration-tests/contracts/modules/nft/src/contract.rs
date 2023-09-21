@@ -1,6 +1,6 @@
 use coreum_wasm_sdk::assetnft::{
-    self, ClassResponse, ClassesResponse, FrozenResponse, ParamsResponse,
-    WhitelistedAccountsForNFTResponse, WhitelistedResponse,
+    self, BurntNFTResponse, BurntNFTsInClassResponse, ClassResponse, ClassesResponse,
+    FrozenResponse, ParamsResponse, WhitelistedAccountsForNFTResponse, WhitelistedResponse,
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 use coreum_wasm_sdk::nft;
@@ -241,6 +241,8 @@ pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<B
         QueryMsg::Nfts { owner } => to_binary(&query_nfts(deps, owner)?),
         QueryMsg::ClassNft {} => to_binary(&query_nft_class(deps)?),
         QueryMsg::ClassesNft {} => to_binary(&query_nft_classes(deps)?),
+        QueryMsg::BurntNft { nft_id } => to_binary(&query_burnt_nft(deps, nft_id)?),
+        QueryMsg::BurntNftsInClass {} => to_binary(&query_burnt_nfts_in_class(deps)?),
     }
 }
 
@@ -347,6 +349,46 @@ fn query_whitelisted_accounts_for_nft(
     let res = WhitelistedAccountsForNFTResponse {
         pagination: res.pagination,
         accounts,
+    };
+    Ok(res)
+}
+
+fn query_burnt_nft(deps: Deps<CoreumQueries>, nft_id: String) -> StdResult<BurntNFTResponse> {
+    let class_id = CLASS_ID.load(deps.storage)?;
+    let request: QueryRequest<CoreumQueries> =
+        CoreumQueries::AssetNFT(assetnft::Query::BurntNFT { class_id, nft_id }).into();
+    let res = deps.querier.query(&request)?;
+    Ok(res)
+}
+
+fn query_burnt_nfts_in_class(deps: Deps<CoreumQueries>) -> StdResult<BurntNFTsInClassResponse> {
+    let class_id = CLASS_ID.load(deps.storage)?;
+    let mut pagination = None;
+    let mut nft_ids = vec![];
+    let mut res: BurntNFTsInClassResponse;
+    loop {
+        let request = CoreumQueries::AssetNFT(assetnft::Query::BurntNFTsInClass {
+            pagination,
+            class_id: class_id.clone(),
+        })
+        .into();
+        res = deps.querier.query(&request)?;
+        nft_ids.append(&mut res.nft_ids);
+        if res.pagination.next_key.is_none() {
+            break;
+        } else {
+            pagination = Some(PageRequest {
+                key: res.pagination.next_key,
+                offset: None,
+                limit: None,
+                count_total: None,
+                reverse: None,
+            })
+        }
+    }
+    let res = BurntNFTsInClassResponse {
+        pagination: res.pagination,
+        nft_ids,
     };
     Ok(res)
 }
