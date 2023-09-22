@@ -75,6 +75,8 @@ type assetNFTQuery struct {
 	Frozen                    *assetnfttypes.QueryFrozenRequest                    `json:"Frozen"`
 	Whitelisted               *assetnfttypes.QueryWhitelistedRequest               `json:"Whitelisted"`
 	WhitelistedAccountsforNFT *assetnfttypes.QueryWhitelistedAccountsForNFTRequest `json:"WhitelistedAccountsforNft"`
+	BurntNFT                  *assetnfttypes.QueryBurntNFTRequest                  `json:"BurntNft"`
+	BurntNFTsInClass          *assetnfttypes.QueryBurntNFTsInClassRequest          `json:"BurntNftsInClass"`
 }
 
 // nft is the nft with string data.
@@ -325,6 +327,18 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *assetNFTQuery, assetNF
 	if assetNFTQuery.WhitelistedAccountsforNFT != nil {
 		return executeQuery(ctx, assetNFTQuery.WhitelistedAccountsforNFT, func(ctx context.Context, req *assetnfttypes.QueryWhitelistedAccountsForNFTRequest) (*assetnfttypes.QueryWhitelistedAccountsForNFTResponse, error) {
 			return assetNFTQueryServer.WhitelistedAccountsForNFT(ctx, req)
+		})
+	}
+
+	if assetNFTQuery.BurntNFT != nil {
+		return executeQuery(ctx, assetNFTQuery.BurntNFT, func(ctx context.Context, req *assetnfttypes.QueryBurntNFTRequest) (*assetnfttypes.QueryBurntNFTResponse, error) {
+			return assetNFTQueryServer.BurntNFT(ctx, req)
+		})
+	}
+
+	if assetNFTQuery.BurntNFTsInClass != nil {
+		return executeQuery(ctx, assetNFTQuery.BurntNFTsInClass, func(ctx context.Context, req *assetnfttypes.QueryBurntNFTsInClassRequest) (*assetnfttypes.QueryBurntNFTsInClassResponse, error) {
+			return assetNFTQueryServer.BurntNFTsInClass(ctx, req)
 		})
 	}
 
