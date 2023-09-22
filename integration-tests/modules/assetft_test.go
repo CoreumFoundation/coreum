@@ -2580,6 +2580,246 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	requireT.EqualValues("921", whitelistingRes.GetBalance().Amount.String())
 }
 
+// TestAuthzMintAuthorizationLimit tests the authz MintLimitAuthorization msg works as expected.
+func TestAuthzMintAuthorizationLimit(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&authztypes.MsgGrant{},
+			&authztypes.MsgGrant{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// mint and grant authorization
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        granter.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(0),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+		},
+	}
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, granter)
+	grantMintMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		assetfttypes.NewMintAuthorization(sdk.NewCoin(denom, sdk.NewInt(1000))),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMintMsg, issueMsg)),
+		grantMintMsg, issueMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+
+	// try to mint using the authz
+	msgMint := &assetfttypes.MsgMint{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(501)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	supply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
+	requireT.NoError(err)
+	requireT.EqualValues("501", supply.Amount.Amount.String())
+
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+	updatedGrant := assetfttypes.MintAuthorization{}
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
+	requireT.EqualValues("499", updatedGrant.MintLimit.Amount.String())
+
+	// try to mint exceeding limit
+	msgMint = &assetfttypes.MsgMint{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(500)),
+	}
+
+	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// minting the entire limit should remove the grant
+	msgMint = &assetfttypes.MsgMint{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(499)),
+	}
+
+	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(0, len(gransRes.Grants))
+}
+
+// TestAuthzMintAuthorizationLimit_GrantFromNonIssuer tests the authz MintLimitAuthorization msg works as expected if
+// the granter is non-issuer address.
+func TestAuthzMintAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&authztypes.MsgGrant{},
+			&authztypes.MsgGrant{},
+		},
+	})
+
+	// mint and grant authorization
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(0),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+	grantMintMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		assetfttypes.NewMintAuthorization(sdk.NewCoin(denom, sdk.NewInt(1000))),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMintMsg)),
+		grantMintMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+
+	// try to mint using the authz
+	msgMint := &assetfttypes.MsgMint{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(501)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
 // TestAssetFTBurnRate_OnMinting verifies both burn rate and send commission rate are not applied on received minted tokens.
 func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	assertT := assert.New(t)
