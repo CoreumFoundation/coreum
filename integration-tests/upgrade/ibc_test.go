@@ -12,6 +12,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	integrationtestsibc "github.com/CoreumFoundation/coreum/v3/integration-tests/ibc"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 type ibcUpgradeTest struct {
@@ -36,21 +37,21 @@ func (iut *ibcUpgradeTest) Before(t *testing.T) {
 	gaiaRecipient := gaiaChain.GenAccount() // account to receive IBC transfer form Coreum to Gaia
 
 	sendToGaiaCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 		Amount:   sendToGaiaCoin.Amount,
 	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumRecipient, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumRecipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	})
 
 	sendToCoreumCoin := gaiaChain.NewCoin(sdkmath.NewInt(1500))
 	gaiaFeesCoin := gaiaChain.NewCoin(sdkmath.NewInt(1000000))
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaSender,
 		Amount:  sendToCoreumCoin.Add(gaiaFeesCoin), // amount to send + coin for the fees
 	})
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
 		Amount:  gaiaFeesCoin, // coin for the fees
 	})

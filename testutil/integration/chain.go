@@ -1,11 +1,14 @@
-package integrationtests
+package integration
 
 import (
 	"context"
+	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
@@ -14,13 +17,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum/v3/app"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	coreumkeyring "github.com/CoreumFoundation/coreum/v3/pkg/keyring"
 )
 
 // ChainSettings represent common settings for the chains.
@@ -258,7 +266,7 @@ func NewChain(grpcClient *grpc.ClientConn, rpcClient *rpchttp.HTTP, chainSetting
 	clientCtxConfig.GasConfig.GasAdjustment = 1
 	clientCtx := client.NewContext(clientCtxConfig, app.ModuleBasics).
 		WithChainID(chainSettings.ChainID).
-		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
+		WithKeyring(coreumkeyring.NewConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
 		WithBroadcastMode(flags.BroadcastSync).
 		WithGRPCClient(grpcClient).
 		WithClient(rpcClient).
@@ -277,4 +285,74 @@ func NewChain(grpcClient *grpc.ClientConn, rpcClient *rpchttp.HTTP, chainSetting
 		Faucet:       faucet,
 		Wasm:         NewWasm(chainCtx),
 	}
+}
+
+// QueryChainSettings queries the chain setting using the provided GRPC client.
+func QueryChainSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainSettings {
+	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
+		WithGRPCClient(grpcClient)
+
+	infoBeforeRes, err := tmservice.NewServiceClient(clientCtx).GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	if err != nil {
+		panic(fmt.Sprintf("failed to get node info, err: %s", err))
+	}
+
+	chainID := infoBeforeRes.DefaultNodeInfo.Network
+
+	paramsRes, err := stakingtypes.NewQueryClient(clientCtx).Params(ctx, &stakingtypes.QueryParamsRequest{})
+	if err != nil {
+		panic(errors.Errorf("failed to get staking params, err: %s", err))
+	}
+
+	denom := paramsRes.Params.BondDenom
+
+	accountsRes, err := authtypes.NewQueryClient(clientCtx).Accounts(ctx, &authtypes.QueryAccountsRequest{})
+	if err != nil {
+		panic(fmt.Sprintf("failed to get account params, err: %s", err))
+	}
+
+	var addressPrefix string
+	for _, account := range accountsRes.Accounts {
+		if account != nil && account.TypeUrl == fmt.Sprintf("/%s", proto.MessageName(&authtypes.BaseAccount{})) {
+			var acc authtypes.BaseAccount
+			if err := proto.Unmarshal(account.Value, &acc); err != nil {
+				panic(fmt.Sprintf("failed to unpack account, err: %s", err))
+			}
+
+			addressPrefix, _, err = bech32.DecodeAndConvert(acc.Address)
+			if err != nil {
+				panic(fmt.Sprintf("failed to extract address prefix address:%s, err: %s", acc.Address, err))
+			}
+			break
+		}
+	}
+	if addressPrefix == "" {
+		panic("address prefix is empty")
+	}
+
+	return ChainSettings{
+		ChainID:       chainID,
+		Denom:         denom,
+		AddressPrefix: addressPrefix,
+	}
+}
+
+// DialGRPCClient creates the grpc connection for the given URL.
+func DialGRPCClient(url string) *grpc.ClientConn {
+	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		panic("failed to cast codec to codec.GRPCCodecProvider)")
+	}
+
+	grpClient, err := grpc.Dial(
+		url,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
+
+	return grpClient
 }

@@ -1,4 +1,4 @@
-package integrationtests
+package integration
 
 import (
 	"context"
@@ -26,6 +26,7 @@ import (
 // 1. Fully migrate new params (which are stored inside each module instead of params module).
 // 2. Migrate to new proposal types. Mostly initialize by NewMsgSubmitProposalV1 method.
 // 3. Get rid of interactions with cored v2 (inside upgrade tests) which uses v1beta1 API.
+// Deprecated: Don't use it since it will be removed soon.
 type GovernanceLegacy struct {
 	chainCtx       ChainContext
 	faucet         Faucet
@@ -103,7 +104,7 @@ func (g GovernanceLegacy) ProposeAndVote(ctx context.Context, t *testing.T, prop
 
 // Propose creates a new proposal.
 func (g GovernanceLegacy) Propose(ctx context.Context, t *testing.T, msg *govtypesv1beta1.MsgSubmitProposal) (uint64, error) {
-	SkipUnsafe(t)
+	SkipUnsafe(ctx, t)
 
 	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
 	result, err := client.BroadcastTx(
