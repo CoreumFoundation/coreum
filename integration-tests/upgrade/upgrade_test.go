@@ -46,6 +46,7 @@ func upgradeV3(t *testing.T) {
 		&paramsMigrationTest{},
 		&wasmMigrationTest{},
 		&ibcUpgradeTest{},
+		&govMigrationTest{},
 	}
 
 	for _, test := range tests {
