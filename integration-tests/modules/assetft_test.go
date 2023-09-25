@@ -2595,7 +2595,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 	granter := chain.GenAccount()
 	grantee := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&authztypes.MsgGrant{},
@@ -2647,7 +2647,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -2682,7 +2682,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 	}
 
 	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -2704,7 +2704,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 	}
 
 	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -2740,14 +2740,14 @@ func TestAuthzMintAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
 	granter := chain.GenAccount()
 	grantee := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
-	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
 			&authztypes.MsgGrant{},
@@ -2805,7 +2805,7 @@ func TestAuthzMintAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},

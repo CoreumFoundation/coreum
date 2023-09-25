@@ -14,6 +14,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 var (
@@ -39,7 +40,7 @@ func (gmt *govMigrationTest) Before(t *testing.T) {
 	}
 
 	chain.FundAccountWithOptions(ctx, t, communityPoolFunder,
-		integrationtests.BalancesOptions{
+		integration.BalancesOptions{
 			Messages: []sdk.Msg{
 				msgFundCommunityPool,
 			},
@@ -57,7 +58,7 @@ func (gmt *govMigrationTest) Before(t *testing.T) {
 	proposer := chain.GenAccount()
 	proposerBalance, err := chain.LegacyGovernance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
-	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 
 	communityPoolRecipient := chain.GenAccount()
 	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposalV1Beta1(
@@ -100,7 +101,7 @@ func (gmt *govMigrationTest) After(t *testing.T) {
 	depositor := chain.GenAccount()
 	requireT.NoError(err)
 
-	chain.FundAccountWithOptions(ctx, t, depositor, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, depositor, integration.BalancesOptions{
 		Messages: []sdk.Msg{&govtypesv1.MsgDeposit{}},
 		Amount:   missingDepositAmount,
 	})
