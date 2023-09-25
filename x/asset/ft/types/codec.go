@@ -5,6 +5,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 )
 
 // RegisterInterfaces registers the asset module tx interfaces.
@@ -22,6 +23,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	)
 	registry.RegisterImplementations((*codec.ProtoMarshaler)(nil),
 		&DelayedTokenUpgradeV1{},
+	)
+	registry.RegisterImplementations(
+		(*authz.Authorization)(nil),
+		&MintAuthorization{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

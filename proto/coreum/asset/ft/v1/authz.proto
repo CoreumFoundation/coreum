@@ -1,0 +1,21 @@
+syntax = "proto3";
+package coreum.asset.ft.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
+
+// MintAuthorization allows the grantee to mint up to mint_limit coin from
+// the granter's account.
+message MintAuthorization {
+  option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
+  option (amino.name)                        = "cosmos-sdk/MintAuthorization";
+
+  cosmos.base.v1beta1.Coin mint_limit = 1 [
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = false 
+  ];
+}
