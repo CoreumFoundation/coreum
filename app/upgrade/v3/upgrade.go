@@ -161,9 +161,9 @@ func New(
 			// TODO(new-gov-params): Discuss new values for the following params with the team and set here & inside genesis.v3.json.
 			// min_initial_deposit_ratio, burn_vote_quorum, burn_proposal_deposit_prevote, burn_vote_veto
 			govParams := govKeeper.GetParams(ctx)
-			govParams.MinInitialDepositRatio = sdk.NewDec(0).Quo(sdk.NewDec(100)).String()
+			govParams.MinInitialDepositRatio = sdk.NewDec(50).Quo(sdk.NewDec(100)).String()
 			govParams.BurnVoteQuorum = false
-			govParams.BurnProposalDepositPrevote = false
+			govParams.BurnProposalDepositPrevote = true
 			govParams.BurnVoteVeto = true
 			if err := govKeeper.SetParams(ctx, govParams); err != nil {
 				return nil, err
