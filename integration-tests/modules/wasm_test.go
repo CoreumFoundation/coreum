@@ -1368,7 +1368,6 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(json.Unmarshal(queryOut, &classQueryRes))
 	requireT.Equal(
 		moduleswasm.AssetnftClass{
-			// TODO Artem: compare it with Class[0].
 			ID:          expectedClass.Id,
 			Issuer:      expectedClass.Issuer,
 			Name:        expectedClass.Name,
@@ -1472,6 +1471,33 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	var whitelistedAccountsForNFTQueryRes assetnfttypes.QueryWhitelistedAccountsForNFTResponse
 	requireT.NoError(json.Unmarshal(queryOut, &whitelistedAccountsForNFTQueryRes))
 	requireT.Equal(whitelistedAccountsForNFTQueryRes.Accounts[0], recipient.String())
+
+	// ********** BurntNFT **********
+
+	burntNFTPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.BurntNftIDRequest{
+		moduleswasm.NftMethodBurntNft: {
+			NftID: "id-1",
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, burntNFTPayload)
+	requireT.NoError(err)
+	var burntNFTQueryRes assetnfttypes.QueryBurntNFTResponse
+	requireT.NoError(json.Unmarshal(queryOut, &burntNFTQueryRes))
+	requireT.Equal(burntNFTQueryRes.Burnt, true)
+
+	// ********** BurntNFTsInClass **********
+
+	burntNFTsInClassPayload, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodBurntNftInClass: {},
+	})
+
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, burntNFTsInClassPayload)
+	requireT.NoError(err)
+	var burntNFTsInClassQueryRes assetnfttypes.QueryBurntNFTsInClassResponse
+	requireT.NoError(json.Unmarshal(queryOut, &burntNFTsInClassQueryRes))
+	requireT.Equal(burntNFTsInClassQueryRes.NftIds, []string{"id-1"})
 
 	// ********** Balance **********
 
