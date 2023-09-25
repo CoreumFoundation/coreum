@@ -88,10 +88,6 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 		}
 
 		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
-		if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
-			return err
-		}
-
 		commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
 		if err := k.bankKeeper.SendCoins(ctx, sender, issuer, commissionCoin); err != nil {
 			return err
@@ -101,13 +97,18 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 			return err
 		}
 
-		return iterateMapDeterministic(outOps, func(account string, amount sdkmath.Int) error {
+		if err := iterateMapDeterministic(outOps, func(account string, amount sdkmath.Int) error {
 			accountAddr, err := sdk.AccAddressFromBech32(account)
 			if err != nil {
 				return sdkerrors.Wrapf(err, "invalid address %s", account)
 			}
 			return k.isCoinReceivable(ctx, accountAddr, def, amount)
-		})
+		}); err != nil {
+			return err
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
