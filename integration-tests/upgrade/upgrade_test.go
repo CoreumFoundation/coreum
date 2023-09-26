@@ -17,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev3 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3"
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 type upgradeTest interface {
@@ -95,7 +96,7 @@ func runUpgrade(
 	proposerBalance, err := chain.LegacyGovernance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 
 	t.Logf("Creating proposal for upgrading, upgradeName:%s, upgradeHeight:%d", upgradeName, upgradeHeight)
 

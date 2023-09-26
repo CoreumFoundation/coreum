@@ -21,6 +21,7 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/testutil/event"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
@@ -79,7 +80,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		})
 	}
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages:                    append([]sdk.Msg{issueMsg}, multiSendMsgs...),
 		NondeterministicMessagesGas: 50_000_000, // to cover extra bytes because of the message size
 		Amount:                      chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
@@ -155,7 +156,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	for i := 0; i < iterationsToFund; i++ {
 		fundMsgs = append(fundMsgs, bankSendSendMsgs...)
 	}
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: fundMsgs,
 		Amount:   chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
@@ -195,7 +196,7 @@ func TestBankSendDeterministicGas(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	amountToSend := sdkmath.NewInt(1000)
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	})
@@ -240,7 +241,7 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1000))),
 	}
 
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: []sdk.Msg{bankSend1, bankSend2},
 		Amount:   sdkmath.NewInt(2000),
 	})
@@ -278,7 +279,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 		})
 	}
 
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgSend{
 			Amount: make(sdk.Coins, numOfTokens),
 		}}, issueMsgs...),
@@ -337,7 +338,7 @@ func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	sender := chain.GenAccount()
 
 	amountToSend := sdkmath.NewInt(1000)
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	})
@@ -368,7 +369,7 @@ func TestBankSendGasEstimation(t *testing.T) {
 	sender := chain.GenAccount()
 
 	amountToSend := sdkmath.NewInt(1000)
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	})
@@ -416,7 +417,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 		})
 	}
 
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				{
@@ -511,7 +512,7 @@ func TestBankMultiSend(t *testing.T) {
 		},
 	}
 
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				{Coins: make(sdk.Coins, 2)},
@@ -683,14 +684,14 @@ func TestTryBankMultiSendFromMultipleAccounts(t *testing.T) {
 	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 
 	// fund accounts
-	chain.FundAccountWithOptions(ctx, t, sender1, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			multiSendMsg,
 			issue1Msg,
 		},
 		Amount: issueFee.Add(nativeAmountToSend.Amount),
 	})
-	chain.FundAccountWithOptions(ctx, t, sender2, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender2, integration.BalancesOptions{
 		Messages: []sdk.Msg{issue2Msg},
 		Amount:   issueFee,
 	})
@@ -767,11 +768,11 @@ func TestBankCoreSend(t *testing.T) {
 
 	senderInitialAmount := sdkmath.NewInt(100)
 	recipientInitialAmount := sdkmath.NewInt(10)
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   senderInitialAmount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Amount: recipientInitialAmount,
 	})
 
@@ -814,7 +815,7 @@ func TestBankCoreSend(t *testing.T) {
 
 func assertBatchAccounts(
 	ctx context.Context,
-	chain integrationtests.CoreumChain,
+	chain integration.CoreumChain,
 	expectedCoins sdk.Coins,
 	fundedAccounts []sdk.AccAddress,
 	denom string,

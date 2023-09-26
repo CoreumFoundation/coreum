@@ -23,6 +23,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
@@ -36,7 +37,7 @@ func TestIBCFailsIfNotEnabled(t *testing.T) {
 	coreumIssuer := coreumChain.GenAccount()
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&ibctransfertypes.MsgTransfer{},
@@ -95,25 +96,25 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	osmosisRecipient1 := osmosisChain.GenAccount()
 	osmosisRecipient2 := osmosisChain.GenAccount()
 
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient1,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
-	}, integrationtests.FundedAccount{
+	}, integration.FundedAccount{
 		Address: gaiaRecipient2,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
-	osmosisChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	osmosisChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: osmosisRecipient1,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
-	}, integrationtests.FundedAccount{
+	}, integration.FundedAccount{
 		Address: osmosisRecipient2,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
 	coreumIssuer := coreumChain.GenAccount()
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -123,7 +124,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		Amount: issueFee,
 	})
 
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
@@ -351,13 +352,13 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 	coreumRecipientWhitelisted := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
@@ -446,13 +447,13 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
@@ -460,7 +461,7 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 		},
 		Amount: issueFee,
 	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
@@ -546,13 +547,13 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 	coreumIssuer := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
@@ -630,13 +631,13 @@ func TestIBCGlobalFreeze(t *testing.T) {
 	coreumRecipient := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgGloballyFreeze{},
@@ -646,7 +647,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 		},
 		Amount: issueFee,
 	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 		},
@@ -784,7 +785,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
 
-		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&ibctransfertypes.MsgTransfer{},
@@ -892,7 +893,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&ibctransfertypes.MsgTransfer{},
@@ -900,7 +901,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 		},
 		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
 		Amount:  gaiaChain.NewCoin(sdk.NewIntFromUint64(100000)),
 	})
@@ -944,7 +945,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 
 	// test that the reverse transfer from gaia to coreum is blocked too
 
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	})
 
@@ -985,7 +986,7 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
@@ -995,7 +996,7 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 		},
 		Amount: issueFee,
 	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 		},
@@ -1116,7 +1117,7 @@ func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
 
-		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgFreeze{},
@@ -1126,7 +1127,7 @@ func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 			},
 			Amount: issueFee,
 		})
-		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 			Messages: []sdk.Msg{
 				&ibctransfertypes.MsgTransfer{},
 			},
@@ -1283,14 +1284,14 @@ func TestIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T) {
 	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
 		},
 		Amount: issueFee,
 	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 		},
@@ -1378,14 +1379,14 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
 
-		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
 			Amount: issueFee,
 		})
-		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 			Messages: []sdk.Msg{
 				&ibctransfertypes.MsgTransfer{},
 			},
@@ -1499,10 +1500,10 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 func ibcTransferAndAssertBalanceChanges(
 	ctx context.Context,
 	t *testing.T,
-	srcChainCtx integrationtests.ChainContext,
+	srcChainCtx integration.ChainContext,
 	srcSender sdk.AccAddress,
 	sendCoin sdk.Coin,
-	dstChainCtx integrationtests.ChainContext,
+	dstChainCtx integration.ChainContext,
 	dstChainRecipient sdk.AccAddress,
 	receiveCoin sdk.Coin,
 	srcExpectedBalanceChanges map[string]sdkmath.Int,
@@ -1537,7 +1538,7 @@ func ibcTransferAndAssertBalanceChanges(
 func fetchBalanceForMultipleAddresses(
 	ctx context.Context,
 	t *testing.T,
-	chainCtx integrationtests.ChainContext,
+	chainCtx integration.ChainContext,
 	denom string,
 	addresses []string,
 ) map[string]sdkmath.Int {

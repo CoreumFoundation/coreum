@@ -8,7 +8,6 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
@@ -18,14 +17,20 @@ import (
 func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
 	return k.applyFeatures(
 		ctx,
-		[]banktypes.Input{{Address: fromAddress.String(), Coins: coins}},
+		banktypes.Input{Address: fromAddress.String(), Coins: coins},
 		[]banktypes.Output{{Address: toAddress.String(), Coins: coins}},
 	)
 }
 
 // BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper.
 func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	return k.applyFeatures(ctx, inputs, outputs)
+	if len(inputs) > 1 {
+		return banktypes.ErrMultipleSenders
+	}
+	if len(inputs) == 0 {
+		return banktypes.ErrNoInputs
+	}
+	return k.applyFeatures(ctx, inputs[0], outputs)
 }
 
 type accountOperationMap map[string]sdkmath.Int
@@ -49,93 +54,73 @@ func (g groupedByDenomAccountOperations) add(address string, coins sdk.Coins) {
 	}
 }
 
-func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	// TODO: Starting from version v0.47 Cosmos SDK accepts single input only, so we may greatly simplify the logic here.
-	groupInputs := make(groupedByDenomAccountOperations)
-	for _, in := range inputs {
-		groupInputs.add(in.Address, in.Coins)
-	}
-
+func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []banktypes.Output) error {
 	groupOutputs := make(groupedByDenomAccountOperations)
 	for _, out := range outputs {
 		groupOutputs.add(out.Address, out.Coins)
 	}
 
-	return k.applyRules(ctx, groupInputs, groupOutputs)
+	return k.applyRules(ctx, input, groupOutputs)
 }
 
-func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccountOperations) error {
-	return iterateMapDeterministic(inputs, func(denom string, inOps accountOperationMap) error {
-		def, err := k.GetDefinition(ctx, denom)
+func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs groupedByDenomAccountOperations) error {
+	sender, err := sdk.AccAddressFromBech32(input.Address)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "invalid address %s", input.Address)
+	}
+
+	for _, coin := range input.Coins {
+		def, err := k.GetDefinition(ctx, coin.Denom)
 		if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
-			return nil
+			continue
 		}
 
-		outOps := outputs[denom]
-
-		burnShares, err := k.CalculateRateShares(ctx, def.BurnRate, def.Issuer, inOps, outOps)
-		if err != nil {
-			return err
-		}
-
-		if err := iterateMapDeterministic(burnShares, func(account string, amount sdkmath.Int) error {
-			accountAddr, err := sdk.AccAddressFromBech32(account)
-			if err != nil {
-				return sdkerrors.Wrapf(err, "invalid address %s", account)
-			}
-			return k.burnIfSpendable(ctx, accountAddr, def, amount)
-		}); err != nil {
-			return err
-		}
-
-		commissionShares, err := k.CalculateRateShares(ctx, def.SendCommissionRate, def.Issuer, inOps, outOps)
-		if err != nil {
-			return err
-		}
+		outOps := outputs[coin.Denom]
 
 		issuer, err := sdk.AccAddressFromBech32(def.Issuer)
 		if err != nil {
 			return sdkerrors.Wrapf(err, "invalid address %s", def.Issuer)
 		}
 
-		if err := iterateMapDeterministic(commissionShares, func(account string, amount sdkmath.Int) error {
-			accountAddr, err := sdk.AccAddressFromBech32(account)
-			if err != nil {
-				return sdkerrors.Wrapf(err, "invalid address %s", account)
-			}
-			coins := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
-			return k.bankKeeper.SendCoins(ctx, accountAddr, issuer, coins)
-		}); err != nil {
+		burnAmount := k.ApplyRate(ctx, def.BurnRate, issuer, sender, outOps)
+		if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
 			return err
 		}
 
-		if err := iterateMapDeterministic(inOps, func(account string, amount sdkmath.Int) error {
-			accountAddr, err := sdk.AccAddressFromBech32(account)
-			if err != nil {
-				return sdkerrors.Wrapf(err, "invalid address %s", account)
-			}
-			return k.isCoinSpendable(ctx, accountAddr, def, amount)
-		}); err != nil {
+		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
+		commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
+		if err := k.bankKeeper.SendCoins(ctx, sender, issuer, commissionCoin); err != nil {
 			return err
 		}
 
-		return iterateMapDeterministic(outOps, func(account string, amount sdkmath.Int) error {
+		if err := k.isCoinSpendable(ctx, sender, def, coin.Amount); err != nil {
+			return err
+		}
+
+		if err := iterateMapDeterministic(outOps, func(account string, amount sdkmath.Int) error {
 			accountAddr, err := sdk.AccAddressFromBech32(account)
 			if err != nil {
 				return sdkerrors.Wrapf(err, "invalid address %s", account)
 			}
 			return k.isCoinReceivable(ctx, accountAddr, def, amount)
-		})
-	})
+		}); err != nil {
+			return err
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-// CalculateRateShares calculates how the burn or commission share amount should be split between different parties.
-func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) (map[string]sdkmath.Int, error) {
+// ApplyRate calculates how the burn or commission amount should be calculated.
+func (k Keeper) ApplyRate(ctx sdk.Context, rate sdk.Dec, issuer, sender sdk.AccAddress, outOps accountOperationMap) sdkmath.Int {
 	// We decided that rates should not be charged on incoming IBC transfers.
 	// According to our current protocol, it cannot be done because sender pays the rates, meaning that escrow address
 	// would be charged leading to breaking the IBC mechanics.
 	if wibctransfertypes.IsPurposeIn(ctx) {
-		return nil, nil //nolint:nilnil
+		return sdk.ZeroInt()
 	}
 
 	// Context is marked with ACK purpose in two cases:
@@ -144,81 +129,53 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// This function is called only in the negative case, when the IBC transfer must be rolled back and funds
 	// must be sent back to the sender. In this case we should not charge the rates.
 	if wibctransfertypes.IsPurposeAck(ctx) {
-		return nil, nil //nolint:nilnil
+		return sdk.ZeroInt()
 	}
 
 	// Same thing as above just in case of IBC timeout.
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
-		return nil, nil //nolint:nilnil
+		return sdk.ZeroInt()
 	}
 	// Since burning & send commissions are not applied when sending to/from token issuer or from any smart contract,
 	// we can't simply apply original burn rate or send commission rates when bank multisend contains issuer or smart contract in
-	// inputs or issuer in outputs. To recalculate new adjusted amount we split whole "commission" between all non-issuer
-	// and non-smart-contract senders proportionally to amount they send.
+	// input or issuer in outputs. To recalculate new adjusted amount we exclude amount sent to issuers.
 
 	// Examples
 	// burn_rate: 10%
 
 	// inputs:
-	// 75, 75
-	// 25 <-- issuer
+	// 100
 
 	// outputs:
-	// 50
-	// 100 <-- issuer
-	// 25
+	// 75
+	// 25 <-- issuer
 
-	// In this case commissioned amount is: min(non_issuer_inputs, non_issuer_outputs) = min(75+75, 50+25) = 75
+	// In this case commissioned amount is: 75
 	// Expected commission: 75 * 10% = 7.5
-	// And now we divide it proportionally between all input sender: 7.5 / 150 * 75 = 3.75
-	// As result each sender is expected to pay 3.75 of commission.
-	// Note that if we used original rate it would be 75 * 10% = 7.5
-	// Here is the final formula we use to calculate adjusted burn/commission amount for multisend txs:
-	// amount * rate * min(non_issuer_inputs_sum, non_issuer_outputs_sum) / non_issuer_inputs_sum
+	// which is deduces from the sender account.
 	if rate.IsNil() || !rate.IsPositive() {
-		return nil, nil //nolint:nilnil
+		return sdk.ZeroInt()
 	}
 
-	taxableInputSum := sdkmath.ZeroInt()
-	shares := accountOperationMap{}
-	for account, amount := range inOps {
-		if account == issuer {
-			continue
-		}
-		acc, err := sdk.AccAddressFromBech32(account)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		if len(acc) == wasmtypes.ContractAddrLen && k.wasmKeeper.HasContractInfo(ctx, acc) {
-			continue
-		}
-		taxableInputSum = taxableInputSum.Add(amount)
-		shares[account] = amount
+	if sender.String() == issuer.String() {
+		return sdk.ZeroInt()
 	}
 
-	taxableOutputSum := sdkmath.ZeroInt()
+	// we do not apply burn and commission rate if sender is an smart contract address.
+	if len(sender) == wasmtypes.ContractAddrLen && k.wasmKeeper.HasContractInfo(ctx, sender) {
+		return sdk.ZeroInt()
+	}
+
+	taxableOutputSum := sdk.NewInt(0)
+	issuerStr := issuer.String()
 	for account, amount := range outOps {
-		if account != issuer {
-			taxableOutputSum = taxableOutputSum.Add(amount)
+		if account == issuerStr {
+			continue
 		}
+		taxableOutputSum = taxableOutputSum.Add(amount)
 	}
 
-	taxableSum := taxableInputSum
-	if taxableOutputSum.LT(taxableInputSum) {
-		taxableSum = taxableOutputSum
-	}
-
-	if !taxableSum.IsPositive() {
-		return nil, nil //nolint:nilnil
-	}
-
-	for account, amount := range shares {
-		// in order to reduce precision errors, we first multiply all sdkmath.Ints, and then multiply sdk.Decs, and then divide
-		finalShare := rate.MulInt(taxableSum.Mul(amount)).QuoInt(taxableInputSum).Ceil().RoundInt()
-		shares[account] = finalShare
-	}
-
-	return shares, nil
+	return rate.MulInt(taxableOutputSum).Ceil().RoundInt()
 }
 
 func sortedKeys[V any](m map[string]V) []string {

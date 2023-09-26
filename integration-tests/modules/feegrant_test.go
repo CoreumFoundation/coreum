@@ -15,6 +15,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 func TestFeeGrant(t *testing.T) {
@@ -26,7 +27,7 @@ func TestFeeGrant(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
@@ -34,7 +35,7 @@ func TestFeeGrant(t *testing.T) {
 			&feegrant.MsgRevokeAllowance{},
 		},
 	})
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(1),
 	})
 	basicAllowance, err := codetypes.NewAnyWithValue(&feegrant.BasicAllowance{

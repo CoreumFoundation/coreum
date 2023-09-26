@@ -26,6 +26,7 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	moduleswasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 	nfttypes "github.com/CoreumFoundation/coreum/v3/x/nft"
@@ -129,7 +130,7 @@ func TestWASMBankSendContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	clientCtx := chain.ClientContext
@@ -145,7 +146,7 @@ func TestWASMBankSendContract(t *testing.T) {
 		txf,
 		admin,
 		moduleswasm.BankSendWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
 			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
@@ -245,7 +246,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	admin := chain.GenAccount()
 
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	// deployWASMContract and init contract with the initial coins amount
@@ -261,7 +262,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 		txf,
 		admin,
 		moduleswasm.BankSendWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
 			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
@@ -322,8 +323,8 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	proposerBalance.Amount = proposerBalance.Amount.MulRaw(2)
 
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-		integrationtests.NewFundedAccount(proposer, proposerBalance),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(proposer, proposerBalance),
 	)
 
 	// instantiateWASMContract the contract and set the initial counter state.
@@ -340,7 +341,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		txf,
 		admin,
 		moduleswasm.SimpleStateWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
 			Label:      "simple_state",
@@ -434,8 +435,8 @@ func TestWASMContractUpgrade(t *testing.T) {
 	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000))),
-		integrationtests.NewFundedAccount(noneAdmin, chain.NewCoin(sdkmath.NewInt(5000000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000))),
+		integration.NewFundedAccount(noneAdmin, chain.NewCoin(sdkmath.NewInt(5000000))),
 	)
 
 	// instantiateWASMContract the contract and set the initial counter state.
@@ -452,7 +453,7 @@ func TestWASMContractUpgrade(t *testing.T) {
 		txf,
 		admin,
 		moduleswasm.SimpleStateWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			Admin:      admin,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -517,9 +518,9 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
-	chain.FundAccountWithOptions(ctx, t, newAdmin, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, newAdmin, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&wasmtypes.MsgClearAdmin{},
 		},
@@ -535,7 +536,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		chain.TxFactory().WithSimulateAndExecute(true),
 		admin,
 		moduleswasm.BankSendWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Admin:      admin,
 			Payload:    initialPayload,
@@ -615,7 +616,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	totalAmountToSend := sdkmath.NewInt(2_000)
 
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(granter, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(granter, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	// deployWASMContract and init contract with the granter.
@@ -629,7 +630,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		chain.TxFactory().WithSimulateAndExecute(true),
 		granter,
 		moduleswasm.AuthzWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
 			Label:      "authz",
@@ -697,7 +698,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	clientCtx := chain.ClientContext
@@ -736,7 +737,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		txf,
 		admin,
 		moduleswasm.FTWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
 			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
 			AccessType: wasmtypes.AccessTypeUnspecified,
@@ -1095,7 +1096,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	clientCtx := chain.ClientContext
@@ -1137,7 +1138,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		txf,
 		admin,
 		moduleswasm.NftWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerNFTInstantiatePayload,
 			Label:      "non_fungible_token",
@@ -1643,7 +1644,7 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000_000_000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000_000_000))),
 	)
 
 	// deployWASMContract and init contract with the initial coins amount
@@ -1655,7 +1656,7 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 			WithSimulateAndExecute(true),
 		admin,
 		moduleswasm.BankSendWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
 			Amount:     chain.NewCoin(sdk.NewInt(10000)),

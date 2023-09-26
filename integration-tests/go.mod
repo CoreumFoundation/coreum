@@ -30,7 +30,7 @@ require (
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/relayer/v2 v2.4.1
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7 // indirect
@@ -38,10 +38,10 @@ require (
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.24.0
 	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130 // indirect
-	google.golang.org/grpc v1.57.0
+	google.golang.org/grpc v1.57.0 // indirect
 )
 
-require cosmossdk.io/errors v1.0.0
+require cosmossdk.io/errors v1.0.0 // indirect
 
 require (
 	cloud.google.com/go v0.110.4 // indirect

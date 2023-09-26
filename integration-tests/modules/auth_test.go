@@ -13,6 +13,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
@@ -26,7 +27,7 @@ func TestAuthFeeLimits(t *testing.T) {
 
 	feeModel := getFeemodelParams(ctx, t, chain.ClientContext)
 	maxBlockGas := feeModel.MaxBlockGas
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -136,7 +137,7 @@ func TestAuthMultisig(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	// fund the multisig account
-	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdkmath.NewInt(amountToSendFromMultisigAccount),
 	})
@@ -187,7 +188,7 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdkmath.NewInt(10),
 	})

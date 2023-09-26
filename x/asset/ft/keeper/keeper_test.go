@@ -597,14 +597,15 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		issuers = append(issuers, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 		settings := types.IssueSettings{
-			Issuer:        issuers[i],
-			Symbol:        fmt.Sprintf("DEF%d", i),
-			Subunit:       fmt.Sprintf("def%d", i),
-			Precision:     6,
-			Description:   "DEF Desc",
-			InitialAmount: sdkmath.NewInt(1000),
-			Features:      []types.Feature{},
-			BurnRate:      sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
+			Issuer:             issuers[i],
+			Symbol:             fmt.Sprintf("DEF%d", i),
+			Subunit:            fmt.Sprintf("def%d", i),
+			Precision:          6,
+			Description:        "DEF Desc",
+			InitialAmount:      sdkmath.NewInt(1000),
+			Features:           []types.Feature{},
+			BurnRate:           sdk.NewDec(int64(i + 1)).QuoInt64(10), // 10% and 20% respectively
+			SendCommissionRate: sdk.NewDec(int64(i + 1)).QuoInt64(20), // 5% and 10% respectively
 		}
 
 		denom, err := assetKeeper.Issue(ctx, settings)
@@ -623,10 +624,37 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 		distribution map[string]map[*sdk.AccAddress]int64
 	}{
 		{
-			name: "send from issuer to other accounts",
+			name: "send from issuer1 to other accounts",
 			inputs: []banktypes.Input{
-				{Address: issuers[0].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[0], sdkmath.NewInt(200)))},
-				{Address: issuers[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(200)))},
+				{Address: issuers[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600)))},
+			},
+			outputs: []banktypes.Output{
+				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+				{Address: recipients[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(400)),
+				)},
+			},
+			distribution: map[string]map[*sdk.AccAddress]int64{
+				denoms[1]: {
+					&issuers[1]:    400,
+					&issuers[0]:    400,
+					&recipients[0]: 100,
+					&recipients[1]: 100,
+				},
+			},
+		},
+		{
+			name: "send from issuer0 to other accounts",
+			inputs: []banktypes.Input{
+				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(200)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(200)),
+				)},
 			},
 			outputs: []banktypes.Output{
 				{Address: recipients[0].String(), Coins: sdk.NewCoins(
@@ -645,92 +673,63 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 					&recipients[1]: 100,
 				},
 				denoms[1]: {
-					&issuers[1]:    800,
-					&recipients[0]: 100,
-					&recipients[1]: 100,
-				},
-			},
-		},
-		{
-			name: "include issuer in senders",
-			inputs: []banktypes.Input{
-				{Address: issuers[0].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[0], sdkmath.NewInt(90)))},
-				{Address: recipients[0].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[0], sdkmath.NewInt(29)))},
-				{Address: recipients[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[0], sdkmath.NewInt(32)))},
-			},
-			outputs: []banktypes.Output{
-				{Address: recipients[2].String(), Coins: sdk.NewCoins(
-					sdk.NewCoin(denoms[0], sdkmath.NewInt(89)),
-				)},
-				{Address: recipients[3].String(), Coins: sdk.NewCoins(
-					sdk.NewCoin(denoms[0], sdkmath.NewInt(62)),
-				)},
-			},
-			distribution: map[string]map[*sdk.AccAddress]int64{
-				denoms[0]: {
-					&issuers[0]:    710,
-					&recipients[0]: 68, // 100 - 29 - 3 (burn = roundup(29 * 10%))
-					&recipients[1]: 64, // 100 - 32 - 4 (burn = roundup(32 * 10%))
-					&recipients[2]: 89,
-					&recipients[3]: 62,
+					&issuers[1]:    420, // (400 + 200*10%)
+					&issuers[0]:    140, // (400 - 200 - 200*10%(commison) - 200*20% (burn))
+					&recipients[0]: 200,
+					&recipients[1]: 200,
 				},
 			},
 		},
 		{
 			name: "include issuer in receivers",
 			inputs: []banktypes.Input{
-				{Address: recipients[0].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(60)))},
-				{Address: recipients[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(40)))},
+				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(60)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(60)),
+				)},
 			},
 			outputs: []banktypes.Output{
 				{Address: issuers[1].String(), Coins: sdk.NewCoins(
-					sdk.NewCoin(denoms[1], sdkmath.NewInt(40)),
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(25)),
+				)},
+				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(15)),
 				)},
 				{Address: recipients[2].String(), Coins: sdk.NewCoins(
-					sdk.NewCoin(denoms[1], sdkmath.NewInt(25)),
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(11)),
 				)},
 				{Address: recipients[3].String(), Coins: sdk.NewCoins(
-					sdk.NewCoin(denoms[1], sdkmath.NewInt(35)),
-				)},
-			},
-			distribution: map[string]map[*sdk.AccAddress]int64{
-				denoms[1]: {
-					&issuers[1]:    840,
-					&recipients[0]: 32, // 100 - 60 - 8 (burn = roundup(60 * (60/100) * 20%))
-					&recipients[1]: 55, // 100 - 40 - 5 (burn = roundup(40 * (60/100) * 20%))
-					&recipients[2]: 25,
-					&recipients[3]: 35,
-				},
-			},
-		},
-		{
-			name: "send all coins back to issuers",
-			inputs: []banktypes.Input{
-				// coin[0]
-				{Address: recipients[0].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[0], sdkmath.NewInt(68)))},
-				{Address: recipients[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[0], sdkmath.NewInt(64)))},
-				{Address: recipients[2].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[0], sdkmath.NewInt(89)))},
-				{Address: recipients[3].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[0], sdkmath.NewInt(62)))},
-				// coin[1]
-				{Address: recipients[0].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(32)))},
-				{Address: recipients[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(55)))},
-				{Address: recipients[2].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(25)))},
-				{Address: recipients[3].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(35)))},
-			},
-			outputs: []banktypes.Output{
-				{Address: issuers[0].String(), Coins: sdk.NewCoins(
-					sdk.NewCoin(denoms[0], sdkmath.NewInt(283)),
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(9)),
 				)},
 				{Address: issuers[1].String(), Coins: sdk.NewCoins(
-					sdk.NewCoin(denoms[1], sdkmath.NewInt(147)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(25)),
+				)},
+				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(15)),
+				)},
+				{Address: recipients[2].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(11)),
+				)},
+				{Address: recipients[3].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(9)),
 				)},
 			},
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[0]: {
-					&issuers[0]: 993,
+					&issuers[0]:    818, // 800 + 15 + 45*5% (commission)
+					&issuers[1]:    25,
+					&recipients[0]: 32, // 100 - 60 - 45*10% (burn) - 45*5% (commission)
+					&recipients[1]: 100,
+					&recipients[2]: 11,
+					&recipients[3]: 9,
 				},
 				denoms[1]: {
-					&issuers[1]: 987,
+					&issuers[1]:    449, // 420 + 25 + 35*10% (commission)
+					&issuers[0]:    155, // 140 + 15
+					&recipients[0]: 129, // 200 - 60 - 35*20% (burn) - 35*10% (commission)
+					&recipients[1]: 200,
+					&recipients[2]: 11,
+					&recipients[3]: 9,
 				},
 			},
 		},
@@ -1305,12 +1304,11 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	bankKeeper := testApp.BankKeeper
 
 	issuer1 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	issuer2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	settings1 := types.IssueSettings{
 		Issuer:        issuer1,
-		Symbol:        "DEF",
-		Subunit:       "def",
+		Symbol:        "DEF1",
+		Subunit:       "def1",
 		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdkmath.NewInt(1000),
@@ -1318,9 +1316,9 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	}
 
 	settings2 := types.IssueSettings{
-		Issuer:        issuer2,
-		Symbol:        "DEF",
-		Subunit:       "def",
+		Issuer:        issuer1,
+		Symbol:        "DEF2",
+		Subunit:       "def2",
 		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdkmath.NewInt(2000),
@@ -1346,7 +1344,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	requireT.NoError(err)
 
 	// whitelist denom2 partially on the recipient2
-	err = ftKeeper.SetWhitelistedBalance(ctx, issuer2, recipient2, sdk.NewCoin(denom2, sdkmath.NewInt(10)))
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer1, recipient2, sdk.NewCoin(denom2, sdkmath.NewInt(10)))
 	requireT.NoError(err)
 
 	// multi-send valid amount
@@ -1354,9 +1352,9 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 		[]banktypes.Input{
 			{Address: issuer1.String(), Coins: sdk.NewCoins(
 				sdk.NewCoin(denom1, sdkmath.NewInt(15)),
+				sdk.NewCoin(denom2, sdkmath.NewInt(10)),
 				sdk.NewCoin(bondDenom, sdkmath.NewInt(20)),
 			)},
-			{Address: issuer2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(10)))},
 		},
 		[]banktypes.Output{
 			// the recipient1 has frozen balance so that amount can be received
@@ -1380,20 +1378,26 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{
 			// we can't return 15 coins since 10 are frozen
-			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom1, sdkmath.NewInt(15)))},
-			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(10)))},
+			{Address: recipient1.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdkmath.NewInt(15)),
+				sdk.NewCoin(denom2, sdkmath.NewInt(10)),
+			)},
 		},
 		[]banktypes.Output{
-			{Address: issuer1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom1, sdkmath.NewInt(15)))},
-			{Address: issuer2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(10)))},
+			{Address: issuer1.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdkmath.NewInt(15)),
+				sdk.NewCoin(denom2, sdkmath.NewInt(10)),
+			)},
 		})
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// multi-send invalid whitelisted amount
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{
-			{Address: issuer1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom1, sdkmath.NewInt(15)))},
-			{Address: issuer2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(15)))},
+			{Address: issuer1.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdkmath.NewInt(15)),
+				sdk.NewCoin(denom2, sdkmath.NewInt(15)),
+			)},
 		},
 		[]banktypes.Output{
 			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom1, sdkmath.NewInt(15)))},
