@@ -169,9 +169,9 @@ func (pmt *paramsMigrationTest) After(t *testing.T) {
 		Quorum:                     pmt.govParamsBeforeMigration.TallyParams.Quorum.String(),
 		Threshold:                  pmt.govParamsBeforeMigration.TallyParams.Threshold.String(),
 		VetoThreshold:              pmt.govParamsBeforeMigration.TallyParams.VetoThreshold.String(),
-		MinInitialDepositRatio:     sdk.ZeroDec().String(),
+		MinInitialDepositRatio:     sdk.MustNewDecFromStr("0.5").String(),
 		BurnVoteQuorum:             false,
-		BurnProposalDepositPrevote: false,
+		BurnProposalDepositPrevote: true,
 		BurnVoteVeto:               true,
 	}
 	assertT.Equal(paramsBeforeMigration, govParams)
