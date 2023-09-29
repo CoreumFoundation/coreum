@@ -27,6 +27,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*authz.Authorization)(nil),
 		&MintAuthorization{},
+		&BurnAuthorization{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

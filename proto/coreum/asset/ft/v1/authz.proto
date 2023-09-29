@@ -14,8 +14,22 @@ message MintAuthorization {
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
   option (amino.name)                        = "cosmos-sdk/MintAuthorization";
 
-  cosmos.base.v1beta1.Coin mint_limit = 1 [
+  repeated cosmos.base.v1beta1.Coin mint_limit = 1 [
     (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = false 
+    (amino.dont_omitempty)   = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// BurnAuthorization allows the grantee to burn up to burn_limit coin from
+// the granter's account.
+message BurnAuthorization {
+  option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
+  option (amino.name)                        = "cosmos-sdk/BurnAuthorization";
+
+  repeated cosmos.base.v1beta1.Coin burn_limit = 1 [
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }

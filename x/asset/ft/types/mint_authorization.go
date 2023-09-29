@@ -9,7 +9,7 @@ import (
 var _ authz.Authorization = &MintAuthorization{}
 
 // NewMintAuthorization returns a new MintAuthorization object.
-func NewMintAuthorization(mintLimit sdk.Coin) *MintAuthorization {
+func NewMintAuthorization(mintLimit sdk.Coins) *MintAuthorization {
 	return &MintAuthorization{
 		MintLimit: mintLimit,
 	}
@@ -27,8 +27,8 @@ func (a MintAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authz.AcceptRes
 		return authz.AcceptResponse{}, sdkerrors.ErrInvalidType.Wrap("type mismatch")
 	}
 
-	limitLeft, err := a.MintLimit.SafeSub(mMint.Coin)
-	if err != nil {
+	limitLeft, isNegative := a.MintLimit.SafeSub(mMint.Coin)
+	if isNegative {
 		return authz.AcceptResponse{}, sdkerrors.ErrUnauthorized.Wrapf("requested amount is more than mint limit")
 	}
 
@@ -41,8 +41,8 @@ func (a MintAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authz.AcceptRes
 
 // ValidateBasic implements Authorization.ValidateBasic.
 func (a MintAuthorization) ValidateBasic() error {
-	if !a.MintLimit.IsPositive() {
-		return sdkerrors.ErrInvalidCoins.Wrapf("spend limit must be positive")
+	if !a.MintLimit.IsAllPositive() {
+		return sdkerrors.ErrInvalidCoins.Wrapf("mint limit must be positive")
 	}
 	return nil
 }
