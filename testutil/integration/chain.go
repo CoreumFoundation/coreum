@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -258,7 +258,7 @@ type Chain struct {
 }
 
 // NewChain creates an instance of the new Chain.
-func NewChain(grpcClient *grpc.ClientConn, rpcClient *rpchttp.HTTP, chainSettings ChainSettings, fundingMnemonic string) Chain {
+func NewChain(grpcClient *grpc.ClientConn, rpcClient rpcclient.Client, chainSettings ChainSettings, fundingMnemonic string) Chain {
 	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
 
 	clientCtxConfig := client.DefaultContextConfig()
