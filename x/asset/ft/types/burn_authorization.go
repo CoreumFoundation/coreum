@@ -41,10 +41,6 @@ func (a BurnAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authz.AcceptRes
 
 // ValidateBasic implements Authorization.ValidateBasic.
 func (a BurnAuthorization) ValidateBasic() error {
-	if len(a.BurnLimit) == 0 {
-		return sdkerrors.ErrInvalidCoins.Wrap("burn limit cannot be nil")
-	}
-
 	if !a.BurnLimit.IsAllPositive() {
 		return sdkerrors.ErrInvalidCoins.Wrapf("burn limit must be positive")
 	}
