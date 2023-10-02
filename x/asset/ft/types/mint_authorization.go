@@ -1,3 +1,4 @@
+//nolint:dupl // this code is identical to the burn part, but they should not be merged.
 package types
 
 import (

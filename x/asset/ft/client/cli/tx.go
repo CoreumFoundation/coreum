@@ -558,6 +558,8 @@ $ %s tx grant <grantee_addr> burn --burn-limit 100ucore --expiration 1667979596
 					return fmt.Errorf("burn-limit should be greater than zero")
 				}
 				authorization = types.NewBurnAuthorization(limitCoins)
+			default:
+				return errors.Errorf("invalid authorization types, %s", args[1])
 			}
 
 			expire, err := getExpireTime(cmd)
