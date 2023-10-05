@@ -40,7 +40,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
 )
 
-const LedgerAppName = "Coreum"
+const ledgerAppName = "Coreum"
 
 // NewRootCmd creates a new root command for simd. It is called once in the
 // main function.
@@ -57,7 +57,7 @@ func NewRootCmd() *cobra.Command {
 		WithHomeDir(app.DefaultNodeHome).
 		WithViper("").
 		WithKeyringOptions(func(options *keyring.Options) {
-			options.LedgerAppName = LedgerAppName
+			options.LedgerAppName = ledgerAppName
 		})
 
 	rootCmd := &cobra.Command{
