@@ -1,4 +1,4 @@
-package integrationtests
+package integration
 
 import (
 	"context"
@@ -116,7 +116,7 @@ func (c CoreumChain) FundAccountWithOptions(ctx context.Context, t *testing.T, a
 // CreateValidator creates a new validator on the chain and returns the staker addresses, validator addresses and callback function to deactivate it.
 func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingAmount, selfDelegationAmount sdkmath.Int) (sdk.AccAddress, sdk.ValAddress, func(), error) {
 	t.Helper()
-	SkipUnsafe(t)
+	SkipUnsafe(ctx, t)
 
 	stakingClient := stakingtypes.NewQueryClient(c.ClientContext)
 	staker := c.GenAccount()

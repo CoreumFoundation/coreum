@@ -1,4 +1,4 @@
-package integrationtests
+package integration
 
 import (
 	"context"
@@ -119,7 +119,7 @@ func (g Governance) ProposalFromMsgAndVote(
 
 // Propose creates a new proposal.
 func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypesv1.MsgSubmitProposal) (uint64, error) {
-	SkipUnsafe(t)
+	SkipUnsafe(ctx, t)
 	proposer, err := sdk.AccAddressFromBech32(msg.Proposer)
 	if err != nil {
 		return 0, err
@@ -160,7 +160,6 @@ func (g Governance) NewMsgSubmitProposal(
 	msg, err := govtypesv1.NewMsgSubmitProposal(
 		messages, govParams.MinDeposit, proposer.String(), metadata, title, summary,
 	)
-
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

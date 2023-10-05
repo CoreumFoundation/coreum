@@ -5,6 +5,10 @@
 
 ## Table of Contents
 
+- [coreum/asset/ft/v1/authz.proto](#coreum/asset/ft/v1/authz.proto)
+    - [BurnAuthorization](#coreum.asset.ft.v1.BurnAuthorization)
+    - [MintAuthorization](#coreum.asset.ft.v1.MintAuthorization)
+  
 - [coreum/asset/ft/v1/event.proto](#coreum/asset/ft/v1/event.proto)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
@@ -316,6 +320,54 @@
     - [ContractCodeHistoryOperationType](#cosmwasm.wasm.v1.ContractCodeHistoryOperationType)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="coreum/asset/ft/v1/authz.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/asset/ft/v1/authz.proto
+
+
+
+<a name="coreum.asset.ft.v1.BurnAuthorization"></a>
+
+### BurnAuthorization
+BurnAuthorization allows the grantee to burn up to burn_limit coin from
+the granter's account.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `burn_limit` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.MintAuthorization"></a>
+
+### MintAuthorization
+MintAuthorization allows the grantee to mint up to mint_limit coin from
+the granter's account.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `mint_limit` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 

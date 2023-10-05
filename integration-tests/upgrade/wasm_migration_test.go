@@ -13,6 +13,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	moduleswasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 type wasmMigrationTest struct {
@@ -28,7 +29,7 @@ func (wmt *wasmMigrationTest) Before(t *testing.T) {
 	admin := chain.GenAccount()
 
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000))),
 	)
 
 	// instantiateWASMContract the contract and set the initial counter state.
@@ -46,7 +47,7 @@ func (wmt *wasmMigrationTest) Before(t *testing.T) {
 		txf,
 		admin,
 		moduleswasm.SimpleStateWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			Admin:      admin,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,

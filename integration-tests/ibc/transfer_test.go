@@ -21,6 +21,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
@@ -37,12 +38,12 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	gaiaRecipient := gaiaChain.GenAccount()
 
 	sendToGaiaCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 		Amount:   sendToGaiaCoin.Amount,
 	})
 
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
@@ -80,14 +81,14 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	coreumToGaiaSender := coreumChain.GenAccount()
 
 	// Fund accounts
-	coreumChain.FundAccountWithOptions(ctx, t, coreumToCoreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumToCoreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 	})
 
-	coreumChain.FundAccountWithOptions(ctx, t, coreumToGaiaSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumToGaiaSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	})
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaAccount1,
 		Amount:  sendToCoreumCoin.Add(gaiaChain.NewCoin(sdkmath.NewInt(1000000))), // coin to send + coin for the fee
 	})
@@ -151,7 +152,7 @@ func TestTimedOutTransfer(t *testing.T) {
 		osmosisRecipient := osmosisChain.GenAccount()
 
 		sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
-		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 			Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 			Amount:   sendToOsmosisCoin.Amount,
 		})
@@ -237,11 +238,11 @@ func TestRejectedTransfer(t *testing.T) {
 	gaiaRecipient := gaiaChain.GenAccount()
 
 	sendToGaiaCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 		Amount:   sendToGaiaCoin.Amount,
 	})
-	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
 		Amount:  gaiaChain.NewCoin(sdk.NewIntFromUint64(100000)),
 	})
@@ -264,7 +265,7 @@ func TestRejectedTransfer(t *testing.T) {
 
 	// test that the reverse transfer from gaia to coreum is blocked too
 
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	})
 

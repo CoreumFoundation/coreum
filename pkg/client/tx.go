@@ -400,7 +400,7 @@ func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*s
 		}
 	} else if res.TxResponse.Code != 0 {
 		return nil, errors.Wrapf(sdkerrors.ABCIError(res.TxResponse.Codespace, res.TxResponse.Code, res.TxResponse.Logs.String()),
-			"transaction '%s' failed", res.TxResponse.TxHash)
+			"transaction '%s' failed, raw log:%s", res.TxResponse.TxHash, res.TxResponse.RawLog)
 	}
 
 	return res.TxResponse, nil

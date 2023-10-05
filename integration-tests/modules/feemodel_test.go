@@ -15,6 +15,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
@@ -78,7 +79,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// For the test we need to create the proposal twice.
 	proposerBalance = proposerBalance.Add(proposerBalance)
 	requireT.NoError(err)
-	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 
 	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)

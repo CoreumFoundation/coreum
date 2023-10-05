@@ -9,21 +9,14 @@ import (
 	"time"
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum/v3/app"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
 	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
@@ -44,9 +37,9 @@ func (m *stringsFlag) Set(val string) error {
 
 // Chains defines the all chains used for the tests.
 type Chains struct {
-	Coreum  CoreumChain
-	Gaia    Chain
-	Osmosis Chain
+	Coreum  integration.CoreumChain
+	Gaia    integration.Chain
+	Osmosis integration.Chain
 }
 
 var (
@@ -93,6 +86,9 @@ func init() {
 	flag.Parse()
 
 	ctx = context.Background()
+	if !runUnsafe {
+		ctx = integration.WithSkipUnsafe(ctx)
+	}
 
 	// set the default staker mnemonic used in the dev znet by default
 	if len(coreumStakerMnemonics) == 0 {
@@ -108,8 +104,8 @@ func init() {
 
 	// ********** Coreum **********
 
-	coreumGRPCClient := dialGRPCClient(coreumGRPCAddress)
-	coreumSettings := queryCommonSettings(queryCtx, coreumGRPCClient)
+	coreumGRPCClient := integration.DialGRPCClient(coreumGRPCAddress)
+	coreumSettings := integration.QueryChainSettings(queryCtx, coreumGRPCClient)
 
 	coreumClientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
@@ -129,7 +125,7 @@ func init() {
 		panic(errors.WithStack(err))
 	}
 
-	chains.Coreum = NewCoreumChain(NewChain(
+	chains.Coreum = integration.NewCoreumChain(integration.NewChain(
 		coreumGRPCClient,
 		coreumRPCClient,
 		coreumSettings,
@@ -137,7 +133,7 @@ func init() {
 }
 
 // NewCoreumTestingContext returns the configured coreum chain and new context for the integration tests.
-func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
+func NewCoreumTestingContext(t *testing.T) (context.Context, integration.CoreumChain) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 
@@ -154,8 +150,8 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		defer queryCtxCancel()
 		// ********** Gaia **********
 
-		gaiaGRPClient := dialGRPCClient(gaiaGRPCAddress)
-		gaiaSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
+		gaiaGRPClient := integration.DialGRPCClient(gaiaGRPCAddress)
+		gaiaSettings := integration.QueryChainSettings(queryCtx, gaiaGRPClient)
 		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		gaiaSettings.GasAdjustment = 1.5
 		gaiaSettings.CoinType = sdk.CoinType // gaia coin type
@@ -166,7 +162,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 			panic(errors.WithStack(err))
 		}
 
-		chains.Gaia = NewChain(
+		chains.Gaia = integration.NewChain(
 			gaiaGRPClient,
 			gaiaRPClient,
 			gaiaSettings,
@@ -174,8 +170,8 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 
 		// ********** Osmosis **********
 
-		osmosisGRPClient := dialGRPCClient(osmosisGRPCAddress)
-		osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
+		osmosisGRPClient := integration.DialGRPCClient(osmosisGRPCAddress)
+		osmosisChainSettings := integration.QueryChainSettings(queryCtx, osmosisGRPClient)
 		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		osmosisChainSettings.GasAdjustment = 1.5
 		osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
@@ -186,7 +182,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 			panic(errors.WithStack(err))
 		}
 
-		chains.Osmosis = NewChain(
+		chains.Osmosis = integration.NewChain(
 			osmosisGRPClient,
 			osmosisRPClient,
 			osmosisChainSettings,
@@ -196,77 +192,9 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 	return testCtx, chains
 }
 
-func queryCommonSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainSettings {
-	clientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
-		WithGRPCClient(grpcClient)
-
-	infoBeforeRes, err := tmservice.NewServiceClient(clientCtx).GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
-	if err != nil {
-		panic(fmt.Sprintf("can't get node info, err: %s", err))
-	}
-
-	chainID := infoBeforeRes.DefaultNodeInfo.Network
-
-	paramsRes, err := stakingtypes.NewQueryClient(clientCtx).Params(ctx, &stakingtypes.QueryParamsRequest{})
-	if err != nil {
-		panic(errors.Errorf("can't get staking params, err: %s", err))
-	}
-
-	denom := paramsRes.Params.BondDenom
-
-	accountsRes, err := authtypes.NewQueryClient(clientCtx).Accounts(ctx, &authtypes.QueryAccountsRequest{})
-	if err != nil {
-		panic(fmt.Sprintf("can't get account params, err: %s", err))
-	}
-
-	var addressPrefix string
-	for _, account := range accountsRes.Accounts {
-		if account != nil && account.TypeUrl == fmt.Sprintf("/%s", proto.MessageName(&authtypes.BaseAccount{})) {
-			var acc authtypes.BaseAccount
-			if err := proto.Unmarshal(account.Value, &acc); err != nil {
-				panic(fmt.Sprintf("can't unpack account, err: %s", err))
-			}
-
-			addressPrefix, _, err = bech32.DecodeAndConvert(acc.Address)
-			if err != nil {
-				panic(fmt.Sprintf("can't extract address prefix address:%s, err: %s", acc.Address, err))
-			}
-			break
-		}
-	}
-	if addressPrefix == "" {
-		panic("address prefix is empty")
-	}
-
-	return ChainSettings{
-		ChainID:       chainID,
-		Denom:         denom,
-		AddressPrefix: addressPrefix,
-	}
-}
-
 func getTestContextConfig() client.ContextConfig {
 	cfg := client.DefaultContextConfig()
 	cfg.TimeoutConfig.TxStatusPollInterval = 100 * time.Millisecond
 
 	return cfg
-}
-
-func dialGRPCClient(url string) *grpc.ClientConn {
-	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
-	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
-	if !ok {
-		panic("failed to cast codec to codec.GRPCCodecProvider)")
-	}
-
-	grpClient, err := grpc.Dial(
-		url,
-		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	return grpClient
 }

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -13,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -26,6 +28,9 @@ const (
 	BurnRateFlag           = "burn-rate"
 	SendCommissionRateFlag = "send-commission-rate"
 	IBCEnabledFlag         = "ibc-enabled"
+	MintLimitFlag          = "mint-limit"
+	BurnLimitFlag          = "burn-limit"
+	ExpirationFlag         = "expiration"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -48,6 +53,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxGloballyUnfreeze(),
 		CmdTxSetWhitelistedLimit(),
 		CmdTxUpgradeV1(),
+		CmdGrantAuthorization(),
 	)
 
 	return cmd
@@ -495,4 +501,94 @@ $ %s tx %s upgrade-v1 ABC-%s --%s=true --from [sender]
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+// CmdGrantAuthorization returns a CLI command handler for creating a MsgGrant transaction.
+func CmdGrantAuthorization() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "grant [grantee] [message_type=\"mint\"|\"burn\"] --from <granter> --burn-limit 10ucore --mint-limit 10ucore",
+		Short: "Grant authorization to an address",
+		Long: fmt.Sprintf(`Grant authorization to an address.
+Examples:
+$ %s tx grant <grantee_addr> mint --mint-limit 100ucore --expiration 1667979596
+
+$ %s tx grant <grantee_addr> burn --burn-limit 100ucore --expiration 1667979596
+`, version.AppName, version.AppName),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			grantee, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			var authorization authz.Authorization
+			switch args[1] {
+			case "mint":
+				limit, err := cmd.Flags().GetString(MintLimitFlag)
+				if err != nil {
+					return err
+				}
+
+				limitCoins, err := sdk.ParseCoinsNormalized(limit)
+				if err != nil {
+					return err
+				}
+
+				if !limitCoins.IsAllPositive() {
+					return fmt.Errorf("mint-limit should be greater than zero")
+				}
+				authorization = types.NewMintAuthorization(limitCoins)
+			case "burn":
+				limit, err := cmd.Flags().GetString(BurnLimitFlag)
+				if err != nil {
+					return err
+				}
+
+				limitCoins, err := sdk.ParseCoinsNormalized(limit)
+				if err != nil {
+					return err
+				}
+
+				if !limitCoins.IsAllPositive() {
+					return fmt.Errorf("burn-limit should be greater than zero")
+				}
+				authorization = types.NewBurnAuthorization(limitCoins)
+			default:
+				return errors.Errorf("invalid authorization types, %s", args[1])
+			}
+
+			expire, err := getExpireTime(cmd)
+			if err != nil {
+				return err
+			}
+
+			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, expire)
+			if err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), grantMsg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().Int64(ExpirationFlag, 0, "Expire time as Unix timestamp. Set zero (0) for no expiry.")
+	cmd.Flags().String(BurnLimitFlag, "", "The Amount that is allowed to be burnt.")
+	cmd.Flags().String(MintLimitFlag, "", "The Amount that is allowed to be minted.")
+	return cmd
+}
+
+func getExpireTime(cmd *cobra.Command) (*time.Time, error) {
+	exp, err := cmd.Flags().GetInt64(ExpirationFlag)
+	if err != nil {
+		return nil, err
+	}
+	if exp == 0 {
+		return nil, nil //nolint:nilnil //the intent of this function is to simplify return nil time.
+	}
+	e := time.Unix(exp, 0)
+	return &e, nil
 }

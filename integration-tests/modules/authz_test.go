@@ -16,6 +16,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
 // TestAuthzDirectTransferFails if grantee sends message directly, without using authz.
@@ -80,6 +81,15 @@ func TestAuthz(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
+	totalAmountToSend := sdkmath.NewInt(2_000)
+	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&authztypes.MsgGrant{},
+			&authztypes.MsgRevoke{},
+		},
+		Amount: totalAmountToSend,
+	})
+
 	// init the messages provisionally to use in the authztypes.MsgExec
 	msgBankSend := &banktypes.MsgSend{
 		FromAddress: granter.String(),
@@ -90,7 +100,7 @@ func TestAuthz(t *testing.T) {
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
 
 	totalAmountToSend := sdkmath.NewInt(2_000)
-	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
 			&authztypes.MsgRevoke{},
@@ -98,7 +108,7 @@ func TestAuthz(t *testing.T) {
 		Amount: totalAmountToSend,
 	})
 
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgBankSend,
 			&execMsg,
@@ -206,7 +216,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{grantMsg},
 		Amount:   sdkmath.NewInt(amountToSendFromMultisigAccount),
 	})
@@ -226,7 +236,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 		Amount:      coinsToSendToRecipient,
 	}
 	execMsg := authztypes.NewMsgExec(multisigAddress, []sdk.Msg{msgBankSend})
-	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -288,7 +298,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			grantMsg,
 		},
@@ -312,7 +322,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend})
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},

@@ -26,6 +26,7 @@ import (
 	moduleswasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/testutil/event"
+	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
@@ -49,7 +50,7 @@ func TestAssetFTIssue(t *testing.T) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
@@ -100,7 +101,7 @@ func TestAssetFTIssueInvalidFeatures(t *testing.T) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
@@ -177,7 +178,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
@@ -228,13 +229,13 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 
 	issuer1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer1, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer1, integration.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
 		Amount:   issueFee,
 	})
 
 	issuer2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer2, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer2, integration.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
 		Amount:   issueFee,
 	})
@@ -305,7 +306,7 @@ func TestBalanceQuery(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
@@ -427,7 +428,7 @@ func TestAssetFTMint(t *testing.T) {
 	randomAddress := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
@@ -437,7 +438,7 @@ func TestAssetFTMint(t *testing.T) {
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
 	})
 
-	chain.FundAccountWithOptions(ctx, t, randomAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgMint{},
 		},
@@ -560,7 +561,7 @@ func TestAssetFTBurn(t *testing.T) {
 	recipient := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
@@ -572,7 +573,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
 	})
 
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgBurn{},
 			&assetfttypes.MsgBurn{},
@@ -744,19 +745,19 @@ func TestAssetFTBurnRate(t *testing.T) {
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient2, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -858,7 +859,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 		},
 	}
 
-	chain.FundAccountWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			multiSendMsg,
 		},
@@ -891,19 +892,19 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient2, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -1005,7 +1006,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		},
 	}
 
-	chain.FundAccountWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			multiSendMsg,
 		},
@@ -1041,7 +1042,7 @@ func TestAssetFTFreeze(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	randomAddress := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
@@ -1053,7 +1054,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgMultiSend{},
@@ -1063,7 +1064,7 @@ func TestAssetFTFreeze(t *testing.T) {
 			&banktypes.MsgSend{},
 		},
 	})
-	chain.FundAccountWithOptions(ctx, t, randomAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgFreeze{},
 		},
@@ -1331,7 +1332,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
@@ -1385,7 +1386,7 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
@@ -1439,7 +1440,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgGloballyFreeze{},
@@ -1450,7 +1451,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgMultiSend{},
@@ -1605,7 +1606,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
@@ -1613,7 +1614,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -1690,7 +1691,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
@@ -1698,7 +1699,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -1779,14 +1780,14 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -1858,14 +1859,14 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -1940,7 +1941,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	issuer := chain.GenAccount()
 	nonIssuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
@@ -1957,12 +1958,12 @@ func TestAssetFTWhitelist(t *testing.T) {
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, nonIssuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, nonIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgSetWhitelistedLimit{},
 		},
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -2223,7 +2224,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
@@ -2277,7 +2278,7 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
@@ -2336,7 +2337,7 @@ func TestBareToken(t *testing.T) {
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgMint{},
@@ -2348,7 +2349,7 @@ func TestBareToken(t *testing.T) {
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgBurn{},
 		},
@@ -2483,7 +2484,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&authztypes.MsgGrant{},
@@ -2551,7 +2552,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgFreeze, msgWhitelist})
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -2580,6 +2581,662 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	requireT.EqualValues("921", whitelistingRes.GetBalance().Amount.String())
 }
 
+// TestAuthzMintAuthorizationLimit tests the authz MintLimitAuthorization msg works as expected.
+func TestAuthzMintAuthorizationLimit(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&authztypes.MsgGrant{},
+			&authztypes.MsgGrant{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// mint and grant authorization
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        granter.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(0),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+		},
+	}
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, granter)
+	grantMintMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		assetfttypes.NewMintAuthorization(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1000)))),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMintMsg, issueMsg)),
+		grantMintMsg, issueMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+
+	// try to mint using the authz
+	msgMint := &assetfttypes.MsgMint{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(501)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	supply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
+	requireT.NoError(err)
+	requireT.EqualValues("501", supply.Amount.Amount.String())
+
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+	updatedGrant := assetfttypes.MintAuthorization{}
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
+	requireT.EqualValues("499", updatedGrant.MintLimit.AmountOf(denom).String())
+
+	// try to mint exceeding limit
+	msgMint = &assetfttypes.MsgMint{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(500)),
+	}
+
+	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// minting the entire limit should remove the grant
+	msgMint = &assetfttypes.MsgMint{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(499)),
+	}
+
+	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(0, len(gransRes.Grants))
+}
+
+// TestAuthzMintAuthorizationLimit_GrantFromNonIssuer tests the authz MintLimitAuthorization msg works as expected if
+// the granter is non-issuer address.
+func TestAuthzMintAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&authztypes.MsgGrant{},
+			&authztypes.MsgGrant{},
+		},
+	})
+
+	// issue and grant authorization
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(0),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+		},
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+	grantMintMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		assetfttypes.NewMintAuthorization(sdk.NewCoins(
+			sdk.NewCoin(denom, sdk.NewInt(1000)),
+		)),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMintMsg)),
+		grantMintMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+
+	// try to mint using the authz
+	msgMint := &assetfttypes.MsgMint{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(501)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
+// TestAuthzMintAuthorizationLimit_MultipleCoins tests the authz MintLimitAuthorization msg works as expected
+// if there are multiple coins in the grant.
+func TestAuthzMintAuthorizationLimit_MultipleCoins(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	grantee := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+			&authztypes.MsgGrant{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdk.NewInt(2)),
+	})
+
+	// issue and grant authorization
+	issueMsg1 := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "symbolminting",
+		Subunit:       "subunitminting",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(0),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+		},
+	}
+
+	issueMsg2 := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(0),
+		Features:      []assetfttypes.Feature{},
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg1, issueMsg2)),
+		issueMsg1, issueMsg2,
+	)
+	requireT.NoError(err)
+
+	denom1 := assetfttypes.BuildDenom(issueMsg1.Subunit, issuer)
+	denom2 := assetfttypes.BuildDenom(issueMsg2.Subunit, issuer)
+	grantMintMsg, err := authztypes.NewMsgGrant(
+		issuer,
+		grantee,
+		assetfttypes.NewMintAuthorization(sdk.NewCoins(
+			sdk.NewCoin(denom1, sdk.NewInt(1000)),
+			sdk.NewCoin(denom2, sdk.NewInt(1000)),
+		)),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMintMsg)),
+		grantMintMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: issuer.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+
+	// try to mint using the authz
+	msgMint := &assetfttypes.MsgMint{
+		Sender: issuer.String(),
+		Coin:   sdk.NewCoin(denom1, sdkmath.NewInt(501)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgMint})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: issuer.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+	updatedGrant := assetfttypes.BurnAuthorization{}
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
+	requireT.EqualValues("499", updatedGrant.BurnLimit.AmountOf(denom1).String())
+	requireT.EqualValues("1000", updatedGrant.BurnLimit.AmountOf(denom2).String())
+}
+
+// TestAuthzBurnAuthorizationLimit tests the authz BurnLimitAuthorization msg works as expected.
+func TestAuthzBurnAuthorizationLimit(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&authztypes.MsgGrant{},
+			&authztypes.MsgGrant{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// grant authorization
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        granter.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(10000),
+		Features:      []assetfttypes.Feature{},
+	}
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, granter)
+	grantBurnMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		assetfttypes.NewBurnAuthorization(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1000)))),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantBurnMsg, issueMsg)),
+		grantBurnMsg, issueMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+
+	// try to burn using the authz
+	msgBurn := &assetfttypes.MsgBurn{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(501)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBurn})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	supply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
+	requireT.NoError(err)
+	requireT.EqualValues("9499", supply.Amount.Amount.String())
+
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+	updatedGrant := assetfttypes.BurnAuthorization{}
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
+	requireT.EqualValues("499", updatedGrant.BurnLimit.AmountOf(denom).String())
+
+	// try to burn exceeding limit
+	msgBurn = &assetfttypes.MsgBurn{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(500)),
+	}
+
+	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgBurn})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// burning the entire limit should remove the grant
+	msgBurn = &assetfttypes.MsgBurn{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(499)),
+	}
+
+	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgBurn})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(0, len(gransRes.Grants))
+
+	supply, err = bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
+	requireT.NoError(err)
+	requireT.EqualValues("9000", supply.Amount.Amount.String())
+}
+
+// TestAuthzBurnAuthorizationLimit_GrantFromNonIssuer tests the authz BurnLimitAuthorization msg works as expected if
+// the granter is non-issuer address.
+func TestAuthzBurnAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdk.NewInt(2)),
+	})
+
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&authztypes.MsgGrant{},
+			&authztypes.MsgGrant{},
+		},
+	})
+
+	// issue and grant authorization
+	issueWithBurningFeatureMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "symbolburning",
+		Subunit:       "subunitburning",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(10000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_burning,
+		},
+	}
+
+	issueWithoutBurningFeatureMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(10000),
+		Features:      []assetfttypes.Feature{},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueWithBurningFeatureMsg, issueWithoutBurningFeatureMsg)),
+		issueWithBurningFeatureMsg, issueWithoutBurningFeatureMsg,
+	)
+	requireT.NoError(err)
+
+	denomBurning := assetfttypes.BuildDenom(issueWithBurningFeatureMsg.Subunit, issuer)
+	denomNoBurning := assetfttypes.BuildDenom(issueWithoutBurningFeatureMsg.Subunit, issuer)
+
+	// send coins to granter
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   granter.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denomBurning, sdkmath.NewInt(1000)),
+			sdk.NewCoin(denomNoBurning, sdkmath.NewInt(1000)),
+		),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// grant authz to burn
+	grantMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		assetfttypes.NewBurnAuthorization(sdk.NewCoins(
+			sdk.NewCoin(denomBurning, sdk.NewInt(1000)),
+			sdk.NewCoin(denomNoBurning, sdk.NewInt(1000)),
+		)),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+
+	// try to burn using the authz when burning is enabled
+	msgBurn := &assetfttypes.MsgBurn{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denomBurning, sdkmath.NewInt(501)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBurn})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	// try to burn using the authz when burning is not enabled
+	msgBurn = &assetfttypes.MsgBurn{
+		Sender: granter.String(),
+		Coin:   sdk.NewCoin(denomNoBurning, sdkmath.NewInt(501)),
+	}
+
+	execMsg = authztypes.NewMsgExec(grantee, []sdk.Msg{msgBurn})
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+}
+
 // TestAssetFTBurnRate_OnMinting verifies both burn rate and send commission rate are not applied on received minted tokens.
 func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	assertT := assert.New(t)
@@ -2590,7 +3247,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgMint{},
@@ -2655,7 +3312,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -2663,7 +3320,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgBurn{},
 		},
@@ -2753,7 +3410,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -2762,7 +3419,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
-	chain.FundAccountWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgBurn{},
 			&assetfttypes.MsgBurn{},
@@ -2885,7 +3542,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			recipient1 := chain.GenAccount()
 			recipient2 := chain.GenAccount()
 
-			chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+			chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 				Messages: []sdk.Msg{
 					&banktypes.MsgSend{},
 					&assetfttypes.MsgIssue{},
@@ -2894,7 +3551,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 			})
 
-			chain.FundAccountWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+			chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
 				Messages: []sdk.Msg{
 					&banktypes.MsgSend{},
 					&banktypes.MsgSend{},
@@ -3016,7 +3673,7 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgBurn{},
@@ -3096,7 +3753,7 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	chain.FundAccountWithOptions(ctx, t, multisigGranterAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigGranterAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			grantMsg,
 		},
@@ -3126,7 +3783,7 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 
 	execMsg := authztypes.NewMsgExec(multisigGranteeAddress, []sdk.Msg{issueMsg})
 
-	chain.FundAccountWithOptions(ctx, t, multisigGranteeAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigGranteeAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -3161,8 +3818,8 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	clientCtx := chain.ClientContext
@@ -3215,7 +3872,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 		txf,
 		issuer,
 		moduleswasm.BankSendWASM,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
 			Amount:     sdk.NewInt64Coin(denom, 100),
@@ -3331,7 +3988,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		integrationtests.InstantiateConfig{
+		integration.InstantiateConfig{
 			CodeID:     contractCodeID,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
