@@ -883,12 +883,12 @@ func TestBankSendEstimation(t *testing.T) {
 		sendMsg.Amount = sendMsg.Amount.Add(sdk.NewCoin(denom, initialAmount))
 	}
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: deterministicMsgs,
 		Amount:   chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(nTokens).AddRaw(1_000_000_000),
 	})
 
-	chain.FundAccountWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
 		Amount: sdk.NewIntFromUint64(1_000_000_000),
 	})
 

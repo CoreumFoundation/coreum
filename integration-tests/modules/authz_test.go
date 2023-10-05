@@ -41,7 +41,7 @@ func TestAuthzDirectTransferFails(t *testing.T) {
 		Amount: sdk.NewCoins(chain.NewCoin(amountToSend)),
 	}
 
-	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			// Grantee signs the transaction, but granter is the sender, so fees are taken from the granter's account.
 			// In ante handler, fees are deducted before verifying signature, so funding granter to cover the fee is important,
@@ -52,7 +52,7 @@ func TestAuthzDirectTransferFails(t *testing.T) {
 	})
 
 	// this is done because account must exist to send transaction
-	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Amount: sdk.NewIntFromUint64(1),
 	})
 
@@ -82,7 +82,7 @@ func TestAuthz(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	totalAmountToSend := sdkmath.NewInt(2_000)
-	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
 			&authztypes.MsgRevoke{},
@@ -99,7 +99,6 @@ func TestAuthz(t *testing.T) {
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
 
-	totalAmountToSend := sdkmath.NewInt(2_000)
 	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
