@@ -799,19 +799,33 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
 	// Balance queries the number of NFTs of a given class owned by the owner, same as balanceOf in ERC721
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Balance(ctx context.Context, in *QueryBalanceRequest, opts ...grpc.CallOption) (*QueryBalanceResponse, error)
 	// Owner queries the owner of the NFT based on its class and id, same as ownerOf in ERC721
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Owner(ctx context.Context, in *QueryOwnerRequest, opts ...grpc.CallOption) (*QueryOwnerResponse, error)
 	// Supply queries the number of NFTs from the given class, same as totalSupply of ERC721.
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Supply(ctx context.Context, in *QuerySupplyRequest, opts ...grpc.CallOption) (*QuerySupplyResponse, error)
 	// NFTs queries all NFTs of a given class or owner,choose at least one of the two, similar to tokenByIndex in
 	// ERC721Enumerable
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	NFTs(ctx context.Context, in *QueryNFTsRequest, opts ...grpc.CallOption) (*QueryNFTsResponse, error)
 	// NFT queries an NFT based on its class and id.
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	NFT(ctx context.Context, in *QueryNFTRequest, opts ...grpc.CallOption) (*QueryNFTResponse, error)
 	// Class queries an NFT class based on its id
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Class(ctx context.Context, in *QueryClassRequest, opts ...grpc.CallOption) (*QueryClassResponse, error)
 	// Classes queries all NFT classes
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Classes(ctx context.Context, in *QueryClassesRequest, opts ...grpc.CallOption) (*QueryClassesResponse, error)
 }
 
@@ -889,19 +903,33 @@ func (c *queryClient) Classes(ctx context.Context, in *QueryClassesRequest, opts
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Balance queries the number of NFTs of a given class owned by the owner, same as balanceOf in ERC721
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Balance(context.Context, *QueryBalanceRequest) (*QueryBalanceResponse, error)
 	// Owner queries the owner of the NFT based on its class and id, same as ownerOf in ERC721
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Owner(context.Context, *QueryOwnerRequest) (*QueryOwnerResponse, error)
 	// Supply queries the number of NFTs from the given class, same as totalSupply of ERC721.
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Supply(context.Context, *QuerySupplyRequest) (*QuerySupplyResponse, error)
 	// NFTs queries all NFTs of a given class or owner,choose at least one of the two, similar to tokenByIndex in
 	// ERC721Enumerable
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	NFTs(context.Context, *QueryNFTsRequest) (*QueryNFTsResponse, error)
 	// NFT queries an NFT based on its class and id.
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	NFT(context.Context, *QueryNFTRequest) (*QueryNFTResponse, error)
 	// Class queries an NFT class based on its id
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Class(context.Context, *QueryClassRequest) (*QueryClassResponse, error)
 	// Classes queries all NFT classes
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Classes(context.Context, *QueryClassesRequest) (*QueryClassesResponse, error)
 }
 

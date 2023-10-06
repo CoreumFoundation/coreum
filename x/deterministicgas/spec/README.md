@@ -102,6 +102,7 @@ TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/cosmos.gov.v1beta1.MsgDeposit`                                       | 52000                          |
 | `/cosmos.gov.v1beta1.MsgVote`                                          | 7000                           |
 | `/cosmos.gov.v1beta1.MsgVoteWeighted`                                  | 9000                           |
+| `/cosmos.nft.v1beta1.MsgSend`                                          | 16000                          |
 | `/cosmos.slashing.v1beta1.MsgUnjail`                                   | 25000                          |
 | `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           | 142000                         |
 | `/cosmos.staking.v1beta1.MsgCreateValidator`                           | 76000                          |

@@ -2,9 +2,8 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // NFTKeeper defines the expected NFT interface.

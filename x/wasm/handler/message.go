@@ -6,11 +6,11 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/pkg/errors"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	nfttypes "github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // assetFTMsg represents asset ft module messages integrated with the wasm handler.

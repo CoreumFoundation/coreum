@@ -2,9 +2,9 @@ package v1
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // AssetNFTKeeper represents the assetnft keeper.

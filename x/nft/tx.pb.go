@@ -180,6 +180,8 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	// Send defines a method to send a nft from one account to another account.
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Send(ctx context.Context, in *MsgSend, opts ...grpc.CallOption) (*MsgSendResponse, error)
 }
 
@@ -203,6 +205,8 @@ func (c *msgClient) Send(ctx context.Context, in *MsgSend, opts ...grpc.CallOpti
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// Send defines a method to send a nft from one account to another account.
+	//
+	// Deprecated: use cosmos-sdk/x/nft package instead
 	Send(context.Context, *MsgSend) (*MsgSendResponse, error)
 }
 

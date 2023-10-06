@@ -131,8 +131,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/v3/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
-	nftkeeper "github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
+	cnftkeeper "github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
+	cnftmodule "github.com/CoreumFoundation/coreum/v3/x/nft/module"
 	wasmcustomhandler "github.com/CoreumFoundation/coreum/v3/x/wasm/handler"
 	"github.com/CoreumFoundation/coreum/v3/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v3/x/wbank/keeper"
@@ -141,6 +141,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/v3/x/wstaking"
+	"github.com/cosmos/cosmos-sdk/x/nft"
+	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 )
 
 const (
@@ -193,6 +195,7 @@ var (
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
 		wnft.AppModuleBasic{},
+		cnftmodule.AppModuleBasic{},
 		assetft.AppModuleBasic{},
 		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
@@ -318,7 +321,7 @@ func New(
 		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey, stakingtypes.StoreKey, crisistypes.StoreKey, minttypes.StoreKey,
 		distrtypes.StoreKey, slashingtypes.StoreKey, govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
 		feegrant.StoreKey, evidencetypes.StoreKey, capabilitytypes.StoreKey, consensusparamtypes.StoreKey, wasmtypes.StoreKey, feemodeltypes.StoreKey,
-		assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey,
+		assetfttypes.StoreKey, assetnfttypes.StoreKey, cnftkeeper.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		delaytypes.StoreKey, customparamstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
@@ -491,7 +494,7 @@ func New(
 	app.IBCKeeper = ibckeeper.NewKeeper(appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName),
 		app.StakingKeeper, app.UpgradeKeeper, app.ScopedIBCKeeper)
 
-	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
+	nftKeeper := nftkeeper.NewKeeper(keys[cnftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
 	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
 		appCodec,
 		keys[assetnfttypes.StoreKey],
@@ -1048,6 +1051,15 @@ func (app *App) RegisterAPIRoutes(apiSvr *serverapi.Server, _ serverconfig.APICo
 
 	// Register grpc-gateway routes for all modules.
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+
+	// Regsiter cnft routes.
+	// We register the tx and query handlers here, since we don't want to introduce a new module to the
+	// list of app.Modules where we have to handle genesis registration and migraitons. we only need to
+	// keep these deprecated handlers around to give time to users to migrate.
+	cnftKeeper := cnftkeeper.NewKeeper(app.NFTKeeper)
+	cnftModule := cnftmodule.NewAppModule(app.AppCodec(), cnftKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
+	cnftModule.RegisterServices(app.configurator)
+	cnftModule.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register app's OpenAPI routes.
 	apiSvr.Router.Handle("/static/openapi.json", http.FileServer(http.FS(docs.Docs)))

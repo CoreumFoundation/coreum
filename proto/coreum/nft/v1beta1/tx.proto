@@ -8,6 +8,8 @@ import "cosmos/msg/v1/msg.proto";
 // Msg defines the nft Msg service.
 service Msg {
   // Send defines a method to send a nft from one account to another account.
+  //
+  // Deprecated: use cosmos-sdk/x/nft package instead
   rpc Send(MsgSend) returns (MsgSendResponse);
 }
 // MsgSend represents a message to send a nft from one account to another account.
