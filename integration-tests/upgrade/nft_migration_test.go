@@ -105,4 +105,39 @@ func (nut *nftMigrationTest) After(t *testing.T) {
 	nfts, err := nftClient.NFTs(ctx, &cosmosnft.QueryNFTsRequest{Owner: nut.issuer.String()})
 	requireT.NoError(err)
 	requireT.ElementsMatch(nut.nfts, cnftkeeper.ConvertFromCosmosNFTList(nfts.Nfts))
+
+	// try sending the nft minted before the upgrade
+	recipient := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, nut.issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&cosmosnft.MsgSend{},
+			&cosmosnft.MsgSend{},
+		},
+	})
+
+	sendMsg := []sdk.Msg{
+		&cosmosnft.MsgSend{
+			ClassId:  nfts.Nfts[0].ClassId,
+			Id:       nfts.Nfts[0].Id,
+			Sender:   nut.issuer.String(),
+			Receiver: recipient.String(),
+		},
+		&cosmosnft.MsgSend{
+			ClassId:  nfts.Nfts[1].ClassId,
+			Id:       nfts.Nfts[1].Id,
+			Sender:   nut.issuer.String(),
+			Receiver: recipient.String(),
+		},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(nut.issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg...)),
+		sendMsg...,
+	)
+	requireT.NoError(err)
+
+	nfts, err = nftClient.NFTs(ctx, &cosmosnft.QueryNFTsRequest{Owner: recipient.String()})
+	requireT.NoError(err)
+	requireT.Len(nfts.Nfts, 2)
 }
