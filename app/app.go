@@ -321,7 +321,7 @@ func New(
 		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey, stakingtypes.StoreKey, crisistypes.StoreKey, minttypes.StoreKey,
 		distrtypes.StoreKey, slashingtypes.StoreKey, govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
 		feegrant.StoreKey, evidencetypes.StoreKey, capabilitytypes.StoreKey, consensusparamtypes.StoreKey, wasmtypes.StoreKey, feemodeltypes.StoreKey,
-		assetfttypes.StoreKey, assetnfttypes.StoreKey, cnftkeeper.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey,
+		assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		delaytypes.StoreKey, customparamstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
@@ -494,7 +494,7 @@ func New(
 	app.IBCKeeper = ibckeeper.NewKeeper(appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName),
 		app.StakingKeeper, app.UpgradeKeeper, app.ScopedIBCKeeper)
 
-	nftKeeper := nftkeeper.NewKeeper(keys[cnftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
+	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
 	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
 		appCodec,
 		keys[assetnfttypes.StoreKey],
