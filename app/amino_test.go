@@ -14,6 +14,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcinterchainaccountstypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
@@ -37,6 +38,9 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		// bank
 		sdk.MsgTypeURL(&banktypes.MsgUpdateParams{}):   {},
 		sdk.MsgTypeURL(&banktypes.MsgSetSendEnabled{}): {},
+
+		// nft
+		sdk.MsgTypeURL(&nft.MsgSend{}): {},
 
 		// gov
 		sdk.MsgTypeURL(&govtypesv1.MsgExecLegacyContent{}): {},

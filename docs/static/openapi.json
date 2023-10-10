@@ -910,6 +910,7 @@
     },
     "/coreum/nft/v1beta1/balance/{owner}/{class_id}": {
       "get": {
+        "description": "Deprecated: use cosmos-sdk/x/nft package instead",
         "operationId": "GithubComCoreumFoundationCoreumV3XNftBalance",
         "parameters": [
           {
@@ -947,6 +948,7 @@
     },
     "/coreum/nft/v1beta1/classes": {
       "get": {
+        "description": "Deprecated: use cosmos-sdk/x/nft package instead",
         "operationId": "GithubComCoreumFoundationCoreumV3XNftClasses",
         "parameters": [
           {
@@ -1010,6 +1012,7 @@
     },
     "/coreum/nft/v1beta1/classes/{class_id}": {
       "get": {
+        "description": "Deprecated: use cosmos-sdk/x/nft package instead",
         "operationId": "GithubComCoreumFoundationCoreumV3XNftClass",
         "parameters": [
           {
@@ -1041,6 +1044,7 @@
     },
     "/coreum/nft/v1beta1/nfts": {
       "get": {
+        "description": "Deprecated: use cosmos-sdk/x/nft package instead",
         "operationId": "GithubComCoreumFoundationCoreumV3XNftNFTs",
         "parameters": [
           {
@@ -1116,6 +1120,7 @@
     },
     "/coreum/nft/v1beta1/nfts/{class_id}/{id}": {
       "get": {
+        "description": "Deprecated: use cosmos-sdk/x/nft package instead",
         "operationId": "GithubComCoreumFoundationCoreumV3XNftNFT",
         "parameters": [
           {
@@ -1153,6 +1158,7 @@
     },
     "/coreum/nft/v1beta1/owner/{class_id}/{id}": {
       "get": {
+        "description": "Deprecated: use cosmos-sdk/x/nft package instead",
         "operationId": "GithubComCoreumFoundationCoreumV3XNftOwner",
         "parameters": [
           {
@@ -1190,6 +1196,7 @@
     },
     "/coreum/nft/v1beta1/supply/{class_id}": {
       "get": {
+        "description": "Deprecated: use cosmos-sdk/x/nft package instead",
         "operationId": "GithubComCoreumFoundationCoreumV3XNftSupply",
         "parameters": [
           {

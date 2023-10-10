@@ -6,9 +6,9 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/nft"
+	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
-	nftkeeper "github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
 	"github.com/CoreumFoundation/coreum/v3/x/wnft/types"
 )
 

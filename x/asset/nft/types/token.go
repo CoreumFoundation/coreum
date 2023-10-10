@@ -10,8 +10,6 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/samber/lo"
-
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 var (
@@ -110,10 +108,6 @@ func ValidateClassFeatures(features []ClassFeature) error {
 func ValidateTokenID(id string) error {
 	if !nftIDRegex.MatchString(id) {
 		return sdkerrors.Wrapf(ErrInvalidID, "id must match regex format '%s'", nftIDRegexStr)
-	}
-
-	if err := nft.ValidateNFTID(id); err != nil {
-		return sdkerrors.Wrapf(ErrInvalidID, err.Error())
 	}
 
 	return nil

@@ -17,6 +17,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/event"
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // TestAssetNFTQueryParams queries parameters of asset/nft module.
@@ -1470,91 +1470,4 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.True(queryRes.Frozen)
-}
-
-// TestAssetNFTAminoMultisig tests that assetnft module works seamlessly with amino multisig.
-func TestAssetNFTAminoMultisig(t *testing.T) {
-	t.Parallel()
-
-	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	requireT := require.New(t)
-	recipient := chain.GenAccount()
-
-	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(2, 2)
-	requireT.NoError(err)
-	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
-	signer1KeyName := keyNamesSet[0]
-	signer2KeyName := keyNamesSet[1]
-
-	nftClient := nft.NewQueryClient(chain.ClientContext)
-
-	// fund the multisig account
-	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{},
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
-
-	// issue new NFT class
-	issueMsg := &assetnfttypes.MsgIssueClass{
-		Issuer: multisigAddress.String(),
-		Symbol: "NFTClassSymbol",
-		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_freezing,
-		},
-		RoyaltyRate: sdk.NewDec(0),
-	}
-
-	_, err = chain.SignAndBroadcastMultisigTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(multisigAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
-		issueMsg,
-		signer1KeyName, signer2KeyName)
-	requireT.NoError(err)
-
-	// mint new token in that class
-	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, multisigAddress)
-	nftID := "id-1"
-	mintMsg := &assetnfttypes.MsgMint{
-		Sender:  multisigAddress.String(),
-		ID:      nftID,
-		ClassID: classID,
-	}
-
-	_, err = chain.SignAndBroadcastMultisigTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(multisigAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
-		mintMsg,
-		signer1KeyName, signer2KeyName)
-	requireT.NoError(err)
-
-	sendMsg := &nft.MsgSend{
-		Sender:   multisigAddress.String(),
-		ClassId:  classID,
-		Id:       nftID,
-		Receiver: recipient.String(),
-	}
-
-	_, err = chain.SignAndBroadcastMultisigTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(multisigAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
-		sendMsg,
-		signer1KeyName, signer2KeyName)
-	requireT.NoError(err)
-
-	nftRes, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{
-		ClassId: classID,
-		Id:      nftID,
-	})
-	requireT.NoError(err)
-	requireT.Equal(&nft.NFT{
-		ClassId: classID,
-		Id:      nftID,
-	}, nftRes.Nft)
 }

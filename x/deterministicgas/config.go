@@ -16,6 +16,7 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -27,7 +28,7 @@ import (
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	nfttypes "github.com/CoreumFoundation/coreum/v3/x/nft"
+	cnfttypes "github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // These constants define gas for messages which have custom calculation logic.
@@ -125,6 +126,10 @@ func DefaultConfig() Config {
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25000),
+
+		// cnft
+		// Deprecated: this will be removed in the next release alongside the cnft types.
+		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(16000),
 
 		// slashing
 		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze

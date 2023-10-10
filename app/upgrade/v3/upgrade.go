@@ -19,6 +19,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -36,6 +37,7 @@ import (
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
+	cnftkeeper "github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
 )
 
 // References:
@@ -69,6 +71,12 @@ func New(
 				// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md#xconsensus
 				consensustypes.StoreKey,
 				customparamstypes.StoreKey,
+			},
+			Renamed: []storetypes.StoreRename{
+				{
+					OldKey: cnftkeeper.StoreKey,
+					NewKey: nftkeeper.StoreKey,
+				},
 			},
 		},
 		Upgrade: func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {

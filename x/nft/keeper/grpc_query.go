@@ -3,10 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
+	cosmosnft "github.com/cosmos/cosmos-sdk/x/nft"
 
 	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
@@ -15,187 +12,144 @@ var _ nft.QueryServer = Keeper{}
 
 // Balance return the number of NFTs of a given class owned by the owner, same as balanceOf in ERC721.
 func (k Keeper) Balance(goCtx context.Context, r *nft.QueryBalanceRequest) (*nft.QueryBalanceResponse, error) {
-	if r == nil {
-		return nil, cosmoserrors.ErrInvalidRequest.Wrap("empty request")
-	}
-
-	if err := nft.ValidateClassID(r.ClassId); err != nil {
-		return nil, err
-	}
-
-	owner, err := sdk.AccAddressFromBech32(r.Owner)
+	resp, err := k.wkeeper.Balance(goCtx, &cosmosnft.QueryBalanceRequest{
+		ClassId: r.ClassId,
+		Owner:   r.Owner,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	balance := k.GetBalance(ctx, r.ClassId, owner)
-	return &nft.QueryBalanceResponse{Amount: balance}, nil
+	return &nft.QueryBalanceResponse{
+		Amount: resp.Amount,
+	}, nil
 }
 
 // Owner return the owner of the NFT based on its class and id, same as ownerOf in ERC721.
 func (k Keeper) Owner(goCtx context.Context, r *nft.QueryOwnerRequest) (*nft.QueryOwnerResponse, error) {
-	if r == nil {
-		return nil, cosmoserrors.ErrInvalidRequest.Wrap("empty request")
-	}
-
-	if err := nft.ValidateClassID(r.ClassId); err != nil {
+	resp, err := k.wkeeper.Owner(goCtx, &cosmosnft.QueryOwnerRequest{
+		ClassId: r.ClassId,
+		Id:      r.Id,
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	if err := nft.ValidateNFTID(r.Id); err != nil {
-		return nil, err
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	owner := k.GetOwner(ctx, r.ClassId, r.Id)
-	return &nft.QueryOwnerResponse{Owner: owner.String()}, nil
+	return &nft.QueryOwnerResponse{
+		Owner: resp.Owner,
+	}, nil
 }
 
 // Supply return the number of NFTs from the given class, same as totalSupply of ERC721.
 func (k Keeper) Supply(goCtx context.Context, r *nft.QuerySupplyRequest) (*nft.QuerySupplyResponse, error) {
-	if r == nil {
-		return nil, cosmoserrors.ErrInvalidRequest.Wrap("empty request")
-	}
-
-	if err := nft.ValidateClassID(r.ClassId); err != nil {
+	resp, err := k.wkeeper.Supply(goCtx, &cosmosnft.QuerySupplyRequest{
+		ClassId: r.ClassId,
+	})
+	if err != nil {
 		return nil, err
 	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	supply := k.GetTotalSupply(ctx, r.ClassId)
-	return &nft.QuerySupplyResponse{Amount: supply}, nil
+	return &nft.QuerySupplyResponse{
+		Amount: resp.Amount,
+	}, nil
 }
 
 // NFTs queries all NFTs of a given class or owner (at least one must be provided), similar to tokenByIndex in ERC721Enumerable.
 func (k Keeper) NFTs(goCtx context.Context, r *nft.QueryNFTsRequest) (*nft.QueryNFTsResponse, error) {
-	if r == nil {
-		return nil, cosmoserrors.ErrInvalidRequest.Wrap("empty request")
-	}
-
-	var err error
-	var owner sdk.AccAddress
-	if len(r.ClassId) > 0 {
-		if err := nft.ValidateClassID(r.ClassId); err != nil {
-			return nil, err
-		}
-	}
-
-	if len(r.Owner) > 0 {
-		owner, err = sdk.AccAddressFromBech32(r.Owner)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var nfts []*nft.NFT
-	var pageRes *query.PageResponse
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	switch {
-	case len(r.ClassId) > 0 && len(r.Owner) > 0:
-		if pageRes, err = query.Paginate(k.getClassStoreByOwner(ctx, owner, r.ClassId), r.Pagination, func(key, _ []byte) error {
-			nft, has := k.GetNFT(ctx, r.ClassId, string(key))
-			if has {
-				nfts = append(nfts, &nft)
-			}
-			return nil
-		}); err != nil {
-			return nil, err
-		}
-	case len(r.ClassId) > 0 && len(r.Owner) == 0:
-		nftStore := k.getNFTStore(ctx, r.ClassId)
-		if pageRes, err = query.Paginate(nftStore, r.Pagination, func(_, value []byte) error {
-			var nft nft.NFT
-			if err := k.cdc.Unmarshal(value, &nft); err != nil {
-				return err
-			}
-			nfts = append(nfts, &nft)
-			return nil
-		}); err != nil {
-			return nil, err
-		}
-	case len(r.ClassId) == 0 && len(r.Owner) > 0:
-		if pageRes, err = query.Paginate(k.prefixStoreNftOfClassByOwner(ctx, owner), r.Pagination, func(key, value []byte) error {
-			classID, nftID := parseNftOfClassByOwnerStoreKey(key)
-			if n, has := k.GetNFT(ctx, classID, nftID); has {
-				nfts = append(nfts, &n)
-			}
-			return nil
-		}); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, cosmoserrors.ErrInvalidRequest.Wrap("must provide at least one of classID or owner")
+	resp, err := k.wkeeper.NFTs(goCtx, &cosmosnft.QueryNFTsRequest{
+		ClassId:    r.ClassId,
+		Owner:      r.Owner,
+		Pagination: r.Pagination,
+	})
+	if err != nil {
+		return nil, err
 	}
 	return &nft.QueryNFTsResponse{
-		Nfts:       nfts,
-		Pagination: pageRes,
+		Nfts:       ConvertFromCosmosNFTList(resp.Nfts),
+		Pagination: resp.Pagination,
 	}, nil
 }
 
 // NFT return an NFT based on its class and id.
 func (k Keeper) NFT(goCtx context.Context, r *nft.QueryNFTRequest) (*nft.QueryNFTResponse, error) {
-	if r == nil {
-		return nil, cosmoserrors.ErrInvalidRequest.Wrap("empty request")
-	}
-
-	if err := nft.ValidateClassID(r.ClassId); err != nil {
+	resp, err := k.wkeeper.NFT(goCtx, &cosmosnft.QueryNFTRequest{
+		ClassId: r.ClassId,
+		Id:      r.Id,
+	})
+	if err != nil {
 		return nil, err
 	}
-	if err := nft.ValidateNFTID(r.Id); err != nil {
-		return nil, err
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	n, has := k.GetNFT(ctx, r.ClassId, r.Id)
-	if !has {
-		return nil, nft.ErrNFTNotExists.Wrapf("not found nft: class: %s, id: %s", r.ClassId, r.Id)
-	}
-	return &nft.QueryNFTResponse{Nft: &n}, nil
+	return &nft.QueryNFTResponse{
+		Nft: ConvertFromCosmosNFT(resp.Nft),
+	}, nil
 }
 
 // Class return an NFT class based on its id.
 func (k Keeper) Class(goCtx context.Context, r *nft.QueryClassRequest) (*nft.QueryClassResponse, error) {
-	if r == nil {
-		return nil, cosmoserrors.ErrInvalidRequest.Wrap("empty request")
-	}
-
-	if err := nft.ValidateClassID(r.ClassId); err != nil {
+	resp, err := k.wkeeper.Class(goCtx, &cosmosnft.QueryClassRequest{
+		ClassId: r.ClassId,
+	})
+	if err != nil {
 		return nil, err
 	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	class, has := k.GetClass(ctx, r.ClassId)
-	if !has {
-		return nil, nft.ErrClassNotExists.Wrapf("not found class: %s", r.ClassId)
-	}
-	return &nft.QueryClassResponse{Class: &class}, nil
+	return &nft.QueryClassResponse{
+		Class: ConvertFromCosmosClass(resp.Class),
+	}, nil
 }
 
 // Classes return all NFT classes.
 func (k Keeper) Classes(goCtx context.Context, r *nft.QueryClassesRequest) (*nft.QueryClassesResponse, error) {
-	if r == nil {
-		return nil, cosmoserrors.ErrInvalidRequest.Wrap("empty request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	store := ctx.KVStore(k.storeKey)
-	classStore := prefix.NewStore(store, ClassKey)
-
-	var classes []*nft.Class
-	pageRes, err := query.Paginate(classStore, r.Pagination, func(_, value []byte) error {
-		var class nft.Class
-		if err := k.cdc.Unmarshal(value, &class); err != nil {
-			return err
-		}
-		classes = append(classes, &class)
-		return nil
+	resp, err := k.wkeeper.Classes(goCtx, &cosmosnft.QueryClassesRequest{
+		Pagination: r.Pagination,
 	})
 	if err != nil {
 		return nil, err
 	}
 	return &nft.QueryClassesResponse{
-		Classes:    classes,
-		Pagination: pageRes,
+		Classes:    ConvertFromCosmosClassList(resp.Classes),
+		Pagination: resp.Pagination,
 	}, nil
+}
+
+// ConvertFromCosmosNFT converts cosmos nft type to cnft type.
+func ConvertFromCosmosNFT(n *cosmosnft.NFT) *nft.NFT {
+	return &nft.NFT{
+		ClassId: n.ClassId,
+		Id:      n.Id,
+		Uri:     n.Uri,
+		UriHash: n.UriHash,
+		Data:    n.Data,
+	}
+}
+
+// ConvertFromCosmosNFTList converts cosmos nft type to cnft type.
+func ConvertFromCosmosNFTList(ns []*cosmosnft.NFT) []*nft.NFT {
+	var nfts []*nft.NFT
+	for _, n := range ns {
+		n := n
+		nfts = append(nfts, ConvertFromCosmosNFT(n))
+	}
+	return nfts
+}
+
+// ConvertFromCosmosClass converts cosmos nft type to cnft type.
+func ConvertFromCosmosClass(c *cosmosnft.Class) *nft.Class {
+	return &nft.Class{
+		Id:          c.Id,
+		Name:        c.Name,
+		Symbol:      c.Symbol,
+		Description: c.Description,
+		Uri:         c.Uri,
+		UriHash:     c.UriHash,
+		Data:        c.Data,
+	}
+}
+
+// ConvertFromCosmosClassList converts cosmos nft type to cnft type.
+func ConvertFromCosmosClassList(cs []*cosmosnft.Class) []*nft.Class {
+	var classes []*nft.Class
+	for _, cosmosClass := range cs {
+		cosmosClass := cosmosClass
+		classes = append(classes, ConvertFromCosmosClass(cosmosClass))
+	}
+	return classes
 }
