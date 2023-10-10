@@ -69,9 +69,10 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	mintSettings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "nft-id",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "nft-id",
 	}
 	err = assetNFTKeeper.Mint(ctx, mintSettings)
 	requireT.NoError(err)
@@ -109,9 +110,10 @@ func TestBurntNFTNotExistsInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	mintSettings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "nft-id",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "nft-id",
 	}
 	err = assetNFTKeeper.Mint(ctx, mintSettings)
 	requireT.NoError(err)

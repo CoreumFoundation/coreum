@@ -328,7 +328,7 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		Uri:     settings.URI,
 		UriHash: settings.URIHash,
 		Data:    settings.Data,
-	}, settings.Sender); err != nil {
+	}, settings.Recipient); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "can't save non-fungible token: %s", err)
 	}
 

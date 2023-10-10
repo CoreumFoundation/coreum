@@ -1096,6 +1096,7 @@ MsgIssue defines message to issue new fungible token.
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  |  |
 | `coin` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+| `recipient` | [string](#string) |  |  |
 
 
 
@@ -1876,6 +1877,7 @@ MsgMint defines message for the Mint method.
 | `uri` | [string](#string) |  |  |
 | `uri_hash` | [string](#string) |  |  |
 | `data` | [google.protobuf.Any](#google.protobuf.Any) |  |  |
+| `recipient` | [string](#string) |  |  |
 
 
 
