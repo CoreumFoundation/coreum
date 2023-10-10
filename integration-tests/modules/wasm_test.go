@@ -19,6 +19,7 @@ import (
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	nfttypes "github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // bank wasm models

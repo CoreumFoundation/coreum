@@ -10,12 +10,12 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
 	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/migrations/v1"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 func TestMigrateWasmCreatedNFTData(t *testing.T) {

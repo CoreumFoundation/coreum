@@ -2866,13 +2866,27 @@ Query defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Balance` | [QueryBalanceRequest](#coreum.nft.v1beta1.QueryBalanceRequest) | [QueryBalanceResponse](#coreum.nft.v1beta1.QueryBalanceResponse) | Balance queries the number of NFTs of a given class owned by the owner, same as balanceOf in ERC721 | GET|/coreum/nft/v1beta1/balance/{owner}/{class_id}|
-| `Owner` | [QueryOwnerRequest](#coreum.nft.v1beta1.QueryOwnerRequest) | [QueryOwnerResponse](#coreum.nft.v1beta1.QueryOwnerResponse) | Owner queries the owner of the NFT based on its class and id, same as ownerOf in ERC721 | GET|/coreum/nft/v1beta1/owner/{class_id}/{id}|
-| `Supply` | [QuerySupplyRequest](#coreum.nft.v1beta1.QuerySupplyRequest) | [QuerySupplyResponse](#coreum.nft.v1beta1.QuerySupplyResponse) | Supply queries the number of NFTs from the given class, same as totalSupply of ERC721. | GET|/coreum/nft/v1beta1/supply/{class_id}|
-| `NFTs` | [QueryNFTsRequest](#coreum.nft.v1beta1.QueryNFTsRequest) | [QueryNFTsResponse](#coreum.nft.v1beta1.QueryNFTsResponse) | NFTs queries all NFTs of a given class or owner,choose at least one of the two, similar to tokenByIndex in ERC721Enumerable | GET|/coreum/nft/v1beta1/nfts|
-| `NFT` | [QueryNFTRequest](#coreum.nft.v1beta1.QueryNFTRequest) | [QueryNFTResponse](#coreum.nft.v1beta1.QueryNFTResponse) | NFT queries an NFT based on its class and id. | GET|/coreum/nft/v1beta1/nfts/{class_id}/{id}|
-| `Class` | [QueryClassRequest](#coreum.nft.v1beta1.QueryClassRequest) | [QueryClassResponse](#coreum.nft.v1beta1.QueryClassResponse) | Class queries an NFT class based on its id | GET|/coreum/nft/v1beta1/classes/{class_id}|
-| `Classes` | [QueryClassesRequest](#coreum.nft.v1beta1.QueryClassesRequest) | [QueryClassesResponse](#coreum.nft.v1beta1.QueryClassesResponse) | Classes queries all NFT classes | GET|/coreum/nft/v1beta1/classes|
+| `Balance` | [QueryBalanceRequest](#coreum.nft.v1beta1.QueryBalanceRequest) | [QueryBalanceResponse](#coreum.nft.v1beta1.QueryBalanceResponse) | Balance queries the number of NFTs of a given class owned by the owner, same as balanceOf in ERC721
+
+Deprecated: use cosmos-sdk/x/nft package instead | GET|/coreum/nft/v1beta1/balance/{owner}/{class_id}|
+| `Owner` | [QueryOwnerRequest](#coreum.nft.v1beta1.QueryOwnerRequest) | [QueryOwnerResponse](#coreum.nft.v1beta1.QueryOwnerResponse) | Owner queries the owner of the NFT based on its class and id, same as ownerOf in ERC721
+
+Deprecated: use cosmos-sdk/x/nft package instead | GET|/coreum/nft/v1beta1/owner/{class_id}/{id}|
+| `Supply` | [QuerySupplyRequest](#coreum.nft.v1beta1.QuerySupplyRequest) | [QuerySupplyResponse](#coreum.nft.v1beta1.QuerySupplyResponse) | Supply queries the number of NFTs from the given class, same as totalSupply of ERC721.
+
+Deprecated: use cosmos-sdk/x/nft package instead | GET|/coreum/nft/v1beta1/supply/{class_id}|
+| `NFTs` | [QueryNFTsRequest](#coreum.nft.v1beta1.QueryNFTsRequest) | [QueryNFTsResponse](#coreum.nft.v1beta1.QueryNFTsResponse) | NFTs queries all NFTs of a given class or owner,choose at least one of the two, similar to tokenByIndex in ERC721Enumerable
+
+Deprecated: use cosmos-sdk/x/nft package instead | GET|/coreum/nft/v1beta1/nfts|
+| `NFT` | [QueryNFTRequest](#coreum.nft.v1beta1.QueryNFTRequest) | [QueryNFTResponse](#coreum.nft.v1beta1.QueryNFTResponse) | NFT queries an NFT based on its class and id.
+
+Deprecated: use cosmos-sdk/x/nft package instead | GET|/coreum/nft/v1beta1/nfts/{class_id}/{id}|
+| `Class` | [QueryClassRequest](#coreum.nft.v1beta1.QueryClassRequest) | [QueryClassResponse](#coreum.nft.v1beta1.QueryClassResponse) | Class queries an NFT class based on its id
+
+Deprecated: use cosmos-sdk/x/nft package instead | GET|/coreum/nft/v1beta1/classes/{class_id}|
+| `Classes` | [QueryClassesRequest](#coreum.nft.v1beta1.QueryClassesRequest) | [QueryClassesResponse](#coreum.nft.v1beta1.QueryClassesResponse) | Classes queries all NFT classes
+
+Deprecated: use cosmos-sdk/x/nft package instead | GET|/coreum/nft/v1beta1/classes|
 
  <!-- end services -->
 
@@ -2926,7 +2940,9 @@ Msg defines the nft Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Send` | [MsgSend](#coreum.nft.v1beta1.MsgSend) | [MsgSendResponse](#coreum.nft.v1beta1.MsgSendResponse) | Send defines a method to send a nft from one account to another account. | |
+| `Send` | [MsgSend](#coreum.nft.v1beta1.MsgSend) | [MsgSendResponse](#coreum.nft.v1beta1.MsgSendResponse) | Send defines a method to send a nft from one account to another account.
+
+Deprecated: use cosmos-sdk/x/nft package instead | |
 
  <!-- end services -->
 

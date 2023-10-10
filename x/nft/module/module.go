@@ -17,9 +17,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/v3/x/nft"
-	"github.com/CoreumFoundation/coreum/v3/x/nft/client/cli"
 	"github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
-	"github.com/CoreumFoundation/coreum/v3/x/nft/simulation"
 )
 
 var (
@@ -81,12 +79,12 @@ func (a AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux 
 
 // GetQueryCmd returns the cli query commands for the nft module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd()
+	return nil
 }
 
 // GetTxCmd returns the transaction commands for the nft module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	return nil
 }
 
 // AppModule implements the sdk.AppModule interface.
@@ -129,17 +127,13 @@ func (AppModule) QuerierRoute() string { return "" }
 // InitGenesis performs genesis initialization for the nft module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState nft.GenesisState
-	cdc.MustUnmarshalJSON(data, &genesisState)
-	am.keeper.InitGenesis(ctx, &genesisState)
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the nft
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	gs := am.keeper.ExportGenesis(ctx)
-	return cdc.MustMarshalJSON(gs)
+	return nil
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
@@ -154,7 +148,6 @@ func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 
 // GenerateGenesisState creates a randomized GenState of the nft module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	simulation.RandomizedGenState(simState)
 }
 
 // ProposalContents returns all the nft content functions used to
@@ -166,14 +159,9 @@ func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes
 
 // RegisterStoreDecoder registers a decoder for nft module's types.
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
-	sdr[keeper.StoreKey] = simulation.NewDecodeStore(am.cdc)
 }
 
 // WeightedOperations returns the all the nft module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
-	return simulation.WeightedOperations(
-		am.registry,
-		simState.AppParams, simState.Cdc,
-		am.accountKeeper, am.bankKeeper, am.keeper,
-	)
+	return nil
 }

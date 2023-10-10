@@ -4,9 +4,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/nft"
+	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
 
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
-	nftmodule "github.com/CoreumFoundation/coreum/v3/x/nft/module"
 	"github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
 )
 

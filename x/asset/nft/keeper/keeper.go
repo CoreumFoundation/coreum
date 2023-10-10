@@ -11,13 +11,13 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v3/pkg/store"
 	"github.com/CoreumFoundation/coreum/v3/x/asset"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 // Keeper is the asset module non-fungible token nftKeeper.
@@ -135,10 +135,6 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 	}
 
 	id := types.BuildClassID(settings.Symbol, settings.Issuer)
-	if err := nft.ValidateClassID(id); err != nil {
-		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
-	}
-
 	if err := types.ValidateData(settings.Data); err != nil {
 		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
