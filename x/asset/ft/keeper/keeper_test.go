@@ -378,7 +378,7 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unmintableDenom)
 
 	// try to mint unmintable token
-	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(unmintableDenom, sdkmath.NewInt(100)))
+	err = ftKeeper.Mint(ctx, addr, addr, sdk.NewCoin(unmintableDenom, sdkmath.NewInt(100)))
 	requireT.ErrorIs(err, types.ErrFeatureDisabled)
 
 	// Issue a mintable fungible token
@@ -398,11 +398,11 @@ func TestKeeper_Mint(t *testing.T) {
 
 	// try to mint as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	err = ftKeeper.Mint(ctx, randomAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
+	err = ftKeeper.Mint(ctx, randomAddr, randomAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// mint tokens and check balance and total supply
-	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
+	err = ftKeeper.Mint(ctx, addr, addr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
 	requireT.NoError(err)
 
 	balance := bankKeeper.GetBalance(ctx, addr, mintableDenom)
@@ -411,6 +411,17 @@ func TestKeeper_Mint(t *testing.T) {
 	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(877), totalSupply.Supply.AmountOf(mintableDenom))
+
+	// mint to another account
+	err = ftKeeper.Mint(ctx, addr, randomAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+
+	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
+	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)), balance)
+
+	totalSupply, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	requireT.NoError(err)
+	requireT.EqualValues(sdkmath.NewInt(977), totalSupply.Supply.AmountOf(mintableDenom))
 }
 
 func TestKeeper_Burn(t *testing.T) {

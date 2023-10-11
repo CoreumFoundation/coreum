@@ -58,6 +58,7 @@ message MsgMint {
   string uri = 4 [(gogoproto.customname) = "URI"];
   string uri_hash = 5 [(gogoproto.customname) = "URIHash"];
   google.protobuf.Any data = 6;
+  string recipient = 7;
 }
 
 // MsgBurn defines message for the Burn method.

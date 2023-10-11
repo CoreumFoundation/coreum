@@ -41,12 +41,13 @@ type IssueClassSettings struct {
 
 // MintSettings is the model which represents the params for the non-fungible token minting.
 type MintSettings struct {
-	Sender  sdk.AccAddress
-	ClassID string
-	ID      string
-	URI     string
-	URIHash string
-	Data    *codectypes.Any
+	Sender    sdk.AccAddress
+	Recipient sdk.AccAddress
+	ClassID   string
+	ID        string
+	URI       string
+	URIHash   string
+	Data      *codectypes.Any
 }
 
 // BuildClassID builds the non-fungible token id string from the symbol and issuer address.
