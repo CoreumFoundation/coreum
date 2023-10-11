@@ -74,11 +74,12 @@ TotalGas = 65000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/coreum.asset.ft.v1.MsgBurn`                                          | 35000                          |
 | `/coreum.asset.ft.v1.MsgFreeze`                                        | 8500                           |
 | `/coreum.asset.ft.v1.MsgGloballyFreeze`                                | 5000                           |
-| `/coreum.asset.ft.v1.MsgGloballyUnfreeze`                              | 2500                           |
+| `/coreum.asset.ft.v1.MsgGloballyUnfreeze`                              | 5000                           |
 | `/coreum.asset.ft.v1.MsgIssue`                                         | 70000                          |
 | `/coreum.asset.ft.v1.MsgMint`                                          | 31000                          |
+| `/coreum.asset.ft.v1.MsgSetFrozen`                                     | 8500                           |
 | `/coreum.asset.ft.v1.MsgSetWhitelistedLimit`                           | 9000                           |
-| `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 4000                           |
+| `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 8500                           |
 | `/coreum.asset.ft.v1.MsgUpgradeTokenV1`                                | 25000                          |
 | `/coreum.asset.nft.v1.MsgAddToWhitelist`                               | 7000                           |
 | `/coreum.asset.nft.v1.MsgBurn`                                         | 26000                          |
