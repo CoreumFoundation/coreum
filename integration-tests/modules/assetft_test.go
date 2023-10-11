@@ -2352,7 +2352,7 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
-// TestBareToken checks non of the features will work if the flags are not set.
+// TestBareToken checks none of the features will work if the flags are not set.
 func TestBareToken(t *testing.T) {
 	t.Parallel()
 

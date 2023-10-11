@@ -44,10 +44,10 @@ func TestAutoGasPrices(t *testing.T) {
 			},
 		},
 		{
-			name:  "specific gas prices is provided",
-			flags: []string{fmt.Sprintf("--gas-prices=0.1%s", denom), "--gas=100000"},
+			name:  "specific gas prices are provided",
+			flags: []string{fmt.Sprintf("--gas-prices=0.1%s", denom), "--gas=115000"},
 			feeAssertion: func(t *testing.T, fee sdk.Coins) {
-				assert.True(t, fee.IsEqual(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10000)))))
+				assert.True(t, fee.IsEqual(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(11500)))))
 			},
 		},
 		{

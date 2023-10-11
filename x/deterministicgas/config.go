@@ -33,8 +33,8 @@ import (
 
 // These constants define gas for messages which have custom calculation logic.
 const (
-	BankSendPerCoinGas            = 24000
-	BankMultiSendPerOperationsGas = 11000
+	BankSendPerCoinGas            = 50000
+	BankMultiSendPerOperationsGas = 35000
 	AuthzExecOverhead             = 2000
 )
 
@@ -62,110 +62,116 @@ type Config struct {
 //nolint:funlen
 func DefaultConfig() Config {
 	cfg := Config{
-		FixedGas:       50000,
+		FixedGas:       65000,
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 	}
 
-	// FIXME(v47-deterministic): re-estimate and update all values + regenerate doc
 	cfg.gasByMsg = map[MsgURL]gasByMsgFunc{
 		// asset/ft
 		MsgToMsgURL(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
-		MsgToMsgURL(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
-		MsgToMsgURL(&assetfttypes.MsgBurn{}):                constantGasFunc(23000),
-		MsgToMsgURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(5000),
-		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(2500),
+		MsgToMsgURL(&assetfttypes.MsgMint{}):                constantGasFunc(31000),
+		MsgToMsgURL(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
+		MsgToMsgURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(8500),
+		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(4000),
 		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
 		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
-		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
-		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):      constantGasFunc(25000),
+		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9000),
+		// TODO: Reestimate when next token upgrade is prepared
+		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25000),
 
 		// asset/nft
-		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(16000),
+		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(26000),
 		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):          constantGasFunc(16000),
 		MsgToMsgURL(&assetnfttypes.MsgMint{}):                constantGasFunc(39000),
-		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):              constantGasFunc(7000),
+		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):              constantGasFunc(8000),
 		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
 		MsgToMsgURL(&assetnfttypes.MsgAddToWhitelist{}):      constantGasFunc(7000),
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}): constantGasFunc(3500),
 
 		// authz
+		// FIXME (v47-deterministic): We need a procedure to estimate the overhead of the authz. Proposal:
+		// 1. Estimate normal message
+		// 2. Estimate the same message executed using authz
+		// 3. Subtract one from the other
+		// We should have an integration test doing this.
 		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
-		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(7000),
-		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(2500),
+		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(28000),
+		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(8000),
 
 		// bank
 		MsgToMsgURL(&banktypes.MsgSend{}):      bankSendMsgGasFunc(BankSendPerCoinGas),
 		MsgToMsgURL(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(BankMultiSendPerOperationsGas),
 
 		// distribution
-		MsgToMsgURL(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(15000),
+		MsgToMsgURL(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(17000),
 		MsgToMsgURL(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(5000),
-		MsgToMsgURL(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(65000),
+		MsgToMsgURL(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(79000),
 		MsgToMsgURL(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(22000),
 
 		// feegrant
-		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(10000),
+		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(11000),
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
 		// FIXME(v47-deterministic): check that if we want to support both go types
-		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(7000),
+		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6000),
 		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}): constantGasFunc(9000),
-		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(52000),
+		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(85000),
 
-		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(7000),
-		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(9000),
-		MsgToMsgURL(&govtypesv1.MsgDeposit{}):      constantGasFunc(52000),
+		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6000),
+		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6500),
+		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
+		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52000),
 
 		// nft
-		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(16000),
+		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25000),
 
 		// cnft
 		// Deprecated: this will be removed in the next release alongside the cnft types.
-		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(16000),
+		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25000),
 
 		// slashing
+		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
 		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
 		// staking
-		MsgToMsgURL(&stakingtypes.MsgDelegate{}):        constantGasFunc(69000),
+		MsgToMsgURL(&stakingtypes.MsgDelegate{}):        constantGasFunc(83000),
 		MsgToMsgURL(&stakingtypes.MsgUndelegate{}):      constantGasFunc(112000),
-		MsgToMsgURL(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(142000),
-		MsgToMsgURL(&stakingtypes.MsgCreateValidator{}): constantGasFunc(76000),
+		MsgToMsgURL(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(157000),
+		MsgToMsgURL(&stakingtypes.MsgCreateValidator{}): constantGasFunc(117000),
 		MsgToMsgURL(&stakingtypes.MsgEditValidator{}):   constantGasFunc(13000),
 
 		// vesting
-		MsgToMsgURL(&vestingtypes.MsgCreateVestingAccount{}): constantGasFunc(25000),
+		MsgToMsgURL(&vestingtypes.MsgCreateVestingAccount{}): constantGasFunc(30000),
 
 		// wasm
 		MsgToMsgURL(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
 		MsgToMsgURL(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
 
 		// ibc transfer
-		MsgToMsgURL(&ibctransfertypes.MsgTransfer{}): constantGasFunc(37000),
+		MsgToMsgURL(&ibctransfertypes.MsgTransfer{}): constantGasFunc(54000),
 	}
 
-	// FIXME(v47-deterministic): validate all new un-deterministic messages and move to deterministic if possible
 	registerNondeterministicGasFuncs(
 		&cfg,
 		[]sdk.Msg{
 			// auth
-			&authtypes.MsgUpdateParams{},
+			&authtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// bank
-			&banktypes.MsgSetSendEnabled{},
-			&banktypes.MsgUpdateParams{},
+			&banktypes.MsgSetSendEnabled{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+			&banktypes.MsgUpdateParams{},   // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// consensus
-			&consensustypes.MsgUpdateParams{},
+			&consensustypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// crisis
-			&crisistypes.MsgUpdateParams{},
+			&crisistypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// distribution
-			&distributiontypes.MsgUpdateParams{},
-			&distributiontypes.MsgCommunityPoolSpend{},
+			&distributiontypes.MsgUpdateParams{},       // This is non-deterministic because all the gov proposals are non-deterministic anyway
+			&distributiontypes.MsgCommunityPoolSpend{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// gov
 			// MsgSubmitProposal is defined as nondeterministic because it runs a proposal handler function
@@ -175,7 +181,7 @@ func DefaultConfig() Config {
 			// FIXME(v47-deterministic): check that if we want to support both go types
 			&govtypesv1.MsgSubmitProposal{},
 			&govtypesv1.MsgExecLegacyContent{},
-			&govtypesv1.MsgUpdateParams{},
+			&govtypesv1.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// crisis
 			// MsgVerifyInvariant is defined as nondeterministic since fee
@@ -189,22 +195,22 @@ func DefaultConfig() Config {
 			&evidencetypes.MsgSubmitEvidence{},
 
 			// mint
-			&minttypes.MsgUpdateParams{},
+			&minttypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// staking
-			&stakingtypes.MsgUpdateParams{},
+			&stakingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
 			&stakingtypes.MsgCancelUnbondingDelegation{},
 
 			// slashing
-			&slashingtypes.MsgUpdateParams{},
+			&slashingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// slashing
-			&slashingtypes.MsgUpdateParams{},
+			&slashingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// upgrade
-			&upgradetypes.MsgCancelUpgrade{},
-			&upgradetypes.MsgSoftwareUpgrade{},
+			&upgradetypes.MsgCancelUpgrade{},   // This is non-deterministic because all the gov proposals are non-deterministic anyway
+			&upgradetypes.MsgSoftwareUpgrade{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// vesting
 			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
@@ -221,7 +227,7 @@ func DefaultConfig() Config {
 			&wasmtypes.MsgIBCSend{},
 			&wasmtypes.MsgIBCCloseChannel{},
 			&wasmtypes.MsgUpdateInstantiateConfig{},
-			&wasmtypes.MsgUpdateParams{},
+			&wasmtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 			&wasmtypes.MsgUnpinCodes{},
 			&wasmtypes.MsgPinCodes{},
 			&wasmtypes.MsgSudoContract{},
