@@ -61,6 +61,7 @@
     - [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze)
     - [MsgIssue](#coreum.asset.ft.v1.MsgIssue)
     - [MsgMint](#coreum.asset.ft.v1.MsgMint)
+    - [MsgSetFrozen](#coreum.asset.ft.v1.MsgSetFrozen)
     - [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit)
     - [MsgUnfreeze](#coreum.asset.ft.v1.MsgUnfreeze)
     - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
@@ -1103,6 +1104,23 @@ MsgIssue defines message to issue new fungible token.
 
 
 
+<a name="coreum.asset.ft.v1.MsgSetFrozen"></a>
+
+### MsgSetFrozen
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  |
+| `account` | [string](#string) |  |  |
+| `coin` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.MsgSetWhitelistedLimit"></a>
 
 ### MsgSetWhitelistedLimit
@@ -1188,6 +1206,7 @@ Msg defines the Msg service.
 | `Burn` | [MsgBurn](#coreum.asset.ft.v1.MsgBurn) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | Burn burns the specified fungible tokens from senders balance if the sender has enough balance. | |
 | `Freeze` | [MsgFreeze](#coreum.asset.ft.v1.MsgFreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | Freeze freezes a part of the fungible tokens in an account, only if the freezable feature is enabled on that token. | |
 | `Unfreeze` | [MsgUnfreeze](#coreum.asset.ft.v1.MsgUnfreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | Unfreeze unfreezes a part of the frozen fungible tokens in an account, only if there are such frozen tokens on that account. | |
+| `SetFrozen` | [MsgSetFrozen](#coreum.asset.ft.v1.MsgSetFrozen) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | SetFrozen sets the absolute value of frozen amount. | |
 | `GloballyFreeze` | [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | GloballyFreeze freezes fungible token so no operations are allowed with it before unfrozen. This operation is idempotent so global freeze of already frozen token does nothing. | |
 | `GloballyUnfreeze` | [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it. This operation is idempotent so global unfreezing of non-frozen token does nothing. | |
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | SetWhitelistedLimit sets the limit of how many tokens a specific account may hold. | |

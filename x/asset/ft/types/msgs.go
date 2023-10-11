@@ -37,6 +37,8 @@ var (
 	_ legacytx.LegacyMsg = &MsgFreeze{}
 	_ sdk.Msg            = &MsgUnfreeze{}
 	_ legacytx.LegacyMsg = &MsgUnfreeze{}
+	_ sdk.Msg            = &MsgSetFrozen{}
+	_ legacytx.LegacyMsg = &MsgSetFrozen{}
 	_ sdk.Msg            = &MsgGloballyFreeze{}
 	_ legacytx.LegacyMsg = &MsgGloballyFreeze{}
 	_ sdk.Msg            = &MsgGloballyUnfreeze{}
@@ -56,6 +58,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgBurn{}, fmt.Sprintf("%s/MsgBurn", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgFreeze{}, fmt.Sprintf("%s/MsgFreeze", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgUnfreeze{}, fmt.Sprintf("%s/MsgUnfreeze", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgSetFrozen{}, fmt.Sprintf("%s/MsgSetFrozen", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgGloballyFreeze{}, fmt.Sprintf("%s/MsgGloballyFreeze", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgGloballyUnfreeze{}, fmt.Sprintf("%s/MsgGloballyUnfreeze", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgSetWhitelistedLimit{}, fmt.Sprintf("%s/MsgSetWhitelistedLimit", ModuleName), nil)
@@ -281,6 +284,50 @@ func (m MsgUnfreeze) Route() string {
 // Type returns message type for LegacyMsg.
 func (m MsgUnfreeze) Type() string {
 	return TypeMsgUnfreeze
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m MsgSetFrozen) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	if err != nil {
+		return err
+	}
+
+	if issuer.String() == m.Account {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
+	}
+
+	return m.Coin.Validate()
+}
+
+// GetSigners returns the required signers of this message type.
+func (m MsgSetFrozen) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(m.Sender),
+	}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgSetFrozen) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgSetFrozen) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgSetFrozen) Type() string {
+	return TypeMsgFreeze
 }
 
 // ValidateBasic checks that message fields are valid.

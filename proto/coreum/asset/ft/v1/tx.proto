@@ -29,6 +29,8 @@ service Msg {
   // Unfreeze unfreezes a part of the frozen fungible tokens in an
   // account, only if there are such frozen tokens on that account.
   rpc Unfreeze(MsgUnfreeze) returns (EmptyResponse);
+  // SetFrozen sets the absolute value of frozen amount.
+  rpc SetFrozen(MsgSetFrozen) returns (EmptyResponse);
 
   // GloballyFreeze freezes fungible token so no operations are allowed with it before unfrozen.
   // This operation is idempotent so global freeze of already frozen token does nothing.
@@ -92,6 +94,12 @@ message MsgFreeze {
 }
 
 message MsgUnfreeze {
+  string sender = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgSetFrozen {
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];

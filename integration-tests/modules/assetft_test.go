@@ -1322,11 +1322,41 @@ func TestAssetFTFreeze(t *testing.T) {
 	)
 	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
-	// unfreeze 200 tokens and observer current frozen amount is zero
+	// set absolute frozen amount to 250
+	setFrozenMsg := &assetfttypes.MsgSetFrozen{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(250)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(setFrozenMsg)),
+		setFrozenMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(setFrozenMsg))
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(200),
+		CurrentAmount:  sdkmath.NewInt(250),
+	}, fungibleTokenFreezeEvts[0])
+
+	frozenBalance, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(250)), frozenBalance.Balance)
+
+	// unfreeze 250 tokens and observer current frozen amount is zero
 	unfreezeMsg = &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(250)),
 	}
 	res, err = client.BroadcastTx(
 		ctx,
@@ -1342,7 +1372,7 @@ func TestAssetFTFreeze(t *testing.T) {
 	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
-		PreviousAmount: sdkmath.NewInt(200),
+		PreviousAmount: sdkmath.NewInt(250),
 		CurrentAmount:  sdkmath.NewInt(0),
 	}, fungibleTokenFreezeEvts[0])
 }

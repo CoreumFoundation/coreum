@@ -157,6 +157,15 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom}, &respFrozen))
 	requireT.Equal(sdk.NewInt64Coin(denom, 25).String(), respFrozen.Balance.String())
+
+	// set absolute frozen amount
+	setFrozenTokens := sdk.NewInt64Coin(denom, 100)
+	args = append([]string{recipient.String(), setFrozenTokens.String()}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxSetFrozen(), args)
+	requireT.NoError(err)
+
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom}, &respFrozen))
+	requireT.Equal(setFrozenTokens.String(), respFrozen.Balance.String())
 }
 
 func TestGloballyFreezeUnfreeze(t *testing.T) {
