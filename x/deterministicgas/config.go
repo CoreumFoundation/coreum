@@ -129,7 +129,7 @@ func DefaultConfig() Config {
 
 		// cnft
 		// Deprecated: this will be removed in the next release alongside the cnft types.
-		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(16000),
+		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25000),
 
 		// slashing
 		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
