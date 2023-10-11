@@ -15,7 +15,7 @@ var _ types.MsgServer = MsgServer{}
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
 	Issue(ctx sdk.Context, settings types.IssueSettings) (string, error)
-	Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
+	Mint(ctx sdk.Context, sender, recipient sdk.AccAddress, coin sdk.Coin) error
 	Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
@@ -70,7 +70,15 @@ func (ms MsgServer) Mint(goCtx context.Context, req *types.MsgMint) (*types.Empt
 		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	err = ms.keeper.Mint(ctx, sender, req.Coin)
+	recipient := sender
+	if req.Recipient != "" {
+		recipient, err = sdk.AccAddressFromBech32(req.Recipient)
+		if err != nil {
+			return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid recipient address")
+		}
+	}
+
+	err = ms.keeper.Mint(ctx, sender, recipient, req.Coin)
 	if err != nil {
 		return nil, err
 	}

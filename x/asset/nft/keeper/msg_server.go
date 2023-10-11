@@ -68,15 +68,25 @@ func (ms MsgServer) Mint(ctx context.Context, req *types.MsgMint) (*types.EmptyR
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
 	}
+
+	recipient := owner
+	if req.Recipient != "" {
+		recipient, err = sdk.AccAddressFromBech32(req.Recipient)
+		if err != nil {
+			return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid recipient")
+		}
+	}
+
 	if err := ms.keeper.Mint(
 		sdk.UnwrapSDKContext(ctx),
 		types.MintSettings{
-			Sender:  owner,
-			ClassID: req.ClassID,
-			ID:      req.ID,
-			URI:     req.URI,
-			URIHash: req.URIHash,
-			Data:    req.Data,
+			Sender:    owner,
+			Recipient: recipient,
+			ClassID:   req.ClassID,
+			ID:        req.ID,
+			URI:       req.URI,
+			URIHash:   req.URIHash,
+			Data:      req.Data,
 		},
 	); err != nil {
 		return nil, err

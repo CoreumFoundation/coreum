@@ -426,12 +426,14 @@ func TestAssetFTMint(t *testing.T) {
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	randomAddress := chain.GenAccount()
+	recipient := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
 		},
@@ -547,6 +549,29 @@ func TestAssetFTMint(t *testing.T) {
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
 	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
+
+	// mint tokens to recipient
+	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(10))
+	mintMsg = &assetfttypes.MsgMint{
+		Sender:    issuer.String(),
+		Recipient: recipient.String(),
+		Coin:      mintCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin.String(), balance.GetBalance().String())
+
+	newSupply2, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin, newSupply2.GetAmount().Sub(newSupply.GetAmount()))
 }
 
 // TestAssetFTBurn tests burn functionality of fungible tokens.

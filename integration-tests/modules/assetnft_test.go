@@ -274,6 +274,7 @@ func TestAssetNFTMint(t *testing.T) {
 			&assetnfttypes.MsgIssueClass{},
 			&assetnfttypes.MsgMint{},
 			&nft.MsgSend{},
+			&assetnfttypes.MsgMint{},
 		},
 		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
@@ -429,6 +430,29 @@ func TestAssetNFTMint(t *testing.T) {
 	ownerRes, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
 		Id:      nftMintedEvent.Id,
+	})
+	requireT.NoError(err)
+	requireT.Equal(recipient.String(), ownerRes.Owner)
+
+	// mint to recipient
+
+	mintMsg = &assetnfttypes.MsgMint{
+		Sender:    issuer.String(),
+		Recipient: recipient.String(),
+		ID:        "id-2",
+		ClassID:   classID,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	ownerRes, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      mintMsg.ID,
 	})
 	requireT.NoError(err)
 	requireT.Equal(recipient.String(), ownerRes.Owner)
