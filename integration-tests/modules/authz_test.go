@@ -19,6 +19,53 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
+// TestAuthzDirectTransferFails if grantee sends message directly, without using authz.
+func TestAuthzDirectTransferFails(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	amountToSend := sdkmath.NewInt(1_000)
+
+	// init the messages provisionally to use in the authztypes.MsgExec
+	msgBankSend := &banktypes.MsgSend{
+		FromAddress: granter.String(),
+		ToAddress:   recipient.String(),
+		// send a half to have 2 messages in the Exec
+		Amount: sdk.NewCoins(chain.NewCoin(amountToSend)),
+	}
+
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			// Grantee signs the transaction, but granter is the sender, so fees are taken from the granter's account.
+			// In ante handler, fees are deducted before verifying signature, so funding granter to cover the fee is important,
+			// to verify that transaction is rejected due to invalid signature.
+			msgBankSend,
+		},
+		Amount: amountToSend,
+	})
+
+	// this is done because account must exist to send transaction
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Amount: sdk.NewIntFromUint64(1),
+	})
+
+	// try to send from grantee directly
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBankSend)),
+		msgBankSend,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrInvalidPubKey)
+}
+
 // TestAuthz tests the authz module Grant/Execute/Revoke messages execution and their deterministic gas.
 func TestAuthz(t *testing.T) {
 	t.Parallel()
@@ -51,6 +98,15 @@ func TestAuthz(t *testing.T) {
 		Amount: sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1_000))),
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
+
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&authztypes.MsgGrant{},
+			&authztypes.MsgRevoke{},
+		},
+		Amount: totalAmountToSend,
+	})
+
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgBankSend,
@@ -84,15 +140,6 @@ func TestAuthz(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(1, len(gransRes.Grants))
-
-	// try to send from grantee directly
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBankSend)),
-		msgBankSend,
-	)
-	requireT.ErrorIs(err, cosmoserrors.ErrInvalidPubKey)
 
 	// try to send using the authz
 	txResult, err = client.BroadcastTx(

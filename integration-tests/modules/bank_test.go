@@ -493,23 +493,21 @@ func TestBankMultiSend(t *testing.T) {
 
 	amount := sdkmath.NewInt(1000)
 
-	issueMsgs := []sdk.Msg{
-		&assetfttypes.MsgIssue{
-			Issuer:        sender.String(),
-			Symbol:        "TOK1",
-			Subunit:       "tok1",
-			Precision:     1,
-			Description:   "TOK1 Description",
-			InitialAmount: amount,
-		},
-		&assetfttypes.MsgIssue{
-			Issuer:        sender.String(),
-			Symbol:        "TOK2",
-			Subunit:       "tok2",
-			Precision:     1,
-			Description:   "TOK2 Description",
-			InitialAmount: amount,
-		},
+	issueMsg1 := &assetfttypes.MsgIssue{
+		Issuer:        sender.String(),
+		Symbol:        "TOK1",
+		Subunit:       "tok1",
+		Precision:     1,
+		Description:   "TOK1 Description",
+		InitialAmount: amount,
+	}
+	issueMsg2 := &assetfttypes.MsgIssue{
+		Issuer:        sender.String(),
+		Symbol:        "TOK2",
+		Subunit:       "tok2",
+		Precision:     1,
+		Description:   "TOK2 Description",
+		InitialAmount: amount,
 	}
 
 	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
@@ -521,25 +519,36 @@ func TestBankMultiSend(t *testing.T) {
 				{Coins: make(sdk.Coins, 2)},
 				{Coins: make(sdk.Coins, 2)},
 			},
-		}}, issueMsgs...),
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(int64(len(issueMsgs))),
+		}}, issueMsg1, issueMsg2),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
 	})
 
 	// Issue fungible tokens
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsgs...)),
-		issueMsgs...,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg1)),
+		issueMsg1,
 	)
 	require.NoError(t, err)
 
 	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, len(issueMsgs), len(tokenIssuedEvts))
 
 	denom1 := tokenIssuedEvts[0].Denom
-	denom2 := tokenIssuedEvts[1].Denom
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg2)),
+		issueMsg2,
+	)
+	require.NoError(t, err)
+
+	tokenIssuedEvts, err = event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	require.NoError(t, err)
+
+	denom2 := tokenIssuedEvts[0].Denom
 
 	msg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
@@ -580,6 +589,8 @@ func TestBankMultiSend(t *testing.T) {
 		msg)
 	require.NoError(t, err)
 	require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
+
+	// =============================
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 

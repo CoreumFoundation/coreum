@@ -95,11 +95,11 @@ func (c CoreumChain) ComputeNeededBalanceFromOptions(options BalancesOptions) sd
 		gas := c.GasLimitByMsgs(msg)
 		// Ceil().RoundInt() is here to be compatible with the sdk's TxFactory
 		// https://github.com/cosmos/cosmos-sdk/blob/ff416ee63d32da5d520a8b2d16b00da762416146/client/tx/factory.go#L223
-		amt := options.GasPrice.Mul(sdk.NewDec(int64(gas))).Ceil().RoundInt()
+		amt := options.GasPrice.Mul(sdkmath.LegacyNewDec(int64(gas))).Ceil().RoundInt()
 		totalAmount = totalAmount.Add(amt)
 	}
 
-	return totalAmount.Add(options.GasPrice.Mul(sdk.NewDec(int64(options.NondeterministicMessagesGas))).Ceil().RoundInt()).Add(options.Amount)
+	return totalAmount.Add(options.GasPrice.Mul(sdkmath.LegacyNewDec(int64(options.NondeterministicMessagesGas))).Ceil().RoundInt()).Add(options.Amount)
 }
 
 // FundAccountWithOptions computes the needed balances and fund account with it.
