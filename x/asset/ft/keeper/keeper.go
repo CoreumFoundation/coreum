@@ -662,19 +662,22 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 		return nil
 	}
 
-	if !def.IsFeatureEnabled(types.Feature_whitelisting) ||
-		def.IsIssuer(addr) {
-		return nil
+	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.IsIssuer(addr) {
+		balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
+		whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
+
+		finalBalance := balance.Amount.Add(amount)
+		if finalBalance.GT(whitelistedBalance.Amount) {
+			return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
+				addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
+		}
 	}
 
-	balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
-	whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
-
-	finalBalance := balance.Amount.Add(amount)
-	if finalBalance.GT(whitelistedBalance.Amount) {
-		return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
-			addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
+	// TODO: To be discussed: Should it be allowed to create such tokens by smart contract?
+	if def.IsFeatureEnabled(types.Feature_sending_to_smart_contracts_blocked) && !def.IsIssuer(addr) && k.isSmartContract(ctx, addr) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
+
 	return nil
 }
 

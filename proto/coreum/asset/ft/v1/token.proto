@@ -13,6 +13,7 @@ enum Feature {
   freezing = 2;
   whitelisting = 3;
   ibc = 4;
+  sending_to_smart_contracts_blocked = 5;
 }
 
 // Definition defines the fungible token settings to store.
