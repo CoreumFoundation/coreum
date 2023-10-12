@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -71,6 +72,7 @@ func (w Wasm) ExecuteWASMContract(ctx context.Context, txf client.Factory, fromA
 	if err != nil {
 		return 0, err
 	}
+	fmt.Println("ExecuteWASMContract txid: " + res.TxHash)
 	return res.GasUsed, nil
 }
 

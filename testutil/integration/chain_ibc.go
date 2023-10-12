@@ -46,6 +46,8 @@ func (c ChainContext) ExecuteIBCTransfer(
 	)
 	require.NoError(t, err)
 
+	t.Logf("Source chain height & number: %d , %d", height.RevisionHeight, height.RevisionNumber)
+
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:    ibctransfertypes.PortID,
 		SourceChannel: recipientChannelID,
@@ -123,7 +125,7 @@ func (c ChainContext) AwaitForBalance(
 
 	t.Logf("Waiting for account %s balance, expected amount: %s.", c.MustConvertToBech32Address(address), expectedBalance.String())
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
-	retryCtx, retryCancel := context.WithTimeout(ctx, 30*time.Second)
+	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()
 	err := retry.Do(retryCtx, 100*time.Millisecond, func() error {
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)

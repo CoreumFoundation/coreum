@@ -39,8 +39,8 @@ pub fn execute(
             .add_message(IbcMsg::SendPacket {
                 channel_id: channel,
                 data: to_binary(&IbcExecuteMsg::Increment {})?,
-                // default timeout of two minutes.
-                timeout: IbcTimeout::with_timestamp(env.block.time.plus_seconds(120)),
+                // default timeout of 10 minutes.
+                timeout: IbcTimeout::with_timestamp(env.block.time.plus_seconds(600)),
             })),
     }
 }
