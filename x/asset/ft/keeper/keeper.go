@@ -325,19 +325,6 @@ func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 	return k.burnIfSpendable(ctx, sender, def, coin.Amount)
 }
 
-func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
-	def, err := k.GetDefinition(ctx, coin.Denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if def.IsIssuer(addr) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
-	}
-
-	return def.CheckFeatureAllowed(sender, types.Feature_freezing)
-}
-
 // Freeze freezes specified token from the specified account.
 func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
@@ -808,6 +795,19 @@ func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) 
 // frozenAccountBalanceStore gets the store for the frozen balances of an account.
 func (k Keeper) frozenAccountsBalanceStore(ctx sdk.Context) balanceStore {
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
+}
+
+func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+	def, err := k.GetDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	if def.IsIssuer(addr) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
+	}
+
+	return def.CheckFeatureAllowed(sender, types.Feature_freezing)
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {

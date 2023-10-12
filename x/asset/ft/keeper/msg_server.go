@@ -13,6 +13,8 @@ import (
 var _ types.MsgServer = MsgServer{}
 
 // MsgKeeper defines subscope of keeper methods required by msg service.
+//
+//nolint:interfacebloat // We accept the fact that this interface declares more than 10 methods.
 type MsgKeeper interface {
 	Issue(ctx sdk.Context, settings types.IssueSettings) (string, error)
 	Mint(ctx sdk.Context, sender, recipient sdk.AccAddress, coin sdk.Coin) error
