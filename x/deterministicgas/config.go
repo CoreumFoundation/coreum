@@ -74,7 +74,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
 		MsgToMsgURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(8500),
 		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(8500),
-		MsgToMsgURL(&assetfttypes.MsgSetFrozen{}):              constantGasFunc(8500),
+		MsgToMsgURL(&assetfttypes.MsgSetFrozen{}):           constantGasFunc(8500),
 		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
 		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9000),
