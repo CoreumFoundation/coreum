@@ -303,6 +303,9 @@ func AwaitNextBlocks(
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
+		// inside GetBlockByHeightResponse you have SdkBlock.Data.Txs
+		tmQueryClient.GetBlockByHeight(...)
+
 		res, err := tmQueryClient.GetLatestBlock(requestCtx, &tmservice.GetLatestBlockRequest{})
 		if err != nil {
 			return retry.Retryable(errors.WithStack(err))
