@@ -4,6 +4,7 @@ package ibc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -29,8 +30,9 @@ func ConvertToIBCDenom(channelID, denom string) string {
 	).IBCDenom()
 }
 
-// CreateIBCChannelsAndConnect creates two new channels for the provided ports on provided chains and connects them.
-func CreateIBCChannelsAndConnect(
+// CreateOpenIBCChannelsAndStartRelaying creates two new channels for the provided ports on provided chains,
+// connects them and starts relaying them.
+func CreateOpenIBCChannelsAndStartRelaying(
 	ctx context.Context,
 	t *testing.T,
 	srcChain integration.Chain,
@@ -63,6 +65,7 @@ func CreateIBCChannelsAndConnect(
 	}
 
 	pathName := fmt.Sprintf("%s-%s", srcChain.ChainSettings.ChainID, dstChain.ChainSettings.ChainID)
+
 	require.NoError(t, relayerSrcChain.CreateOpenChannels(
 		ctx,
 		relayerDstChain,
@@ -74,10 +77,42 @@ func CreateIBCChannelsAndConnect(
 		"",
 		pathName,
 	))
-	closerFunc := func() {
+
+	relErrCh := cosmosrelayer.StartRelayer(
+		ctx,
+		log.With(zap.String("process", "relayer")),
+		map[string]*cosmosrelayer.Chain{
+			srcChain.ChainSettings.ChainID: relayerSrcChain,
+			dstChain.ChainSettings.ChainID: relayerDstChain,
+		},
+		[]cosmosrelayer.NamedPath{
+			{Name: pathName, Path: &cosmosrelayer.Path{
+				Src:    relayerSrcChain.PathEnd,
+				Dst:    relayerDstChain.PathEnd,
+				Filter: cosmosrelayer.ChannelFilter{},
+			}},
+		},
+		cosmosrelayer.DefaultMaxMsgLength,
+		"",
+		cosmosrelayer.DefaultClientUpdateThreshold,
+		cosmosrelayer.DefaultFlushInterval,
+		nil,
+		cosmosrelayer.ProcessorEvents,
+		0,
+		nil,
+	)
+
+	go func() {
+		err := <-relErrCh
+		if !errors.Is(err, context.Canceled) {
+			return
+		}
+		require.NoError(t, err, "Cosmos Relayer start error")
+	}()
+
+	return func() {
 		require.NoError(t, relayerSrcChain.CloseChannel(ctx, relayerDstChain, 5, 5*time.Second, srcChain.ChainSettings.ChainID, srcChainPort, "", pathName))
 	}
-	return closerFunc
 }
 
 func setupRelayerChain(

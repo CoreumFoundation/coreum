@@ -235,7 +235,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	requireT.NotEmpty(osmosisIBCPort)
 	t.Logf("Osmisis contrac IBC port:%s", osmosisIBCPort)
 
-	closerFunc := CreateIBCChannelsAndConnect(
+	closerFunc := CreateOpenIBCChannelsAndStartRelaying(
 		ctx,
 		t,
 		coreumChain.Chain,
@@ -251,21 +251,22 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(ctx, t, osmosisIBCPort, coreumChain.ChainSettings.ChainID)
 	t.Logf("Channels are ready coreum channel ID:%s, osmosis channel ID:%s", coreumToOsmosisChannelID, osmosisToCoreumChannelID)
 
-	t.Logf("Sendng two IBC transactions from coreum contract to osmosis contract")
+	// make sure that initial values are correct.
 	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
 	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 0)
 
-	// execute coreum counter twice
+	t.Logf("Sendng two IBC-increment transactions from coreum contract to osmosis contract")
 	executeWasmIncrement(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
 	executeWasmIncrement(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
 
 	// check that current state is expected
 	// the order of assertion is important because we are waiting for the expected non-zero counter first to be sure
-	// that async operation is completed fully before the second assertion
+	// that async operations are completed fully before the second assertion.
+	// This is done to make sure that all IBC operations are finished before we make second assertion.
 	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
 	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
 
-	t.Logf("Sendng three IBC transactions from osmosis contract to coreum contract")
+	t.Logf("Sendng three IBC-increment transactions from osmosis contract to coreum contract")
 	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
 	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
 	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
