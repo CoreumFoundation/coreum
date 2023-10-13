@@ -157,10 +157,10 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisRecipient, expectedOsmosisRecipientBalance))
 }
 
-// TestIBCCallFromSmartContract tests the IBC contract calls.
+// TestIBCCallFromSmartContract tests the WASM contract calls via WASM IBC channel.
 func TestIBCCallFromSmartContract(t *testing.T) {
-	// we don't enable the t.Parallel here since that test uses the config unseal hack because of the cosmos relayer
-	// implementation
+	// We don't enable the t.Parallel here since that test uses the config unseal hack.
+	// Config unseal is needed to run cosmos relayer which interacts with both chain SDK configs internally.
 	restoreSDKConfig := unsealSDKConfig()
 	defer restoreSDKConfig()
 
