@@ -74,6 +74,7 @@ jobs:
       - name: Checkout crust
         uses: actions/checkout@v3
         with:
+          ref: wojtek/master-clone
           repository: CoreumFoundation/crust
           path: crust
       - name: Set up crust
