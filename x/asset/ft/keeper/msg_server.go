@@ -13,12 +13,15 @@ import (
 var _ types.MsgServer = MsgServer{}
 
 // MsgKeeper defines subscope of keeper methods required by msg service.
+//
+//nolint:interfacebloat // We accept the fact that this interface declares more than 10 methods.
 type MsgKeeper interface {
 	Issue(ctx sdk.Context, settings types.IssueSettings) (string, error)
 	Mint(ctx sdk.Context, sender, recipient sdk.AccAddress, coin sdk.Coin) error
 	Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
+	SetFrozen(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
@@ -137,6 +140,27 @@ func (ms MsgServer) Unfreeze(goCtx context.Context, req *types.MsgUnfreeze) (*ty
 	}
 
 	err = ms.keeper.Unfreeze(ctx, sender, account, req.Coin)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// SetFrozen sets the frozen amount on an account.
+func (ms MsgServer) SetFrozen(goCtx context.Context, req *types.MsgSetFrozen) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	err = ms.keeper.SetFrozen(ctx, sender, account, req.Coin)
 	if err != nil {
 		return nil, err
 	}

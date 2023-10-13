@@ -1046,8 +1046,14 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	err = ftKeeper.Unfreeze(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
 	assertT.True(sdkerrors.IsOf(err, cosmoserrors.ErrUnauthorized))
 
+	// set absolute frozen amount
+	err = ftKeeper.SetFrozen(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), frozenBalance)
+
 	// unfreeze, query frozen, and try to send
-	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
+	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
 	requireT.NoError(err)
 	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), frozenBalance)

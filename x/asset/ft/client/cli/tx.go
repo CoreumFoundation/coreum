@@ -49,6 +49,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxBurn(),
 		CmdTxFreeze(),
 		CmdTxUnfreeze(),
+		CmdTxSetFrozen(),
 		CmdTxGloballyFreeze(),
 		CmdTxGloballyUnfreeze(),
 		CmdTxSetWhitelistedLimit(),
@@ -330,6 +331,50 @@ $ %s tx %s unfreeze [account_address] 100000ABC-%s --from [sender]
 				Coin:    amount,
 			}
 
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxSetFrozen returns SetFrozen cobra command.
+//
+//nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
+func CmdTxSetFrozen() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-frozen [account_address] [amount] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Set absolute frozen amount for the specific account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Set absolute frozen amount for the specific account.
+
+Example:
+$ %s tx %s set-frozen [account_address] 100000ABC-%s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			account := args[0]
+			amount, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgSetFrozen{
+				Sender:  sender.String(),
+				Account: account,
+				Coin:    amount,
+			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

@@ -73,9 +73,10 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgMint{}):                constantGasFunc(31000),
 		MsgToMsgURL(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
 		MsgToMsgURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(8500),
-		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(4000),
+		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(8500),
+		MsgToMsgURL(&assetfttypes.MsgSetFrozen{}):           constantGasFunc(8500),
 		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
-		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
+		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9000),
 		// TODO: Reestimate when next token upgrade is prepared
 		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25000),

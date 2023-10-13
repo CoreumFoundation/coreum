@@ -331,16 +331,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	def, err := k.GetDefinition(ctx, coin.Denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if def.IsIssuer(addr) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
-	}
-
-	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil {
+	if err := k.freezingChecks(ctx, sender, addr, coin); err != nil {
 		return err
 	}
 
@@ -349,7 +340,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 	newFrozenBalance := frozenBalance.Add(coin)
 	frozenStore.SetBalance(newFrozenBalance)
 
-	if err = ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: frozenBalance.Amount,
@@ -367,12 +358,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	def, err := k.GetDefinition(ctx, coin.Denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil {
+	if err := k.freezingChecks(ctx, sender, addr, coin); err != nil {
 		return err
 	}
 
@@ -389,11 +375,37 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 	newFrozenBalance := frozenBalance.Sub(coin)
 	frozenStore.SetBalance(newFrozenBalance)
 
-	if err = ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: frozenBalance.Amount,
 		CurrentAmount:  newFrozenBalance.Amount,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventFrozenAmountChanged event: %s", err)
+	}
+
+	return nil
+}
+
+// SetFrozen sets frozen amount on the specified account.
+func (k Keeper) SetFrozen(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+	if coin.IsNegative() {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "frozen amount must not be negative")
+	}
+
+	if err := k.freezingChecks(ctx, sender, addr, coin); err != nil {
+		return err
+	}
+
+	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
+	frozenBalance := frozenStore.Balance(coin.Denom)
+	frozenStore.SetBalance(coin)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
+		Account:        addr.String(),
+		Denom:          coin.Denom,
+		PreviousAmount: frozenBalance.Amount,
+		CurrentAmount:  coin.Amount,
 	}); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventFrozenAmountChanged event: %s", err)
 	}
@@ -783,6 +795,19 @@ func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) 
 // frozenAccountBalanceStore gets the store for the frozen balances of an account.
 func (k Keeper) frozenAccountsBalanceStore(ctx sdk.Context) balanceStore {
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
+}
+
+func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+	def, err := k.GetDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	if def.IsIssuer(addr) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
+	}
+
+	return def.CheckFeatureAllowed(sender, types.Feature_freezing)
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
