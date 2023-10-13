@@ -18,6 +18,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/v3/testutil/event"
 	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
@@ -958,6 +959,57 @@ func TestKeeper_ClassWhitelist(t *testing.T) {
 	}, incrementallyQueriedAccounts)
 }
 
+func TestKeeper_ClassWhitelist_And_NFTWhitelist(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_whitelisting,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// mint 2 NFTs
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+	nftID1 := settings.ID
+
+	settings.ID = settings.ID + "2"
+	nftID2 := settings.ID
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+
+	// whitelist the recipient
+	requireT.NoError(assetNFTKeeper.AddToWhitelist(ctx, classID, nftID1, issuer, recipient))
+	assertWhitelisting(t, ctx, assetNFTKeeper, classID, nftID1, recipient, true)
+	assertWhitelisting(t, ctx, assetNFTKeeper, classID, nftID2, recipient, false)
+
+	// whitelist the whole class
+	requireT.NoError(assetNFTKeeper.AddToClassWhitelist(ctx, classID, issuer, recipient))
+	assertWhitelisting(t, ctx, assetNFTKeeper, classID, nftID1, recipient, true)
+	assertWhitelisting(t, ctx, assetNFTKeeper, classID, nftID2, recipient, true)
+
+	// remove the class whitelist, nft whitelist should still be effective
+	requireT.NoError(assetNFTKeeper.RemoveFromClassWhitelist(ctx, classID, issuer, recipient))
+	assertWhitelisting(t, ctx, assetNFTKeeper, classID, nftID1, recipient, true)
+	assertWhitelisting(t, ctx, assetNFTKeeper, classID, nftID2, recipient, false)
+}
+
 func TestKeeper_ClassWhitelist_Unwhitelistable(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
@@ -1017,4 +1069,10 @@ func requireClassSettingsEqualClass(requireT *require.Assertions, settings types
 	requireT.Equal(settings.URIHash, class.URIHash)
 	requireT.Equal(string(settings.Data.Value), string(class.Data.Value))
 	requireT.Equal(settings.Features, class.Features)
+}
+
+func assertWhitelisting(t *testing.T, ctx sdk.Context, k keeper.Keeper, classID, nftID string, account sdk.AccAddress, expectedWhitelisting bool) {
+	isWhitelisted, err := k.IsWhitelisted(ctx, classID, nftID, account)
+	require.NoError(t, err)
+	require.EqualValues(t, isWhitelisted, expectedWhitelisting)
 }

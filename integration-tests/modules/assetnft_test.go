@@ -1351,14 +1351,14 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.False(queryRes.Whitelisted)
 
 	// assert the unwhitelisting event
-	unWhitelistedEvents, err := event.FindTypedEvents[*assetnfttypes.EventRemovedFromWhitelist](res.Events)
+	unwhitelistedEvents, err := event.FindTypedEvents[*assetnfttypes.EventRemovedFromWhitelist](res.Events)
 	requireT.NoError(err)
-	unWhitelistedEvent := unWhitelistedEvents[0]
+	unwhitelistedEvent := unwhitelistedEvents[0]
 	requireT.Equal(&assetnfttypes.EventRemovedFromWhitelist{
 		ClassId: classID,
 		Id:      msgAddToWhitelist.ID,
 		Account: recipient.String(),
-	}, unWhitelistedEvent)
+	}, unwhitelistedEvent)
 
 	// try to send back from recipient2 to non-whitelisted recipient (send should fail)
 	sendMsg = &nft.MsgSend{
@@ -1733,13 +1733,13 @@ func TestAssetNFTClassWhitelist(t *testing.T) {
 	requireT.False(queryRes.Whitelisted)
 
 	// assert the unwhitelisting event
-	unWhitelistedEvents, err := event.FindTypedEvents[*assetnfttypes.EventRemovedFromClassWhitelist](res.Events)
+	unwhitelistedEvents, err := event.FindTypedEvents[*assetnfttypes.EventRemovedFromClassWhitelist](res.Events)
 	requireT.NoError(err)
-	unWhitelistedEvent := unWhitelistedEvents[0]
+	unwhitelistedEvent := unwhitelistedEvents[0]
 	requireT.Equal(&assetnfttypes.EventRemovedFromClassWhitelist{
 		ClassId: classID,
 		Account: recipient.String(),
-	}, unWhitelistedEvent)
+	}, unwhitelistedEvent)
 
 	// try to send back from recipient2 to non-whitelisted recipient (send should fail)
 	sendMsg = &nft.MsgSend{
