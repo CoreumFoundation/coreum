@@ -68,6 +68,7 @@ jobs:
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
+          fetch-depth: 0 # needed for proto backward compatibility check
           persist-credentials: false
           path: coreum
       - name: Checkout crust
