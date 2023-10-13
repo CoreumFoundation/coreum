@@ -8,6 +8,8 @@ import (
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
+	cosmoscli "github.com/cosmos/cosmos-sdk/x/nft/client/cli"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -39,6 +41,43 @@ func TestCmdTxIssueClass(t *testing.T) {
 
 	requireT.NotEmpty(res.TxHash)
 	requireT.Equal(uint32(0), res.Code, "can't submit IssueClass tx", res)
+}
+
+func TestCmdMintToRecipient(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+
+	// create class
+	classID := issueClass(
+		requireT,
+		ctx,
+		symbol,
+		"class name",
+		"class description",
+		"https://my-class-meta.invalid/1",
+		"",
+		testNetwork,
+		"0.0",
+		types.ClassFeature_freezing,
+	)
+	// mint nft
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	nftID := "nft-1"
+	args := []string{classID, nftID, "", "", "--recipient", recipient.String()}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
+	requireT.NoError(err)
+
+	// query recipient
+
+	var resp nft.QueryOwnerResponse
+	args = []string{classID, nftID}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscli.GetCmdQueryOwner(), args, &resp))
+	requireT.Equal(recipient.String(), resp.Owner)
 }
 
 func TestCmdFreeze(t *testing.T) {
