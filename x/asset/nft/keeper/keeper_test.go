@@ -990,7 +990,7 @@ func TestKeeper_ClassWhitelist_And_NFTWhitelist(t *testing.T) {
 	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
 	nftID1 := settings.ID
 
-	settings.ID = settings.ID + "2"
+	settings.ID += "2"
 	nftID2 := settings.ID
 	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
 
