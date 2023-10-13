@@ -19,6 +19,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
+const nftID = "nft-1"
+
 func TestCmdTxIssueClass(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
@@ -66,7 +68,6 @@ func TestCmdMintToRecipient(t *testing.T) {
 	)
 	// mint nft
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	nftID := "nft-1"
 	args := []string{classID, nftID, "", "", "--recipient", recipient.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
@@ -102,7 +103,6 @@ func TestCmdFreeze(t *testing.T) {
 		types.ClassFeature_freezing,
 	)
 	// mint nft
-	nftID := "nft-1"
 	mint(
 		requireT,
 		ctx,
@@ -159,7 +159,6 @@ func TestCmdWhitelist(t *testing.T) {
 		types.ClassFeature_whitelisting,
 	)
 	// mint nft
-	nftID := "nft-1"
 	mint(
 		requireT,
 		ctx,

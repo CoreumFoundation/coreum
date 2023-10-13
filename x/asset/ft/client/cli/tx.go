@@ -171,7 +171,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 }
 
 // CmdTxMint returns Mint cobra command.
-func CmdTxMint() *cobra.Command { //nolint:dupl // all CLI commands are similar.
+func CmdTxMint() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint [amount] --from [sender] --recipient [recipient]",
 		Args:  cobra.ExactArgs(1),
@@ -219,7 +219,7 @@ $ %s tx %s mint 100000ABC-%s --from [sender]
 }
 
 // CmdTxBurn returns Burn cobra command.
-func CmdTxBurn() *cobra.Command { //nolint:dupl // all CLI commands are similar.
+func CmdTxBurn() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
