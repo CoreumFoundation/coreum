@@ -184,7 +184,7 @@ func TestCmdClassWhitelist(t *testing.T) {
 		types.ClassFeature_whitelisting,
 	)
 	// mint nft
-	nftID := "nft-1"
+	nftID := "nft"
 	mint(
 		requireT,
 		ctx,

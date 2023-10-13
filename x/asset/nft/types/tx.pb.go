@@ -577,9 +577,13 @@ type MsgClient interface {
 	// RemoveFromWhitelist removes an account from whitelisted list of the NFT
 	RemoveFromWhitelist(ctx context.Context, in *MsgRemoveFromWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// AddToClassWhitelist adds account as whitelist for all the NFTs in the class
+	// NOTE: class whitelist does not affect the individual nft whitelisting.
 	AddToClassWhitelist(ctx context.Context, in *MsgAddToClassWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// RemoveFromClassWhitelist removes account as whitelist for the entire class
-	// NOTE: if specific whitelist is granted for an NFT, that whitelist will still be valid.
+	// NOTE:
+	// class whitelist does not affect the individual nft whitelisting.
+	// ie. if specific whitelist is granted for an NFT, that whitelist will
+	// still be valid, ater we add and remove it from the class whitelist.
 	RemoveFromClassWhitelist(ctx context.Context, in *MsgRemoveFromClassWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// UpdateParams is a governance operation that sets the parameters of the module.
 	// NOTE: all parameters must be provided.
@@ -701,9 +705,13 @@ type MsgServer interface {
 	// RemoveFromWhitelist removes an account from whitelisted list of the NFT
 	RemoveFromWhitelist(context.Context, *MsgRemoveFromWhitelist) (*EmptyResponse, error)
 	// AddToClassWhitelist adds account as whitelist for all the NFTs in the class
+	// NOTE: class whitelist does not affect the individual nft whitelisting.
 	AddToClassWhitelist(context.Context, *MsgAddToClassWhitelist) (*EmptyResponse, error)
 	// RemoveFromClassWhitelist removes account as whitelist for the entire class
-	// NOTE: if specific whitelist is granted for an NFT, that whitelist will still be valid.
+	// NOTE:
+	// class whitelist does not affect the individual nft whitelisting.
+	// ie. if specific whitelist is granted for an NFT, that whitelist will
+	// still be valid, ater we add and remove it from the class whitelist.
 	RemoveFromClassWhitelist(context.Context, *MsgRemoveFromClassWhitelist) (*EmptyResponse, error)
 	// UpdateParams is a governance operation that sets the parameters of the module.
 	// NOTE: all parameters must be provided.
