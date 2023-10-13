@@ -46,3 +46,13 @@ message EventRemovedFromWhitelist {
   string id       = 2;
   string account   = 3;
 }
+
+message EventAddedToClassWhitelist {
+  string class_id = 1;
+  string account   = 2;
+}
+
+message EventRemovedFromClassWhitelist {
+  string class_id = 1;
+  string account   = 2;
+}

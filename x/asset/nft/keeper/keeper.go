@@ -574,6 +574,15 @@ func (k Keeper) IsWhitelisted(ctx sdk.Context, classID, nftID string, account sd
 		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
+	classKey, err := types.CreateClassWhitelistingKey(classID, account)
+	if err != nil {
+		return false, err
+	}
+
+	if bytes.Equal(ctx.KVStore(k.storeKey).Get(classKey), asset.StoreTrue) {
+		return true, nil
+	}
+
 	key, err := types.CreateWhitelistingKey(classID, nftID, account)
 	if err != nil {
 		return false, err
@@ -656,6 +665,66 @@ func (k Keeper) GetWhitelistedAccounts(ctx sdk.Context, q *query.PageRequest) ([
 	return whitelisted, pageRes, nil
 }
 
+// GetAllClassWhitelistedAccounts returns all whitelisted accounts for all NFTs.
+func (k Keeper) GetAllClassWhitelistedAccounts(ctx sdk.Context, q *query.PageRequest) ([]types.ClassWhitelistedAccounts, *query.PageResponse, error) {
+	mp := make(map[string][]string, 0)
+	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassWhitelistingKeyPrefix),
+		q, func(key, value []byte) error {
+			if !bytes.Equal(value, asset.StoreTrue) {
+				return sdkerrors.Wrapf(types.ErrInvalidState, "value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
+			}
+			classID, account, err := types.ParseClassWhitelistingKey(key)
+			if err != nil {
+				return err
+			}
+			if !k.nftKeeper.HasClass(ctx, classID) {
+				return nil
+			}
+
+			accountString := account.String()
+			mp[classID] = append(mp[classID], accountString)
+			return nil
+		})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	whitelisted := make([]types.ClassWhitelistedAccounts, 0, len(mp))
+	for classID, accounts := range mp {
+		whitelisted = append(whitelisted, types.ClassWhitelistedAccounts{
+			ClassID:  classID,
+			Accounts: accounts,
+		})
+	}
+
+	return whitelisted, pageRes, nil
+}
+
+// GetWhitelistedAccountsForClass returns all whitelisted accounts for the class.
+func (k Keeper) GetWhitelistedAccountsForClass(ctx sdk.Context, classID string, q *query.PageRequest) ([]string, *query.PageResponse, error) {
+	compositeKey, err := store.JoinKeysWithLength([]byte(classID))
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidKey, "failed to create a composite key for nft, err: %s", err)
+	}
+	key := store.JoinKeys(types.NFTClassWhitelistingKeyPrefix, compositeKey)
+	accounts := []string{}
+	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key),
+		q, func(key, value []byte) error {
+			if !bytes.Equal(value, asset.StoreTrue) {
+				return sdkerrors.Wrapf(types.ErrInvalidState, "value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
+			}
+
+			account := sdk.AccAddress(key[1:]) // the first byte contains the length prefix
+			accounts = append(accounts, account.String())
+			return nil
+		})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return accounts, pageRes, nil
+}
+
 // AddToWhitelist adds an account to the whitelisted list of accounts for the NFT.
 func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error {
 	return k.addToWhitelistOrRemoveFromWhitelist(ctx, classID, nftID, sender, account, true)
@@ -666,10 +735,36 @@ func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, send
 	return k.addToWhitelistOrRemoveFromWhitelist(ctx, classID, nftID, sender, account, false)
 }
 
+// AddToClassWhitelist adds an account to the whitelisted list of accounts for the entire class.
+func (k Keeper) AddToClassWhitelist(ctx sdk.Context, classID string, sender, account sdk.AccAddress) error {
+	return k.addToWhitelistOrRemoveFromWhitelistClass(ctx, classID, sender, account, true)
+}
+
+// RemoveFromClassWhitelist removes an account from the whitelisted list of accounts for the entire class.
+func (k Keeper) RemoveFromClassWhitelist(ctx sdk.Context, classID string, sender, account sdk.AccAddress) error {
+	return k.addToWhitelistOrRemoveFromWhitelistClass(ctx, classID, sender, account, false)
+}
+
 // SetWhitelisting adds an account to the whitelisting of the NFT, if whitelisting is true
 // and removes it, if whitelisting is false.
 func (k Keeper) SetWhitelisting(ctx sdk.Context, classID, nftID string, account sdk.AccAddress, whitelisting bool) error {
 	key, err := types.CreateWhitelistingKey(classID, nftID, account)
+	if err != nil {
+		return err
+	}
+	s := ctx.KVStore(k.storeKey)
+	if whitelisting {
+		s.Set(key, asset.StoreTrue)
+	} else {
+		s.Delete(key)
+	}
+	return nil
+}
+
+// SetClassWhitelisting adds an account to the whitelisting of the Class, if whitelisting is true
+// and removes it, if whitelisting is false.
+func (k Keeper) SetClassWhitelisting(ctx sdk.Context, classID string, account sdk.AccAddress, whitelisting bool) error {
+	key, err := types.CreateClassWhitelistingKey(classID, account)
 	if err != nil {
 		return err
 	}
@@ -783,6 +878,44 @@ func (k Keeper) freezeOrUnfreeze(ctx sdk.Context, sender sdk.AccAddress, classID
 			ClassId: classID,
 			Id:      nftID,
 			Owner:   owner.String(),
+		}
+	}
+
+	if err = ctx.EventManager().EmitTypedEvent(event); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit event: %v, err: %s", event, err)
+	}
+
+	return nil
+}
+
+func (k Keeper) addToWhitelistOrRemoveFromWhitelistClass(ctx sdk.Context, classID string, sender, account sdk.AccAddress, setWhitelisted bool) error {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	if err != nil {
+		return err
+	}
+
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_whitelisting); err != nil {
+		return err
+	}
+
+	if classDefinition.Issuer == account.String() {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "setting class whitelisting for the nft class issuer is forbidden")
+	}
+
+	if err := k.SetClassWhitelisting(ctx, classID, account, setWhitelisted); err != nil {
+		return err
+	}
+
+	var event proto.Message
+	if setWhitelisted {
+		event = &types.EventAddedToClassWhitelist{
+			ClassId: classID,
+			Account: account.String(),
+		}
+	} else {
+		event = &types.EventRemovedFromClassWhitelist{
+			ClassId: classID,
+			Account: account.String(),
 		}
 	}
 

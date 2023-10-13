@@ -867,6 +867,141 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 	requireT.True(types.ErrNFTNotFound.Is(err))
 }
 
+func TestKeeper_ClassWhitelist(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 1000_000),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(testApp.FundAccount(ctx, issuer, sdk.NewCoins(nftParams.MintFee)))
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_whitelisting,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	// mint NFT
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+	nftID := settings.ID
+
+	// transfer to non whitelisted account, it should fail.
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
+	requireT.Error(err)
+	requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
+
+	// whitelist the account
+	requireT.NoError(assetNFTKeeper.AddToClassWhitelist(ctx, classID, issuer, recipient))
+
+	// check whitelisting
+	isWhitelisted, err := assetNFTKeeper.IsWhitelisted(ctx, classID, nftID, recipient)
+	requireT.NoError(err)
+	requireT.True(isWhitelisted)
+
+	// transfer again, it should now succeed.
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
+	requireT.NoError(err)
+
+	// test query accounts
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(assetNFTKeeper.AddToClassWhitelist(ctx, classID, issuer, recipient2))
+
+	isWhitelisted, err = assetNFTKeeper.IsWhitelisted(ctx, classID, nftID, recipient2)
+	requireT.NoError(err)
+	requireT.True(isWhitelisted)
+
+	whitelistedNftAccounts, _, err := assetNFTKeeper.GetWhitelistedAccountsForClass(ctx, classID, &query.PageRequest{Limit: query.MaxLimit})
+	requireT.NoError(err)
+	requireT.Len(whitelistedNftAccounts, 2)
+	requireT.ElementsMatch(whitelistedNftAccounts, []string{
+		recipient.String(),
+		recipient2.String(),
+	})
+
+	incrementallyQueriedAccounts := []string{}
+	whitelistedNftAccounts, pageRes, err := assetNFTKeeper.GetWhitelistedAccountsForClass(ctx, classID, &query.PageRequest{Limit: 1})
+	requireT.NoError(err)
+	requireT.Len(whitelistedNftAccounts, 1)
+	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, whitelistedNftAccounts...)
+
+	whitelistedNftAccounts, pageRes, err = assetNFTKeeper.GetWhitelistedAccountsForClass(ctx, classID, &query.PageRequest{Key: pageRes.GetNextKey()})
+	requireT.NoError(err)
+	requireT.Len(whitelistedNftAccounts, 1)
+	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, whitelistedNftAccounts...)
+	requireT.Nil(pageRes.GetNextKey())
+
+	requireT.ElementsMatch([]string{
+		recipient.String(),
+		recipient2.String(),
+	}, incrementallyQueriedAccounts)
+}
+
+func TestKeeper_ClassWhitelist_Unwhitelistable(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer:   issuer,
+		Symbol:   "symbol",
+		Features: []types.ClassFeature{},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// try to whitelist account, it should fail
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = assetNFTKeeper.AddToClassWhitelist(ctx, classID, issuer, recipient)
+	requireT.Error(err)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+}
+
+func TestKeeper_ClassWhitelist_NonExistent(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classID := types.BuildClassID("symbol", issuer)
+
+	// try whitelist account, it should fail because class is not present
+	err := assetNFTKeeper.AddToClassWhitelist(ctx, classID, issuer, recipient)
+	requireT.Error(err)
+	requireT.ErrorIs(err, types.ErrClassNotFound)
+}
+
 func genNFTData(requireT *require.Assertions) *codectypes.Any {
 	dataString := "metadata"
 	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})

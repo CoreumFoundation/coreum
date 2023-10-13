@@ -70,14 +70,17 @@
     - [Msg](#coreum.asset.ft.v1.Msg)
   
 - [coreum/asset/nft/v1/event.proto](#coreum/asset/nft/v1/event.proto)
+    - [EventAddedToClassWhitelist](#coreum.asset.nft.v1.EventAddedToClassWhitelist)
     - [EventAddedToWhitelist](#coreum.asset.nft.v1.EventAddedToWhitelist)
     - [EventClassIssued](#coreum.asset.nft.v1.EventClassIssued)
     - [EventFrozen](#coreum.asset.nft.v1.EventFrozen)
+    - [EventRemovedFromClassWhitelist](#coreum.asset.nft.v1.EventRemovedFromClassWhitelist)
     - [EventRemovedFromWhitelist](#coreum.asset.nft.v1.EventRemovedFromWhitelist)
     - [EventUnfrozen](#coreum.asset.nft.v1.EventUnfrozen)
   
 - [coreum/asset/nft/v1/genesis.proto](#coreum/asset/nft/v1/genesis.proto)
     - [BurntNFT](#coreum.asset.nft.v1.BurntNFT)
+    - [ClassWhitelistedAccounts](#coreum.asset.nft.v1.ClassWhitelistedAccounts)
     - [FrozenNFT](#coreum.asset.nft.v1.FrozenNFT)
     - [GenesisState](#coreum.asset.nft.v1.GenesisState)
     - [WhitelistedNFTAccounts](#coreum.asset.nft.v1.WhitelistedNFTAccounts)
@@ -104,6 +107,8 @@
     - [QueryFrozenResponse](#coreum.asset.nft.v1.QueryFrozenResponse)
     - [QueryParamsRequest](#coreum.asset.nft.v1.QueryParamsRequest)
     - [QueryParamsResponse](#coreum.asset.nft.v1.QueryParamsResponse)
+    - [QueryWhitelistedAccountsForClassRequest](#coreum.asset.nft.v1.QueryWhitelistedAccountsForClassRequest)
+    - [QueryWhitelistedAccountsForClassResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForClassResponse)
     - [QueryWhitelistedAccountsForNFTRequest](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTRequest)
     - [QueryWhitelistedAccountsForNFTResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTResponse)
     - [QueryWhitelistedRequest](#coreum.asset.nft.v1.QueryWhitelistedRequest)
@@ -113,11 +118,13 @@
   
 - [coreum/asset/nft/v1/tx.proto](#coreum/asset/nft/v1/tx.proto)
     - [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse)
+    - [MsgAddToClassWhitelist](#coreum.asset.nft.v1.MsgAddToClassWhitelist)
     - [MsgAddToWhitelist](#coreum.asset.nft.v1.MsgAddToWhitelist)
     - [MsgBurn](#coreum.asset.nft.v1.MsgBurn)
     - [MsgFreeze](#coreum.asset.nft.v1.MsgFreeze)
     - [MsgIssueClass](#coreum.asset.nft.v1.MsgIssueClass)
     - [MsgMint](#coreum.asset.nft.v1.MsgMint)
+    - [MsgRemoveFromClassWhitelist](#coreum.asset.nft.v1.MsgRemoveFromClassWhitelist)
     - [MsgRemoveFromWhitelist](#coreum.asset.nft.v1.MsgRemoveFromWhitelist)
     - [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze)
     - [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams)
@@ -1224,6 +1231,22 @@ Msg defines the Msg service.
 
 
 
+<a name="coreum.asset.nft.v1.EventAddedToClassWhitelist"></a>
+
+### EventAddedToClassWhitelist
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `class_id` | [string](#string) |  |  |
+| `account` | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="coreum.asset.nft.v1.EventAddedToWhitelist"></a>
 
 ### EventAddedToWhitelist
@@ -1275,6 +1298,22 @@ EventClassIssued is emitted on MsgIssueClass.
 | `class_id` | [string](#string) |  |  |
 | `id` | [string](#string) |  |  |
 | `owner` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="coreum.asset.nft.v1.EventRemovedFromClassWhitelist"></a>
+
+### EventRemovedFromClassWhitelist
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `class_id` | [string](#string) |  |  |
+| `account` | [string](#string) |  |  |
 
 
 
@@ -1347,6 +1386,22 @@ EventClassIssued is emitted on MsgIssueClass.
 
 
 
+<a name="coreum.asset.nft.v1.ClassWhitelistedAccounts"></a>
+
+### ClassWhitelistedAccounts
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `classID` | [string](#string) |  |  |
+| `accounts` | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="coreum.asset.nft.v1.FrozenNFT"></a>
 
 ### FrozenNFT
@@ -1376,6 +1431,7 @@ GenesisState defines the nftasset module's genesis state.
 | `frozen_nfts` | [FrozenNFT](#coreum.asset.nft.v1.FrozenNFT) | repeated |  |
 | `whitelisted_nft_accounts` | [WhitelistedNFTAccounts](#coreum.asset.nft.v1.WhitelistedNFTAccounts) | repeated |  |
 | `burnt_nfts` | [BurntNFT](#coreum.asset.nft.v1.BurntNFT) | repeated |  |
+| `class_whitelisted_accounts` | [ClassWhitelistedAccounts](#coreum.asset.nft.v1.ClassWhitelistedAccounts) | repeated |  |
 
 
 
@@ -1699,6 +1755,38 @@ QueryParamsResponse defines the response type for querying x/asset/nft parameter
 
 
 
+<a name="coreum.asset.nft.v1.QueryWhitelistedAccountsForClassRequest"></a>
+
+### QueryWhitelistedAccountsForClassRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
+| `class_id` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="coreum.asset.nft.v1.QueryWhitelistedAccountsForClassResponse"></a>
+
+### QueryWhitelistedAccountsForClassResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
+| `accounts` | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTRequest"></a>
 
 ### QueryWhitelistedAccountsForNFTRequest
@@ -1783,6 +1871,7 @@ Query defines the gRPC querier service.
 | `Frozen` | [QueryFrozenRequest](#coreum.asset.nft.v1.QueryFrozenRequest) | [QueryFrozenResponse](#coreum.asset.nft.v1.QueryFrozenResponse) | Frozen queries to check if an NFT is frozen or not. | GET|/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen|
 | `Whitelisted` | [QueryWhitelistedRequest](#coreum.asset.nft.v1.QueryWhitelistedRequest) | [QueryWhitelistedResponse](#coreum.asset.nft.v1.QueryWhitelistedResponse) | Whitelisted queries to check if an account is whitelited to hold an NFT or not. | GET|/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/{account}|
 | `WhitelistedAccountsForNFT` | [QueryWhitelistedAccountsForNFTRequest](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTRequest) | [QueryWhitelistedAccountsForNFTResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTResponse) | WhitelistedAccountsForNFT returns the list of accounts which are whitelisted to hold this NFT. | GET|/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted|
+| `WhitelistedAccountsForClass` | [QueryWhitelistedAccountsForClassRequest](#coreum.asset.nft.v1.QueryWhitelistedAccountsForClassRequest) | [QueryWhitelistedAccountsForClassResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForClassResponse) | WhitelistedAccountsForClass returns the list of accounts which are whitelisted to hold NFTs in this class. | GET|/coreum/asset/nft/v1/classes/{class_id}/whitelisted|
 | `BurntNFT` | [QueryBurntNFTRequest](#coreum.asset.nft.v1.QueryBurntNFTRequest) | [QueryBurntNFTResponse](#coreum.asset.nft.v1.QueryBurntNFTResponse) | BurntNFTsInClass checks if an nft if is in burnt NFTs list. | GET|/coreum/asset/nft/v1/classes/{class_id}/burnt/{nft_id}|
 | `BurntNFTsInClass` | [QueryBurntNFTsInClassRequest](#coreum.asset.nft.v1.QueryBurntNFTsInClassRequest) | [QueryBurntNFTsInClassResponse](#coreum.asset.nft.v1.QueryBurntNFTsInClassResponse) | BurntNFTsInClass returns the list of burnt nfts in a class. | GET|/coreum/asset/nft/v1/classes/{class_id}/burnt|
 
@@ -1801,6 +1890,23 @@ Query defines the gRPC querier service.
 
 ### EmptyResponse
 
+
+
+
+
+
+
+<a name="coreum.asset.nft.v1.MsgAddToClassWhitelist"></a>
+
+### MsgAddToClassWhitelist
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  |
+| `class_id` | [string](#string) |  |  |
+| `account` | [string](#string) |  |  |
 
 
 
@@ -1903,6 +2009,23 @@ MsgMint defines message for the Mint method.
 
 
 
+<a name="coreum.asset.nft.v1.MsgRemoveFromClassWhitelist"></a>
+
+### MsgRemoveFromClassWhitelist
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  |
+| `class_id` | [string](#string) |  |  |
+| `account` | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="coreum.asset.nft.v1.MsgRemoveFromWhitelist"></a>
 
 ### MsgRemoveFromWhitelist
@@ -1974,6 +2097,8 @@ Msg defines the Msg service.
 | `Unfreeze` | [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | Unfreeze removes the freeze effect already put on an NFT | |
 | `AddToWhitelist` | [MsgAddToWhitelist](#coreum.asset.nft.v1.MsgAddToWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | AddToWhitelist sets the account as whitelisted to hold the NFT | |
 | `RemoveFromWhitelist` | [MsgRemoveFromWhitelist](#coreum.asset.nft.v1.MsgRemoveFromWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | RemoveFromWhitelist removes an account from whitelisted list of the NFT | |
+| `AddToClassWhitelist` | [MsgAddToClassWhitelist](#coreum.asset.nft.v1.MsgAddToClassWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | AddToClassWhitelist adds account as whitelist for all the NFTs in the class | |
+| `RemoveFromClassWhitelist` | [MsgRemoveFromClassWhitelist](#coreum.asset.nft.v1.MsgRemoveFromClassWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | RemoveFromClassWhitelist removes account as whitelist for the entire class NOTE: if specific whitelist is granted for an NFT, that whitelist will still be valid. | |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | UpdateParams is a governance operation that sets the parameters of the module. NOTE: all parameters must be provided. | |
 
  <!-- end services -->
