@@ -31,6 +31,7 @@ const (
 	MintLimitFlag          = "mint-limit"
 	BurnLimitFlag          = "burn-limit"
 	ExpirationFlag         = "expiration"
+	RecipientFlag          = "recipient"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -170,9 +171,9 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 }
 
 // CmdTxMint returns Mint cobra command.
-func CmdTxMint() *cobra.Command { //nolint:dupl // all CLI commands are similar.
+func CmdTxMint() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mint [amount] --from [sender]",
+		Use:   "mint [amount] --from [sender] --recipient [recipient]",
 		Args:  cobra.ExactArgs(1),
 		Short: "mint new amount of fungible token",
 		Long: strings.TrimSpace(
@@ -191,14 +192,20 @@ $ %s tx %s mint 100000ABC-%s --from [sender]
 			}
 
 			sender := clientCtx.GetFromAddress()
+			recipient, err := cmd.Flags().GetString(RecipientFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
 			amount, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
 				return sdkerrors.Wrap(err, "invalid amount")
 			}
 
 			msg := &types.MsgMint{
-				Sender: sender.String(),
-				Coin:   amount,
+				Sender:    sender.String(),
+				Recipient: recipient,
+				Coin:      amount,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -206,12 +213,13 @@ $ %s tx %s mint 100000ABC-%s --from [sender]
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(RecipientFlag, "", "Address to send minted tokens to, if not specified minted tokens are sent to the issuer")
 
 	return cmd
 }
 
 // CmdTxBurn returns Burn cobra command.
-func CmdTxBurn() *cobra.Command { //nolint:dupl // all CLI commands are similar.
+func CmdTxBurn() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
