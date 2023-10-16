@@ -1516,7 +1516,7 @@ func TestAssetNFTClassWhitelist(t *testing.T) {
 			&assetnfttypes.MsgAddToClassWhitelist{},
 			&assetnfttypes.MsgAddToClassWhitelist{},
 			&assetnfttypes.MsgAddToClassWhitelist{},
-			&assetnfttypes.MsgRemoveFromWhitelist{},
+			&assetnfttypes.MsgRemoveFromClassWhitelist{},
 			&nft.MsgSend{},
 			&nft.MsgSend{},
 			&nft.MsgSend{},
