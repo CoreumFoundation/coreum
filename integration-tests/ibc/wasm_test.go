@@ -160,7 +160,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 // TestIBCCallFromSmartContract tests the WASM contract calls via WASM IBC channel.
 func TestIBCCallFromSmartContract(t *testing.T) {
 	// FIXME: Temporary skip this test because it is incompatible with crust but crust PR needs changes from coreum.
-	//t.SkipNow()
+	t.SkipNow()
 
 	// We don't enable the t.Parallel here since that test uses the config unseal hack.
 	// Config unseal is needed to run cosmos relayer which interacts with both chain SDK configs internally.
