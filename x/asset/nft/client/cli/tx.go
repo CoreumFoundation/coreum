@@ -20,6 +20,7 @@ import (
 const (
 	FeaturesFlag    = "features"
 	RoyaltyRateFlag = "royalty-rate"
+	RecipientFlag   = "recipient"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -145,17 +146,23 @@ $ %s tx %s mint abc-%s id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
 			}
 
 			sender := clientCtx.GetFromAddress()
+			recipient, err := cmd.Flags().GetString(RecipientFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
 			classID := args[0]
 			ID := args[1]
 			uri := args[2]
 			uriHash := args[3]
 
 			msg := &types.MsgMint{
-				Sender:  sender.String(),
-				ClassID: classID,
-				ID:      ID,
-				URI:     uri,
-				URIHash: uriHash,
+				Sender:    sender.String(),
+				Recipient: recipient,
+				ClassID:   classID,
+				ID:        ID,
+				URI:       uri,
+				URIHash:   uriHash,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -163,6 +170,7 @@ $ %s tx %s mint abc-%s id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(RecipientFlag, "", "Address to send minted token to, if not specified minted token is sent to the class issuer")
 
 	return cmd
 }

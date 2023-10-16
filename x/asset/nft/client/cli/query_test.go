@@ -153,7 +153,7 @@ func mint(
 func issueClass(
 	requireT *require.Assertions,
 	ctx client.Context,
-	symbol, name, description, url, urlHash string,
+	symbol, name, description, url, urlHash string, //nolint:unparam
 	testNetwork *network.Network,
 	royaltyRate string,
 	features ...types.ClassFeature,
