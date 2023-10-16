@@ -65,9 +65,5 @@ func (wk Wrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendRes
 
 // Transfer overwrites the original transfer function to include our custom interceptor.
 func (wk Wrapper) Transfer(ctx sdk.Context, classID, nftID string, receiver sdk.AccAddress) error {
-	if err := wk.nonFungibleTokenProvider.BeforeTransfer(ctx, classID, nftID, receiver); err != nil {
-		return err
-	}
-
-	return wk.Keeper.Transfer(ctx, classID, nftID, receiver)
+	return wk.nonFungibleTokenProvider.Transfer(ctx, classID, nftID, receiver)
 }
