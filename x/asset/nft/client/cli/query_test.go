@@ -150,7 +150,6 @@ func mint(
 	requireT.NoError(err)
 }
 
-//nolint:unparam // we don't want to use constants for helpers
 func issueClass(
 	requireT *require.Assertions,
 	ctx client.Context,

@@ -700,8 +700,8 @@ func (k Keeper) GetAllClassWhitelistedAccounts(ctx sdk.Context, q *query.PageReq
 	return whitelisted, pageRes, nil
 }
 
-// GetWhitelistedAccountsForClass returns all whitelisted accounts for the class.
-func (k Keeper) GetWhitelistedAccountsForClass(ctx sdk.Context, classID string, q *query.PageRequest) ([]string, *query.PageResponse, error) {
+// GetClassWhitelistedAccounts returns all whitelisted accounts for the class.
+func (k Keeper) GetClassWhitelistedAccounts(ctx sdk.Context, classID string, q *query.PageRequest) ([]string, *query.PageResponse, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID))
 	if err != nil {
 		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidKey, "failed to create a composite key for nft, err: %s", err)
