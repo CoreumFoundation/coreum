@@ -21,6 +21,8 @@ import (
 
 // TestAssetNFTMintLegacyNFTClient tests legacy APIs in cnft are working.
 // we should remove this test after we remove cnf module.
+//
+//nolint:staticcheck // we are testing deprecated handlers
 func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	t.Parallel()
 
@@ -93,7 +95,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	}, nftMintedEvent)
 
 	// check that token is present in the nft module
-	nftRes, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{ //nolint:staticcheck // we are testing deprecated handlers
+	nftRes, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{
 		ClassId: classID,
 		Id:      nftMintedEvent.Id,
 	})
@@ -112,7 +114,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	requireT.Equal(jsonData, data2.Data)
 
 	// check the owner
-	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{ //nolint:staticcheck // we are testing deprecated handlers
+	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
 		Id:      nftMintedEvent.Id,
 	})
@@ -145,7 +147,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	}, nftSentEvent)
 
 	// check new owner
-	ownerRes, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{ //nolint:staticcheck // we are testing deprecated handlers
+	ownerRes, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
 		Id:      nftMintedEvent.Id,
 	})
