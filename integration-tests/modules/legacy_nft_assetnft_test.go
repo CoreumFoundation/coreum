@@ -93,8 +93,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	}, nftMintedEvent)
 
 	// check that token is present in the nft module
-	//nolint:staticcheck // we are testing deprecated handlers
-	nftRes, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{
+	nftRes, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{ //nolint:staticcheck // we are testing deprecated handlers
 		ClassId: classID,
 		Id:      nftMintedEvent.Id,
 	})
@@ -113,8 +112,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	requireT.Equal(jsonData, data2.Data)
 
 	// check the owner
-	//nolint:staticcheck // we are testing deprecated handlers
-	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{ //nolint:staticcheck // we are testing deprecated handlers
 		ClassId: classID,
 		Id:      nftMintedEvent.Id,
 	})
@@ -147,8 +145,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	}, nftSentEvent)
 
 	// check new owner
-	//nolint:staticcheck // we are testing deprecated handlers
-	ownerRes, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+	ownerRes, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{ //nolint:staticcheck // we are testing deprecated handlers
 		ClassId: classID,
 		Id:      nftMintedEvent.Id,
 	})
