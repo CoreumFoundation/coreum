@@ -208,7 +208,7 @@ func TestCmdClassWhitelist(t *testing.T) {
 	requireT.True(whitelistedResp.Whitelisted)
 
 	// query with pagination
-	var resPage types.QueryWhitelistedAccountsForClassResponse
+	var resPage types.QueryClassWhitelistedAccountsResponse
 	args = []string{classID}
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassWhitelistedAccounts(), args, &resPage))
 	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
