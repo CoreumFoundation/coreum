@@ -9,13 +9,13 @@ import (
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	rawnft "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	rawnft "github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 func TestInitAndExportGenesis(t *testing.T) {

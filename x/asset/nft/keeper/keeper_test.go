@@ -175,12 +175,13 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
 
 	settings := types.MintSettings{
-		Sender:  addr,
-		ClassID: classID,
-		ID:      "my-id",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "content-hash",
-		Data:    genNFTData(requireT),
+		Sender:    addr,
+		Recipient: addr,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+		Data:      genNFTData(requireT),
 	}
 
 	// mint first NFT
@@ -214,10 +215,70 @@ func TestKeeper_Mint(t *testing.T) {
 	err = nftKeeper.Mint(ctx, settings)
 	requireT.True(types.ErrInvalidInput.Is(err))
 
-	// try to mint from not issuer account
+	// try to mint from non-issuer account
 	settings.Sender = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = nftKeeper.Mint(ctx, settings)
 	requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
+}
+
+func TestKeeper_MintWithRecipient(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	nftKeeper := testApp.AssetNFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
+	}
+	requireT.NoError(nftKeeper.SetParams(ctx, nftParams))
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(nftParams.MintFee)))
+	classSettings := types.IssueClassSettings{
+		Issuer: addr,
+		Symbol: "symbol",
+	}
+
+	classID, err := nftKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+
+	settings := types.MintSettings{
+		Sender:    addr,
+		Recipient: randomAddr,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	// mint first NFT
+	err = nftKeeper.Mint(ctx, settings)
+	requireT.NoError(err)
+
+	nft, found := testApp.NFTKeeper.GetNFT(ctx, classID, settings.ID)
+	requireT.True(found)
+	// we check line by line because of the data field
+	requireT.Equal(settings.ClassID, nft.ClassId)
+	requireT.Equal(settings.ID, nft.Id)
+	requireT.Equal(settings.URI, nft.Uri)
+	requireT.Equal(settings.URIHash, nft.UriHash)
+
+	nftOwner := testApp.NFTKeeper.GetOwner(ctx, classID, settings.ID)
+	requireT.Equal(randomAddr, nftOwner)
+
+	// verify issue fee was burnt
+
+	burntStr, err := event.FindStringEventAttribute(ctx.EventManager().ABCIEvents(), banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	requireT.NoError(err)
+	requireT.Equal(nftParams.MintFee.String(), burntStr)
+
+	// check that balance is 0 meaning issue fee was taken
+
+	balance := bankKeeper.GetBalance(ctx, addr, constant.DenomDev)
+	requireT.Equal(sdkmath.ZeroInt().String(), balance.Amount.String())
 }
 
 func TestKeeper_Burn(t *testing.T) {
@@ -244,9 +305,10 @@ func TestKeeper_Burn(t *testing.T) {
 
 	nftID := "my-id"
 	settings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      nftID,
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        nftID,
 	}
 
 	// mint NFT
@@ -296,9 +358,10 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 
 	settings = types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      nftID,
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        nftID,
 	}
 
 	// mint NFT
@@ -346,9 +409,10 @@ func TestKeeper_Burn_Frozen(t *testing.T) {
 
 	nftID := "my-id"
 	settings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      nftID,
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        nftID,
 	}
 
 	// mint NFT
@@ -390,11 +454,12 @@ func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
-		Sender:  addr,
-		ClassID: classID,
-		ID:      "my-id",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "content-hash",
+		Sender:    addr,
+		Recipient: addr,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
 	}
 
 	// mint NFT
@@ -425,11 +490,12 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
-		Sender:  addr,
-		ClassID: classID,
-		ID:      "my-id",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "content-hash",
+		Sender:    addr,
+		Recipient: addr,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
 	}
 
 	// mint NFT
@@ -462,11 +528,12 @@ func TestKeeper_DisableSending(t *testing.T) {
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "my-id",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "content-hash",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
 	}
 
 	// mint NFT
@@ -511,11 +578,12 @@ func TestKeeper_Freeze(t *testing.T) {
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "my-id",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "content-hash",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
 	}
 
 	// mint NFT
@@ -573,11 +641,12 @@ func TestKeeper_Freeze_Unfreezable(t *testing.T) {
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "my-id",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "content-hash",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
 	}
 
 	// mint NFT
@@ -652,11 +721,12 @@ func TestKeeper_Whitelist(t *testing.T) {
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "my-id",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "content-hash",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
 	}
 
 	// mint NFT
@@ -732,11 +802,12 @@ func TestKeeper_Whitelist_Unwhitelistable(t *testing.T) {
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "my-id",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "content-hash",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
 	}
 
 	// mint NFT

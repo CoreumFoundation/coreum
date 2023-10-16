@@ -6,12 +6,12 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 func TestOriginalClassExistsInvariant(t *testing.T) {
@@ -69,9 +69,10 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	mintSettings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "nft-id",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "nft-id",
 	}
 	err = assetNFTKeeper.Mint(ctx, mintSettings)
 	requireT.NoError(err)
@@ -109,9 +110,10 @@ func TestBurntNFTNotExistsInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	mintSettings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "nft-id",
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "nft-id",
 	}
 	err = assetNFTKeeper.Mint(ctx, mintSettings)
 	requireT.NoError(err)

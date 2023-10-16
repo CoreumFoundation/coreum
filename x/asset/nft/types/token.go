@@ -10,8 +10,6 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/samber/lo"
-
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 var (
@@ -43,12 +41,13 @@ type IssueClassSettings struct {
 
 // MintSettings is the model which represents the params for the non-fungible token minting.
 type MintSettings struct {
-	Sender  sdk.AccAddress
-	ClassID string
-	ID      string
-	URI     string
-	URIHash string
-	Data    *codectypes.Any
+	Sender    sdk.AccAddress
+	Recipient sdk.AccAddress
+	ClassID   string
+	ID        string
+	URI       string
+	URIHash   string
+	Data      *codectypes.Any
 }
 
 // BuildClassID builds the non-fungible token id string from the symbol and issuer address.
@@ -110,10 +109,6 @@ func ValidateClassFeatures(features []ClassFeature) error {
 func ValidateTokenID(id string) error {
 	if !nftIDRegex.MatchString(id) {
 		return sdkerrors.Wrapf(ErrInvalidID, "id must match regex format '%s'", nftIDRegexStr)
-	}
-
-	if err := nft.ValidateNFTID(id); err != nil {
-		return sdkerrors.Wrapf(ErrInvalidID, err.Error())
 	}
 
 	return nil

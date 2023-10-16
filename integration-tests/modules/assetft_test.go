@@ -426,12 +426,14 @@ func TestAssetFTMint(t *testing.T) {
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	randomAddress := chain.GenAccount()
+	recipient := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
 		},
@@ -547,6 +549,29 @@ func TestAssetFTMint(t *testing.T) {
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
 	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
+
+	// mint tokens to recipient
+	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(10))
+	mintMsg = &assetfttypes.MsgMint{
+		Sender:    issuer.String(),
+		Recipient: recipient.String(),
+		Coin:      mintCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin.String(), balance.GetBalance().String())
+
+	newSupply2, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin, newSupply2.GetAmount().Sub(newSupply.GetAmount()))
 }
 
 // TestAssetFTBurn tests burn functionality of fungible tokens.
@@ -1297,11 +1322,41 @@ func TestAssetFTFreeze(t *testing.T) {
 	)
 	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
-	// unfreeze 200 tokens and observer current frozen amount is zero
+	// set absolute frozen amount to 250
+	setFrozenMsg := &assetfttypes.MsgSetFrozen{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(250)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(setFrozenMsg)),
+		setFrozenMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(setFrozenMsg))
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(200),
+		CurrentAmount:  sdkmath.NewInt(250),
+	}, fungibleTokenFreezeEvts[0])
+
+	frozenBalance, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(250)), frozenBalance.Balance)
+
+	// unfreeze 250 tokens and observer current frozen amount is zero
 	unfreezeMsg = &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(250)),
 	}
 	res, err = client.BroadcastTx(
 		ctx,
@@ -1317,7 +1372,7 @@ func TestAssetFTFreeze(t *testing.T) {
 	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
-		PreviousAmount: sdkmath.NewInt(200),
+		PreviousAmount: sdkmath.NewInt(250),
 		CurrentAmount:  sdkmath.NewInt(0),
 	}, fungibleTokenFreezeEvts[0])
 }
@@ -2327,7 +2382,7 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
-// TestBareToken checks non of the features will work if the flags are not set.
+// TestBareToken checks none of the features will work if the flags are not set.
 func TestBareToken(t *testing.T) {
 	t.Parallel()
 

@@ -31,6 +31,7 @@ const (
 	MintLimitFlag          = "mint-limit"
 	BurnLimitFlag          = "burn-limit"
 	ExpirationFlag         = "expiration"
+	RecipientFlag          = "recipient"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -49,6 +50,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxBurn(),
 		CmdTxFreeze(),
 		CmdTxUnfreeze(),
+		CmdTxSetFrozen(),
 		CmdTxGloballyFreeze(),
 		CmdTxGloballyUnfreeze(),
 		CmdTxSetWhitelistedLimit(),
@@ -169,9 +171,9 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 }
 
 // CmdTxMint returns Mint cobra command.
-func CmdTxMint() *cobra.Command { //nolint:dupl // all CLI commands are similar.
+func CmdTxMint() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mint [amount] --from [sender]",
+		Use:   "mint [amount] --from [sender] --recipient [recipient]",
 		Args:  cobra.ExactArgs(1),
 		Short: "mint new amount of fungible token",
 		Long: strings.TrimSpace(
@@ -190,14 +192,20 @@ $ %s tx %s mint 100000ABC-%s --from [sender]
 			}
 
 			sender := clientCtx.GetFromAddress()
+			recipient, err := cmd.Flags().GetString(RecipientFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
 			amount, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
 				return sdkerrors.Wrap(err, "invalid amount")
 			}
 
 			msg := &types.MsgMint{
-				Sender: sender.String(),
-				Coin:   amount,
+				Sender:    sender.String(),
+				Recipient: recipient,
+				Coin:      amount,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -205,12 +213,13 @@ $ %s tx %s mint 100000ABC-%s --from [sender]
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(RecipientFlag, "", "Address to send minted tokens to, if not specified minted tokens are sent to the issuer")
 
 	return cmd
 }
 
 // CmdTxBurn returns Burn cobra command.
-func CmdTxBurn() *cobra.Command { //nolint:dupl // all CLI commands are similar.
+func CmdTxBurn() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
@@ -330,6 +339,50 @@ $ %s tx %s unfreeze [account_address] 100000ABC-%s --from [sender]
 				Coin:    amount,
 			}
 
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxSetFrozen returns SetFrozen cobra command.
+//
+//nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
+func CmdTxSetFrozen() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-frozen [account_address] [amount] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Set absolute frozen amount for the specific account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Set absolute frozen amount for the specific account.
+
+Example:
+$ %s tx %s set-frozen [account_address] 100000ABC-%s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			account := args[0]
+			amount, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgSetFrozen{
+				Sender:  sender.String(),
+				Account: account,
+				Coin:    amount,
+			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

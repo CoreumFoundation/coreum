@@ -1,31 +1,23 @@
 package keeper
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	wnftkeeper "github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
 )
+
+// StoreKey is the store key string for nft.
+const StoreKey = nft.ModuleName
 
 // Keeper of the nft store.
 type Keeper struct {
-	cdc      codec.BinaryCodec
-	storeKey storetypes.StoreKey
-	bk       nft.BankKeeper
+	wkeeper wnftkeeper.Wrapper
 }
 
 // NewKeeper creates a new nft Keeper instance.
-func NewKeeper(key storetypes.StoreKey,
-	cdc codec.BinaryCodec, ak nft.AccountKeeper, bk nft.BankKeeper,
+func NewKeeper(
+	wkeeper wnftkeeper.Wrapper,
 ) Keeper {
-	// ensure nft module account is set
-	if addr := ak.GetModuleAddress(nft.ModuleName); addr == nil {
-		panic("the nft module account has not been set")
-	}
-
 	return Keeper{
-		cdc:      cdc,
-		storeKey: key,
-		bk:       bk,
+		wkeeper: wkeeper,
 	}
 }

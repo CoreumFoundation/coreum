@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	cosmosnft "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
 )
 
 func TestGRPCQuery(t *testing.T) {
@@ -29,7 +31,7 @@ func (s *TestSuite) TestBalance() {
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryBalanceRequest{}
 			},
-			"invalid class id",
+			cosmosnft.ErrEmptyClassID.Error(),
 			0,
 			func(index int, require *require.Assertions, res *nft.QueryBalanceResponse, expBalance uint64) {},
 		},
@@ -67,7 +69,7 @@ func (s *TestSuite) TestBalance() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Balance(gocontext.Background(), req)
+			result, err := s.queryClient.Balance(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -97,7 +99,7 @@ func (s *TestSuite) TestOwner() {
 					Id: testID,
 				}
 			},
-			"invalid class id",
+			cosmosnft.ErrEmptyClassID.Error(),
 			func(index int, require *require.Assertions, res *nft.QueryOwnerResponse) {},
 		},
 		{
@@ -107,7 +109,7 @@ func (s *TestSuite) TestOwner() {
 					ClassId: s.testClassID,
 				}
 			},
-			"invalid nft id",
+			cosmosnft.ErrEmptyNFTID.Error(),
 			func(index int, require *require.Assertions, res *nft.QueryOwnerResponse) {},
 		},
 		{
@@ -158,7 +160,7 @@ func (s *TestSuite) TestOwner() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Owner(gocontext.Background(), req)
+			result, err := s.queryClient.Owner(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -184,7 +186,7 @@ func (s *TestSuite) TestSupply() {
 			func(index int, require *require.Assertions) {
 				req = &nft.QuerySupplyRequest{}
 			},
-			"invalid class id",
+			cosmosnft.ErrEmptyClassID.Error(),
 			0,
 			func(index int, require *require.Assertions, res *nft.QuerySupplyResponse, supply uint64) {},
 		},
@@ -218,7 +220,7 @@ func (s *TestSuite) TestSupply() {
 		{
 			"Success",
 			func(index int, require *require.Assertions) {
-				n := nft.NFT{
+				n := cosmosnft.NFT{
 					ClassId: s.testClassID,
 					Id:      testID,
 					Uri:     testURI,
@@ -243,7 +245,7 @@ func (s *TestSuite) TestSupply() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Supply(gocontext.Background(), req)
+			result, err := s.queryClient.Supply(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -293,7 +295,7 @@ func (s *TestSuite) TestNFTs() {
 				req = &nft.QueryNFTsRequest{
 					ClassId: "kitty1",
 				}
-				n := nft.NFT{
+				n := cosmosnft.NFT{
 					ClassId: s.testClassID,
 					Id:      testID,
 					Uri:     testURI,
@@ -309,20 +311,20 @@ func (s *TestSuite) TestNFTs() {
 		{
 			"Success,query by owner",
 			func(index int, require *require.Assertions) {
-				err := s.app.NFTKeeper.SaveClass(s.ctx, nft.Class{
+				err := s.app.NFTKeeper.SaveClass(s.ctx, cosmosnft.Class{
 					Id: "MyKitty",
 				})
 				require.NoError(err)
 
 				nfts = []*nft.NFT{}
 				for i := 0; i < 5; i++ {
-					n := nft.NFT{
+					n := cosmosnft.NFT{
 						ClassId: "MyKitty",
 						Id:      fmt.Sprintf("MyCat%d", i),
 					}
 					err := s.app.NFTKeeper.Mint(s.ctx, n, s.addrs[2])
 					require.NoError(err)
-					nfts = append(nfts, &n)
+					nfts = append(nfts, keeper.ConvertFromCosmosNFT(&n))
 				}
 
 				req = &nft.QueryNFTsRequest{
@@ -373,7 +375,7 @@ func (s *TestSuite) TestNFTs() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.NFTs(gocontext.Background(), req)
+			result, err := s.queryClient.NFTs(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -401,7 +403,7 @@ func (s *TestSuite) TestNFT() {
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryNFTRequest{}
 			},
-			"invalid class id",
+			cosmosnft.ErrEmptyClassID.Error(),
 			func(index int, require *require.Assertions, res *nft.QueryNFTResponse) {},
 		},
 		{
@@ -411,7 +413,7 @@ func (s *TestSuite) TestNFT() {
 					ClassId: s.testClassID,
 				}
 			},
-			"invalid nft id",
+			cosmosnft.ErrEmptyNFTID.Error(),
 			func(index int, require *require.Assertions, res *nft.QueryNFTResponse) {},
 		},
 		{
@@ -462,7 +464,7 @@ func (s *TestSuite) TestNFT() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.NFT(gocontext.Background(), req)
+			result, err := s.queryClient.NFT(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -490,7 +492,7 @@ func (s *TestSuite) TestClass() {
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryClassRequest{}
 			},
-			"invalid class id",
+			cosmosnft.ErrEmptyClassID.Error(),
 			func(index int, require *require.Assertions, res *nft.QueryClassResponse) {},
 		},
 		{
@@ -531,7 +533,7 @@ func (s *TestSuite) TestClass() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Class(gocontext.Background(), req)
+			result, err := s.queryClient.Class(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -593,7 +595,7 @@ func (s *TestSuite) TestClasses() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Classes(gocontext.Background(), req)
+			result, err := s.queryClient.Classes(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
