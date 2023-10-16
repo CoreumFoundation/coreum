@@ -66,9 +66,6 @@ func CreateOpenIBCChannelsAndStartRelaying(
 
 	pathName := fmt.Sprintf("%s-%s", srcChain.ChainSettings.ChainID, dstChain.ChainSettings.ChainID)
 
-	// port name samples:
-	//  coreum: wasm.devcore14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sd4f0ak
-	//  osmosis: wasm.osmo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sq2r9g9
 	require.NoError(t, relayerSrcChain.CreateOpenChannels(
 		ctx,
 		relayerDstChain,
@@ -107,7 +104,7 @@ func CreateOpenIBCChannelsAndStartRelaying(
 
 	go func() {
 		err := <-relErrCh
-		if !errors.Is(err, context.Canceled) {
+		if errors.Is(err, context.Canceled) {
 			return
 		}
 		require.NoError(t, err, "Cosmos Relayer start error")
