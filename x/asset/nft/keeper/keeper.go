@@ -311,6 +311,10 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q has been burnt for the class", settings.ID)
 	}
 
+	if err := k.isNFTReceivable(ctx, settings.ClassID, settings.ID, settings.Recipient); err != nil {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "address %q is unauthorized to receive NFT", settings.Recipient.String())
+	}
+
 	params := k.GetParams(ctx)
 	if params.MintFee.IsPositive() {
 		coinsToBurn := sdk.NewCoins(params.MintFee)

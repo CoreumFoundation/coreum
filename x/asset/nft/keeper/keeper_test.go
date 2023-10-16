@@ -254,7 +254,7 @@ func TestKeeper_MintWithRecipient(t *testing.T) {
 		URIHash:   "content-hash",
 	}
 
-	// mint first NFT
+	// mint NFT
 	err = nftKeeper.Mint(ctx, settings)
 	requireT.NoError(err)
 
@@ -279,6 +279,46 @@ func TestKeeper_MintWithRecipient(t *testing.T) {
 
 	balance := bankKeeper.GetBalance(ctx, addr, constant.DenomDev)
 	requireT.Equal(sdkmath.ZeroInt().String(), balance.Amount.String())
+}
+
+func TestKeeper_MintWithRecipientAndWhitelisting(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	nftKeeper := testApp.AssetNFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
+	}
+	requireT.NoError(nftKeeper.SetParams(ctx, nftParams))
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(nftParams.MintFee)))
+	classSettings := types.IssueClassSettings{
+		Issuer: addr,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_whitelisting,
+		},
+	}
+
+	classID, err := nftKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+
+	settings := types.MintSettings{
+		Sender:    addr,
+		Recipient: randomAddr,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	// mint NFT - should fail because recipient is not whitelisted, and cannot be because nft does not exist
+	err = nftKeeper.Mint(ctx, settings)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 func TestKeeper_Burn(t *testing.T) {
