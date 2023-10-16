@@ -754,7 +754,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/whitelisted": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesWhitelistedAccountsForClass",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesClassWhitelistedAccounts",
         "parameters": [
           {
             "name": "class_id",
@@ -805,7 +805,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/coreum.asset.nft.v1.QueryWhitelistedAccountsForClassResponse"
+              "$ref": "#/definitions/coreum.asset.nft.v1.QueryClassWhitelistedAccountsResponse"
             }
           },
           "default": {
@@ -815,7 +815,7 @@
             }
           }
         },
-        "summary": "WhitelistedAccountsForClass returns the list of accounts which are whitelisted to hold NFTs in this class.",
+        "summary": "ClassWhitelistedAccounts returns the list of accounts which are whitelisted to hold NFTs in this class.",
         "tags": [
           "Query"
         ]
@@ -7221,6 +7221,21 @@
       },
       "description": "QueryClassResponse is response type for the Query/Class RPC method."
     },
+    "coreum.asset.nft.v1.QueryClassWhitelistedAccountsResponse": {
+      "type": "object",
+      "properties": {
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse",
+          "description": "pagination defines the pagination in the response."
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "coreum.asset.nft.v1.QueryClassesResponse": {
       "type": "object",
       "properties": {
@@ -7254,21 +7269,6 @@
         }
       },
       "description": "QueryParamsResponse defines the response type for querying x/asset/nft parameters."
-    },
-    "coreum.asset.nft.v1.QueryWhitelistedAccountsForClassResponse": {
-      "type": "object",
-      "properties": {
-        "pagination": {
-          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse",
-          "description": "pagination defines the pagination in the response."
-        },
-        "accounts": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
     },
     "coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTResponse": {
       "type": "object",

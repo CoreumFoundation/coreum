@@ -256,7 +256,7 @@ func CmdQueryClassWhitelistedAccounts() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "class-whitelisted-accounts [class-id]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Query for the list whitelisted accounts for a class of non-fungible tokens",
+		Short: "Query for whitelisted accounts for a class of non-fungible tokens",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query for whitelisted accounts for a class of non-fungible tokens.
 
@@ -277,7 +277,7 @@ $ %s query %s class-whitelisted-accounts [class-id]
 				return err
 			}
 
-			res, err := queryClient.WhitelistedAccountsForClass(cmd.Context(), &types.QueryWhitelistedAccountsForClassRequest{
+			res, err := queryClient.ClassWhitelistedAccounts(cmd.Context(), &types.QueryClassWhitelistedAccountsRequest{
 				Pagination: pageReq,
 				ClassId:    classID,
 			})

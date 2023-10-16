@@ -101,14 +101,14 @@
     - [QueryBurntNFTsInClassResponse](#coreum.asset.nft.v1.QueryBurntNFTsInClassResponse)
     - [QueryClassRequest](#coreum.asset.nft.v1.QueryClassRequest)
     - [QueryClassResponse](#coreum.asset.nft.v1.QueryClassResponse)
+    - [QueryClassWhitelistedAccountsRequest](#coreum.asset.nft.v1.QueryClassWhitelistedAccountsRequest)
+    - [QueryClassWhitelistedAccountsResponse](#coreum.asset.nft.v1.QueryClassWhitelistedAccountsResponse)
     - [QueryClassesRequest](#coreum.asset.nft.v1.QueryClassesRequest)
     - [QueryClassesResponse](#coreum.asset.nft.v1.QueryClassesResponse)
     - [QueryFrozenRequest](#coreum.asset.nft.v1.QueryFrozenRequest)
     - [QueryFrozenResponse](#coreum.asset.nft.v1.QueryFrozenResponse)
     - [QueryParamsRequest](#coreum.asset.nft.v1.QueryParamsRequest)
     - [QueryParamsResponse](#coreum.asset.nft.v1.QueryParamsResponse)
-    - [QueryWhitelistedAccountsForClassRequest](#coreum.asset.nft.v1.QueryWhitelistedAccountsForClassRequest)
-    - [QueryWhitelistedAccountsForClassResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForClassResponse)
     - [QueryWhitelistedAccountsForNFTRequest](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTRequest)
     - [QueryWhitelistedAccountsForNFTResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTResponse)
     - [QueryWhitelistedRequest](#coreum.asset.nft.v1.QueryWhitelistedRequest)
@@ -1667,6 +1667,38 @@ QueryClassResponse is response type for the Query/Class RPC method.
 
 
 
+<a name="coreum.asset.nft.v1.QueryClassWhitelistedAccountsRequest"></a>
+
+### QueryClassWhitelistedAccountsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
+| `class_id` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="coreum.asset.nft.v1.QueryClassWhitelistedAccountsResponse"></a>
+
+### QueryClassWhitelistedAccountsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
+| `accounts` | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="coreum.asset.nft.v1.QueryClassesRequest"></a>
 
 ### QueryClassesRequest
@@ -1749,38 +1781,6 @@ QueryParamsResponse defines the response type for querying x/asset/nft parameter
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#coreum.asset.nft.v1.Params) |  |  |
-
-
-
-
-
-
-<a name="coreum.asset.nft.v1.QueryWhitelistedAccountsForClassRequest"></a>
-
-### QueryWhitelistedAccountsForClassRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
-| `class_id` | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="coreum.asset.nft.v1.QueryWhitelistedAccountsForClassResponse"></a>
-
-### QueryWhitelistedAccountsForClassResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
-| `accounts` | [string](#string) | repeated |  |
 
 
 
@@ -1871,7 +1871,7 @@ Query defines the gRPC querier service.
 | `Frozen` | [QueryFrozenRequest](#coreum.asset.nft.v1.QueryFrozenRequest) | [QueryFrozenResponse](#coreum.asset.nft.v1.QueryFrozenResponse) | Frozen queries to check if an NFT is frozen or not. | GET|/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen|
 | `Whitelisted` | [QueryWhitelistedRequest](#coreum.asset.nft.v1.QueryWhitelistedRequest) | [QueryWhitelistedResponse](#coreum.asset.nft.v1.QueryWhitelistedResponse) | Whitelisted queries to check if an account is whitelited to hold an NFT or not. | GET|/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/{account}|
 | `WhitelistedAccountsForNFT` | [QueryWhitelistedAccountsForNFTRequest](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTRequest) | [QueryWhitelistedAccountsForNFTResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTResponse) | WhitelistedAccountsForNFT returns the list of accounts which are whitelisted to hold this NFT. | GET|/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted|
-| `WhitelistedAccountsForClass` | [QueryWhitelistedAccountsForClassRequest](#coreum.asset.nft.v1.QueryWhitelistedAccountsForClassRequest) | [QueryWhitelistedAccountsForClassResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForClassResponse) | WhitelistedAccountsForClass returns the list of accounts which are whitelisted to hold NFTs in this class. | GET|/coreum/asset/nft/v1/classes/{class_id}/whitelisted|
+| `ClassWhitelistedAccounts` | [QueryClassWhitelistedAccountsRequest](#coreum.asset.nft.v1.QueryClassWhitelistedAccountsRequest) | [QueryClassWhitelistedAccountsResponse](#coreum.asset.nft.v1.QueryClassWhitelistedAccountsResponse) | ClassWhitelistedAccounts returns the list of accounts which are whitelisted to hold NFTs in this class. | GET|/coreum/asset/nft/v1/classes/{class_id}/whitelisted|
 | `BurntNFT` | [QueryBurntNFTRequest](#coreum.asset.nft.v1.QueryBurntNFTRequest) | [QueryBurntNFTResponse](#coreum.asset.nft.v1.QueryBurntNFTResponse) | BurntNFTsInClass checks if an nft if is in burnt NFTs list. | GET|/coreum/asset/nft/v1/classes/{class_id}/burnt/{nft_id}|
 | `BurntNFTsInClass` | [QueryBurntNFTsInClassRequest](#coreum.asset.nft.v1.QueryBurntNFTsInClassRequest) | [QueryBurntNFTsInClassResponse](#coreum.asset.nft.v1.QueryBurntNFTsInClassResponse) | BurntNFTsInClass returns the list of burnt nfts in a class. | GET|/coreum/asset/nft/v1/classes/{class_id}/burnt|
 

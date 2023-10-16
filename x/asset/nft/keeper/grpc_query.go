@@ -108,10 +108,10 @@ func (qs QueryService) WhitelistedAccountsForNFT(ctx context.Context, req *types
 	}, err
 }
 
-// WhitelistedAccountsForClass returns the list of accounts which are whitelited to hold this NFTs in this class.
-func (qs QueryService) WhitelistedAccountsForClass(ctx context.Context, req *types.QueryWhitelistedAccountsForClassRequest) (*types.QueryWhitelistedAccountsForClassResponse, error) {
+// ClassWhitelistedAccounts returns the list of accounts which are whitelited to hold this NFTs in this class.
+func (qs QueryService) ClassWhitelistedAccounts(ctx context.Context, req *types.QueryClassWhitelistedAccountsRequest) (*types.QueryClassWhitelistedAccountsResponse, error) {
 	accounts, pageRes, err := qs.keeper.GetWhitelistedAccountsForClass(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Pagination)
-	return &types.QueryWhitelistedAccountsForClassResponse{
+	return &types.QueryClassWhitelistedAccountsResponse{
 		Pagination: pageRes,
 		Accounts:   accounts,
 	}, err
