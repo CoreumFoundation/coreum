@@ -78,8 +78,9 @@ func CreateOpenIBCChannelsAndStartRelaying(
 		pathName,
 	))
 
-	relErrCh := cosmosrelayer.StartRelayer(
-		ctx,
+	relayerCtx, relayerCtxCancelF := context.WithCancel(ctx)
+	relayerErrCh := cosmosrelayer.StartRelayer(
+		relayerCtx,
 		log.With(zap.String("process", "relayer")),
 		map[string]*cosmosrelayer.Chain{
 			srcChain.ChainSettings.ChainID: relayerSrcChain,
@@ -102,16 +103,22 @@ func CreateOpenIBCChannelsAndStartRelaying(
 		nil,
 	)
 
-	go func() {
-		err := <-relErrCh
-		if errors.Is(err, context.Canceled) {
-			return
-		}
-		require.NoError(t, err, "Cosmos Relayer start error")
-	}()
-
 	return func() {
 		require.NoError(t, relayerSrcChain.CloseChannel(ctx, relayerDstChain, 5, 5*time.Second, srcChain.ChainSettings.ChainID, srcChainPort, "", pathName))
+
+		t.Logf("Stopping relayer")
+		relayerCtxCancelF()
+
+		select {
+		case err := <-relayerErrCh:
+			if errors.Is(err, context.Canceled) {
+				t.Logf("Relayer exited gracefully")
+				return
+			}
+			require.NoError(t, err, "Cosmos Relayer run error")
+		case <-time.After(30 * time.Second):
+			require.FailNow(t, "Cosmos Relayer stop timeout")
+		}
 	}
 }
 

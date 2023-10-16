@@ -159,8 +159,8 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 
 // TestIBCCallFromSmartContract tests the WASM contract calls via WASM IBC channel.
 func TestIBCCallFromSmartContract(t *testing.T) {
-	// Temporary skip this test because it is incompatible with crust but crust PR needs changes from coreum.
-	t.SkipNow()
+	// FIXME: Temporary skip this test because it is incompatible with crust but crust PR needs changes from coreum.
+	//t.SkipNow()
 
 	// We don't enable the t.Parallel here since that test uses the config unseal hack.
 	// Config unseal is needed to run cosmos relayer which interacts with both chain SDK configs internally.
@@ -258,7 +258,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
 	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 0)
 
-	t.Logf("Sendng two IBC-increment transactions from coreum contract to osmosis contract")
+	t.Logf("Sending two IBC-increment transactions from coreum contract to osmosis contract")
 	executeWasmIncrement(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
 	executeWasmIncrement(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
 
