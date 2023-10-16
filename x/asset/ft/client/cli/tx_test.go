@@ -83,6 +83,16 @@ func TestMintBurn(t *testing.T) {
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetCmdQueryTotalSupply(), []string{"--denom", denom}, &supplyRsp))
 	requireT.Equal(sdk.NewInt64Coin(denom, 877).String(), supplyRsp.String())
 
+	// mint to recipient
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	args = append([]string{coinToMint.String(), "--recipient", recipient.String()}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
+	requireT.NoError(err)
+
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{recipient.String()}, &balanceRsp))
+	requireT.Equal(sdkmath.NewInt(100).String(), balanceRsp.Balances.AmountOf(denom).String())
+
 	// burn tokens
 	coinToMint = sdk.NewInt64Coin(denom, 200)
 	args = append([]string{coinToMint.String()}, txValidator1Args(testNetwork)...)
@@ -93,7 +103,7 @@ func TestMintBurn(t *testing.T) {
 	requireT.Equal(sdkmath.NewInt(677).String(), balanceRsp.Balances.AmountOf(denom).String())
 
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetCmdQueryTotalSupply(), []string{"--denom", denom}, &supplyRsp))
-	requireT.Equal(sdk.NewInt64Coin(denom, 677).String(), supplyRsp.String())
+	requireT.Equal(sdk.NewInt64Coin(denom, 777).String(), supplyRsp.String())
 }
 
 func TestFreezeAndQueryFrozen(t *testing.T) {
