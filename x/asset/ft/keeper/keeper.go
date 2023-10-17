@@ -16,7 +16,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/CoreumFoundation/coreum/v3/x/asset"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
@@ -255,7 +254,7 @@ func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress)
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
 
-	ctx.KVStore(k.storeKey).Set(types.CreateSymbolKey(issuer, symbol), asset.StoreTrue)
+	ctx.KVStore(k.storeKey).Set(types.CreateSymbolKey(issuer, symbol), types.StoreTrue)
 	return nil
 }
 
@@ -476,7 +475,7 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 // SetGlobalFreeze enables/disables global freeze on a fungible token depending on frozen arg.
 func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 	if frozen {
-		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezeKey(denom), asset.StoreTrue)
+		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezeKey(denom), types.StoreTrue)
 		return
 	}
 	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezeKey(denom))
@@ -811,7 +810,7 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
-	return bytes.Equal(ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom)), asset.StoreTrue)
+	return bytes.Equal(ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom)), types.StoreTrue)
 }
 
 // whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account.

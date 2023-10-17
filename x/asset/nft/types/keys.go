@@ -37,6 +37,9 @@ var (
 	NFTClassWhitelistingKeyPrefix = []byte{0x06}
 )
 
+// StoreTrue keeps a value used by stores to indicate that key is present.
+var StoreTrue = []byte{0x01}
+
 // CreateClassKey constructs the key for the non-fungible token class.
 func CreateClassKey(classID string) ([]byte, error) {
 	symbol, issuer, err := DeconstructClassID(classID)
