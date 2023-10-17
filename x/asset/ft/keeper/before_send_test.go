@@ -1,9 +1,11 @@
 package keeper_test
 
 import (
+	"bytes"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,6 +35,9 @@ func TestApplyRate(t *testing.T) {
 	var smartContracts []string
 	for i := 0; i < 11; i++ {
 		accounts = append(accounts, genAccount())
+	}
+	for i := byte(0); i < 2; i++ {
+		smartContracts = append(smartContracts, sdk.AccAddress(bytes.Repeat([]byte{i}, wasmtypes.ContractAddrLen)).String())
 	}
 
 	issuer := genAccount()
