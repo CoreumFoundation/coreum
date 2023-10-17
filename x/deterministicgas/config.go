@@ -82,13 +82,15 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25000),
 
 		// asset/nft
-		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(26000),
-		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):          constantGasFunc(16000),
-		MsgToMsgURL(&assetnfttypes.MsgMint{}):                constantGasFunc(39000),
-		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):              constantGasFunc(8000),
-		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
-		MsgToMsgURL(&assetnfttypes.MsgAddToWhitelist{}):      constantGasFunc(7000),
-		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}): constantGasFunc(3500),
+		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                     constantGasFunc(26000),
+		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):               constantGasFunc(16000),
+		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     constantGasFunc(39000),
+		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):                   constantGasFunc(8000),
+		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):                 constantGasFunc(5000),
+		MsgToMsgURL(&assetnfttypes.MsgAddToWhitelist{}):           constantGasFunc(7000),
+		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}):      constantGasFunc(3500),
+		MsgToMsgURL(&assetnfttypes.MsgAddToClassWhitelist{}):      constantGasFunc(7000),
+		MsgToMsgURL(&assetnfttypes.MsgRemoveFromClassWhitelist{}): constantGasFunc(3500),
 
 		// authz
 		// FIXME (v47-deterministic): We need a procedure to estimate the overhead of the authz. Proposal:

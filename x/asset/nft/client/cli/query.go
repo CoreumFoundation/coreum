@@ -36,6 +36,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryFrozen(),
 		CmdQueryWhitelisted(),
 		CmdQueryWhitelistedAccounts(),
+		CmdQueryClassWhitelistedAccounts(),
 		CmdQueryBurnt(),
 		CmdQueryParams(),
 	)
@@ -214,7 +215,7 @@ func CmdQueryWhitelistedAccounts() *cobra.Command {
 			fmt.Sprintf(`Query for whitelisted accounts for non-fungible token.
 
 Example:
-$ %s query %s whitelisted [class-id] [id]
+$ %s query %s whitelisted-accounts [class-id] [id]
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -234,6 +235,50 @@ $ %s query %s whitelisted [class-id] [id]
 			res, err := queryClient.WhitelistedAccountsForNFT(cmd.Context(), &types.QueryWhitelistedAccountsForNFTRequest{
 				Pagination: pageReq,
 				Id:         id,
+				ClassId:    classID,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "whitelisted accounts")
+
+	return cmd
+}
+
+// CmdQueryClassWhitelistedAccounts return the CmdQueryWhitelistedAccounts cobra command.
+func CmdQueryClassWhitelistedAccounts() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "class-whitelisted-accounts [class-id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query for whitelisted accounts for a class of non-fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query for whitelisted accounts for a class of non-fungible tokens.
+
+Example:
+$ %s query %s class-whitelisted-accounts [class-id]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			classID := args[0]
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.ClassWhitelistedAccounts(cmd.Context(), &types.QueryClassWhitelistedAccountsRequest{
+				Pagination: pageReq,
 				ClassId:    classID,
 			})
 			if err != nil {

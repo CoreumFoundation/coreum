@@ -42,6 +42,11 @@ service Query {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted";
   }
 
+  // ClassWhitelistedAccounts returns the list of accounts which are whitelisted to hold NFTs in this class.
+  rpc ClassWhitelistedAccounts (QueryClassWhitelistedAccountsRequest) returns (QueryClassWhitelistedAccountsResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/whitelisted";
+  }
+
   // BurntNFTsInClass checks if an nft if is in burnt NFTs list.
   rpc BurntNFT (QueryBurntNFTRequest) returns (QueryBurntNFTResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/burnt/{nft_id}";
@@ -112,6 +117,18 @@ message QueryWhitelistedAccountsForNFTRequest {
 }
 
 message QueryWhitelistedAccountsForNFTResponse {
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  repeated string accounts = 2;
+}
+
+message QueryClassWhitelistedAccountsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  string class_id = 2;
+}
+
+message QueryClassWhitelistedAccountsResponse {
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 1;
   repeated string accounts = 2;
