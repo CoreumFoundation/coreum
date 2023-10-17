@@ -162,7 +162,7 @@ func (k Keeper) ApplyRate(ctx sdk.Context, rate sdk.Dec, issuer, sender sdk.AccA
 	}
 
 	// we do not apply burn and commission rate if sender is a smart contract address.
-	if k.isSmartContract(ctx, sender) {
+	if k.isSmartContract(sender) {
 		return sdk.ZeroInt()
 	}
 
@@ -178,7 +178,7 @@ func (k Keeper) ApplyRate(ctx sdk.Context, rate sdk.Dec, issuer, sender sdk.AccA
 	return rate.MulInt(taxableOutputSum).Ceil().RoundInt()
 }
 
-func (k Keeper) isSmartContract(ctx sdk.Context, addr sdk.AccAddress) bool {
+func (k Keeper) isSmartContract(addr sdk.AccAddress) bool {
 	return len(addr) == wasmtypes.ContractAddrLen
 }
 

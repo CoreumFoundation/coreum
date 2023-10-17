@@ -670,7 +670,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 	}
 
 	// TODO: To be discussed: Should it be allowed to create such tokens by smart contract?
-	if def.IsFeatureEnabled(types.Feature_sending_to_smart_contracts_blocked) && !def.IsIssuer(addr) && k.isSmartContract(ctx, addr) {
+	if def.IsFeatureEnabled(types.Feature_sending_to_smart_contracts_blocked) && !def.IsIssuer(addr) && k.isSmartContract(addr) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
 
