@@ -15,6 +15,7 @@ import (
 	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/cosmos/cosmos-sdk/x/group"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -123,6 +124,22 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6500),
 		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
 		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52000),
+
+		// group // FIXME: Find reasonable values.
+		MsgToMsgURL(&group.MsgCreateGroup{}):                     constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgUpdateGroupMembers{}):              constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgUpdateGroupAdmin{}):                constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgUpdateGroupMetadata{}):             constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgCreateGroupPolicy{}):               constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgCreateGroupWithPolicy{}):           constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgUpdateGroupPolicyAdmin{}):          constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgUpdateGroupPolicyDecisionPolicy{}): constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgUpdateGroupPolicyMetadata{}):       constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgSubmitProposal{}):                  constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgWithdrawProposal{}):                constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgVote{}):                            constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgExec{}):                            constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgLeaveGroup{}):                      constantGasFunc(500_000),
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25000),
