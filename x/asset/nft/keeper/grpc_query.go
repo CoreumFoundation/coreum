@@ -20,6 +20,7 @@ type QueryKeeper interface {
 	IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error)
 	IsWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error)
 	GetWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) ([]string, *query.PageResponse, error)
+	GetClassWhitelistedAccounts(ctx sdk.Context, classID string, q *query.PageRequest) ([]string, *query.PageResponse, error)
 	GetBurntByClass(ctx sdk.Context, classID string, q *query.PageRequest) (*query.PageResponse, []string, error)
 	IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error)
 }
@@ -102,6 +103,15 @@ func (qs QueryService) Whitelisted(ctx context.Context, req *types.QueryWhitelis
 func (qs QueryService) WhitelistedAccountsForNFT(ctx context.Context, req *types.QueryWhitelistedAccountsForNFTRequest) (*types.QueryWhitelistedAccountsForNFTResponse, error) {
 	accounts, pageRes, err := qs.keeper.GetWhitelistedAccountsForNFT(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id, req.Pagination)
 	return &types.QueryWhitelistedAccountsForNFTResponse{
+		Pagination: pageRes,
+		Accounts:   accounts,
+	}, err
+}
+
+// ClassWhitelistedAccounts returns the list of accounts which are whitelited to hold this NFTs in this class.
+func (qs QueryService) ClassWhitelistedAccounts(ctx context.Context, req *types.QueryClassWhitelistedAccountsRequest) (*types.QueryClassWhitelistedAccountsResponse, error) {
+	accounts, pageRes, err := qs.keeper.GetClassWhitelistedAccounts(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Pagination)
+	return &types.QueryClassWhitelistedAccountsResponse{
 		Pagination: pageRes,
 		Accounts:   accounts,
 	}, err

@@ -29,6 +29,15 @@ service Msg {
   rpc AddToWhitelist(MsgAddToWhitelist) returns (EmptyResponse);
   // RemoveFromWhitelist removes an account from whitelisted list of the NFT
   rpc RemoveFromWhitelist(MsgRemoveFromWhitelist) returns (EmptyResponse);
+  // AddToClassWhitelist adds account as whitelist for all the NFTs in the class
+  // NOTE: class whitelist does not affect the individual nft whitelisting.
+  rpc AddToClassWhitelist(MsgAddToClassWhitelist) returns (EmptyResponse);
+  // RemoveFromClassWhitelist removes account as whitelist for the entire class
+  // NOTE: 
+  // class whitelist does not affect the individual nft whitelisting.
+  // ie. if specific whitelist is granted for an NFT, that whitelist will 
+  // still be valid, ater we add and remove it from the class whitelist.
+  rpc RemoveFromClassWhitelist(MsgRemoveFromClassWhitelist) returns (EmptyResponse);
   // UpdateParams is a governance operation that sets the parameters of the module.
   // NOTE: all parameters must be provided. 
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
@@ -92,6 +101,18 @@ message MsgBurn {
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
   string account = 4;
+ }
+
+ message MsgAddToClassWhitelist {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string account = 3;
+ }
+
+ message MsgRemoveFromClassWhitelist {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string account = 3;
  }
 
 message MsgUpdateParams {
