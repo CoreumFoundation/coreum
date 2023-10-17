@@ -1787,3 +1787,145 @@ func TestAssetNFTClassWhitelist(t *testing.T) {
 	)
 	requireT.NoError(err)
 }
+
+// TestAssetNFTSendAuthorization tests that assetnft SendAuthorization works as expected.
+func TestAssetNFTSendAuthorization(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+	recipient := chain.GenAccount()
+	nftClient := nft.NewQueryClient(chain.ClientContext)
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+			&assetnfttypes.MsgMint{},
+			&authztypes.MsgGrant{},
+		},
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+	})
+
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&nft.MsgSend{},
+		},
+	})
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:   granter.String(),
+		Symbol:   "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{},
+	}
+
+	// mint new token in that class
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, granter)
+	nftID := "id-1"
+	mintMsg1 := &assetnfttypes.MsgMint{
+		Sender:  granter.String(),
+		ID:      nftID,
+		ClassID: classID,
+	}
+
+	msgList := []sdk.Msg{issueMsg, mintMsg1}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+	requireT.NoError(err)
+
+	// try to send before grant
+	sendMsg := &nft.MsgSend{
+		ClassId:  classID,
+		Id:       nftID,
+		Sender:   granter.String(),
+		Receiver: recipient.String(),
+	}
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{sendMsg})
+
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, authztypes.ErrNoAuthorizationFound)
+
+	// grant authorization to send nft
+	grantMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		assetnfttypes.NewSendAuthorization([]assetnfttypes.NFTIdentifier{
+			{ClassId: classID, Id: nftID},
+			{ClassId: classID, Id: "not-minted-yet"},
+		}),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	requireT.NoError(err)
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+	updatedGrant := assetnfttypes.SendAuthorization{}
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
+	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{
+		{ClassId: classID, Id: nftID},
+		{ClassId: classID, Id: "not-minted-yet"},
+	}, updatedGrant.Nfts)
+
+	// try to send after grant
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	// assert transfer of ownership
+	ownerResp, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      nftID,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(ownerResp.Owner, recipient.String())
+
+	// assert granted
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+	updatedGrant = assetnfttypes.SendAuthorization{}
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
+	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{
+		{ClassId: classID, Id: "not-minted-yet"},
+	}, updatedGrant.Nfts)
+}
