@@ -1,11 +1,9 @@
 package keeper_test
 
 import (
-	"bytes"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,15 +25,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-type wasmKeeperMock struct {
-	contracts map[string]struct{}
-}
-
-func (k wasmKeeperMock) HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
-	_, exists := k.contracts[contractAddress.String()]
-	return exists
-}
-
 func TestApplyRate(t *testing.T) {
 	genAccount := func() string {
 		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
@@ -46,19 +35,10 @@ func TestApplyRate(t *testing.T) {
 		accounts = append(accounts, genAccount())
 	}
 
-	wasmKeeper := wasmKeeperMock{
-		contracts: map[string]struct{}{},
-	}
-	for i := byte(0); i < 2; i++ {
-		addr := sdk.AccAddress(bytes.Repeat([]byte{i}, wasmtypes.ContractAddrLen)).String()
-		smartContracts = append(smartContracts, sdk.AccAddress(bytes.Repeat([]byte{i}, wasmtypes.ContractAddrLen)).String())
-		wasmKeeper.contracts[addr] = struct{}{}
-	}
-
 	issuer := genAccount()
 	dummyAddress := genAccount()
 	key := sdk.NewKVStoreKey(types.StoreKey)
-	assetFTKeeper := assetftkeeper.NewKeeper(nil, key, nil, nil, wasmKeeper, "")
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, key, nil, nil, "")
 
 	testCases := []struct {
 		name         string
