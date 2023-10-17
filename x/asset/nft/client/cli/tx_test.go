@@ -199,6 +199,70 @@ func TestCmdWhitelist(t *testing.T) {
 	requireT.False(whitelistedResp.Whitelisted)
 }
 
+func TestCmdClassWhitelist(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+	account := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// create class
+	classID := issueClass(
+		requireT,
+		ctx,
+		symbol,
+		"class name",
+		"class description",
+		"https://my-class-meta.invalid/1",
+		"",
+		testNetwork,
+		"0",
+		types.ClassFeature_whitelisting,
+	)
+	// mint nft
+	nftID := "nft"
+	mint(
+		requireT,
+		ctx,
+		classID,
+		nftID,
+		"https://my-nft-meta.invalid/1",
+		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		testNetwork,
+	)
+
+	// whitelist
+	args := []string{classID, account.String()}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClassWhitelist(), args)
+	requireT.NoError(err)
+
+	// query whitelisted
+	var whitelistedResp types.QueryWhitelistedResponse
+	args = []string{classID, nftID, account.String()}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
+	requireT.True(whitelistedResp.Whitelisted)
+
+	// query with pagination
+	var resPage types.QueryClassWhitelistedAccountsResponse
+	args = []string{classID}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassWhitelistedAccounts(), args, &resPage))
+	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
+
+	// unwhitelist
+	args = []string{classID, account.String()}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClassUnwhitelist(), args)
+	requireT.NoError(err)
+
+	// query whitelisted
+	args = []string{classID, nftID, account.String()}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
+	requireT.False(whitelistedResp.Whitelisted)
+}
+
 func txValidator1Args(testNetwork *network.Network) []string {
 	return []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, testNetwork.Validators[0].Address.String()),

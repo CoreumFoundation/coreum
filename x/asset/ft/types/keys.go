@@ -43,6 +43,9 @@ var (
 	ParamsKey = []byte{0x08}
 )
 
+// StoreTrue keeps a value used by stores to indicate that key is present.
+var StoreTrue = []byte{0x01}
+
 // CreateTokenKey creates the key for the fungible token.
 func CreateTokenKey(issuer sdk.AccAddress, subunit string) []byte {
 	return store.JoinKeys(CreateIssuerTokensPrefix(issuer), []byte(strings.ToLower(subunit)))

@@ -33,7 +33,12 @@ var (
 	NFTBurningKeyPrefix = []byte{0x04}
 	// ParamsKey defines the key to store parameters of the module, set via governance.
 	ParamsKey = []byte{0x05}
+	// NFTClassWhitelistingKeyPrefix defines the key prefix to track whitelisted account for class.
+	NFTClassWhitelistingKeyPrefix = []byte{0x06}
 )
+
+// StoreTrue keeps a value used by stores to indicate that key is present.
+var StoreTrue = []byte{0x01}
 
 // CreateClassKey constructs the key for the non-fungible token class.
 func CreateClassKey(classID string) ([]byte, error) {
@@ -103,6 +108,29 @@ func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
 		return "", "", nil, err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), parsedKeys[2], nil
+}
+
+// CreateClassWhitelistingKey constructs the key for the whitelisting of class for non-fungible tokens.
+func CreateClassWhitelistingKey(classID string, account sdk.AccAddress) ([]byte, error) {
+	compositeKey, err := store.JoinKeysWithLength([]byte(classID), account)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to create a whitelisting key, err: %s", err)
+	}
+
+	return store.JoinKeys(NFTClassWhitelistingKeyPrefix, compositeKey), nil
+}
+
+// ParseClassWhitelistingKey parses freezing key back to class id and account.
+func ParseClassWhitelistingKey(key []byte) (string, sdk.AccAddress, error) {
+	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
+	if err != nil {
+		return "", nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to parse a class whitelisting key, err: %s", err)
+	}
+	if len(parsedKeys) != 2 {
+		err = sdkerrors.Wrapf(ErrInvalidKey, "class whitelisting key must be composed of 2 length prefixed keys")
+		return "", nil, err
+	}
+	return string(parsedKeys[0]), parsedKeys[1], nil
 }
 
 // CreateBurningKey constructs the key for the burning of non-fungible token.
