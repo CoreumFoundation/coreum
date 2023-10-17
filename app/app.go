@@ -104,6 +104,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 
+	"github.com/cosmos/cosmos-sdk/x/nft"
+	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
+
 	"github.com/CoreumFoundation/coreum/v3/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v3/app/upgrade"
 	appupgradev1 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v1"
@@ -141,8 +144,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/v3/x/wstaking"
-	"github.com/cosmos/cosmos-sdk/x/nft"
-	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 )
 
 const (
@@ -395,8 +396,6 @@ func New(
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
 		app.DelayKeeper,
-		// pointer is used here because there is cycle in keeper dependencies: AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
-		&app.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
