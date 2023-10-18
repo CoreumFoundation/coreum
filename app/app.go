@@ -502,7 +502,6 @@ func New(
 		nftKeeper,
 		// for the assetnft we use the clear bank keeper without the assets integration because it interacts only with native token.
 		originalBankKeeper,
-		app.AccountKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)

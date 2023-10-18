@@ -22,12 +22,11 @@ import (
 
 // Keeper is the asset module non-fungible token nftKeeper.
 type Keeper struct {
-	cdc           codec.BinaryCodec
-	storeKey      storetypes.StoreKey
-	nftKeeper     types.NFTKeeper
-	bankKeeper    types.BankKeeper
-	accountKeeper types.AccountKeeper
-	authority     string
+	cdc        codec.BinaryCodec
+	storeKey   storetypes.StoreKey
+	nftKeeper  types.NFTKeeper
+	bankKeeper types.BankKeeper
+	authority  string
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -36,16 +35,14 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	nftKeeper types.NFTKeeper,
 	bankKeeper types.BankKeeper,
-	accountKeeper types.AccountKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		nftKeeper:     nftKeeper,
-		bankKeeper:    bankKeeper,
-		accountKeeper: accountKeeper,
-		authority:     authority,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		nftKeeper:  nftKeeper,
+		bankKeeper: bankKeeper,
+		authority:  authority,
 	}
 }
 
@@ -298,6 +295,10 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", settings.Sender.String())
 	}
 
+	if definition.IsFeatureEnabled(types.ClassFeature_whitelisting) && !definition.IsIssuer(settings.Recipient) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "due to enabled whitelisting only the issuer can receive minted NFT, %s is not the issuer", settings.Recipient.String())
+	}
+
 	if !k.nftKeeper.HasClass(ctx, settings.ClassID) {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "classID %q not found", settings.ClassID)
 	}
@@ -325,19 +326,17 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		}
 	}
 
-	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-
 	if err := k.nftKeeper.Mint(ctx, nft.NFT{
 		ClassId: settings.ClassID,
 		Id:      settings.ID,
 		Uri:     settings.URI,
 		UriHash: settings.URIHash,
 		Data:    settings.Data,
-	}, moduleAddr); err != nil {
+	}, settings.Recipient); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "can't save non-fungible token: %s", err)
 	}
 
-	return k.Transfer(ctx, settings.ClassID, settings.ID, settings.Recipient)
+	return nil
 }
 
 // Burn burns non-fungible token.
@@ -702,12 +701,6 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 	// always allow issuer to send NFTs issued by them.
 	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
 	if classDefinition.Issuer == owner.String() {
-		return nil
-	}
-
-	// always allow to send NFTs stored by the module. It is required for minting to work.
-	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-	if moduleAddr.String() == owner.String() {
 		return nil
 	}
 

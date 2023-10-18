@@ -38,9 +38,3 @@ type WasmKeeper interface {
 type ParamsKeeper interface {
 	GetSubspace(s string) (paramstypes.Subspace, bool)
 }
-
-// AccountKeeper defines the account contract that must be fulfilled when
-// creating an nft keeper.
-type AccountKeeper interface {
-	GetModuleAddress(moduleName string) sdk.AccAddress
-}
