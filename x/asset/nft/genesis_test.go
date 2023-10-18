@@ -83,15 +83,16 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// Whitelisting
 	var whitelisted []types.WhitelistedNFTAccounts
 	for i := 0; i < 5; i++ {
-		whitelisted = append(whitelisted, types.WhitelistedNFTAccounts{
-			ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
-			NftID:   fmt.Sprintf("nft-id-1-%d", i),
-			Accounts: []string{
-				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
-				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
-				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+		whitelisted = append(whitelisted,
+			types.WhitelistedNFTAccounts{
+				ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
+				NftID:   fmt.Sprintf("nft-id-1-%d", i),
+				Accounts: []string{
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+				},
 			},
-		},
 			types.WhitelistedNFTAccounts{
 				ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
 				NftID:   fmt.Sprintf("nft-id-2-%d", i),
@@ -101,6 +102,21 @@ func TestInitAndExportGenesis(t *testing.T) {
 					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
 				},
 			})
+	}
+
+	// ClassWhitelisting
+	var classWhitelisted []types.ClassWhitelistedAccounts
+	for i := 0; i < 5; i++ {
+		classWhitelisted = append(classWhitelisted,
+			types.ClassWhitelistedAccounts{
+				ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
+				Accounts: []string{
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+				},
+			},
+		)
 	}
 
 	// Burnt NFTs
@@ -116,11 +132,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	genState := types.GenesisState{
-		Params:                 types.DefaultParams(),
-		ClassDefinitions:       classDefinitions,
-		FrozenNFTs:             frozen,
-		WhitelistedNFTAccounts: whitelisted,
-		BurntNFTs:              burnt,
+		Params:                   types.DefaultParams(),
+		ClassDefinitions:         classDefinitions,
+		FrozenNFTs:               frozen,
+		WhitelistedNFTAccounts:   whitelisted,
+		ClassWhitelistedAccounts: classWhitelisted,
+		BurntNFTs:                burnt,
 	}
 
 	// init the keeper
@@ -151,6 +168,14 @@ func TestInitAndExportGenesis(t *testing.T) {
 	for _, st := range exportedGenState.WhitelistedNFTAccounts {
 		sort.Strings(st.Accounts)
 	}
+
+	for _, st := range genState.ClassWhitelistedAccounts {
+		sort.Strings(st.Accounts)
+	}
+	for _, st := range exportedGenState.ClassWhitelistedAccounts {
+		sort.Strings(st.Accounts)
+	}
 	assertT.ElementsMatch(genState.WhitelistedNFTAccounts, exportedGenState.WhitelistedNFTAccounts)
+	assertT.ElementsMatch(genState.ClassWhitelistedAccounts, exportedGenState.ClassWhitelistedAccounts)
 	assertT.ElementsMatch(genState.BurntNFTs, exportedGenState.BurntNFTs)
 }
