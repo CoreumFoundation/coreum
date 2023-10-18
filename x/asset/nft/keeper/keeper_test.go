@@ -317,9 +317,17 @@ func TestKeeper_MintWithRecipientAndWhitelisting(t *testing.T) {
 		URIHash:   "content-hash",
 	}
 
-	// mint NFT - should fail because recipient is not whitelisted, and cannot be because nft does not exist
-	err = nftKeeper.Mint(ctx, settings)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	// mint NFT - should fail because recipient is not whitelisted
+	requireT.ErrorIs(nftKeeper.Mint(ctx, settings), cosmoserrors.ErrUnauthorized)
+
+	// whitelist for class
+	requireT.NoError(nftKeeper.AddToClassWhitelist(ctx, classID, addr, randomAddr))
+
+	// now minting should work
+	requireT.NoError(nftKeeper.Mint(ctx, settings))
+
+	// verify ownership
+	requireT.Equal(randomAddr, testApp.NFTKeeper.GetOwner(ctx, classID, settings.ID))
 }
 
 func TestKeeper_Burn(t *testing.T) {
