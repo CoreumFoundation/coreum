@@ -20,6 +20,8 @@ type MsgKeeper interface {
 	Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
 	AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
 	RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
+	AddToClassWhitelist(ctx sdk.Context, classID string, sender, account sdk.AccAddress) error
+	RemoveFromClassWhitelist(ctx sdk.Context, classID string, sender, account sdk.AccAddress) error
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
 
@@ -176,6 +178,44 @@ func (ms MsgServer) RemoveFromWhitelist(ctx context.Context, req *types.MsgRemov
 	}
 
 	if err := ms.keeper.RemoveFromWhitelist(sdk.UnwrapSDKContext(ctx), req.ClassID, req.ID, sender, account); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// AddToClassWhitelist adds an account to the whitelisted list of accounts for all the NFTs in the class.
+func (ms MsgServer) AddToClassWhitelist(ctx context.Context, req *types.MsgAddToClassWhitelist) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account")
+	}
+
+	if err := ms.keeper.AddToClassWhitelist(sdk.UnwrapSDKContext(ctx), req.ClassID, sender, account); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// RemoveFromClassWhitelist removes an account from the whitelisted list of accounts for the specified Class.
+func (ms MsgServer) RemoveFromClassWhitelist(ctx context.Context, req *types.MsgRemoveFromClassWhitelist) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account")
+	}
+
+	if err := ms.keeper.RemoveFromClassWhitelist(sdk.UnwrapSDKContext(ctx), req.ClassID, sender, account); err != nil {
 		return nil, err
 	}
 

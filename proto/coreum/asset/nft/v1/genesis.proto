@@ -17,6 +17,7 @@ message GenesisState {
   repeated FrozenNFT frozen_nfts = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "FrozenNFTs"];
   repeated WhitelistedNFTAccounts whitelisted_nft_accounts = 4 [(gogoproto.nullable) = false, (gogoproto.customname) = "WhitelistedNFTAccounts"];
   repeated BurntNFT burnt_nfts = 5 [(gogoproto.nullable) = false, (gogoproto.customname) = "BurntNFTs"];
+  repeated ClassWhitelistedAccounts class_whitelisted_accounts = 6 [(gogoproto.nullable) = false];
 }
 
 message FrozenNFT {
@@ -28,6 +29,11 @@ message WhitelistedNFTAccounts {
    string classID = 1;
    string nftID = 2;
    repeated string accounts = 4;
+}
+
+message ClassWhitelistedAccounts {
+   string classID = 1;
+   repeated string accounts = 2;
 }
 
 message BurntNFT {

@@ -41,6 +41,8 @@ func GetTxCmd() *cobra.Command {
 		CmdTxUnfreeze(),
 		CmdTxWhitelist(),
 		CmdTxUnwhitelist(),
+		CmdTxClassWhitelist(),
+		CmdTxClassUnwhitelist(),
 	)
 
 	return cmd
@@ -367,6 +369,86 @@ $ %s tx %s unwhitelist abc-%[3]s id1 %[3]s --from [sender]
 				Sender:  sender.String(),
 				ClassID: classID,
 				ID:      ID,
+				Account: account,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxClassWhitelist returns ClassWhitelist cobra command.
+func CmdTxClassWhitelist() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "class-whitelist [class-id] [account] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Whitelist an account for a class of non-fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Whitelist an account for a class of non-fungible tokens.
+
+Example:
+$ %s tx %s class-whitelist abc-%[3]s %[3]s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			classID := args[0]
+			account := args[1]
+
+			msg := &types.MsgAddToClassWhitelist{
+				Sender:  sender.String(),
+				ClassID: classID,
+				Account: account,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxClassUnwhitelist returns ClassUnwhitelist cobra command.
+func CmdTxClassUnwhitelist() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "class-unwhitelist [class-id] [account] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Unwhitelist an account for a class of non-fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Unwhitelist an account for a class of non-fungible tokens.
+
+Example:
+$ %s tx %s class-unwhitelist abc-%[3]s %[3]s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			classID := args[0]
+			account := args[1]
+
+			msg := &types.MsgRemoveFromClassWhitelist{
+				Sender:  sender.String(),
+				ClassID: classID,
 				Account: account,
 			}
 
