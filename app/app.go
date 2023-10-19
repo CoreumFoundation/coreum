@@ -137,6 +137,7 @@ import (
 	cnftkeeper "github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
 	cnftmodule "github.com/CoreumFoundation/coreum/v3/x/nft/module"
 	wasmcustomhandler "github.com/CoreumFoundation/coreum/v3/x/wasm/handler"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/v3/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v3/x/wbank/keeper"
 	"github.com/CoreumFoundation/coreum/v3/x/wibctransfer"
@@ -407,7 +408,14 @@ func New(
 	}
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.ModuleAccountAddrs(), app.AssetFTKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appCodec,
+		keys[banktypes.StoreKey],
+		app.AccountKeeper,
+		// pointer is used here because there is cycle in keeper dependencies: AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
+		&app.WasmKeeper,
+		app.ModuleAccountAddrs(),
+		app.AssetFTKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	app.StakingKeeper = stakingkeeper.NewKeeper(
@@ -562,7 +570,19 @@ func New(
 	}
 
 	wasmOpts := []wasmkeeper.Option{
-		wasmkeeper.WithMessageEncoders(wasmcustomhandler.NewCoreumMsgHandler()),
+		wasmkeeper.WithAcceptedAccountTypesOnContractInstantiation(),
+		wasmkeeper.WithAccountPruner(cwasmtypes.AccountPruner{}),
+		wasmkeeper.WithCoinTransferrer(cwasmtypes.NewBankCoinTransferrer(app.BankKeeper)),
+		wasmkeeper.WithMessageHandler(wasmcustomhandler.NewMessengerWrapper(wasmkeeper.NewDefaultMessageHandler(
+			app.MsgServiceRouter(),
+			app.IBCKeeper.ChannelKeeper,
+			app.IBCKeeper.ChannelKeeper,
+			app.ScopedWASMKeeper,
+			app.BankKeeper,
+			appCodec,
+			app.TransferKeeper,
+			wasmcustomhandler.NewCoreumMsgHandler(),
+		))),
 		wasmkeeper.WithQueryPlugins(wasmcustomhandler.NewCoreumQueryHandler(
 			assetftkeeper.NewQueryService(app.AssetFTKeeper, app.BankKeeper),
 			assetnftkeeper.NewQueryService(app.AssetNFTKeeper),

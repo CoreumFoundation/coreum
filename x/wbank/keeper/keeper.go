@@ -9,6 +9,8 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/CoreumFoundation/coreum/v3/x/wasm"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/v3/x/wbank/types"
 )
 
@@ -16,6 +18,7 @@ import (
 type BaseKeeperWrapper struct {
 	bankkeeper.BaseKeeper
 	ak         banktypes.AccountKeeper
+	wasmKeeper wasm.Keeper
 	ftProvider types.FungibleTokenProvider
 }
 
@@ -24,6 +27,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	ak banktypes.AccountKeeper,
+	wasmKeeper wasm.Keeper,
 	blockedAddrs map[string]bool,
 	ftProvider types.FungibleTokenProvider,
 	authority string,
@@ -31,6 +35,7 @@ func NewKeeper(
 	return BaseKeeperWrapper{
 		BaseKeeper: bankkeeper.NewBaseKeeper(cdc, storeKey, ak, blockedAddrs, authority),
 		ak:         ak,
+		wasmKeeper: wasmKeeper,
 		ftProvider: ftProvider,
 	}
 }
@@ -83,6 +88,13 @@ func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(ctx sdk.Context, senderA
 
 // SendCoins is a BaseKeeper SendCoins wrapped method.
 func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	if k.isSmartContract(ctx, fromAddr) {
+		ctx = cwasmtypes.WithSmartContractSender(ctx, fromAddr.String())
+	}
+	if k.isSmartContract(ctx, toAddr) {
+		ctx = cwasmtypes.WithSmartContractRecipient(ctx, toAddr.String())
+	}
+
 	if err := k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt); err != nil {
 		return err
 	}
@@ -92,9 +104,32 @@ func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
 func (k BaseKeeperWrapper) InputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	for _, input := range inputs {
+		addr, err := sdk.AccAddressFromBech32(input.Address)
+		if err != nil {
+			return err
+		}
+		if k.isSmartContract(ctx, addr) {
+			ctx = cwasmtypes.WithSmartContractSender(ctx, input.Address)
+		}
+	}
+	for _, output := range outputs {
+		addr, err := sdk.AccAddressFromBech32(output.Address)
+		if err != nil {
+			return err
+		}
+		if k.isSmartContract(ctx, addr) {
+			ctx = cwasmtypes.WithSmartContractRecipient(ctx, output.Address)
+		}
+	}
+
 	if err := k.ftProvider.BeforeInputOutputCoins(ctx, inputs, outputs); err != nil {
 		return err
 	}
 
 	return k.BaseKeeper.InputOutputCoins(ctx, inputs, outputs)
+}
+
+func (k BaseKeeperWrapper) isSmartContract(ctx sdk.Context, addr sdk.AccAddress) bool {
+	return wasm.IsSmartContract(ctx, addr, k.wasmKeeper)
 }

@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Addr, Binary, CosmosMsg, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{Binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128};
 use cw2::set_contract_version;
 use protobuf::Message;
 
@@ -42,14 +42,15 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Transfer{ address, amount, denom } => execute_transfer(deps, env, address, amount, denom),
+        ExecuteMsg::Stargate{ type_url, value } => execute_stargate_message(type_url, value),
     }
 }
 
 pub fn execute_transfer(
     deps: DepsMut,
     env: Env,
-    address: Addr,
-    amount: u64,
+    address: String,
+    amount: Uint128,
     denom: String,
 ) -> Result<Response, ContractError> {
     deps.api.addr_validate(address.as_ref())?;
@@ -57,7 +58,7 @@ pub fn execute_transfer(
 
     let mut send = MsgSend::new();
     send.from_address = granter.into_string();
-    send.to_address = address.to_string();
+    send.to_address = address;
     send.amount = vec![];
     let mut coin = Coin::new();
     coin.amount = amount.to_string();
@@ -76,5 +77,19 @@ pub fn execute_transfer(
 
     Ok(Response::new()
         .add_attribute("method", "execute_authz_transfer")
+        .add_message(msg))
+}
+
+pub fn execute_stargate_message(
+    type_url: String,
+    value: Binary,
+) -> Result<Response, ContractError> {
+    let msg = CosmosMsg::Stargate {
+        type_url: type_url,
+        value: value,
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "execute_authz_stargate")
         .add_message(msg))
 }
