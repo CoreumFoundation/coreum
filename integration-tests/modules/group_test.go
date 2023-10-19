@@ -17,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
+// TestGroupCreationAndBankSend creates group & group policy and then sends funds from group policy account.
 func TestGroupCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
