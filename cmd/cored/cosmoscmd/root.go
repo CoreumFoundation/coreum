@@ -23,6 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/snapshot"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -39,6 +40,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
 )
 
+const ledgerAppName = "Coreum"
+
 // NewRootCmd creates a new root command for simd. It is called once in the
 // main function.
 func NewRootCmd() *cobra.Command {
@@ -52,7 +55,10 @@ func NewRootCmd() *cobra.Command {
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithHomeDir(app.DefaultNodeHome).
-		WithViper("")
+		WithViper("").
+		WithKeyringOptions(func(options *keyring.Options) {
+			options.LedgerAppName = ledgerAppName
+		})
 
 	rootCmd := &cobra.Command{
 		Use:   app.Name + "d",
