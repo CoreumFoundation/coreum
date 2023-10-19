@@ -17,6 +17,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
 
@@ -26,7 +27,6 @@ type Keeper struct {
 	storeKey    storetypes.StoreKey
 	bankKeeper  types.BankKeeper
 	delayKeeper types.DelayKeeper
-	wasmKeeper  types.WASMKeeper
 	authority   string
 }
 
@@ -36,7 +36,6 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
-	wasmKeeper types.WASMKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -44,7 +43,6 @@ func NewKeeper(
 		storeKey:    storeKey,
 		bankKeeper:  bankKeeper,
 		delayKeeper: delayKeeper,
-		wasmKeeper:  wasmKeeper,
 		authority:   authority,
 	}
 }
@@ -661,19 +659,22 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 		return nil
 	}
 
-	if !def.IsFeatureEnabled(types.Feature_whitelisting) ||
-		def.IsIssuer(addr) {
-		return nil
+	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.IsIssuer(addr) {
+		balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
+		whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
+
+		finalBalance := balance.Amount.Add(amount)
+		if finalBalance.GT(whitelistedBalance.Amount) {
+			return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
+				addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
+		}
 	}
 
-	balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
-	whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
-
-	finalBalance := balance.Amount.Add(amount)
-	if finalBalance.GT(whitelistedBalance.Amount) {
-		return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
-			addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
+	// TODO: To be discussed: Should it be allowed to create such tokens by smart contract?
+	if def.IsFeatureEnabled(types.Feature_sending_to_smart_contracts_blocked) && !def.IsIssuer(addr) && cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
+
 	return nil
 }
 

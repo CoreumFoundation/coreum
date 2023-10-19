@@ -4,6 +4,9 @@ package modules
 
 import (
 	_ "embed"
+	"encoding/json"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // Smart contracts bytecode.
@@ -19,3 +22,6 @@ var (
 	//go:embed authz/artifacts/authz.wasm
 	AuthzWASM []byte
 )
+
+// EmptyPayload represents empty payload.
+var EmptyPayload = must.Bytes(json.Marshal(struct{}{}))
