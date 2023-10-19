@@ -126,18 +126,18 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52000),
 
 		// group // FIXME: Find reasonable values.
-		MsgToMsgURL(&group.MsgCreateGroup{}):                     constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgCreateGroup{}):                     constantGasFunc(55_000),
 		MsgToMsgURL(&group.MsgUpdateGroupMembers{}):              constantGasFunc(500_000),
 		MsgToMsgURL(&group.MsgUpdateGroupAdmin{}):                constantGasFunc(500_000),
 		MsgToMsgURL(&group.MsgUpdateGroupMetadata{}):             constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgCreateGroupPolicy{}):               constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgCreateGroupPolicy{}):               constantGasFunc(40_000),
 		MsgToMsgURL(&group.MsgCreateGroupWithPolicy{}):           constantGasFunc(500_000),
 		MsgToMsgURL(&group.MsgUpdateGroupPolicyAdmin{}):          constantGasFunc(500_000),
 		MsgToMsgURL(&group.MsgUpdateGroupPolicyDecisionPolicy{}): constantGasFunc(500_000),
 		MsgToMsgURL(&group.MsgUpdateGroupPolicyMetadata{}):       constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgSubmitProposal{}):                  constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgSubmitProposal{}):                  constantGasFunc(35_000),
 		MsgToMsgURL(&group.MsgWithdrawProposal{}):                constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgVote{}):                            constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgVote{}):                            constantGasFunc(100_000),
 		MsgToMsgURL(&group.MsgExec{}):                            constantGasFunc(500_000),
 		MsgToMsgURL(&group.MsgLeaveGroup{}):                      constantGasFunc(500_000),
 
