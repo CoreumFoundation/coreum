@@ -34,6 +34,8 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryClass(),
 		CmdQueryClasses(),
 		CmdQueryFrozen(),
+		CmdQueryClassFrozen(),
+		CmdQueryClassFrozenAccounts(),
 		CmdQueryWhitelisted(),
 		CmdQueryWhitelistedAccounts(),
 		CmdQueryClassWhitelistedAccounts(),
@@ -165,6 +167,90 @@ $ %[1]s query %s frozen [class-id] [id]
 	return cmd
 }
 
+// CmdQueryClassFrozen return the QueryClassFrozen cobra command.
+func CmdQueryClassFrozen() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "class-frozen [class-id] [account]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query if non-fungible token class is frozen for account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query if non-fungible token class is frozen for account.
+
+Example:
+$ %[1]s query %s class-frozen [class-id] [account]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			classID := args[0]
+			account := args[1]
+			res, err := queryClient.ClassFrozen(cmd.Context(), &types.QueryClassFrozenRequest{
+				Account: account,
+				ClassId: classID,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryClassFrozenAccounts return the QueryClassFrozenAccounts cobra command.
+//
+//nolint:dupl // creating abstraction for cli here will make it less maintainable.
+func CmdQueryClassFrozenAccounts() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "class-frozen-accounts [class-id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query for frozen accounts for a class of non-fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query for frozen accounts for a class of non-fungible tokens.
+
+Example:
+$ %s query %s class-frozen-accounts [class-id]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			classID := args[0]
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.ClassFrozenAccounts(cmd.Context(), &types.QueryClassFrozenAccountsRequest{
+				Pagination: pageReq,
+				ClassId:    classID,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "whitelisted accounts")
+
+	return cmd
+}
+
 // CmdQueryWhitelisted return the CmdQueryWhitelisted cobra command.
 func CmdQueryWhitelisted() *cobra.Command {
 	cmd := &cobra.Command{
@@ -252,6 +338,8 @@ $ %s query %s whitelisted-accounts [class-id] [id]
 }
 
 // CmdQueryClassWhitelistedAccounts return the CmdQueryWhitelistedAccounts cobra command.
+//
+//nolint:dupl // creating abstraction for cli here will make it less maintainable.
 func CmdQueryClassWhitelistedAccounts() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "class-whitelisted-accounts [class-id]",

@@ -39,6 +39,8 @@ func GetTxCmd() *cobra.Command {
 		CmdTxBurn(),
 		CmdTxFreeze(),
 		CmdTxUnfreeze(),
+		CmdTxClassFreeze(),
+		CmdTxClassUnfreeze(),
 		CmdTxWhitelist(),
 		CmdTxUnwhitelist(),
 		CmdTxClassWhitelist(),
@@ -447,6 +449,86 @@ $ %s tx %s class-unwhitelist abc-%[3]s %[3]s --from [sender]
 			account := args[1]
 
 			msg := &types.MsgRemoveFromClassWhitelist{
+				Sender:  sender.String(),
+				ClassID: classID,
+				Account: account,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxClassFreeze returns ClassFreeze cobra command.
+func CmdTxClassFreeze() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "class-freeze [class-id] [account] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Freeze an account for a class of non-fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Freeze an account for a class of non-fungible tokens.
+
+Example:
+$ %s tx %s class-freeze abc-%[3]s %[3]s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			classID := args[0]
+			account := args[1]
+
+			msg := &types.MsgClassFreeze{
+				Sender:  sender.String(),
+				ClassID: classID,
+				Account: account,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxClassUnfreeze returns ClassUnfreeze cobra command.
+func CmdTxClassUnfreeze() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "class-unfreeze [class-id] [account] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Unfreeze an account for a class of non-fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Unfreeze an account for a class of non-fungible tokens.
+
+Example:
+$ %s tx %s class-unfreeze abc-%[3]s %[3]s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			classID := args[0]
+			account := args[1]
+
+			msg := &types.MsgClassUnfreeze{
 				Sender:  sender.String(),
 				ClassID: classID,
 				Account: account,

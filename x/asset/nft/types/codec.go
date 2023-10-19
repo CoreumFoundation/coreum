@@ -18,6 +18,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgUnfreeze{},
 		&MsgAddToWhitelist{},
 		&MsgRemoveFromWhitelist{},
+		&MsgAddToClassWhitelist{},
+		&MsgRemoveFromClassWhitelist{},
+		&MsgClassFreeze{},
+		&MsgClassUnfreeze{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

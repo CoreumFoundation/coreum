@@ -13,14 +13,18 @@ import (
 var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
+//
+//nolint:interfacebloat // breaking down this interface is not beneficial.
 type QueryKeeper interface {
 	GetParams(ctx sdk.Context) types.Params
 	GetClass(ctx sdk.Context, classID string) (types.Class, error)
 	GetClasses(ctx sdk.Context, issuer *sdk.AccAddress, pagination *query.PageRequest) ([]types.Class, *query.PageResponse, error)
 	IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error)
+	IsClassFrozen(ctx sdk.Context, classID string, account sdk.AccAddress) (bool, error)
 	IsWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error)
 	GetWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) ([]string, *query.PageResponse, error)
 	GetClassWhitelistedAccounts(ctx sdk.Context, classID string, q *query.PageRequest) ([]string, *query.PageResponse, error)
+	GetClassFrozenAccounts(ctx sdk.Context, classID string, q *query.PageRequest) ([]string, *query.PageResponse, error)
 	GetBurntByClass(ctx sdk.Context, classID string, q *query.PageRequest) (*query.PageResponse, []string, error)
 	IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error)
 }
@@ -83,6 +87,18 @@ func (qs QueryService) Frozen(ctx context.Context, req *types.QueryFrozenRequest
 	}, err
 }
 
+// ClassFrozen queries to check if an account if frozen for an NFT class.
+func (qs QueryService) ClassFrozen(ctx context.Context, req *types.QueryClassFrozenRequest) (*types.QueryClassFrozenResponse, error) {
+	accountAddress, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account address")
+	}
+	frozen, err := qs.keeper.IsClassFrozen(sdk.UnwrapSDKContext(ctx), req.ClassId, accountAddress)
+	return &types.QueryClassFrozenResponse{
+		Frozen: frozen,
+	}, err
+}
+
 // Whitelisted checks to see if an account is whitelisted for an NFT.
 func (qs QueryService) Whitelisted(ctx context.Context, req *types.QueryWhitelistedRequest) (*types.QueryWhitelistedResponse, error) {
 	account, err := sdk.AccAddressFromBech32(req.Account)
@@ -112,6 +128,15 @@ func (qs QueryService) WhitelistedAccountsForNFT(ctx context.Context, req *types
 func (qs QueryService) ClassWhitelistedAccounts(ctx context.Context, req *types.QueryClassWhitelistedAccountsRequest) (*types.QueryClassWhitelistedAccountsResponse, error) {
 	accounts, pageRes, err := qs.keeper.GetClassWhitelistedAccounts(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Pagination)
 	return &types.QueryClassWhitelistedAccountsResponse{
+		Pagination: pageRes,
+		Accounts:   accounts,
+	}, err
+}
+
+// ClassFrozenAccounts returns the list of accounts which are whitelited to hold this NFTs in this class.
+func (qs QueryService) ClassFrozenAccounts(ctx context.Context, req *types.QueryClassFrozenAccountsRequest) (*types.QueryClassFrozenAccountsResponse, error) {
+	accounts, pageRes, err := qs.keeper.GetClassFrozenAccounts(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Pagination)
+	return &types.QueryClassFrozenAccountsResponse{
 		Pagination: pageRes,
 		Accounts:   accounts,
 	}, err

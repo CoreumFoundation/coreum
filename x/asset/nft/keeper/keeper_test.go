@@ -1054,6 +1054,185 @@ func TestKeeper_ClassWhitelist_NonExistent(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrClassNotFound)
 }
 
+func TestKeeper_ClassFreeze(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_freezing,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// class-freezing issuer is not allowed
+	err = assetNFTKeeper.ClassFreeze(ctx, issuer, issuer, classID)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// mint NFT
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: recipient,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+	nftID := settings.ID
+
+	// class-freeze recipient
+	requireT.NoError(assetNFTKeeper.ClassFreeze(ctx, issuer, recipient, classID))
+
+	isClassFrozen, err := assetNFTKeeper.IsClassFrozen(ctx, classID, recipient)
+	requireT.NoError(err)
+	requireT.True(isClassFrozen)
+
+	frozenAccounts, _, err := assetNFTKeeper.GetClassFrozenAccounts(ctx, classID, &query.PageRequest{})
+	requireT.NoError(err)
+	requireT.ElementsMatch([]string{recipient.String()}, frozenAccounts)
+
+	// transfer must be rejected
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// class-unfreeze
+	requireT.NoError(assetNFTKeeper.ClassUnfreeze(ctx, issuer, recipient, classID))
+
+	// transfer again, must succeed
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.NoError(err)
+}
+
+func TestKeeper_ClassFreeze_And_NFTFreeze(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_freezing,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// mint 2 NFTs
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: recipient,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+	nftID1 := settings.ID
+
+	settings.ID += "2"
+	nftID2 := settings.ID
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+
+	// freeze the recipient for nft1
+	requireT.NoError(assetNFTKeeper.Freeze(ctx, issuer, classID, nftID1))
+	assertFrozen(t, ctx, assetNFTKeeper, classID, nftID1, true)
+	assertFrozen(t, ctx, assetNFTKeeper, classID, nftID2, false)
+
+	// freeze the whole class
+	requireT.NoError(assetNFTKeeper.ClassFreeze(ctx, issuer, recipient, classID))
+	assertFrozen(t, ctx, assetNFTKeeper, classID, nftID1, true)
+	assertFrozen(t, ctx, assetNFTKeeper, classID, nftID2, true)
+
+	// unfreeze the whole class
+	requireT.NoError(assetNFTKeeper.ClassUnfreeze(ctx, issuer, recipient, classID))
+	assertFrozen(t, ctx, assetNFTKeeper, classID, nftID1, true)
+	assertFrozen(t, ctx, assetNFTKeeper, classID, nftID2, false)
+}
+
+func TestKeeper_ClassFreeze_Unfreezable(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	account := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer:   issuer,
+		Symbol:   "symbol",
+		Features: []types.ClassFeature{},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: issuer,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	// mint NFT
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+
+	// class freeze NFT
+	err = assetNFTKeeper.ClassFreeze(ctx, issuer, account, classID)
+	requireT.Error(err)
+	requireT.True(types.ErrFeatureDisabled.Is(err))
+}
+
+func TestKeeper_ClassFreeze_Nonexistent(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	account := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	// try to class freeze when NFT does not exists
+	err := assetNFTKeeper.ClassFreeze(ctx, issuer, account, types.BuildClassID("symbol", issuer))
+	requireT.Error(err)
+	requireT.ErrorIs(err, types.ErrClassNotFound)
+}
+
 func genNFTData(requireT *require.Assertions) *codectypes.Any {
 	dataString := "metadata"
 	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
@@ -1075,4 +1254,10 @@ func assertWhitelisting(t *testing.T, ctx sdk.Context, k keeper.Keeper, classID,
 	isWhitelisted, err := k.IsWhitelisted(ctx, classID, nftID, account)
 	require.NoError(t, err)
 	require.EqualValues(t, isWhitelisted, expectedWhitelisting)
+}
+
+func assertFrozen(t *testing.T, ctx sdk.Context, k keeper.Keeper, classID, nftID string, expected bool) {
+	frozen, err := k.IsFrozen(ctx, classID, nftID)
+	require.NoError(t, err)
+	require.EqualValues(t, frozen, expected)
 }

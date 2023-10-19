@@ -138,6 +138,7 @@ func TestCmdQueryParams(t *testing.T) {
 	requireT.Equal(expectedMintFee, resp.Params.MintFee)
 }
 
+//nolint:unparam // using constant values here will make this function less flexible.
 func mint(
 	requireT *require.Assertions,
 	ctx client.Context,

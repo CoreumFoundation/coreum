@@ -18,6 +18,8 @@ type MsgKeeper interface {
 	Burn(ctx sdk.Context, owner sdk.AccAddress, classID, ID string) error
 	Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
 	Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
+	ClassFreeze(ctx sdk.Context, sender, account sdk.AccAddress, classID string) error
+	ClassUnfreeze(ctx sdk.Context, sender, account sdk.AccAddress, classID string) error
 	AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
 	RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
 	AddToClassWhitelist(ctx sdk.Context, classID string, sender, account sdk.AccAddress) error
@@ -216,6 +218,44 @@ func (ms MsgServer) RemoveFromClassWhitelist(ctx context.Context, req *types.Msg
 	}
 
 	if err := ms.keeper.RemoveFromClassWhitelist(sdk.UnwrapSDKContext(ctx), req.ClassID, sender, account); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// ClassFreeze freezes all NFTs of a class held by an account.
+func (ms MsgServer) ClassFreeze(ctx context.Context, req *types.MsgClassFreeze) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account")
+	}
+
+	if err := ms.keeper.ClassFreeze(sdk.UnwrapSDKContext(ctx), sender, account, req.ClassID); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// ClassUnfreeze removes class-freeze of all NFTs held by an account.
+func (ms MsgServer) ClassUnfreeze(ctx context.Context, req *types.MsgClassUnfreeze) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account")
+	}
+
+	if err := ms.keeper.ClassUnfreeze(sdk.UnwrapSDKContext(ctx), sender, account, req.ClassID); err != nil {
 		return nil, err
 	}
 
