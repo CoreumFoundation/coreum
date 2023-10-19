@@ -556,6 +556,7 @@ func New(
 	groupConfig := group.DefaultConfig()
 	/*
 		Example of setting group params:
+		groupConfig.MaxExecutionPeriod = 2 * time.Hour * 24 // 2 days
 		groupConfig.MaxMetadataLen = 1000
 	*/
 	app.GroupKeeper = groupkeeper.NewKeeper(
