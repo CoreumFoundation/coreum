@@ -163,8 +163,6 @@ const (
 // from cmd package to app.
 var ChosenNetwork config.NetworkConfig
 
-// NOTE: I added group module in the same sequence as ignite puts it when generating a new project. Is it correct approach ?
-
 var (
 	// DefaultNodeHome default home directories for the application daemon.
 	DefaultNodeHome string

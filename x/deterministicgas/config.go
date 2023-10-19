@@ -125,7 +125,7 @@ func DefaultConfig() Config {
 		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
 		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52000),
 
-		// group // FIXME: Find reasonable values.
+		// group // FIXME: Find reasonable values for other msg types.
 		MsgToMsgURL(&group.MsgCreateGroup{}):                     constantGasFunc(55_000),
 		MsgToMsgURL(&group.MsgUpdateGroupMembers{}):              constantGasFunc(500_000),
 		MsgToMsgURL(&group.MsgUpdateGroupAdmin{}):                constantGasFunc(500_000),
