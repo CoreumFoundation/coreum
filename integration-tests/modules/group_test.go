@@ -17,7 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
-func TestGroupCreation(t *testing.T) {
+func TestGroupCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -34,16 +34,8 @@ func TestGroupCreation(t *testing.T) {
 	})
 
 	// Setup group member accounts
-	memberFundBalance := chain.ComputeNeededBalanceFromOptions(integration.BalancesOptions{
-		Messages: []sdk.Msg{&group.MsgVote{}, &group.MsgSubmitProposal{}, &bank.MsgSend{}},
-	})
-	accountsToFund := make([]integration.FundedAccount, 0, 3)
 	groupMembers := lo.Times(3, func(i int) group.MemberRequest {
 		address := chain.GenAccount()
-		accountsToFund = append(accountsToFund, integration.FundedAccount{
-			Address: address,
-			Amount:  chain.NewCoin(memberFundBalance),
-		})
 
 		return group.MemberRequest{
 			Address: address.String(),
@@ -51,12 +43,31 @@ func TestGroupCreation(t *testing.T) {
 		}
 	})
 
-	chain.Faucet.FundAccounts(ctx, t, accountsToFund...)
+	chain.FundAccountWithOptions(ctx,
+		t,
+		sdk.MustAccAddressFromBech32(groupMembers[0].Address),
+		integration.BalancesOptions{
+			// First group member submits proposal
+			Messages: []sdk.Msg{&group.MsgSubmitProposal{}},
+		},
+	)
+
+	for i := 1; i < len(groupMembers); i++ {
+		chain.FundAccountWithOptions(ctx,
+			t,
+			sdk.MustAccAddressFromBech32(groupMembers[i].Address),
+			integration.BalancesOptions{
+				// Other group members vote
+				Messages: []sdk.Msg{&group.MsgVote{}},
+			},
+		)
+	}
 
 	// Create group
 	createGroupMsg := group.MsgCreateGroup{
-		Admin:   admin.String(),
-		Members: groupMembers,
+		Admin:    admin.String(),
+		Members:  groupMembers,
+		Metadata: "Integration test group",
 	}
 
 	result, err := client.BroadcastTx(
@@ -80,12 +91,12 @@ func TestGroupCreation(t *testing.T) {
 	createGroupPolicyMsg, err := group.NewMsgCreateGroupPolicy(
 		admin,
 		grp.Id,
-		"",
+		"Integration test group policy",
 		&group.ThresholdDecisionPolicy{
 			Threshold: "2",
 			Windows: &group.DecisionPolicyWindows{
 				VotingPeriod:       time.Minute,
-				MinExecutionPeriod: time.Millisecond, // TODO: Rewise.
+				MinExecutionPeriod: 100 * time.Millisecond, // Allow execution in 100ms after creation.
 			},
 		},
 	)
@@ -109,7 +120,7 @@ func TestGroupCreation(t *testing.T) {
 	groupPolicy := groupPolicies.GroupPolicies[0]
 	t.Logf("created group policy, groupPolicyAddress:%s txHash:%s", groupPolicy.Address, result.TxHash)
 
-	groupSendCoin := chain.NewCoin(sdk.NewInt(100_000))
+	groupSendCoin := chain.NewCoin(sdk.NewInt(100_000_000))
 	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(groupPolicy.Address), integration.BalancesOptions{
 		Messages: []sdk.Msg{},
 		Amount:   groupSendCoin.Amount,
@@ -128,8 +139,8 @@ func TestGroupCreation(t *testing.T) {
 		}},
 		"",
 		group.Exec_EXEC_UNSPECIFIED,
-		"Title",
-		"Summary",
+		"Integration test for bank send proposal using group",
+		"Integration test for bank send proposal using group",
 	)
 	requireT.NoError(err)
 
@@ -151,9 +162,9 @@ func TestGroupCreation(t *testing.T) {
 	requireT.Equal(group.PROPOSAL_STATUS_SUBMITTED, proposal.Status)
 	t.Logf("submitted group proposal, id:%d txHash:%s", proposal.Id, result.TxHash)
 
-	// Vote for proposal
-	for i := 0; i < 2; i++ {
-		voter := sdk.MustAccAddressFromBech32(groupMembers[i+1].Address)
+	// Vote for proposal from other group members (except proposer).
+	for i := 1; i < len(groupMembers); i++ {
+		voter := sdk.MustAccAddressFromBech32(groupMembers[i].Address)
 		voteMsg := &group.MsgVote{
 			ProposalId: proposal.Id,
 			Voter:      voter.String(),
@@ -170,11 +181,6 @@ func TestGroupCreation(t *testing.T) {
 		requireT.NoError(err)
 	}
 
-	//tally, err := groupClient.TallyResult(ctx, &group.QueryTallyResultRequest{
-	//	ProposalId: proposal.Id,
-	//})
-	//requireT.NoError(err)
-	//tally = tally
 	_, err = groupClient.Proposal(ctx, &group.QueryProposalRequest{
 		ProposalId: proposal.Id,
 	})
