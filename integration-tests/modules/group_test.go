@@ -36,10 +36,8 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 
 	// Setup group member accounts
 	groupMembers := lo.Times(3, func(i int) group.MemberRequest {
-		address := chain.GenAccount()
-
 		return group.MemberRequest{
-			Address: address.String(),
+			Address: chain.GenAccount().String(),
 			Weight:  "1",
 		}
 	})
@@ -195,4 +193,205 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.Equal(groupSendCoin.Amount, receiverBalance.Balance.Amount)
+}
+
+func TestGroupAdministration(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+	groupClient := group.NewQueryClient(chain.ClientContext)
+
+	// Setup group admin account
+	admin := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&group.MsgCreateGroupWithPolicy{},
+			&group.MsgCreateGroupWithPolicy{},
+			&group.MsgCreateGroupWithPolicy{}, // fixme
+			&group.MsgCreateGroupWithPolicy{},
+			&group.MsgCreateGroupWithPolicy{},
+			&group.MsgCreateGroupWithPolicy{},
+			&group.MsgCreateGroupWithPolicy{},
+			&group.MsgCreateGroupWithPolicy{},
+			&group.MsgCreateGroupWithPolicy{},
+		},
+	})
+
+	// Setup group member accounts
+	groupMembers := lo.Times(5, func(i int) group.MemberRequest {
+		return group.MemberRequest{
+			Address: chain.GenAccount().String(),
+			Weight:  "1",
+		}
+	})
+
+	// Create group & group policy
+	createGroupWithPolicyMsg, err := group.NewMsgCreateGroupWithPolicy(
+		admin.String(),
+		groupMembers,
+		"Integration test group",
+		"Integration test group policy",
+		false,
+		&group.PercentageDecisionPolicy{
+			Percentage: "0.45",
+			Windows: &group.DecisionPolicyWindows{
+				VotingPeriod:       time.Minute,
+				MinExecutionPeriod: 100 * time.Millisecond,
+			},
+		})
+
+	requireT.NoError(err)
+
+	result, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createGroupWithPolicyMsg)),
+		createGroupWithPolicyMsg,
+	)
+	requireT.NoError(err)
+
+	groupsByAdmin, err := groupClient.GroupsByAdmin(ctx, &group.QueryGroupsByAdminRequest{
+		Admin: admin.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(groupsByAdmin.Groups, 1)
+
+	grp := groupsByAdmin.Groups[0]
+
+	groupPolicies, err := groupClient.GroupPoliciesByGroup(ctx, &group.QueryGroupPoliciesByGroupRequest{
+		GroupId: grp.Id,
+	})
+	requireT.NoError(err)
+
+	requireT.Len(groupPolicies.GroupPolicies, 1)
+	groupPolicy := groupPolicies.GroupPolicies[0]
+	t.Logf("created group with policy, groupId: %d groupPolicyAddress:%s txHash:%s", grp.Id, groupPolicy.Address, result.TxHash)
+
+	// Update members & metadata in group
+	groupMembersNew := groupMembers[1:] // remove first member
+	updateGroupMembersMsg := &group.MsgUpdateGroupMembers{
+		Admin:   admin.String(),
+		GroupId: grp.Id,
+		MemberUpdates: []group.MemberRequest{
+			{
+				Address: groupMembers[0].Address,
+				Weight:  "0", // to remove member we should set it's weight to 0
+			},
+		},
+	}
+	updateGroupMetadataMsg := &group.MsgUpdateGroupMetadata{
+		Admin:    admin.String(),
+		GroupId:  grp.Id,
+		Metadata: "New group metadata",
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(updateGroupMembersMsg, updateGroupMetadataMsg)),
+		updateGroupMembersMsg, updateGroupMetadataMsg,
+	)
+	requireT.NoError(err)
+
+	groupMembersResp, err := groupClient.GroupMembers(ctx, &group.QueryGroupMembersRequest{
+		GroupId: grp.Id,
+	})
+	requireT.NoError(err)
+	requireT.Len(groupMembersResp.Members, len(groupMembersNew))
+
+	groupInfoResp, err := groupClient.GroupInfo(ctx, &group.QueryGroupInfoRequest{
+		GroupId: grp.Id,
+	})
+	requireT.NoError(err)
+	requireT.Equal(updateGroupMetadataMsg.Metadata, groupInfoResp.Info.Metadata)
+
+	// Update decision policy & metadata in group policy
+	updateGroupPolicyDecisionPolicyMsg, err := group.NewMsgUpdateGroupPolicyDecisionPolicy(
+		admin,
+		sdk.MustAccAddressFromBech32(groupPolicy.Address),
+		&group.ThresholdDecisionPolicy{
+			Threshold: "3",
+			Windows: &group.DecisionPolicyWindows{
+				VotingPeriod:       time.Minute,
+				MinExecutionPeriod: 100 * time.Millisecond,
+			},
+		},
+	)
+	updateGroupPolicyMetadataMsg := &group.MsgUpdateGroupPolicyMetadata{
+		Admin:              admin.String(),
+		GroupPolicyAddress: groupPolicy.Address,
+		Metadata:           "New group policy metadata",
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(updateGroupPolicyDecisionPolicyMsg, updateGroupPolicyMetadataMsg)),
+		updateGroupPolicyDecisionPolicyMsg, updateGroupPolicyMetadataMsg,
+	)
+	requireT.NoError(err)
+
+	groupPolicyInfoRes, err := groupClient.GroupPolicyInfo(ctx, &group.QueryGroupPolicyInfoRequest{
+		Address: groupPolicy.Address,
+	})
+
+	requireT.Equal(updateGroupPolicyDecisionPolicyMsg.DecisionPolicy.String(), groupPolicyInfoRes.Info.DecisionPolicy.String())
+	requireT.Equal(updateGroupPolicyMetadataMsg.Metadata, groupPolicyInfoRes.Info.Metadata)
+
+	// Update admin in both group & group policy
+	adminNew := chain.GenAccount()
+	updateGroupAdminMsg := &group.MsgUpdateGroupAdmin{
+		Admin:    admin.String(),
+		GroupId:  grp.Id,
+		NewAdmin: adminNew.String(),
+	}
+	updateGroupPolicyAdminMsg := &group.MsgUpdateGroupPolicyAdmin{
+		Admin:              admin.String(),
+		GroupPolicyAddress: groupPolicy.Address,
+		NewAdmin:           adminNew.String(),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(updateGroupAdminMsg, updateGroupPolicyAdminMsg)),
+		updateGroupAdminMsg, updateGroupPolicyAdminMsg,
+	)
+	requireT.NoError(err)
+
+	groupInfoResp, err = groupClient.GroupInfo(ctx, &group.QueryGroupInfoRequest{
+		GroupId: grp.Id,
+	})
+	requireT.NoError(err)
+	requireT.Equal(updateGroupAdminMsg.NewAdmin, groupInfoResp.Info.Admin)
+
+	groupPolicyInfoRes, err = groupClient.GroupPolicyInfo(ctx, &group.QueryGroupPolicyInfoRequest{
+		Address: groupPolicy.Address,
+	})
+	requireT.NoError(err)
+	requireT.Equal(updateGroupPolicyAdminMsg.NewAdmin, groupPolicyInfoRes.Info.Admin)
+
+	// Leave group
+	memberToLeaveGroup := groupMembersNew[len(groupMembersNew)-1]
+	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(memberToLeaveGroup.Address), integration.BalancesOptions{
+		Messages: []sdk.Msg{&group.MsgLeaveGroup{}},
+	})
+	leaveGroupMsg := &group.MsgLeaveGroup{
+		Address: memberToLeaveGroup.Address,
+		GroupId: grp.Id,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sdk.MustAccAddressFromBech32(memberToLeaveGroup.Address)),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(leaveGroupMsg)),
+		leaveGroupMsg,
+	)
+	requireT.NoError(err)
+
+	groupMembersResp, err = groupClient.GroupMembers(ctx, &group.QueryGroupMembersRequest{
+		GroupId: grp.Id,
+	})
+	requireT.NoError(err)
+	requireT.Len(groupMembersResp.Members, len(groupMembersNew)-1)
 }
