@@ -10,8 +10,3 @@ type FungibleTokenProvider interface {
 	BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error
 	BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error
 }
-
-// WASMKeeper defines methods required from the WASM keeper.
-type WASMKeeper interface {
-	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
-}

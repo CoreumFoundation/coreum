@@ -17,6 +17,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/wasm"
 	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
@@ -27,6 +28,7 @@ type Keeper struct {
 	storeKey    storetypes.StoreKey
 	bankKeeper  types.BankKeeper
 	delayKeeper types.DelayKeeper
+	wasmKeeper  wasm.Keeper
 	authority   string
 }
 
@@ -36,6 +38,7 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
+	wasmKeeper wasm.Keeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -43,6 +46,7 @@ func NewKeeper(
 		storeKey:    storeKey,
 		bankKeeper:  bankKeeper,
 		delayKeeper: delayKeeper,
+		wasmKeeper:  wasmKeeper,
 		authority:   authority,
 	}
 }
@@ -548,6 +552,11 @@ func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount s
 	if !amount.IsPositive() {
 		return nil
 	}
+
+	if wasm.IsSmartContract(ctx, recipient, k.wasmKeeper) {
+		ctx = cwasmtypes.WithSmartContractRecipient(ctx, recipient.String())
+	}
+
 	if err := k.isCoinReceivable(ctx, recipient, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not receivable")
 	}

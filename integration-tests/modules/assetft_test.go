@@ -430,6 +430,7 @@ func TestAssetFTMint(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
 	randomAddress := chain.GenAccount()
 	recipient := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
@@ -438,6 +439,7 @@ func TestAssetFTMint(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
@@ -451,6 +453,10 @@ func TestAssetFTMint(t *testing.T) {
 		},
 	})
 
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
 	// Issue an unmintable fungible token
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
@@ -460,6 +466,7 @@ func TestAssetFTMint(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_sending_to_smart_contracts_blocked,
 			assetfttypes.Feature_burning,
 			assetfttypes.Feature_freezing,
 		},
@@ -580,6 +587,33 @@ func TestAssetFTMint(t *testing.T) {
 	newSupply2, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
 	assertT.EqualValues(mintCoin, newSupply2.GetAmount().Sub(newSupply.GetAmount()))
+
+	// sending to smart contract is blocked so minting to it should fail
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		admin,
+		moduleswasm.BankSendWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	mintMsg = &assetfttypes.MsgMint{
+		Sender:    issuer.String(),
+		Recipient: contractAddr,
+		Coin:      mintCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 // TestAssetFTBurn tests burn functionality of fungible tokens.

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	sdkerrors "cosmossdk.io/errors"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +9,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/CoreumFoundation/coreum/v3/x/wasm"
 	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/v3/x/wbank/types"
 )
@@ -18,7 +18,7 @@ import (
 type BaseKeeperWrapper struct {
 	bankkeeper.BaseKeeper
 	ak         banktypes.AccountKeeper
-	wasmKeeper types.WASMKeeper
+	wasmKeeper wasm.Keeper
 	ftProvider types.FungibleTokenProvider
 }
 
@@ -27,7 +27,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	ak banktypes.AccountKeeper,
-	wasmKeeper types.WASMKeeper,
+	wasmKeeper wasm.Keeper,
 	blockedAddrs map[string]bool,
 	ftProvider types.FungibleTokenProvider,
 	authority string,
@@ -131,5 +131,5 @@ func (k BaseKeeperWrapper) InputOutputCoins(ctx sdk.Context, inputs []banktypes.
 }
 
 func (k BaseKeeperWrapper) isSmartContract(ctx sdk.Context, addr sdk.AccAddress) bool {
-	return len(addr) == wasmtypes.ContractAddrLen && k.wasmKeeper.HasContractInfo(ctx, addr)
+	return wasm.IsSmartContract(ctx, addr, k.wasmKeeper)
 }
