@@ -4200,8 +4200,6 @@ func TestAssetFTSendingToSmartContractIsDenied(t *testing.T) {
 	)
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
 
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
@@ -4235,7 +4233,7 @@ func TestAssetFTSendingToSmartContractIsDenied(t *testing.T) {
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		txf,
+		chain.TxFactory().WithSimulateAndExecute(true),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
@@ -4252,8 +4250,13 @@ func TestAssetFTSendingToSmartContractIsDenied(t *testing.T) {
 		ToAddress:   contractAddr,
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
 	}
-	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(issuer), txf, sendMsg)
-	requireT.Error(err)
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
@@ -4269,8 +4272,13 @@ func TestAssetFTSendingToSmartContractIsDenied(t *testing.T) {
 			},
 		},
 	}
-	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(issuer), txf, multiSendMsg)
-	requireT.Error(err)
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 // TestAssetFTAttachingToSmartContractIsDenied verifies that this is not possible to attach token to smart contract call
@@ -4337,7 +4345,7 @@ func TestAssetFTAttachingToSmartContractCallIsDenied(t *testing.T) {
 	incrementPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleIncrement)
 	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, issuer, contractAddr, incrementPayload, sdk.NewInt64Coin(denom, 100))
-	requireT.Error(err)
+	requireT.ErrorContains(err, "unauthorized")
 }
 
 // TestAssetFTAttachingToSmartContractIsDenied verifies that this is not possible to attach token to smart contract instantiation
@@ -4400,7 +4408,7 @@ func TestAssetFTAttachingToSmartContractInstantiationIsDenied(t *testing.T) {
 			Label:      "simple_state",
 		},
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, "unauthorized")
 }
 
 // TestAssetFTIssuingSmartContractIsAllowedToReceive verifies that issuing smart contract is allowed to receive coins even
