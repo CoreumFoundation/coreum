@@ -1811,9 +1811,7 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 	})
 
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
-		},
+		Amount: sdk.NewInt(1),
 	})
 
 	// issue new NFT class
