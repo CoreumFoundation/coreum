@@ -23,7 +23,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	ibcwasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/ibc"
-	"github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
 
@@ -96,7 +95,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 		ibcwasm.IBCTransferWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    modules.EmptyPayload,
+			Payload:    ibcwasm.EmptyPayload,
 			Amount:     sendToOsmosisCoin,
 			Label:      "ibc_transfer",
 		},
@@ -195,7 +194,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		integration.InstantiateConfig{
 			Admin:      coreumCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    modules.EmptyPayload,
+			Payload:    ibcwasm.EmptyPayload,
 			Label:      "ibc_call",
 		},
 	)
@@ -209,7 +208,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		integration.InstantiateConfig{
 			Admin:      osmosisCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    modules.EmptyPayload,
+			Payload:    ibcwasm.EmptyPayload,
 			Label:      "ibc_call",
 		},
 	)
