@@ -84,6 +84,8 @@ TotalGas = 65000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/coreum.asset.nft.v1.MsgAddToClassWhitelist`                          | 7000                           |
 | `/coreum.asset.nft.v1.MsgAddToWhitelist`                               | 7000                           |
 | `/coreum.asset.nft.v1.MsgBurn`                                         | 26000                          |
+| `/coreum.asset.nft.v1.MsgClassFreeze`                                  | 8000                           |
+| `/coreum.asset.nft.v1.MsgClassUnfreeze`                                | 5000                           |
 | `/coreum.asset.nft.v1.MsgFreeze`                                       | 8000                           |
 | `/coreum.asset.nft.v1.MsgIssueClass`                                   | 16000                          |
 | `/coreum.asset.nft.v1.MsgMint`                                         | 39000                          |
