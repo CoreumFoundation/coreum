@@ -7,6 +7,8 @@ import (
 )
 
 // NFTKeeper defines the expected NFT interface.
+//
+//nolint:interfacebloat
 type NFTKeeper interface {
 	SaveClass(ctx sdk.Context, class nft.Class) error
 	GetClass(ctx sdk.Context, classID string) (nft.Class, bool)
@@ -18,6 +20,7 @@ type NFTKeeper interface {
 	Burn(ctx sdk.Context, classID, nftID string) error
 	Update(ctx sdk.Context, n nft.NFT) error
 	GetOwner(ctx sdk.Context, classID, nftID string) sdk.AccAddress
+	Transfer(ctx sdk.Context, classID string, nftID string, receiver sdk.AccAddress) error
 }
 
 // BankKeeper defines the expected bank interface.
