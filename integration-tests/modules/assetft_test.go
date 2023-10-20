@@ -2450,7 +2450,7 @@ func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
 	}
 	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(issuer), txf, sendMsg)
-	requireT.Error(err)
+	requireT.ErrorContains(err, "whitelisted limit exceeded")
 }
 
 // TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied verifies that this is not possible to attach token to smart contract call
@@ -2517,7 +2517,7 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied(t *testing.T)
 	incrementPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleIncrement)
 	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, issuer, contractAddr, incrementPayload, sdk.NewInt64Coin(denom, 100))
-	requireT.Error(err)
+	requireT.ErrorContains(err, "whitelisted limit exceeded")
 }
 
 // TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied verifies that this is not possible to attach token to smart contract instantiation
@@ -2580,7 +2580,7 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied(t *t
 			Label:      "simple_state",
 		},
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, "whitelisted limit exceeded")
 }
 
 // TestBareToken checks none of the features will work if the flags are not set.
