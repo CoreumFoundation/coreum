@@ -2397,8 +2397,6 @@ func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 	)
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
 
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
@@ -2432,7 +2430,7 @@ func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		txf,
+		chain.TxFactory().WithSimulateAndExecute(true),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
@@ -2449,8 +2447,13 @@ func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 		ToAddress:   contractAddr,
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
 	}
-	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(issuer), txf, sendMsg)
-	requireT.ErrorContains(err, "whitelisted limit exceeded")
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.ErrorIs(err, assetfttypes.ErrWhitelistedLimitExceeded)
 }
 
 // TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied verifies that this is not possible to attach token to smart contract call
