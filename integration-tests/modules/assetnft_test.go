@@ -258,6 +258,94 @@ func TestAssetNFTIssueClassInvalidFeatures(t *testing.T) {
 	requireT.ErrorContains(err, "non-existing class feature provided")
 }
 
+// TestAssetNFTMintAndWhitelisting tests non-fungible token minting when whitelisting is required.
+func TestAssetNFTMintAndWhitelisting(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	nftClient := nft.NewQueryClient(chain.ClientContext)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+			&assetnfttypes.MsgMint{},
+			&assetnfttypes.MsgAddToClassWhitelist{},
+			&assetnfttypes.MsgMint{},
+		},
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+	})
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_whitelisting,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+
+	// mint new token in that class - should fail
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:    issuer.String(),
+		Recipient: recipient.String(),
+		ID:        "id-1",
+		ClassID:   classID,
+		URI:       "https://my-class-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// whitelist class
+	msgAddToWhitelist := &assetnfttypes.MsgAddToClassWhitelist{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		Account: recipient.String(),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgAddToWhitelist)),
+		msgAddToWhitelist,
+	)
+	requireT.NoError(err)
+
+	// mint again - should succeed
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	// check the owner
+	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      mintMsg.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(recipient.String(), ownerRes.Owner)
+}
+
 // TestAssetNFTMint tests non-fungible token minting.
 func TestAssetNFTMint(t *testing.T) {
 	t.Parallel()
