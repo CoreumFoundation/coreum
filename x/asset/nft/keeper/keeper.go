@@ -962,7 +962,7 @@ func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver
 	}
 
 	// always allow issuer to receive NFTs issued by them.
-	if classDefinition.Issuer == receiver.String() {
+	if classDefinition.IsIssuer(receiver) {
 		return nil
 	}
 

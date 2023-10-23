@@ -83,7 +83,7 @@ func ParseFreezingKey(key []byte) (string, string, error) {
 		return "", "", sdkerrors.Wrapf(ErrInvalidKey, "failed to parse a freezing key, err: %s", err)
 	}
 	if len(parsedKeys) != 2 {
-		err = sdkerrors.Wrapf(ErrInvalidKey, "freezing key must be composed to 2 length prefixed keys")
+		err = sdkerrors.Wrapf(ErrInvalidKey, "freezing key must be composed of 2 length prefixed keys")
 		return "", "", err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), nil
@@ -106,7 +106,7 @@ func ParseClassFreezingKey(key []byte) (string, sdk.AccAddress, error) {
 		return "", nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to parse class freezing key, err: %s", err)
 	}
 	if len(parsedKeys) != 2 {
-		err = sdkerrors.Wrapf(ErrInvalidKey, "key must be composed to 2 length prefixed keys")
+		err = sdkerrors.Wrapf(ErrInvalidKey, "key must be composed of 2 length prefixed keys")
 		return "", nil, err
 	}
 	return string(parsedKeys[0]), parsedKeys[1], nil
@@ -185,7 +185,7 @@ func ParseBurningKey(key []byte) (string, string, error) {
 		return "", "", sdkerrors.Wrapf(ErrInvalidKey, "failed to parse a burning key, err: %s", err)
 	}
 	if len(parsedKeys) != 2 {
-		err = sdkerrors.Wrapf(ErrInvalidKey, "burning key must be composed to 2 length prefixed keys")
+		err = sdkerrors.Wrapf(ErrInvalidKey, "burning key must be composed of 2 length prefixed keys")
 		return "", "", err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), nil
