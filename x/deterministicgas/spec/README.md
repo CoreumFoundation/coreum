@@ -108,10 +108,13 @@ TotalGas = 65000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/cosmos.nft.v1beta1.MsgSend`                                          | 25000                          |
 | `/cosmos.slashing.v1beta1.MsgUnjail`                                   | 25000                          |
 | `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           | 157000                         |
+| `/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation`                 | 75000                          |
 | `/cosmos.staking.v1beta1.MsgCreateValidator`                           | 117000                         |
 | `/cosmos.staking.v1beta1.MsgDelegate`                                  | 83000                          |
 | `/cosmos.staking.v1beta1.MsgEditValidator`                             | 13000                          |
 | `/cosmos.staking.v1beta1.MsgUndelegate`                                | 112000                         |
+| `/cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount`              | 32000                          |
+| `/cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount`              | 30000                          |
 | `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`                      | 30000                          |
 | `/cosmwasm.wasm.v1.MsgClearAdmin`                                      | 6500                           |
 | `/cosmwasm.wasm.v1.MsgUpdateAdmin`                                     | 8000                           |
@@ -159,12 +162,9 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/cosmos.gov.v1beta1.MsgSubmitProposal`                                |
 | `/cosmos.mint.v1beta1.MsgUpdateParams`                                 |
 | `/cosmos.slashing.v1beta1.MsgUpdateParams`                             |
-| `/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation`                 |
 | `/cosmos.staking.v1beta1.MsgUpdateParams`                              |
 | `/cosmos.upgrade.v1beta1.MsgCancelUpgrade`                             |
 | `/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade`                           |
-| `/cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount`              |
-| `/cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount`              |
 | `/cosmwasm.wasm.v1.MsgExecuteContract`                                 |
 | `/cosmwasm.wasm.v1.MsgIBCCloseChannel`                                 |
 | `/cosmwasm.wasm.v1.MsgIBCSend`                                         |

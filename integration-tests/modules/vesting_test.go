@@ -22,8 +22,8 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
-// TestVestingAccountCreationAndBankSend tests vesting account can be created, and it's send limits are applied.
-func TestVestingAccountCreationAndBankSend(t *testing.T) {
+// TestContinuousAndDelayedVestingAccountCreationAndBankSend tests continuous and delayed vesting account can be created, and it's send limits are applied.
+func TestContinuousAndDelayedVestingAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -117,6 +117,181 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 		msgSend,
 	)
 	requireT.NoError(err)
+}
+
+// TestPeriodicVestingAccountCreationAndBankSend tests periodic vesting account can be created, and it's send limits are applied.
+func TestPeriodicVestingAccountCreationAndBankSend(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	creator := chain.GenAccount()
+	vestingAcc := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	requireT := require.New(t)
+	authClient := authtypes.NewQueryClient(chain.ClientContext)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	vestingCoinPeriod1 := chain.NewCoin(sdkmath.NewInt(50))
+	vestingCoinPeriod2 := chain.NewCoin(sdkmath.NewInt(60))
+	amountToVest := vestingCoinPeriod1.Add(vestingCoinPeriod2)
+	chain.FundAccountWithOptions(ctx, t, creator, integration.BalancesOptions{
+		Messages: []sdk.Msg{&vestingtypes.MsgCreatePeriodicVestingAccount{}},
+		Amount:   amountToVest.Amount,
+	})
+
+	createAccMsg := &vestingtypes.MsgCreatePeriodicVestingAccount{
+		FromAddress: creator.String(),
+		ToAddress:   vestingAcc.String(),
+		StartTime:   time.Now().Unix() - 1,
+		VestingPeriods: vestingtypes.Periods{
+			{
+				Length: 1, // activate is immediately
+				Amount: sdk.NewCoins(vestingCoinPeriod1),
+			},
+			{
+				Length: 360, // +360 sec from start
+				Amount: sdk.NewCoins(vestingCoinPeriod2),
+			},
+		},
+	}
+
+	txRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(creator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createAccMsg)),
+		createAccMsg,
+	)
+	requireT.NoError(err)
+	requireT.Equal(uint64(txRes.GasUsed), chain.GasLimitByMsgs(createAccMsg))
+
+	// check account is created and it's vesting
+	accountRes, err := authClient.Account(ctx, &authtypes.QueryAccountRequest{
+		Address: vestingAcc.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal("/cosmos.vesting.v1beta1.PeriodicVestingAccount", accountRes.Account.TypeUrl)
+	// check the balance is full
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: vestingAcc.String(),
+		Denom:   amountToVest.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToVest.String(), balanceRes.Balance.String())
+
+	// fund the vesting account to pay fees
+	chain.FundAccountWithOptions(ctx, t, vestingAcc, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: vestingAcc.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(amountToVest),
+	}
+
+	// try to send full amount from vesting account before delay is ended
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(vestingAcc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+
+	// fund the vesting account to pay fees one more time
+	chain.FundAccountWithOptions(ctx, t, vestingAcc, integration.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+	})
+
+	msgSend = &banktypes.MsgSend{
+		FromAddress: vestingAcc.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(vestingCoinPeriod1),
+	}
+	// try to send one more time, the coins should be unlocked at that time since we use first period only
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(vestingAcc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+}
+
+// TestPermanentLockedAccountAccountCreationAndBankSend tests permanent locked account can be created, and it's send limits are applied.
+func TestPermanentLockedAccountAccountCreationAndBankSend(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	creator := chain.GenAccount()
+	vestingAcc := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	requireT := require.New(t)
+	authClient := authtypes.NewQueryClient(chain.ClientContext)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	amountToVest := chain.NewCoin(sdkmath.NewInt(45))
+	chain.FundAccountWithOptions(ctx, t, creator, integration.BalancesOptions{
+		Messages: []sdk.Msg{&vestingtypes.MsgCreatePermanentLockedAccount{}},
+		Amount:   amountToVest.Amount,
+	})
+
+	createAccMsg := &vestingtypes.MsgCreatePermanentLockedAccount{
+		FromAddress: creator.String(),
+		ToAddress:   vestingAcc.String(),
+		Amount:      sdk.NewCoins(amountToVest),
+	}
+
+	txRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(creator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createAccMsg)),
+		createAccMsg,
+	)
+	requireT.NoError(err)
+	requireT.Equal(uint64(txRes.GasUsed), chain.GasLimitByMsgs(createAccMsg))
+
+	// check account is created and it's vesting
+	accountRes, err := authClient.Account(ctx, &authtypes.QueryAccountRequest{
+		Address: vestingAcc.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal("/cosmos.vesting.v1beta1.PermanentLockedAccount", accountRes.Account.TypeUrl)
+	// check the balance is full
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: vestingAcc.String(),
+		Denom:   amountToVest.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToVest.String(), balanceRes.Balance.String())
+
+	// fund the vesting account to pay fees
+	chain.FundAccountWithOptions(ctx, t, vestingAcc, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: vestingAcc.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(amountToVest),
+	}
+
+	// try to send full amount from vesting account before delay is ended
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(vestingAcc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 }
 
 // TestVestingAccountStaking tests the vesting account can delegate coins.
