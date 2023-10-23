@@ -42,6 +42,10 @@ func (a SendAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authz.AcceptRes
 
 // ValidateBasic implements Authorization.ValidateBasic.
 func (a SendAuthorization) ValidateBasic() error {
+	if len(a.Nfts) == 0 {
+		return ErrInvalidInput.Wrap("empty NFT list")
+	}
+
 	for _, nft := range a.Nfts {
 		if err := ValidateTokenID(nft.Id); err != nil {
 			return ErrInvalidInput.Wrap(err.Error())
