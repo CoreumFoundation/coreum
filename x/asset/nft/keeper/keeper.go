@@ -947,25 +947,25 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s has sending disabled", classID, nftID)
 	}
 
-	frozen, err := k.IsFrozen(ctx, classID, nftID)
+	isFrozen, err := k.IsFrozen(ctx, classID, nftID)
 	if err != nil {
 		if errors.Is(err, types.ErrFeatureDisabled) {
 			return nil
 		}
 		return err
 	}
-	if frozen {
+	if isFrozen {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
 	}
 
-	classFrozen, err := k.IsClassFrozen(ctx, classID, owner)
+	isClassFrozen, err := k.IsClassFrozen(ctx, classID, owner)
 	if err != nil {
 		if errors.Is(err, types.ErrFeatureDisabled) {
 			return nil
 		}
 		return err
 	}
-	if classFrozen {
+	if isClassFrozen {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is class frozen", classID, nftID)
 	}
 	return nil
