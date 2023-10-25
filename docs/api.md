@@ -422,6 +422,8 @@ EventIssued is emitted on MsgIssue.
 | `features` | [Feature](#coreum.asset.ft.v1.Feature) | repeated |  |
 | `burn_rate` | [string](#string) |  |  |
 | `send_commission_rate` | [string](#string) |  |  |
+| `uri` | [string](#string) |  |  |
+| `uri_hash` | [string](#string) |  |  |
 
 
 
@@ -887,6 +889,8 @@ Definition defines the fungible token settings to store.
 | `burn_rate` | [string](#string) |  | burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount. |
 | `send_commission_rate` | [string](#string) |  | send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account. |
 | `version` | [uint32](#uint32) |  |  |
+| `uri` | [string](#string) |  |  |
+| `uri_hash` | [string](#string) |  |  |
 
 
 
@@ -927,6 +931,8 @@ Token is a full representation of the fungible token.
 | `burn_rate` | [string](#string) |  | burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount. |
 | `send_commission_rate` | [string](#string) |  | send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account. |
 | `version` | [uint32](#uint32) |  |  |
+| `uri` | [string](#string) |  |  |
+| `uri_hash` | [string](#string) |  |  |
 
 
 
@@ -1088,6 +1094,8 @@ MsgIssue defines message to issue new fungible token.
 | `features` | [Feature](#coreum.asset.ft.v1.Feature) | repeated |  |
 | `burn_rate` | [string](#string) |  | burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount. |
 | `send_commission_rate` | [string](#string) |  | send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account. |
+| `uri` | [string](#string) |  |  |
+| `uri_hash` | [string](#string) |  |  |
 
 
 

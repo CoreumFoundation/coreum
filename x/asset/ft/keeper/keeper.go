@@ -215,9 +215,19 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
 		Version:            version,
+		URI:                settings.URI,
+		URIHash:            settings.URIHash,
 	}
 
-	if err := k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision); err != nil {
+	if err := k.SetDenomMetadata(
+		ctx,
+		denom,
+		settings.Symbol,
+		settings.Description,
+		settings.URI,
+		settings.URIHash,
+		settings.Precision,
+	); err != nil {
 		return "", err
 	}
 
@@ -238,6 +248,8 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		Features:           settings.Features,
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
+		URI:                settings.URI,
+		URIHash:            settings.URIHash,
 	}); err != nil {
 		return "", sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventIssued event: %s", err)
 	}
@@ -264,12 +276,13 @@ func (k Keeper) SetDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit st
 }
 
 // SetDenomMetadata registers denom metadata on the bank keeper.
-func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description string, precision uint32) error {
+func (k Keeper) SetDenomMetadata(
+	ctx sdk.Context,
+	denom, symbol, description, uri, uriHash string,
+	precision uint32,
+) error {
 	denomMetadata := banktypes.Metadata{
-		Name:        symbol,
-		Symbol:      symbol,
 		Description: description,
-
 		// This is a cosmos sdk requirement that the first denomination unit MUST be the base
 		DenomUnits: []*banktypes.DenomUnit{
 			{
@@ -285,6 +298,10 @@ func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description str
 		// and we take the symbol provided by the user and use it as symbol
 		Base:    denom,
 		Display: symbol,
+		Name:    symbol,
+		Symbol:  symbol,
+		URI:     uri,
+		URIHash: uriHash,
 	}
 
 	if err := denomMetadata.Validate(); err != nil {
@@ -739,6 +756,8 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		SendCommissionRate: definition.SendCommissionRate,
 		GloballyFrozen:     k.isGloballyFrozen(ctx, definition.Denom),
 		Version:            definition.Version,
+		URI:                definition.URI,
+		URIHash:            definition.URIHash,
 	}, nil
 }
 
