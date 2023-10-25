@@ -22,7 +22,7 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
-// TestContinuousAndDelayedVestingAccountCreationAndBankSend tests continuous and delayed vesting account can be created, and it's send limits are applied.
+// TestContinuousAndDelayedVestingAccountCreationAndBankSend tests continuous and delayed vesting account can be created, and its send limit are applied.
 func TestContinuousAndDelayedVestingAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
@@ -95,7 +95,7 @@ func TestContinuousAndDelayedVestingAccountCreationAndBankSend(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// await vesting time to unlock the vesting coins
 	select {
@@ -119,7 +119,7 @@ func TestContinuousAndDelayedVestingAccountCreationAndBankSend(t *testing.T) {
 	requireT.NoError(err)
 }
 
-// TestPeriodicVestingAccountCreationAndBankSend tests periodic vesting account can be created, and it's send limits are applied.
+// TestPeriodicVestingAccountCreationAndBankSend tests periodic vesting account can be created, and its send limit are applied.
 func TestPeriodicVestingAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
@@ -147,7 +147,7 @@ func TestPeriodicVestingAccountCreationAndBankSend(t *testing.T) {
 		StartTime:   time.Now().Unix() - 1,
 		VestingPeriods: vestingtypes.Periods{
 			{
-				Length: 1, // activate is immediately
+				Length: 1, // activate it immediately
 				Amount: sdk.NewCoins(vestingCoinPeriod1),
 			},
 			{
@@ -200,7 +200,7 @@ func TestPeriodicVestingAccountCreationAndBankSend(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// fund the vesting account to pay fees one more time
 	chain.FundAccountWithOptions(ctx, t, vestingAcc, integration.BalancesOptions{
@@ -222,8 +222,8 @@ func TestPeriodicVestingAccountCreationAndBankSend(t *testing.T) {
 	requireT.NoError(err)
 }
 
-// TestPermanentLockedAccountAccountCreationAndBankSend tests permanent locked account can be created, and it's send limits are applied.
-func TestPermanentLockedAccountAccountCreationAndBankSend(t *testing.T) {
+// TestPermanentLockedAccountCreationAndBankSend tests permanent locked account can be created, and its send limit are applied.
+func TestPermanentLockedAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -291,7 +291,7 @@ func TestPermanentLockedAccountAccountCreationAndBankSend(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 }
 
 // TestVestingAccountStaking tests the vesting account can delegate coins.
@@ -508,7 +508,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// try to send vesting locker coins
 	msgSend := &banktypes.MsgSend{
@@ -522,7 +522,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// freeze coins, it should work even for the vested coins
 	freezeMsg := &assetfttypes.MsgFreeze{
@@ -575,7 +575,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// unfreeze coins, to let prev vesting account tx pass
 	unfreezeMsg := &assetfttypes.MsgUnfreeze{

@@ -335,7 +335,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	assert.EqualValues(t, editValidatorMsg.Description.Details, valResp.GetValidator().Description.Details)
 }
 
-// TestUnbondAndCancelUnbondingDelegation checks that it is possible to unbond and cancel unbondion delegation.
+// TestUnbondAndCancelUnbondingDelegation checks that it is possible to unbond and cancel unbonding delegation.
 func TestUnbondAndCancelUnbondingDelegation(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
