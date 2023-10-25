@@ -19,6 +19,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgUnfreeze{},
 		&MsgAddToWhitelist{},
 		&MsgRemoveFromWhitelist{},
+		&MsgAddToClassWhitelist{},
+		&MsgRemoveFromClassWhitelist{},
+		&MsgClassFreeze{},
+		&MsgClassUnfreeze{},
 	)
 	registry.RegisterImplementations(
 		(*authz.Authorization)(nil),
