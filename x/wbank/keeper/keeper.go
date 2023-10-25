@@ -116,8 +116,7 @@ func (k BaseKeeperWrapper) SpendableBalances(ctx context.Context, req *banktypes
 		return nil, sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid address %s", req.Address)
 	}
 	for i := range res.Balances {
-		spendableCoin := k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, res.Balances[i])
-		res.Balances[i] = spendableCoin
+		res.Balances[i] = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, res.Balances[i])
 	}
 
 	return res, nil

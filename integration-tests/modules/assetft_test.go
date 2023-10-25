@@ -437,7 +437,7 @@ func TestSpendableBalanceQuery(t *testing.T) {
 	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 
 	issuer := chain.GenAccount()
-	recipient := chain.GenAccount()
+	recipient1 := chain.GenAccount()
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -469,7 +469,7 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
 		msgIssue,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	denom1 := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
 	frozenCoin1 := sdk.NewInt64Coin(denom1, 20)
@@ -477,7 +477,7 @@ func TestSpendableBalanceQuery(t *testing.T) {
 
 	msgSend := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
-		ToAddress:   recipient.String(),
+		ToAddress:   recipient1.String(),
 		Amount:      sdk.NewCoins(sendCoin1),
 	}
 	_, err = client.BroadcastTx(
@@ -486,18 +486,18 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
-	recipientSpendableBalanceBeforeFreesRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
-		Address: recipient.String(),
+	recipientSpendableBalanceBeforeFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient1.String(),
 		Denom:   denom1,
 	})
-	require.NoError(t, err)
-	requireT.Equal(sendCoin1.Amount.String(), recipientSpendableBalanceBeforeFreesRes.Balance.Amount.String())
+	requireT.NoError(err)
+	requireT.Equal(sendCoin1.Amount.String(), recipientSpendableBalanceBeforeFreezeRes.Balance.Amount.String())
 
 	msgFreeze := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
-		Account: recipient.String(),
+		Account: recipient1.String(),
 		Coin:    frozenCoin1,
 	}
 	_, err = client.BroadcastTx(
@@ -506,13 +506,13 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
 		msgFreeze,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	recipientSpendableBalanceAfterFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
-		Address: recipient.String(),
+		Address: recipient1.String(),
 		Denom:   denom1,
 	})
-	require.NoError(t, err)
+	requireT.NoError(err)
 	requireT.Equal(sendCoin1.Amount.Sub(frozenCoin1.Amount).String(), recipientSpendableBalanceAfterFreezeRes.Balance.Amount.String())
 
 	// freeze globally now
@@ -526,13 +526,13 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgGloballyFreeze)),
 		msgGloballyFreeze,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	recipientSpendableBalanceAfterGlobalFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
-		Address: recipient.String(),
+		Address: recipient1.String(),
 		Denom:   denom1,
 	})
-	require.NoError(t, err)
+	requireT.NoError(err)
 	requireT.Equal(sdkmath.ZeroInt().String(), recipientSpendableBalanceAfterGlobalFreezeRes.Balance.Amount.String())
 
 	// issue one more token
@@ -552,7 +552,7 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
 		msgIssue,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	denom2 := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
 	frozenCoin2 := sdk.NewInt64Coin(denom2, 20)
@@ -560,7 +560,7 @@ func TestSpendableBalanceQuery(t *testing.T) {
 
 	msgSend = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
-		ToAddress:   recipient.String(),
+		ToAddress:   recipient1.String(),
 		Amount:      sdk.NewCoins(sendCoin2),
 	}
 
@@ -570,18 +570,18 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	recipientSpendableBalancesBeforeFreezeRes, err := bankClient.SpendableBalances(ctx, &banktypes.QuerySpendableBalancesRequest{
-		Address: recipient.String(),
+		Address: recipient1.String(),
 	})
-	require.NoError(t, err)
-	require.Len(t, recipientSpendableBalancesBeforeFreezeRes.Balances, 2)
+	requireT.NoError(err)
+	requireT.Len(recipientSpendableBalancesBeforeFreezeRes.Balances, 2)
 	requireT.Equal(sendCoin2.Amount.String(), recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String())
 
 	msgFreeze = &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
-		Account: recipient.String(),
+		Account: recipient1.String(),
 		Coin:    frozenCoin2,
 	}
 	_, err = client.BroadcastTx(
@@ -590,13 +590,26 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
 		msgFreeze,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	recipientSpendableBalancesBeforeFreezeRes, err = bankClient.SpendableBalances(ctx, &banktypes.QuerySpendableBalancesRequest{
-		Address: recipient.String(),
+		Address: recipient1.String(),
 	})
-	require.NoError(t, err)
+	requireT.NoError(err)
 	requireT.Equal(sendCoin2.Amount.Sub(frozenCoin2.Amount).String(), recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String())
+
+	// check the native denom
+	recipient2 := chain.GenAccount()
+	amountToFund := sdkmath.NewInt(100)
+	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
+		Amount: amountToFund,
+	})
+	recipient2SpendableBalance, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient2.String(),
+		Denom:   chain.Chain.ChainSettings.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToFund.String(), recipient2SpendableBalance.Balance.Amount.String())
 }
 
 // TestEmptyBalanceQuery tests balance query.

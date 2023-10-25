@@ -29,7 +29,7 @@ func TestBaseKeeperWrapper_SpendableBalances(t *testing.T) {
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	totalTokens := 10
-	amountToSemd := sdkmath.NewInt(100)
+	amountToSend := sdkmath.NewInt(100)
 	denoms := make([]string, 0, totalTokens)
 	for i := 0; i < totalTokens; i++ {
 		settings := types.IssueSettings{
@@ -44,7 +44,7 @@ func TestBaseKeeperWrapper_SpendableBalances(t *testing.T) {
 		requireT.NoError(err)
 		denoms = append(denoms, denom)
 
-		coinToSend := sdk.NewCoin(denom, amountToSemd)
+		coinToSend := sdk.NewCoin(denom, amountToSend)
 		err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
 			coinToSend,
 		))
@@ -70,8 +70,8 @@ func TestBaseKeeperWrapper_SpendableBalances(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(
-		balances.AmountOfNoDenomValidation(denom).Sub(coinToFreeze.Amount).String(),
-		spendableBalancesRes.Balances.AmountOfNoDenomValidation(denom).String(),
+		balances.AmountOf(denom).Sub(coinToFreeze.Amount).String(),
+		spendableBalancesRes.Balances.AmountOf(denom).String(),
 	)
 
 	// check with global freeze
@@ -83,7 +83,7 @@ func TestBaseKeeperWrapper_SpendableBalances(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(
 		sdk.ZeroInt().String(),
-		spendableBalancesRes.Balances.AmountOfNoDenomValidation(denom).String(),
+		spendableBalancesRes.Balances.AmountOf(denom).String(),
 	)
 }
 
