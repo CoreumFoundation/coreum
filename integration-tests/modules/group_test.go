@@ -3,6 +3,7 @@
 package modules
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -42,25 +43,25 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 		}
 	})
 
+	// First group member submits proposal
 	chain.FundAccountWithOptions(ctx,
 		t,
 		sdk.MustAccAddressFromBech32(groupMembers[0].Address),
 		integration.BalancesOptions{
-			// First group member submits proposal
 			Messages: []sdk.Msg{&group.MsgSubmitProposal{}},
 		},
 	)
 
-	for i := 1; i < len(groupMembers); i++ {
+	// Other group members vote
+	lo.ForEach(groupMembers[1:], func(member group.MemberRequest, _ int) {
 		chain.FundAccountWithOptions(ctx,
 			t,
-			sdk.MustAccAddressFromBech32(groupMembers[i].Address),
+			sdk.MustAccAddressFromBech32(member.Address),
 			integration.BalancesOptions{
-				// Other group members vote
 				Messages: []sdk.Msg{&group.MsgVote{}},
 			},
 		)
-	}
+	})
 
 	// Create group
 	createGroupMsg := group.MsgCreateGroup{
@@ -162,8 +163,8 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	t.Logf("submitted group proposal, id:%d txHash:%s", proposal.Id, result.TxHash)
 
 	// Vote for proposal from other group members (except proposer).
-	for i := 1; i < len(groupMembers); i++ {
-		voter := sdk.MustAccAddressFromBech32(groupMembers[i].Address)
+	lo.ForEach(groupMembers[1:], func(member group.MemberRequest, _ int) {
+		voter := sdk.MustAccAddressFromBech32(member.Address)
 		voteMsg := &group.MsgVote{
 			ProposalId: proposal.Id,
 			Voter:      voter.String(),
@@ -178,12 +179,12 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 			voteMsg,
 		)
 		requireT.NoError(err)
-	}
+	})
 
 	_, err = groupClient.Proposal(ctx, &group.QueryProposalRequest{
 		ProposalId: proposal.Id,
 	})
-	requireT.Error(err)
+	requireT.Error(err) // Proposal is automatically removed right after execution.
 
 	bankClient := bank.NewQueryClient(chain.ClientContext)
 	receiverBalance, err := bankClient.Balance(ctx, &bank.QueryBalanceRequest{
@@ -195,33 +196,22 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	requireT.Equal(groupSendCoin.Amount, receiverBalance.Balance.Amount)
 }
 
-func TestGroupAdministration(t *testing.T) {
+func TestGroupForAssetFTManagement(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	//ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	//requireT := require.New(t)
+	//groupClient := group.NewQueryClient(chain.ClientContext)
+
+}
+
+func createGroupWithPolicy(ctx context.Context, t *testing.T, chain integration.CoreumChain, admin sdk.AccAddress, groupMembers []sdk.AccAddress) (*group.GroupInfo, *group.GroupPolicyInfo) {
 	requireT := require.New(t)
 	groupClient := group.NewQueryClient(chain.ClientContext)
 
-	// Setup group admin account
-	admin := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&group.MsgCreateGroupWithPolicy{},
-			&group.MsgCreateGroupWithPolicy{},
-			&group.MsgCreateGroupWithPolicy{}, // fixme
-			&group.MsgCreateGroupWithPolicy{},
-			&group.MsgCreateGroupWithPolicy{},
-			&group.MsgCreateGroupWithPolicy{},
-			&group.MsgCreateGroupWithPolicy{},
-			&group.MsgCreateGroupWithPolicy{},
-			&group.MsgCreateGroupWithPolicy{},
-		},
-	})
-
-	// Setup group member accounts
-	groupMembers := lo.Times(5, func(i int) group.MemberRequest {
+	membersRequest := lo.Map(groupMembers, func(member sdk.AccAddress, _ int) group.MemberRequest {
 		return group.MemberRequest{
-			Address: chain.GenAccount().String(),
+			Address: member.String(),
 			Weight:  "1",
 		}
 	})
@@ -229,7 +219,7 @@ func TestGroupAdministration(t *testing.T) {
 	// Create group & group policy
 	createGroupWithPolicyMsg, err := group.NewMsgCreateGroupWithPolicy(
 		admin.String(),
-		groupMembers,
+		membersRequest,
 		"Integration test group",
 		"Integration test group policy",
 		false,
@@ -256,7 +246,6 @@ func TestGroupAdministration(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Len(groupsByAdmin.Groups, 1)
-
 	grp := groupsByAdmin.Groups[0]
 
 	groupPolicies, err := groupClient.GroupPoliciesByGroup(ctx, &group.QueryGroupPoliciesByGroupRequest{
@@ -268,6 +257,36 @@ func TestGroupAdministration(t *testing.T) {
 	groupPolicy := groupPolicies.GroupPolicies[0]
 	t.Logf("created group with policy, groupId: %d groupPolicyAddress:%s txHash:%s", grp.Id, groupPolicy.Address, result.TxHash)
 
+	return grp, groupPolicy
+}
+
+func TestGroupAdministration(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+	groupClient := group.NewQueryClient(chain.ClientContext)
+
+	// Generate & fund group admin & member accounts
+	admin := chain.GenAccount()
+	groupMembers := lo.Times(5, func(i int) sdk.AccAddress {
+		return chain.GenAccount()
+	})
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&group.MsgCreateGroupWithPolicy{},
+			&group.MsgUpdateGroupMembers{},
+			&group.MsgUpdateGroupMetadata{},
+			&group.MsgUpdateGroupPolicyDecisionPolicy{},
+			&group.MsgUpdateGroupPolicyMetadata{},
+			&group.MsgUpdateGroupAdmin{},
+			&group.MsgUpdateGroupPolicyAdmin{},
+		},
+	})
+
+	// Create group & group policy
+	grp, groupPolicy := createGroupWithPolicy(ctx, t, chain, admin, groupMembers)
+
 	// Update members & metadata in group
 	groupMembersNew := groupMembers[1:] // remove first member
 	updateGroupMembersMsg := &group.MsgUpdateGroupMembers{
@@ -275,8 +294,8 @@ func TestGroupAdministration(t *testing.T) {
 		GroupId: grp.Id,
 		MemberUpdates: []group.MemberRequest{
 			{
-				Address: groupMembers[0].Address,
-				Weight:  "0", // to remove member we should set it's weight to 0
+				Address: groupMembers[0].String(),
+				Weight:  "0", // to remove member we should set its weight to 0
 			},
 		},
 	}
@@ -286,7 +305,7 @@ func TestGroupAdministration(t *testing.T) {
 		Metadata: "New group metadata",
 	}
 
-	_, err = client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(updateGroupMembersMsg, updateGroupMetadataMsg)),
@@ -374,16 +393,16 @@ func TestGroupAdministration(t *testing.T) {
 
 	// Leave group
 	memberToLeaveGroup := groupMembersNew[len(groupMembersNew)-1]
-	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(memberToLeaveGroup.Address), integration.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(memberToLeaveGroup.String()), integration.BalancesOptions{
 		Messages: []sdk.Msg{&group.MsgLeaveGroup{}},
 	})
 	leaveGroupMsg := &group.MsgLeaveGroup{
-		Address: memberToLeaveGroup.Address,
+		Address: memberToLeaveGroup.String(),
 		GroupId: grp.Id,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(sdk.MustAccAddressFromBech32(memberToLeaveGroup.Address)),
+		chain.ClientContext.WithFromAddress(sdk.MustAccAddressFromBech32(memberToLeaveGroup.String())),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(leaveGroupMsg)),
 		leaveGroupMsg,
 	)
