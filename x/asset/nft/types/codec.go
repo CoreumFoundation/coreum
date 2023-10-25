@@ -4,6 +4,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/cosmos/gogoproto/proto"
 )
 
@@ -22,6 +23,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgRemoveFromClassWhitelist{},
 		&MsgClassFreeze{},
 		&MsgClassUnfreeze{},
+	)
+	registry.RegisterImplementations(
+		(*authz.Authorization)(nil),
+		&SendAuthorization{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

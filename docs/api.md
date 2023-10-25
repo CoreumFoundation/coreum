@@ -69,6 +69,10 @@
   
     - [Msg](#coreum.asset.ft.v1.Msg)
   
+- [coreum/asset/nft/v1/authz.proto](#coreum/asset/nft/v1/authz.proto)
+    - [NFTIdentifier](#coreum.asset.nft.v1.NFTIdentifier)
+    - [SendAuthorization](#coreum.asset.nft.v1.SendAuthorization)
+  
 - [coreum/asset/nft/v1/event.proto](#coreum/asset/nft/v1/event.proto)
     - [EventAddedToClassWhitelist](#coreum.asset.nft.v1.EventAddedToClassWhitelist)
     - [EventAddedToWhitelist](#coreum.asset.nft.v1.EventAddedToWhitelist)
@@ -1228,6 +1232,53 @@ Msg defines the Msg service.
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | SetWhitelistedLimit sets the limit of how many tokens a specific account may hold. | |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | TokenUpgradeV1 upgrades token to version V1. | |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided. | |
+
+ <!-- end services -->
+
+
+
+<a name="coreum/asset/nft/v1/authz.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/asset/nft/v1/authz.proto
+
+
+
+<a name="coreum.asset.nft.v1.NFTIdentifier"></a>
+
+### NFTIdentifier
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `class_id` | [string](#string) |  | class_id defines the unique identifier of the nft classification, similar to the contract address of ERC721 |
+| `id` | [string](#string) |  | id defines the unique identification of nft |
+
+
+
+
+
+
+<a name="coreum.asset.nft.v1.SendAuthorization"></a>
+
+### SendAuthorization
+SendAuthorization allows the grantee to send specific NFTs from the granter's account.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `nfts` | [NFTIdentifier](#coreum.asset.nft.v1.NFTIdentifier) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
 
  <!-- end services -->
 

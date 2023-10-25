@@ -1,0 +1,25 @@
+syntax = "proto3";
+package coreum.asset.nft.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types";
+
+// SendAuthorization allows the grantee to send specific NFTs from the granter's account.
+message SendAuthorization {
+  option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
+  option (amino.name)                        = "cosmos-sdk/nft/SendAuthorization";
+  repeated NFTIdentifier nfts = 1 [
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true
+  ];
+}
+
+message NFTIdentifier {
+  // class_id defines the unique identifier of the nft classification, similar to the contract address of ERC721
+  string class_id = 1;
+  // id defines the unique identification of nft
+  string id = 2;
+}
