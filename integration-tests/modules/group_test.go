@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
@@ -16,6 +17,7 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 // TestGroupCreationAndBankSend creates group & group policy and then sends funds from group policy account.
@@ -129,7 +131,7 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	// Create proposal
 	groupCoinReceiver := chain.GenAccount()
 	proposer := sdk.MustAccAddressFromBech32(groupMembers[0].Address)
-	createProposalMsg, err := group.NewMsgSubmitProposal(
+	submitProposalMsg, err := group.NewMsgSubmitProposal(
 		groupPolicy.Address,
 		[]string{proposer.String()},
 		[]sdk.Msg{&bank.MsgSend{
@@ -144,37 +146,20 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	result, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(proposer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createProposalMsg)),
-		createProposalMsg,
-	)
-	requireT.NoError(err)
-
-	proposals, err := groupClient.ProposalsByGroupPolicy(ctx, &group.QueryProposalsByGroupPolicyRequest{
-		Address: groupPolicy.Address,
-	})
-	requireT.NoError(err)
-	requireT.Len(proposals.Proposals, 1)
-
-	proposal := proposals.Proposals[0]
-	requireT.Equal(group.PROPOSAL_STATUS_SUBMITTED, proposal.Status)
-	t.Logf("submitted group proposal, id:%d txHash:%s", proposal.Id, result.TxHash)
+	proposal := submitGroupProposal(ctx, t, chain, proposer, submitProposalMsg)
 
 	// Vote for proposal from other group members (except proposer).
 	lo.ForEach(groupMembers[1:], func(member group.MemberRequest, _ int) {
-		voter := sdk.MustAccAddressFromBech32(member.Address)
 		voteMsg := &group.MsgVote{
 			ProposalId: proposal.Id,
-			Voter:      voter.String(),
+			Voter:      member.Address,
 			Option:     group.VOTE_OPTION_YES,
 			Exec:       group.Exec_EXEC_TRY,
 		}
 
 		result, err = client.BroadcastTx(
 			ctx,
-			chain.ClientContext.WithFromAddress(voter),
+			chain.ClientContext.WithFromAddress(sdk.MustAccAddressFromBech32(member.Address)),
 			chain.TxFactory().WithGas(chain.GasLimitByMsgs(voteMsg)),
 			voteMsg,
 		)
@@ -184,7 +169,7 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	_, err = groupClient.Proposal(ctx, &group.QueryProposalRequest{
 		ProposalId: proposal.Id,
 	})
-	requireT.Error(err) // Proposal is automatically removed right after execution.
+	requireT.Error(err) // The proposal will be automatically pruned after execution if successful. https://docs.cosmos.network/v0.47/build/modules/group#executing-proposals
 
 	bankClient := bank.NewQueryClient(chain.ClientContext)
 	receiverBalance, err := bankClient.Balance(ctx, &bank.QueryBalanceRequest{
@@ -199,65 +184,173 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 func TestGroupForAssetFTManagement(t *testing.T) {
 	t.Parallel()
 
-	//ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	//requireT := require.New(t)
-	//groupClient := group.NewQueryClient(chain.ClientContext)
-
-}
-
-func createGroupWithPolicy(ctx context.Context, t *testing.T, chain integration.CoreumChain, admin sdk.AccAddress, groupMembers []sdk.AccAddress) (*group.GroupInfo, *group.GroupPolicyInfo) {
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 	groupClient := group.NewQueryClient(chain.ClientContext)
 
-	membersRequest := lo.Map(groupMembers, func(member sdk.AccAddress, _ int) group.MemberRequest {
-		return group.MemberRequest{
-			Address: member.String(),
-			Weight:  "1",
-		}
+	admin := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&group.MsgCreateGroupWithPolicy{},
+		},
 	})
 
-	// Create group & group policy
-	createGroupWithPolicyMsg, err := group.NewMsgCreateGroupWithPolicy(
-		admin.String(),
-		membersRequest,
-		"Integration test group",
-		"Integration test group policy",
-		false,
-		&group.PercentageDecisionPolicy{
-			Percentage: "0.45",
-			Windows: &group.DecisionPolicyWindows{
-				VotingPeriod:       time.Minute,
-				MinExecutionPeriod: 100 * time.Millisecond,
+	groupMembers := lo.Times(3, func(i int) sdk.AccAddress {
+		return chain.GenAccount()
+	})
+	proposer := groupMembers[0]
+	chain.FundAccountWithOptions(ctx, t, proposer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&group.MsgSubmitProposal{},
+			&group.MsgWithdrawProposal{},
+			&group.MsgSubmitProposal{},
+			&group.MsgExec{},
+			&group.MsgExec{},
+		},
+	})
+	voters := groupMembers[1:]
+	lo.ForEach(voters, func(member sdk.AccAddress, _ int) {
+		chain.FundAccountWithOptions(ctx, t, member, integration.BalancesOptions{
+			Messages: []sdk.Msg{
+				&group.MsgVote{},
+				&group.MsgVote{},
 			},
 		})
+	})
 
-	requireT.NoError(err)
+	_, groupPolicy := createGroupWithPolicy(ctx, t, chain, admin, groupMembers)
 
-	result, err := client.BroadcastTx(
+	// Submit proposal #1
+	submitProposalMsg, err := group.NewMsgSubmitProposal(
+		groupPolicy.Address,
+		[]string{groupMembers[0].String()},
+		[]sdk.Msg{&assetfttypes.MsgIssue{
+			Issuer:        groupPolicy.Address,
+			Symbol:        "ABC",
+			Subunit:       "uabc",
+			Precision:     6,
+			InitialAmount: sdkmath.NewInt(1000),
+			Description:   "ABC",
+			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_minting,
+			},
+		}},
+		"Issue asset FT using group #1",
+		group.Exec_EXEC_UNSPECIFIED,
+		"Issue asset FT using group",
+		"Issue asset FT using group",
+	)
+	proposal1 := submitGroupProposal(ctx, t, chain, proposer, submitProposalMsg)
+
+	// Vote for proposal #1
+	lo.ForEach(voters, func(member sdk.AccAddress, _ int) {
+		voteMsg := &group.MsgVote{
+			ProposalId: proposal1.Id,
+			Voter:      member.String(),
+			Option:     group.VOTE_OPTION_NO,
+			Exec:       group.Exec_EXEC_UNSPECIFIED,
+		}
+
+		_, err = client.BroadcastTx(
+			ctx,
+			chain.ClientContext.WithFromAddress(member),
+			chain.TxFactory().WithGas(chain.GasLimitByMsgs(voteMsg)),
+			voteMsg,
+		)
+		requireT.NoError(err)
+	})
+
+	// Withdraw proposal #1
+	withdrawProposalMsg := &group.MsgWithdrawProposal{
+		ProposalId: proposal1.Id,
+		Address:    proposer.String(), // either proposer or group policy admin is able to withdraw.
+	}
+	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createGroupWithPolicyMsg)),
-		createGroupWithPolicyMsg,
+		chain.ClientContext.WithFromAddress(proposer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(withdrawProposalMsg)),
+		withdrawProposalMsg,
+	)
+	requireT.NoError(err)
+	proposalInfo, err := groupClient.Proposal(ctx, &group.QueryProposalRequest{
+		ProposalId: proposal1.Id,
+	})
+	requireT.NoError(err)
+	requireT.Equal(proposalInfo.Proposal.Status, group.PROPOSAL_STATUS_WITHDRAWN)
+
+	// Submit proposal #2
+	submitProposalMsg.Metadata = "Issue asset FT using group #2"
+	proposal2 := submitGroupProposal(ctx, t, chain, proposer, submitProposalMsg)
+
+	// Vote for proposal #2
+	lo.ForEach(voters, func(member sdk.AccAddress, _ int) {
+		voteMsg := &group.MsgVote{
+			ProposalId: proposal2.Id,
+			Voter:      member.String(),
+			Option:     group.VOTE_OPTION_YES,
+			Exec:       group.Exec_EXEC_UNSPECIFIED,
+		}
+
+		_, err = client.BroadcastTx(
+			ctx,
+			chain.ClientContext.WithFromAddress(member),
+			chain.TxFactory().WithGas(chain.GasLimitByMsgs(voteMsg)),
+			voteMsg,
+		)
+		requireT.NoError(err)
+
+		// Make sure proposal is not executed.
+		proposalInfo, err := groupClient.Proposal(ctx, &group.QueryProposalRequest{
+			ProposalId: proposal2.Id,
+		})
+		requireT.NoError(err)
+		requireT.Equal(proposalInfo.Proposal.Status, group.PROPOSAL_STATUS_SUBMITTED)
+	})
+
+	// Execute proposal #2 (first try)
+	executeProposalMsg := &group.MsgExec{
+		ProposalId: proposal2.Id,
+		Executor:   proposer.String(),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(proposer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(executeProposalMsg)),
+		executeProposalMsg,
 	)
 	requireT.NoError(err)
 
-	groupsByAdmin, err := groupClient.GroupsByAdmin(ctx, &group.QueryGroupsByAdminRequest{
-		Admin: admin.String(),
+	// Proposal is accepted but not executed successfully because there is no enough balance to pay FT issuance fee.
+	proposal2Info, err := groupClient.Proposal(ctx, &group.QueryProposalRequest{
+		ProposalId: proposal2.Id,
 	})
 	requireT.NoError(err)
-	requireT.Len(groupsByAdmin.Groups, 1)
-	grp := groupsByAdmin.Groups[0]
+	requireT.Equal(proposal2Info.Proposal.Status, group.PROPOSAL_STATUS_ACCEPTED)
+	requireT.Equal(proposal2Info.Proposal.ExecutorResult, group.PROPOSAL_EXECUTOR_RESULT_FAILURE)
 
-	groupPolicies, err := groupClient.GroupPoliciesByGroup(ctx, &group.QueryGroupPoliciesByGroupRequest{
-		GroupId: grp.Id,
+	// Fund group policy account with issuance fee
+	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(groupPolicy.Address), integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// Execute proposal #2 (second try)
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(proposer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(executeProposalMsg)),
+		executeProposalMsg,
+	)
+	requireT.NoError(err)
+
+	// Verify that asset is issued.
+	bankClient := bank.NewQueryClient(chain.ClientContext)
+	receiverBalance, err := bankClient.Balance(ctx, &bank.QueryBalanceRequest{
+		Address: groupPolicy.Address,
+		Denom:   assetfttypes.BuildDenom("uabc", sdk.MustAccAddressFromBech32(groupPolicy.Address)),
 	})
 	requireT.NoError(err)
 
-	requireT.Len(groupPolicies.GroupPolicies, 1)
-	groupPolicy := groupPolicies.GroupPolicies[0]
-	t.Logf("created group with policy, groupId: %d groupPolicyAddress:%s txHash:%s", grp.Id, groupPolicy.Address, result.TxHash)
-
-	return grp, groupPolicy
+	requireT.Equal(sdk.NewInt(1000), receiverBalance.Balance.Amount)
 }
 
 func TestGroupAdministration(t *testing.T) {
@@ -413,4 +506,89 @@ func TestGroupAdministration(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Len(groupMembersResp.Members, len(groupMembersNew)-1)
+}
+
+func createGroupWithPolicy(ctx context.Context, t *testing.T, chain integration.CoreumChain, admin sdk.AccAddress, groupMembers []sdk.AccAddress) (*group.GroupInfo, *group.GroupPolicyInfo) {
+	requireT := require.New(t)
+	groupClient := group.NewQueryClient(chain.ClientContext)
+
+	membersRequest := lo.Map(groupMembers, func(member sdk.AccAddress, _ int) group.MemberRequest {
+		return group.MemberRequest{
+			Address: member.String(),
+			Weight:  "1",
+		}
+	})
+
+	// Create group & group policy
+	createGroupWithPolicyMsg, err := group.NewMsgCreateGroupWithPolicy(
+		admin.String(),
+		membersRequest,
+		"Integration test group",
+		"Integration test group policy",
+		false,
+		&group.PercentageDecisionPolicy{
+			Percentage: "0.45",
+			Windows: &group.DecisionPolicyWindows{
+				VotingPeriod:       time.Minute,
+				MinExecutionPeriod: 100 * time.Millisecond,
+			},
+		})
+
+	requireT.NoError(err)
+
+	result, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createGroupWithPolicyMsg)),
+		createGroupWithPolicyMsg,
+	)
+	requireT.NoError(err)
+
+	groupsByAdmin, err := groupClient.GroupsByAdmin(ctx, &group.QueryGroupsByAdminRequest{
+		Admin: admin.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(groupsByAdmin.Groups, 1)
+	grp := groupsByAdmin.Groups[0]
+
+	groupPolicies, err := groupClient.GroupPoliciesByGroup(ctx, &group.QueryGroupPoliciesByGroupRequest{
+		GroupId: grp.Id,
+	})
+	requireT.NoError(err)
+
+	requireT.Len(groupPolicies.GroupPolicies, 1)
+	groupPolicy := groupPolicies.GroupPolicies[0]
+	t.Logf("created group with policy, groupId: %d groupPolicyAddress:%s txHash:%s", grp.Id, groupPolicy.Address, result.TxHash)
+
+	return grp, groupPolicy
+}
+
+func submitGroupProposal(ctx context.Context, t *testing.T, chain integration.CoreumChain, proposer sdk.AccAddress, submitProposalMsg *group.MsgSubmitProposal) *group.Proposal {
+	requireT := require.New(t)
+	groupClient := group.NewQueryClient(chain.ClientContext)
+
+	proposalsBefore, err := groupClient.ProposalsByGroupPolicy(ctx, &group.QueryProposalsByGroupPolicyRequest{
+		Address: submitProposalMsg.GroupPolicyAddress,
+	})
+	requireT.NoError(err)
+
+	result, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(proposer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(submitProposalMsg)),
+		submitProposalMsg,
+	)
+	requireT.NoError(err)
+
+	proposalsAfter, err := groupClient.ProposalsByGroupPolicy(ctx, &group.QueryProposalsByGroupPolicyRequest{
+		Address: submitProposalMsg.GroupPolicyAddress,
+	})
+	requireT.NoError(err)
+	requireT.Len(proposalsAfter.Proposals, len(proposalsBefore.Proposals)+1)
+
+	createdProposal := proposalsAfter.Proposals[len(proposalsAfter.Proposals)-1]
+	requireT.Equal(group.PROPOSAL_STATUS_SUBMITTED, createdProposal.Status)
+	t.Logf("submitted group proposal, id:%d txHash:%s", createdProposal.Id, result.TxHash)
+
+	return createdProposal
 }
