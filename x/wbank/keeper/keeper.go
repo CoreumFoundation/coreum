@@ -1,7 +1,10 @@
 package keeper
 
 import (
+	"context"
+
 	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -97,4 +100,56 @@ func (k BaseKeeperWrapper) InputOutputCoins(ctx sdk.Context, inputs []banktypes.
 	}
 
 	return k.BaseKeeper.InputOutputCoins(ctx, inputs, outputs)
+}
+
+// ********** Query server **********
+
+// SpendableBalances implements a gRPC query handler for retrieving an account's spendable balances including asset ft
+// frozen coins.
+func (k BaseKeeperWrapper) SpendableBalances(ctx context.Context, req *banktypes.QuerySpendableBalancesRequest) (*banktypes.QuerySpendableBalancesResponse, error) {
+	res, err := k.BaseKeeper.SpendableBalances(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid address %s", req.Address)
+	}
+	for i := range res.Balances {
+		res.Balances[i] = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, res.Balances[i])
+	}
+
+	return res, nil
+}
+
+// SpendableBalanceByDenom implements a gRPC query handler for retrieving an account's spendable balance for a specific
+// denom, including asset ft frozen coins.
+func (k BaseKeeperWrapper) SpendableBalanceByDenom(ctx context.Context, req *banktypes.QuerySpendableBalanceByDenomRequest) (*banktypes.QuerySpendableBalanceByDenomResponse, error) {
+	res, err := k.BaseKeeper.SpendableBalanceByDenom(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid address %s", req.Address)
+	}
+	if res.Balance == nil {
+		return res, nil
+	}
+
+	spendableCoin := k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, *res.Balance)
+	res.Balance = &spendableCoin
+
+	return res, nil
+}
+
+func (k BaseKeeperWrapper) getSpendableCoin(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) sdk.Coin {
+	denom := coin.Denom
+	frozenCoin := k.ftProvider.GetFrozenBalance(ctx, addr, denom)
+	spendableAmount := coin.Amount.Sub(frozenCoin.Amount)
+	if spendableAmount.IsNegative() {
+		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+	}
+
+	return sdk.NewCoin(denom, spendableAmount)
 }

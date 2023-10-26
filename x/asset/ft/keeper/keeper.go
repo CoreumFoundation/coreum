@@ -460,6 +460,9 @@ func (k Keeper) GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, paginati
 
 // GetFrozenBalance returns the frozen balance of a denom and account.
 func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+	if k.isGloballyFrozen(ctx, denom) {
+		return k.bankKeeper.GetBalance(ctx, addr, denom)
+	}
 	return k.frozenAccountBalanceStore(ctx, addr).Balance(denom)
 }
 
