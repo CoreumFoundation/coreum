@@ -132,8 +132,15 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25000),
 
 		// slashing
-		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
-		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
+		// Unjail message is not used in any integration test because it's too much hassle. Instead, unjailing is estimated
+		// manually by following this procedure:
+		// 1. move MsgUnjail to non-deterministic messages,
+		// 2. reduce `signed_blocks_window` slashing parameter to 50 for devnet,
+		// 3. start znet with 5 cored nodes,
+		// 4. stop one validator,
+		// 5. wait until it is jailed,
+		// 6. unjail it and check the amount of gas used.
+		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(90000),
 
 		// staking
 		MsgToMsgURL(&stakingtypes.MsgDelegate{}):                  constantGasFunc(83000),
