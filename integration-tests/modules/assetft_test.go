@@ -317,6 +317,7 @@ func TestBalanceQuery(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
 			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgGloballyFreeze{},
 			&banktypes.MsgSend{},
 		},
 		Amount: issueFee,
@@ -397,6 +398,224 @@ func TestBalanceQuery(t *testing.T) {
 	assertT.Equal(frozenCoin.Amount.String(), resp.Frozen.String())
 	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
 	assertT.Equal("0", resp.Locked.String())
+
+	// freeze globally now
+
+	msgGloballyFreeze := &assetfttypes.MsgGloballyFreeze{
+		Sender: issuer.String(),
+		Denom:  denom,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgGloballyFreeze)),
+		msgGloballyFreeze,
+	)
+	require.NoError(t, err)
+
+	resp, err = ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	require.NoError(t, err)
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	recipientBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	require.NoError(t, err)
+
+	assertT.Equal(whitelistedCoin.Amount.String(), resp.Whitelisted.String())
+	assertT.Equal(recipientBalanceRes.Balance.Amount.String(), resp.Frozen.String())
+	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
+	assertT.Equal("0", resp.Locked.String())
+}
+
+func TestSpendableBalanceQuery(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
+
+	issuer := chain.GenAccount()
+	recipient1 := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgGloballyFreeze{},
+		},
+		Amount: issueFee.MulRaw(2),
+	})
+
+	// issue the new fungible token form issuer
+	msgIssue := &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "WBTC",
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		InitialAmount:      sdkmath.NewInt(200),
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
+		msgIssue,
+	)
+	requireT.NoError(err)
+
+	denom1 := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	frozenCoin1 := sdk.NewInt64Coin(denom1, 20)
+	sendCoin1 := sdk.NewInt64Coin(denom1, 100)
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient1.String(),
+		Amount:      sdk.NewCoins(sendCoin1),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalanceBeforeFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sendCoin1.Amount.String(), recipientSpendableBalanceBeforeFreezeRes.Balance.Amount.String())
+
+	msgFreeze := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient1.String(),
+		Coin:    frozenCoin1,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
+		msgFreeze,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalanceAfterFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sendCoin1.Amount.Sub(frozenCoin1.Amount).String(), recipientSpendableBalanceAfterFreezeRes.Balance.Amount.String())
+
+	// freeze globally now
+	msgGloballyFreeze := &assetfttypes.MsgGloballyFreeze{
+		Sender: issuer.String(),
+		Denom:  denom1,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgGloballyFreeze)),
+		msgGloballyFreeze,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalanceAfterGlobalFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.ZeroInt().String(), recipientSpendableBalanceAfterGlobalFreezeRes.Balance.Amount.String())
+
+	// issue one more token
+	msgIssue = &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "WBTC2",
+		Subunit:            "wsatoshi2",
+		Precision:          8,
+		InitialAmount:      sdkmath.NewInt(200),
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
+		msgIssue,
+	)
+	requireT.NoError(err)
+
+	denom2 := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	frozenCoin2 := sdk.NewInt64Coin(denom2, 20)
+	sendCoin2 := sdk.NewInt64Coin(denom2, 100)
+
+	msgSend = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient1.String(),
+		Amount:      sdk.NewCoins(sendCoin2),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalancesBeforeFreezeRes, err := bankClient.SpendableBalances(ctx, &banktypes.QuerySpendableBalancesRequest{
+		Address: recipient1.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(recipientSpendableBalancesBeforeFreezeRes.Balances, 2)
+	requireT.Equal(sendCoin2.Amount.String(), recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String())
+
+	msgFreeze = &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient1.String(),
+		Coin:    frozenCoin2,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
+		msgFreeze,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalancesBeforeFreezeRes, err = bankClient.SpendableBalances(ctx, &banktypes.QuerySpendableBalancesRequest{
+		Address: recipient1.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(sendCoin2.Amount.Sub(frozenCoin2.Amount).String(), recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String())
+
+	// check the native denom
+	recipient2 := chain.GenAccount()
+	amountToFund := sdkmath.NewInt(100)
+	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
+		Amount: amountToFund,
+	})
+	recipient2SpendableBalance, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient2.String(),
+		Denom:   chain.Chain.ChainSettings.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToFund.String(), recipient2SpendableBalance.Balance.Amount.String())
 }
 
 // TestEmptyBalanceQuery tests balance query.
@@ -764,8 +983,6 @@ func TestAssetFTBurn(t *testing.T) {
 }
 
 // TestAssetFTBurnRate tests burn rate functionality of fungible tokens.
-//
-//nolint:dupl
 func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
 
@@ -911,8 +1128,6 @@ func TestAssetFTBurnRate(t *testing.T) {
 }
 
 // TestAssetFTSendCommissionRate tests send commission rate functionality of fungible tokens.
-//
-//nolint:dupl
 func TestAssetFTSendCommissionRate(t *testing.T) {
 	t.Parallel()
 
@@ -1829,8 +2044,6 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 }
 
 // TestNotEnoughBalanceForBurnRate checks tx will fail if there is not enough balance to cover burn rate.
-//
-//nolint:dupl // we expect code duplication in tests
 func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 	t.Parallel()
 
@@ -1908,8 +2121,6 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 }
 
 // TestNotEnoughBalanceForCommissionRate checks tx will fail if there is not enough balance to cover commission rate.
-//
-//nolint:dupl // we expect code duplication in tests
 func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 	t.Parallel()
 
@@ -2386,6 +2597,210 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	)
 
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
+// TestAssetFTSendingToNonWhitelistedSmartContractIsDenied verifies that this is not possible to send token to smart contract
+// if it is not whitelisted.
+func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+
+	// Issue a fungible token which cannot be sent to the smart contract
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Description:   "ABC Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_whitelisting,
+		},
+		BurnRate:           sdk.ZeroDec(),
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+		Count: 1337,
+	})
+	requireT.NoError(err)
+
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		issuer,
+		moduleswasm.SimpleStateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "simple_state",
+		},
+	)
+	requireT.NoError(err)
+
+	// sending coins to the smart contract should fail
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.ErrorIs(err, assetfttypes.ErrWhitelistedLimitExceeded)
+}
+
+// TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied verifies that this is not possible to attach token to smart contract call
+// if contract is not whitelisted.
+func TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Issue a fungible token which cannot be sent to the smart contract
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Description:   "ABC Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_whitelisting,
+		},
+		BurnRate:           sdk.ZeroDec(),
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+		Count: 1337,
+	})
+	requireT.NoError(err)
+
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		issuer,
+		moduleswasm.SimpleStateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "simple_state",
+		},
+	)
+	requireT.NoError(err)
+
+	// Executing smart contract - this operation should fail because coins are attached to it
+	incrementPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleIncrement)
+	requireT.NoError(err)
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, issuer, contractAddr, incrementPayload, sdk.NewInt64Coin(denom, 100))
+	requireT.ErrorContains(err, "whitelisted limit exceeded")
+}
+
+// TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied verifies that this is not possible to attach token to smart contract instantiation
+// if contract is not whitelisted.
+func TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Issue a fungible token which cannot be sent to the smart contract
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Description:   "ABC Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_whitelisting,
+		},
+		BurnRate:           sdk.ZeroDec(),
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+		Count: 1337,
+	})
+	requireT.NoError(err)
+
+	// This operation should fail due to coins being attached to it
+	_, _, err = chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		issuer,
+		moduleswasm.SimpleStateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Amount:     sdk.NewInt64Coin(denom, 100),
+			Label:      "simple_state",
+		},
+	)
+	requireT.ErrorContains(err, "whitelisted limit exceeded")
 }
 
 // TestBareToken checks none of the features will work if the flags are not set.

@@ -23,6 +23,8 @@ const (
 	TypeMsgRemoveFromWhitelist      = "remove-from-whitelist"
 	TypeMsgAddToClassWhitelist      = "class-whitelist"
 	TypeMsgRemoveFromClassWhitelist = "remove-from-class-whitelist"
+	TypeMsgClassFreeze              = "class-freeze"
+	TypeMsgClassUnfreeze            = "class-unfreeze"
 	TypeMsgUpdateParams             = "update-params"
 )
 
@@ -41,6 +43,8 @@ var (
 	_ msgAndLegacyMsg = &MsgRemoveFromWhitelist{}
 	_ msgAndLegacyMsg = &MsgAddToClassWhitelist{}
 	_ msgAndLegacyMsg = &MsgRemoveFromClassWhitelist{}
+	_ msgAndLegacyMsg = &MsgClassFreeze{}
+	_ msgAndLegacyMsg = &MsgClassUnfreeze{}
 	_ msgAndLegacyMsg = &MsgUpdateParams{}
 )
 
@@ -64,6 +68,8 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgRemoveFromWhitelist{}, fmt.Sprintf("%s/MsgRemoveFromWhitelist", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgAddToClassWhitelist{}, fmt.Sprintf("%s/MsgAddToClassWhitelist", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgRemoveFromClassWhitelist{}, fmt.Sprintf("%s/MsgRemoveFromClassWhitelist", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgClassFreeze{}, fmt.Sprintf("%s/MsgClassFreeze", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgClassUnfreeze{}, fmt.Sprintf("%s/MsgClassUnfreeze", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName), nil)
 }
 
@@ -383,6 +389,84 @@ func (m MsgRemoveFromWhitelist) Route() string {
 // Type returns message type for LegacyMsg.
 func (m MsgRemoveFromWhitelist) Type() string {
 	return TypeMsgRemoveFromWhitelist
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m *MsgClassFreeze) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid account %s", m.Sender)
+	}
+
+	if _, _, err := DeconstructClassID(m.ClassID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	return nil
+}
+
+// GetSigners returns the required signers of this message type.
+func (m *MsgClassFreeze) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(m.Sender),
+	}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgClassFreeze) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgClassFreeze) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgClassFreeze) Type() string {
+	return TypeMsgClassFreeze
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m *MsgClassUnfreeze) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid account %s", m.Sender)
+	}
+
+	if _, _, err := DeconstructClassID(m.ClassID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	return nil
+}
+
+// GetSigners returns the required signers of this message type.
+func (m *MsgClassUnfreeze) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(m.Sender),
+	}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgClassUnfreeze) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgClassUnfreeze) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgClassUnfreeze) Type() string {
+	return TypeMsgClassUnfreeze
 }
 
 // ValidateBasic checks that message fields are valid.

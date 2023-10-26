@@ -597,6 +597,112 @@
         ]
       }
     },
+    "/coreum/asset/nft/v1/classes/{class_id}/frozen": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesClassFrozenAccounts",
+        "parameters": [
+          {
+            "name": "class_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.asset.nft.v1.QueryClassFrozenAccountsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "QueryClassFrozenAccountsRequest returns the list of accounts which are frozen to hold NFTs in this class.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/coreum/asset/nft/v1/classes/{class_id}/frozen/{account}": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesClassFrozen",
+        "parameters": [
+          {
+            "name": "class_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "account",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.asset.nft.v1.QueryClassFrozenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "ClassFrozen queries to check if an account if frozen for an NFT class.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen": {
       "get": {
         "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesFrozen",
@@ -7215,6 +7321,29 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "coreum.asset.nft.v1.QueryClassFrozenAccountsResponse": {
+      "type": "object",
+      "properties": {
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse",
+          "description": "pagination defines the pagination in the response."
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "coreum.asset.nft.v1.QueryClassFrozenResponse": {
+      "type": "object",
+      "properties": {
+        "frozen": {
+          "type": "boolean"
         }
       }
     },

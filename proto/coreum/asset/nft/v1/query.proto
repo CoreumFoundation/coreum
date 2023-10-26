@@ -32,6 +32,16 @@ service Query {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen";
   }
 
+  // ClassFrozen queries to check if an account if frozen for an NFT class.
+  rpc ClassFrozen (QueryClassFrozenRequest) returns (QueryClassFrozenResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/frozen/{account}";
+  }
+
+  // QueryClassFrozenAccountsRequest returns the list of accounts which are frozen to hold NFTs in this class.
+  rpc ClassFrozenAccounts (QueryClassFrozenAccountsRequest) returns (QueryClassFrozenAccountsResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/frozen";
+  }
+
   // Whitelisted queries to check if an account is whitelited to hold an NFT or not.
   rpc Whitelisted (QueryWhitelistedRequest) returns (QueryWhitelistedResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/{account}";
@@ -99,6 +109,15 @@ message QueryFrozenResponse {
   bool frozen = 1;
 }
 
+message QueryClassFrozenRequest {
+  string class_id = 1;
+  string account = 2;
+}
+
+message QueryClassFrozenResponse {
+  bool frozen = 1;
+}
+
 message QueryWhitelistedRequest {
   string id = 1;
   string class_id = 2;
@@ -129,6 +148,18 @@ message QueryClassWhitelistedAccountsRequest {
 }
 
 message QueryClassWhitelistedAccountsResponse {
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  repeated string accounts = 2;
+}
+
+message QueryClassFrozenAccountsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  string class_id = 2;
+}
+
+message QueryClassFrozenAccountsResponse {
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 1;
   repeated string accounts = 2;

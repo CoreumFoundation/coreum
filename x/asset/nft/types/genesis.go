@@ -96,6 +96,20 @@ func (c ClassWhitelistedAccounts) Validate() error {
 	return nil
 }
 
+// Validate performs basic validation on the fields of WhitelistedNFTAccounts.
+func (c ClassFrozenAccounts) Validate() error {
+	if _, _, err := DeconstructClassID(c.ClassID); err != nil {
+		return err
+	}
+
+	for _, acc := range c.Accounts {
+		if _, err := sdk.AccAddressFromBech32(acc); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Validate performs basic validation on the fields of BurntNFT.
 func (b BurntNFT) Validate() error {
 	if _, _, err := DeconstructClassID(b.ClassID); err != nil {

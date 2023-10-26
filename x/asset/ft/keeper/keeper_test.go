@@ -517,7 +517,6 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 }
 
-//nolint:dupl // We don't care
 func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
@@ -765,7 +764,6 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 	}
 }
 
-//nolint:dupl // We don't care
 func TestKeeper_SendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 

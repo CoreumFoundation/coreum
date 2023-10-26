@@ -263,6 +263,75 @@ func TestCmdClassWhitelist(t *testing.T) {
 	requireT.False(whitelistedResp.Whitelisted)
 }
 
+func TestCmdClassFreeze(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+	account := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// create class
+	classID := issueClass(
+		requireT,
+		ctx,
+		symbol,
+		"class name",
+		"class description",
+		"https://my-class-meta.invalid/1",
+		"",
+		testNetwork,
+		"0.0",
+		types.ClassFeature_freezing,
+	)
+	// mint nft
+	mint(
+		requireT,
+		ctx,
+		classID,
+		nftID,
+		"https://my-nft-meta.invalid/1",
+		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		testNetwork,
+	)
+
+	// class-freeze
+	args := []string{classID, account.String()}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClassFreeze(), args)
+	requireT.NoError(err)
+
+	// query class frozen
+	var classFrozenResp types.QueryFrozenResponse
+	args = []string{classID, account.String()}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassFrozen(), args, &classFrozenResp))
+	requireT.True(classFrozenResp.Frozen)
+
+	// query frozen
+	var frozenResp types.QueryFrozenResponse
+	args = []string{classID, nftID}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
+	requireT.False(frozenResp.Frozen)
+
+	// query with pagination
+	var resPage types.QueryClassFrozenAccountsResponse
+	args = []string{classID}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassFrozenAccounts(), args, &resPage))
+	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
+
+	// unfreeze
+	args = []string{classID, account.String()}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClassUnfreeze(), args)
+	requireT.NoError(err)
+
+	// query class frozen
+	args = []string{classID, account.String()}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassFrozen(), args, &classFrozenResp))
+	requireT.False(classFrozenResp.Frozen)
+}
+
 func txValidator1Args(testNetwork *network.Network) []string {
 	return []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, testNetwork.Validators[0].Address.String()),
