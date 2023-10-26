@@ -126,8 +126,7 @@ func DefaultConfig() Config {
 
 		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6000),
 		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6500),
-		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
-		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52000),
+		MsgToMsgURL(&govtypesv1.MsgDeposit{}):      constantGasFunc(65000),
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25000),
