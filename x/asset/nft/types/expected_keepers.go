@@ -20,7 +20,7 @@ type NFTKeeper interface {
 	Burn(ctx sdk.Context, classID, nftID string) error
 	Update(ctx sdk.Context, n nft.NFT) error
 	GetOwner(ctx sdk.Context, classID, nftID string) sdk.AccAddress
-	Transfer(ctx sdk.Context, classID string, nftID string, receiver sdk.AccAddress) error
+	Transfer(ctx sdk.Context, classID, nftID string, receiver sdk.AccAddress) error
 }
 
 // BankKeeper defines the expected bank interface.
