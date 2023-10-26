@@ -65,6 +65,8 @@ func TestAssetFTIssue(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features:      []assetfttypes.Feature{},
+		URI:           "https://my-class-meta.invalid/1",
+		URIHash:       "content-hash",
 	}
 
 	res, err := client.BroadcastTx(
@@ -250,6 +252,8 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		InitialAmount:      sdkmath.NewInt(777),
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
+		URI:                "https://my-class-meta.invalid/1",
+		URIHash:            "content-hash",
 	}
 
 	_, err := client.BroadcastTx(
@@ -284,12 +288,14 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		Denom:              denom,
 		Issuer:             issuer1.String(),
 		Symbol:             msg1.Symbol,
-		Subunit:            "wsatoshi",
-		Precision:          8,
+		Subunit:            msg1.Subunit,
+		Precision:          msg1.Precision,
 		Description:        msg1.Description,
 		BurnRate:           msg1.BurnRate,
 		SendCommissionRate: msg1.SendCommissionRate,
 		Version:            gotToken.Tokens[0].Version, // test should work with all versions
+		URI:                msg1.URI,
+		URIHash:            msg1.URIHash,
 	}, gotToken.Tokens[0])
 }
 

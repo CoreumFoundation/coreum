@@ -34,25 +34,35 @@ func TestInitAndExportGenesis(t *testing.T) {
 	var pendingTokenUpgrades []types.PendingTokenUpgrade
 	for i := uint32(0); i < 5; i++ {
 		token := types.Token{
-			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
-			Issuer:             issuer.String(),
-			Symbol:             fmt.Sprintf("ABC%d", i),
-			Subunit:            fmt.Sprintf("abc%d", i),
-			Precision:          uint32(rand.Int31n(19) + 1),
-			BurnRate:           sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
-			SendCommissionRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
+			Denom:       types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
+			Issuer:      issuer.String(),
+			Symbol:      fmt.Sprintf("ABC%d", i),
+			Subunit:     fmt.Sprintf("abc%d", i),
+			Precision:   uint32(rand.Int31n(19) + 1),
+			Description: fmt.Sprintf("DESC%d", i),
 			Features: []types.Feature{
 				types.Feature_freezing,
 				types.Feature_whitelisting,
 			},
-			Version: i,
+			BurnRate:           sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
+			SendCommissionRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
+			Version:            i,
+			URI:                fmt.Sprintf("https://my-class-meta.invalid/%d", i),
+			URIHash:            fmt.Sprintf("content-hash%d", i),
 		}
 		// Globally freeze some Tokens.
 		if i%2 == 0 {
 			token.GloballyFrozen = true
 		}
 		tokens = append(tokens, token)
-		requireT.NoError(ftKeeper.SetDenomMetadata(ctx, token.Denom, token.Symbol, token.Description, token.Precision))
+		requireT.NoError(ftKeeper.SetDenomMetadata(
+			ctx,
+			token.Denom,
+			token.Symbol,
+			token.Description,
+			token.URI,
+			token.URIHash,
+			token.Precision))
 		if i == 0 {
 			pendingTokenUpgrades = append(pendingTokenUpgrades, types.PendingTokenUpgrade{
 				Denom:   token.Denom,

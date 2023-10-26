@@ -28,6 +28,8 @@ message EventIssued {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
+  string uri = 11 [(gogoproto.customname) = "URI"];
+  string uri_hash = 12 [(gogoproto.customname) = "URIHash"];
 }
 
 message EventFrozenAmountChanged {
