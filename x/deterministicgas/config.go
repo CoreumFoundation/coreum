@@ -114,7 +114,6 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
-		// FIXME(v47-deterministic): check that if we want to support both go types
 		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6000),
 		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}): constantGasFunc(9000),
 		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(85000),
@@ -181,7 +180,6 @@ func DefaultConfig() Config {
 			// specific for each proposal and those functions consume unknown amount of gas.
 			&govtypesv1beta1.MsgSubmitProposal{},
 
-			// FIXME(v47-deterministic): check that if we want to support both go types
 			&govtypesv1.MsgSubmitProposal{},
 			&govtypesv1.MsgExecLegacyContent{},
 			&govtypesv1.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
