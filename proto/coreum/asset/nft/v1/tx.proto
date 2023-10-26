@@ -38,6 +38,12 @@ service Msg {
   // ie. if specific whitelist is granted for an NFT, that whitelist will 
   // still be valid, ater we add and remove it from the class whitelist.
   rpc RemoveFromClassWhitelist(MsgRemoveFromClassWhitelist) returns (EmptyResponse);
+  // ClassFreeze freezes all NFTs of a class held by an account.
+  rpc ClassFreeze(MsgClassFreeze) returns (EmptyResponse);
+  // ClassUnfreeze removes class-freeze on an account for an NFT class.
+  // NOTE: 
+  // class unfreeze does not affect the individual nft freeze.
+  rpc ClassUnfreeze(MsgClassUnfreeze) returns (EmptyResponse);
   // UpdateParams is a governance operation that sets the parameters of the module.
   // NOTE: all parameters must be provided. 
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
@@ -87,6 +93,18 @@ message MsgBurn {
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
+ }
+
+ message MsgClassFreeze {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string account = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"]; 
+ }
+ 
+ message MsgClassUnfreeze {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string account = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
  }
 
  message MsgAddToWhitelist {

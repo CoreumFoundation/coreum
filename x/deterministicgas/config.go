@@ -87,6 +87,8 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     constantGasFunc(39000),
 		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):                   constantGasFunc(8000),
 		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):                 constantGasFunc(5000),
+		MsgToMsgURL(&assetnfttypes.MsgClassFreeze{}):              constantGasFunc(8000),
+		MsgToMsgURL(&assetnfttypes.MsgClassUnfreeze{}):            constantGasFunc(5000),
 		MsgToMsgURL(&assetnfttypes.MsgAddToWhitelist{}):           constantGasFunc(7000),
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}):      constantGasFunc(3500),
 		MsgToMsgURL(&assetnfttypes.MsgAddToClassWhitelist{}):      constantGasFunc(7000),
@@ -139,14 +141,17 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
 		// staking
-		MsgToMsgURL(&stakingtypes.MsgDelegate{}):        constantGasFunc(83000),
-		MsgToMsgURL(&stakingtypes.MsgUndelegate{}):      constantGasFunc(112000),
-		MsgToMsgURL(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(157000),
-		MsgToMsgURL(&stakingtypes.MsgCreateValidator{}): constantGasFunc(117000),
-		MsgToMsgURL(&stakingtypes.MsgEditValidator{}):   constantGasFunc(13000),
+		MsgToMsgURL(&stakingtypes.MsgDelegate{}):                  constantGasFunc(83000),
+		MsgToMsgURL(&stakingtypes.MsgUndelegate{}):                constantGasFunc(112000),
+		MsgToMsgURL(&stakingtypes.MsgBeginRedelegate{}):           constantGasFunc(157000),
+		MsgToMsgURL(&stakingtypes.MsgCreateValidator{}):           constantGasFunc(117000),
+		MsgToMsgURL(&stakingtypes.MsgEditValidator{}):             constantGasFunc(13000),
+		MsgToMsgURL(&stakingtypes.MsgCancelUnbondingDelegation{}): constantGasFunc(75000),
 
 		// vesting
-		MsgToMsgURL(&vestingtypes.MsgCreateVestingAccount{}): constantGasFunc(30000),
+		MsgToMsgURL(&vestingtypes.MsgCreateVestingAccount{}):         constantGasFunc(30000),
+		MsgToMsgURL(&vestingtypes.MsgCreatePeriodicVestingAccount{}): constantGasFunc(32000),
+		MsgToMsgURL(&vestingtypes.MsgCreatePermanentLockedAccount{}): constantGasFunc(30000),
 
 		// wasm
 		MsgToMsgURL(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
@@ -202,8 +207,6 @@ func DefaultConfig() Config {
 
 			// staking
 			&stakingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
-			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
-			&stakingtypes.MsgCancelUnbondingDelegation{},
 
 			// slashing
 			&slashingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
@@ -214,12 +217,6 @@ func DefaultConfig() Config {
 			// upgrade
 			&upgradetypes.MsgCancelUpgrade{},   // This is non-deterministic because all the gov proposals are non-deterministic anyway
 			&upgradetypes.MsgSoftwareUpgrade{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
-
-			// vesting
-			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
-			&vestingtypes.MsgCreatePeriodicVestingAccount{},
-			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
-			&vestingtypes.MsgCreatePermanentLockedAccount{},
 
 			// wasm
 			&wasmtypes.MsgStoreCode{},

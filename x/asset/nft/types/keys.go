@@ -35,6 +35,8 @@ var (
 	ParamsKey = []byte{0x05}
 	// NFTClassWhitelistingKeyPrefix defines the key prefix to track whitelisted account for class.
 	NFTClassWhitelistingKeyPrefix = []byte{0x06}
+	// NFTClassFreezingKeyPrefix defines the key prefix to track frozen account for NFT class.
+	NFTClassFreezingKeyPrefix = []byte{0x07}
 )
 
 // StoreTrue keeps a value used by stores to indicate that key is present.
@@ -81,10 +83,33 @@ func ParseFreezingKey(key []byte) (string, string, error) {
 		return "", "", sdkerrors.Wrapf(ErrInvalidKey, "failed to parse a freezing key, err: %s", err)
 	}
 	if len(parsedKeys) != 2 {
-		err = sdkerrors.Wrapf(ErrInvalidKey, "freezing key must be composed to 2 length prefixed keys")
+		err = sdkerrors.Wrapf(ErrInvalidKey, "freezing key must be composed of 2 length prefixed keys")
 		return "", "", err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), nil
+}
+
+// CreateClassFreezingKey constructs the key for the class freezing of NFT class.
+func CreateClassFreezingKey(classID string, account sdk.AccAddress) ([]byte, error) {
+	compositeKey, err := store.JoinKeysWithLength([]byte(classID), account)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to create a freezing key, err: %s", err)
+	}
+
+	return store.JoinKeys(NFTClassFreezingKeyPrefix, compositeKey), nil
+}
+
+// ParseClassFreezingKey parses key back to class id and account.
+func ParseClassFreezingKey(key []byte) (string, sdk.AccAddress, error) {
+	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
+	if err != nil {
+		return "", nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to parse class freezing key, err: %s", err)
+	}
+	if len(parsedKeys) != 2 {
+		err = sdkerrors.Wrapf(ErrInvalidKey, "key must be composed of 2 length prefixed keys")
+		return "", nil, err
+	}
+	return string(parsedKeys[0]), parsedKeys[1], nil
 }
 
 // CreateWhitelistingKey constructs the key for the whitelisting of non-fungible token.
@@ -160,7 +185,7 @@ func ParseBurningKey(key []byte) (string, string, error) {
 		return "", "", sdkerrors.Wrapf(ErrInvalidKey, "failed to parse a burning key, err: %s", err)
 	}
 	if len(parsedKeys) != 2 {
-		err = sdkerrors.Wrapf(ErrInvalidKey, "burning key must be composed to 2 length prefixed keys")
+		err = sdkerrors.Wrapf(ErrInvalidKey, "burning key must be composed of 2 length prefixed keys")
 		return "", "", err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), nil

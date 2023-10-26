@@ -10,6 +10,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -145,15 +146,14 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
 
-	_, err = client.BroadcastTx(
+	editValidatorRes, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(validatorAccAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(editValidatorMsg)),
 		editValidatorMsg,
 	)
 	require.NoError(t, err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assert.EqualValues(t, int64(chain.GasLimitByMsgs(editValidatorMsg)), editValidatorRes.GasUsed)
+	assert.EqualValues(t, int64(chain.GasLimitByMsgs(editValidatorMsg)), editValidatorRes.GasUsed)
 
 	valResp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validatorAddress.String(),
@@ -163,7 +163,11 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	assert.EqualValues(t, updatedDetail, valResp.GetValidator().Description.Details)
 
 	// Delegate coins
-	delegateMsg := stakingtypes.NewMsgDelegate(delegator, validatorAddress, chain.NewCoin(delegateAmount))
+	delegateMsg := &stakingtypes.MsgDelegate{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validatorAddress.String(),
+		Amount:           chain.NewCoin(delegateAmount),
+	}
 	delegateResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
@@ -200,8 +204,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		redelegateMsg,
 	)
 	require.NoError(t, err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assert.Equal(t, int64(chain.GasLimitByMsgs(redelegateMsg)), redelegateResult.GasUsed)
+	assert.Equal(t, int64(chain.GasLimitByMsgs(redelegateMsg)), redelegateResult.GasUsed)
 	t.Logf("Redelegation executed, txHash:%s", redelegateResult.TxHash)
 
 	ddResp, err = stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
@@ -222,7 +225,11 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	setUnbondingTimeViaGovernance(ctx, t, chain, fastUnbondingTime)
 
 	// Undelegate coins
-	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, validator2Address, chain.NewCoin(delegateAmount))
+	undelegateMsg := &stakingtypes.MsgUndelegate{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validator2Address.String(),
+		Amount:           chain.NewCoin(delegateAmount),
+	}
 	undelegateResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
@@ -326,6 +333,95 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.EqualValues(t, editValidatorMsg.Description.Details, valResp.GetValidator().Description.Details)
+}
+
+// TestUnbondAndCancelUnbondingDelegation checks that it is possible to unbond and cancel unbonding delegation.
+func TestUnbondAndCancelUnbondingDelegation(t *testing.T) {
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
+
+	delegator := chain.GenAccount()
+	delegateAmount := sdkmath.NewInt(100)
+	chain.FundAccountWithOptions(ctx, t, delegator, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&stakingtypes.MsgDelegate{},
+			&stakingtypes.MsgUndelegate{},
+			&stakingtypes.MsgCancelUnbondingDelegation{},
+		},
+		Amount: delegateAmount,
+	})
+
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	require.NoError(t, err)
+	// we stake the minimum possible staking amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
+
+	// setup validator
+	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
+	require.NoError(t, err)
+	defer deactivateValidator()
+
+	// delegate coins
+	delegateMsg := &stakingtypes.MsgDelegate{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validatorAddress.String(),
+		Amount:           chain.NewCoin(delegateAmount),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
+		delegateMsg,
+	)
+	require.NoError(t, err)
+
+	// undelegate coins
+	undelegateMsg := &stakingtypes.MsgUndelegate{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validatorAddress.String(),
+		Amount:           chain.NewCoin(delegateAmount),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
+		undelegateMsg,
+	)
+	require.NoError(t, err)
+
+	// check unbonding delegation
+	unbondingDelegationRes, err := stakingClient.UnbondingDelegation(ctx, &stakingtypes.QueryUnbondingDelegationRequest{
+		DelegatorAddr: delegator.String(),
+		ValidatorAddr: validatorAddress.String(),
+	})
+	require.NoError(t, err)
+	require.Len(t, unbondingDelegationRes.Unbond.Entries, 1)
+	require.Equal(t, unbondingDelegationRes.Unbond.Entries[0].Balance.String(), delegateAmount.String())
+
+	// cancel undelegation
+	cancelUnbondingDelegationMsg := &stakingtypes.MsgCancelUnbondingDelegation{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validatorAddress.String(),
+		Amount:           chain.NewCoin(delegateAmount),
+		CreationHeight:   unbondingDelegationRes.Unbond.Entries[0].CreationHeight,
+	}
+	txRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(cancelUnbondingDelegationMsg)),
+		cancelUnbondingDelegationMsg,
+	)
+	require.NoError(t, err)
+	require.Equal(t, chain.GasLimitByMsgs(cancelUnbondingDelegationMsg), uint64(txRes.GasUsed))
+
+	// check unbonding delegation one more time
+	_, err = stakingClient.UnbondingDelegation(ctx, &stakingtypes.QueryUnbondingDelegationRequest{
+		DelegatorAddr: delegator.String(),
+		ValidatorAddr: validatorAddress.String(),
+	})
+	require.ErrorContains(t, err, cosmoserrors.ErrNotFound.Error())
 }
 
 func changeMinSelfDelegationCustomParam(
