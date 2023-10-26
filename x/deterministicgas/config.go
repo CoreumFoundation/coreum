@@ -70,83 +70,80 @@ func DefaultConfig() Config {
 
 	cfg.gasByMsg = map[MsgURL]gasByMsgFunc{
 		// asset/ft
-		MsgToMsgURL(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
-		MsgToMsgURL(&assetfttypes.MsgMint{}):                constantGasFunc(31000),
-		MsgToMsgURL(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
-		MsgToMsgURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(8500),
-		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(8500),
-		MsgToMsgURL(&assetfttypes.MsgSetFrozen{}):           constantGasFunc(8500),
-		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
-		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
-		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9000),
+		MsgToMsgURL(&assetfttypes.MsgIssue{}):               constantGasFunc(70_000),
+		MsgToMsgURL(&assetfttypes.MsgMint{}):                constantGasFunc(31_000),
+		MsgToMsgURL(&assetfttypes.MsgBurn{}):                constantGasFunc(35_000),
+		MsgToMsgURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(8_500),
+		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(8_500),
+		MsgToMsgURL(&assetfttypes.MsgSetFrozen{}):           constantGasFunc(8_500),
+		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5_000),
+		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5_000),
+		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9_000),
 		// TODO: Reestimate when next token upgrade is prepared
-		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25000),
+		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25_000),
 
 		// asset/nft
-		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                     constantGasFunc(26000),
-		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):               constantGasFunc(16000),
-		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     constantGasFunc(39000),
-		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):                   constantGasFunc(8000),
-		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):                 constantGasFunc(5000),
-		MsgToMsgURL(&assetnfttypes.MsgClassFreeze{}):              constantGasFunc(8000),
-		MsgToMsgURL(&assetnfttypes.MsgClassUnfreeze{}):            constantGasFunc(5000),
-		MsgToMsgURL(&assetnfttypes.MsgAddToWhitelist{}):           constantGasFunc(7000),
-		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}):      constantGasFunc(3500),
-		MsgToMsgURL(&assetnfttypes.MsgAddToClassWhitelist{}):      constantGasFunc(7000),
-		MsgToMsgURL(&assetnfttypes.MsgRemoveFromClassWhitelist{}): constantGasFunc(3500),
+		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                     constantGasFunc(26_000),
+		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):               constantGasFunc(16_000),
+		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     constantGasFunc(39_000),
+		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):                   constantGasFunc(8_000),
+		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):                 constantGasFunc(5_000),
+		MsgToMsgURL(&assetnfttypes.MsgClassFreeze{}):              constantGasFunc(8_000),
+		MsgToMsgURL(&assetnfttypes.MsgClassUnfreeze{}):            constantGasFunc(5_000),
+		MsgToMsgURL(&assetnfttypes.MsgAddToWhitelist{}):           constantGasFunc(7_000),
+		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}):      constantGasFunc(3_500),
+		MsgToMsgURL(&assetnfttypes.MsgAddToClassWhitelist{}):      constantGasFunc(7_000),
+		MsgToMsgURL(&assetnfttypes.MsgRemoveFromClassWhitelist{}): constantGasFunc(3_500),
 
 		// authz
 		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
-		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(28000),
-		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(8000),
+		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(28_000),
+		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(8_000),
 
 		// bank
 		MsgToMsgURL(&banktypes.MsgSend{}):      bankSendMsgGasFunc(BankSendPerCoinGas),
 		MsgToMsgURL(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(BankMultiSendPerOperationsGas),
 
 		// distribution
-		MsgToMsgURL(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(17000),
-		MsgToMsgURL(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(5000),
-		MsgToMsgURL(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(79000),
-		MsgToMsgURL(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(22000),
+		MsgToMsgURL(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(17_000),
+		MsgToMsgURL(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(5_000),
+		MsgToMsgURL(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(79_000),
+		MsgToMsgURL(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(22_000),
 
 		// feegrant
-		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(11000),
-		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
+		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(11_000),
+		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2_500),
 
 		// gov
 		// FIXME(v47-deterministic): check that if we want to support both go types
-		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6000),
-		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}): constantGasFunc(9000),
-		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(85000),
+		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6_000),
+		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}): constantGasFunc(9_000),
+		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(85_000),
 
-		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6000),
-		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6500),
+		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6_000),
+		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6_500),
 		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
-		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52000),
+		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52_000),
 
-		// group // FIXME: Find reasonable values for other msg types.
+		// group
 		MsgToMsgURL(&group.MsgCreateGroup{}):                     constantGasFunc(55_000),
-		MsgToMsgURL(&group.MsgUpdateGroupMembers{}):              constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgUpdateGroupAdmin{}):                constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgUpdateGroupMetadata{}):             constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgUpdateGroupMembers{}):              constantGasFunc(17_500),
+		MsgToMsgURL(&group.MsgUpdateGroupAdmin{}):                constantGasFunc(13_500),
+		MsgToMsgURL(&group.MsgUpdateGroupMetadata{}):             constantGasFunc(14_500),
 		MsgToMsgURL(&group.MsgCreateGroupPolicy{}):               constantGasFunc(40_000),
-		MsgToMsgURL(&group.MsgCreateGroupWithPolicy{}):           constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgUpdateGroupPolicyAdmin{}):          constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgUpdateGroupPolicyDecisionPolicy{}): constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgUpdateGroupPolicyMetadata{}):       constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgSubmitProposal{}):                  constantGasFunc(35_000),
-		MsgToMsgURL(&group.MsgWithdrawProposal{}):                constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgVote{}):                            constantGasFunc(100_000),
-		MsgToMsgURL(&group.MsgExec{}):                            constantGasFunc(500_000),
-		MsgToMsgURL(&group.MsgLeaveGroup{}):                      constantGasFunc(500_000),
+		MsgToMsgURL(&group.MsgCreateGroupWithPolicy{}):           constantGasFunc(95_000),
+		MsgToMsgURL(&group.MsgUpdateGroupPolicyAdmin{}):          constantGasFunc(20_000),
+		MsgToMsgURL(&group.MsgUpdateGroupPolicyDecisionPolicy{}): constantGasFunc(17_000),
+		MsgToMsgURL(&group.MsgUpdateGroupPolicyMetadata{}):       constantGasFunc(15_000),
+		MsgToMsgURL(&group.MsgWithdrawProposal{}):                constantGasFunc(22_000),
+		MsgToMsgURL(&group.MsgLeaveGroup{}):                      constantGasFunc(15_000),
 
 		// nft
-		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25000),
+		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25_000),
 
 		// cnft
 		// Deprecated: this will be removed in the next release alongside the cnft types.
-		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25000),
+		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25_000),
 
 		// slashing
 		// Unjail message is not used in any integration test because it's too much hassle. Instead, unjailing is estimated
@@ -157,27 +154,27 @@ func DefaultConfig() Config {
 		// 4. stop one validator,
 		// 5. wait until it is jailed,
 		// 6. unjail it and check the amount of gas used.
-		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(90000),
+		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(90_000),
 
 		// staking
-		MsgToMsgURL(&stakingtypes.MsgDelegate{}):                  constantGasFunc(83000),
-		MsgToMsgURL(&stakingtypes.MsgUndelegate{}):                constantGasFunc(112000),
-		MsgToMsgURL(&stakingtypes.MsgBeginRedelegate{}):           constantGasFunc(157000),
-		MsgToMsgURL(&stakingtypes.MsgCreateValidator{}):           constantGasFunc(117000),
-		MsgToMsgURL(&stakingtypes.MsgEditValidator{}):             constantGasFunc(13000),
-		MsgToMsgURL(&stakingtypes.MsgCancelUnbondingDelegation{}): constantGasFunc(75000),
+		MsgToMsgURL(&stakingtypes.MsgDelegate{}):                  constantGasFunc(83_000),
+		MsgToMsgURL(&stakingtypes.MsgUndelegate{}):                constantGasFunc(112_000),
+		MsgToMsgURL(&stakingtypes.MsgBeginRedelegate{}):           constantGasFunc(157_000),
+		MsgToMsgURL(&stakingtypes.MsgCreateValidator{}):           constantGasFunc(117_000),
+		MsgToMsgURL(&stakingtypes.MsgEditValidator{}):             constantGasFunc(13_000),
+		MsgToMsgURL(&stakingtypes.MsgCancelUnbondingDelegation{}): constantGasFunc(75_000),
 
 		// vesting
-		MsgToMsgURL(&vestingtypes.MsgCreateVestingAccount{}):         constantGasFunc(30000),
-		MsgToMsgURL(&vestingtypes.MsgCreatePeriodicVestingAccount{}): constantGasFunc(32000),
-		MsgToMsgURL(&vestingtypes.MsgCreatePermanentLockedAccount{}): constantGasFunc(30000),
+		MsgToMsgURL(&vestingtypes.MsgCreateVestingAccount{}):         constantGasFunc(30_000),
+		MsgToMsgURL(&vestingtypes.MsgCreatePeriodicVestingAccount{}): constantGasFunc(32_000),
+		MsgToMsgURL(&vestingtypes.MsgCreatePermanentLockedAccount{}): constantGasFunc(30_000),
 
 		// wasm
-		MsgToMsgURL(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
-		MsgToMsgURL(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
+		MsgToMsgURL(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8_000),
+		MsgToMsgURL(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6_500),
 
 		// ibc transfer
-		MsgToMsgURL(&ibctransfertypes.MsgTransfer{}): constantGasFunc(54000),
+		MsgToMsgURL(&ibctransfertypes.MsgTransfer{}): constantGasFunc(54_000),
 	}
 
 	registerNondeterministicGasFuncs(
@@ -209,6 +206,17 @@ func DefaultConfig() Config {
 			&govtypesv1.MsgSubmitProposal{},
 			&govtypesv1.MsgExecLegacyContent{},
 			&govtypesv1.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+
+			// group
+			// MsgSubmitProposal, MsgWithdrawProposal and MsgVote are defined as nondeterministic because they might potentially
+			// run messages specified inside a proposal.
+			// For MsgVote and MsgExec we don't have access to messages inside ante handler because they are present in
+			// store only so deterministic estimation is not possible.
+			// For MsgSubmitProposal we have access to the list of messages but estimation depends on Exec attribute
+			// value that is why we decided to make it non-deterministic to simple logic and consistent with other 2.
+			&group.MsgSubmitProposal{},
+			&group.MsgVote{},
+			&group.MsgExec{},
 
 			// crisis
 			// MsgVerifyInvariant is defined as nondeterministic since fee

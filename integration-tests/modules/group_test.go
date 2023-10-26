@@ -37,7 +37,7 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 		},
 	})
 
-	// Setup group member accounts
+	// Generate group member accounts
 	groupMembers := lo.Times(3, func(i int) group.MemberRequest {
 		return group.MemberRequest{
 			Address: chain.GenAccount().String(),
@@ -45,25 +45,15 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 		}
 	})
 
-	// First group member submits proposal
-	chain.FundAccountWithOptions(ctx,
-		t,
-		sdk.MustAccAddressFromBech32(groupMembers[0].Address),
-		integration.BalancesOptions{
-			Messages: []sdk.Msg{&group.MsgSubmitProposal{}},
-		},
-	)
-
-	// Other group members vote
-	lo.ForEach(groupMembers[1:], func(member group.MemberRequest, _ int) {
-		chain.FundAccountWithOptions(ctx,
-			t,
-			sdk.MustAccAddressFromBech32(member.Address),
-			integration.BalancesOptions{
-				Messages: []sdk.Msg{&group.MsgVote{}},
-			},
-		)
+	// Fund group member accounts.
+	// Since MsgSubmitProposal & MsgVote are non-deterministic we just fund each account with 1 CORE.
+	accountsToFund := lo.Map(groupMembers, func(member group.MemberRequest, _ int) integration.FundedAccount {
+		return integration.FundedAccount{
+			Address: sdk.MustAccAddressFromBech32(member.Address),
+			Amount:  chain.NewCoin(sdk.NewInt(1_000_000)),
+		}
 	})
+	chain.Faucet.FundAccounts(ctx, t, accountsToFund...)
 
 	// Create group
 	createGroupMsg := group.MsgCreateGroup{
@@ -160,7 +150,7 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 		result, err = client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(sdk.MustAccAddressFromBech32(member.Address)),
-			chain.TxFactory().WithGas(chain.GasLimitByMsgs(voteMsg)),
+			chain.TxFactory().WithSimulateAndExecute(true),
 			voteMsg,
 		)
 		requireT.NoError(err)
@@ -198,24 +188,17 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 
 	groupMembers := lo.Times(3, func(i int) sdk.AccAddress { return chain.GenAccount() })
 	proposer := groupMembers[0]
-	chain.FundAccountWithOptions(ctx, t, proposer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&group.MsgSubmitProposal{},
-			&group.MsgWithdrawProposal{},
-			&group.MsgSubmitProposal{},
-			&group.MsgExec{},
-			&group.MsgExec{},
-		},
-	})
 	voters := groupMembers[1:]
-	lo.ForEach(voters, func(member sdk.AccAddress, _ int) {
-		chain.FundAccountWithOptions(ctx, t, member, integration.BalancesOptions{
-			Messages: []sdk.Msg{
-				&group.MsgVote{},
-				&group.MsgVote{},
-			},
-		})
+
+	// Fund group member accounts.
+	// Since MsgSubmitProposal & MsgVote are non-deterministic we just fund each account with 1 CORE.
+	accountsToFund := lo.Map(groupMembers, func(acc sdk.AccAddress, _ int) integration.FundedAccount {
+		return integration.FundedAccount{
+			Address: acc,
+			Amount:  chain.NewCoin(sdk.NewInt(1_000_000)),
+		}
 	})
+	chain.Faucet.FundAccounts(ctx, t, accountsToFund...)
 
 	_, groupPolicy := createGroupWithPolicy(ctx, t, chain, admin, groupMembers)
 
@@ -253,7 +236,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 		_, err = client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(member),
-			chain.TxFactory().WithGas(chain.GasLimitByMsgs(voteMsg)),
+			chain.TxFactory().WithSimulateAndExecute(true),
 			voteMsg,
 		)
 		requireT.NoError(err)
@@ -293,7 +276,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 		_, err = client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(member),
-			chain.TxFactory().WithGas(chain.GasLimitByMsgs(voteMsg)),
+			chain.TxFactory().WithSimulateAndExecute(true),
 			voteMsg,
 		)
 		requireT.NoError(err)
@@ -314,7 +297,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(proposer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(executeProposalMsg)),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		executeProposalMsg,
 	)
 	requireT.NoError(err)
@@ -336,7 +319,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(proposer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(executeProposalMsg)),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		executeProposalMsg,
 	)
 	requireT.NoError(err)
@@ -590,7 +573,7 @@ func submitGroupProposal(
 	result, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(proposer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(submitProposalMsg)),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		submitProposalMsg,
 	)
 	requireT.NoError(err)
