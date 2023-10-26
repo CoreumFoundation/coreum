@@ -305,7 +305,6 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // tests and mint tests are identical, but merging them is not beneficial
 func TestMsgMint_ValidateBasic(t *testing.T) {
 	type M = types.MsgMint
 
@@ -352,7 +351,6 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // tests and mint tests are identical, but merging them is not beneficial
 func TestMsgBurn_ValidateBasic(t *testing.T) {
 	type M = types.MsgBurn
 

@@ -280,7 +280,6 @@ func TestValidateFeatures(t *testing.T) {
 	}
 }
 
-//nolint:dupl // We don't care
 func TestValidateBurnRate(t *testing.T) {
 	testCases := []struct {
 		rate    string
@@ -363,7 +362,6 @@ func TestValidateBurnRate(t *testing.T) {
 	}
 }
 
-//nolint:dupl // We don't care
 func TestValidateSendCommissionRate(t *testing.T) {
 	testCases := []struct {
 		rate    string
