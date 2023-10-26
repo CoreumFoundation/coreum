@@ -181,7 +181,8 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	requireT.Equal(groupSendCoin.Amount, receiverBalance.Balance.Amount)
 }
 
-func TestGroupForAssetFTManagement(t *testing.T) {
+// TestGroupForAssetFTIssuance creates group & group policy and then issues FT using group policy account.
+func TestGroupForAssetFTIssuance(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -195,9 +196,7 @@ func TestGroupForAssetFTManagement(t *testing.T) {
 		},
 	})
 
-	groupMembers := lo.Times(3, func(i int) sdk.AccAddress {
-		return chain.GenAccount()
-	})
+	groupMembers := lo.Times(3, func(i int) sdk.AccAddress { return chain.GenAccount() })
 	proposer := groupMembers[0]
 	chain.FundAccountWithOptions(ctx, t, proposer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -320,7 +319,7 @@ func TestGroupForAssetFTManagement(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// Proposal is accepted but not executed successfully because there is no enough balance to pay FT issuance fee.
+	// Proposal is accepted but not executed successfully because there is no enough balance to pay for FT issuance fee.
 	proposal2Info, err := groupClient.Proposal(ctx, &group.QueryProposalRequest{
 		ProposalId: proposal2.Id,
 	})
@@ -353,6 +352,7 @@ func TestGroupForAssetFTManagement(t *testing.T) {
 	requireT.Equal(sdk.NewInt(1000), receiverBalance.Balance.Amount)
 }
 
+// TestGroupAdministration tests group administration functionality: update of metadata, admin, decision policy, etc.
 func TestGroupAdministration(t *testing.T) {
 	t.Parallel()
 
@@ -508,7 +508,15 @@ func TestGroupAdministration(t *testing.T) {
 	requireT.Len(groupMembersResp.Members, len(groupMembersNew)-1)
 }
 
-func createGroupWithPolicy(ctx context.Context, t *testing.T, chain integration.CoreumChain, admin sdk.AccAddress, groupMembers []sdk.AccAddress) (*group.GroupInfo, *group.GroupPolicyInfo) {
+// createGroupWithPolicy simple helper function to creates group & group policy with hardcoded params & customizable
+// member list and admin.
+func createGroupWithPolicy(
+	ctx context.Context,
+	t *testing.T,
+	chain integration.CoreumChain,
+	admin sdk.AccAddress,
+	groupMembers []sdk.AccAddress,
+) (*group.GroupInfo, *group.GroupPolicyInfo) {
 	requireT := require.New(t)
 	groupClient := group.NewQueryClient(chain.ClientContext)
 
@@ -563,7 +571,14 @@ func createGroupWithPolicy(ctx context.Context, t *testing.T, chain integration.
 	return grp, groupPolicy
 }
 
-func submitGroupProposal(ctx context.Context, t *testing.T, chain integration.CoreumChain, proposer sdk.AccAddress, submitProposalMsg *group.MsgSubmitProposal) *group.Proposal {
+// submitGroupProposal simple helper function to submit group proposal & verify that creation was successful.
+func submitGroupProposal(
+	ctx context.Context,
+	t *testing.T,
+	chain integration.CoreumChain,
+	proposer sdk.AccAddress,
+	submitProposalMsg *group.MsgSubmitProposal,
+) *group.Proposal {
 	requireT := require.New(t)
 	groupClient := group.NewQueryClient(chain.ClientContext)
 
