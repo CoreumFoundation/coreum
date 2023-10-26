@@ -101,7 +101,7 @@ TotalGas = 65000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission`          | 22000                          |
 | `/cosmos.feegrant.v1beta1.MsgGrantAllowance`                           | 11000                          |
 | `/cosmos.feegrant.v1beta1.MsgRevokeAllowance`                          | 2500                           |
-| `/cosmos.gov.v1.MsgDeposit`                                            | 52000                          |
+| `/cosmos.gov.v1.MsgDeposit`                                            | 65000                          |
 | `/cosmos.gov.v1.MsgVote`                                               | 6000                           |
 | `/cosmos.gov.v1.MsgVoteWeighted`                                       | 6500                           |
 | `/cosmos.gov.v1beta1.MsgDeposit`                                       | 85000                          |
