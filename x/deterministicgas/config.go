@@ -129,14 +129,14 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&group.MsgCreateGroup{}):                     constantGasFunc(55_000),
 		MsgToMsgURL(&group.MsgUpdateGroupMembers{}):              constantGasFunc(17_500),
 		MsgToMsgURL(&group.MsgUpdateGroupAdmin{}):                constantGasFunc(13_500),
-		MsgToMsgURL(&group.MsgUpdateGroupMetadata{}):             constantGasFunc(14_500),
+		MsgToMsgURL(&group.MsgUpdateGroupMetadata{}):             constantGasFunc(9_500),
 		MsgToMsgURL(&group.MsgCreateGroupPolicy{}):               constantGasFunc(40_000),
 		MsgToMsgURL(&group.MsgCreateGroupWithPolicy{}):           constantGasFunc(95_000),
 		MsgToMsgURL(&group.MsgUpdateGroupPolicyAdmin{}):          constantGasFunc(20_000),
 		MsgToMsgURL(&group.MsgUpdateGroupPolicyDecisionPolicy{}): constantGasFunc(17_000),
 		MsgToMsgURL(&group.MsgUpdateGroupPolicyMetadata{}):       constantGasFunc(15_000),
 		MsgToMsgURL(&group.MsgWithdrawProposal{}):                constantGasFunc(22_000),
-		MsgToMsgURL(&group.MsgLeaveGroup{}):                      constantGasFunc(15_000),
+		MsgToMsgURL(&group.MsgLeaveGroup{}):                      constantGasFunc(17_500),
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25_000),
