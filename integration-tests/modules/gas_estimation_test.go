@@ -5,10 +5,13 @@ package modules
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
@@ -113,4 +116,84 @@ func TestBankSendEstimation(t *testing.T) {
 
 		fmt.Printf("%d\t%d\n", n, txRes.GasUsed)
 	}
+}
+
+// TestAuthzEstimation it estimates gas overhead required by authz message execution.
+// It executes regular message first. Then the same message is executed using authz. By subtracting those values
+// we know what the overhead of authz is.
+// To get correct results, both authz and bank send must be temporarily configured as non-deterministic messages,
+// to get real results.
+func TestAuthzEstimation(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+	recipient1 := chain.GenAccount()
+	recipient2 := chain.GenAccount()
+
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.FundedAccount{
+			Address: granter,
+			Amount:  chain.NewCoin(sdk.NewInt(50000000)),
+		},
+		integration.FundedAccount{
+			Address: grantee,
+			Amount:  chain.NewCoin(sdk.NewInt(50000000)),
+		},
+	)
+
+	// grant the authorization
+	grantMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
+	)
+	requireT.NoError(err)
+
+	// execute regular message
+	amountToSend := sdkmath.NewInt(2_000)
+	txf := chain.TxFactory().WithSimulateAndExecute(true)
+	resRegular, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		txf,
+		&banktypes.MsgSend{
+			FromAddress: granter.String(),
+			ToAddress:   recipient1.String(),
+			Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
+		},
+	)
+	requireT.NoError(err)
+
+	// execute authz message
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{
+		&banktypes.MsgSend{
+			FromAddress: granter.String(),
+			ToAddress:   recipient2.String(),
+			Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
+		},
+	})
+
+	resAuthZ, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		txf,
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	fmt.Printf("Authz gas overhead: %d\n", resAuthZ.GasUsed-resRegular.GasUsed)
 }
