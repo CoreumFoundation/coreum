@@ -140,7 +140,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_ibc,
 		},
 	}
@@ -378,7 +378,7 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_whitelisting,
 		},
@@ -479,7 +479,7 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 		},
@@ -575,7 +575,7 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
@@ -666,7 +666,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 		},
@@ -807,7 +807,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(1_000_000),
 			Features: []assetfttypes.Feature{
-				assetfttypes.Feature_sending_to_smart_contracts_blocked,
+				assetfttypes.Feature_disallowing_smart_contracts,
 				assetfttypes.Feature_ibc,
 			},
 		}
@@ -921,7 +921,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 		},
@@ -1018,7 +1018,7 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
@@ -1150,7 +1150,7 @@ func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(1_000_000),
 			Features: []assetfttypes.Feature{
-				assetfttypes.Feature_sending_to_smart_contracts_blocked,
+				assetfttypes.Feature_disallowing_smart_contracts,
 				assetfttypes.Feature_ibc,
 				assetfttypes.Feature_whitelisting,
 				assetfttypes.Feature_freezing,
@@ -1315,7 +1315,7 @@ func TestIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(910_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_ibc,
 		},
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
@@ -1411,7 +1411,7 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(910_000),
 			Features: []assetfttypes.Feature{
-				assetfttypes.Feature_sending_to_smart_contracts_blocked,
+				assetfttypes.Feature_disallowing_smart_contracts,
 				assetfttypes.Feature_ibc,
 			},
 			BurnRate:           sdk.MustNewDecFromStr("0.1"),

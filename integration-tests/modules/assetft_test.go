@@ -251,7 +251,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 	}
 
@@ -294,7 +294,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		SendCommissionRate: msg1.SendCommissionRate,
 		Version:            gotToken.Tokens[0].Version, // test should work with all versions
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 	}, gotToken.Tokens[0])
 }
@@ -467,7 +467,7 @@ func TestAssetFTMint(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_burning,
 			assetfttypes.Feature_freezing,
 		},
@@ -511,7 +511,7 @@ func TestAssetFTMint(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_minting,
 		},
 	}
@@ -732,7 +732,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_burning,
 		},
 	}
@@ -843,7 +843,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(1000),
 		Description:   "ABC Description",
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 		BurnRate:           sdk.MustNewDecFromStr("0.10"),
 		SendCommissionRate: sdk.NewDec(0),
@@ -992,7 +992,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(1000),
 		Description:   "ABC Description",
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.10"),
@@ -1444,7 +1444,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_freezing,
 		},
 	}
@@ -2377,7 +2377,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: amount,
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 			assetfttypes.Feature_whitelisting,
 		},
 	}
@@ -4708,7 +4708,7 @@ func TestAssetFTSendingToSmartContractIsDenied(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(1000),
 		Description:   "ABC Description",
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 		BurnRate:           sdk.ZeroDec(),
 		SendCommissionRate: sdk.ZeroDec(),
@@ -4805,7 +4805,7 @@ func TestAssetFTAttachingToSmartContractCallIsDenied(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(1000),
 		Description:   "ABC Description",
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 		BurnRate:           sdk.ZeroDec(),
 		SendCommissionRate: sdk.ZeroDec(),
@@ -4872,7 +4872,7 @@ func TestAssetFTAttachingToSmartContractInstantiationIsDenied(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(1000),
 		Description:   "ABC Description",
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 		BurnRate:           sdk.ZeroDec(),
 		SendCommissionRate: sdk.ZeroDec(),
@@ -4941,7 +4941,7 @@ func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 		Description:   "my wasm fungible token",
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 		BurnRate:           sdk.ZeroDec().String(),
 		SendCommissionRate: sdk.ZeroDec().String(),
@@ -5105,7 +5105,7 @@ func TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfS
 			InitialAmount: sdkmath.NewInt(1000),
 			Features: []assetfttypes.Feature{
 				assetfttypes.Feature_minting,
-				assetfttypes.Feature_sending_to_smart_contracts_blocked,
+				assetfttypes.Feature_disallowing_smart_contracts,
 			},
 		},
 		&banktypes.MsgSend{
@@ -5182,7 +5182,7 @@ func TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_sending_to_smart_contracts_blocked,
+			assetfttypes.Feature_disallowing_smart_contracts,
 		},
 	}
 	_, err := client.BroadcastTx(
