@@ -35,6 +35,17 @@ message EventUnfrozen {
   string owner    = 3;
 }
 
+message EventClassFrozen {
+  string class_id = 1;
+  string account  = 3;
+}
+
+message EventClassUnfrozen {
+  string class_id = 1;
+  string account  = 3;
+}
+
+
 message EventAddedToWhitelist {
   string class_id = 1;
   string id       = 2;

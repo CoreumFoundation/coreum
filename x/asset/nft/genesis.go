@@ -63,6 +63,22 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		}
 	}
 
+	for _, classFrozen := range genState.ClassFrozenAccounts {
+		if err := classFrozen.Validate(); err != nil {
+			panic(err)
+		}
+		for _, account := range classFrozen.Accounts {
+			if err := k.SetClassFrozen(
+				ctx,
+				classFrozen.ClassID,
+				sdk.MustAccAddressFromBech32(account),
+				true,
+			); err != nil {
+				panic(err)
+			}
+		}
+	}
+
 	for _, burnt := range genState.BurntNFTs {
 		if err := burnt.Validate(); err != nil {
 			panic(err)
@@ -97,6 +113,11 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	classFrozen, _, err := k.GetAllClassFrozenAccounts(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	if err != nil {
+		panic(err)
+	}
+
 	burnt, _, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
 		panic(err)
@@ -108,6 +129,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		FrozenNFTs:               frozen,
 		WhitelistedNFTAccounts:   whitelisted,
 		ClassWhitelistedAccounts: classWhitelisted,
+		ClassFrozenAccounts:      classFrozen,
 		BurntNFTs:                burnt,
 	}
 }
