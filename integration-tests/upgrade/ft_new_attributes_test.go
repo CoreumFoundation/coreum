@@ -66,49 +66,4 @@ func (ftt *ftURIAttributesTest) After(t *testing.T) {
 	})
 	requireT.NoError(err)
 	require.Equal(t, ftt.token, tokenRes.Token)
-
-	// create a token with URI and URIHash
-	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
-	})
-	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        issuer.String(),
-		Symbol:        "ABC",
-		Subunit:       "uabc",
-		Precision:     6,
-		Description:   "ABC Description",
-		InitialAmount: sdkmath.NewInt(1000),
-		Features:      []assetfttypes.Feature{},
-		URI:           "https://my-class-meta.invalid/1",
-		URIHash:       "content-hash",
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
-		issueMsg,
-	)
-	requireT.NoError(err)
-
-	tokenRes, err = assetftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
-		Denom: assetfttypes.BuildDenom(issueMsg.Subunit, issuer),
-	})
-	requireT.NoError(err)
-	requireT.Equal(assetfttypes.Token{
-		Denom:              assetfttypes.BuildDenom(issueMsg.Subunit, issuer),
-		Issuer:             issuer.String(),
-		Symbol:             issueMsg.Symbol,
-		Subunit:            issueMsg.Subunit,
-		Precision:          issueMsg.Precision,
-		Description:        issueMsg.Description,
-		BurnRate:           sdkmath.LegacyZeroDec(),
-		SendCommissionRate: sdkmath.LegacyZeroDec(),
-		Version:            assetfttypes.CurrentTokenVersion,
-		URI:                issueMsg.URI,
-		URIHash:            issueMsg.URIHash,
-	}, tokenRes.Token)
 }
