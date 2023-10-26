@@ -35,7 +35,7 @@ import (
 const (
 	BankSendPerCoinGas            = 50000
 	BankMultiSendPerOperationsGas = 35000
-	AuthzExecOverhead             = 2000
+	AuthzExecOverhead             = 1500
 )
 
 type (
@@ -95,11 +95,6 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromClassWhitelist{}): constantGasFunc(3500),
 
 		// authz
-		// FIXME (v47-deterministic): We need a procedure to estimate the overhead of the authz. Proposal:
-		// 1. Estimate normal message
-		// 2. Estimate the same message executed using authz
-		// 3. Subtract one from the other
-		// We should have an integration test doing this.
 		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
 		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(28000),
 		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(8000),

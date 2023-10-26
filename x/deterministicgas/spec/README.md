@@ -143,7 +143,7 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 `DeterministicGasForMsg = authzMsgExecOverhead + Sum(DeterministicGas(ChildMsg))`
 
-`authzMsgExecOverhead` is currently equal to `2000`.
+`authzMsgExecOverhead` is currently equal to `1500`.
 
 ### Nondeterministic messages
 
