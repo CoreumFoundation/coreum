@@ -87,6 +87,8 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     constantGasFunc(39000),
 		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):                   constantGasFunc(8000),
 		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):                 constantGasFunc(5000),
+		MsgToMsgURL(&assetnfttypes.MsgClassFreeze{}):              constantGasFunc(8000),
+		MsgToMsgURL(&assetnfttypes.MsgClassUnfreeze{}):            constantGasFunc(5000),
 		MsgToMsgURL(&assetnfttypes.MsgAddToWhitelist{}):           constantGasFunc(7000),
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}):      constantGasFunc(3500),
 		MsgToMsgURL(&assetnfttypes.MsgAddToClassWhitelist{}):      constantGasFunc(7000),
