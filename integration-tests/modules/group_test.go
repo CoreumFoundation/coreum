@@ -413,6 +413,7 @@ func TestGroupAdministration(t *testing.T) {
 			},
 		},
 	)
+	requireT.NoError(err)
 	updateGroupPolicyMetadataMsg := &group.MsgUpdateGroupPolicyMetadata{
 		Admin:              admin.String(),
 		GroupPolicyAddress: groupPolicy.Address,
@@ -430,6 +431,7 @@ func TestGroupAdministration(t *testing.T) {
 	groupPolicyInfoRes, err := groupClient.GroupPolicyInfo(ctx, &group.QueryGroupPolicyInfoRequest{
 		Address: groupPolicy.Address,
 	})
+	requireT.NoError(err)
 
 	requireT.Equal(updateGroupPolicyDecisionPolicyMsg.DecisionPolicy.String(), groupPolicyInfoRes.Info.DecisionPolicy.String())
 	requireT.Equal(updateGroupPolicyMetadataMsg.Metadata, groupPolicyInfoRes.Info.Metadata)
