@@ -50,6 +50,8 @@ type IssueSettings struct {
 	Subunit            string
 	Precision          uint32
 	Description        string
+	URI                string
+	URIHash            string
 	InitialAmount      sdkmath.Int
 	Features           []Feature
 	BurnRate           sdk.Dec
