@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"strings"
 	"testing"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -35,6 +36,8 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 		Precision:     1,
 		Description:   "BTC Description",
 		InitialAmount: sdkmath.NewInt(777),
+		URI:           "https://my.invalid",
+		URIHash:       "sha-hash",
 	}
 
 	testCases := []struct {
@@ -144,6 +147,22 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 					types.Feature_whitelisting,
 					types.Feature_burning,
 				}
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid uri",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.URI = string(make([]byte, 257))
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid uri hash",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.URIHash = strings.Repeat("x", 129)
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,

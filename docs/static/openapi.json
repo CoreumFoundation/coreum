@@ -7205,6 +7205,12 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        },
+        "uri": {
+          "type": "string"
+        },
+        "uri_hash": {
+          "type": "string"
         }
       },
       "description": "Token is a full representation of the fungible token."

@@ -32,6 +32,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			BurnRate:           token.BurnRate,
 			SendCommissionRate: token.SendCommissionRate,
 			Version:            token.Version,
+			URI:                token.URI,
+			URIHash:            token.URIHash,
 		}
 
 		k.SetDefinition(ctx, issuer, subunit, definition)
