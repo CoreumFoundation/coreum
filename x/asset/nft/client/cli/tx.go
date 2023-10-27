@@ -22,7 +22,7 @@ import (
 
 // Flags defined on transactions.
 const (
-	AuthzFlag       = "authz"
+	AuthzFlag       = "auth-file"
 	ExpirationFlag  = "expiration"
 	FeaturesFlag    = "features"
 	RoyaltyRateFlag = "royalty-rate"
