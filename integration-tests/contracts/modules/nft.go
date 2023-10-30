@@ -35,7 +35,7 @@ type NftIDRequest struct {
 	ID string `json:"id"`
 }
 
-// NftAccountRequest is used to query NFT with ID.
+// NftAccountRequest is used to query NFT with Account.
 type NftAccountRequest struct {
 	Account string `json:"account"`
 }
