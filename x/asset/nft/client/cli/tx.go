@@ -553,11 +553,11 @@ $ %s tx %s class-unfreeze abc-%[3]s %[3]s --from [sender]
 // CmdGrantAuthorization returns a CLI command handler for creating a MsgGrant transaction.
 func CmdGrantAuthorization() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "grant [grantee] [message_type=\"send\"] --from <granter> --authz=path/to/authz.json",
+		Use:   "grant [grantee] [message_type=\"send\"] --from <granter> --auth-file=path/to/authz.json",
 		Short: "Grant authorization to an address",
 		Long: fmt.Sprintf(`Grant authorization to an address.
 Examples:
-$ %s tx grant <grantee_addr> send --expiration 1667979596 --authz=./authz.json
+$ %s tx grant <grantee_addr> send --expiration 1667979596 --auth-file=./authz.json
 
 Where authz.json for send grant contains:
 
@@ -569,7 +569,7 @@ Where authz.json for send grant contains:
 		}
 	]
 }
-`, version.AppName, version.AppName, constant.AddressSampleTest),
+`, version.AppName, version.AppName, constant.AddressSampleTest, AuthzFlag),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
