@@ -7276,7 +7276,7 @@
         },
         "royalty_rate": {
           "type": "string",
-          "description": "royalty_rate is a number between 0 and 1,which will be used in coreum native Dex. \nwhenever an NFT this class is traded on the Dex, the traded amount will be multiplied by this value\nthat will be transferred to the issuer of the NFT."
+          "description": "royalty_rate is a number between 0 and 1,which will be used in coreum native Dex.\nwhenever an NFT this class is traded on the Dex, the traded amount will be multiplied by this value\nthat will be transferred to the issuer of the NFT."
         }
       },
       "description": "Class is a full representation of the non-fungible token class."

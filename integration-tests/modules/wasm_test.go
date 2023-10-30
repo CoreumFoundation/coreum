@@ -76,6 +76,8 @@ type issueFTRequest struct {
 	Features           []assetfttypes.Feature `json:"features"`
 	BurnRate           string                 `json:"burn_rate"`
 	SendCommissionRate string                 `json:"send_commission_rate"`
+	URI                string                 `json:"uri"`
+	URIHash            string                 `json:"uri_hash"`
 }
 
 type amountBodyFTRequest struct {
@@ -727,6 +729,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 		BurnRate:           burnRate.String(),
 		SendCommissionRate: sendCommissionRate.String(),
+		URI:                "https://example.com",
+		URIHash:            "1234567890abcdef",
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
@@ -769,6 +773,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		BurnRate:           burnRate,
 		SendCommissionRate: sendCommissionRate,
 		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
+		URI:                issuanceReq.URI,
+		URIHash:            issuanceReq.URIHash,
 	}
 	requireT.Equal(
 		expectedToken, tokenRes.Token,
@@ -1245,6 +1251,44 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.False(assertNftFrozenRes.Frozen)
 
+	// ********** ClassFreeze **********
+
+	classFreezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classFreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassFrozenRes, err := assetNftClient.ClassFrozen(ctx, &assetnfttypes.QueryClassFrozenRequest{
+		ClassId: classID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.True(assertNftClassFrozenRes.Frozen)
+
+	// ********** ClassUnFreeze **********
+
+	classUnfreezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassUnfreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classUnfreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassFrozenRes, err = assetNftClient.ClassFrozen(ctx, &assetnfttypes.QueryClassFrozenRequest{
+		ClassId: classID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.False(assertNftClassFrozenRes.Frozen)
+
 	// ********** AddToWhitelist **********
 
 	addToWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
@@ -1286,6 +1330,42 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.False(assertNftWhitelistedRes.Whitelisted)
+
+	// ********** AddToClassWhitelist **********
+
+	addToClassWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodAddToClassWhitelist: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, addToClassWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassWhitelistedRes, err := assetNftClient.ClassWhitelistedAccounts(ctx, &assetnfttypes.QueryClassWhitelistedAccountsRequest{
+		ClassId: classID,
+	})
+	requireT.NoError(err)
+	requireT.Contains(assertNftClassWhitelistedRes.Accounts, recipient.String())
+
+	// ********** RemoveFromClassWhitelist **********
+
+	removeFromClassWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodRemoveFromClassWhitelist: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, removeFromClassWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassWhitelistedRes, err = assetNftClient.ClassWhitelistedAccounts(ctx, &assetnfttypes.QueryClassWhitelistedAccountsRequest{
+		ClassId: classID,
+	})
+	requireT.NoError(err)
+	requireT.NotContains(assertNftClassWhitelistedRes.Accounts, recipient.String())
 
 	// ********** Burn **********
 
@@ -1444,6 +1524,52 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(json.Unmarshal(queryOut, &frozenQueryRes))
 	requireT.True(frozenQueryRes.Frozen)
 
+	// ********** ClassFrozen **********
+
+	classFreezePayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classFreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	classFrozenPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFrozen: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classFrozenPayload)
+	requireT.NoError(err)
+	var classFrozenQueryRes assetnfttypes.QueryClassFrozenResponse
+	requireT.NoError(json.Unmarshal(queryOut, &classFrozenQueryRes))
+	requireT.True(frozenQueryRes.Frozen)
+
+	// ********** ClassFrozenAccounts **********
+
+	classFreezePayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classFreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	classFrozenAccountsPayLoad, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodClassFrozenAccounts: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classFrozenAccountsPayLoad)
+	requireT.NoError(err)
+	var classFrozenAccountsQueryRes assetnfttypes.QueryClassFrozenAccountsResponse
+	requireT.NoError(json.Unmarshal(queryOut, &classFrozenAccountsQueryRes))
+	requireT.Contains(classFrozenAccountsQueryRes.Accounts, recipient.String())
+
 	// ********** Whitelisted **********
 
 	whitelistedPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
@@ -1472,6 +1598,28 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	var whitelistedAccountsForNFTQueryRes assetnfttypes.QueryWhitelistedAccountsForNFTResponse
 	requireT.NoError(json.Unmarshal(queryOut, &whitelistedAccountsForNFTQueryRes))
 	requireT.Equal(whitelistedAccountsForNFTQueryRes.Accounts[0], recipient.String())
+
+	// ********** ClassWhitelistedAccounts **********
+
+	addToClassWhitelistPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodAddToClassWhitelist: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, addToClassWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	classWhitelistedAccountsPayLoad, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodClassWhitelistedAccounts: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classWhitelistedAccountsPayLoad)
+	requireT.NoError(err)
+	var classWhitelistedAccountsQueryRes assetnfttypes.QueryClassWhitelistedAccountsResponse
+	requireT.NoError(json.Unmarshal(queryOut, &classWhitelistedAccountsQueryRes))
+	requireT.Contains(classFrozenAccountsQueryRes.Accounts, recipient.String())
 
 	// ********** BurntNFT **********
 

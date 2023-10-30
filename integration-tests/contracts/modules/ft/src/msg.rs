@@ -11,6 +11,8 @@ pub struct InstantiateMsg {
     pub features: Option<Vec<u32>>,
     pub burn_rate: Option<String>,
     pub send_commission_rate: Option<String>,
+    pub uri: Option<String>,
+    pub uri_hash: Option<String>,
 }
 
 #[cw_serde]
