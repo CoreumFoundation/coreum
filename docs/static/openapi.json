@@ -7287,7 +7287,8 @@
         "burning",
         "freezing",
         "whitelisting",
-        "disable_sending"
+        "disable_sending",
+        "soulbound"
       ],
       "default": "burning",
       "description": "ClassFeature defines possible features of non-fungible token class."
