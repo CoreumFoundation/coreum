@@ -115,9 +115,13 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2_500),
 
 		// gov
-		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6000),
-		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6500),
-		MsgToMsgURL(&govtypesv1.MsgDeposit{}):      constantGasFunc(65000),
+		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6_000),
+		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}): constantGasFunc(9_000),
+		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(85_000),
+
+		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6_000),
+		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6_500),
+		MsgToMsgURL(&govtypesv1.MsgDeposit{}):      constantGasFunc(65_000),
 
 		// group
 		MsgToMsgURL(&group.MsgCreateGroup{}):                     constantGasFunc(55_000),
