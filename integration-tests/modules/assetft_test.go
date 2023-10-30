@@ -65,6 +65,8 @@ func TestAssetFTIssue(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features:      []assetfttypes.Feature{},
+		URI:           "https://my-class-meta.invalid/1",
+		URIHash:       "content-hash",
 	}
 
 	res, err := client.BroadcastTx(
@@ -250,6 +252,8 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		InitialAmount:      sdkmath.NewInt(777),
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
+		URI:                "https://my-class-meta.invalid/1",
+		URIHash:            "content-hash",
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_disallowing_smart_contracts,
 		},
@@ -287,12 +291,14 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		Denom:              denom,
 		Issuer:             issuer1.String(),
 		Symbol:             msg1.Symbol,
-		Subunit:            "wsatoshi",
-		Precision:          8,
+		Subunit:            msg1.Subunit,
+		Precision:          msg1.Precision,
 		Description:        msg1.Description,
 		BurnRate:           msg1.BurnRate,
 		SendCommissionRate: msg1.SendCommissionRate,
 		Version:            gotToken.Tokens[0].Version, // test should work with all versions
+		URI:                msg1.URI,
+		URIHash:            msg1.URIHash,
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_disallowing_smart_contracts,
 		},
@@ -317,6 +323,7 @@ func TestBalanceQuery(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
 			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgGloballyFreeze{},
 			&banktypes.MsgSend{},
 		},
 		Amount: issueFee,
@@ -397,6 +404,224 @@ func TestBalanceQuery(t *testing.T) {
 	assertT.Equal(frozenCoin.Amount.String(), resp.Frozen.String())
 	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
 	assertT.Equal("0", resp.Locked.String())
+
+	// freeze globally now
+
+	msgGloballyFreeze := &assetfttypes.MsgGloballyFreeze{
+		Sender: issuer.String(),
+		Denom:  denom,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgGloballyFreeze)),
+		msgGloballyFreeze,
+	)
+	require.NoError(t, err)
+
+	resp, err = ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	require.NoError(t, err)
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	recipientBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	require.NoError(t, err)
+
+	assertT.Equal(whitelistedCoin.Amount.String(), resp.Whitelisted.String())
+	assertT.Equal(recipientBalanceRes.Balance.Amount.String(), resp.Frozen.String())
+	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
+	assertT.Equal("0", resp.Locked.String())
+}
+
+func TestSpendableBalanceQuery(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
+
+	issuer := chain.GenAccount()
+	recipient1 := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgGloballyFreeze{},
+		},
+		Amount: issueFee.MulRaw(2),
+	})
+
+	// issue the new fungible token form issuer
+	msgIssue := &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "WBTC",
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		InitialAmount:      sdkmath.NewInt(200),
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
+		msgIssue,
+	)
+	requireT.NoError(err)
+
+	denom1 := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	frozenCoin1 := sdk.NewInt64Coin(denom1, 20)
+	sendCoin1 := sdk.NewInt64Coin(denom1, 100)
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient1.String(),
+		Amount:      sdk.NewCoins(sendCoin1),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalanceBeforeFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sendCoin1.Amount.String(), recipientSpendableBalanceBeforeFreezeRes.Balance.Amount.String())
+
+	msgFreeze := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient1.String(),
+		Coin:    frozenCoin1,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
+		msgFreeze,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalanceAfterFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sendCoin1.Amount.Sub(frozenCoin1.Amount).String(), recipientSpendableBalanceAfterFreezeRes.Balance.Amount.String())
+
+	// freeze globally now
+	msgGloballyFreeze := &assetfttypes.MsgGloballyFreeze{
+		Sender: issuer.String(),
+		Denom:  denom1,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgGloballyFreeze)),
+		msgGloballyFreeze,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalanceAfterGlobalFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.ZeroInt().String(), recipientSpendableBalanceAfterGlobalFreezeRes.Balance.Amount.String())
+
+	// issue one more token
+	msgIssue = &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "WBTC2",
+		Subunit:            "wsatoshi2",
+		Precision:          8,
+		InitialAmount:      sdkmath.NewInt(200),
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
+		msgIssue,
+	)
+	requireT.NoError(err)
+
+	denom2 := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	frozenCoin2 := sdk.NewInt64Coin(denom2, 20)
+	sendCoin2 := sdk.NewInt64Coin(denom2, 100)
+
+	msgSend = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient1.String(),
+		Amount:      sdk.NewCoins(sendCoin2),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalancesBeforeFreezeRes, err := bankClient.SpendableBalances(ctx, &banktypes.QuerySpendableBalancesRequest{
+		Address: recipient1.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(recipientSpendableBalancesBeforeFreezeRes.Balances, 2)
+	requireT.Equal(sendCoin2.Amount.String(), recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String())
+
+	msgFreeze = &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient1.String(),
+		Coin:    frozenCoin2,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
+		msgFreeze,
+	)
+	requireT.NoError(err)
+
+	recipientSpendableBalancesBeforeFreezeRes, err = bankClient.SpendableBalances(ctx, &banktypes.QuerySpendableBalancesRequest{
+		Address: recipient1.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(sendCoin2.Amount.Sub(frozenCoin2.Amount).String(), recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String())
+
+	// check the native denom
+	recipient2 := chain.GenAccount()
+	amountToFund := sdkmath.NewInt(100)
+	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
+		Amount: amountToFund,
+	})
+	recipient2SpendableBalance, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		Address: recipient2.String(),
+		Denom:   chain.Chain.ChainSettings.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToFund.String(), recipient2SpendableBalance.Balance.Amount.String())
 }
 
 // TestEmptyBalanceQuery tests balance query.

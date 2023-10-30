@@ -36,6 +36,8 @@ message Definition {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
   uint32 version = 6;
+  string uri = 7 [(gogoproto.customname) = "URI"];
+  string uri_hash = 8 [(gogoproto.customname) = "URIHash"];
 }
 
 // Token is a full representation of the fungible token.
@@ -63,6 +65,8 @@ message Token {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
   uint32 version = 11;
+  string uri = 12 [(gogoproto.customname) = "URI"];
+  string uri_hash = 13 [(gogoproto.customname) = "URIHash"];
 }
 
 // DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.

@@ -57,6 +57,8 @@ func (ms MsgServer) Issue(ctx context.Context, req *types.MsgIssue) (*types.Empt
 		Features:           req.Features,
 		BurnRate:           req.BurnRate,
 		SendCommissionRate: req.SendCommissionRate,
+		URI:                req.URI,
+		URIHash:            req.URIHash,
 	})
 	if err != nil {
 		return nil, err

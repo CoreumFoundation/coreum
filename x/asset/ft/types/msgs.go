@@ -26,6 +26,15 @@ const (
 	TypeMsgUpdateParams        = "update-params"
 )
 
+const (
+	// MaxDescriptionLength is max description length.
+	MaxDescriptionLength = 200
+	// MaxURILength is max URI length.
+	MaxURILength = 256
+	// MaxURIHashLength is max URIHash length.
+	MaxURIHashLength = 128
+)
+
 var (
 	_ sdk.Msg            = &MsgIssue{}
 	_ legacytx.LegacyMsg = &MsgIssue{}
@@ -68,8 +77,6 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 
 // ValidateBasic validates the message.
 func (m MsgIssue) ValidateBasic() error {
-	const maxDescriptionLength = 200
-
 	if _, err := sdk.AccAddressFromBech32(m.Issuer); err != nil {
 		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid issuer %s", m.Issuer)
 	}
@@ -99,13 +106,21 @@ func (m MsgIssue) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid initial amount %s, can't be negative", m.InitialAmount.String())
 	}
 
-	if len(m.Description) > maxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", m.Description, maxDescriptionLength)
+	if len(m.Description) > MaxDescriptionLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", m.Description, MaxDescriptionLength)
 	}
 
 	duplicates := lo.FindDuplicates(m.Features)
 	if len(duplicates) != 0 {
 		return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the features list, duplicates: %v", duplicates)
+	}
+
+	if len(m.URI) > MaxURILength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(m.URI), MaxURILength)
+	}
+
+	if len(m.URIHash) > MaxURIHashLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(m.URIHash), MaxURIHashLength)
 	}
 
 	return nil

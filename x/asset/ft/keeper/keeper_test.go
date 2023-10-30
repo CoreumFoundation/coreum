@@ -50,6 +50,8 @@ func TestKeeper_Issue(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		Features:      []types.Feature{types.Feature_freezing},
+		URI:           "https://my-class-meta.invalid/1",
+		URIHash:       "content-hash",
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
@@ -81,6 +83,8 @@ func TestKeeper_Issue(t *testing.T) {
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
 		Version:            types.CurrentTokenVersion,
+		URI:                settings.URI,
+		URIHash:            settings.URIHash,
 	}, gotToken)
 
 	// check the metadata
@@ -102,6 +106,8 @@ func TestKeeper_Issue(t *testing.T) {
 		},
 		Base:    denom,
 		Display: settings.Symbol,
+		URI:     settings.URI,
+		URIHash: settings.URIHash,
 	}, storedMetadata)
 
 	// check the account state

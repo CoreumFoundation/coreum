@@ -114,15 +114,13 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
-		// FIXME(v47-deterministic): check that if we want to support both go types
 		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6000),
 		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}): constantGasFunc(9000),
 		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(85000),
 
 		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6000),
 		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6500),
-		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
-		MsgToMsgURL(&govtypesv1.MsgDeposit{}): constantGasFunc(52000),
+		MsgToMsgURL(&govtypesv1.MsgDeposit{}):      constantGasFunc(65000),
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25000),
@@ -132,8 +130,15 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25000),
 
 		// slashing
-		// FIXME (v47-deterministic): We must add integration test executing this message to have data to analyze
-		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
+		// Unjail message is not used in any integration test because it's too much hassle. Instead, unjailing is estimated
+		// manually by following this procedure:
+		// 1. move MsgUnjail to non-deterministic messages,
+		// 2. reduce `signed_blocks_window` slashing parameter to 50 for devnet,
+		// 3. start znet with 5 cored nodes,
+		// 4. stop one validator,
+		// 5. wait until it is jailed,
+		// 6. unjail it and check the amount of gas used.
+		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(90000),
 
 		// staking
 		MsgToMsgURL(&stakingtypes.MsgDelegate{}):                  constantGasFunc(83000),
@@ -181,7 +186,6 @@ func DefaultConfig() Config {
 			// specific for each proposal and those functions consume unknown amount of gas.
 			&govtypesv1beta1.MsgSubmitProposal{},
 
-			// FIXME(v47-deterministic): check that if we want to support both go types
 			&govtypesv1.MsgSubmitProposal{},
 			&govtypesv1.MsgExecLegacyContent{},
 			&govtypesv1.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
