@@ -1619,7 +1619,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	var classWhitelistedAccountsQueryRes assetnfttypes.QueryClassWhitelistedAccountsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classWhitelistedAccountsQueryRes))
-	requireT.Contains(classFrozenAccountsQueryRes.Accounts, recipient.String())
+	requireT.Contains(classWhitelistedAccountsQueryRes.Accounts, recipient.String())
 
 	// ********** BurntNFT **********
 
