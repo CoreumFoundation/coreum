@@ -1,13 +1,12 @@
 syntax = "proto3";
 package coreum.asset.ft.v1;
 
+import "coreum/asset/ft/v1/params.proto";
+import "coreum/asset/ft/v1/token.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/v1beta1/coin.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-
-import "coreum/asset/ft/v1/token.proto";
-import "coreum/asset/ft/v1/params.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
 
@@ -152,7 +151,7 @@ message QueryFrozenBalanceRequest {
 }
 
 message QueryFrozenBalanceResponse {
-  // balance contains the frozen balance with the queried account and denom 
+  // balance contains the frozen balance with the queried account and denom
   cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
 }
 
