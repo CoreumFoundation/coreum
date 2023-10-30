@@ -21,7 +21,7 @@ import (
 type BaseKeeperWrapper struct {
 	bankkeeper.BaseKeeper
 	ak         banktypes.AccountKeeper
-	wasmKeeper wasm.Keeper
+	wasmKeeper cwasmtypes.WasmKeeper
 	ftProvider types.FungibleTokenProvider
 }
 
@@ -30,7 +30,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	ak banktypes.AccountKeeper,
-	wasmKeeper wasm.Keeper,
+	wasmKeeper cwasmtypes.WasmKeeper,
 	blockedAddrs map[string]bool,
 	ftProvider types.FungibleTokenProvider,
 	authority string,

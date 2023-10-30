@@ -28,7 +28,7 @@ type Keeper struct {
 	storeKey    storetypes.StoreKey
 	bankKeeper  types.BankKeeper
 	delayKeeper types.DelayKeeper
-	wasmKeeper  wasm.Keeper
+	wasmKeeper  cwasmtypes.WasmKeeper
 	authority   string
 }
 
@@ -38,7 +38,7 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
-	wasmKeeper wasm.Keeper,
+	wasmKeeper cwasmtypes.WasmKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
