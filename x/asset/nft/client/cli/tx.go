@@ -22,7 +22,7 @@ import (
 
 // Flags defined on transactions.
 const (
-	AuthzFlag       = "auth-file"
+	AuthzFileFlag   = "auth-file"
 	ExpirationFlag  = "expiration"
 	FeaturesFlag    = "features"
 	RoyaltyRateFlag = "royalty-rate"
@@ -569,7 +569,7 @@ Where authz.json for send grant contains:
 		}
 	]
 }
-`, version.AppName, version.AppName, constant.AddressSampleTest, AuthzFlag),
+`, version.AppName, version.AppName, constant.AddressSampleTest),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -590,7 +590,7 @@ Where authz.json for send grant contains:
 			var authorization authz.Authorization
 			switch args[1] {
 			case "send":
-				path, err := cmd.Flags().GetString(AuthzFlag)
+				path, err := cmd.Flags().GetString(AuthzFileFlag)
 				if err != nil {
 					return err
 				}
@@ -618,7 +618,7 @@ Where authz.json for send grant contains:
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().Int64(ExpirationFlag, 0, "Expire time as Unix timestamp. Set zero (0) for no expiry.")
-	cmd.Flags().String(AuthzFlag, "", "path to the file containing auth content.")
+	cmd.Flags().String(AuthzFileFlag, "", "path to the file containing auth content.")
 	return cmd
 }
 
