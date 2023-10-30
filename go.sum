@@ -399,8 +399,6 @@ github.com/cosmos/btcutil v1.0.5 h1:t+ZFcX77LpKtDBhjucvnOH8C2l2ioGsBNEQ3jef8xFk=
 github.com/cosmos/btcutil v1.0.5/go.mod h1:IyB7iuqZMJlthe2tkIFL33xPyzbFYP0XVdS8P5lUPis=
 github.com/cosmos/cosmos-proto v1.0.0-beta.3 h1:VitvZ1lPORTVxkmF2fAp3IiA61xVwArQYKXTdEcpW6o=
 github.com/cosmos/cosmos-proto v1.0.0-beta.3/go.mod h1:t8IASdLaAq+bbHbjq4p960BvcTqtwuAxid3b/2rOD6I=
-github.com/cosmos/cosmos-sdk v0.47.5 h1:n1+WjP/VM/gAEOx3TqU2/Ny734rj/MX1kpUnn7zVJP8=
-github.com/cosmos/cosmos-sdk v0.47.5/go.mod h1:EHwCeN9IXonsjKcjpS12MqeStdZvIdxt3VYXhus3G3c=
 github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d/go.mod h1:tSxLoYXyBmiFeKpvmq4dzayMdCjCnu8uqmCysIGBT2Y=
 github.com/cosmos/go-bip39 v1.0.0 h1:pcomnQdrdH22njcAatO0yWojsUnCO3y2tNoV1cb6hHY=
 github.com/cosmos/go-bip39 v1.0.0/go.mod h1:RNJv0H/pOIVgxw6KS7QeX2a0Uo0aKUlfhZ4xuwvCdJw=
@@ -1203,6 +1201,8 @@ github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q
 github.com/xlab/treeprint v0.0.0-20180616005107-d6fb6747feb6/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/ybbus/jsonrpc v2.1.2+incompatible/go.mod h1:XJrh1eMSzdIYFbM08flv0wp5G35eRniyeGut1z+LSiE=
+github.com/ysv/cosmos-sdk v0.47.5-patch-ledger-cosmos-go h1:npvXMoqnIUCiO1/zUHa2MKMb+9F2+7veFd9vNe63fuk=
+github.com/ysv/cosmos-sdk v0.47.5-patch-ledger-cosmos-go/go.mod h1:eYwpOPDF5uwD5TWibynY0BT7t06prIrJie3SHLLIcq4=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
