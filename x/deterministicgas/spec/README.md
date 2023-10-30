@@ -107,6 +107,17 @@ TotalGas = 65000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/cosmos.gov.v1beta1.MsgDeposit`                                       | 85000                          |
 | `/cosmos.gov.v1beta1.MsgVote`                                          | 6000                           |
 | `/cosmos.gov.v1beta1.MsgVoteWeighted`                                  | 9000                           |
+| `/cosmos.group.v1.MsgCreateGroup`                                      | 55000                          |
+| `/cosmos.group.v1.MsgCreateGroupPolicy`                                | 40000                          |
+| `/cosmos.group.v1.MsgCreateGroupWithPolicy`                            | 95000                          |
+| `/cosmos.group.v1.MsgLeaveGroup`                                       | 17500                          |
+| `/cosmos.group.v1.MsgUpdateGroupAdmin`                                 | 13500                          |
+| `/cosmos.group.v1.MsgUpdateGroupMembers`                               | 17500                          |
+| `/cosmos.group.v1.MsgUpdateGroupMetadata`                              | 9500                           |
+| `/cosmos.group.v1.MsgUpdateGroupPolicyAdmin`                           | 20000                          |
+| `/cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy`                  | 17000                          |
+| `/cosmos.group.v1.MsgUpdateGroupPolicyMetadata`                        | 15000                          |
+| `/cosmos.group.v1.MsgWithdrawProposal`                                 | 22000                          |
 | `/cosmos.nft.v1beta1.MsgSend`                                          | 25000                          |
 | `/cosmos.slashing.v1beta1.MsgUnjail`                                   | 90000                          |
 | `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           | 157000                         |
@@ -162,6 +173,9 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/cosmos.gov.v1.MsgSubmitProposal`                                     |
 | `/cosmos.gov.v1.MsgUpdateParams`                                       |
 | `/cosmos.gov.v1beta1.MsgSubmitProposal`                                |
+| `/cosmos.group.v1.MsgExec`                                             |
+| `/cosmos.group.v1.MsgSubmitProposal`                                   |
+| `/cosmos.group.v1.MsgVote`                                             |
 | `/cosmos.mint.v1beta1.MsgUpdateParams`                                 |
 | `/cosmos.slashing.v1beta1.MsgUpdateParams`                             |
 | `/cosmos.staking.v1beta1.MsgUpdateParams`                              |

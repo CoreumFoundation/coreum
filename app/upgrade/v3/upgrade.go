@@ -18,6 +18,7 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/cosmos/cosmos-sdk/x/group"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -64,6 +65,9 @@ func New(
 		Name: Name,
 		StoreUpgrades: storetypes.StoreUpgrades{
 			Added: []string{
+				// Integrate new group module:
+				group.StoreKey,
+
 				// Migration of SDK modules away from x/params:
 
 				// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md#xcrisis
