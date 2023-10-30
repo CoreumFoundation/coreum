@@ -114,6 +114,11 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(11_000),
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2_500),
 
+		// gov
+		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6000),
+		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6500),
+		MsgToMsgURL(&govtypesv1.MsgDeposit{}):      constantGasFunc(65000),
+
 		// group
 		MsgToMsgURL(&group.MsgCreateGroup{}):                     constantGasFunc(55_000),
 		MsgToMsgURL(&group.MsgUpdateGroupMembers{}):              constantGasFunc(17_500),
@@ -129,10 +134,6 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):                  constantGasFunc(6000),
 		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}):          constantGasFunc(9000),
 		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):               constantGasFunc(85000),
-
-		MsgToMsgURL(&govtypesv1.MsgVote{}):         constantGasFunc(6000),
-		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(6500),
-		MsgToMsgURL(&govtypesv1.MsgDeposit{}):      constantGasFunc(65000),
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25_000),
