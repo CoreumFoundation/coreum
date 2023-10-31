@@ -13,6 +13,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
@@ -20,6 +21,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	wnftkeeper "github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
 )
 
 func TestKeeper_IssueClass(t *testing.T) {
@@ -1281,6 +1283,107 @@ func TestKeeper_ClassFreeze_Nonexistent(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrClassNotFound)
 }
 
+func TestKeeper_Soulbound(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_soulbound,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// mint NFT
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: recipient,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+	nftID := settings.ID
+
+	// transfer must be rejected
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// transfer to issuer must also be rejected
+	err = nftKeeper.Transfer(ctx, classID, nftID, issuer)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
+func TestKeeper_Soulbound_Burning(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_soulbound,
+			types.ClassFeature_burning,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// mint NFT
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: recipient,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+	nftID := settings.ID
+
+	// transfer must be rejected
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// burning is allowed
+	err = assetNFTKeeper.Burn(ctx, recipient, classID, nftID)
+	requireT.NoError(err)
+	requireT.False(nftKeeper.HasNFT(ctx, classID, nftID))
+}
+
 func genNFTData(requireT *require.Assertions) *codectypes.Any {
 	dataString := "metadata"
 	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
@@ -1308,4 +1411,10 @@ func assertFrozen(t *testing.T, ctx sdk.Context, k keeper.Keeper, classID, nftID
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
 	require.NoError(t, err)
 	require.EqualValues(t, frozen, expected)
+}
+
+func assertOwner(t *testing.T, ctx sdk.Context, k wnftkeeper.Wrapper, classID, nftID string, expectedAddress sdk.AccAddress) {
+	res, err := k.Owner(ctx, &nft.QueryOwnerRequest{ClassId: classID, Id: nftID})
+	require.NoError(t, err)
+	require.EqualValues(t, expectedAddress.String(), res.Owner)
 }

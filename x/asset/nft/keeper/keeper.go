@@ -992,12 +992,6 @@ func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
-	// we check for soulbound before the check for issuer, since the issuer should not be able to receive the token.
-	// Or in other words, the non-issuer sender should not be able to send to issuer.
-	if classDefinition.IsFeatureEnabled(types.ClassFeature_soulbound) {
-		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is soulbound and cannot be sent", classID, nftID)
-	}
-
 	// always allow issuer to receive NFTs issued by them.
 	if classDefinition.IsIssuer(receiver) {
 		return nil

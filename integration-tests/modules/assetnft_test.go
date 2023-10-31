@@ -2054,6 +2054,91 @@ func TestAssetNFTClassWhitelist(t *testing.T) {
 	requireT.NoError(err)
 }
 
+func TestAssetNFTSoulbound(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+			&assetnfttypes.MsgMint{},
+			&nft.MsgSend{},
+		},
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+	})
+
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&nft.MsgSend{},
+		},
+	})
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_soulbound,
+		},
+	}
+
+	// mint new token in that class
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	nftID := "id-1"
+	mintMsg1 := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      nftID,
+		ClassID: classID,
+	}
+
+	msgList := []sdk.Msg{issueMsg, mintMsg1}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+	requireT.NoError(err)
+
+	// try to send from issuer to recipient (it is allowed)
+	sendMsg := &nft.MsgSend{
+		ClassId:  classID,
+		Id:       nftID,
+		Sender:   issuer.String(),
+		Receiver: recipient.String(),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// try to send from recipient to issuer (it is not allowed)
+	sendMsg = &nft.MsgSend{
+		ClassId:  classID,
+		Id:       nftID,
+		Sender:   recipient.String(),
+		Receiver: issuer.String(),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
 // TestAssetNFTSendAuthorization tests that assetnft SendAuthorization works as expected.
 func TestAssetNFTSendAuthorization(t *testing.T) {
 	t.Parallel()
