@@ -22,7 +22,7 @@ var (
 	// The length is 50 since the demon is {subunit}-{address} and
 	// the address length might be up to 66 symbols and the demon length must be less than 127 symbols
 	// according to bank validation.
-	subunitRegexStr = `^[a-z][a-z0-9]{0,50}$`
+	subunitRegexStr = `^[a-z][a-z0-9/:._]{0,50}$`
 	subunitRegex    *regexp.Regexp
 
 	symbolRegexStr = `^[a-zA-Z][a-zA-Z0-9-]{2,127}$`
@@ -89,13 +89,16 @@ var reserved = []string{
 	strings.ToLower(constant.DenomTestDisplay),
 	strings.ToLower(constant.DenomMain),
 	strings.ToLower(constant.DenomMainDisplay),
-	strings.ToLower(ibctypes.DenomPrefix),
 }
 
 // ValidateSubunit checks the provided subunit is valid.
 func ValidateSubunit(subunit string) error {
 	if lo.Contains(reserved, strings.ToLower(subunit)) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "%s is a reserved subunit", subunit)
+	}
+
+	if strings.HasPrefix(strings.ToLower(subunit), ibctypes.DenomPrefix) {
+		return sdkerrors.Wrapf(ErrInvalidInput, "subunit cannot start with ibc")
 	}
 
 	if !subunitRegex.MatchString(subunit) {

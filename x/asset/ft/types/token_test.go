@@ -58,6 +58,8 @@ func TestValidateSubunit(t *testing.T) {
 		"ABC1",
 		"ABC-1",
 		"ABC/1",
+		"ABC.1",
+		"ABC:1",
 		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
 		"BTC-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
 		"core",
@@ -77,6 +79,17 @@ func TestValidateSubunit(t *testing.T) {
 		ibctypes.DenomPrefix + "-",
 		ibctypes.DenomPrefix + "/",
 		ibctypes.DenomPrefix + "/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+		"/abc",
+		".abc",
+		":abc",
+		"ibc",
+		"ibc/1",
+		"ibc.1",
+		"ibc:1",
+		"IBC",
+		"IBC/1",
+		"IBC.1",
+		"IBC:1",
 	}
 
 	acceptableSubunits := []string{
@@ -88,14 +101,18 @@ func TestValidateSubunit(t *testing.T) {
 		"ucoreum",
 		"coreeum",
 		"a1234567890123456789012345678901234567890123456789",
+		"abc/1",
+		"abc.1",
+		"abc:1",
 	}
 
 	assertValidSubunit := func(symbol string, isValid bool) {
 		err := types.ValidateSubunit(symbol)
 		if isValid {
-			requireT.NoError(err)
+			requireT.NoError(err, "symbol: %s", symbol)
 		} else {
-			requireT.True(types.ErrInvalidInput.Is(err))
+			requireT.Error(err, "symbol: %s", symbol)
+			requireT.ErrorIs(err, types.ErrInvalidInput, "symbol: %s", symbol)
 		}
 	}
 
