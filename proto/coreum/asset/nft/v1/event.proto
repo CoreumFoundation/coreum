@@ -1,9 +1,8 @@
 syntax = "proto3";
 package coreum.asset.nft.v1;
 
-import "gogoproto/gogo.proto";
-
 import "coreum/asset/nft/v1/nft.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types";
 
@@ -25,45 +24,44 @@ message EventClassIssued {
 
 message EventFrozen {
   string class_id = 1;
-  string id       = 2;
-  string owner    = 3;
+  string id = 2;
+  string owner = 3;
 }
 
 message EventUnfrozen {
   string class_id = 1;
-  string id       = 2;
-  string owner    = 3;
+  string id = 2;
+  string owner = 3;
 }
 
 message EventClassFrozen {
   string class_id = 1;
-  string account  = 3;
+  string account = 3;
 }
 
 message EventClassUnfrozen {
   string class_id = 1;
-  string account  = 3;
+  string account = 3;
 }
-
 
 message EventAddedToWhitelist {
   string class_id = 1;
-  string id       = 2;
-  string account   = 3;
+  string id = 2;
+  string account = 3;
 }
 
 message EventRemovedFromWhitelist {
   string class_id = 1;
-  string id       = 2;
-  string account   = 3;
+  string id = 2;
+  string account = 3;
 }
 
 message EventAddedToClassWhitelist {
   string class_id = 1;
-  string account   = 2;
+  string account = 2;
 }
 
 message EventRemovedFromClassWhitelist {
   string class_id = 1;
-  string account   = 2;
+  string account = 2;
 }

@@ -1,12 +1,11 @@
 syntax = "proto3";
 package coreum.asset.nft.v1;
 
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
-
 import "coreum/asset/nft/v1/nft.proto";
 import "coreum/asset/nft/v1/params.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types";
 
@@ -28,42 +27,42 @@ service Query {
   }
 
   // Frozen queries to check if an NFT is frozen or not.
-  rpc Frozen (QueryFrozenRequest) returns (QueryFrozenResponse) {
+  rpc Frozen(QueryFrozenRequest) returns (QueryFrozenResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen";
   }
 
   // ClassFrozen queries to check if an account if frozen for an NFT class.
-  rpc ClassFrozen (QueryClassFrozenRequest) returns (QueryClassFrozenResponse) {
+  rpc ClassFrozen(QueryClassFrozenRequest) returns (QueryClassFrozenResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/frozen/{account}";
   }
 
   // QueryClassFrozenAccountsRequest returns the list of accounts which are frozen to hold NFTs in this class.
-  rpc ClassFrozenAccounts (QueryClassFrozenAccountsRequest) returns (QueryClassFrozenAccountsResponse) {
+  rpc ClassFrozenAccounts(QueryClassFrozenAccountsRequest) returns (QueryClassFrozenAccountsResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/frozen";
   }
 
   // Whitelisted queries to check if an account is whitelited to hold an NFT or not.
-  rpc Whitelisted (QueryWhitelistedRequest) returns (QueryWhitelistedResponse) {
+  rpc Whitelisted(QueryWhitelistedRequest) returns (QueryWhitelistedResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/{account}";
   }
 
   // WhitelistedAccountsForNFT returns the list of accounts which are whitelisted to hold this NFT.
-  rpc WhitelistedAccountsForNFT (QueryWhitelistedAccountsForNFTRequest) returns (QueryWhitelistedAccountsForNFTResponse) {
+  rpc WhitelistedAccountsForNFT(QueryWhitelistedAccountsForNFTRequest) returns (QueryWhitelistedAccountsForNFTResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted";
   }
 
   // ClassWhitelistedAccounts returns the list of accounts which are whitelisted to hold NFTs in this class.
-  rpc ClassWhitelistedAccounts (QueryClassWhitelistedAccountsRequest) returns (QueryClassWhitelistedAccountsResponse) {
+  rpc ClassWhitelistedAccounts(QueryClassWhitelistedAccountsRequest) returns (QueryClassWhitelistedAccountsResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/whitelisted";
   }
 
   // BurntNFTsInClass checks if an nft if is in burnt NFTs list.
-  rpc BurntNFT (QueryBurntNFTRequest) returns (QueryBurntNFTResponse) {
+  rpc BurntNFT(QueryBurntNFTRequest) returns (QueryBurntNFTResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/burnt/{nft_id}";
   }
 
   // BurntNFTsInClass returns the list of burnt nfts in a class.
-  rpc BurntNFTsInClass (QueryBurntNFTsInClassRequest) returns (QueryBurntNFTsInClassResponse) {
+  rpc BurntNFTsInClass(QueryBurntNFTsInClassRequest) returns (QueryBurntNFTsInClassResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/burnt";
   }
 }

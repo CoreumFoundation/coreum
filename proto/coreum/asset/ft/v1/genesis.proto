@@ -1,11 +1,10 @@
 syntax = "proto3";
 package coreum.asset.ft.v1;
 
-import "gogoproto/gogo.proto";
-import "cosmos/base/v1beta1/coin.proto";
-
-import "coreum/asset/ft/v1/token.proto";
 import "coreum/asset/ft/v1/params.proto";
+import "coreum/asset/ft/v1/token.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
 
@@ -20,7 +19,7 @@ message GenesisState {
   // whitelisted_balances contains the whitelisted balances on all of the accounts
   repeated Balance whitelisted_balances = 4 [(gogoproto.nullable) = false];
   // pending_token_upgrades contains pending token upgrades.
-  repeated PendingTokenUpgrade pending_token_upgrades = 5  [(gogoproto.nullable) = false];
+  repeated PendingTokenUpgrade pending_token_upgrades = 5 [(gogoproto.nullable) = false];
 }
 
 // Balance defines an account address and balance pair used module genesis genesis state.
@@ -29,8 +28,10 @@ message Balance {
   string address = 1;
 
   // coins defines the different coins this balance holds.
-  repeated cosmos.base.v1beta1.Coin coins = 2
-  [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin coins = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // PendingTokenUpgrade stores the version of pending token upgrade.

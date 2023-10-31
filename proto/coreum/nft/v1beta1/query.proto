@@ -1,9 +1,9 @@
 syntax = "proto3";
 package coreum.nft.v1beta1;
 
+import "coreum/nft/v1beta1/nft.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "google/api/annotations.proto";
-import "coreum/nft/v1beta1/nft.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/nft";
 
@@ -63,7 +63,7 @@ service Query {
 // QueryBalanceRequest is the request type for the Query/Balance RPC method
 message QueryBalanceRequest {
   string class_id = 1;
-  string owner    = 2;
+  string owner = 2;
 }
 
 // QueryBalanceResponse is the response type for the Query/Balance RPC method
@@ -74,7 +74,7 @@ message QueryBalanceResponse {
 // QueryOwnerRequest is the request type for the Query/Owner RPC method
 message QueryOwnerRequest {
   string class_id = 1;
-  string id       = 2;
+  string id = 2;
 }
 
 // QueryOwnerResponse is the response type for the Query/Owner RPC method
@@ -94,21 +94,21 @@ message QuerySupplyResponse {
 
 // QueryNFTstRequest is the request type for the Query/NFTs RPC method
 message QueryNFTsRequest {
-  string                                class_id   = 1;
-  string                                owner      = 2;
+  string class_id = 1;
+  string owner = 2;
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 
 // QueryNFTsResponse is the response type for the Query/NFTs RPC methods
 message QueryNFTsResponse {
-  repeated coreum.nft.v1beta1.NFT        nfts       = 1;
+  repeated coreum.nft.v1beta1.NFT nfts = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryNFTRequest is the request type for the Query/NFT RPC method
 message QueryNFTRequest {
   string class_id = 1;
-  string id       = 2;
+  string id = 2;
 }
 
 // QueryNFTResponse is the response type for the Query/NFT RPC method
@@ -134,6 +134,6 @@ message QueryClassesRequest {
 
 // QueryClassesResponse is the response type for the Query/Classes RPC method
 message QueryClassesResponse {
-  repeated coreum.nft.v1beta1.Class      classes    = 1;
+  repeated coreum.nft.v1beta1.Class classes = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
