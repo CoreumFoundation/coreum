@@ -41,12 +41,22 @@ func TestIssue(t *testing.T) {
 		},
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		Version:            0,
+		URI:                "https://my-token-meta.invalid/1 ",
+		URIHash:            "e000624",
 	}
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(100)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
-	requireT.Equal(types.BuildDenom(token.Subunit, testNetwork.Validators[0].Address), denom)
+
+	var resp types.QueryTokenResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
+	// set generated values
+	token.Denom = denom
+	token.Issuer = resp.Token.Issuer
+	token.Version = resp.Token.Version
+	requireT.Equal(token, resp.Token)
 }
 
 func TestMintBurn(t *testing.T) {
@@ -320,7 +330,7 @@ func issue(requireT *require.Assertions, ctx client.Context, token types.Token, 
 	}
 	// args
 	args := []string{
-		token.Symbol, token.Subunit, fmt.Sprint(token.Precision), initialAmount.String(), token.Description, // args
+		token.Symbol, token.Subunit, fmt.Sprint(token.Precision), initialAmount.String(), token.Description, token.URI, token.URIHash, // args
 	}
 	// flags
 	if len(features) > 0 {

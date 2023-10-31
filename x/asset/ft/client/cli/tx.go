@@ -71,14 +71,14 @@ func CmdTxIssue() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12 --send-commission-rate=0.2",
-		Args:  cobra.ExactArgs(5),
+		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] [uri] [uri_hash] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12 --send-commission-rate=0.2",
+		Args:  cobra.ExactArgs(7),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Issues new fungible token.
 
 Example:
-$ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
+$ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" https://my-token-meta.invalid/1 e000624 --from [issuer]
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -145,6 +145,8 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 				features = append(features, types.Feature(feature))
 			}
 			description := args[4]
+			uri := args[5]
+			uriHash := args[6]
 
 			msg := &types.MsgIssue{
 				Issuer:             issuer.String(),
@@ -156,6 +158,8 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 				Features:           features,
 				BurnRate:           burnRate,
 				SendCommissionRate: sendCommissionRate,
+				URI:                uri,
+				URIHash:            uriHash,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
