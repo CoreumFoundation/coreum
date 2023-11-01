@@ -13,7 +13,6 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
@@ -21,7 +20,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	wnftkeeper "github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
 )
 
 func TestKeeper_IssueClass(t *testing.T) {
@@ -1411,10 +1409,4 @@ func assertFrozen(t *testing.T, ctx sdk.Context, k keeper.Keeper, classID, nftID
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
 	require.NoError(t, err)
 	require.EqualValues(t, frozen, expected)
-}
-
-func assertOwner(t *testing.T, ctx sdk.Context, k wnftkeeper.Wrapper, classID, nftID string, expectedAddress sdk.AccAddress) {
-	res, err := k.Owner(ctx, &nft.QueryOwnerRequest{ClassId: classID, Id: nftID})
-	require.NoError(t, err)
-	require.EqualValues(t, expectedAddress.String(), res.Owner)
 }
