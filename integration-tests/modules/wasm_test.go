@@ -825,7 +825,7 @@ func TestWASMAuthzContract(t *testing.T) {
 			ID:      "id-1",
 		},
 	})
-
+	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), receiver, contractAddr, acceptNftOfferPayload, sdk.Coin{Denom: denom, Amount: sdkmath.NewInt(10000)})
 	requireT.NoError(err)
 
