@@ -9,8 +9,8 @@ pub struct InstantiateMsg {
     pub initial_amount: Uint128,
     pub description: Option<String>,
     pub features: Option<Vec<u32>>,
-    pub burn_rate: Option<String>,
-    pub send_commission_rate: Option<String>,
+    pub burn_rate: String,
+    pub send_commission_rate: String,
     pub uri: Option<String>,
     pub uri_hash: Option<String>,
 }
