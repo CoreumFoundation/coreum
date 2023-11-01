@@ -19,6 +19,7 @@ import (
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -58,10 +59,23 @@ type authzTransferRequest struct {
 	Denom   string `json:"denom"`
 }
 
+type authzNftOfferRequest struct {
+	ClassId string   `json:"class_id"`
+	Id      string   `json:"id"`
+	Price   sdk.Coin `json:"price"`
+}
+
+type authzAcceptNftOfferRequest struct {
+	ClassId string `json:"class_id"`
+	Id      string `json:"id"`
+}
+
 type authzMethod string
 
 const (
-	transfer authzMethod = "transfer"
+	transfer       authzMethod = "transfer"
+	offerNft       authzMethod = "offer_nft"
+	acceptNftOffer authzMethod = "accept_nft_offer"
 )
 
 // fungible token wasm models
@@ -612,6 +626,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	authzClient := authztypes.NewQueryClient(chain.ClientContext)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	nftClient := nft.NewQueryClient(chain.ClientContext)
 
 	totalAmountToSend := sdkmath.NewInt(2_000)
 
@@ -637,6 +652,8 @@ func TestWASMAuthzContract(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
+
+	// ********** Test sending funds with Authz **********
 
 	// grant the bank send authorization
 	grantMsg, err := authztypes.NewMsgGrant(
@@ -684,6 +701,146 @@ func TestWASMAuthzContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoins(chain.NewCoin(totalAmountToSend)).String(), receiverBalancesRes.Balances.String())
+
+	// ********** Test trading an NFT for an AssetFT with Authz **********
+
+	// Issue and mind an NFT to the sender (will offer it)
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:   granter.String(),
+		Symbol:   "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, granter)
+
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:    granter.String(),
+		Recipient: granter.String(),
+		ID:        "id-1",
+		ClassID:   classID,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+
+	requireT.NoError(err)
+
+	// Issue an AssetFT that will be used to buy the NFT
+
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(receiver, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	issueAssetFTMsg := &assetfttypes.MsgIssue{
+		Issuer:        receiver.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(100000),
+		Features:      []assetfttypes.Feature{},
+		URI:           "https://my-class-meta.valid/1",
+		URIHash:       "content-hash",
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(receiver),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueAssetFTMsg)),
+		issueAssetFTMsg,
+	)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueAssetFTMsg.Subunit, receiver)
+
+	// grant the nft transfer authorization to the contract
+	grantMsg, err = authztypes.NewMsgGrant(
+		granter,
+		sdk.MustAccAddressFromBech32(contractAddr),
+		assetnfttypes.NewSendAuthorization([]assetnfttypes.NFTIdentifier{
+			{ClassId: classID, Id: "id-1"},
+		}),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	requireT.NoError(err)
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: contractAddr,
+	})
+	requireT.NoError(err)
+	requireT.Equal(2, len(gransRes.Grants))
+	updatedGrant := assetnfttypes.SendAuthorization{}
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[1].Authorization.Value, &updatedGrant)
+	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{
+		{ClassId: classID, Id: "id-1"},
+	}, updatedGrant.Nfts)
+
+	// Make the offer of the NFT for the AssetFT
+
+	nftOfferPayload, err := json.Marshal(map[authzMethod]authzNftOfferRequest{
+		offerNft: {
+			ClassId: classID,
+			Id:      "id-1",
+			Price:   sdk.NewCoin(denom, sdkmath.NewInt(10000)),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, nftOfferPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	ownerResp, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      "id-1",
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(ownerResp.Owner, contractAddr)
+
+	// Accept the offer
+	acceptNftOfferPayload, err := json.Marshal(map[authzMethod]authzAcceptNftOfferRequest{
+		acceptNftOffer: {
+			ClassId: classID,
+			Id:      "id-1",
+		},
+	})
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), receiver, contractAddr, acceptNftOfferPayload, sdk.Coin{Denom: denom, Amount: sdkmath.NewInt(10000)})
+	requireT.NoError(err)
+
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: granter.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal("10000", balanceRes.Balance.Amount.String())
+
+	ownerResp, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      "id-1",
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(ownerResp.Owner, receiver.String())
 }
 
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.

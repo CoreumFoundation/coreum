@@ -29,6 +29,8 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgSend represents a message to send a nft from one account to another account.
+//
+// Deprecated: use cosmos-sdk/x/nft package instead
 type MsgSend struct {
 	// class_id defines the unique identifier of the nft classification, similar to the contract address of ERC721
 	ClassId string `protobuf:"bytes,1,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
