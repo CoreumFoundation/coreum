@@ -1,14 +1,18 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -18,6 +22,8 @@ import (
 
 // Flags defined on transactions.
 const (
+	AuthzFileFlag   = "auth-file"
+	ExpirationFlag  = "expiration"
 	FeaturesFlag    = "features"
 	RoyaltyRateFlag = "royalty-rate"
 	RecipientFlag   = "recipient"
@@ -45,6 +51,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxUnwhitelist(),
 		CmdTxClassWhitelist(),
 		CmdTxClassUnwhitelist(),
+		CmdGrantAuthorization(),
 	)
 
 	return cmd
@@ -541,4 +548,88 @@ $ %s tx %s class-unfreeze abc-%[3]s %[3]s --from [sender]
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+// CmdGrantAuthorization returns a CLI command handler for creating a MsgGrant transaction.
+func CmdGrantAuthorization() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "grant [grantee] [message_type=\"send\"] --from <granter> --auth-file=path/to/authz.json",
+		Short: "Grant authorization to an address",
+		Long: fmt.Sprintf(`Grant authorization to an address.
+Examples:
+$ %s tx grant <grantee_addr> send --expiration 1667979596 --auth-file=./authz.json
+
+Where authz.json for send grant contains:
+
+{
+	"nfts":[
+		{
+			"class_id":"class1-%[3]s",
+			"id": "nft-id-1"
+		}
+	]
+}
+`, version.AppName, version.AppName, constant.AddressSampleTest),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			grantee, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			expire, err := getExpireTime(cmd)
+			if err != nil {
+				return err
+			}
+
+			var authorization authz.Authorization
+			switch args[1] {
+			case "send":
+				path, err := cmd.Flags().GetString(AuthzFileFlag)
+				if err != nil {
+					return err
+				}
+
+				contents, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+
+				authorization = &types.SendAuthorization{}
+				err = json.Unmarshal(contents, authorization)
+				if err != nil {
+					return err
+				}
+			default:
+				return errors.Errorf("invalid authorization types, %s", args[1])
+			}
+
+			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, expire)
+			if err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), grantMsg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().Int64(ExpirationFlag, 0, "Expire time as Unix timestamp. Set zero (0) for no expiry.")
+	cmd.Flags().String(AuthzFileFlag, "", "path to the file containing auth content.")
+	return cmd
+}
+
+func getExpireTime(cmd *cobra.Command) (*time.Time, error) {
+	exp, err := cmd.Flags().GetInt64(ExpirationFlag)
+	if err != nil {
+		return nil, err
+	}
+	if exp == 0 {
+		return nil, nil //nolint:nilnil //the intent of this function is to simplify return nil time.
+	}
+	e := time.Unix(exp, 0)
+	return &e, nil
 }
