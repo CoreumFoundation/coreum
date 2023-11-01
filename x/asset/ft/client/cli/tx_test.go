@@ -330,7 +330,7 @@ func issue(requireT *require.Assertions, ctx client.Context, token types.Token, 
 	}
 	// args
 	args := []string{
-		token.Symbol, token.Subunit, fmt.Sprint(token.Precision), initialAmount.String(), token.Description, token.URI, token.URIHash, // args
+		token.Symbol, token.Subunit, fmt.Sprint(token.Precision), initialAmount.String(), token.Description, // args
 	}
 	// flags
 	if len(features) > 0 {
@@ -341,6 +341,12 @@ func issue(requireT *require.Assertions, ctx client.Context, token types.Token, 
 	}
 	if !token.SendCommissionRate.IsNil() {
 		args = append(args, fmt.Sprintf("--%s=%s", cli.SendCommissionRateFlag, token.SendCommissionRate.String()))
+	}
+	if token.URI != "" {
+		args = append(args, fmt.Sprintf("--%s=%s", cli.URIFlag, token.URI))
+	}
+	if token.URIHash != "" {
+		args = append(args, fmt.Sprintf("--%s=%s", cli.URIHashFlag, token.URIHash))
 	}
 
 	args = append(args, txValidator1Args(testNetwork)...)

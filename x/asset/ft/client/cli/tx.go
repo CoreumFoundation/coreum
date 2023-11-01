@@ -32,6 +32,8 @@ const (
 	BurnLimitFlag          = "burn-limit"
 	ExpirationFlag         = "expiration"
 	RecipientFlag          = "recipient"
+	URIFlag                = "uri"
+	URIHashFlag            = "uri_hash"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -71,14 +73,14 @@ func CmdTxIssue() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] [uri] [uri_hash] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12 --send-commission-rate=0.2",
-		Args:  cobra.ExactArgs(7),
+		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624",
+		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Issues new fungible token.
 
 Example:
-$ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" https://my-token-meta.invalid/1 e000624 --from [issuer]
+$ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -145,8 +147,15 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" https://my-token
 				features = append(features, types.Feature(feature))
 			}
 			description := args[4]
-			uri := args[5]
-			uriHash := args[6]
+
+			uri, err := cmd.Flags().GetString(URIFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			uriHash, err := cmd.Flags().GetString(URIHashFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 
 			msg := &types.MsgIssue{
 				Issuer:             issuer.String(),
@@ -168,6 +177,8 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" https://my-token
 	cmd.Flags().StringSlice(FeaturesFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
 	cmd.Flags().String(BurnRateFlag, "0", "Indicates the rate at which coins will be burnt on top of the sent amount in every send action. Must be between 0 and 1.")
 	cmd.Flags().String(SendCommissionRateFlag, "0", "Indicates the rate at which coins will be sent to the issuer on top of the sent amount in every send action. Must be between 0 and 1.")
+	cmd.Flags().String(URIFlag, "", "Token URI.")
+	cmd.Flags().String(URIHashFlag, "", "Token URI hash.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
