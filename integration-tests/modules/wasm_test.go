@@ -19,7 +19,6 @@ import (
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -59,15 +58,17 @@ type authzTransferRequest struct {
 	Denom   string `json:"denom"`
 }
 
+//nolint:tagliatelle
 type authzNftOfferRequest struct {
-	ClassId string   `json:"class_id"`
-	Id      string   `json:"id"`
+	ClassID string   `json:"class_id"`
+	ID      string   `json:"id"`
 	Price   sdk.Coin `json:"price"`
 }
 
+//nolint:tagliatelle
 type authzAcceptNftOfferRequest struct {
-	ClassId string `json:"class_id"`
-	Id      string `json:"id"`
+	ClassID string `json:"class_id"`
+	ID      string `json:"id"`
 }
 
 type authzMethod string
@@ -626,7 +627,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	authzClient := authztypes.NewQueryClient(chain.ClientContext)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-	nftClient := nft.NewQueryClient(chain.ClientContext)
+	nftClient := nfttypes.NewQueryClient(chain.ClientContext)
 
 	totalAmountToSend := sdkmath.NewInt(2_000)
 
@@ -800,8 +801,8 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	nftOfferPayload, err := json.Marshal(map[authzMethod]authzNftOfferRequest{
 		offerNft: {
-			ClassId: classID,
-			Id:      "id-1",
+			ClassID: classID,
+			ID:      "id-1",
 			Price:   sdk.NewCoin(denom, sdkmath.NewInt(10000)),
 		},
 	})
@@ -810,7 +811,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, nftOfferPayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	ownerResp, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+	ownerResp, err := nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
 		ClassId: classID,
 		Id:      "id-1",
 	})
@@ -820,8 +821,8 @@ func TestWASMAuthzContract(t *testing.T) {
 	// Accept the offer
 	acceptNftOfferPayload, err := json.Marshal(map[authzMethod]authzAcceptNftOfferRequest{
 		acceptNftOffer: {
-			ClassId: classID,
-			Id:      "id-1",
+			ClassID: classID,
+			ID:      "id-1",
 		},
 	})
 
@@ -835,7 +836,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal("10000", balanceRes.Balance.Amount.String())
 
-	ownerResp, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{
+	ownerResp, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
 		ClassId: classID,
 		Id:      "id-1",
 	})
