@@ -2,9 +2,9 @@ syntax = "proto3";
 package coreum.asset.ft.v1;
 
 import "amino/amino.proto";
-import "gogoproto/gogo.proto";
-import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
 
@@ -12,11 +12,11 @@ option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
 // the granter's account.
 message MintAuthorization {
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
-  option (amino.name)                        = "cosmos-sdk/MintAuthorization";
+  option (amino.name) = "cosmos-sdk/MintAuthorization";
 
   repeated cosmos.base.v1beta1.Coin mint_limit = 1 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = false,
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
@@ -25,11 +25,11 @@ message MintAuthorization {
 // the granter's account.
 message BurnAuthorization {
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
-  option (amino.name)                        = "cosmos-sdk/BurnAuthorization";
+  option (amino.name) = "cosmos-sdk/BurnAuthorization";
 
   repeated cosmos.base.v1beta1.Coin burn_limit = 1 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = false,
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
