@@ -2,13 +2,12 @@ syntax = "proto3";
 package coreum.asset.ft.v1;
 
 import "amino/amino.proto";
+import "coreum/asset/ft/v1/params.proto";
+import "coreum/asset/ft/v1/token.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-
-import "coreum/asset/ft/v1/params.proto";
-import "coreum/asset/ft/v1/token.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
 option (gogoproto.goproto_getters_all) = false;
@@ -46,7 +45,7 @@ service Msg {
   rpc UpgradeTokenV1(MsgUpgradeTokenV1) returns (EmptyResponse);
 
   // UpdateParams is a governance operation to modify the parameters of the module.
-  // NOTE: all parameters must be provided. 
+  // NOTE: all parameters must be provided.
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
 }
 
@@ -135,7 +134,10 @@ message MsgUpdateParams {
   option (amino.name) = "cosmos-sdk/MsgUpdateParams";
 
   string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 message EmptyResponse {}

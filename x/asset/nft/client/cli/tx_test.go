@@ -33,9 +33,9 @@ func TestCmdTxIssueClass(t *testing.T) {
 		symbol,
 		"class name",
 		"class description",
-		"https://my-class-meta.invalid/1",
-		"content-hash",
 		fmt.Sprintf("--%s=%s", cli.FeaturesFlag, types.ClassFeature_burning.String()),
+		fmt.Sprintf("--%s=%s", cli.URIFlag, "https://my-class-meta.invalid/1"),
+		fmt.Sprintf("--%s=%s", cli.URIHashFlag, "content-hash"),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
@@ -43,6 +43,78 @@ func TestCmdTxIssueClass(t *testing.T) {
 
 	requireT.NotEmpty(res.TxHash)
 	requireT.Equal(uint32(0), res.Code, "can't submit IssueClass tx", res)
+}
+
+func TestCmdTxMint(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+
+	classID := issueClass(
+		requireT, ctx,
+		symbol,
+		"class name",
+		"class description",
+		"https://my-class-meta.invalid/1", "content-hash",
+		testNetwork, "",
+	)
+
+	mint(
+		requireT,
+		ctx,
+		classID,
+		nftID,
+		"https://my-nft-meta.invalid/1",
+		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		testNetwork,
+	)
+}
+
+func TestCmdTxBurn(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+
+	classID := issueClass(
+		requireT, ctx,
+		symbol,
+		"class name",
+		"class description",
+		"https://my-class-meta.invalid/1", "content-hash",
+		testNetwork, "",
+	)
+
+	mint(
+		requireT,
+		ctx,
+		classID,
+		"nft-1",
+		"https://my-nft-meta.invalid/1",
+		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		testNetwork,
+	)
+
+	args := []string{classID, "nft-1"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxBurn(), args)
+	requireT.NoError(err)
+
+	var resp types.QueryBurntNFTResponse
+	args = []string{classID, "nft-1", "--output", "json"}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBurnt(), args, &resp))
+
+	requireT.True(resp.Burnt)
+
+	args = []string{classID, "--output", "json"}
+	var respList types.QueryBurntNFTsInClassResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBurnt(), args, &respList))
+	requireT.Len(respList.NftIds, 1)
 }
 
 func TestCmdMintToRecipient(t *testing.T) {
@@ -68,7 +140,13 @@ func TestCmdMintToRecipient(t *testing.T) {
 	)
 	// mint nft
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	args := []string{classID, nftID, "", "", "--recipient", recipient.String()}
+	args := []string{
+		classID,
+		nftID,
+		fmt.Sprintf("--%s=%s", cli.RecipientFlag, recipient.String()),
+		fmt.Sprintf("--%s=%s", cli.URIFlag, "https://my-class-meta.invalid/1"),
+		fmt.Sprintf("--%s=%s", cli.URIHashFlag, "content-hash"),
+	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
 	requireT.NoError(err)

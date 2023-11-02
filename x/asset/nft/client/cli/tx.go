@@ -1,14 +1,18 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -18,9 +22,13 @@ import (
 
 // Flags defined on transactions.
 const (
+	AuthzFileFlag   = "auth-file"
+	ExpirationFlag  = "expiration"
 	FeaturesFlag    = "features"
 	RoyaltyRateFlag = "royalty-rate"
 	RecipientFlag   = "recipient"
+	URIFlag         = "uri"
+	URIHashFlag     = "uri_hash"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -45,6 +53,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxUnwhitelist(),
 		CmdTxClassWhitelist(),
 		CmdTxClassUnwhitelist(),
+		CmdGrantAuthorization(),
 	)
 
 	return cmd
@@ -59,14 +68,14 @@ func CmdTxIssueClass() *cobra.Command {
 	allowedFeaturesString := strings.Join(allowedFeatures, ",")
 
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] [uri] [uri_hash] --from [issuer] --%s=%s", FeaturesFlag, allowedFeaturesString),
-		Args:  cobra.ExactArgs(5),
+		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] --from [issuer] --%s=%s --uri https://my-token-meta.invalid/1 --uri_hash e000624", FeaturesFlag, allowedFeaturesString),
+		Args:  cobra.ExactArgs(3),
 		Short: "Issue new non-fungible token class",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Issue new non-fungible token class.
 
 Example:
-$ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-meta.invalid/1 e000624 --from [issuer] --%s=%s"
+$ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] --%s=%s"
 `,
 				version.AppName, types.ModuleName, FeaturesFlag, allowedFeaturesString,
 			),
@@ -81,8 +90,6 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 			symbol := args[0]
 			name := args[1]
 			description := args[2]
-			uri := args[3]
-			uriHash := args[4]
 			royaltyStr, err := cmd.Flags().GetString(RoyaltyRateFlag)
 			if err != nil {
 				return errors.WithStack(err)
@@ -106,6 +113,16 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 				features = append(features, types.ClassFeature(feature))
 			}
 
+			uri, err := cmd.Flags().GetString(URIFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			uriHash, err := cmd.Flags().GetString(URIHashFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
 			msg := &types.MsgIssueClass{
 				Issuer:      issuer.String(),
 				Symbol:      symbol,
@@ -123,6 +140,9 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 
 	cmd.Flags().StringSlice(FeaturesFlag, []string{}, fmt.Sprintf("Features to be enabled on non-fungible token. e.g --%s=%s", FeaturesFlag, allowedFeaturesString))
 	cmd.Flags().String(RoyaltyRateFlag, "0", fmt.Sprintf("%s is a number between 0 and 1, and will be used to determine royalties sent to issuer, when an nft in this class is traded.", RoyaltyRateFlag))
+	cmd.Flags().String(URIFlag, "", "Class URI.")
+	cmd.Flags().String(URIHashFlag, "", "Class URI hash.")
+
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
@@ -131,14 +151,14 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 // CmdTxMint returns Mint cobra command.
 func CmdTxMint() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mint [class-id] [id] [uri] [uri_hash] --from [sender]",
-		Args:  cobra.ExactArgs(4),
+		Use:   "mint [class-id] [id] --from [sender] --uri https://my-token-meta.invalid/1 --uri_hash e000624",
+		Args:  cobra.ExactArgs(2),
 		Short: "Mint new non-fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Mint new non-fungible token.
 
 Example:
-$ %s tx %s mint abc-%s id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
+$ %s tx %s mint abc-%s id1 --from [sender]
 `,
 				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
@@ -157,8 +177,16 @@ $ %s tx %s mint abc-%s id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
 
 			classID := args[0]
 			ID := args[1]
-			uri := args[2]
-			uriHash := args[3]
+
+			uri, err := cmd.Flags().GetString(URIFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			uriHash, err := cmd.Flags().GetString(URIHashFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 
 			msg := &types.MsgMint{
 				Sender:    sender.String(),
@@ -175,6 +203,8 @@ $ %s tx %s mint abc-%s id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
 
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().String(RecipientFlag, "", "Address to send minted token to, if not specified minted token is sent to the class issuer")
+	cmd.Flags().String(URIFlag, "", "NFT URI.")
+	cmd.Flags().String(URIHashFlag, "", "NFT URI hash.")
 
 	return cmd
 }
@@ -541,4 +571,88 @@ $ %s tx %s class-unfreeze abc-%[3]s %[3]s --from [sender]
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+// CmdGrantAuthorization returns a CLI command handler for creating a MsgGrant transaction.
+func CmdGrantAuthorization() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "grant [grantee] [message_type=\"send\"] --from <granter> --auth-file=path/to/authz.json",
+		Short: "Grant authorization to an address",
+		Long: fmt.Sprintf(`Grant authorization to an address.
+Examples:
+$ %s tx grant <grantee_addr> send --expiration 1667979596 --auth-file=./authz.json
+
+Where authz.json for send grant contains:
+
+{
+	"nfts":[
+		{
+			"class_id":"class1-%[3]s",
+			"id": "nft-id-1"
+		}
+	]
+}
+`, version.AppName, version.AppName, constant.AddressSampleTest),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			grantee, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			expire, err := getExpireTime(cmd)
+			if err != nil {
+				return err
+			}
+
+			var authorization authz.Authorization
+			switch args[1] {
+			case "send":
+				path, err := cmd.Flags().GetString(AuthzFileFlag)
+				if err != nil {
+					return err
+				}
+
+				contents, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+
+				authorization = &types.SendAuthorization{}
+				err = json.Unmarshal(contents, authorization)
+				if err != nil {
+					return err
+				}
+			default:
+				return errors.Errorf("invalid authorization types, %s", args[1])
+			}
+
+			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, expire)
+			if err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), grantMsg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().Int64(ExpirationFlag, 0, "Expire time as Unix timestamp. Set zero (0) for no expiry.")
+	cmd.Flags().String(AuthzFileFlag, "", "path to the file containing auth content.")
+	return cmd
+}
+
+func getExpireTime(cmd *cobra.Command) (*time.Time, error) {
+	exp, err := cmd.Flags().GetInt64(ExpirationFlag)
+	if err != nil {
+		return nil, err
+	}
+	if exp == 0 {
+		return nil, nil //nolint:nilnil //the intent of this function is to simplify return nil time.
+	}
+	e := time.Unix(exp, 0)
+	return &e, nil
 }

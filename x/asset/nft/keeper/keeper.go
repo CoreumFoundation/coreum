@@ -947,6 +947,11 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s has sending disabled", classID, nftID)
 	}
 
+	// we check for soulbound only after the check for issuer, since the issuer should be able to send the token.
+	if classDefinition.IsFeatureEnabled(types.ClassFeature_soulbound) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is soulbound and cannot be sent", classID, nftID)
+	}
+
 	isFrozen, err := k.IsFrozen(ctx, classID, nftID)
 	if err != nil {
 		if errors.Is(err, types.ErrFeatureDisabled) {
