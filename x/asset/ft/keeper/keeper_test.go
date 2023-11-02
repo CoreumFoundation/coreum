@@ -183,7 +183,6 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 
 	unacceptableSymbols := []string{
-		"ABC/1",
 		"core",
 		"ucore",
 		"Core",
@@ -192,7 +191,6 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 		"UCORE",
 		"3abc",
 		"3ABC",
-		"COREeum.",
 		"C",
 	}
 
@@ -201,9 +199,11 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 		"BTC-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
 		"ABC-1",
 		"ABC1",
+		"ABC/1",
 		"coreum",
 		"ucoreum",
 		"Coreum",
+		"COREeum.",
 		"uCoreum",
 		"COREeum",
 		"A1234567890123456789012345678901234567890123456789012345678901234567890",
@@ -224,9 +224,9 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 
 		_, err := ftKeeper.Issue(ctx, settings)
 		if !isValid {
-			requireT.ErrorIs(err, types.ErrInvalidInput)
+			requireT.ErrorIs(err, types.ErrInvalidInput, "symbol:%s", symbol)
 		} else {
-			requireT.NoError(err)
+			requireT.NoError(err, "symbol:%s", symbol)
 		}
 	}
 
