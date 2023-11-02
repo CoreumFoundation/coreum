@@ -12,6 +12,7 @@ enum ClassFeature {
   freezing = 1;
   whitelisting = 2;
   disable_sending = 3;
+  soulbound = 4;
 }
 
 // ClassDefinition defines the non-fungible token class settings to store.
