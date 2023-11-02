@@ -13,6 +13,89 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
+func TestSymbolAndIDValidation(t *testing.T) {
+	testCases := []struct {
+		name        string
+		value       string
+		validSymbol bool
+		validID     bool
+	}{
+		{
+			name:        "containing dash",
+			value:       "ABC-1",
+			validSymbol: false,
+			validID:     true,
+		},
+		{
+			name:        "containing dot and upper case",
+			value:       "ABC.1",
+			validSymbol: true,
+			validID:     true,
+		},
+		{
+			name:        "containing dot",
+			value:       "abc.1",
+			validSymbol: true,
+			validID:     true,
+		},
+		{
+			name:        "containing colon",
+			value:       "ABC:1",
+			validSymbol: true,
+			validID:     true,
+		},
+		{
+			name:        "similar to ft denom",
+			value:       "btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
+			validSymbol: false,
+			validID:     true,
+		},
+		{
+			name:        "just core",
+			value:       "core",
+			validSymbol: true,
+			validID:     true,
+		},
+		{
+			name:        "31 chars",
+			value:       "A123456789012345678901234567890",
+			validSymbol: true,
+			validID:     true,
+		},
+		{
+			name:        "32 chars",
+			value:       "A1234567890123456789012345678901",
+			validSymbol: false,
+			validID:     true,
+		},
+		{
+			name:        "start with number",
+			value:       "3abc",
+			validSymbol: false,
+			validID:     false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := types.ValidateClassSymbol(tc.value)
+			if tc.validSymbol {
+				require.NoError(t, err, "expected no error for symbol %s", tc.value)
+			} else {
+				require.Error(t, err, "expected error for symbol %s", tc.value)
+			}
+
+			err = types.ValidateTokenID(tc.value)
+			if tc.validID {
+				require.NoError(t, err, "expected no error for nft id %s", tc.value)
+			} else {
+				require.Error(t, err, "expected error for nft id %s", tc.value)
+			}
+		})
+	}
+}
+
 func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	nonIssuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
