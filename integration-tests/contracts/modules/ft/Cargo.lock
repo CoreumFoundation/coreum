@@ -109,7 +109,8 @@ checksum = "28c122c3980598d243d63d9a704629a2d748d101f278052ff068be5a4423ab6f"
 [[package]]
 name = "coreum-wasm-sdk"
 version = "0.2.1"
-source = "git+https://github.com/CoreumFoundation/coreum-wasm-sdk?branch=keyne/upgrade-coreum-wasm-sdk#e8733a23fea126aaa53dc944ab6dff53ad2cd279"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb106415d1ea995f54efbc3165fa0cc8d0b3a292a1fb2e74dcd1eb0447e7584e"
 dependencies = [
  "chrono",
  "cosmwasm-schema",
