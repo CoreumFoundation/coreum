@@ -152,13 +152,6 @@ func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
-// ProposalContents returns all the nft content functions used to
-// simulate governance proposals.
-// FIXME(v47-legacy) try to remove/replace the usage.
-func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
-	return nil
-}
-
 // RegisterStoreDecoder registers a decoder for nft module's types.
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 }
