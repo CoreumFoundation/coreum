@@ -998,7 +998,7 @@ Feature defines possible features of fungible token.
 | freezing | 2 |  |
 | whitelisting | 3 |  |
 | ibc | 4 |  |
-| disallowing_smart_contracts | 5 |  |
+| block_smart_contracts | 5 |  |
 
 
  <!-- end enums -->

@@ -34,6 +34,12 @@ func IsReceivingSmartContract(ctx sdk.Context, addr string) bool {
 	return has(ctx, addr, smartContractRecipientKey{})
 }
 
+// add adds address to the map stored in the context.
+// It is possible to store many addresses in the map because there might be many addresses selected to be potential
+// senders or recipients during message execution. Examples:
+//   - multisend might send funds to many addresses, some of them are smart contracts, others are not
+//   - smart contract sending funds on behalf of another smart contract using authz - both addresses are marked as smart contract senders
+//     and the final decision is made in the bank keeper when we know the address of real sender.
 func add(ctx sdk.Context, addr string, key interface{}) sdk.Context {
 	set, ok := ctx.Value(key).(map[string]struct{})
 	if !ok || set == nil {

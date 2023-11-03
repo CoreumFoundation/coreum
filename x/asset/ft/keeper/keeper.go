@@ -644,7 +644,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_disallowing_smart_contracts) && !def.IsIssuer(addr) && cwasmtypes.IsTriggeredBySmartContract(ctx) {
+	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) && !def.IsIssuer(addr) && cwasmtypes.IsTriggeredBySmartContract(ctx) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers made by smart contracts are disabled for %s", def.Denom)
 	}
 
@@ -702,7 +702,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 		}
 	}
 
-	if def.IsFeatureEnabled(types.Feature_disallowing_smart_contracts) && !def.IsIssuer(addr) && cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
+	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) && !def.IsIssuer(addr) && cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
 

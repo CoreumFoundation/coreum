@@ -7026,7 +7026,7 @@
         "freezing",
         "whitelisting",
         "ibc",
-        "disallowing_smart_contracts"
+        "block_smart_contracts"
       ],
       "default": "minting",
       "description": "Feature defines possible features of fungible token."
