@@ -39,12 +39,6 @@ type authz struct {
 	Granter string `json:"granter"`
 }
 
-type authzTransferRequest struct {
-	Address string `json:"address"`
-	Amount  int    `json:"amount"`
-	Denom   string `json:"denom"`
-}
-
 //nolint:tagliatelle
 type authzNftOfferRequest struct {
 	ClassID string   `json:"class_id"`
