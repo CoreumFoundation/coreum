@@ -697,7 +697,7 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 			},
 		},
 		{
-			name: "include issuer in receivers",
+			name: "include issuer in recipients",
 			inputs: []banktypes.Input{
 				{Address: recipients[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(60)),

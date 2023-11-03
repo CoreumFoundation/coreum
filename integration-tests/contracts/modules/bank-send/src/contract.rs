@@ -15,14 +15,33 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     initialize_owner(deps.storage, deps.api, Some(info.sender.as_ref()))?;
 
-    Ok(Response::new()
-        .add_attribute("method", "instantiate")
-        .add_attribute("owner", info.sender))
+    match msg.amount {
+        None => Ok(Response::new()
+            .add_attribute("method", "instantiate")
+            .add_attribute("owner", info.sender)),
+        Some(_) => {
+            let msg_res = prepare_withdraw(
+                deps,
+                info.clone(),
+                msg.denom.unwrap(),
+                msg.amount.unwrap(),
+                msg.recipient.unwrap(),
+            );
+
+            match msg_res {
+                Err(err) => Err(err),
+                Ok(msg) => Ok(Response::new()
+                    .add_attribute("method", "instantiate")
+                    .add_attribute("owner", info.sender)
+                    .add_message(msg))
+            }
+        }
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -50,6 +69,35 @@ pub fn try_withdraw(
 ) -> Result<Response, ContractError> {
     let recipient_addr = deps.api.addr_validate(&recipient)?;
 
+    let msg_res = prepare_withdraw(
+        deps,
+        info,
+        denom,
+        amount,
+        recipient,
+    );
+
+    match msg_res {
+        Err(e) => Err(e),
+        Ok(msg) => {
+            Ok(Response::new()
+                .add_attribute("method", "try_withdraw")
+                .add_attribute("to", recipient_addr)
+                .add_attribute("amount", amount)
+                .add_message(msg))
+        }
+    }
+}
+
+fn prepare_withdraw(
+    deps: DepsMut,
+    info: MessageInfo,
+    denom: String,
+    amount: Uint128,
+    recipient: String,
+) -> Result<CosmosMsg, ContractError> {
+    let recipient_addr = deps.api.addr_validate(&recipient)?;
+
     assert_owner(deps.storage, &info.sender)?;
     if amount == Uint128::zero() {
         return Err(ContractError::InvalidZeroAmount {});
@@ -63,12 +111,5 @@ pub fn try_withdraw(
         }],
     };
 
-    let transfer_bank_cosmos_msg: CosmosMsg = transfer_bank_msg.into();
-
-    let res = Response::new()
-        .add_attribute("method", "try_withdraw")
-        .add_attribute("to", recipient_addr)
-        .add_attribute("amount", amount)
-        .add_message(transfer_bank_cosmos_msg);
-    Ok(res)
+    Ok(transfer_bank_msg.into())
 }
