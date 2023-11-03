@@ -1603,7 +1603,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 }
 
 // TestWASMBankSendContractWithMultipleFundsAttached tests sending multiple ft funds and core token to smart contract.
-// TODO: remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
+// TODO(v4): remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
 func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	t.Parallel()
 

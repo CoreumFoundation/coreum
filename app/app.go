@@ -179,7 +179,7 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
 			[]govclient.ProposalHandler{
-				// TODO: Remove once IBC migrates to the new mechanism
+				// TODO(v4): Remove once IBC upgrades to the new param management mechanism. Check ibc-go/modules/core/02-client/types/params.go
 				paramsclient.ProposalHandler,
 				ibcclientclient.UpdateClientProposalHandler,
 				ibcclientclient.UpgradeProposalHandler,
@@ -531,7 +531,7 @@ func New(
 	// See: https://docs.cosmos.network/main/modules/gov#proposal-messages
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-		// TODO: Remove once IBC upgrades to the new mechanism
+		// TODO(v4): Remove once IBC upgrades to the new param management mechanism. Check ibc-go/modules/core/02-client/types/params.go
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
