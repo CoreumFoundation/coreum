@@ -30,12 +30,24 @@ pub enum ExecuteMsg {
     Unfreeze {
         id: String,
     },
+    ClassFreeze {
+        account: String,
+    },
+    ClassUnfreeze {
+        account: String,
+    },
     AddToWhitelist {
         id: String,
         account: String,
     },
     RemoveFromWhitelist {
         id: String,
+        account: String,
+    },
+    AddToClassWhitelist {
+        account: String,
+    },
+    RemoveFromClassWhitelist {
         account: String,
     },
     Send {
@@ -50,8 +62,11 @@ pub enum QueryMsg {
     Class {},
     Classes { issuer: String },
     Frozen { id: String },
+    ClassFrozen { account: String },
+    ClassFrozenAccounts {},
     Whitelisted { id: String, account: String },
     WhitelistedAccountsForNft { id: String },
+    ClassWhitelistedAccounts {},
     Balance { owner: String },
     Owner { id: String },
     Supply {},

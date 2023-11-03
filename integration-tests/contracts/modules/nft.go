@@ -35,6 +35,11 @@ type NftIDRequest struct {
 	ID string `json:"id"`
 }
 
+// NftAccountRequest is used to query NFT with Account.
+type NftAccountRequest struct {
+	Account string `json:"account"`
+}
+
 // BurntNftIDRequest is used to query burnt nfts with nft_id.
 //
 //nolint:tagliatelle
@@ -70,20 +75,27 @@ type NftMethod string
 // all the methods used for smart contract.
 const (
 	// transactions.
-	NftMethodMint                NftMethod = "mint"
-	NftMethodBurn                NftMethod = "burn"
-	NftMethodFreeze              NftMethod = "freeze"
-	NftMethodUnfreeze            NftMethod = "unfreeze"
-	NftMethodAddToWhitelist      NftMethod = "add_to_whitelist"
-	NftMethodRemoveFromWhiteList NftMethod = "remove_from_whitelist"
-	NftMethodSend                NftMethod = "send"
+	NftMethodMint                     NftMethod = "mint"
+	NftMethodBurn                     NftMethod = "burn"
+	NftMethodFreeze                   NftMethod = "freeze"
+	NftMethodUnfreeze                 NftMethod = "unfreeze"
+	NftMethodClassFreeze              NftMethod = "class_freeze"
+	NftMethodClassUnfreeze            NftMethod = "class_unfreeze"
+	NftMethodAddToWhitelist           NftMethod = "add_to_whitelist"
+	NftMethodRemoveFromWhiteList      NftMethod = "remove_from_whitelist"
+	NftMethodAddToClassWhitelist      NftMethod = "add_to_class_whitelist"
+	NftMethodRemoveFromClassWhitelist NftMethod = "remove_from_class_whitelist"
+	NftMethodSend                     NftMethod = "send"
 	// queries.
 	NftMethodParams                    NftMethod = "params"
 	NftMethodClass                     NftMethod = "class"
 	NftMethodClasses                   NftMethod = "classes"
 	NftMethodFrozen                    NftMethod = "frozen"
+	NftMethodClassFrozen               NftMethod = "class_frozen"
+	NftMethodClassFrozenAccounts       NftMethod = "class_frozen_accounts"
 	NftMethodWhitelisted               NftMethod = "whitelisted"
 	NftMethodWhitelistedAccountsForNft NftMethod = "whitelisted_accounts_for_nft"
+	NftMethodClassWhitelistedAccounts  NftMethod = "class_whitelisted_accounts"
 	NftMethodBurntNft                  NftMethod = "burnt_nft"
 	NftMethodBurntNftInClass           NftMethod = "burnt_nfts_in_class"
 	NftMethodBalance                   NftMethod = "balance"
