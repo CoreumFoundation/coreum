@@ -2,9 +2,11 @@ package integration
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 
 	sdkerrors "cosmossdk.io/errors"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
@@ -38,14 +40,25 @@ func NewWasm(chainCtx ChainContext) Wasm {
 }
 
 // DeployAndInstantiateWASMContract deploys, instantiateWASMContract the wasm contract and returns its address.
-func (w Wasm) DeployAndInstantiateWASMContract(ctx context.Context, txf client.Factory, fromAddress sdk.AccAddress, wasmData []byte, initConfig InstantiateConfig) (string, uint64, error) {
+func (w Wasm) DeployAndInstantiateWASMContract(
+	ctx context.Context,
+	txf client.Factory,
+	fromAddress sdk.AccAddress,
+	wasmData []byte,
+	initConfig InstantiateConfig,
+) (string, uint64, error) {
 	codeID, err := w.DeployWASMContract(ctx, txf, fromAddress, wasmData)
 	if err != nil {
 		return "", 0, err
 	}
 
+	salt, err := w.GenerateSalt()
+	if err != nil {
+		return "", 0, errors.WithStack(err)
+	}
+
 	initConfig.CodeID = codeID
-	contractAddr, err := w.InstantiateWASMContract(ctx, txf, fromAddress, initConfig)
+	contractAddr, err := w.InstantiateWASMContract(ctx, txf, fromAddress, salt, initConfig)
 	if err != nil {
 		return "", 0, err
 	}
@@ -54,7 +67,14 @@ func (w Wasm) DeployAndInstantiateWASMContract(ctx context.Context, txf client.F
 }
 
 // ExecuteWASMContract executes the wasm contract with the payload and optionally funding amount.
-func (w Wasm) ExecuteWASMContract(ctx context.Context, txf client.Factory, fromAddress sdk.AccAddress, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
+func (w Wasm) ExecuteWASMContract(
+	ctx context.Context,
+	txf client.Factory,
+	fromAddress sdk.AccAddress,
+	contractAddr string,
+	payload json.RawMessage,
+	fundAmt sdk.Coin,
+) (int64, error) {
 	funds := sdk.NewCoins()
 	if !fundAmt.Amount.IsNil() {
 		funds = funds.Add(fundAmt)
@@ -110,14 +130,48 @@ func (w Wasm) DeployWASMContract(ctx context.Context, txf client.Factory, fromAd
 	return codeID, nil
 }
 
+// GenerateSalt generates random salt for contract instantiation.
+func (w Wasm) GenerateSalt() ([]byte, error) {
+	salt := make([]byte, 32)
+	if _, err := rand.Read(salt); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return salt, nil
+}
+
+// PredictWASMContractAddress predicts the address of the smart contract.
+func (w Wasm) PredictWASMContractAddress(
+	ctx context.Context,
+	fromAddress sdk.AccAddress,
+	salt []byte,
+	codeID uint64,
+) (sdk.AccAddress, error) {
+	wasmClient := wasmtypes.NewQueryClient(w.chainCtx.ClientContext)
+	resp, err := wasmClient.Code(ctx, &wasmtypes.QueryCodeRequest{
+		CodeId: codeID,
+	})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return keeper.BuildContractAddressPredictable(resp.DataHash, fromAddress, salt, []byte{}), nil
+}
+
 // InstantiateWASMContract instantiates the contract and returns the contract address.
-func (w Wasm) InstantiateWASMContract(ctx context.Context, txf client.Factory, fromAddress sdk.AccAddress, req InstantiateConfig) (string, error) {
+func (w Wasm) InstantiateWASMContract(
+	ctx context.Context,
+	txf client.Factory,
+	fromAddress sdk.AccAddress,
+	salt []byte,
+	req InstantiateConfig,
+) (string, error) {
 	funds := sdk.NewCoins()
 	if amount := req.Amount; !amount.Amount.IsNil() {
 		funds = funds.Add(amount)
 	}
 
-	msg := &wasmtypes.MsgInstantiateContract{
+	msg := &wasmtypes.MsgInstantiateContract2{
 		Sender: w.chainCtx.MustConvertToBech32Address(fromAddress),
 		Admin: func() string {
 			if req.Admin != nil {
@@ -129,6 +183,7 @@ func (w Wasm) InstantiateWASMContract(ctx context.Context, txf client.Factory, f
 		Label:  req.Label,
 		Msg:    wasmtypes.RawContractMessage(req.Payload),
 		Funds:  funds,
+		Salt:   salt,
 	}
 
 	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)

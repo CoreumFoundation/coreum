@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
@@ -11,6 +12,7 @@ import (
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/wasm/types"
 )
 
 // assetFTMsg represents asset ft module messages integrated with the wasm handler.
@@ -259,4 +261,28 @@ func decodeNFTMessage(nftMsg *nftMsg, sender string) (sdk.Msg, error) {
 	}
 
 	return nil, nil
+}
+
+var _ wasmkeeper.Messenger = &MessengerWrapper{}
+
+// MessengerWrapper wraps WASM messenger and sets information about smart contract.
+type MessengerWrapper struct {
+	parentMessenger wasmkeeper.Messenger
+}
+
+// NewMessengerWrapper returns new messenger wrapper.
+func NewMessengerWrapper(parentMessenger wasmkeeper.Messenger) *MessengerWrapper {
+	return &MessengerWrapper{
+		parentMessenger: parentMessenger,
+	}
+}
+
+// DispatchMsg sets smart contract sender in the context, in case the executed message handlers sends tokens from the smart contract account.
+func (m *MessengerWrapper) DispatchMsg(
+	ctx sdk.Context,
+	contractAddr sdk.AccAddress,
+	contractIBCPortID string,
+	msg wasmvmtypes.CosmosMsg,
+) (events []sdk.Event, data [][]byte, err error) {
+	return m.parentMessenger.DispatchMsg(types.WithSmartContractSender(ctx, contractAddr.String()), contractAddr, contractIBCPortID, msg)
 }
