@@ -18,7 +18,7 @@ import (
 //go:linkname revProtoTypes github.com/cosmos/gogoproto/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
-// TODO(v4): drop together with x/gov/types/v1beta1 support
+// TODO(v4): drop together with x/gov/types/v1beta1 support.
 func TestExpectedRegisteredProposals(t *testing.T) {
 	knownProposals := map[string]struct{}{
 		// proposals we have integration tests for
