@@ -16,6 +16,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -30,20 +31,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-)
-
-// bank wasm models
-
-type bankWithdrawRequest struct {
-	Amount    string `json:"amount"`
-	Denom     string `json:"denom"`
-	Recipient string `json:"recipient"`
-}
-
-type bankMethod string
-
-const (
-	withdraw bankMethod = "withdraw"
 )
 
 // authz models
@@ -74,7 +61,6 @@ type authzAcceptNftOfferRequest struct {
 type authzMethod string
 
 const (
-	transfer       authzMethod = "transfer"
 	offerNft       authzMethod = "offer_nft"
 	acceptNftOffer authzMethod = "accept_nft_offer"
 )
@@ -154,8 +140,6 @@ func TestWASMBankSendContract(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	// deployWASMContract and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(struct{}{})
-	requireT.NoError(err)
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		txf,
@@ -163,7 +147,7 @@ func TestWASMBankSendContract(t *testing.T) {
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    initialPayload,
+			Payload:    moduleswasm.EmptyPayload,
 			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
@@ -194,15 +178,6 @@ func TestWASMBankSendContract(t *testing.T) {
 	requireT.Equal(sdk.NewInt64Coin(nativeDenom, 15000).String(), contractBalance.Balance.String())
 
 	recipient := chain.GenAccount()
-	// try to exceed the contract limit
-	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
-		withdraw: {
-			Amount:    "16000",
-			Denom:     nativeDenom,
-			Recipient: recipient.String(),
-		},
-	})
-	requireT.NoError(err)
 
 	// try to withdraw more than the admin has
 	_, err = chain.Wasm.ExecuteWASMContract(
@@ -213,21 +188,19 @@ func TestWASMBankSendContract(t *testing.T) {
 			WithGas(uint64(getFeemodelParams(ctx, t, chain.ClientContext).MaxBlockGas)),
 		admin,
 		contractAddr,
-		withdrawPayload,
+		moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(nativeDenom, 16000), recipient),
 		sdk.Coin{})
 	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// send coin from the contract to test wallet
-	withdrawPayload, err = json.Marshal(map[bankMethod]bankWithdrawRequest{
-		withdraw: {
-			Amount:    "5000",
-			Denom:     nativeDenom,
-			Recipient: recipient.String(),
-		},
-	})
-	requireT.NoError(err)
-
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, withdrawPayload, sdk.Coin{})
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		txf,
+		admin,
+		contractAddr,
+		moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(nativeDenom, 5000), recipient),
+		sdk.Coin{},
+	)
 	requireT.NoError(err)
 
 	// check contract and wallet balances
@@ -265,9 +238,6 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	)
 
 	// deployWASMContract and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(struct{}{})
-	requireT.NoError(err)
-
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
@@ -279,7 +249,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    initialPayload,
+			Payload:    moduleswasm.EmptyPayload,
 			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
@@ -288,19 +258,11 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 
 	// Send tokens
 	recipient := chain.GenAccount()
-	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
-		withdraw: {
-			Amount:    "5000",
-			Denom:     chain.ChainSettings.Denom,
-			Recipient: recipient.String(),
-		},
-	})
-	requireT.NoError(err)
 
 	wasmBankSend := &wasmtypes.MsgExecuteContract{
 		Sender:   admin.String(),
 		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(withdrawPayload),
+		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(chain.ChainSettings.Denom, 5000), recipient)),
 		Funds:    sdk.Coins{},
 	}
 
@@ -544,8 +506,6 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 
 	// deployWASMContract and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(struct{}{})
-	requireT.NoError(err)
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
@@ -554,7 +514,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Admin:      admin,
-			Payload:    initialPayload,
+			Payload:    moduleswasm.EmptyPayload,
 			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
@@ -683,16 +643,38 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	// ********** Transfer **********
 
-	transferFundsPayload, err := json.Marshal(map[authzMethod]authzTransferRequest{
-		transfer: {
-			Address: receiver.String(),
-			Amount:  int(totalAmountToSend.Int64()),
-			Denom:   chain.ChainSettings.Denom,
-		},
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		granter,
+		contractAddr,
+		moduleswasm.AuthZExecuteTransferRequest(receiver.String(), chain.NewCoin(totalAmountToSend)),
+		sdk.Coin{},
+	)
+	requireT.NoError(err)
+
+	// ********** Stargate **********
+
+	msgSendAny, err := codectypes.NewAnyWithValue(&banktypes.MsgSend{
+		FromAddress: granter.String(),
+		ToAddress:   receiver.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(totalAmountToSend)),
 	})
 	requireT.NoError(err)
 
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, transferFundsPayload, sdk.Coin{})
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		granter,
+		contractAddr,
+		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
+			Grantee: contractAddr,
+			Msgs: []*codectypes.Any{
+				msgSendAny,
+			},
+		}),
+		sdk.Coin{},
+	)
 	requireT.NoError(err)
 
 	// check receiver balance
@@ -701,7 +683,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		Address: receiver.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoins(chain.NewCoin(totalAmountToSend)).String(), receiverBalancesRes.Balances.String())
+	requireT.Equal(chain.NewCoin(totalAmountToSend.MulRaw(2)).String(), receiverBalancesRes.Balances.String())
 
 	// ********** Test trading an NFT for an AssetFT with Authz **********
 
@@ -1806,8 +1788,6 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	)
 
 	// deployWASMContract and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(struct{}{})
-	requireT.NoError(err)
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().
@@ -1816,7 +1796,7 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    initialPayload,
+			Payload:    moduleswasm.EmptyPayload,
 			Amount:     chain.NewCoin(sdk.NewInt(10000)),
 			Label:      "bank_send",
 		},
@@ -1851,19 +1831,10 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	coinsToSend = append(coinsToSend, chain.NewCoin(sdk.NewInt(10000)))
 
 	// send coin from the contract to test wallet
-	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
-		withdraw: {
-			Amount:    "5000",
-			Denom:     nativeDenom,
-			Recipient: recipient.String(),
-		},
-	})
-	requireT.NoError(err)
-
 	executeMsg := &wasmtypes.MsgExecuteContract{
 		Sender:   admin.String(),
 		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(withdrawPayload),
+		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(nativeDenom, 5000), recipient)),
 		Funds:    sdk.NewCoins(coinsToSend...),
 	}
 	_, err = client.BroadcastTx(
@@ -1876,6 +1847,128 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	waitCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	t.Cleanup(cancel)
 	requireT.NoError(client.AwaitNextBlocks(waitCtx, chain.ClientContext, 2))
+}
+
+// TestWASMContractInstantiationIsRejectedIfThereAreTokensOnItsAccount verifies that smart contract instantiation
+// is rejected if account exists.
+func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	admin := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Deploy smart contract.
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.BankSendWASM,
+	)
+	requireT.NoError(err)
+
+	// Predict the address of the smart contract.
+
+	salt, err := chain.Wasm.GenerateSalt()
+	requireT.NoError(err)
+
+	contract, err := chain.Wasm.PredictWASMContractAddress(
+		ctx,
+		admin,
+		salt,
+		codeID,
+	)
+	requireT.NoError(err)
+
+	// Send coins to the contract address before instantiation.
+
+	msg := &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   contract.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(500))),
+	}
+
+	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, msg)
+	requireT.NoError(err)
+
+	// Instantiate the smart contract. It should fail because its account holds some funds.
+
+	_, err = chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		salt,
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Label:      "bank_send",
+		},
+	)
+	requireT.ErrorContains(err, "contract account already exists")
+
+	// Predict the address of another smart contract.
+
+	salt, err = chain.Wasm.GenerateSalt()
+	requireT.NoError(err)
+
+	contract, err = chain.Wasm.PredictWASMContractAddress(
+		ctx,
+		admin,
+		salt,
+		codeID,
+	)
+	requireT.NoError(err)
+
+	// Create vesting account using address of the smart cotntract.
+
+	createVestingAccMsg := &vestingtypes.MsgCreateVestingAccount{
+		FromAddress: admin.String(),
+		ToAddress:   contract.String(),
+		Amount: sdk.NewCoins(
+			chain.NewCoin(sdkmath.NewInt(10000)),
+		),
+		EndTime: time.Now().Unix(),
+		Delayed: true,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createVestingAccMsg)),
+		createVestingAccMsg,
+	)
+	requireT.NoError(err)
+
+	// Await next block to ensure that funds are vested.
+
+	requireT.NoError(client.AwaitNextBlocks(ctx, clientCtx, 1))
+
+	// Instantiate the smart contract. It should fail because its account holds some funds.
+
+	_, err = chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		salt,
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Label:      "bank_send",
+		},
+	)
+	requireT.ErrorContains(err, "contract account already exists")
 }
 
 func randStringWithLength(n int) string {

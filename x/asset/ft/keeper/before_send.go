@@ -5,11 +5,11 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
 
@@ -161,8 +161,8 @@ func (k Keeper) ApplyRate(ctx sdk.Context, rate sdk.Dec, issuer, sender sdk.AccA
 		return sdk.ZeroInt()
 	}
 
-	// we do not apply burn and commission rate if sender is an smart contract address.
-	if len(sender) == wasmtypes.ContractAddrLen && k.wasmKeeper.HasContractInfo(ctx, sender) {
+	// We do not apply burn and commission rate if sender is a smart contract address.
+	if cwasmtypes.IsSendingSmartContract(ctx, sender.String()) {
 		return sdk.ZeroInt()
 	}
 

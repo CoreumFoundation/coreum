@@ -3,12 +3,12 @@ use coreum_wasm_sdk::nft;
 use coreum_wasm_sdk::types::cosmos::authz::v1beta1::MsgExec;
 use coreum_wasm_sdk::types::cosmos::bank::v1beta1::MsgSend;
 use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
-use coreum_wasm_sdk::types::cosmos::nft::v1beta1::MsgSend as NftMsgSend;
+use coreum_wasm_sdk::types::cosmos::nft::v1beta1::MsgSend as MsgSendNft;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    Addr, BankMsg, Binary, Coin as CWCoin, CosmosMsg, DepsMut, Env, MessageInfo, Response,
+    BankMsg, Binary, Coin as CWCoin, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128,
 };
 use cw2::set_contract_version;
 use cw_utils::one_coin;
@@ -56,14 +56,15 @@ pub fn execute(
             price,
         } => offer_nft(deps, env, info, class_id, id, price),
         ExecuteMsg::AcceptNftOffer { class_id, id } => accept_offer(deps, info, class_id, id),
+        ExecuteMsg::Stargate { type_url, value } => execute_stargate_message(type_url, value),
     }
 }
 
 fn execute_transfer(
     deps: DepsMut,
     env: Env,
-    address: Addr,
-    amount: u64,
+    address: String,
+    amount: Uint128,
     denom: String,
 ) -> CoreumResult<ContractError> {
     deps.api.addr_validate(address.as_ref())?;
@@ -71,7 +72,7 @@ fn execute_transfer(
 
     let send = MsgSend {
         from_address: granter.to_string(),
-        to_address: address.to_string(),
+        to_address: address,
         amount: vec![Coin {
             denom,
             amount: amount.to_string(),
@@ -104,7 +105,7 @@ fn offer_nft(
     id: String,
     price: CWCoin,
 ) -> CoreumResult<ContractError> {
-    let nft_send = NftMsgSend {
+    let nft_send = MsgSendNft {
         class_id: class_id.clone(),
         id: id.clone(),
         sender: info.sender.to_string(),
@@ -162,4 +163,12 @@ fn accept_offer(
     Ok(Response::new()
         .add_attribute("method", "execute_accept_nft_offer")
         .add_messages([nft_send_msg, send_funds_msg]))
+}
+
+pub fn execute_stargate_message(type_url: String, value: Binary) -> CoreumResult<ContractError> {
+    let msg = CosmosMsg::Stargate { type_url, value };
+
+    Ok(Response::new()
+        .add_attribute("method", "execute_authz_stargate")
+        .add_message(msg))
 }

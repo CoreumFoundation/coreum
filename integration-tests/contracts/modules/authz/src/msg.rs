@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Coin};
+use cosmwasm_std::{Addr, Binary, Coin, Uint128};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -10,8 +10,8 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     Transfer {
-        address: Addr,
-        amount: u64,
+        address: String,
+        amount: Uint128,
         denom: String,
     },
     OfferNft {
@@ -22,5 +22,9 @@ pub enum ExecuteMsg {
     AcceptNftOffer {
         class_id: String,
         id: String,
+    },
+    Stargate {
+        type_url: String,
+        value: Binary,
     },
 }
