@@ -17,15 +17,13 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Mint { amount: u128 },
+    Mint { amount: u128, recipient: String },
     Burn { amount: u128 },
     Freeze { account: String, amount: u128 },
     Unfreeze { account: String, amount: u128 },
     GloballyFreeze {},
     GloballyUnfreeze {},
     SetWhitelistedLimit { account: String, amount: u128 },
-    // custom message we use to show the submission of multiple messages
-    MintAndSend { account: String, amount: u128 },
     UpgradeTokenV1 { ibc_enabled: bool },
 }
 

@@ -20,6 +20,7 @@ pub enum ExecuteMsg {
         uri: Option<String>,
         uri_hash: Option<String>,
         data: Option<Binary>,
+        recipient: String,
     },
     Burn {
         id: String,

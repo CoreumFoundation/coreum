@@ -108,9 +108,9 @@ checksum = "28c122c3980598d243d63d9a704629a2d748d101f278052ff068be5a4423ab6f"
 
 [[package]]
 name = "coreum-wasm-sdk"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb106415d1ea995f54efbc3165fa0cc8d0b3a292a1fb2e74dcd1eb0447e7584e"
+checksum = "4308ab8c69b56c727e58ceecc64f6c01fc897d3a1585e65c4513dd9c1d6f46db"
 dependencies = [
  "chrono",
  "cosmwasm-schema",
@@ -365,9 +365,9 @@ dependencies = [
 
 [[package]]
 name = "dyn-clone"
-version = "1.0.14"
+version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23d2f3407d9a573d666de4b5bdf10569d73ca9478087346697dcbae6244bfbcd"
+checksum = "545b22097d44f8a9581187cdf93de7a71e4722bf51200cfaba810865b49a495d"
 
 [[package]]
 name = "ecdsa"

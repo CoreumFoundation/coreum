@@ -59,6 +59,11 @@ type amountBodyFTRequest struct {
 	Amount string `json:"amount"`
 }
 
+type amountRecipientBodyFTRequest struct {
+	Amount    string `json:"amount"`
+	Recipient string `json:"recipient"`
+}
+
 type accountAmountBodyFTRequest struct {
 	Account string `json:"account"`
 	Amount  string `json:"amount"`
@@ -83,7 +88,6 @@ const (
 	ftMethodGloballyFreeze      ftMethod = "globally_freeze"
 	ftMethodGloballyUnfreeze    ftMethod = "globally_unfreeze"
 	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
-	ftMethodMintAndSend         ftMethod = "mint_and_send"
 	// query.
 	ftMethodParams              ftMethod = "params"
 	ftMethodTokens              ftMethod = "tokens"
@@ -765,9 +769,10 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Mint **********
 
 	amountToMint := sdkmath.NewInt(500)
-	mintPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
+	mintPayload, err := json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
 		ftMethodMint: {
-			Amount: amountToMint.String(),
+			Amount:    amountToMint.String(),
+			Recipient: contractAddr,
 		},
 	})
 	requireT.NoError(err)
@@ -782,6 +787,38 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	newAmount := issuanceAmount.Add(amountToMint)
 	requireT.Equal(newAmount.String(), balanceRes.Balance.Amount.String())
+
+	// ********** Mint (sending to someone) **********
+
+	amountToMint = sdkmath.NewInt(100)
+	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetWhitelistedLimit: {
+			Account: recipient2.String(),
+			Amount:  amountToMint.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, whitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	mintPayload, err = json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
+		ftMethodMint: {
+			Amount:    amountToMint.String(),
+			Recipient: recipient2.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient2.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToMint.String(), balanceRes.Balance.Amount.String())
 
 	// ********** Burn **********
 
@@ -881,7 +918,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Whitelisting **********
 
 	amountToWhitelist := sdkmath.NewInt(100)
-	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+	whitelistPayload, err = json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodSetWhitelistedLimit: {
 			Account: recipient1.String(),
 			Amount:  amountToWhitelist.String(),
@@ -898,38 +935,6 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(amountToWhitelist.String(), whitelistedRes.Balance.Amount.String())
-
-	// ********** MintAndSend **********
-
-	amountToMintAndSend := sdkmath.NewInt(100)
-	whitelistPayload, err = json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
-		ftMethodSetWhitelistedLimit: {
-			Account: recipient2.String(),
-			Amount:  amountToMintAndSend.String(),
-		},
-	})
-	requireT.NoError(err)
-
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, whitelistPayload, sdk.Coin{})
-	requireT.NoError(err)
-
-	mintAndSendPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
-		ftMethodMintAndSend: {
-			Account: recipient2.String(),
-			Amount:  amountToMintAndSend.String(),
-		},
-	})
-	requireT.NoError(err)
-
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintAndSendPayload, sdk.Coin{})
-	requireT.NoError(err)
-
-	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: recipient2.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(amountToWhitelist.String(), balanceRes.Balance.Amount.String())
 
 	// ********** Query **********
 
@@ -1070,6 +1075,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	admin := chain.GenAccount()
 	recipient := chain.GenAccount()
+	mintRecipient := chain.GenAccount()
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
@@ -1154,10 +1160,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	// ********** Mint **********
 
 	mintNFTReq1 := moduleswasm.NftMintRequest{
-		ID:      "id-1",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "hash",
-		Data:    encodedData,
+		ID:        "id-1",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "hash",
+		Data:      encodedData,
+		Recipient: contractAddr,
 	}
 	mintPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
 		moduleswasm.NftMethodMint: mintNFTReq1,
@@ -1183,6 +1190,83 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.Equal(
 		expectedNFT1, nftResp.Nft,
 	)
+
+	nftOwner, err := nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, contractAddr)
+
+	// ********** Mint (to someone) **********
+
+	issueClassReqNoWhitelist := moduleswasm.IssueNFTRequest{
+		Name:        "name",
+		Symbol:      "symbol",
+		Description: "description",
+		URI:         "https://my-nft-class-meta.invalid/1",
+		URIHash:     "hash",
+		Data:        encodedData,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+		RoyaltyRate: royaltyRate.String(),
+	}
+	issuerNFTInstantiatePayload, err = json.Marshal(issueClassReqNoWhitelist)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddrNoWhitelist, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.NftWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerNFTInstantiatePayload,
+			Label:      "non_fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	classIDNoWhitelist := assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist))
+
+	mintNFTReq1NoWhitelist := moduleswasm.NftMintRequest{
+		ID:        "id-1",
+		Recipient: mintRecipient.String(),
+	}
+
+	// mint
+	mintPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMint: mintNFTReq1NoWhitelist,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	})
+	requireT.NoError(err)
+
+	expectedNFT1 = &nfttypes.NFT{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	}
+	requireT.Equal(
+		expectedNFT1, nftResp.Nft,
+	)
+
+	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, mintRecipient.String())
 
 	// ********** Freeze **********
 

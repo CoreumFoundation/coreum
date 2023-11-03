@@ -48,11 +48,12 @@ type assetNFTMsgIssueClass struct {
 //
 //nolint:tagliatelle // we keep the name same as consume
 type assetNFTMsgMint struct {
-	ClassID string `json:"class_id"`
-	ID      string `json:"id"`
-	URI     string `json:"uri"`
-	URIHash string `json:"uri_hash"`
-	Data    string `json:"data"`
+	ClassID   string `json:"class_id"`
+	ID        string `json:"id"`
+	URI       string `json:"uri"`
+	URIHash   string `json:"uri_hash"`
+	Data      string `json:"data"`
+	Recipient string `json:"recipient"`
 }
 
 // assetNFTMsg represents asset nft module messages integrated with the wasm handler.
@@ -206,12 +207,13 @@ func decodeAssetNFTMessage(assetNFTMsg *assetNFTMsg, sender string) (sdk.Msg, er
 			}
 		}
 		return &assetnfttypes.MsgMint{
-			Sender:  sender,
-			ClassID: assetNFTMsg.Mint.ClassID,
-			ID:      assetNFTMsg.Mint.ID,
-			URI:     assetNFTMsg.Mint.URI,
-			URIHash: assetNFTMsg.Mint.URIHash,
-			Data:    data,
+			Sender:    sender,
+			ClassID:   assetNFTMsg.Mint.ClassID,
+			ID:        assetNFTMsg.Mint.ID,
+			URI:       assetNFTMsg.Mint.URI,
+			URIHash:   assetNFTMsg.Mint.URIHash,
+			Data:      data,
+			Recipient: assetNFTMsg.Mint.Recipient,
 		}, nil
 	}
 	if assetNFTMsg.Burn != nil {

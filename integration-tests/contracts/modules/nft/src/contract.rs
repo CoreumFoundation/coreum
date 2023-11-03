@@ -7,7 +7,7 @@ use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 use coreum_wasm_sdk::nft;
 use coreum_wasm_sdk::pagination::PageRequest;
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
     StdResult,
 };
 use cw2::set_contract_version;
@@ -68,7 +68,8 @@ pub fn execute(
             uri,
             uri_hash,
             data,
-        } => mint(deps, info, id, uri, uri_hash, data),
+            recipient,
+        } => mint(deps, info, id, uri, uri_hash, data, recipient),
         ExecuteMsg::Burn { id } => burn(deps, info, id),
         ExecuteMsg::Freeze { id } => freeze(deps, info, id),
         ExecuteMsg::Unfreeze { id } => unfreeze(deps, info, id),
@@ -95,6 +96,7 @@ fn mint(
     uri: Option<String>,
     uri_hash: Option<String>,
     data: Option<Binary>,
+    recipient: String,
 ) -> CoreumResult<ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let class_id = CLASS_ID.load(deps.storage)?;
@@ -105,6 +107,7 @@ fn mint(
         uri,
         uri_hash,
         data,
+        recipient
     });
 
     Ok(Response::new()
@@ -309,26 +312,26 @@ fn remove_from_class_whitelist(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Params {} => to_binary(&query_params(deps)?),
-        QueryMsg::Class {} => to_binary(&query_class(deps)?),
-        QueryMsg::Classes { issuer } => to_binary(&query_classes(deps, issuer)?),
-        QueryMsg::Frozen { id } => to_binary(&query_frozen(deps, id)?),
-        QueryMsg::Whitelisted { id, account } => to_binary(&query_whitelisted(deps, id, account)?),
+        QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
+        QueryMsg::Class {} => to_json_binary(&query_class(deps)?),
+        QueryMsg::Classes { issuer } => to_json_binary(&query_classes(deps, issuer)?),
+        QueryMsg::Frozen { id } => to_json_binary(&query_frozen(deps, id)?),
+        QueryMsg::Whitelisted { id, account } => to_json_binary(&query_whitelisted(deps, id, account)?),
         QueryMsg::WhitelistedAccountsForNft { id } => {
-            to_binary(&query_whitelisted_accounts_for_nft(deps, id)?)
+            to_json_binary(&query_whitelisted_accounts_for_nft(deps, id)?)
         }
-        QueryMsg::Balance { owner } => to_binary(&query_balance(deps, owner)?),
-        QueryMsg::Owner { id } => to_binary(&query_owner(deps, id)?),
-        QueryMsg::Supply {} => to_binary(&query_supply(deps)?),
-        QueryMsg::Nft { id } => to_binary(&query_nft(deps, id)?),
-        QueryMsg::Nfts { owner } => to_binary(&query_nfts(deps, owner)?),
-        QueryMsg::ClassNft {} => to_binary(&query_nft_class(deps)?),
-        QueryMsg::ClassesNft {} => to_binary(&query_nft_classes(deps)?),
-        QueryMsg::BurntNft { nft_id } => to_binary(&query_burnt_nft(deps, nft_id)?),
-        QueryMsg::BurntNftsInClass {} => to_binary(&query_burnt_nfts_in_class(deps)?),
-        QueryMsg::ClassFrozen { account } => to_binary(&query_class_frozen(deps, account)?),
-        QueryMsg::ClassFrozenAccounts {} => to_binary(&query_class_frozen_accounts(deps)?),
-        QueryMsg::ClassWhitelistedAccounts {} => to_binary(&query_class_whitelisted_accounts(deps)?),
+        QueryMsg::Balance { owner } => to_json_binary(&query_balance(deps, owner)?),
+        QueryMsg::Owner { id } => to_json_binary(&query_owner(deps, id)?),
+        QueryMsg::Supply {} => to_json_binary(&query_supply(deps)?),
+        QueryMsg::Nft { id } => to_json_binary(&query_nft(deps, id)?),
+        QueryMsg::Nfts { owner } => to_json_binary(&query_nfts(deps, owner)?),
+        QueryMsg::ClassNft {} => to_json_binary(&query_nft_class(deps)?),
+        QueryMsg::ClassesNft {} => to_json_binary(&query_nft_classes(deps)?),
+        QueryMsg::BurntNft { nft_id } => to_json_binary(&query_burnt_nft(deps, nft_id)?),
+        QueryMsg::BurntNftsInClass {} => to_json_binary(&query_burnt_nfts_in_class(deps)?),
+        QueryMsg::ClassFrozen { account } => to_json_binary(&query_class_frozen(deps, account)?),
+        QueryMsg::ClassFrozenAccounts {} => to_json_binary(&query_class_frozen_accounts(deps)?),
+        QueryMsg::ClassWhitelistedAccounts {} => to_json_binary(&query_class_whitelisted_accounts(deps)?),
     }
 }
 
