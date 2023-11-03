@@ -17,6 +17,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/wasm"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
 
@@ -26,7 +28,7 @@ type Keeper struct {
 	storeKey    storetypes.StoreKey
 	bankKeeper  types.BankKeeper
 	delayKeeper types.DelayKeeper
-	wasmKeeper  types.WASMKeeper
+	wasmKeeper  cwasmtypes.WasmKeeper
 	authority   string
 }
 
@@ -36,7 +38,7 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
-	wasmKeeper types.WASMKeeper,
+	wasmKeeper cwasmtypes.WasmKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -570,6 +572,11 @@ func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount s
 	if !amount.IsPositive() {
 		return nil
 	}
+
+	if wasm.IsSmartContract(ctx, recipient, k.wasmKeeper) {
+		ctx = cwasmtypes.WithSmartContractRecipient(ctx, recipient.String())
+	}
+
 	if err := k.isCoinReceivable(ctx, recipient, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not receivable")
 	}
@@ -624,11 +631,8 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
 		return nil
 	}
-	if !def.IsFeatureEnabled(types.Feature_freezing) || def.IsIssuer(addr) {
-		return nil
-	}
 
-	if k.isGloballyFrozen(ctx, def.Denom) {
+	if def.IsFeatureEnabled(types.Feature_freezing) && k.isGloballyFrozen(ctx, def.Denom) && !def.IsIssuer(addr) {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
@@ -640,10 +644,16 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return nil
 	}
 
-	availableBalance := k.availableBalance(ctx, addr, def.Denom)
-	if !availableBalance.Amount.GTE(amount) {
-		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s",
-			sdk.NewCoin(def.Denom, amount), availableBalance)
+	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) && !def.IsIssuer(addr) && cwasmtypes.IsTriggeredBySmartContract(ctx) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers made by smart contracts are disabled for %s", def.Denom)
+	}
+
+	if def.IsFeatureEnabled(types.Feature_freezing) && !def.IsIssuer(addr) {
+		availableBalance := k.availableBalance(ctx, addr, def.Denom)
+		if !availableBalance.Amount.GTE(amount) {
+			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s",
+				sdk.NewCoin(def.Denom, amount), availableBalance)
+		}
 	}
 	return nil
 }
@@ -681,19 +691,21 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 		return nil
 	}
 
-	if !def.IsFeatureEnabled(types.Feature_whitelisting) ||
-		def.IsIssuer(addr) {
-		return nil
+	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.IsIssuer(addr) {
+		balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
+		whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
+
+		finalBalance := balance.Amount.Add(amount)
+		if finalBalance.GT(whitelistedBalance.Amount) {
+			return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
+				addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
+		}
 	}
 
-	balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
-	whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
-
-	finalBalance := balance.Amount.Add(amount)
-	if finalBalance.GT(whitelistedBalance.Amount) {
-		return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
-			addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
+	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) && !def.IsIssuer(addr) && cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
+
 	return nil
 }
 
