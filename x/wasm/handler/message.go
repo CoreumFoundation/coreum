@@ -59,13 +59,17 @@ type assetNFTMsgMint struct {
 //
 //nolint:tagliatelle // we keep the name same as consume
 type assetNFTMsg struct {
-	IssueClass          *assetNFTMsgIssueClass                `json:"IssueClass"`
-	Mint                *assetNFTMsgMint                      `json:"Mint"`
-	Burn                *assetnfttypes.MsgBurn                `json:"Burn"`
-	Freeze              *assetnfttypes.MsgFreeze              `json:"Freeze"`
-	Unfreeze            *assetnfttypes.MsgUnfreeze            `json:"Unfreeze"`
-	AddToWhitelist      *assetnfttypes.MsgAddToWhitelist      `json:"AddToWhitelist"`
-	RemoveFromWhitelist *assetnfttypes.MsgRemoveFromWhitelist `json:"RemoveFromWhitelist"`
+	IssueClass               *assetNFTMsgIssueClass                     `json:"IssueClass"`
+	Mint                     *assetNFTMsgMint                           `json:"Mint"`
+	Burn                     *assetnfttypes.MsgBurn                     `json:"Burn"`
+	Freeze                   *assetnfttypes.MsgFreeze                   `json:"Freeze"`
+	Unfreeze                 *assetnfttypes.MsgUnfreeze                 `json:"Unfreeze"`
+	ClassFreeze              *assetnfttypes.MsgClassFreeze              `json:"ClassFreeze"`
+	ClassUnfreeze            *assetnfttypes.MsgClassUnfreeze            `json:"ClassUnfreeze"`
+	AddToWhitelist           *assetnfttypes.MsgAddToWhitelist           `json:"AddToWhitelist"`
+	RemoveFromWhitelist      *assetnfttypes.MsgRemoveFromWhitelist      `json:"RemoveFromWhitelist"`
+	AddToClassWhiteList      *assetnfttypes.MsgAddToClassWhitelist      `json:"AddToClassWhiteList"`
+	RemoveFromClassWhitelist *assetnfttypes.MsgRemoveFromClassWhitelist `json:"RemoveFromClassWhitelist"`
 }
 
 // nftMsg represents nft module messages integrated with the wasm handler.
@@ -222,6 +226,14 @@ func decodeAssetNFTMessage(assetNFTMsg *assetNFTMsg, sender string) (sdk.Msg, er
 		assetNFTMsg.Unfreeze.Sender = sender
 		return assetNFTMsg.Unfreeze, nil
 	}
+	if assetNFTMsg.ClassFreeze != nil {
+		assetNFTMsg.ClassFreeze.Sender = sender
+		return assetNFTMsg.ClassFreeze, nil
+	}
+	if assetNFTMsg.ClassUnfreeze != nil {
+		assetNFTMsg.ClassUnfreeze.Sender = sender
+		return assetNFTMsg.ClassUnfreeze, nil
+	}
 	if assetNFTMsg.AddToWhitelist != nil {
 		assetNFTMsg.AddToWhitelist.Sender = sender
 		return assetNFTMsg.AddToWhitelist, nil
@@ -229,6 +241,14 @@ func decodeAssetNFTMessage(assetNFTMsg *assetNFTMsg, sender string) (sdk.Msg, er
 	if assetNFTMsg.RemoveFromWhitelist != nil {
 		assetNFTMsg.RemoveFromWhitelist.Sender = sender
 		return assetNFTMsg.RemoveFromWhitelist, nil
+	}
+	if assetNFTMsg.AddToClassWhiteList != nil {
+		assetNFTMsg.AddToClassWhiteList.Sender = sender
+		return assetNFTMsg.AddToClassWhiteList, nil
+	}
+	if assetNFTMsg.RemoveFromClassWhitelist != nil {
+		assetNFTMsg.RemoveFromClassWhitelist.Sender = sender
+		return assetNFTMsg.RemoveFromClassWhitelist, nil
 	}
 
 	return nil, nil
