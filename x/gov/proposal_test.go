@@ -18,7 +18,7 @@ import (
 //go:linkname revProtoTypes github.com/cosmos/gogoproto/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
-// FIXME(v47-legacy): check that we need it, probably we should update it to new way of gov.
+// TODO(v4): drop together with x/gov/types/v1beta1 support
 func TestExpectedRegisteredProposals(t *testing.T) {
 	knownProposals := map[string]struct{}{
 		// proposals we have integration tests for
