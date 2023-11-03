@@ -1644,6 +1644,7 @@ ClassFeature defines possible features of non-fungible token class.
 | freezing | 1 |  |
 | whitelisting | 2 |  |
 | disable_sending | 3 |  |
+| soulbound | 4 |  |
 
 
  <!-- end enums -->

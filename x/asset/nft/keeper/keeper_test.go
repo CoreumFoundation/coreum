@@ -1281,6 +1281,107 @@ func TestKeeper_ClassFreeze_Nonexistent(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrClassNotFound)
 }
 
+func TestKeeper_Soulbound(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_soulbound,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// mint NFT
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: recipient,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+	nftID := settings.ID
+
+	// transfer must be rejected
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// transfer to issuer must also be rejected
+	err = nftKeeper.Transfer(ctx, classID, nftID, issuer)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
+func TestKeeper_Soulbound_Burning(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	requireT.NoError(assetNFTKeeper.SetParams(ctx, nftParams))
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_soulbound,
+			types.ClassFeature_burning,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// mint NFT
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.MintSettings{
+		Sender:    issuer,
+		Recipient: recipient,
+		ClassID:   classID,
+		ID:        "my-id",
+		URI:       "https://my-nft-meta.invalid/1",
+		URIHash:   "content-hash",
+	}
+
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+	nftID := settings.ID
+
+	// transfer must be rejected
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// burning is allowed
+	err = assetNFTKeeper.Burn(ctx, recipient, classID, nftID)
+	requireT.NoError(err)
+	requireT.False(nftKeeper.HasNFT(ctx, classID, nftID))
+}
+
 func genNFTData(requireT *require.Assertions) *codectypes.Any {
 	dataString := "metadata"
 	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})

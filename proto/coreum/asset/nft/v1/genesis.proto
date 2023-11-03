@@ -1,10 +1,9 @@
 syntax = "proto3";
 package coreum.asset.nft.v1;
 
-import "gogoproto/gogo.proto";
-
-import "coreum/asset/nft/v1/params.proto";
 import "coreum/asset/nft/v1/nft.proto";
+import "coreum/asset/nft/v1/params.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types";
 
@@ -14,32 +13,41 @@ message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   // class_definitions keep the non-fungible token class definitions state
   repeated ClassDefinition class_definitions = 2 [(gogoproto.nullable) = false];
-  repeated FrozenNFT frozen_nfts = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "FrozenNFTs"];
-  repeated WhitelistedNFTAccounts whitelisted_nft_accounts = 4 [(gogoproto.nullable) = false, (gogoproto.customname) = "WhitelistedNFTAccounts"];
-  repeated BurntNFT burnt_nfts = 5 [(gogoproto.nullable) = false, (gogoproto.customname) = "BurntNFTs"];
+  repeated FrozenNFT frozen_nfts = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "FrozenNFTs"
+  ];
+  repeated WhitelistedNFTAccounts whitelisted_nft_accounts = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "WhitelistedNFTAccounts"
+  ];
+  repeated BurntNFT burnt_nfts = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "BurntNFTs"
+  ];
   repeated ClassWhitelistedAccounts class_whitelisted_accounts = 6 [(gogoproto.nullable) = false];
   repeated ClassFrozenAccounts class_frozen_accounts = 7 [(gogoproto.nullable) = false];
 }
 
 message FrozenNFT {
-   string classID = 1;
-   repeated string nftIDs = 2;
+  string classID = 1;
+  repeated string nftIDs = 2;
 }
 
 message WhitelistedNFTAccounts {
-   string classID = 1;
-   string nftID = 2;
-   repeated string accounts = 4;
+  string classID = 1;
+  string nftID = 2;
+  repeated string accounts = 4;
 }
 
 message ClassWhitelistedAccounts {
-   string classID = 1;
-   repeated string accounts = 2;
+  string classID = 1;
+  repeated string accounts = 2;
 }
 
 message ClassFrozenAccounts {
-   string classID = 1;
-   repeated string accounts = 2;
+  string classID = 1;
+  repeated string accounts = 2;
 }
 
 message BurntNFT {

@@ -91,6 +91,11 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/cosmos.gov.v1.MsgExecLegacyContent",
 		"/cosmos.gov.v1.MsgUpdateParams",
 
+		// group
+		"/cosmos.group.v1.MsgSubmitProposal",
+		"/cosmos.group.v1.MsgVote",
+		"/cosmos.group.v1.MsgExec",
+
 		// mint
 		"/cosmos.mint.v1beta1.MsgUpdateParams",
 
@@ -185,8 +190,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 57, len(nondeterministicMsgs))
-	assert.Equal(t, 53, len(deterministicMsgs))
+	assert.Equal(t, 60, len(nondeterministicMsgs))
+	assert.Equal(t, 64, len(deterministicMsgs))
 
 	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg

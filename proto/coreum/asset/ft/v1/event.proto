@@ -1,9 +1,8 @@
 syntax = "proto3";
 package coreum.asset.ft.v1;
 
-import "gogoproto/gogo.proto";
-
 import "coreum/asset/ft/v1/token.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
 
