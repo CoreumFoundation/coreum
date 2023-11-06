@@ -38,6 +38,8 @@ pub fn instantiate(
         features: msg.features,
         burn_rate: msg.burn_rate,
         send_commission_rate: msg.send_commission_rate,
+        uri: msg.uri,
+        uri_hash: msg.uri_hash,
     });
 
     let denom = format!("{}-{}", msg.subunit, env.contract.address).to_lowercase();
