@@ -1953,8 +1953,15 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 func randStringWithLength(n int) string {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	for {
+		for i := range b {
+			b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		}
+		// Make sure string is not one of reserved subunits/symbols and if it is regenerate it.
+		if assetfttypes.ValidateSubunit(string(b)) == nil && assetfttypes.ValidateSymbol(string(b)) == nil {
+			break
+		}
 	}
+
 	return string(b)
 }
