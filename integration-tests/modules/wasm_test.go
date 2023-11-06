@@ -52,11 +52,11 @@ type authzAcceptNftOfferRequest struct {
 	ID      string `json:"id"`
 }
 
-type authzMethod string
+type authzNftMethod string
 
 const (
-	offerNft       authzMethod = "offer_nft"
-	acceptNftOffer authzMethod = "accept_nft_offer"
+	offerNft       authzNftMethod = "offer_nft"
+	acceptNftOffer authzNftMethod = "accept_nft_offer"
 )
 
 // fungible token wasm models
@@ -775,7 +775,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	// Make the offer of the NFT for the AssetFT
 
-	nftOfferPayload, err := json.Marshal(map[authzMethod]authzNftOfferRequest{
+	nftOfferPayload, err := json.Marshal(map[authzNftMethod]authzNftOfferRequest{
 		offerNft: {
 			ClassID: classID,
 			ID:      "id-1",
@@ -795,7 +795,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT.EqualValues(ownerResp.Owner, contractAddr)
 
 	// Accept the offer
-	acceptNftOfferPayload, err := json.Marshal(map[authzMethod]authzAcceptNftOfferRequest{
+	acceptNftOfferPayload, err := json.Marshal(map[authzNftMethod]authzAcceptNftOfferRequest{
 		acceptNftOffer: {
 			ClassID: classID,
 			ID:      "id-1",

@@ -3,7 +3,8 @@ use cosmwasm_std::{Addr, Binary, Coin, Uint128};
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    //Granter used for transfering tokens from the contract in behalf of him.
+    // Granter used for transfering native tokens from the contract in behalf of him.
+    // This is only used for Transfer ExecuteMsg.
     pub granter: Addr,
 }
 
