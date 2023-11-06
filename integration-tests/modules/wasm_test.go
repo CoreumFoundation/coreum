@@ -85,6 +85,7 @@ const (
 	ftMethodBurn                ftMethod = "burn"
 	ftMethodFreeze              ftMethod = "freeze"
 	ftMethodUnfreeze            ftMethod = "unfreeze"
+	ftMethodSetFrozen           ftMethod = "set_frozen"
 	ftMethodGloballyFreeze      ftMethod = "globally_freeze"
 	ftMethodGloballyUnfreeze    ftMethod = "globally_unfreeze"
 	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
@@ -769,10 +770,9 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Mint **********
 
 	amountToMint := sdkmath.NewInt(500)
-	mintPayload, err := json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
+	mintPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
 		ftMethodMint: {
-			Amount:    amountToMint.String(),
-			Recipient: contractAddr,
+			Amount: amountToMint.String(),
 		},
 	})
 	requireT.NoError(err)
@@ -882,6 +882,27 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(amountToFreeze.Sub(amountToUnfreeze).String(), frozenRes.Balance.Amount.String())
+
+	// ********** SetFrozen **********
+
+	amountToSetFrozen := sdkmath.NewInt(30)
+	setFrozenPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetFrozen: {
+			Account: recipient1.String(),
+			Amount:  amountToSetFrozen.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, setFrozenPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	frozenRes, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient1.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToSetFrozen.String(), frozenRes.Balance.Amount.String())
 
 	// ********** GloballyFreeze **********
 
@@ -1013,7 +1034,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	var wasmFrozenBalanceRes assetfttypes.QueryFrozenBalanceResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmFrozenBalanceRes))
 	requireT.Equal(
-		sdk.NewCoin(denom, amountToFreeze.Sub(amountToUnfreeze)).String(), wasmFrozenBalanceRes.Balance.String(),
+		sdk.NewCoin(denom, amountToSetFrozen).String(), wasmFrozenBalanceRes.Balance.String(),
 	)
 
 	// ********** FrozenBalances **********
@@ -1029,7 +1050,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	var wasmFrozenBalancesRes assetfttypes.QueryFrozenBalancesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmFrozenBalancesRes))
 	requireT.Equal(
-		sdk.NewCoin(denom, amountToFreeze.Sub(amountToUnfreeze)).String(), wasmFrozenBalancesRes.Balances[0].String(),
+		sdk.NewCoin(denom, amountToSetFrozen).String(), wasmFrozenBalancesRes.Balances[0].String(),
 	)
 
 	// ********** WhitelistedBalance **********
@@ -1160,11 +1181,10 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	// ********** Mint **********
 
 	mintNFTReq1 := moduleswasm.NftMintRequest{
-		ID:        "id-1",
-		URI:       "https://my-nft-meta.invalid/1",
-		URIHash:   "hash",
-		Data:      encodedData,
-		Recipient: contractAddr,
+		ID:      "id-1",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "hash",
+		Data:    encodedData,
 	}
 	mintPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
 		moduleswasm.NftMethodMint: mintNFTReq1,

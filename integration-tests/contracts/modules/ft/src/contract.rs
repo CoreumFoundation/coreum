@@ -66,6 +66,7 @@ pub fn execute(
         ExecuteMsg::Burn { amount } => burn(deps, info, amount),
         ExecuteMsg::Freeze { account, amount } => freeze(deps, info, account, amount),
         ExecuteMsg::Unfreeze { account, amount } => unfreeze(deps, info, account, amount),
+        ExecuteMsg::SetFrozen { account, amount } => set_frozen(deps, info, account, amount),
         ExecuteMsg::GloballyFreeze {} => globally_freeze(deps, info),
         ExecuteMsg::GloballyUnfreeze {} => globally_unfreeze(deps, info),
         ExecuteMsg::SetWhitelistedLimit { account, amount } => {
@@ -77,7 +78,7 @@ pub fn execute(
 
 // ********** Transactions **********
 
-fn mint(deps: DepsMut, info: MessageInfo, amount: u128, recipient: String) -> CoreumResult<ContractError> {
+fn mint(deps: DepsMut, info: MessageInfo, amount: u128, recipient: Option<String>) -> CoreumResult<ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
     let msg = CoreumMsg::AssetFT(assetft::Msg::Mint {
@@ -144,6 +145,27 @@ fn unfreeze(
 
     Ok(Response::new()
         .add_attribute("method", "unfreeze")
+        .add_attribute("denom", denom)
+        .add_attribute("amount", amount.to_string())
+        .add_message(msg))
+}
+
+fn set_frozen(
+    deps: DepsMut,
+    info: MessageInfo,
+    account: String,
+    amount: u128,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let denom = DENOM.load(deps.storage)?;
+
+    let msg = CoreumMsg::AssetFT(assetft::Msg::SetFrozen {
+        account,
+        coin: coin(amount, denom.clone()),
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "set_frozen")
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
         .add_message(msg))

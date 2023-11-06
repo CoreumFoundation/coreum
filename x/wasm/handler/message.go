@@ -24,6 +24,7 @@ type assetFTMsg struct {
 	Burn                *assetfttypes.MsgBurn                `json:"Burn"`
 	Freeze              *assetfttypes.MsgFreeze              `json:"Freeze"`
 	Unfreeze            *assetfttypes.MsgUnfreeze            `json:"Unfreeze"`
+	SetFrozen           *assetfttypes.MsgSetFrozen           `json:"SetFrozen"`
 	GloballyFreeze      *assetfttypes.MsgGloballyFreeze      `json:"GloballyFreeze"`
 	GloballyUnfreeze    *assetfttypes.MsgGloballyUnfreeze    `json:"GloballyUnfreeze"`
 	SetWhitelistedLimit *assetfttypes.MsgSetWhitelistedLimit `json:"SetWhitelistedLimit"`
@@ -150,6 +151,10 @@ func decodeAssetFTMessage(assetFTMsg *assetFTMsg, sender string) (sdk.Msg, error
 	if assetFTMsg.Unfreeze != nil {
 		assetFTMsg.Unfreeze.Sender = sender
 		return assetFTMsg.Unfreeze, nil
+	}
+	if assetFTMsg.SetFrozen != nil {
+		assetFTMsg.SetFrozen.Sender = sender
+		return assetFTMsg.SetFrozen, nil
 	}
 	if assetFTMsg.GloballyFreeze != nil {
 		assetFTMsg.GloballyFreeze.Sender = sender

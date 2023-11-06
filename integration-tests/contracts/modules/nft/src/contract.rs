@@ -96,7 +96,7 @@ fn mint(
     uri: Option<String>,
     uri_hash: Option<String>,
     data: Option<Binary>,
-    recipient: String,
+    recipient: Option<String>,
 ) -> CoreumResult<ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let class_id = CLASS_ID.load(deps.storage)?;
