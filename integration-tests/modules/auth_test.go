@@ -8,8 +8,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
+
+	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
@@ -211,4 +214,109 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 			WithGas(chain.GasLimitByMsgs(msg)),
 		msg)
 	require.True(t, cosmoserrors.ErrWrongSequence.Is(err))
+}
+
+// TestAuthSignModeDirectAux tests SignModeDirectAux signing mode.
+func TestAuthSignModeDirectAux(t *testing.T) {
+	t.Parallel()
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	// Tipper does not pay any tips yet because TipDecorator is not integrated yet (it is still in beta).
+	tipper := chain.GenAccount()
+	feePayer := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	amountToSend := sdk.NewIntFromUint64(1000)
+	chain.FundAccountWithOptions(ctx, t, feePayer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
+	chain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
+		Address: tipper,
+		Amount:  chain.NewCoin(amountToSend),
+	})
+
+	msg := &banktypes.MsgSend{
+		FromAddress: tipper.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
+	}
+
+	tipperKey, err := chain.ClientContext.Keyring().KeyByAddress(tipper)
+	requireT.NoError(err)
+	tipperPubKey, err := tipperKey.GetPubKey()
+	requireT.NoError(err)
+
+	feePayerKey, err := chain.ClientContext.Keyring().KeyByAddress(feePayer)
+	requireT.NoError(err)
+
+	tipperAccountInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, tipper)
+	requireT.NoError(err)
+
+	feePayerAccountInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, feePayer)
+	requireT.NoError(err)
+
+	builder := clienttx.NewAuxTxBuilder()
+	builder.SetChainID(chain.ClientContext.ChainID())
+	requireT.NoError(builder.SetMsgs(msg))
+	builder.SetAddress(tipper.String())
+	requireT.NoError(builder.SetPubKey(tipperPubKey))
+	builder.SetAccountNumber(tipperAccountInfo.GetAccountNumber())
+	builder.SetSequence(tipperAccountInfo.GetSequence())
+	requireT.NoError(builder.SetSignMode(signing.SignMode_SIGN_MODE_DIRECT_AUX))
+
+	signBytes, err := builder.GetSignBytes()
+	requireT.NoError(err)
+
+	tipperSignature, _, err := chain.ClientContext.Keyring().SignByAddress(tipper, signBytes)
+	requireT.NoError(err)
+
+	builder.SetSignature(tipperSignature)
+	tipperSignerData, err := builder.GetAuxSignerData()
+	requireT.NoError(err)
+
+	gas := chain.GasLimitByMsgs(msg)
+	txBuilder := chain.ClientContext.TxConfig().NewTxBuilder()
+	requireT.NoError(txBuilder.AddAuxSignerData(tipperSignerData))
+	txBuilder.SetFeePayer(feePayer)
+	txBuilder.SetFeeAmount(sdk.NewCoins(chain.NewCoin(chain.ChainSettings.GasPrice.Mul(sdk.NewDecFromInt(sdk.NewIntFromUint64(gas))).Ceil().RoundInt())))
+	txBuilder.SetGasLimit(gas)
+
+	requireT.NoError(clienttx.Sign(chain.TxFactory().
+		WithAccountNumber(feePayerAccountInfo.GetAccountNumber()).
+		WithSequence(feePayerAccountInfo.GetSequence()),
+		feePayerKey.Name,
+		txBuilder,
+		false))
+	txBytes, err := chain.ClientContext.TxConfig().TxEncoder()(txBuilder.GetTx())
+	requireT.NoError(err)
+
+	_, err = client.BroadcastRawTx(ctx, chain.ClientContext, txBytes)
+	requireT.NoError(err)
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	tipperBalanceResp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: tipper.String(),
+		Denom:   chain.ChainSettings.Denom,
+	})
+	requireT.NoError(err)
+
+	feePayerBalanceResp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: feePayer.String(),
+		Denom:   chain.ChainSettings.Denom,
+	})
+	requireT.NoError(err)
+
+	recipientBalanceResp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   chain.ChainSettings.Denom,
+	})
+	requireT.NoError(err)
+
+	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), tipperBalanceResp.Balance.String())
+	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), feePayerBalanceResp.Balance.String())
+	requireT.Equal(chain.NewCoin(amountToSend).String(), recipientBalanceResp.Balance.String())
 }
