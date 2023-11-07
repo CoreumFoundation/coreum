@@ -28,11 +28,11 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = "1.4.1"
-cosmwasm-storage = "1.4.1"
+cosmwasm-std = "1.5.0"
+cosmwasm-storage = "1.5.0"
 cw-storage-plus = "1.1.0"
 cw2 = "1.1.1"
 thiserror = { version = "1.0.50" }
-coreum-wasm-sdk = "0.2.1"
-cosmwasm-schema = "1.4.1"
+coreum-wasm-sdk = "0.2.3"
+cosmwasm-schema = "1.5.0"
 cw-ownable = "0.5.1"
