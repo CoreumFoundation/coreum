@@ -95,7 +95,7 @@ fn execute_transfer(
         .add_message(msg))
 }
 
-// The contract must have been granted authorization to send the NFT before execution of it will fail.
+// The contract must have been granted authorization to send the NFT before execution or it will fail.
 // We will send the NFT to the contract to be able to sell it when someone provides the price.
 fn offer_nft(
     deps: DepsMut,
