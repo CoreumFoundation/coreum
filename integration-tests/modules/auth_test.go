@@ -8,13 +8,16 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/deterministicgas"
 )
 
 // TestAuthFeeLimits verifies that invalid message gas won't be accepted.
@@ -128,11 +131,11 @@ func TestAuthMultisig(t *testing.T) {
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
 
-	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(3, 2)
+	signersCount := 7
+	multisigTreshold := 6
+	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(signersCount, multisigTreshold)
 	requireT.NoError(err)
 	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
-	signer1KeyName := keyNamesSet[0]
-	signer2KeyName := keyNamesSet[1]
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
@@ -158,9 +161,17 @@ func TestAuthMultisig(t *testing.T) {
 		// We do it to test simulation for multisig account.
 		chain.TxFactory().WithSimulateAndExecute(true),
 		bankSendMsg,
-		signer1KeyName)
+		keyNamesSet[0])
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
+
+	_, estimatedGas, err := client.CalculateGas(
+		ctx,
+		chain.ClientContext.WithFromAddress(multisigAddress),
+		chain.TxFactory().WithGasAdjustment(1.0),
+		bankSendMsg,
+	)
+	requireT.NoError(err)
 
 	// sign and submit with the min threshold
 	txRes, err := chain.SignAndBroadcastMultisigTx(
@@ -168,9 +179,13 @@ func TestAuthMultisig(t *testing.T) {
 		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
 		bankSendMsg,
-		signer1KeyName, signer2KeyName)
+		keyNamesSet[:multisigTreshold]...)
 	requireT.NoError(err)
-	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)
+	t.Logf("Fully signed tx executed, txHash:%s, gas:%d", txRes.TxHash, txRes.GasUsed)
+
+	//requireT.Equal(txRes.GasUsed, txRes.GasWanted) // another option to reproduce is to use chain.TxFactory().WithSimulateAndExecute(true) & this assertion.
+
+	requireT.Equal(txRes.GasUsed, int64(estimatedGas)) // this shouldn't fail.
 
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipientAddr,
@@ -211,4 +226,129 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 			WithGas(chain.GasLimitByMsgs(msg)),
 		msg)
 	require.True(t, cosmoserrors.ErrWrongSequence.Is(err))
+}
+
+func TestGasEstimation(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	sender := chain.GenAccount()
+
+	multisigPublicKey1, _, err := chain.GenMultisigAccount(3, 2)
+	require.NoError(t, err)
+	multisigAddress1 := sdk.AccAddress(multisigPublicKey1.Address())
+
+	multisigPublicKey2, _, err := chain.GenMultisigAccount(7, 6)
+	require.NoError(t, err)
+	multisigAddress2 := sdk.AccAddress(multisigPublicKey2.Address())
+
+	dgc := deterministicgas.DefaultConfig()
+
+	// For accounts to exist on chain we need to fund them at least with min amount (1ucore).
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
+	chain.FundAccountWithOptions(ctx, t, multisigAddress1, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
+	chain.FundAccountWithOptions(ctx, t, multisigAddress2, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
+
+	//initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+	//	Count: 1337,
+	//})
+	//requireT.NoError(err)
+	//contractAddr, codeID, err := chain.Wasm.DeployAndInstantiateWASMContract(
+	//	ctx,
+	//	chain.TxFactory().WithSimulateAndExecute(true),
+	//	admin,
+	//	moduleswasm.SimpleStateWASM,
+	//	integration.InstantiateConfig{
+	//		AccessType: wasmtypes.AccessTypeUnspecified,
+	//		Payload:    initialPayload,
+	//		Label:      "simple_state",
+	//	},
+	//)
+	//requireT.NoError(err)
+	//chain.Wasm.ExecuteWASMContract()
+
+	tests := []struct {
+		name        string
+		fromAddress sdk.AccAddress
+		msgs        []sdk.Msg
+		expectedGas uint64
+	}{
+		{
+			name:        "singlesig_bank_send",
+			fromAddress: sender,
+			msgs: []sdk.Msg{
+				&banktypes.MsgSend{
+					FromAddress: sender.String(),
+					ToAddress:   sender.String(),
+					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+				},
+			},
+			// single signature no extra bytes.
+			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas,
+		},
+		{
+			name:        "multisig_2_3_bank_send",
+			fromAddress: multisigAddress1,
+			msgs: []sdk.Msg{
+				&banktypes.MsgSend{
+					FromAddress: multisigAddress1.String(),
+					ToAddress:   multisigAddress1.String(),
+					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+				},
+			},
+			// single signature no extra bytes.
+			// Note that multisig account and multiple signatures in a single tx are different.
+			// Multisig tx still has single signature which is combination of multiple signatures so gas is charged for single sig.
+			// Tx containing multiple signatures is a different case and gas is charged for each standalone signature.
+			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas,
+		},
+		// FIXME: This test fails. Probably because of bug.
+		//{
+		//	name:        "multisig_6_7_bank_send",
+		//	fromAddress: multisigAddress2,
+		//	msgs: []sdk.Msg{
+		//		&banktypes.MsgSend{
+		//			FromAddress: multisigAddress2.String(),
+		//			ToAddress:   multisigAddress2.String(),
+		//			Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+		//		},
+		//	},
+		//	expectedGas:             dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas,
+		//	expectedGasAllowedDelta: 0,
+		//},
+		{
+			name:        "singlesig_auth_exec_and_bank_send",
+			fromAddress: sender,
+			msgs: []sdk.Msg{
+				lo.ToPtr(
+					authztypes.NewMsgExec(sender, []sdk.Msg{
+						&banktypes.MsgSend{
+							FromAddress: sender.String(),
+							ToAddress:   sender.String(),
+							Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+						},
+					})),
+				&banktypes.MsgSend{
+					FromAddress: sender.String(),
+					ToAddress:   sender.String(),
+					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+				},
+			},
+			// single signature no extra bytes.
+			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + (1*deterministicgas.AuthzExecOverhead + 1*deterministicgas.BankSendPerCoinGas),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, estimatedGas, err := client.CalculateGas(
+				ctx,
+				chain.ClientContext.WithFromAddress(test.fromAddress),
+				chain.TxFactory(),
+				test.msgs...,
+			)
+			require.NoError(t, err)
+			require.Equal(t, test.expectedGas, estimatedGas)
+		})
+	}
 }
