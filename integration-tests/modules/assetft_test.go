@@ -5186,9 +5186,10 @@ func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 
 	// mint to itself
 	amountToMint := sdkmath.NewInt(500)
-	mintPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
+	mintPayload, err := json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
 		ftMethodMint: {
-			Amount: amountToMint.String(),
+			Amount:    amountToMint.String(),
+			Recipient: contractAddr,
 		},
 	})
 	requireT.NoError(err)
@@ -5197,23 +5198,23 @@ func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 	requireT.NoError(err)
 
 	// mint to someone else
-	amountToMintAndSend := sdkmath.NewInt(100)
-	mintAndSendPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
-		ftMethodMintAndSend: {
-			Account: recipient.String(),
-			Amount:  amountToMintAndSend.String(),
+	amountToMint = sdkmath.NewInt(100)
+	mintPayload, err = json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
+		ftMethodMint: {
+			Amount:    amountToMint.String(),
+			Recipient: recipient.String(),
 		},
 	})
 	requireT.NoError(err)
 
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintAndSendPayload, sdk.Coin{})
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// send back to smart contract
 	msgSend := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   contractAddr,
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, amountToMintAndSend)),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, amountToMint)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
