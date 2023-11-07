@@ -49,7 +49,7 @@ Let's say we have a transaction with 1 messages of type
 signatures and the tx size is 1000 bytes, total will be:
 
 `
-TotalGas = {{ .FixedGas }} +  1 * {{ .BankSendPerCoinGas }} + 1 * {{ .SigVerifyCost }} + max(0, 1000-{{ .FreeBytes }}) * {{ .TxSizeCostPerByte }}
+TotalGas = {{ .FixedGas }} +  1 * {{ .BankSendPerCoinGas }} + (1 - 1) * {{ .SigVerifyCost }} + max(0, 1000-{{ .FreeBytes }}) * {{ .TxSizeCostPerByte }}
 `
 
 #### Example 2
@@ -58,7 +58,7 @@ Let's say we have a transaction with 2 messages of type
 signatures and the tx size is 2050 bytes, total will be:
 
 `
-TotalGas = {{ .FixedGas }} + 2 * {{ .MsgIssueGasPrice }} + 2 * {{ .SigVerifyCost }} + max(0, 2050-{{ .FreeBytes }}) * {{ .TxSizeCostPerByte }}
+TotalGas = {{ .FixedGas }} + 2 * {{ .MsgIssueGasPrice }} + (2 - 1) * {{ .SigVerifyCost }} + max(0, 2050-{{ .FreeBytes }}) * {{ .TxSizeCostPerByte }}
 `
 
 ## Gas Tables

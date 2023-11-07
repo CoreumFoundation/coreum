@@ -380,11 +380,10 @@ func TestBankSendGasEstimation(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
 	}
 
-	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	_, estimatedGas, err := client.CalculateGas(
 		ctx,
-		clientCtx,
+		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
 			WithGas(bankSendGas),
 		msg)

@@ -104,8 +104,9 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 
 // CalculateGas simulates the execution of a transaction and returns the
 // simulation response obtained by the query and the adjusted gas amount.
-//
-//	FIXME(v47-multisig-calculate-gas-test) add test to calculate
+// The main differences between our version and the one from cosmos-sdk are:
+// - we respect context.Context
+// - it correctly works when estimating for multisig accounts
 func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
