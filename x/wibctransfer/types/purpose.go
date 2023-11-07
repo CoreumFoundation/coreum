@@ -6,25 +6,25 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Direction is the direction of the transfer.
-type Direction string
+// Purpose is the purpose of the transfer.
+type Purpose string
 
 const (
 	// PurposeOut is used when IBC transfer from Coreum to peered chain is initialized by executing ibctransfertypes.MsgTransfer message.
-	PurposeOut Direction = "ibcTransferOut"
+	PurposeOut Purpose = "ibcTransferOut"
 	// PurposeIn is used when incoming IBC transfer comes from peered chain to Coreum.
-	PurposeIn Direction = "ibcTransferIn"
+	PurposeIn Purpose = "ibcTransferIn"
 	// PurposeAck is used when outgoing IBC transfer from Coreum is acknowledged by the peered chain.
-	PurposeAck Direction = "ibcTransferAck"
+	PurposeAck Purpose = "ibcTransferAck"
 	// PurposeTimeout is used when outgoing IBC transfer from Coreum times out.
-	PurposeTimeout Direction = "ibcTransferTimeout"
+	PurposeTimeout Purpose = "ibcTransferTimeout"
 )
 
-type directionKey struct{}
+type purposeKey struct{}
 
 // WithPurpose stores IBC transfer purpose inside SDK context.
-func WithPurpose(ctx sdk.Context, direction Direction) sdk.Context {
-	return ctx.WithValue(directionKey{}, direction)
+func WithPurpose(ctx sdk.Context, direction Purpose) sdk.Context {
+	return ctx.WithValue(purposeKey{}, direction)
 }
 
 // IsPurposeOut returns true if context is tagged with an outgoing transfer.
@@ -51,7 +51,7 @@ func IsPurposeTimeout(ctx sdk.Context) bool {
 	return ok && d == PurposeTimeout
 }
 
-func getPurpose(ctx context.Context) (Direction, bool) {
-	direction, ok := ctx.Value(directionKey{}).(Direction)
-	return direction, ok
+func getPurpose(ctx context.Context) (Purpose, bool) {
+	purpose, ok := ctx.Value(purposeKey{}).(Purpose)
+	return purpose, ok
 }

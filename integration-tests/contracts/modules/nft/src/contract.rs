@@ -1,12 +1,13 @@
 use coreum_wasm_sdk::assetnft::{
-    self, BurntNFTResponse, BurntNFTsInClassResponse, ClassResponse, ClassesResponse,
+    self, BurntNFTResponse, BurntNFTsInClassResponse, ClassFrozenAccountsResponse,
+    ClassFrozenResponse, ClassResponse, ClassWhitelistedAccountsResponse, ClassesResponse,
     FrozenResponse, ParamsResponse, WhitelistedAccountsForNFTResponse, WhitelistedResponse,
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 use coreum_wasm_sdk::nft;
 use coreum_wasm_sdk::pagination::PageRequest;
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
     StdResult,
 };
 use cw2::set_contract_version;
@@ -67,7 +68,8 @@ pub fn execute(
             uri,
             uri_hash,
             data,
-        } => mint(deps, info, id, uri, uri_hash, data),
+            recipient,
+        } => mint(deps, info, id, uri, uri_hash, data, recipient),
         ExecuteMsg::Burn { id } => burn(deps, info, id),
         ExecuteMsg::Freeze { id } => freeze(deps, info, id),
         ExecuteMsg::Unfreeze { id } => unfreeze(deps, info, id),
@@ -76,6 +78,12 @@ pub fn execute(
             remove_from_white_list(deps, info, id, account)
         }
         ExecuteMsg::Send { id, receiver } => send(deps, info, id, receiver),
+        ExecuteMsg::ClassFreeze { account } => class_freeze(deps, info, account),
+        ExecuteMsg::ClassUnfreeze { account } => class_unfreeze(deps, info, account),
+        ExecuteMsg::AddToClassWhitelist { account } => add_to_class_whitelist(deps, info, account),
+        ExecuteMsg::RemoveFromClassWhitelist { account } => {
+            remove_from_class_whitelist(deps, info, account)
+        }
     }
 }
 
@@ -88,6 +96,7 @@ fn mint(
     uri: Option<String>,
     uri_hash: Option<String>,
     data: Option<Binary>,
+    recipient: Option<String>,
 ) -> CoreumResult<ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let class_id = CLASS_ID.load(deps.storage)?;
@@ -98,6 +107,7 @@ fn mint(
         uri,
         uri_hash,
         data,
+        recipient
     });
 
     Ok(Response::new()
@@ -221,28 +231,107 @@ fn send(
         .add_message(msg))
 }
 
+fn class_freeze(deps: DepsMut, info: MessageInfo, account: String) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let class_id = CLASS_ID.load(deps.storage)?;
+
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::ClassFreeze {
+        class_id: class_id.clone(),
+        account: account.clone(),
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "class_freeze")
+        .add_attribute("class_id", class_id)
+        .add_attribute("account", account)
+        .add_message(msg))
+}
+
+fn class_unfreeze(
+    deps: DepsMut,
+    info: MessageInfo,
+    account: String,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let class_id = CLASS_ID.load(deps.storage)?;
+
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::ClassUnfreeze {
+        class_id: class_id.clone(),
+        account: account.clone(),
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "class_unfreeze")
+        .add_attribute("class_id", class_id)
+        .add_attribute("account", account)
+        .add_message(msg))
+}
+
+fn add_to_class_whitelist(
+    deps: DepsMut,
+    info: MessageInfo,
+    account: String,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let class_id = CLASS_ID.load(deps.storage)?;
+
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::AddToClassWhitelist {
+        class_id: class_id.clone(),
+        account: account.clone(),
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "add_to_class_whitelist")
+        .add_attribute("class_id", class_id)
+        .add_attribute("account", account)
+        .add_message(msg))
+}
+
+fn remove_from_class_whitelist(
+    deps: DepsMut,
+    info: MessageInfo,
+    account: String,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let class_id = CLASS_ID.load(deps.storage)?;
+
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::RemoveFromClassWhitelist {
+        class_id: class_id.clone(),
+        account: account.clone(),
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "remove_from_class_whitelist")
+        .add_attribute("class_id", class_id)
+        .add_attribute("account", account)
+        .add_message(msg))
+}
+
 // ********** Queries **********
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Params {} => to_binary(&query_params(deps)?),
-        QueryMsg::Class {} => to_binary(&query_class(deps)?),
-        QueryMsg::Classes { issuer } => to_binary(&query_classes(deps, issuer)?),
-        QueryMsg::Frozen { id } => to_binary(&query_frozen(deps, id)?),
-        QueryMsg::Whitelisted { id, account } => to_binary(&query_whitelisted(deps, id, account)?),
+        QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
+        QueryMsg::Class {} => to_json_binary(&query_class(deps)?),
+        QueryMsg::Classes { issuer } => to_json_binary(&query_classes(deps, issuer)?),
+        QueryMsg::Frozen { id } => to_json_binary(&query_frozen(deps, id)?),
+        QueryMsg::Whitelisted { id, account } => to_json_binary(&query_whitelisted(deps, id, account)?),
         QueryMsg::WhitelistedAccountsForNft { id } => {
-            to_binary(&query_whitelisted_accounts_for_nft(deps, id)?)
+            to_json_binary(&query_whitelisted_accounts_for_nft(deps, id)?)
         }
-        QueryMsg::Balance { owner } => to_binary(&query_balance(deps, owner)?),
-        QueryMsg::Owner { id } => to_binary(&query_owner(deps, id)?),
-        QueryMsg::Supply {} => to_binary(&query_supply(deps)?),
-        QueryMsg::Nft { id } => to_binary(&query_nft(deps, id)?),
-        QueryMsg::Nfts { owner } => to_binary(&query_nfts(deps, owner)?),
-        QueryMsg::ClassNft {} => to_binary(&query_nft_class(deps)?),
-        QueryMsg::ClassesNft {} => to_binary(&query_nft_classes(deps)?),
-        QueryMsg::BurntNft { nft_id } => to_binary(&query_burnt_nft(deps, nft_id)?),
-        QueryMsg::BurntNftsInClass {} => to_binary(&query_burnt_nfts_in_class(deps)?),
+        QueryMsg::Balance { owner } => to_json_binary(&query_balance(deps, owner)?),
+        QueryMsg::Owner { id } => to_json_binary(&query_owner(deps, id)?),
+        QueryMsg::Supply {} => to_json_binary(&query_supply(deps)?),
+        QueryMsg::Nft { id } => to_json_binary(&query_nft(deps, id)?),
+        QueryMsg::Nfts { owner } => to_json_binary(&query_nfts(deps, owner)?),
+        QueryMsg::ClassNft {} => to_json_binary(&query_nft_class(deps)?),
+        QueryMsg::ClassesNft {} => to_json_binary(&query_nft_classes(deps)?),
+        QueryMsg::BurntNft { nft_id } => to_json_binary(&query_burnt_nft(deps, nft_id)?),
+        QueryMsg::BurntNftsInClass {} => to_json_binary(&query_burnt_nfts_in_class(deps)?),
+        QueryMsg::ClassFrozen { account } => to_json_binary(&query_class_frozen(deps, account)?),
+        QueryMsg::ClassFrozenAccounts {} => to_json_binary(&query_class_frozen_accounts(deps)?),
+        QueryMsg::ClassWhitelistedAccounts {} => to_json_binary(&query_class_whitelisted_accounts(deps)?),
     }
 }
 
@@ -389,6 +478,85 @@ fn query_burnt_nfts_in_class(deps: Deps<CoreumQueries>) -> StdResult<BurntNFTsIn
     let res = BurntNFTsInClassResponse {
         pagination: res.pagination,
         nft_ids,
+    };
+    Ok(res)
+}
+
+fn query_class_frozen(
+    deps: Deps<CoreumQueries>,
+    account: String,
+) -> StdResult<ClassFrozenResponse> {
+    let class_id = CLASS_ID.load(deps.storage)?;
+    let request: QueryRequest<CoreumQueries> =
+        CoreumQueries::AssetNFT(assetnft::Query::ClassFrozen { class_id, account }).into();
+    let res = deps.querier.query(&request)?;
+    Ok(res)
+}
+
+fn query_class_frozen_accounts(
+    deps: Deps<CoreumQueries>,
+) -> StdResult<ClassFrozenAccountsResponse> {
+    let class_id = CLASS_ID.load(deps.storage)?;
+    let mut pagination = None;
+    let mut accounts = vec![];
+    let mut res: ClassFrozenAccountsResponse;
+    loop {
+        let request = CoreumQueries::AssetNFT(assetnft::Query::ClassFrozenAccounts {
+            pagination,
+            class_id: class_id.clone(),
+        })
+        .into();
+        res = deps.querier.query(&request)?;
+        accounts.append(&mut res.accounts);
+        if res.pagination.next_key.is_none() {
+            break;
+        } else {
+            pagination = Some(PageRequest {
+                key: res.pagination.next_key,
+                offset: None,
+                limit: None,
+                count_total: None,
+                reverse: None,
+            })
+        }
+    }
+    let res = ClassFrozenAccountsResponse {
+        pagination: res.pagination,
+        accounts,
+    };
+    Ok(res)
+}
+
+fn query_class_whitelisted_accounts(
+    deps: Deps<CoreumQueries>,
+) -> StdResult<ClassWhitelistedAccountsResponse> {
+    let class_id = CLASS_ID.load(deps.storage)?;
+    let mut pagination = None;
+    let mut accounts = vec![];
+    let mut res: ClassWhitelistedAccountsResponse;
+    loop {
+        let request = CoreumQueries::AssetNFT(assetnft::Query::ClassWhitelistedAccounts {
+            pagination,
+            class_id: class_id.clone(),
+        })
+        .into();
+        res = deps.querier.query(&request)?;
+        accounts.append(&mut res.accounts);
+        if res.pagination.next_key.is_none() {
+            break;
+        } else {
+            pagination = Some(PageRequest {
+                key: res.pagination.next_key,
+                offset: None,
+                limit: None,
+                count_total: None,
+                reverse: None,
+            })
+        }
+    }
+    let res = ClassWhitelistedAccountsResponse {
+        pagination: res.pagination,
+        accounts,
     };
     Ok(res)
 }

@@ -9,21 +9,22 @@ pub struct InstantiateMsg {
     pub initial_amount: Uint128,
     pub description: Option<String>,
     pub features: Option<Vec<u32>>,
-    pub burn_rate: Option<String>,
-    pub send_commission_rate: Option<String>,
+    pub burn_rate: String,
+    pub send_commission_rate: String,
+    pub uri: Option<String>,
+    pub uri_hash: Option<String>,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Mint { amount: u128 },
+    Mint { amount: u128, recipient: Option<String> },
     Burn { amount: u128 },
     Freeze { account: String, amount: u128 },
     Unfreeze { account: String, amount: u128 },
+    SetFrozen { account: String, amount: u128 },
     GloballyFreeze {},
     GloballyUnfreeze {},
     SetWhitelistedLimit { account: String, amount: u128 },
-    // custom message we use to show the submission of multiple messages
-    MintAndSend { account: String, amount: u128 },
     UpgradeTokenV1 { ibc_enabled: bool },
 }
 

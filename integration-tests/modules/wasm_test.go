@@ -16,6 +16,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -32,37 +33,11 @@ import (
 	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
-// bank wasm models
-
-type bankWithdrawRequest struct {
-	Amount    string `json:"amount"`
-	Denom     string `json:"denom"`
-	Recipient string `json:"recipient"`
-}
-
-type bankMethod string
-
-const (
-	withdraw bankMethod = "withdraw"
-)
-
 // authz models
 
 type authz struct {
 	Granter string `json:"granter"`
 }
-
-type authzTransferRequest struct {
-	Address string `json:"address"`
-	Amount  int    `json:"amount"`
-	Denom   string `json:"denom"`
-}
-
-type authzMethod string
-
-const (
-	transfer authzMethod = "transfer"
-)
 
 // fungible token wasm models
 //
@@ -76,10 +51,17 @@ type issueFTRequest struct {
 	Features           []assetfttypes.Feature `json:"features"`
 	BurnRate           string                 `json:"burn_rate"`
 	SendCommissionRate string                 `json:"send_commission_rate"`
+	URI                string                 `json:"uri"`
+	URIHash            string                 `json:"uri_hash"`
 }
 
 type amountBodyFTRequest struct {
 	Amount string `json:"amount"`
+}
+
+type amountRecipientBodyFTRequest struct {
+	Amount    string `json:"amount"`
+	Recipient string `json:"recipient"`
 }
 
 type accountAmountBodyFTRequest struct {
@@ -103,10 +85,10 @@ const (
 	ftMethodBurn                ftMethod = "burn"
 	ftMethodFreeze              ftMethod = "freeze"
 	ftMethodUnfreeze            ftMethod = "unfreeze"
+	ftMethodSetFrozen           ftMethod = "set_frozen"
 	ftMethodGloballyFreeze      ftMethod = "globally_freeze"
 	ftMethodGloballyUnfreeze    ftMethod = "globally_unfreeze"
 	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
-	ftMethodMintAndSend         ftMethod = "mint_and_send"
 	// query.
 	ftMethodParams              ftMethod = "params"
 	ftMethodTokens              ftMethod = "tokens"
@@ -139,8 +121,6 @@ func TestWASMBankSendContract(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	// deployWASMContract and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(struct{}{})
-	requireT.NoError(err)
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		txf,
@@ -148,7 +128,7 @@ func TestWASMBankSendContract(t *testing.T) {
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    initialPayload,
+			Payload:    moduleswasm.EmptyPayload,
 			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
@@ -179,15 +159,6 @@ func TestWASMBankSendContract(t *testing.T) {
 	requireT.Equal(sdk.NewInt64Coin(nativeDenom, 15000).String(), contractBalance.Balance.String())
 
 	recipient := chain.GenAccount()
-	// try to exceed the contract limit
-	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
-		withdraw: {
-			Amount:    "16000",
-			Denom:     nativeDenom,
-			Recipient: recipient.String(),
-		},
-	})
-	requireT.NoError(err)
 
 	// try to withdraw more than the admin has
 	_, err = chain.Wasm.ExecuteWASMContract(
@@ -198,21 +169,19 @@ func TestWASMBankSendContract(t *testing.T) {
 			WithGas(uint64(getFeemodelParams(ctx, t, chain.ClientContext).MaxBlockGas)),
 		admin,
 		contractAddr,
-		withdrawPayload,
+		moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(nativeDenom, 16000), recipient),
 		sdk.Coin{})
 	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// send coin from the contract to test wallet
-	withdrawPayload, err = json.Marshal(map[bankMethod]bankWithdrawRequest{
-		withdraw: {
-			Amount:    "5000",
-			Denom:     nativeDenom,
-			Recipient: recipient.String(),
-		},
-	})
-	requireT.NoError(err)
-
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, withdrawPayload, sdk.Coin{})
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		txf,
+		admin,
+		contractAddr,
+		moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(nativeDenom, 5000), recipient),
+		sdk.Coin{},
+	)
 	requireT.NoError(err)
 
 	// check contract and wallet balances
@@ -250,9 +219,6 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	)
 
 	// deployWASMContract and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(struct{}{})
-	requireT.NoError(err)
-
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
@@ -264,7 +230,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    initialPayload,
+			Payload:    moduleswasm.EmptyPayload,
 			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
@@ -273,19 +239,11 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 
 	// Send tokens
 	recipient := chain.GenAccount()
-	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
-		withdraw: {
-			Amount:    "5000",
-			Denom:     chain.ChainSettings.Denom,
-			Recipient: recipient.String(),
-		},
-	})
-	requireT.NoError(err)
 
 	wasmBankSend := &wasmtypes.MsgExecuteContract{
 		Sender:   admin.String(),
 		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(withdrawPayload),
+		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(chain.ChainSettings.Denom, 5000), recipient)),
 		Funds:    sdk.Coins{},
 	}
 
@@ -529,8 +487,6 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 
 	// deployWASMContract and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(struct{}{})
-	requireT.NoError(err)
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
@@ -539,7 +495,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Admin:      admin,
-			Payload:    initialPayload,
+			Payload:    moduleswasm.EmptyPayload,
 			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
@@ -665,16 +621,38 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	// ********** Transfer **********
 
-	transferFundsPayload, err := json.Marshal(map[authzMethod]authzTransferRequest{
-		transfer: {
-			Address: receiver.String(),
-			Amount:  int(totalAmountToSend.Int64()),
-			Denom:   chain.ChainSettings.Denom,
-		},
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		granter,
+		contractAddr,
+		moduleswasm.AuthZExecuteTransferRequest(receiver.String(), chain.NewCoin(totalAmountToSend)),
+		sdk.Coin{},
+	)
+	requireT.NoError(err)
+
+	// ********** Stargate **********
+
+	msgSendAny, err := codectypes.NewAnyWithValue(&banktypes.MsgSend{
+		FromAddress: granter.String(),
+		ToAddress:   receiver.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(totalAmountToSend)),
 	})
 	requireT.NoError(err)
 
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, transferFundsPayload, sdk.Coin{})
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		granter,
+		contractAddr,
+		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
+			Grantee: contractAddr,
+			Msgs: []*codectypes.Any{
+				msgSendAny,
+			},
+		}),
+		sdk.Coin{},
+	)
 	requireT.NoError(err)
 
 	// check receiver balance
@@ -683,7 +661,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		Address: receiver.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoins(chain.NewCoin(totalAmountToSend)).String(), receiverBalancesRes.Balances.String())
+	requireT.Equal(chain.NewCoin(totalAmountToSend.MulRaw(2)).String(), receiverBalancesRes.Balances.String())
 }
 
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.
@@ -727,6 +705,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 		BurnRate:           burnRate.String(),
 		SendCommissionRate: sendCommissionRate.String(),
+		URI:                "https://example.com",
+		URIHash:            "1234567890abcdef",
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
@@ -769,6 +749,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		BurnRate:           burnRate,
 		SendCommissionRate: sendCommissionRate,
 		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
+		URI:                issuanceReq.URI,
+		URIHash:            issuanceReq.URIHash,
 	}
 	requireT.Equal(
 		expectedToken, tokenRes.Token,
@@ -805,6 +787,38 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	newAmount := issuanceAmount.Add(amountToMint)
 	requireT.Equal(newAmount.String(), balanceRes.Balance.Amount.String())
+
+	// ********** Mint (sending to someone) **********
+
+	amountToMint = sdkmath.NewInt(100)
+	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetWhitelistedLimit: {
+			Account: recipient2.String(),
+			Amount:  amountToMint.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, whitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	mintPayload, err = json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
+		ftMethodMint: {
+			Amount:    amountToMint.String(),
+			Recipient: recipient2.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient2.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToMint.String(), balanceRes.Balance.Amount.String())
 
 	// ********** Burn **********
 
@@ -869,6 +883,27 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(amountToFreeze.Sub(amountToUnfreeze).String(), frozenRes.Balance.Amount.String())
 
+	// ********** SetFrozen **********
+
+	amountToSetFrozen := sdkmath.NewInt(30)
+	setFrozenPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetFrozen: {
+			Account: recipient1.String(),
+			Amount:  amountToSetFrozen.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, setFrozenPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	frozenRes, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient1.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToSetFrozen.String(), frozenRes.Balance.Amount.String())
+
 	// ********** GloballyFreeze **********
 
 	globallyFreezePayload, err := json.Marshal(map[ftMethod]struct{}{
@@ -904,7 +939,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Whitelisting **********
 
 	amountToWhitelist := sdkmath.NewInt(100)
-	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+	whitelistPayload, err = json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodSetWhitelistedLimit: {
 			Account: recipient1.String(),
 			Amount:  amountToWhitelist.String(),
@@ -921,38 +956,6 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(amountToWhitelist.String(), whitelistedRes.Balance.Amount.String())
-
-	// ********** MintAndSend **********
-
-	amountToMintAndSend := sdkmath.NewInt(100)
-	whitelistPayload, err = json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
-		ftMethodSetWhitelistedLimit: {
-			Account: recipient2.String(),
-			Amount:  amountToMintAndSend.String(),
-		},
-	})
-	requireT.NoError(err)
-
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, whitelistPayload, sdk.Coin{})
-	requireT.NoError(err)
-
-	mintAndSendPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
-		ftMethodMintAndSend: {
-			Account: recipient2.String(),
-			Amount:  amountToMintAndSend.String(),
-		},
-	})
-	requireT.NoError(err)
-
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintAndSendPayload, sdk.Coin{})
-	requireT.NoError(err)
-
-	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: recipient2.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(amountToWhitelist.String(), balanceRes.Balance.Amount.String())
 
 	// ********** Query **********
 
@@ -1031,7 +1034,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	var wasmFrozenBalanceRes assetfttypes.QueryFrozenBalanceResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmFrozenBalanceRes))
 	requireT.Equal(
-		sdk.NewCoin(denom, amountToFreeze.Sub(amountToUnfreeze)).String(), wasmFrozenBalanceRes.Balance.String(),
+		sdk.NewCoin(denom, amountToSetFrozen).String(), wasmFrozenBalanceRes.Balance.String(),
 	)
 
 	// ********** FrozenBalances **********
@@ -1047,7 +1050,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	var wasmFrozenBalancesRes assetfttypes.QueryFrozenBalancesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmFrozenBalancesRes))
 	requireT.Equal(
-		sdk.NewCoin(denom, amountToFreeze.Sub(amountToUnfreeze)).String(), wasmFrozenBalancesRes.Balances[0].String(),
+		sdk.NewCoin(denom, amountToSetFrozen).String(), wasmFrozenBalancesRes.Balances[0].String(),
 	)
 
 	// ********** WhitelistedBalance **********
@@ -1093,6 +1096,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	admin := chain.GenAccount()
 	recipient := chain.GenAccount()
+	mintRecipient := chain.GenAccount()
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
@@ -1207,6 +1211,83 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		expectedNFT1, nftResp.Nft,
 	)
 
+	nftOwner, err := nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, contractAddr)
+
+	// ********** Mint (to someone) **********
+
+	issueClassReqNoWhitelist := moduleswasm.IssueNFTRequest{
+		Name:        "name",
+		Symbol:      "symbol",
+		Description: "description",
+		URI:         "https://my-nft-class-meta.invalid/1",
+		URIHash:     "hash",
+		Data:        encodedData,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+		RoyaltyRate: royaltyRate.String(),
+	}
+	issuerNFTInstantiatePayload, err = json.Marshal(issueClassReqNoWhitelist)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddrNoWhitelist, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.NftWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerNFTInstantiatePayload,
+			Label:      "non_fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	classIDNoWhitelist := assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist))
+
+	mintNFTReq1NoWhitelist := moduleswasm.NftMintRequest{
+		ID:        "id-1",
+		Recipient: mintRecipient.String(),
+	}
+
+	// mint
+	mintPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMint: mintNFTReq1NoWhitelist,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	})
+	requireT.NoError(err)
+
+	expectedNFT1 = &nfttypes.NFT{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	}
+	requireT.Equal(
+		expectedNFT1, nftResp.Nft,
+	)
+
+	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, mintRecipient.String())
+
 	// ********** Freeze **********
 
 	freezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
@@ -1244,6 +1325,44 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.False(assertNftFrozenRes.Frozen)
+
+	// ********** ClassFreeze **********
+
+	classFreezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classFreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassFrozenRes, err := assetNftClient.ClassFrozen(ctx, &assetnfttypes.QueryClassFrozenRequest{
+		ClassId: classID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.True(assertNftClassFrozenRes.Frozen)
+
+	// ********** ClassUnFreeze **********
+
+	classUnfreezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassUnfreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classUnfreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassFrozenRes, err = assetNftClient.ClassFrozen(ctx, &assetnfttypes.QueryClassFrozenRequest{
+		ClassId: classID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.False(assertNftClassFrozenRes.Frozen)
 
 	// ********** AddToWhitelist **********
 
@@ -1286,6 +1405,42 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.False(assertNftWhitelistedRes.Whitelisted)
+
+	// ********** AddToClassWhitelist **********
+
+	addToClassWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodAddToClassWhitelist: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, addToClassWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassWhitelistedRes, err := assetNftClient.ClassWhitelistedAccounts(ctx, &assetnfttypes.QueryClassWhitelistedAccountsRequest{
+		ClassId: classID,
+	})
+	requireT.NoError(err)
+	requireT.Contains(assertNftClassWhitelistedRes.Accounts, recipient.String())
+
+	// ********** RemoveFromClassWhitelist **********
+
+	removeFromClassWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodRemoveFromClassWhitelist: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, removeFromClassWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassWhitelistedRes, err = assetNftClient.ClassWhitelistedAccounts(ctx, &assetnfttypes.QueryClassWhitelistedAccountsRequest{
+		ClassId: classID,
+	})
+	requireT.NoError(err)
+	requireT.NotContains(assertNftClassWhitelistedRes.Accounts, recipient.String())
 
 	// ********** Burn **********
 
@@ -1444,6 +1599,52 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(json.Unmarshal(queryOut, &frozenQueryRes))
 	requireT.True(frozenQueryRes.Frozen)
 
+	// ********** ClassFrozen **********
+
+	classFreezePayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classFreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	classFrozenPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFrozen: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classFrozenPayload)
+	requireT.NoError(err)
+	var classFrozenQueryRes assetnfttypes.QueryClassFrozenResponse
+	requireT.NoError(json.Unmarshal(queryOut, &classFrozenQueryRes))
+	requireT.True(frozenQueryRes.Frozen)
+
+	// ********** ClassFrozenAccounts **********
+
+	classFreezePayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classFreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	classFrozenAccountsPayLoad, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodClassFrozenAccounts: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classFrozenAccountsPayLoad)
+	requireT.NoError(err)
+	var classFrozenAccountsQueryRes assetnfttypes.QueryClassFrozenAccountsResponse
+	requireT.NoError(json.Unmarshal(queryOut, &classFrozenAccountsQueryRes))
+	requireT.Contains(classFrozenAccountsQueryRes.Accounts, recipient.String())
+
 	// ********** Whitelisted **********
 
 	whitelistedPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
@@ -1472,6 +1673,28 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	var whitelistedAccountsForNFTQueryRes assetnfttypes.QueryWhitelistedAccountsForNFTResponse
 	requireT.NoError(json.Unmarshal(queryOut, &whitelistedAccountsForNFTQueryRes))
 	requireT.Equal(whitelistedAccountsForNFTQueryRes.Accounts[0], recipient.String())
+
+	// ********** ClassWhitelistedAccounts **********
+
+	addToClassWhitelistPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodAddToClassWhitelist: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, addToClassWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	classWhitelistedAccountsPayLoad, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodClassWhitelistedAccounts: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classWhitelistedAccountsPayLoad)
+	requireT.NoError(err)
+	var classWhitelistedAccountsQueryRes assetnfttypes.QueryClassWhitelistedAccountsResponse
+	requireT.NoError(json.Unmarshal(queryOut, &classWhitelistedAccountsQueryRes))
+	requireT.Contains(classWhitelistedAccountsQueryRes.Accounts, recipient.String())
 
 	// ********** BurntNFT **********
 
@@ -1632,7 +1855,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 }
 
 // TestWASMBankSendContractWithMultipleFundsAttached tests sending multiple ft funds and core token to smart contract.
-// TODO: remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
+// TODO(v4): remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
 func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	t.Parallel()
 
@@ -1648,8 +1871,6 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	)
 
 	// deployWASMContract and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(struct{}{})
-	requireT.NoError(err)
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().
@@ -1658,7 +1879,7 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    initialPayload,
+			Payload:    moduleswasm.EmptyPayload,
 			Amount:     chain.NewCoin(sdk.NewInt(10000)),
 			Label:      "bank_send",
 		},
@@ -1693,19 +1914,10 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	coinsToSend = append(coinsToSend, chain.NewCoin(sdk.NewInt(10000)))
 
 	// send coin from the contract to test wallet
-	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
-		withdraw: {
-			Amount:    "5000",
-			Denom:     nativeDenom,
-			Recipient: recipient.String(),
-		},
-	})
-	requireT.NoError(err)
-
 	executeMsg := &wasmtypes.MsgExecuteContract{
 		Sender:   admin.String(),
 		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(withdrawPayload),
+		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(nativeDenom, 5000), recipient)),
 		Funds:    sdk.NewCoins(coinsToSend...),
 	}
 	_, err = client.BroadcastTx(
@@ -1720,11 +1932,140 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	requireT.NoError(client.AwaitNextBlocks(waitCtx, chain.ClientContext, 2))
 }
 
+// TestWASMContractInstantiationIsRejectedIfThereAreTokensOnItsAccount verifies that smart contract instantiation
+// is rejected if account exists.
+func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	admin := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Deploy smart contract.
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.BankSendWASM,
+	)
+	requireT.NoError(err)
+
+	// Predict the address of the smart contract.
+
+	salt, err := chain.Wasm.GenerateSalt()
+	requireT.NoError(err)
+
+	contract, err := chain.Wasm.PredictWASMContractAddress(
+		ctx,
+		admin,
+		salt,
+		codeID,
+	)
+	requireT.NoError(err)
+
+	// Send coins to the contract address before instantiation.
+
+	msg := &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   contract.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(500))),
+	}
+
+	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, msg)
+	requireT.NoError(err)
+
+	// Instantiate the smart contract. It should fail because its account holds some funds.
+
+	_, err = chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		salt,
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Label:      "bank_send",
+		},
+	)
+	requireT.ErrorContains(err, "contract account already exists")
+
+	// Predict the address of another smart contract.
+
+	salt, err = chain.Wasm.GenerateSalt()
+	requireT.NoError(err)
+
+	contract, err = chain.Wasm.PredictWASMContractAddress(
+		ctx,
+		admin,
+		salt,
+		codeID,
+	)
+	requireT.NoError(err)
+
+	// Create vesting account using address of the smart cotntract.
+
+	createVestingAccMsg := &vestingtypes.MsgCreateVestingAccount{
+		FromAddress: admin.String(),
+		ToAddress:   contract.String(),
+		Amount: sdk.NewCoins(
+			chain.NewCoin(sdkmath.NewInt(10000)),
+		),
+		EndTime: time.Now().Unix(),
+		Delayed: true,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createVestingAccMsg)),
+		createVestingAccMsg,
+	)
+	requireT.NoError(err)
+
+	// Await next block to ensure that funds are vested.
+
+	requireT.NoError(client.AwaitNextBlocks(ctx, clientCtx, 1))
+
+	// Instantiate the smart contract. It should fail because its account holds some funds.
+
+	_, err = chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		salt,
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Label:      "bank_send",
+		},
+	)
+	requireT.ErrorContains(err, "contract account already exists")
+}
+
 func randStringWithLength(n int) string {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	for {
+		for i := range b {
+			b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		}
+		// Make sure string is not one of reserved subunits/symbols and if it is regenerate it.
+		if assetfttypes.ValidateSubunit(string(b)) == nil && assetfttypes.ValidateSymbol(string(b)) == nil {
+			break
+		}
 	}
+
 	return string(b)
 }

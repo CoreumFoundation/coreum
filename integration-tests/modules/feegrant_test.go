@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	codetypes "github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -38,7 +38,7 @@ func TestFeeGrant(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(1),
 	})
-	basicAllowance, err := codetypes.NewAnyWithValue(&feegrant.BasicAllowance{
+	basicAllowance, err := codectypes.NewAnyWithValue(&feegrant.BasicAllowance{
 		SpendLimit: nil, // empty means no limit
 		Expiration: nil, // empty means no limit
 	})

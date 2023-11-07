@@ -4,8 +4,8 @@ use coreum_wasm_sdk::assetft::{
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 use coreum_wasm_sdk::pagination::PageRequest;
-use cosmwasm_std::{coin, entry_point, to_binary, Binary, Deps, QueryRequest, StdResult};
-use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response, SubMsg};
+use cosmwasm_std::{coin, entry_point, to_json_binary, Binary, Deps, QueryRequest, StdResult};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use cw_ownable::{assert_owner, initialize_owner};
 
@@ -38,6 +38,8 @@ pub fn instantiate(
         features: msg.features,
         burn_rate: msg.burn_rate,
         send_commission_rate: msg.send_commission_rate,
+        uri: msg.uri,
+        uri_hash: msg.uri_hash,
     });
 
     let denom = format!("{}-{}", msg.subunit, env.contract.address).to_lowercase();
@@ -60,27 +62,28 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> CoreumResult<ContractError> {
     match msg {
-        ExecuteMsg::Mint { amount } => mint(deps, info, amount),
+        ExecuteMsg::Mint { amount, recipient } => mint(deps, info, amount, recipient),
         ExecuteMsg::Burn { amount } => burn(deps, info, amount),
         ExecuteMsg::Freeze { account, amount } => freeze(deps, info, account, amount),
         ExecuteMsg::Unfreeze { account, amount } => unfreeze(deps, info, account, amount),
+        ExecuteMsg::SetFrozen { account, amount } => set_frozen(deps, info, account, amount),
         ExecuteMsg::GloballyFreeze {} => globally_freeze(deps, info),
         ExecuteMsg::GloballyUnfreeze {} => globally_unfreeze(deps, info),
         ExecuteMsg::SetWhitelistedLimit { account, amount } => {
             set_whitelisted_limit(deps, info, account, amount)
         }
-        ExecuteMsg::MintAndSend { account, amount } => mint_and_send(deps, info, account, amount),
         ExecuteMsg::UpgradeTokenV1 { ibc_enabled } => upgrate_token_v1(deps, info, ibc_enabled),
     }
 }
 
 // ********** Transactions **********
 
-fn mint(deps: DepsMut, info: MessageInfo, amount: u128) -> CoreumResult<ContractError> {
+fn mint(deps: DepsMut, info: MessageInfo, amount: u128, recipient: Option<String>) -> CoreumResult<ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
     let msg = CoreumMsg::AssetFT(assetft::Msg::Mint {
         coin: coin(amount, denom.clone()),
+        recipient,
     });
 
     Ok(Response::new()
@@ -147,6 +150,27 @@ fn unfreeze(
         .add_message(msg))
 }
 
+fn set_frozen(
+    deps: DepsMut,
+    info: MessageInfo,
+    account: String,
+    amount: u128,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let denom = DENOM.load(deps.storage)?;
+
+    let msg = CoreumMsg::AssetFT(assetft::Msg::SetFrozen {
+        account,
+        coin: coin(amount, denom.clone()),
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "set_frozen")
+        .add_attribute("denom", denom)
+        .add_attribute("amount", amount.to_string())
+        .add_message(msg))
+}
+
 fn globally_freeze(deps: DepsMut, info: MessageInfo) -> CoreumResult<ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
@@ -196,34 +220,6 @@ fn set_whitelisted_limit(
         .add_message(msg))
 }
 
-fn mint_and_send(
-    deps: DepsMut,
-    info: MessageInfo,
-    account: String,
-    amount: u128,
-) -> CoreumResult<ContractError> {
-    assert_owner(deps.storage, &info.sender)?;
-    let denom = DENOM.load(deps.storage)?;
-
-    let mint_msg = SubMsg::new(CoreumMsg::AssetFT(assetft::Msg::Mint {
-        coin: coin(amount, denom.clone()),
-    }));
-
-    let send_msg = SubMsg::new(cosmwasm_std::BankMsg::Send {
-        to_address: account,
-        amount: vec![Coin {
-            amount: amount.into(),
-            denom: denom.clone(),
-        }],
-    });
-
-    Ok(Response::new()
-        .add_attribute("method", "mint_and_send")
-        .add_attribute("denom", denom)
-        .add_attribute("amount", amount.to_string())
-        .add_submessages([mint_msg, send_msg]))
-}
-
 fn upgrate_token_v1(
     deps: DepsMut,
     info: MessageInfo,
@@ -248,17 +244,17 @@ fn upgrate_token_v1(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Params {} => to_binary(&query_params(deps)?),
-        QueryMsg::Token {} => to_binary(&query_token(deps)?),
-        QueryMsg::Tokens { issuer } => to_binary(&query_tokens(deps, issuer)?),
-        QueryMsg::FrozenBalance { account } => to_binary(&query_frozen_balance(deps, account)?),
+        QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
+        QueryMsg::Token {} => to_json_binary(&query_token(deps)?),
+        QueryMsg::Tokens { issuer } => to_json_binary(&query_tokens(deps, issuer)?),
+        QueryMsg::FrozenBalance { account } => to_json_binary(&query_frozen_balance(deps, account)?),
         QueryMsg::WhitelistedBalance { account } => {
-            to_binary(&query_whitelisted_balance(deps, account)?)
+            to_json_binary(&query_whitelisted_balance(deps, account)?)
         }
-        QueryMsg::Balance { account } => to_binary(&query_balance(deps, account)?),
-        QueryMsg::FrozenBalances { account } => to_binary(&query_frozen_balances(deps, account)?),
+        QueryMsg::Balance { account } => to_json_binary(&query_balance(deps, account)?),
+        QueryMsg::FrozenBalances { account } => to_json_binary(&query_frozen_balances(deps, account)?),
         QueryMsg::WhitelistedBalances { account } => {
-            to_binary(&query_whitelisted_balances(deps, account)?)
+            to_json_binary(&query_whitelisted_balances(deps, account)?)
         }
     }
 }
