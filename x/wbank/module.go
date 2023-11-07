@@ -53,11 +53,4 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	if err := cfg.RegisterMigration(banktypes.ModuleName, 3, m.Migrate3to4); err != nil {
 		panic(fmt.Sprintf("failed to migrate x/bank from version 3 to 4: %v", err))
 	}
-
-	// FIXME(v47-module-config): remove or replace with corresponding component
-	// Route returns the message routing key for the bank module.
-	/* func (am AppModule) Route() sdk.Route {
-		// we need to pass the wrapped keeper to the handler to use it instead of the default
-		return sdk.NewRoute(banktypes.RouterKey, bank.NewHandler(am.keeper))
-	} */
 }

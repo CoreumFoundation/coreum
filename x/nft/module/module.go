@@ -91,6 +91,8 @@ func (AppModuleBasic) GetTxCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 	keeper keeper.Keeper
+	// TODO(v4): To be removed together with module.
+	//   This todo comes from cosmos-sdk code and will be remove together with nft module once we drop back-compatibility.
 	// TODO accountKeeper,bankKeeper will be replaced by query service
 	accountKeeper nft.AccountKeeper
 	bankKeeper    nft.BankKeeper
@@ -148,13 +150,6 @@ func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 
 // GenerateGenesisState creates a randomized GenState of the nft module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-}
-
-// ProposalContents returns all the nft content functions used to
-// simulate governance proposals.
-// FIXME(v47-legacy) try to remove/replace the usage.
-func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
-	return nil
 }
 
 // RegisterStoreDecoder registers a decoder for nft module's types.

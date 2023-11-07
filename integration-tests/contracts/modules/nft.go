@@ -24,10 +24,11 @@ type IssueNFTRequest struct {
 //
 //nolint:tagliatelle
 type NftMintRequest struct {
-	ID      string `json:"id"`
-	URI     string `json:"uri"`
-	URIHash string `json:"uri_hash"`
-	Data    string `json:"data"`
+	ID        string `json:"id"`
+	URI       string `json:"uri"`
+	URIHash   string `json:"uri_hash"`
+	Data      string `json:"data"`
+	Recipient string `json:"recipient"`
 }
 
 // NftIDRequest is used to query NFT with ID.

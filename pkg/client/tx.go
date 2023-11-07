@@ -312,7 +312,7 @@ func AwaitNextBlocks(
 		if res.SdkBlock != nil {
 			currentHeight = res.SdkBlock.Header.Height
 		} else {
-			// TODO: Remove this in v4 version of cored. Now it is needed because we might still use it in integration tests together with v2 cored binary.
+			// TODO(v4): Remove this in v4 version of cored. Now it is needed because we might still use it in integration tests together with v2 cored binary.
 			currentHeight = res.Block.Header.Height //nolint:staticcheck // Yes, we know that this is deprecated
 		}
 

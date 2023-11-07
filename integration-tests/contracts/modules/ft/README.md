@@ -27,9 +27,9 @@ For more detailed information of the AssetFT module and functionality go to [Ass
 
 # Messages
 
-### Mint (amount) [Mint](https://github.com/CoreumFoundation/coreum/tree/master/x/asset/ft/spec#mint)
+### Mint (amount, recipient) [Mint](https://github.com/CoreumFoundation/coreum/tree/master/x/asset/ft/spec#mint)
 
-The contract (issuer) will mint the amount of tokens provided.
+The contract (issuer) will mint the amount of tokens provided to the corresponding recipient.
 
 ### Burn (amount) [Burn](https://github.com/CoreumFoundation/coreum/tree/master/x/asset/ft/spec#burn)
 
@@ -54,10 +54,6 @@ Globally unfreezes the token.
 ### SetWhitelistedLimit (account, amount) [Whitelist](https://github.com/CoreumFoundation/coreum/tree/master/x/asset/ft/spec#whitelist)
 
 Sets a whitelisted limit for an account.
-
-### MintAndSend (account, amount)
-
-Combines the Mint feature described above with a bank transfer for convenience.
 
 # Queries
 
