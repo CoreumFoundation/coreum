@@ -2018,7 +2018,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 }
 
 // TestWASMBankSendContractWithMultipleFundsAttached tests sending multiple ft funds and core token to smart contract.
-// TODO: remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
+// TODO(v4): remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
 func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	t.Parallel()
 
@@ -2220,8 +2220,15 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 func randStringWithLength(n int) string {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	for {
+		for i := range b {
+			b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		}
+		// Make sure string is not one of reserved subunits/symbols and if it is regenerate it.
+		if assetfttypes.ValidateSubunit(string(b)) == nil && assetfttypes.ValidateSymbol(string(b)) == nil {
+			break
+		}
 	}
+
 	return string(b)
 }
