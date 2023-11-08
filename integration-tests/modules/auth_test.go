@@ -3,9 +3,11 @@
 package modules
 
 import (
+	"encoding/json"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
@@ -14,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
@@ -165,27 +168,20 @@ func TestAuthMultisig(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
 
-	_, estimatedGas, err := client.CalculateGas(
-		ctx,
-		chain.ClientContext.WithFromAddress(multisigAddress),
-		chain.TxFactory().WithGasAdjustment(1.0),
-		bankSendMsg,
-	)
-	requireT.NoError(err)
-
 	// sign and submit with the min threshold
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(multisigAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		bankSendMsg,
 		keyNamesSet[:multisigTreshold]...)
 	requireT.NoError(err)
-	t.Logf("Fully signed tx executed, txHash:%s, gas:%d", txRes.TxHash, txRes.GasUsed)
+	t.Logf("Fully signed tx executed, txHash:%s, gasUsed:%d, gasWanted:%d", txRes.TxHash, txRes.GasUsed, txRes.GasWanted)
 
-	//requireT.Equal(txRes.GasUsed, txRes.GasWanted) // another option to reproduce is to use chain.TxFactory().WithSimulateAndExecute(true) & this assertion.
-
-	requireT.Equal(txRes.GasUsed, int64(estimatedGas)) // this shouldn't fail.
+	// Real gas used might be less that estimation for multisig account because (especially when there are many signers)
+	// because in ConsumeTxSizeGasDecorator (cosmos-sdk@v0.47.5/x/auth/ante/basic.go:99) bytes are estimated for the worst
+	// case.
+	requireT.LessOrEqual(txRes.GasUsed, txRes.GasWanted)
 
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipientAddr,
@@ -233,7 +229,7 @@ func TestGasEstimation(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	sender := chain.GenAccount()
+	singlesigAddress := chain.GenAccount()
 
 	multisigPublicKey1, _, err := chain.GenMultisigAccount(3, 2)
 	require.NoError(t, err)
@@ -246,29 +242,12 @@ func TestGasEstimation(t *testing.T) {
 	dgc := deterministicgas.DefaultConfig()
 
 	// For accounts to exist on chain we need to fund them at least with min amount (1ucore).
-	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
+	chain.FundAccountWithOptions(ctx, t, singlesigAddress, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
 	chain.FundAccountWithOptions(ctx, t, multisigAddress1, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
 	chain.FundAccountWithOptions(ctx, t, multisigAddress2, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
 
-	//initialPayload, err := json.Marshal(moduleswasm.SimpleState{
-	//	Count: 1337,
-	//})
-	//requireT.NoError(err)
-	//contractAddr, codeID, err := chain.Wasm.DeployAndInstantiateWASMContract(
-	//	ctx,
-	//	chain.TxFactory().WithSimulateAndExecute(true),
-	//	admin,
-	//	moduleswasm.SimpleStateWASM,
-	//	integration.InstantiateConfig{
-	//		AccessType: wasmtypes.AccessTypeUnspecified,
-	//		Payload:    initialPayload,
-	//		Label:      "simple_state",
-	//	},
-	//)
-	//requireT.NoError(err)
-	//chain.Wasm.ExecuteWASMContract()
-
-	tests := []struct {
+	// For deterministic messages we are able to assert that gas estimation is equal to exact number.
+	testsDeterm := []struct {
 		name        string
 		fromAddress sdk.AccAddress
 		msgs        []sdk.Msg
@@ -276,11 +255,11 @@ func TestGasEstimation(t *testing.T) {
 	}{
 		{
 			name:        "singlesig_bank_send",
-			fromAddress: sender,
+			fromAddress: singlesigAddress,
 			msgs: []sdk.Msg{
 				&banktypes.MsgSend{
-					FromAddress: sender.String(),
-					ToAddress:   sender.String(),
+					FromAddress: singlesigAddress.String(),
+					ToAddress:   singlesigAddress.String(),
 					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
 				},
 			},
@@ -298,40 +277,37 @@ func TestGasEstimation(t *testing.T) {
 				},
 			},
 			// single signature no extra bytes.
-			// Note that multisig account and multiple signatures in a single tx are different.
-			// Multisig tx still has single signature which is combination of multiple signatures so gas is charged for single sig.
-			// Tx containing multiple signatures is a different case and gas is charged for each standalone signature.
 			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas,
 		},
-		// FIXME: This test fails. Probably because of bug.
-		//{
-		//	name:        "multisig_6_7_bank_send",
-		//	fromAddress: multisigAddress2,
-		//	msgs: []sdk.Msg{
-		//		&banktypes.MsgSend{
-		//			FromAddress: multisigAddress2.String(),
-		//			ToAddress:   multisigAddress2.String(),
-		//			Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-		//		},
-		//	},
-		//	expectedGas:             dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas,
-		//	expectedGasAllowedDelta: 0,
-		//},
+		{
+			name:        "multisig_6_7_bank_send",
+			fromAddress: multisigAddress2,
+			msgs: []sdk.Msg{
+				&banktypes.MsgSend{
+					FromAddress: multisigAddress2.String(),
+					ToAddress:   multisigAddress2.String(),
+					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+				},
+			},
+			// estimation uses worst case to estimate number of bytes in tx which causes possible overflow of free bytes.
+			// 10 is price for each extra byte over FreeBytes.
+			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + 1133*10,
+		},
 		{
 			name:        "singlesig_auth_exec_and_bank_send",
-			fromAddress: sender,
+			fromAddress: singlesigAddress,
 			msgs: []sdk.Msg{
 				lo.ToPtr(
-					authztypes.NewMsgExec(sender, []sdk.Msg{
+					authztypes.NewMsgExec(singlesigAddress, []sdk.Msg{
 						&banktypes.MsgSend{
-							FromAddress: sender.String(),
-							ToAddress:   sender.String(),
+							FromAddress: singlesigAddress.String(),
+							ToAddress:   singlesigAddress.String(),
 							Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
 						},
 					})),
 				&banktypes.MsgSend{
-					FromAddress: sender.String(),
-					ToAddress:   sender.String(),
+					FromAddress: singlesigAddress.String(),
+					ToAddress:   singlesigAddress.String(),
 					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
 				},
 			},
@@ -339,7 +315,7 @@ func TestGasEstimation(t *testing.T) {
 			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + (1*deterministicgas.AuthzExecOverhead + 1*deterministicgas.BankSendPerCoinGas),
 		},
 	}
-	for _, test := range tests {
+	for _, test := range testsDeterm {
 		t.Run(test.name, func(t *testing.T) {
 			_, estimatedGas, err := client.CalculateGas(
 				ctx,
@@ -348,7 +324,77 @@ func TestGasEstimation(t *testing.T) {
 				test.msgs...,
 			)
 			require.NoError(t, err)
-			require.Equal(t, test.expectedGas, estimatedGas)
+			require.Equal(t, int(test.expectedGas), int(estimatedGas))
 		})
 	}
+
+	// For non-deterministic messages we need to deploy a contract.
+	// Any address could be admin since we are not going to execute it but just estimate.
+	admin := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{Amount: sdkmath.NewInt(1_000_000)})
+
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+		Count: 1337,
+	})
+	require.NoError(t, err)
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		admin,
+		moduleswasm.SimpleStateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "simple_state",
+		},
+	)
+	require.NoError(t, err)
+
+	wasmPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleIncrement)
+	require.NoError(t, err)
+
+	// For non-deterministic messages we are unable to know exact number, so we do just basic assertion.
+	testsNonDeterm := []struct {
+		name        string
+		fromAddress sdk.AccAddress
+		msgs        []sdk.Msg
+	}{
+		{
+			name:        "singlesig_wasm_execute_contract",
+			fromAddress: singlesigAddress,
+			msgs: []sdk.Msg{
+				&wasmtypes.MsgExecuteContract{
+					Sender:   singlesigAddress.String(),
+					Contract: contractAddr,
+					Msg:      wasmtypes.RawContractMessage(wasmPayload),
+					Funds:    sdk.Coins{},
+				},
+			},
+		},
+		{
+			name:        "multisig_2_3_wasm_execute_contract",
+			fromAddress: multisigAddress1,
+			msgs: []sdk.Msg{
+				&wasmtypes.MsgExecuteContract{
+					Sender:   multisigAddress1.String(),
+					Contract: contractAddr,
+					Msg:      wasmtypes.RawContractMessage(wasmPayload),
+					Funds:    sdk.Coins{},
+				},
+			},
+		},
+	}
+	for _, test := range testsNonDeterm {
+		t.Run(test.name, func(t *testing.T) {
+			_, estimatedGas, err := client.CalculateGas(
+				ctx,
+				chain.ClientContext.WithFromAddress(test.fromAddress),
+				chain.TxFactory(),
+				test.msgs...,
+			)
+			require.NoError(t, err)
+			require.Greater(t, int(estimatedGas), 0)
+		})
+	}
+
 }
