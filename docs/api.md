@@ -3270,6 +3270,8 @@ Deprecated: use cosmos-sdk/x/nft package instead | GET|/coreum/nft/v1beta1/class
 ### MsgSend
 MsgSend represents a message to send a nft from one account to another account.
 
+Deprecated: use cosmos-sdk/x/nft package instead
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |

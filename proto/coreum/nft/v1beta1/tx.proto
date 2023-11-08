@@ -14,6 +14,8 @@ service Msg {
 }
 
 // MsgSend represents a message to send a nft from one account to another account.
+//
+// Deprecated: use cosmos-sdk/x/nft package instead
 message MsgSend {
   option (cosmos.msg.v1.signer) = "sender";
 

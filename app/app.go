@@ -179,7 +179,7 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
 			[]govclient.ProposalHandler{
-				// TODO: Remove once IBC migrates to the new mechanism
+				// TODO(v4): Remove once IBC upgrades to the new param management mechanism. Check ibc-go/modules/core/02-client/types/params.go
 				paramsclient.ProposalHandler,
 				ibcclientclient.UpdateClientProposalHandler,
 				ibcclientclient.UpgradeProposalHandler,
@@ -531,7 +531,7 @@ func New(
 	// See: https://docs.cosmos.network/main/modules/gov#proposal-messages
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-		// TODO: Remove once IBC upgrades to the new mechanism
+		// TODO(v4): Remove once IBC upgrades to the new param management mechanism. Check ibc-go/modules/core/02-client/types/params.go
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
@@ -627,7 +627,7 @@ func New(
 		app.BankKeeper,
 		app.StakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
-		app.IBCKeeper.ChannelKeeper, // FIXME(v47-ibc) add the fee wrapper
+		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.ScopedWASMKeeper,
@@ -645,7 +645,7 @@ func New(
 	// FIXME(v47-legacy): remove once we finish with full migration
 	govRouter.AddRoute(wasmtypes.RouterKey, wasmkeeper.NewWasmProposalHandler(app.WasmKeeper, wasmtypes.EnableAllProposals)) //nolint:staticcheck // we need to keep backward compatibility
 
-	// FIXME(v47-legacy): remove once we finish with full migration
+	// FIXME(v4): drop once we drop gov v1beta1 compatibility.
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
 

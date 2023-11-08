@@ -79,7 +79,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5_000),
 		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5_000),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9_000),
-		// TODO: Reestimate when next token upgrade is prepared
+		// TODO(v4): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
 		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25_000),
 
 		// asset/nft
@@ -144,6 +144,7 @@ func DefaultConfig() Config {
 
 		// cnft
 		// Deprecated: this will be removed in the next release alongside the cnft types.
+		//nolint:staticcheck //deprecated
 		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25_000),
 
 		// slashing
