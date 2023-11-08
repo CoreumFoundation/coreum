@@ -7,6 +7,8 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"math/rand"
 	"testing"
 	"time"
@@ -323,12 +325,20 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	// pin smart contract
-	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposalV1(ctx, proposer, &wasmtypes.PinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
-		Title:       "Pin smart contract",
-		Description: "Testing smart contract pinning",
-		CodeIDs:     []uint64{codeID},
-	})
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		[]sdk.Msg{
+			&wasmtypes.MsgPinCodes{
+				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				CodeIDs:   []uint64{codeID},
+			}},
+		"",
+		"Pin smart contract",
+		"Testing smart contract pinning",
+	)
 	requireT.NoError(err)
+
 	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
@@ -349,11 +359,20 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	gasUsedAfterPinning := moduleswasm.IncrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1339)
 
 	// unpin smart contract
-	proposalMsg, err = chain.LegacyGovernance.NewMsgSubmitProposalV1(ctx, proposer, &wasmtypes.UnpinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
-		Title:       "Unpin smart contract",
-		Description: "Testing smart contract unpinning",
-		CodeIDs:     []uint64{codeID},
-	})
+	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		[]sdk.Msg{
+			&wasmtypes.MsgUnpinCodes{
+				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				CodeIDs:   []uint64{codeID},
+			}},
+		"",
+		"Unpin smart contract",
+		"Testing smart contract unpinning",
+	)
+	requireT.NoError(err)
+
 	requireT.NoError(err)
 	proposalID, err = chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
