@@ -39,6 +39,26 @@ type authz struct {
 	Granter string `json:"granter"`
 }
 
+//nolint:tagliatelle
+type authzNFTOfferRequest struct {
+	ClassID string   `json:"class_id"`
+	ID      string   `json:"id"`
+	Price   sdk.Coin `json:"price"`
+}
+
+//nolint:tagliatelle
+type authzAcceptNFTOfferRequest struct {
+	ClassID string `json:"class_id"`
+	ID      string `json:"id"`
+}
+
+type authzNFTMethod string
+
+const (
+	offerNft       authzNFTMethod = "offer_nft"
+	acceptNftOffer authzNFTMethod = "accept_nft_offer"
+)
+
 // fungible token wasm models
 //
 //nolint:tagliatelle
@@ -568,6 +588,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	authzClient := authztypes.NewQueryClient(chain.ClientContext)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	nftClient := nfttypes.NewQueryClient(chain.ClientContext)
 
 	totalAmountToSend := sdkmath.NewInt(2_000)
 
@@ -593,6 +614,8 @@ func TestWASMAuthzContract(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
+
+	// ********** Test sending funds with Authz **********
 
 	// grant the bank send authorization
 	grantMsg, err := authztypes.NewMsgGrant(
@@ -662,6 +685,146 @@ func TestWASMAuthzContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(totalAmountToSend.MulRaw(2)).String(), receiverBalancesRes.Balances.String())
+
+	// ********** Test trading an NFT for an AssetFT with Authz **********
+
+	// Issue and mind an NFT to the sender (will offer it)
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:   granter.String(),
+		Symbol:   "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, granter)
+
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:    granter.String(),
+		Recipient: granter.String(),
+		ID:        "id-1",
+		ClassID:   classID,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+
+	requireT.NoError(err)
+
+	// Issue an AssetFT that will be used to buy the NFT
+
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(receiver, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	issueAssetFTMsg := &assetfttypes.MsgIssue{
+		Issuer:        receiver.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(100000),
+		Features:      []assetfttypes.Feature{},
+		URI:           "https://my-class-meta.valid/1",
+		URIHash:       "content-hash",
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(receiver),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueAssetFTMsg)),
+		issueAssetFTMsg,
+	)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueAssetFTMsg.Subunit, receiver)
+
+	// grant the nft transfer authorization to the contract
+	grantMsg, err = authztypes.NewMsgGrant(
+		granter,
+		sdk.MustAccAddressFromBech32(contractAddr),
+		assetnfttypes.NewSendAuthorization([]assetnfttypes.NFTIdentifier{
+			{ClassId: classID, Id: "id-1"},
+		}),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	requireT.NoError(err)
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: contractAddr,
+	})
+	requireT.NoError(err)
+	requireT.Equal(2, len(gransRes.Grants))
+	updatedGrant := assetnfttypes.SendAuthorization{}
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[1].Authorization.Value, &updatedGrant)
+	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{
+		{ClassId: classID, Id: "id-1"},
+	}, updatedGrant.Nfts)
+
+	// Make the offer of the NFT for the AssetFT
+
+	nftOfferPayload, err := json.Marshal(map[authzNFTMethod]authzNFTOfferRequest{
+		offerNft: {
+			ClassID: classID,
+			ID:      "id-1",
+			Price:   sdk.NewCoin(denom, sdkmath.NewInt(10000)),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, nftOfferPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	ownerResp, err := nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      "id-1",
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(ownerResp.Owner, contractAddr)
+
+	// Accept the offer
+	acceptNftOfferPayload, err := json.Marshal(map[authzNFTMethod]authzAcceptNFTOfferRequest{
+		acceptNftOffer: {
+			ClassID: classID,
+			ID:      "id-1",
+		},
+	})
+	requireT.NoError(err)
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), receiver, contractAddr, acceptNftOfferPayload, sdk.Coin{Denom: denom, Amount: sdkmath.NewInt(10000)})
+	requireT.NoError(err)
+
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: granter.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal("10000", balanceRes.Balance.Amount.String())
+
+	ownerResp, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      "id-1",
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(ownerResp.Owner, receiver.String())
 }
 
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.
@@ -1855,7 +2018,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 }
 
 // TestWASMBankSendContractWithMultipleFundsAttached tests sending multiple ft funds and core token to smart contract.
-// TODO: remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
+// TODO(v4): remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
 func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	t.Parallel()
 
@@ -2057,8 +2220,15 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 func randStringWithLength(n int) string {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	for {
+		for i := range b {
+			b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		}
+		// Make sure string is not one of reserved subunits/symbols and if it is regenerate it.
+		if assetfttypes.ValidateSubunit(string(b)) == nil && assetfttypes.ValidateSymbol(string(b)) == nil {
+			break
+		}
 	}
+
 	return string(b)
 }
