@@ -1,26 +1,11 @@
 package ante
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/CoreumFoundation/coreum/v3/x/deterministicgas"
 )
-
-type debuggingGasMeter struct {
-	sdk.GasMeter
-}
-
-func newDGM(g sdk.GasMeter) debuggingGasMeter {
-	return debuggingGasMeter{g}
-}
-
-func (d debuggingGasMeter) ConsumeGas(amount sdk.Gas, descriptor string) {
-	fmt.Printf("Consumig gas descriptor: %q, amount: %d\n", descriptor, amount)
-	d.GasMeter.ConsumeGas(amount, descriptor)
-}
 
 // SetInfiniteGasMeterDecorator sets the infinite gas limit for ante handler
 // CONTRACT: Must be the first decorator in the chain.
@@ -43,7 +28,7 @@ func (sigmd SetInfiniteGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx,
 	ctx.GasMeter().ConsumeGas(sigmd.deterministicGasConfig.FixedGas, "Fixed")
 
 	// Set infinite gas meter for ante handler
-	return next(ctx.WithGasMeter(newDGM(sdk.NewInfiniteGasMeter())), tx, simulate)
+	return next(ctx.WithGasMeter(sdk.NewInfiniteGasMeter()), tx, simulate)
 }
 
 // AddBaseGasDecorator adds free gas to gas meter.
@@ -67,14 +52,14 @@ func (abgd AddBaseGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 	if simulate || ctx.BlockHeight() == 0 {
 		// During simulation and genesis initialization infinite gas meter is set inside context by `SetUpContextDecorator`.
 		// Here, we reset it to initial state with 0 gas consumed.
-		gasMeter = newDGM(sdk.NewInfiniteGasMeter())
+		gasMeter = sdk.NewInfiniteGasMeter()
 	} else {
 		params := abgd.ak.GetParams(ctx)
 
 		// It is not needed to verify that tx really implements `GasTx` interface because it has been already done by
 		// `SetUpContextDecorator`
 		gasTx := tx.(authante.GasTx)
-		gasMeter = newDGM(sdk.NewGasMeter(gasTx.GetGas() + abgd.deterministicGasConfig.TxBaseGas(params)))
+		gasMeter = sdk.NewGasMeter(gasTx.GetGas() + abgd.deterministicGasConfig.TxBaseGas(params))
 	}
 	return next(ctx.WithGasMeter(gasMeter), tx, simulate)
 }
@@ -106,9 +91,9 @@ func (cfgd ChargeFixedGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simul
 	if simulate || ctx.BlockHeight() == 0 {
 		// During simulation and genesis initialization infinite gas meter is set inside context by `SetUpContextDecorator`.
 		// We reset it to initial state with 0 gas consumed.
-		gasMeter = newDGM(sdk.NewInfiniteGasMeter())
+		gasMeter = sdk.NewInfiniteGasMeter()
 	} else {
-		gasMeter = newDGM(sdk.NewGasMeter(gasTx.GetGas()))
+		gasMeter = sdk.NewGasMeter(gasTx.GetGas())
 	}
 
 	gasConsumed := ctx.GasMeter().GasConsumed()
@@ -117,8 +102,6 @@ func (cfgd ChargeFixedGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simul
 		gasMeter.ConsumeGas(gasConsumed-bonus, "OverBonus")
 	}
 	gasMeter.ConsumeGas(cfgd.deterministicGasConfig.FixedGas, "Fixed")
-
-	fmt.Printf("ChargeFixedGasDecorator: simulate: %v\n. gasMeter: %v\n", simulate, gasMeter.String())
 
 	return next(ctx.WithGasMeter(gasMeter), tx, simulate)
 }

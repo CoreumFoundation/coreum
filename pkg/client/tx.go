@@ -182,22 +182,8 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 			signature,
 		},
 	})
-	fmt.Printf("tx bytes len: %v\n", len(txBytes))
 	if err != nil {
 		return nil, 0, errors.WithStack(err)
-	}
-
-	txTx, err := clientCtx.TxConfig().TxDecoder()(txBytes)
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-
-	txJSON, err := clientCtx.TxConfig().TxJSONEncoder()(txTx)
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	} else {
-		_ = txJSON
-		fmt.Printf("txJSON: %s\n", txJSON)
 	}
 
 	txSvcClient := sdktx.NewServiceClient(clientCtx)
@@ -327,7 +313,7 @@ func AwaitNextBlocks(
 		if res.SdkBlock != nil {
 			currentHeight = res.SdkBlock.Header.Height
 		} else {
-			// TODO: Remove this in v4 version of cored. Now it is needed because we might still use it in integration tests together with v2 cored binary.
+			// TODO(v4): Remove this in v4 version of cored. Now it is needed because we might still use it in integration tests together with v2 cored binary.
 			currentHeight = res.Block.Header.Height //nolint:staticcheck // Yes, we know that this is deprecated
 		}
 
