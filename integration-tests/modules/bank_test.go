@@ -766,8 +766,6 @@ func TestTryBankMultiSendFromMultipleAccounts(t *testing.T) {
 	requireT.ErrorIs(err, banktypes.ErrMultipleSenders)
 }
 
-// FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
-
 // TestBankCoreSend checks that core is transferred correctly between wallets.
 func TestBankCoreSend(t *testing.T) {
 	t.Parallel()
@@ -822,6 +820,22 @@ func TestBankCoreSend(t *testing.T) {
 
 	assert.Equal(t, senderInitialAmount.Sub(amountToSend).String(), balancesSender.Balance.Amount.String())
 	assert.Equal(t, recipientInitialAmount.Add(amountToSend).String(), balancesRecipient.Balance.Amount.String())
+
+	// Try to send more than remaining balance
+	msg = &banktypes.MsgSend{
+		FromAddress: sender.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(*balancesSender.Balance), // sender can't send whole balance because funds for paying fees are required.
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "insufficient funds")
 }
 
 func assertBatchAccounts(
