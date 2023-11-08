@@ -35,7 +35,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
 			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{},
+			&nft.MsgSend{}, //nolint:staticcheck // we are testing deprecated handlers
 		},
 		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
@@ -120,7 +120,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	requireT.Equal(issuer.String(), ownerRes.Owner)
 
 	// change the owner
-	sendMsg := &nft.MsgSend{
+	sendMsg := &nft.MsgSend{ //nolint:staticcheck // we are testing deprecated handlers
 		Sender:   issuer.String(),
 		Receiver: recipient.String(),
 		Id:       mintMsg.ID,

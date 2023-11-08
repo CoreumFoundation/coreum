@@ -1,17 +1,21 @@
+use coreum_wasm_sdk::core::{CoreumMsg, CoreumResult};
+use coreum_wasm_sdk::nft;
+use coreum_wasm_sdk::types::cosmos::authz::v1beta1::MsgExec;
+use coreum_wasm_sdk::types::cosmos::bank::v1beta1::MsgSend;
+use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
+use coreum_wasm_sdk::types::cosmos::nft::v1beta1::MsgSend as MsgSendNft;
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{
+    BankMsg, Binary, Coin as CWCoin, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128,
+};
 use cw2::set_contract_version;
-use protobuf::Message;
+use cw_utils::one_coin;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::state::GRANTER;
-// Get Protos
-include!("protos/mod.rs");
-use CosmosAuthz::MsgExec;
-use CosmosBankSend::Coin;
-use CosmosBankSend::MsgSend;
+use crate::state::{Offer, GRANTER, NFT_OFFERS};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -37,38 +41,49 @@ pub fn instantiate(
 pub fn execute(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+) -> CoreumResult<ContractError> {
     match msg {
-        ExecuteMsg::Transfer{ address, amount, denom } => execute_transfer(deps, env, address, amount, denom),
-        ExecuteMsg::Stargate{ type_url, value } => execute_stargate_message(type_url, value),
+        ExecuteMsg::Transfer {
+            address,
+            amount,
+            denom,
+        } => execute_transfer(deps, env, address, amount, denom),
+        ExecuteMsg::OfferNft {
+            class_id,
+            id,
+            price,
+        } => offer_nft(deps, env, info, class_id, id, price),
+        ExecuteMsg::AcceptNftOffer { class_id, id } => accept_offer(deps, info, class_id, id),
+        ExecuteMsg::Stargate { type_url, value } => execute_stargate_message(type_url, value),
     }
 }
 
-pub fn execute_transfer(
+fn execute_transfer(
     deps: DepsMut,
     env: Env,
     address: String,
     amount: Uint128,
     denom: String,
-) -> Result<Response, ContractError> {
+) -> CoreumResult<ContractError> {
     deps.api.addr_validate(address.as_ref())?;
     let granter = GRANTER.load(deps.storage)?;
 
-    let mut send = MsgSend::new();
-    send.from_address = granter.into_string();
-    send.to_address = address;
-    send.amount = vec![];
-    let mut coin = Coin::new();
-    coin.amount = amount.to_string();
-    coin.denom = denom;
-    send.amount.push(coin);
+    let send = MsgSend {
+        from_address: granter.to_string(),
+        to_address: address,
+        amount: vec![Coin {
+            denom,
+            amount: amount.to_string(),
+        }],
+    };
 
-    let mut exec = MsgExec::new();
-    exec.grantee = env.contract.address.to_string();
-    exec.msgs = vec![send.to_any().unwrap()];
-    let exec_bytes: Vec<u8> = exec.write_to_bytes().unwrap();
+    let exec = MsgExec {
+        grantee: env.contract.address.to_string(),
+        msgs: vec![send.to_any()],
+    };
+    let exec_bytes: Vec<u8> = exec.to_proto_bytes();
 
     let msg = CosmosMsg::Stargate {
         type_url: "/cosmos.authz.v1beta1.MsgExec".to_string(),
@@ -80,14 +95,78 @@ pub fn execute_transfer(
         .add_message(msg))
 }
 
-pub fn execute_stargate_message(
-    type_url: String,
-    value: Binary,
-) -> Result<Response, ContractError> {
-    let msg = CosmosMsg::Stargate {
-        type_url: type_url,
-        value: value,
+// The contract must have been granted authorization to send the NFT before execution or it will fail.
+// We will send the NFT to the contract to be able to sell it when someone provides the price.
+fn offer_nft(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    class_id: String,
+    id: String,
+    price: CWCoin,
+) -> CoreumResult<ContractError> {
+    let nft_send = MsgSendNft {
+        class_id: class_id.clone(),
+        id: id.clone(),
+        sender: info.sender.to_string(),
+        receiver: env.contract.address.to_string(),
     };
+
+    let exec = MsgExec {
+        grantee: env.contract.address.to_string(),
+        msgs: vec![nft_send.to_any()],
+    };
+    let exec_bytes: Vec<u8> = exec.to_proto_bytes();
+
+    let msg = CosmosMsg::Stargate {
+        type_url: "/cosmos.authz.v1beta1.MsgExec".to_string(),
+        value: Binary::from(exec_bytes),
+    };
+
+    NFT_OFFERS.save(
+        deps.storage,
+        (class_id, id),
+        &Offer {
+            address: info.sender,
+            price,
+        },
+    )?;
+
+    Ok(Response::new()
+        .add_attribute("method", "execute_offer_nft_authz")
+        .add_message(msg))
+}
+
+fn accept_offer(
+    deps: DepsMut,
+    info: MessageInfo,
+    class_id: String,
+    id: String,
+) -> CoreumResult<ContractError> {
+    let offer = NFT_OFFERS.load(deps.storage, (class_id.clone(), id.clone()))?;
+
+    if one_coin(&info)? != offer.price {
+        return Err(ContractError::InvalidFundsAmount {});
+    }
+
+    let nft_send_msg = CosmosMsg::from(CoreumMsg::NFT(nft::Msg::Send {
+        class_id,
+        id,
+        receiver: info.sender.to_string(),
+    }));
+
+    let send_funds_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: offer.address.to_string(),
+        amount: info.funds,
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "execute_accept_nft_offer")
+        .add_messages([nft_send_msg, send_funds_msg]))
+}
+
+pub fn execute_stargate_message(type_url: String, value: Binary) -> CoreumResult<ContractError> {
+    let msg = CosmosMsg::Stargate { type_url, value };
 
     Ok(Response::new()
         .add_attribute("method", "execute_authz_stargate")
