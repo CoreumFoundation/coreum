@@ -50,7 +50,7 @@ Let's say we have a transaction with 1 messages of type
 signatures and the tx size is 1000 bytes, total will be:
 
 `
-TotalGas = 65000 +  1 * 50000 + 1 * 1000 + max(0, 1000-2048) * 10
+TotalGas = 65000 +  1 * 50000 + (1 - 1) * 1000 + max(0, 1000-2048) * 10
 `
 
 #### Example 2
@@ -59,7 +59,7 @@ Let's say we have a transaction with 2 messages of type
 signatures and the tx size is 2050 bytes, total will be:
 
 `
-TotalGas = 65000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
+TotalGas = 65000 + 2 * 70000 + (2 - 1) * 1000 + max(0, 2050-2048) * 10
 `
 
 ## Gas Tables
