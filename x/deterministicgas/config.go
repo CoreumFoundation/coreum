@@ -144,6 +144,7 @@ func DefaultConfig() Config {
 
 		// cnft
 		// Deprecated: this will be removed in the next release alongside the cnft types.
+		//nolint:staticcheck //deprecated
 		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25_000),
 
 		// slashing
