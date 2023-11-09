@@ -10,6 +10,7 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/samber/lo"
@@ -240,6 +241,8 @@ func TestGasEstimation(t *testing.T) {
 	multisigAddress2 := sdk.AccAddress(multisigPublicKey2.Address())
 
 	dgc := deterministicgas.DefaultConfig()
+	authParams, err := authtypes.NewQueryClient(chain.ClientContext).Params(ctx, &authtypes.QueryParamsRequest{})
+	require.NoError(t, err)
 
 	// For accounts to exist on chain we need to fund them at least with min amount (1ucore).
 	chain.FundAccountWithOptions(ctx, t, singlesigAddress, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
@@ -291,7 +294,7 @@ func TestGasEstimation(t *testing.T) {
 			},
 			// estimation uses worst case to estimate number of bytes in tx which causes possible overflow of free bytes.
 			// 10 is price for each extra byte over FreeBytes.
-			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + 1133*10,
+			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + 1133*authParams.Params.TxSizeCostPerByte,
 		},
 		{
 			name:        "singlesig_auth_exec_and_bank_send",
