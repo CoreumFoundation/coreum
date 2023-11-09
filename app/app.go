@@ -107,6 +107,7 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibclocalhost "github.com/cosmos/ibc-go/v7/modules/light-clients/09-localhost"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cast"
 
 	"github.com/CoreumFoundation/coreum/v3/app/openapi"
@@ -608,18 +609,15 @@ func New(
 		)),
 	}
 
-	// FIXME (wasmd-1575): This is commented out temporarily because it causes panics in telemetry server due to buggy
-	// initialization of wasm vm in version v0.41 of wasmd.
-	// Bug has been already fixed here: https://github.com/CosmWasm/wasmd/pull/1575
-	// and will be released in v0.42.
-	// if cast.ToBool(appOpts.Get("telemetry.enabled")) {
-	// 	wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
-	// }
+	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	}
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3"
+	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
+
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		keys[wasmtypes.StoreKey],
@@ -640,10 +638,6 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
-
-	// enable all wasm proposals
-	// FIXME(v47-legacy): remove once we finish with full migration
-	govRouter.AddRoute(wasmtypes.RouterKey, wasmkeeper.NewWasmProposalHandler(app.WasmKeeper, wasmtypes.EnableAllProposals)) //nolint:staticcheck // we need to keep backward compatibility
 
 	// FIXME(v4): drop once we drop gov v1beta1 compatibility.
 	// Set legacy router for backwards compatibility with gov v1beta1
