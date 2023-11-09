@@ -2,11 +2,11 @@ package app_test
 
 import (
 	"fmt"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"reflect"
 	"testing"
 	_ "unsafe"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdktestdatatypes "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktxtypes "github.com/cosmos/cosmos-sdk/types/tx"

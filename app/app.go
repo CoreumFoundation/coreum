@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
 	"os"
@@ -108,6 +107,7 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibclocalhost "github.com/cosmos/ibc-go/v7/modules/light-clients/09-localhost"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cast"
 
 	"github.com/CoreumFoundation/coreum/v3/app/openapi"
