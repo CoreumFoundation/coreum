@@ -11,6 +11,8 @@ import (
 var _ nft.MsgServer = Keeper{}
 
 // Send implement Send method of the types.MsgServer.
+//
+//nolint:staticcheck //deprecated
 func (k Keeper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendResponse, error) {
 	_, err := k.wkeeper.Send(goCtx, &cosmosnft.MsgSend{
 		ClassId:  msg.ClassId,

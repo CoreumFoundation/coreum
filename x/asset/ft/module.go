@@ -173,12 +173,6 @@ func (AppModule) ConsensusVersion() uint64 { return 3 }
 // GenerateGenesisState creates a randomized GenState of the asset ft module.
 func (AppModule) GenerateGenesisState(_ *module.SimulationState) {}
 
-// ProposalContents doesn't return any content functions for governance proposals.
-// FIXME(v47-legacy) try to remove/replace the usage.
-func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
-	return nil
-}
-
 // RegisterStoreDecoder registers a decoder for asset ft module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
