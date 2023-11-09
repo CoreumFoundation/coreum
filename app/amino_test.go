@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"fmt"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"reflect"
 	"testing"
 	_ "unsafe"
@@ -85,6 +86,9 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		// internal cosmos
 		sdk.MsgTypeURL(&sdktestdatatypes.MsgCreateDog{}): {},
 		sdk.MsgTypeURL(&sdktxtypes.Tx{}):                 {},
+
+		// wasm
+		sdk.MsgTypeURL(&wasmtypes.MsgUpdateContractLabel{}): {},
 	}
 
 	for protoType := range revProtoTypes {
