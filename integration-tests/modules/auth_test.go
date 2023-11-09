@@ -133,7 +133,7 @@ func TestAuthMultisig(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 	recipient := chain.GenAccount()
-	amountToSendFromMultisigAccount := int64(1000)
+	amountToSendFromMultisigAccount := int64(1_000_000)
 
 	signersCount := 7
 	multisigTreshold := 6
@@ -141,13 +141,11 @@ func TestAuthMultisig(t *testing.T) {
 	requireT.NoError(err)
 	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 
-	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-
-	// fund the multisig account
 	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{}},
-		Amount:   sdkmath.NewInt(amountToSendFromMultisigAccount),
+		Amount: sdkmath.NewInt(amountToSendFromMultisigAccount), // for gas estimation to work wee need account to exist on chain so we fund it with to be sent amount.
 	})
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	// prepare account to be funded from the multisig
 	recipientAddr := recipient.String()
@@ -158,6 +156,20 @@ func TestAuthMultisig(t *testing.T) {
 		ToAddress:   recipientAddr,
 		Amount:      coinsToSendToRecipient,
 	}
+
+	_, gasEstimation, err := client.CalculateGas(
+		ctx,
+		chain.ClientContext.WithFromAddress(multisigAddress),
+		chain.TxFactory(),
+		bankSendMsg,
+	)
+	requireT.NoError(err)
+
+	// fund the multisig account
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(int64(gasEstimation)), // because of 6/7 multisig gas exceeds FixedGas, and we need to fund it to pay fees.
+	})
+
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(multisigAddress),
@@ -179,10 +191,10 @@ func TestAuthMultisig(t *testing.T) {
 	requireT.NoError(err)
 	t.Logf("Fully signed tx executed, txHash:%s, gasUsed:%d, gasWanted:%d", txRes.TxHash, txRes.GasUsed, txRes.GasWanted)
 
-	// Real gas used might be less that estimation for multisig account because (especially when there are many signers)
-	// because in ConsumeTxSizeGasDecorator (cosmos-sdk@v0.47.5/x/auth/ante/basic.go:99) bytes are estimated for the worst
-	// case.
-	requireT.LessOrEqual(txRes.GasUsed, txRes.GasWanted)
+	// Real gas used might be less that estimation for multisig account (especially when there are many signers)
+	// because in ConsumeTxSizeGasDecorator (cosmos-sdk@v0.47.5/x/auth/ante/basic.go:99) amount of bytes is estimated
+	// for the worst case.
+	requireT.LessOrEqual(txRes.GasUsed, int64(gasEstimation))
 
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipientAddr,

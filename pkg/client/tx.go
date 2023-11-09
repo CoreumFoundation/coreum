@@ -106,7 +106,7 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 // simulation response obtained by the query and the adjusted gas amount.
 // The main differences between our version and the one from cosmos-sdk are:
 // - we respect context.Context
-// - it correctly works when estimating for multisig accounts
+// - it works when estimating for multisig accounts.
 func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
