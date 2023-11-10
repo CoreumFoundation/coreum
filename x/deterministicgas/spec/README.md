@@ -16,31 +16,36 @@ complicated, nondeterministic execution path (e.g `/cosmwasm.wasm.v1.MsgExecuteC
 Here is formula for the transaction
 
 `
-Gas = FixedGas + Sum(Gas for each message) + GasForExtraBytes + GasForExtraSignatures
+Gas = FixedGas + max((GasForBytes + GasForSignatures - TxBaseGas), 0) + Sum(Gas for each message)
 `
 
 If message type is deterministic, then the value is looked up from the table, if it is non-deterministic, then the
 required gas is determined after the execution.
 
 `
-GasForExtraBytes = max(0, TxByteSize-FreeBytes) * TxSizeCostPerByte
+GasForBytes = TxByteSize * TxSizeCostPerByte
 `
 
 `
-GasForExtraSignatures = max(0, NumOfSigs-FreeSigs) * SigVerifyCost
+GasForSignatures = NumOfSigs * SigVerifyCost
 `
 
 Currently, we have values for the above variables as follows:
 
 - `FixedGas`: 65000
+- `TxBaseGas`: 21480
 - `SigVerifyCost`: 1000
 - `TxSizeCostPerByte`: 10
 - `FreeSignatures`: 1
 - `FreeBytes`: 2048
 
-As an example if the transaction has 1 signature on it and is below
-2048 bytes, the user will not pay anything extra, and if one of those values exceed those limits, the user will pay for
-the extra resources.
+
+To summarize user pays FixedGas as long as `GasForBytes + GasForSignatures <= TxBaseGas`.
+If `GasForBytes + GasForSignatures > TxBaseGas` user will have to pay anything above `TxBaseGas` on top of `FixedGas`. 
+
+As an example if the transaction has 1 signature on it and size is below
+2048 bytes, the user will not pay anything extra. Or user can have multiple signatures but fewer bytes then nothing extra should be paid.
+
 
 ### Full examples
 
@@ -50,7 +55,7 @@ Let's say we have a transaction with 1 messages of type
 signatures and the tx size is 1000 bytes, total will be:
 
 `
-TotalGas = 65000 +  1 * 50000 + (1 - 1) * 1000 + max(0, 1000-2048) * 10
+TotalGas = 65000 +  max(0, (21480 - 1 * 1000 + 1000 * 10)) + 1 * 50000
 `
 
 #### Example 2
@@ -59,7 +64,7 @@ Let's say we have a transaction with 2 messages of type
 signatures and the tx size is 2050 bytes, total will be:
 
 `
-TotalGas = 65000 + 2 * 70000 + (2 - 1) * 1000 + max(0, 2050-2048) * 10
+TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 `
 
 ## Gas Tables
