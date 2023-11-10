@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/authz"
@@ -29,6 +30,7 @@ const (
 	RecipientFlag   = "recipient"
 	URIFlag         = "uri"
 	URIHashFlag     = "uri_hash"
+	DataFileFlag    = "data-file"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -68,14 +70,14 @@ func CmdTxIssueClass() *cobra.Command {
 	allowedFeaturesString := strings.Join(allowedFeatures, ",")
 
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] --from [issuer] --%s=%s --uri https://my-token-meta.invalid/1 --uri_hash e000624", FeaturesFlag, allowedFeaturesString),
+		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] --from [issuer] --%s=%s --uri https://my-token-meta.invalid/1 --uri_hash e000624 --data-file [path]", FeaturesFlag, allowedFeaturesString),
 		Args:  cobra.ExactArgs(3),
 		Short: "Issue new non-fungible token class",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Issue new non-fungible token class.
 
 Example:
-$ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] --%s=%s"
+$ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] --data-file [path] --%s=%s"
 `,
 				version.AppName, types.ModuleName, FeaturesFlag, allowedFeaturesString,
 			),
@@ -123,6 +125,11 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 				return errors.WithStack(err)
 			}
 
+			data, err := getDataFromFile(cmd)
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgIssueClass{
 				Issuer:      issuer.String(),
 				Symbol:      symbol,
@@ -130,6 +137,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 				Description: description,
 				URI:         uri,
 				URIHash:     uriHash,
+				Data:        data,
 				Features:    features,
 				RoyaltyRate: royaltyRate,
 			}
@@ -142,6 +150,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 	cmd.Flags().String(RoyaltyRateFlag, "0", fmt.Sprintf("%s is a number between 0 and 1, and will be used to determine royalties sent to issuer, when an nft in this class is traded.", RoyaltyRateFlag))
 	cmd.Flags().String(URIFlag, "", "Class URI.")
 	cmd.Flags().String(URIHashFlag, "", "Class URI hash.")
+	cmd.Flags().String(DataFileFlag, "", "path to the file containing data.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -151,14 +160,14 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 // CmdTxMint returns Mint cobra command.
 func CmdTxMint() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mint [class-id] [id] --from [sender] --uri https://my-token-meta.invalid/1 --uri_hash e000624",
+		Use:   "mint [class-id] [id] --from [sender] --uri https://my-token-meta.invalid/1 --uri_hash e000624 --data-file [path]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Mint new non-fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Mint new non-fungible token.
 
 Example:
-$ %s tx %s mint abc-%s id1 --from [sender]
+$ %s tx %s mint abc-%s id1 --from [sender] --data-file [path]
 `,
 				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
@@ -188,6 +197,11 @@ $ %s tx %s mint abc-%s id1 --from [sender]
 				return errors.WithStack(err)
 			}
 
+			data, err := getDataFromFile(cmd)
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgMint{
 				Sender:    sender.String(),
 				Recipient: recipient,
@@ -195,6 +209,7 @@ $ %s tx %s mint abc-%s id1 --from [sender]
 				ID:        ID,
 				URI:       uri,
 				URIHash:   uriHash,
+				Data:      data,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -205,6 +220,7 @@ $ %s tx %s mint abc-%s id1 --from [sender]
 	cmd.Flags().String(RecipientFlag, "", "Address to send minted token to, if not specified minted token is sent to the class issuer")
 	cmd.Flags().String(URIFlag, "", "NFT URI.")
 	cmd.Flags().String(URIHashFlag, "", "NFT URI hash.")
+	cmd.Flags().String(DataFileFlag, "", "path to the file containing data.")
 
 	return cmd
 }
@@ -655,4 +671,27 @@ func getExpireTime(cmd *cobra.Command) (*time.Time, error) {
 	}
 	e := time.Unix(exp, 0)
 	return &e, nil
+}
+
+func getDataFromFile(cmd *cobra.Command) (*codectypes.Any, error) {
+	if !cmd.Flags().Changed(DataFileFlag) {
+		return nil, nil //nolint:nilnil
+	}
+
+	dataFilePath, err := cmd.Flags().GetString(DataFileFlag)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	data, err := os.ReadFile(dataFilePath)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	dataAny, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: data})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return dataAny, nil
 }
