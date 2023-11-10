@@ -46,7 +46,6 @@ func TestCmdTxIssueClass(t *testing.T) {
 }
 
 func TestCmdTxMint(t *testing.T) {
-	requireT := require.New(t)
 	testNetwork := network.New(t)
 
 	symbol := "nft" + uuid.NewString()[:4]
@@ -54,7 +53,7 @@ func TestCmdTxMint(t *testing.T) {
 	ctx := validator.ClientCtx
 
 	classID := issueClass(
-		requireT, ctx,
+		t, ctx,
 		symbol,
 		"class name",
 		"class description",
@@ -63,7 +62,7 @@ func TestCmdTxMint(t *testing.T) {
 	)
 
 	mint(
-		requireT,
+		t,
 		ctx,
 		classID,
 		nftID,
@@ -82,7 +81,7 @@ func TestCmdTxBurn(t *testing.T) {
 	ctx := validator.ClientCtx
 
 	classID := issueClass(
-		requireT, ctx,
+		t, ctx,
 		symbol,
 		"class name",
 		"class description",
@@ -91,7 +90,7 @@ func TestCmdTxBurn(t *testing.T) {
 	)
 
 	mint(
-		requireT,
+		t,
 		ctx,
 		classID,
 		"nft-1",
@@ -127,7 +126,7 @@ func TestCmdMintToRecipient(t *testing.T) {
 
 	// create class
 	classID := issueClass(
-		requireT,
+		t,
 		ctx,
 		symbol,
 		"class name",
@@ -169,7 +168,7 @@ func TestCmdFreeze(t *testing.T) {
 
 	// create class
 	classID := issueClass(
-		requireT,
+		t,
 		ctx,
 		symbol,
 		"class name",
@@ -182,7 +181,7 @@ func TestCmdFreeze(t *testing.T) {
 	)
 	// mint nft
 	mint(
-		requireT,
+		t,
 		ctx,
 		classID,
 		nftID,
@@ -225,7 +224,7 @@ func TestCmdWhitelist(t *testing.T) {
 
 	// create class
 	classID := issueClass(
-		requireT,
+		t,
 		ctx,
 		symbol,
 		"class name",
@@ -238,7 +237,7 @@ func TestCmdWhitelist(t *testing.T) {
 	)
 	// mint nft
 	mint(
-		requireT,
+		t,
 		ctx,
 		classID,
 		nftID,
@@ -288,7 +287,7 @@ func TestCmdClassWhitelist(t *testing.T) {
 
 	// create class
 	classID := issueClass(
-		requireT,
+		t,
 		ctx,
 		symbol,
 		"class name",
@@ -302,7 +301,7 @@ func TestCmdClassWhitelist(t *testing.T) {
 	// mint nft
 	nftID := "nft"
 	mint(
-		requireT,
+		t,
 		ctx,
 		classID,
 		nftID,
@@ -352,7 +351,7 @@ func TestCmdClassFreeze(t *testing.T) {
 
 	// create class
 	classID := issueClass(
-		requireT,
+		t,
 		ctx,
 		symbol,
 		"class name",
@@ -365,7 +364,7 @@ func TestCmdClassFreeze(t *testing.T) {
 	)
 	// mint nft
 	mint(
-		requireT,
+		t,
 		ctx,
 		classID,
 		nftID,
