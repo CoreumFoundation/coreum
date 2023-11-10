@@ -75,8 +75,6 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          # FIXME(dzmotryhil) replace with master on we merge it
-          ref: dzmitryhil/wasm-v0.44.0
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
