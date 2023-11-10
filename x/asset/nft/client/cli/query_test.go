@@ -2,12 +2,17 @@ package cli_test
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
+	nftcli "github.com/cosmos/cosmos-sdk/x/nft/client/cli"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -19,7 +24,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
 )
 
-func TestQueryClassAndClasses(t *testing.T) {
+func TestQueryClassAndNFT(t *testing.T) {
 	requireT := require.New(t)
 
 	testNetwork := network.New(t)
@@ -32,7 +37,7 @@ func TestQueryClassAndClasses(t *testing.T) {
 	ctx := testNetwork.Validators[0].ClientCtx
 
 	classID := issueClass(
-		requireT, ctx,
+		t, ctx,
 		symbol, name, description, uri, uriHash,
 		testNetwork,
 		"0.1",
@@ -51,6 +56,10 @@ func TestQueryClassAndClasses(t *testing.T) {
 		Description: description,
 		URI:         uri,
 		URIHash:     uriHash,
+		Data: &codectypes.Any{
+			TypeUrl: "/coreum.asset.nft.v1.DataBytes",
+			Value:   []byte{0xa, 0x2, 0x11, 0x12},
+		},
 		Features: []types.ClassFeature{
 			types.ClassFeature_burning,
 			types.ClassFeature_disable_sending,
@@ -66,6 +75,32 @@ func TestQueryClassAndClasses(t *testing.T) {
 		[]string{fmt.Sprintf("--%s", cli.IssuerFlag), testNetwork.Validators[0].Address.String(), "--output", "json"},
 		&classesRes))
 	requireT.Equal(expectedClass, classesRes.Classes[0])
+
+	mint(
+		t,
+		ctx,
+		classID,
+		nftID,
+		"https://my-nft-meta.invalid/1",
+		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		testNetwork,
+	)
+
+	expectedNFT := nft.NFT{
+		ClassId: classID,
+		Id:      nftID,
+		Uri:     "https://my-nft-meta.invalid/1",
+		UriHash: "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		Data: &codectypes.Any{
+			TypeUrl: "/coreum.asset.nft.v1.DataBytes",
+			Value:   []byte{0xa, 0x2, 0x21, 0x22},
+		},
+	}
+
+	var nftRes nft.QueryNFTResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
+
+	requireT.Equal(&expectedNFT, nftRes.Nft)
 }
 
 func TestCmdQueryParams(t *testing.T) {
@@ -83,29 +118,38 @@ func TestCmdQueryParams(t *testing.T) {
 
 //nolint:unparam // using constant values here will make this function less flexible.
 func mint(
-	requireT *require.Assertions,
+	t *testing.T,
 	ctx client.Context,
 	classID, nftID, uri, uriHash string,
 	testNetwork *network.Network,
 ) {
+	data := []byte{0x21, 0x22}
+	dataFile := filepath.Join(t.TempDir(), "data")
+	require.NoError(t, os.WriteFile(dataFile, data, 0o600))
+
 	args := []string{
 		classID, nftID,
 		fmt.Sprintf("--%s=%s", cli.URIFlag, uri),
 		fmt.Sprintf("--%s=%s", cli.URIHashFlag, uriHash),
+		fmt.Sprintf("--%s=%s", cli.DataFileFlag, dataFile),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
-	requireT.NoError(err)
+	require.NoError(t, err)
 }
 
 func issueClass(
-	requireT *require.Assertions,
+	t *testing.T,
 	ctx client.Context,
 	symbol, name, description, uri, uriHash string, //nolint:unparam
 	testNetwork *network.Network,
 	royaltyRate string,
 	features ...types.ClassFeature,
 ) string {
+	data := []byte{0x11, 0x12}
+	dataFile := filepath.Join(t.TempDir(), "data")
+	require.NoError(t, os.WriteFile(dataFile, data, 0o600))
+
 	featuresStringList := lo.Map(features, func(s types.ClassFeature, _ int) string {
 		return s.String()
 	})
@@ -118,13 +162,14 @@ func issueClass(
 		fmt.Sprintf("--%s=%s", cli.FeaturesFlag, featuresString),
 		fmt.Sprintf("--%s=%s", cli.URIFlag, uri),
 		fmt.Sprintf("--%s=%s", cli.URIHashFlag, uriHash),
+		fmt.Sprintf("--%s=%s", cli.DataFileFlag, dataFile),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	if royaltyRate != "" {
 		args = append(args, fmt.Sprintf("--%s", cli.RoyaltyRateFlag), royaltyRate)
 	}
 	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
-	requireT.NoError(err)
+	require.NoError(t, err)
 
 	return types.BuildClassID(symbol, validator.Address)
 }
