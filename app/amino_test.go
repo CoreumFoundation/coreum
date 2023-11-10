@@ -6,6 +6,7 @@ import (
 	"testing"
 	_ "unsafe"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdktestdatatypes "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktxtypes "github.com/cosmos/cosmos-sdk/types/tx"
@@ -85,6 +86,9 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		// internal cosmos
 		sdk.MsgTypeURL(&sdktestdatatypes.MsgCreateDog{}): {},
 		sdk.MsgTypeURL(&sdktxtypes.Tx{}):                 {},
+
+		// wasm
+		sdk.MsgTypeURL(&wasmtypes.MsgUpdateContractLabel{}): {},
 	}
 
 	for protoType := range revProtoTypes {
