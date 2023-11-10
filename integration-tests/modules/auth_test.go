@@ -403,6 +403,7 @@ func TestGasEstimation(t *testing.T) {
 	for _, tt := range testsNonDeterm {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			_, estimatedGas, err := client.CalculateGas(
 				ctx,
 				chain.ClientContext.WithFromAddress(tt.fromAddress),
