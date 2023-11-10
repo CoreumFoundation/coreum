@@ -125,6 +125,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract",
 		"/cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses",
 		"/cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses",
+		"/cosmwasm.wasm.v1.MsgStoreAndMigrateContract",
+		"/cosmwasm.wasm.v1.MsgUpdateContractLabel",
 
 		// ibc/applications/interchain_accounts
 		"/ibc.applications.interchain_accounts.controller.v1.MsgRegisterInterchainAccount",
@@ -190,7 +192,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 60, len(nondeterministicMsgs))
+	assert.Equal(t, 62, len(nondeterministicMsgs))
 	assert.Equal(t, 64, len(deterministicMsgs))
 
 	for _, sdkMsg := range deterministicMsgs {

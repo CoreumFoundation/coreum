@@ -260,6 +260,8 @@ func DefaultConfig() Config {
 			&wasmtypes.MsgPinCodes{},
 			&wasmtypes.MsgSudoContract{},
 			&wasmtypes.MsgStoreAndInstantiateContract{},
+			&wasmtypes.MsgStoreAndMigrateContract{},
+			&wasmtypes.MsgUpdateContractLabel{},
 
 			// ibc/core/client
 			&ibcclienttypes.MsgCreateClient{},

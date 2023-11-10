@@ -5335,7 +5335,8 @@ func TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfS
 			Sender:    contractAddr,
 			Recipient: recipient.String(),
 			Coin:      sdk.NewInt64Coin(denom, 100),
-		}})
+		},
+	})
 
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Messages: []sdk.Msg{

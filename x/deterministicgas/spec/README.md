@@ -194,9 +194,11 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/cosmwasm.wasm.v1.MsgMigrateContract`                                 |
 | `/cosmwasm.wasm.v1.MsgPinCodes`                                        |
 | `/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract`                     |
+| `/cosmwasm.wasm.v1.MsgStoreAndMigrateContract`                         |
 | `/cosmwasm.wasm.v1.MsgStoreCode`                                       |
 | `/cosmwasm.wasm.v1.MsgSudoContract`                                    |
 | `/cosmwasm.wasm.v1.MsgUnpinCodes`                                      |
+| `/cosmwasm.wasm.v1.MsgUpdateContractLabel`                             |
 | `/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig`                         |
 | `/cosmwasm.wasm.v1.MsgUpdateParams`                                    |
 | `/ibc.core.channel.v1.MsgAcknowledgement`                              |
