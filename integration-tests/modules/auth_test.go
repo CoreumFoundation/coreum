@@ -239,7 +239,6 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 
 func TestGasEstimation(t *testing.T) {
 	t.Parallel()
-
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	singlesigAddress := chain.GenAccount()
@@ -330,16 +329,18 @@ func TestGasEstimation(t *testing.T) {
 			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + (1*deterministicgas.AuthzExecOverhead + 1*deterministicgas.BankSendPerCoinGas),
 		},
 	}
-	for _, test := range testsDeterm {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tt := range testsDeterm {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			_, estimatedGas, err := client.CalculateGas(
 				ctx,
-				chain.ClientContext.WithFromAddress(test.fromAddress),
+				chain.ClientContext.WithFromAddress(tt.fromAddress),
 				chain.TxFactory(),
-				test.msgs...,
+				tt.msgs...,
 			)
 			require.NoError(t, err)
-			require.Equal(t, int(test.expectedGas), int(estimatedGas))
+			require.Equal(t, int(tt.expectedGas), int(estimatedGas))
 		})
 	}
 
@@ -399,17 +400,17 @@ func TestGasEstimation(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range testsNonDeterm {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tt := range testsNonDeterm {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
 			_, estimatedGas, err := client.CalculateGas(
 				ctx,
-				chain.ClientContext.WithFromAddress(test.fromAddress),
+				chain.ClientContext.WithFromAddress(tt.fromAddress),
 				chain.TxFactory(),
-				test.msgs...,
+				tt.msgs...,
 			)
 			require.NoError(t, err)
 			require.Greater(t, int(estimatedGas), 0)
 		})
 	}
-
 }
