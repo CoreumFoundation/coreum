@@ -15,31 +15,36 @@ complicated, nondeterministic execution path (e.g `/cosmwasm.wasm.v1.MsgExecuteC
 Here is formula for the transaction
 
 `
-Gas = FixedGas + Sum(Gas for each message) + GasForExtraBytes + GasForExtraSignatures
+Gas = FixedGas + max((GasForBytes + GasForSignatures - TxBaseGas), 0) + Sum(Gas for each message)
 `
 
 If message type is deterministic, then the value is looked up from the table, if it is non-deterministic, then the
 required gas is determined after the execution.
 
 `
-GasForExtraBytes = max(0, TxByteSize-FreeBytes) * TxSizeCostPerByte
+GasForBytes = TxByteSize * TxSizeCostPerByte
 `
 
 `
-GasForExtraSignatures = max(0, NumOfSigs-FreeSigs) * SigVerifyCost
+GasForSignatures = NumOfSigs * SigVerifyCost
 `
 
 Currently, we have values for the above variables as follows:
 
 - `FixedGas`: {{ .FixedGas }}
+- `TxBaseGas`: {{ .TxBaseGas }}
 - `SigVerifyCost`: {{ .SigVerifyCost }}
 - `TxSizeCostPerByte`: {{ .TxSizeCostPerByte }}
 - `FreeSignatures`: {{ .FreeSignatures }}
 - `FreeBytes`: {{ .FreeBytes }}
 
-As an example if the transaction has 1 signature on it and is below
-2048 bytes, the user will not pay anything extra, and if one of those values exceed those limits, the user will pay for
-the extra resources.
+
+To summarize user pays FixedGas as long as `GasForBytes + GasForSignatures <= TxBaseGas`.
+If `GasForBytes + GasForSignatures > TxBaseGas` user will have to pay anything above `TxBaseGas` on top of `FixedGas`. 
+
+As an example if the transaction has 1 signature on it and size is below
+2048 bytes, the user will not pay anything extra. Or user can have multiple signatures but fewer bytes then nothing extra should be paid.
+
 
 ### Full examples
 
@@ -49,7 +54,7 @@ Let's say we have a transaction with 1 messages of type
 signatures and the tx size is 1000 bytes, total will be:
 
 `
-TotalGas = {{ .FixedGas }} +  1 * {{ .BankSendPerCoinGas }} + 1 * {{ .SigVerifyCost }} + max(0, 1000-{{ .FreeBytes }}) * {{ .TxSizeCostPerByte }}
+TotalGas = {{ .FixedGas }} +  max(0, ({{ .TxBaseGas }} - 1 * {{ .SigVerifyCost }} + 1000 * {{ .TxSizeCostPerByte }})) + 1 * {{ .BankSendPerCoinGas }}
 `
 
 #### Example 2
@@ -58,7 +63,7 @@ Let's say we have a transaction with 2 messages of type
 signatures and the tx size is 2050 bytes, total will be:
 
 `
-TotalGas = {{ .FixedGas }} + 2 * {{ .MsgIssueGasPrice }} + 2 * {{ .SigVerifyCost }} + max(0, 2050-{{ .FreeBytes }}) * {{ .TxSizeCostPerByte }}
+TotalGas = {{ .FixedGas }} +  max(0, ({{ .TxBaseGas }} - 2 * {{ .SigVerifyCost }} + 2050 * {{ .TxSizeCostPerByte }})) + 2 * {{ .MsgIssueGasPrice }}
 `
 
 ## Gas Tables
