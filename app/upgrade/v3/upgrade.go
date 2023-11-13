@@ -102,9 +102,6 @@ func New(
 
 				// wasm:
 				wasmtypes.ModuleName: wasmtypes.ParamKeyTable(), //nolint:staticcheck
-
-				// coreum:
-				// TODO(migration-away-from-x/params): Add migration of params for Coreum modules. Skipping them for now.
 			}
 
 			// https://github.com/cosmos/cosmos-sdk/pull/12363/files
@@ -113,7 +110,6 @@ func New(
 				subspace := subspace
 
 				if lo.Contains([]string{
-					// TODO(migration-away-from-x/params): Add migration of params for Coreum modules. Skipping them for now.
 					feemodeltypes.ModuleName,
 					assetfttypes.ModuleName,
 					assetnfttypes.ModuleName,
@@ -170,8 +166,7 @@ func New(
 			params.AllowedClients = append(params.AllowedClients, ibccoreexported.Localhost)
 			ibcClientKeeper.SetParams(ctx, params)
 
-			// TODO(new-gov-params): Discuss new values for the following params with the team and set here & inside genesis.v3.json.
-			// min_initial_deposit_ratio, burn_vote_quorum, burn_proposal_deposit_prevote, burn_vote_veto
+			// Set values for new params: min_initial_deposit_ratio, burn_vote_quorum, burn_proposal_deposit_prevote, burn_vote_veto
 			govParams := govKeeper.GetParams(ctx)
 			govParams.MinInitialDepositRatio = sdk.NewDec(50).Quo(sdk.NewDec(100)).String()
 			govParams.BurnVoteQuorum = false
@@ -181,8 +176,7 @@ func New(
 				return nil, err
 			}
 
-			// TODO(new-staking-params): Discuss new values for the following params with the team and set here & inside genesis.v3.json.
-			// min_commission_rate
+			// Set value for new param min_commission_rate
 			stakingParams := stakingKeeper.GetParams(ctx)
 			stakingParams.MinCommissionRate = sdk.ZeroDec()
 			err = stakingKeeper.SetParams(ctx, stakingParams)
