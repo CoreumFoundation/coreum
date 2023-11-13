@@ -6,13 +6,12 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
-
-	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
