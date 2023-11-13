@@ -73,11 +73,13 @@ func main() {
 		panic(err)
 	}
 
+	authParams := auth.DefaultParams()
 	err = template.Must(template.New("README.md").Parse(readmeTmpl)).Execute(file, struct {
 		GeneratorComment  string
 		SigVerifyCost     uint64
 		TxSizeCostPerByte uint64
 		FixedGas          uint64
+		TxBaseGas         uint64
 		FreeBytes         uint64
 		FreeSignatures    uint64
 
@@ -95,8 +97,9 @@ func main() {
 	}{
 		GeneratorComment:  generatorComment,
 		FixedGas:          cfg.FixedGas,
-		SigVerifyCost:     auth.DefaultSigVerifyCostSecp256k1,
-		TxSizeCostPerByte: auth.DefaultTxSizeCostPerByte,
+		TxBaseGas:         cfg.TxBaseGas(authParams),
+		SigVerifyCost:     authParams.SigVerifyCostSecp256k1,
+		TxSizeCostPerByte: authParams.TxSizeCostPerByte,
 		FreeBytes:         cfg.FreeBytes,
 		FreeSignatures:    cfg.FreeSignatures,
 
