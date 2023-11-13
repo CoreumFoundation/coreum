@@ -594,6 +594,9 @@ func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount s
 }
 
 func (k Keeper) burnIfSpendable(ctx sdk.Context, account sdk.AccAddress, def types.Definition, amount sdkmath.Int) error {
+	if !amount.IsPositive() {
+		return nil
+	}
 	if err := k.isCoinSpendable(ctx, account, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}
@@ -656,6 +659,13 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		}
 	}
 	return nil
+}
+
+func (k Keeper) sendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amount sdk.Coins) error {
+	if !amount.IsAllPositive() {
+		return nil
+	}
+	return k.bankKeeper.SendCoins(ctx, fromAddr, toAddr, amount)
 }
 
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdkmath.Int) error {
