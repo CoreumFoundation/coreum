@@ -3,13 +3,18 @@
 package modules
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -414,4 +419,110 @@ func TestGasEstimation(t *testing.T) {
 			require.Greater(t, int(estimatedGas), 0)
 		})
 	}
+}
+
+func TestTxWithMultipleSignatures(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	_ = ctx
+
+	addr1 := chain.GenAccount()
+	addr2 := chain.GenAccount()
+
+	receiver := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, addr1, integration.BalancesOptions{Amount: sdkmath.NewInt(10_000_000)})
+	chain.FundAccountWithOptions(ctx, t, addr2, integration.BalancesOptions{Amount: sdkmath.NewInt(10_000_000)})
+
+	sendAmount1 := chain.NewCoin(sdkmath.NewInt(10))
+	sendAmount2 := chain.NewCoin(sdkmath.NewInt(40))
+
+	msgs := []sdk.Msg{
+		&banktypes.MsgSend{
+			FromAddress: addr1.String(),
+			ToAddress:   receiver.String(),
+			Amount:      sdk.NewCoins(sendAmount1),
+		},
+		&banktypes.MsgSend{
+			FromAddress: addr2.String(),
+			ToAddress:   receiver.String(),
+			Amount:      sdk.NewCoins(sendAmount2),
+		},
+	}
+
+	tx := SignTxMultipleSigners(ctx, t, chain, chain.ClientContext.TxConfig(), msgs, []sdk.AccAddress{addr1, addr2})
+
+	txBytesJSON, err := chain.ClientContext.TxConfig().TxJSONEncoder()(tx)
+	require.NoError(t, err)
+
+	fmt.Println(string(txBytesJSON))
+
+	txBytes, err := chain.ClientContext.TxConfig().TxEncoder()(tx)
+	require.NoError(t, err)
+
+	resp, err := client.BroadcastRawTx(ctx, chain.ClientContext, txBytes)
+	require.NoError(t, err)
+
+	fmt.Printf("txid: %s, gasUsed: %v\n", resp.TxHash, resp.GasUsed)
+}
+
+// Reference: cosmos-sdk/testutil/sims/tx_helpers.go (GenSignedMockTx)
+func SignTxMultipleSigners(ctx context.Context, t *testing.T, chain integration.CoreumChain, txConfig cosmosclient.TxConfig, msgs []sdk.Msg, signers []sdk.AccAddress) sdk.Tx {
+	requireT := require.New(t)
+
+	signMod := txConfig.SignModeHandler().DefaultMode()
+
+	sigs := make([]signing.SignatureV2, len(signers))
+
+	// 1st round: set SignatureV2 with empty signatures, to set correct
+	// signer infos.
+	for i, signer := range signers {
+		k, err := chain.TxFactory().Keybase().KeyByAddress(signer)
+		requireT.NoError(err)
+
+		pubKey, err := k.GetPubKey()
+		requireT.NoError(err)
+
+		accInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer)
+		requireT.NoError(err)
+
+		sigs[i] = signing.SignatureV2{
+			PubKey: pubKey,
+			Data: &signing.SingleSignatureData{
+				SignMode: signMod,
+			},
+			Sequence: accInfo.GetSequence(), // todo
+		}
+	}
+
+	tx := txConfig.NewTxBuilder()
+	err := tx.SetMsgs(msgs...)
+	requireT.NoError(err)
+	err = tx.SetSignatures(sigs...)
+	requireT.NoError(err)
+	tx.SetFeeAmount(sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(200_000))))
+	tx.SetGasLimit(200_000)
+
+	for i, signer := range signers {
+		accInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer)
+		requireT.NoError(err)
+
+		signerData := authsign.SignerData{
+			Address:       signer.String(),
+			ChainID:       chain.ChainContext.ChainSettings.ChainID,
+			AccountNumber: accInfo.GetAccountNumber(),
+			Sequence:      accInfo.GetSequence(),
+			PubKey:        sigs[i].PubKey,
+		}
+		signBytes, err := txConfig.SignModeHandler().GetSignBytes(signMod, signerData, tx.GetTx())
+		requireT.NoError(err)
+		sig, _, err := chain.TxFactory().Keybase().SignByAddress(signer, signBytes)
+		sigs[i].Data.(*signing.SingleSignatureData).Signature = sig
+		requireT.NoError(err)
+
+		err = tx.SetSignatures(sigs...)
+		requireT.NoError(err)
+	}
+
+	return tx.GetTx()
 }
