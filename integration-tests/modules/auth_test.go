@@ -420,7 +420,7 @@ func TestGasEstimation(t *testing.T) {
 }
 
 // TestTxWithMultipleSignatures verifies that transaction with multiple signatures is executed correctly.
-// For more details check: func signTxWithMultipleSignatures
+// For more details check: func signTxWithMultipleSignatures.
 func TestTxWithMultipleSignatures(t *testing.T) {
 	t.Parallel()
 	requireT := require.New(t)
