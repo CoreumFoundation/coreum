@@ -5,15 +5,14 @@ package modules
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
@@ -421,61 +420,106 @@ func TestGasEstimation(t *testing.T) {
 	}
 }
 
+// TestTxWithMultipleSignatures verifies that transaction with multiple signatures is executed correctly.
+// For more details check: func signTxWithMultipleSignatures
 func TestTxWithMultipleSignatures(t *testing.T) {
 	t.Parallel()
+	requireT := require.New(t)
+
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	_ = ctx
 
-	addr1 := chain.GenAccount()
-	addr2 := chain.GenAccount()
-
+	sender1 := chain.GenAccount()
+	sender2 := chain.GenAccount()
 	receiver := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, addr1, integration.BalancesOptions{Amount: sdkmath.NewInt(10_000_000)})
-	chain.FundAccountWithOptions(ctx, t, addr2, integration.BalancesOptions{Amount: sdkmath.NewInt(10_000_000)})
-
-	sendAmount1 := chain.NewCoin(sdkmath.NewInt(10))
-	sendAmount2 := chain.NewCoin(sdkmath.NewInt(40))
+	sendAmount1 := chain.NewCoin(sdkmath.NewInt(100))
+	sendAmount2 := chain.NewCoin(sdkmath.NewInt(50))
 
 	msgs := []sdk.Msg{
 		&banktypes.MsgSend{
-			FromAddress: addr1.String(),
+			FromAddress: sender1.String(),
 			ToAddress:   receiver.String(),
 			Amount:      sdk.NewCoins(sendAmount1),
 		},
 		&banktypes.MsgSend{
-			FromAddress: addr2.String(),
+			FromAddress: sender2.String(),
 			ToAddress:   receiver.String(),
 			Amount:      sdk.NewCoins(sendAmount2),
 		},
 	}
 
-	tx := SignTxMultipleSigners(ctx, t, chain, chain.ClientContext.TxConfig(), msgs, []sdk.AccAddress{addr1, addr2})
+	chain.FundAccountWithOptions(ctx, t, sender1, integration.BalancesOptions{
+		Amount:   sendAmount1.Amount,
+		Messages: msgs, // note that first signer pays fees for the whole tx.
+	})
+	chain.FundAccountWithOptions(ctx, t, sender2, integration.BalancesOptions{
+		Amount: sendAmount2.Amount,
+	})
 
-	txBytesJSON, err := chain.ClientContext.TxConfig().TxJSONEncoder()(tx)
-	require.NoError(t, err)
-
-	fmt.Println(string(txBytesJSON))
+	tx := signTxWithMultipleSignaturesV2(ctx, t, chain, msgs, []sdk.AccAddress{sender1, sender2})
 
 	txBytes, err := chain.ClientContext.TxConfig().TxEncoder()(tx)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
-	resp, err := client.BroadcastRawTx(ctx, chain.ClientContext, txBytes)
-	require.NoError(t, err)
+	_, err = client.BroadcastRawTx(ctx, chain.ClientContext, txBytes)
+	requireT.NoError(err)
 
-	fmt.Printf("txid: %s, gasUsed: %v\n", resp.TxHash, resp.GasUsed)
+	balanceResp, err := banktypes.NewQueryClient(chain.ClientContext).Balance(
+		ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: receiver.String(),
+			Denom:   chain.ChainSettings.Denom,
+		},
+	)
+	requireT.NoError(err)
+	requireT.Equal(sendAmount1.Amount.Add(sendAmount2.Amount).String(), balanceResp.Balance.Amount.String())
 }
 
+// signTxWithMultipleSignatures signs a transaction with multiple signatures.
 // Reference: cosmos-sdk/testutil/sims/tx_helpers.go (GenSignedMockTx)
-func SignTxMultipleSigners(ctx context.Context, t *testing.T, chain integration.CoreumChain, txConfig cosmosclient.TxConfig, msgs []sdk.Msg, signers []sdk.AccAddress) sdk.Tx {
+// Note the difference between multisig account transaction and multiple signer account tx.
+//
+// multisig account tx signature sample:
+// "signatures": [
+//
+//	  "CkAnDHXdaoGxCtO97cMJOxAAg2r5M286FnvZ1Dm2lOiHGhnFesLrNHmdmEFJH8yzaMuBGpMgLs2NsjrP3aD4J..."
+//	]
+//
+// multiple signer account tx:
+// "signatures": [
+//
+//	  "80/z4w/4JaNoxSOBRt1J5bOXyZN27V5Jn9Ssfp/FQ9l5wn/z5jcHMpXTIt7EIcW5vU9nFaoztL+SwYG8FTzC9Q==",
+//	  "CBeIHV6NTWPfOcxn/bTKUI/OMOT0SQk3jstEvGgmbhpQJJPDSpC2mQmm8f9AOHBI78FxJ4li2AuCRhFBZEm0Zw=="
+//	]
+//
+// Multisig account tx contains single string in array where multiple signatures are combined.
+// While multiple signer account tx contains each signature as a separate element in array.
+func signTxWithMultipleSignatures(
+	ctx context.Context,
+	t *testing.T,
+	chain integration.CoreumChain,
+	msgs []sdk.Msg,
+	signers []sdk.AccAddress,
+) sdk.Tx {
 	requireT := require.New(t)
 
+	txConfig := chain.ClientContext.TxConfig()
 	signMod := txConfig.SignModeHandler().DefaultMode()
+
+	signerAccInfos := make([]authtypes.AccountI, len(signers))
+	// Fetch account info for all signers.
+	for i, signer := range signers {
+		accInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer)
+		requireT.NoError(err)
+		signerAccInfos[i] = accInfo
+	}
 
 	sigs := make([]signing.SignatureV2, len(signers))
 
 	// 1st round: set SignatureV2 with empty signatures, to set correct
-	// signer infos.
+	// signer infos. This is needed for GetSignBytes to return all bytes
+	// which should be signed by each signer.
+	// Check cosmos-sdk@v0.47.5/x/auth/tx/direct.go DirectSignBytes for more details.
 	for i, signer := range signers {
 		k, err := chain.TxFactory().Keybase().KeyByAddress(signer)
 		requireT.NoError(err)
@@ -483,46 +527,78 @@ func SignTxMultipleSigners(ctx context.Context, t *testing.T, chain integration.
 		pubKey, err := k.GetPubKey()
 		requireT.NoError(err)
 
-		accInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer)
-		requireT.NoError(err)
-
 		sigs[i] = signing.SignatureV2{
 			PubKey: pubKey,
 			Data: &signing.SingleSignatureData{
 				SignMode: signMod,
 			},
-			Sequence: accInfo.GetSequence(), // todo
+			Sequence: signerAccInfos[i].GetSequence(),
 		}
 	}
 
-	tx := txConfig.NewTxBuilder()
-	err := tx.SetMsgs(msgs...)
+	txBuilder, err := chain.TxFactory().
+		WithGas(chain.GasLimitByMsgs(msgs...)).
+		BuildUnsignedTx(msgs...)
 	requireT.NoError(err)
-	err = tx.SetSignatures(sigs...)
-	requireT.NoError(err)
-	tx.SetFeeAmount(sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(200_000))))
-	tx.SetGasLimit(200_000)
+	requireT.NoError(txBuilder.SetSignatures(sigs...))
 
+	// 2nd round: sign and set real signatures.
 	for i, signer := range signers {
-		accInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer)
-		requireT.NoError(err)
-
 		signerData := authsign.SignerData{
 			Address:       signer.String(),
 			ChainID:       chain.ChainContext.ChainSettings.ChainID,
-			AccountNumber: accInfo.GetAccountNumber(),
-			Sequence:      accInfo.GetSequence(),
+			AccountNumber: signerAccInfos[i].GetAccountNumber(),
+			Sequence:      signerAccInfos[i].GetSequence(),
 			PubKey:        sigs[i].PubKey,
 		}
-		signBytes, err := txConfig.SignModeHandler().GetSignBytes(signMod, signerData, tx.GetTx())
+		signBytes, err := txConfig.SignModeHandler().GetSignBytes(signMod, signerData, txBuilder.GetTx())
 		requireT.NoError(err)
 		sig, _, err := chain.TxFactory().Keybase().SignByAddress(signer, signBytes)
-		sigs[i].Data.(*signing.SingleSignatureData).Signature = sig
 		requireT.NoError(err)
 
-		err = tx.SetSignatures(sigs...)
+		sigs[i].Data.(*signing.SingleSignatureData).Signature = sig
+	}
+	requireT.NoError(txBuilder.SetSignatures(sigs...))
+
+	return txBuilder.GetTx()
+}
+
+func signTxWithMultipleSignaturesV2(ctx context.Context,
+	t *testing.T,
+	chain integration.CoreumChain,
+	msgs []sdk.Msg,
+	signers []sdk.AccAddress,
+) sdk.Tx {
+
+	requireT := require.New(t)
+
+	txBuilder, err := chain.TxFactory().
+		WithGas(chain.GasLimitByMsgs(msgs...)).
+		WithSignMode(chain.ClientContext.TxConfig().SignModeHandler().DefaultMode()).
+		BuildUnsignedTx(msgs...)
+	requireT.NoError(err)
+
+	signerAccInfos := make([]authtypes.AccountI, len(signers))
+
+	// Fetch account info for all signers.
+	for i, signer := range signers {
+		accInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer)
 		requireT.NoError(err)
+		signerAccInfos[i] = accInfo
 	}
 
-	return tx.GetTx()
+	for i, signer := range signers {
+		txF := chain.TxFactory().
+			WithAccountNumber(signerAccInfos[i].GetAccountNumber()).
+			WithSequence(signerAccInfos[i].GetSequence()).
+			WithGas(chain.GasLimitByMsgs(msgs...)).
+			WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
+
+		signerKeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(signer)
+		requireT.NoError(err)
+
+		requireT.NoError(client.Sign(txF, signerKeyInfo.Name, txBuilder, false))
+	}
+
+	return txBuilder.GetTx()
 }
