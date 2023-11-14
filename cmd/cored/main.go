@@ -1,13 +1,13 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v3/app"
 	"github.com/CoreumFoundation/coreum/v3/cmd/cored/cosmoscmd"
