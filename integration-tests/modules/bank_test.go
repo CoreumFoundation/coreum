@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -615,12 +614,7 @@ func TestTryBankMultiSendFromMultipleAccounts(t *testing.T) {
 	requireT := require.New(t)
 
 	sender1 := chain.GenAccount()
-	sender1KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(sender1)
-	requireT.NoError(err)
-
 	sender2 := chain.GenAccount()
-	sender2KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(sender2)
-	requireT.NoError(err)
 
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
@@ -707,7 +701,7 @@ func TestTryBankMultiSendFromMultipleAccounts(t *testing.T) {
 	})
 
 	// issue first fungible token
-	_, err = client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issue1Msg)),
@@ -723,40 +717,10 @@ func TestTryBankMultiSendFromMultipleAccounts(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// create MultiSend tx message and sign it from 2 accounts
-	sender1AccInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, sender1)
-	requireT.NoError(err)
-
-	// set sender1 params for the signature
-	txF := chain.TxFactory().
-		WithAccountNumber(sender1AccInfo.GetAccountNumber()).
-		WithSequence(sender1AccInfo.GetSequence()).
-		WithGas(chain.GasLimitByMsgs(multiSendMsg)).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-
-	txBuilder, err := txF.BuildUnsignedTx(multiSendMsg)
-	requireT.NoError(err)
-
-	// sign from sender1
-	err = client.Sign(txF, sender1KeyInfo.Name, txBuilder, false)
-	requireT.NoError(err)
-
-	sender2AccInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, sender2)
-	requireT.NoError(err)
-
-	// set sender2 params for the signature
-	txF = chain.TxFactory().
-		WithAccountNumber(sender2AccInfo.GetAccountNumber()).
-		WithSequence(sender2AccInfo.GetSequence()).
-		WithGas(chain.GasLimitByMsgs(multiSendMsg)).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-
-	// sign from sender2
-	err = client.Sign(txF, sender2KeyInfo.Name, txBuilder, false)
-	requireT.NoError(err)
+	tx := signTxWithMultipleSignatures(ctx, t, chain, []sdk.Msg{multiSendMsg}, []sdk.AccAddress{sender1, sender2})
 
 	// encode tx and broadcast
-	encodedMultiSendTx, err := chain.ClientContext.TxConfig().TxEncoder()(txBuilder.GetTx())
+	encodedMultiSendTx, err := chain.ClientContext.TxConfig().TxEncoder()(tx)
 	requireT.NoError(err)
 	_, err = client.BroadcastRawTx(
 		ctx,
