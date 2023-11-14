@@ -1091,13 +1091,16 @@ func TestAssetFTBurnRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
 	}
 
-	_, err = client.BroadcastTx(
+	txRes, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
 	requireT.NoError(err)
+	// assert that we don't receive events with empty amounts
+	requireT.NotContains(txRes.RawLog, `{"key":"amount"}`)
+
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&issuer:     600,
 		&recipient1: 400,
@@ -1238,13 +1241,16 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
 	}
 
-	_, err = client.BroadcastTx(
+	txRes, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
 	requireT.NoError(err)
+	// assert that we don't receive events with empty amounts
+	requireT.NotContains(txRes.RawLog, `{"key":"amount"}`)
+
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&issuer:     600,
 		&recipient1: 400,
