@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	// The length is 50 since the demon is {subunit}-{address} and
+	// The length is 51 since the demon is {subunit}-{address} and
 	// the address length might be up to 66 symbols and the demon length must be less than 127 symbols
-	// according to bank validation.
+	// according to bank validation. This leaves 61 spaces, and we choose 51 to leave some room for
+	// future changes.
 	subunitRegexStr = `^[a-z][a-z0-9/:._]{0,50}$`
 	subunitRegex    *regexp.Regexp
 
