@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	// The length is 30 and this is the reasoning for it.
+	// The length is 31 and this is the reasoning for it.
 	// since the class id has {symbol}-{address} format and
 	// the address length might be up to 66 symbols and the demon length must be less than 101
-	// this leaves room for 33 characters, but we round it down to 30 to be conservative.
+	// this leaves room for 33 characters, but we choose 31 to be conservative.
 	nftSymbolRegexStr = `^[a-zA-Z][a-zA-Z0-9/:._]{0,30}$`
 	nftSymbolRegex    = regexp.MustCompile(nftSymbolRegexStr)
 	// the regexp is same as for the nft module.
