@@ -12,7 +12,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
@@ -456,7 +455,7 @@ func TestTxWithMultipleSignatures(t *testing.T) {
 		Amount: sendAmount2.Amount,
 	})
 
-	tx := signTxWithMultipleSignaturesV2(ctx, t, chain, msgs, []sdk.AccAddress{sender1, sender2})
+	tx := signTxWithMultipleSignatures(ctx, t, chain, msgs, []sdk.AccAddress{sender1, sender2})
 
 	txBytes, err := chain.ClientContext.TxConfig().TxEncoder()(tx)
 	requireT.NoError(err)
@@ -559,46 +558,6 @@ func signTxWithMultipleSignatures(
 		sigs[i].Data.(*signing.SingleSignatureData).Signature = sig
 	}
 	requireT.NoError(txBuilder.SetSignatures(sigs...))
-
-	return txBuilder.GetTx()
-}
-
-func signTxWithMultipleSignaturesV2(ctx context.Context,
-	t *testing.T,
-	chain integration.CoreumChain,
-	msgs []sdk.Msg,
-	signers []sdk.AccAddress,
-) sdk.Tx {
-
-	requireT := require.New(t)
-
-	txBuilder, err := chain.TxFactory().
-		WithGas(chain.GasLimitByMsgs(msgs...)).
-		WithSignMode(chain.ClientContext.TxConfig().SignModeHandler().DefaultMode()).
-		BuildUnsignedTx(msgs...)
-	requireT.NoError(err)
-
-	signerAccInfos := make([]authtypes.AccountI, len(signers))
-
-	// Fetch account info for all signers.
-	for i, signer := range signers {
-		accInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer)
-		requireT.NoError(err)
-		signerAccInfos[i] = accInfo
-	}
-
-	for i, signer := range signers {
-		txF := chain.TxFactory().
-			WithAccountNumber(signerAccInfos[i].GetAccountNumber()).
-			WithSequence(signerAccInfos[i].GetSequence()).
-			WithGas(chain.GasLimitByMsgs(msgs...)).
-			WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-
-		signerKeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(signer)
-		requireT.NoError(err)
-
-		requireT.NoError(client.Sign(txF, signerKeyInfo.Name, txBuilder, false))
-	}
 
 	return txBuilder.GetTx()
 }
