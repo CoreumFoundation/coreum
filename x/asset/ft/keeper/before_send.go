@@ -83,14 +83,18 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 		}
 
 		burnAmount := k.ApplyRate(ctx, def.BurnRate, issuer, sender, outOps)
-		if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
-			return err
+		if burnAmount.IsPositive() {
+			if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
+				return err
+			}
 		}
 
 		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
-		commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
-		if err := k.bankKeeper.SendCoins(ctx, sender, issuer, commissionCoin); err != nil {
-			return err
+		if commissionAmount.IsPositive() {
+			commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
+			if err := k.bankKeeper.SendCoins(ctx, sender, issuer, commissionCoin); err != nil {
+				return err
+			}
 		}
 
 		if err := k.isCoinSpendable(ctx, sender, def, coin.Amount); err != nil {
