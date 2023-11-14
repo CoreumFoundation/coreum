@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -28,12 +29,9 @@ func main() {
 	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	if err := svrcmd.Execute(rootCmd, coreumEnvPrefix, app.DefaultNodeHome); err != nil {
 		fmt.Printf("Error executing cmd, err: %s", err)
-		switch e := err.(type) {
-		case server.ErrorCode:
-			os.Exit(e.Code)
-
-		default:
-			os.Exit(1)
+		errCode := new(server.ErrorCode)
+		if errors.As(err, errCode) {
+			os.Exit(errCode.Code)
 		}
 	}
 }
