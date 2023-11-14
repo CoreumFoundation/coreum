@@ -33,5 +33,7 @@ func main() {
 		if errors.As(err, errCode) {
 			os.Exit(errCode.Code)
 		}
+
+		os.Exit(1)
 	}
 }
