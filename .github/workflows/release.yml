@@ -42,6 +42,7 @@ jobs:
         run: |
           ln crust/bin/.cache/cored/docker.amd64/bin/cored cored-linux-amd64
           ln crust/bin/.cache/cored/docker.arm64/bin/cored cored-linux-arm64
+          sha256sum cored-* > checksums.txt
       - name: Create release
         if: steps.check-tag.outputs.release == 'true'
         uses: softprops/action-gh-release@v1
@@ -51,6 +52,7 @@ jobs:
           files: |
             cored-linux-amd64
             cored-linux-arm64
+            checksums.txt
       - name: Create release candidate
         if: steps.check-tag.outputs.release_candidate == 'true'
         uses: softprops/action-gh-release@v1
@@ -61,3 +63,4 @@ jobs:
           files: |
             cored-linux-amd64
             cored-linux-arm64
+            checksums.txt
