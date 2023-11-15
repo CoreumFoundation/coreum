@@ -89,8 +89,8 @@ func appendStringFlag(args []string, flag, newVal string) error {
 
 func removeFlag(args []string, flag string) []string {
 	newArgs := make([]string, 0, len(args))
+	var prevArgRemoved bool
 	for _, arg := range args {
-		var prevArgRemoved bool
 		if arg == flag {
 			prevArgRemoved = true
 			continue
@@ -101,7 +101,7 @@ func removeFlag(args []string, flag string) []string {
 				continue
 			}
 		}
-		if strings.HasPrefix(arg, "--"+flag+"=") {
+		if strings.HasPrefix(arg, flag+"=") {
 			continue
 		}
 

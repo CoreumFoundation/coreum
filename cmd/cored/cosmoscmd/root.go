@@ -291,44 +291,64 @@ func (txw *txWriter) Write(p []byte) (int, error) {
 	if writer == nil {
 		writer = os.Stdout
 	}
+
+	// If output does not contain transaction object, just print the original output.
 	res := &sdk.TxResponse{}
 	if err := txw.cdc.UnmarshalJSON(p, res); err != nil || res.TxHash == "" {
 		return writer.Write(p)
 	}
 
+	// Store the tx hash for further processing.
 	txw.txHash = res.TxHash
 	return len(p), nil
 }
 
 func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
+	// Read values of broadcast mode and output format set by the user.
 	const flagHelp = "help"
 	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)
 	flagSet.ParseErrorsWhitelist.UnknownFlags = true
-	broadcastMode := flagSet.String(flags.FlagBroadcastMode, "", "")
-	originalOutputFormat := flagSet.String(flags.FlagOutput, "", "")
+	broadcastMode := flagSet.StringP(flags.FlagBroadcastMode, "b", "", "")
+	originalOutputFormat := flagSet.StringP(flags.FlagOutput, "o", "", "")
 	// Dummy flag to turn off printing usage of this flag set
 	flagSet.BoolP(flagHelp, "h", false, "")
 	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here
 	flagSet.Parse(os.Args[1:])
 
-	if *broadcastMode != broadcastModeBlock {
-		return
+	if *originalOutputFormat == "" {
+		*originalOutputFormat = "text"
 	}
-	os.Args = append(removeFlag(os.Args, flags.FlagBroadcastMode), "--"+flags.FlagBroadcastMode, flags.BroadcastSync)
-	os.Args = append(removeFlag(os.Args, flags.FlagOutput), "--"+flags.FlagOutput, "json")
 
+	// If broadcast mode is "block", we need to set output format to json and broadcast mode to sync, so our
+	// wrapper behaves correctly.
+	if *broadcastMode == broadcastModeBlock {
+		removeFlag(os.Args, "-b")
+		removeFlag(os.Args, "-o")
+		os.Args = append(removeFlag(os.Args, "--"+flags.FlagBroadcastMode), "--"+flags.FlagBroadcastMode, flags.BroadcastSync)
+		os.Args = append(removeFlag(os.Args, "--"+flags.FlagOutput), "--"+flags.FlagOutput, "json")
+	}
+
+	// Iterate over all the "tx" subcommands.
 	cmds := []*cobra.Command{cmd}
-
 	for len(cmds) > 0 {
 		cmd := cmds[len(cmds)-1]
 		cmds = cmds[:len(cmds)-1]
+		cmds = append(cmds, cmd.Commands()...)
 
+		// Modify description of "--broadcast-mode" flag to add "block" to available values.
 		if broadcastModeFlag := cmd.LocalFlags().Lookup(flags.FlagBroadcastMode); broadcastModeFlag != nil {
 			broadcastModeFlag.Usage = `Transaction broadcasting mode (sync|async|block)`
 		}
 
+		// We install our wrapper only if this is "block" broadcast mode.
+		if *broadcastMode != broadcastModeBlock {
+			continue
+		}
+
+		// Install wrapper for the command.
 		originalRunE := cmd.RunE
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			// Set output handler in the client context.
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			originalOutput := clientCtx.Output
 			writer := &txWriter{
@@ -339,13 +359,16 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 			if err := client.SetCmdClientContext(cmd, clientCtx); err != nil {
 				return errors.WithStack(err)
 			}
+
+			// Execute original command handler.
 			if err := originalRunE(cmd, args); err != nil {
 				return err
 			}
 
+			// Once we read tx hash from the output produced by cosmos sdk we may await the transaction.
 			awaitClientCtx := coreumclient.NewContext(coreumclient.DefaultContextConfig(), app.ModuleBasics).
 				WithGRPCClient(clientCtx.GRPCClient).WithClient(clientCtx.Client)
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
 			defer cancel()
 
 			res, err := coreumclient.AwaitTx(ctx, awaitClientCtx, writer.txHash)
@@ -353,12 +376,11 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 				return err
 			}
 
+			// Restore original output and print the transaction.
 			clientCtx.Output = originalOutput
 			clientCtx.OutputFormat = *originalOutputFormat
 			return errors.WithStack(clientCtx.PrintProto(res))
 		}
-
-		cmds = append(cmds, cmd.Commands()...)
 	}
 }
 
