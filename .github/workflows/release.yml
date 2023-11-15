@@ -20,6 +20,8 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          # FIXME(dzmitryhil) remove once me merge the crust
+          ref: dzmitryhil/cored-darwin-cored-client-release
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Login to DockerHub
@@ -40,8 +42,9 @@ jobs:
           fi
       - name: Link released binaries under right names
         run: |
-          ln crust/bin/.cache/cored/docker.amd64/bin/cored cored-linux-amd64
-          ln crust/bin/.cache/cored/docker.arm64/bin/cored cored-linux-arm64
+          ln crust/bin/.cache/cored/docker.linux.amd64/bin/cored cored-linux-amd64
+          ln crust/bin/.cache/cored/docker.linux.arm64/bin/cored cored-linux-arm64
+          ln crust/bin/.cache/cored/docker.darwin.arm64/bin/cored-client cored-client-darwin-arm64
           sha256sum cored-* > checksums.txt
       - name: Create release
         if: steps.check-tag.outputs.release == 'true'
@@ -52,6 +55,7 @@ jobs:
           files: |
             cored-linux-amd64
             cored-linux-arm64
+            cored-client-darwin-arm64
             checksums.txt
       - name: Create release candidate
         if: steps.check-tag.outputs.release_candidate == 'true'
@@ -63,4 +67,5 @@ jobs:
           files: |
             cored-linux-amd64
             cored-linux-arm64
+            cored-client-darwin-arm64
             checksums.txt
