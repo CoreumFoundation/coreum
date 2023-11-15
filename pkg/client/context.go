@@ -172,7 +172,7 @@ func (c Context) WithGasPriceAdjustment(adj sdk.Dec) Context {
 
 // WithClient returns a copy of the context with an updated RPC client
 // instance.
-func (c Context) WithClient(client rpcclient.Client) Context {
+func (c Context) WithClient(client client.TendermintRPC) Context {
 	c.clientCtx = c.clientCtx.WithClient(client)
 	return c
 }

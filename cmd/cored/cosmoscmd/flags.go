@@ -86,3 +86,27 @@ func appendStringFlag(args []string, flag, newVal string) error {
 
 	return errors.New("flag not found")
 }
+
+func removeFlag(args []string, flag string) []string {
+	newArgs := make([]string, 0, len(args))
+	var prevArgRemoved bool
+	for _, arg := range args {
+		if arg == flag {
+			prevArgRemoved = true
+			continue
+		}
+		if prevArgRemoved {
+			prevArgRemoved = false
+			if !strings.HasPrefix(arg, "-") {
+				continue
+			}
+		}
+		if strings.HasPrefix(arg, flag+"=") {
+			continue
+		}
+
+		newArgs = append(newArgs, arg)
+	}
+
+	return newArgs
+}

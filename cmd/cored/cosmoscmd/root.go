@@ -4,10 +4,11 @@
 package cosmoscmd
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -23,6 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/snapshot"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
@@ -32,11 +34,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/CoreumFoundation/coreum/v3/app"
+	coreumclient "github.com/CoreumFoundation/coreum/v3/pkg/client"
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
 )
 
@@ -269,7 +273,115 @@ func txCommand() *cobra.Command {
 		authcmd.GetAuxToFeeCommand(),
 	)
 
+	installAwaitBroadcastModeWrapper(cmd)
+
 	return cmd
+}
+
+const broadcastModeBlock = "block"
+
+type txWriter struct {
+	cdc          codec.Codec
+	parentWriter io.Writer
+	txHash       string
+}
+
+func (txw *txWriter) Write(p []byte) (int, error) {
+	writer := txw.parentWriter
+	if writer == nil {
+		writer = os.Stdout
+	}
+
+	// If output does not contain transaction object, just print the original output.
+	res := &sdk.TxResponse{}
+	if err := txw.cdc.UnmarshalJSON(p, res); err != nil || res.TxHash == "" {
+		return writer.Write(p)
+	}
+
+	// Store the tx hash for further processing.
+	txw.txHash = res.TxHash
+	return len(p), nil
+}
+
+func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
+	// Read values of broadcast mode and output format set by the user.
+	const flagHelp = "help"
+	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)
+	flagSet.ParseErrorsWhitelist.UnknownFlags = true
+	broadcastMode := flagSet.StringP(flags.FlagBroadcastMode, "b", "", "")
+	originalOutputFormat := flagSet.StringP(flags.FlagOutput, "o", "", "")
+	// Dummy flag to turn off printing usage of this flag set
+	flagSet.BoolP(flagHelp, "h", false, "")
+	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here
+	flagSet.Parse(os.Args[1:])
+
+	if *originalOutputFormat == "" {
+		*originalOutputFormat = "text"
+	}
+
+	// If broadcast mode is "block", we need to set output format to json and broadcast mode to sync, so our
+	// wrapper behaves correctly.
+	if *broadcastMode == broadcastModeBlock {
+		removeFlag(os.Args, "-b")
+		removeFlag(os.Args, "-o")
+		os.Args = append(removeFlag(os.Args, "--"+flags.FlagBroadcastMode), "--"+flags.FlagBroadcastMode, flags.BroadcastSync)
+		os.Args = append(removeFlag(os.Args, "--"+flags.FlagOutput), "--"+flags.FlagOutput, "json")
+	}
+
+	// Iterate over all the "tx" subcommands.
+	cmds := []*cobra.Command{cmd}
+	for len(cmds) > 0 {
+		cmd := cmds[len(cmds)-1]
+		cmds = cmds[:len(cmds)-1]
+		cmds = append(cmds, cmd.Commands()...)
+
+		// Modify description of "--broadcast-mode" flag to add "block" to available values.
+		if broadcastModeFlag := cmd.LocalFlags().Lookup(flags.FlagBroadcastMode); broadcastModeFlag != nil {
+			broadcastModeFlag.Usage = `Transaction broadcasting mode (sync|async|block)`
+		}
+
+		// We install our wrapper only if this is "block" broadcast mode.
+		if *broadcastMode != broadcastModeBlock {
+			continue
+		}
+
+		// Install wrapper for the command.
+		originalRunE := cmd.RunE
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			// Set output handler in the client context.
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			originalOutput := clientCtx.Output
+			writer := &txWriter{
+				cdc:          clientCtx.Codec,
+				parentWriter: originalOutput,
+			}
+			clientCtx.Output = writer
+			if err := client.SetCmdClientContext(cmd, clientCtx); err != nil {
+				return errors.WithStack(err)
+			}
+
+			// Execute original command handler.
+			if err := originalRunE(cmd, args); err != nil {
+				return err
+			}
+
+			// Once we read tx hash from the output produced by cosmos sdk we may await the transaction.
+			awaitClientCtx := coreumclient.NewContext(coreumclient.DefaultContextConfig(), app.ModuleBasics).
+				WithGRPCClient(clientCtx.GRPCClient).WithClient(clientCtx.Client)
+			ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
+			defer cancel()
+
+			res, err := coreumclient.AwaitTx(ctx, awaitClientCtx, writer.txHash)
+			if err != nil {
+				return err
+			}
+
+			// Restore original output and print the transaction.
+			clientCtx.Output = originalOutput
+			clientCtx.OutputFormat = *originalOutputFormat
+			return errors.WithStack(clientCtx.PrintProto(res))
+		}
+	}
 }
 
 // newApp creates the application.
