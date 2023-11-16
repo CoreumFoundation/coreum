@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestModifyArgs(t *testing.T) {
@@ -63,14 +63,14 @@ func TestModifyArgs(t *testing.T) {
 	for tn := range testCases {
 		tc := testCases[tn]
 		t.Run("", func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := appendStringFlag(tc.input, tc.flag, tc.newVal)
 			if tc.hasErr {
-				assertT.Error(err)
+				requireT.Error(err)
 			} else {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			}
-			assertT.EqualValues(tc.expected, tc.input)
+			requireT.EqualValues(tc.expected, tc.input)
 		})
 	}
 }

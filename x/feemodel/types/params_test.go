@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var params = Params{
@@ -20,37 +20,39 @@ var params = Params{
 }
 
 func TestParamsValidation(t *testing.T) {
-	assert.NoError(t, params.ValidateBasic())
+	requireT := require.New(t)
+
+	requireT.NoError(params.ValidateBasic())
 
 	testParams := params
 	testParams.Model.InitialGasPrice = sdk.NewDec(0)
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.Model.MaxGasPriceMultiplier = sdk.ZeroDec()
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.Model.MaxGasPriceMultiplier = sdk.OneDec()
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.Model.MaxDiscount = sdk.ZeroDec()
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.Model.MaxDiscount = sdk.OneDec()
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.Model.MaxDiscount = sdk.ZeroDec()
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.Model.EscalationStartFraction = sdk.ZeroDec()
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.Model.EscalationStartFraction = sdk.OneDec()
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 }
