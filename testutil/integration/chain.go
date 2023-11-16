@@ -2,7 +2,9 @@ package integration
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/url"
 
 	sdkmath "cosmossdk.io/math"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
@@ -23,6 +25,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum/v3/app"
@@ -338,21 +341,45 @@ func QueryChainSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainS
 }
 
 // DialGRPCClient creates the grpc connection for the given URL.
-func DialGRPCClient(url string) *grpc.ClientConn {
+func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
 	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
 	if !ok {
 		panic("failed to cast codec to codec.GRPCCodecProvider)")
 	}
 
-	grpClient, err := grpc.Dial(
-		url,
-		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	parsedURL, err := url.Parse(grpcURL)
 	if err != nil {
-		panic(errors.WithStack(err))
+		return nil, errors.Wrap(err, "failed to parse grpc URL")
 	}
 
-	return grpClient
+	host := parsedURL.Host
+
+	// https - tls grpc
+	if parsedURL.Scheme == "https" {
+		grpcClient, err := grpc.Dial(
+			host,
+			grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to dial grpc")
+		}
+		return grpcClient, nil
+	}
+
+	// handling of host:port URL without the protocol
+	if host == "" {
+		host = fmt.Sprintf("%s:%s", parsedURL.Scheme, parsedURL.Opaque)
+	}
+	// http - insecure
+	grpcClient, err := grpc.Dial(
+		host,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to dial grpc")
+	}
+
+	return grpcClient, nil
 }
