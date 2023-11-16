@@ -15,7 +15,7 @@ type ParamsKeeper interface {
 
 // Keeper specifies methods of the keeper required by the migration.
 type Keeper interface {
-	SetStakingParams(sdk.Context, types.StakingParams) error
+	SetStakingParams(ctx sdk.Context, params types.StakingParams) error
 }
 
 // MigrateParams migrates params of the ft module from the params module to inside the ft module.

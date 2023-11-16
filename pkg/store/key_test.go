@@ -11,7 +11,7 @@ import (
 
 func TestJoinKeys(t *testing.T) {
 	prefix := []byte{0x01}
-	require.Equal(t, 1, len(prefix))
+	require.Len(t, prefix, 1)
 	require.Equal(t, 1, cap(prefix))
 	// clone key to be sure it's not updated
 	keyClone := append(make([]byte, 0, len(prefix)), prefix...)

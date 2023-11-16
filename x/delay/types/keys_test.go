@@ -162,6 +162,6 @@ func TestInvalidDelayedItemKeys(t *testing.T) {
 	assertT := assert.New(t)
 	for _, tc := range tCases {
 		_, _, err := ExtractTimeAndIDFromDelayedItemKey(tc)
-		assertT.Error(err, tc)
+		assertT.Error(err, tc) //nolint:testifylint // We don't want to use require here.
 	}
 }

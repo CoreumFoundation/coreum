@@ -962,12 +962,12 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	// try to freeze unfreezable Token
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(unfreezableDenom, sdkmath.NewInt(10)))
-	assertT.ErrorIs(err, types.ErrFeatureDisabled)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
 
 	// try to freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Freeze(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
-	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// try to freeze 0 balance
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(0)))
@@ -1003,7 +1003,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	// test query all frozen
 	allBalances, pageRes, err := ftKeeper.GetAccountsFrozenBalances(ctx, &query.PageRequest{})
-	assertT.NoError(err)
+	requireT.NoError(err)
 	assertT.Len(allBalances, 1)
 	assertT.EqualValues(1, pageRes.GetTotal())
 	assertT.EqualValues(recipient.String(), allBalances[0].Address)
@@ -1134,12 +1134,12 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 
 	// try to global-freeze unfreezable Token
 	err = ftKeeper.GloballyFreeze(ctx, issuer, unfreezableDenom)
-	assertT.ErrorIs(err, types.ErrFeatureDisabled)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
 
 	// try to global-freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.GloballyFreeze(ctx, randomAddr, freezableDenom)
-	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// freeze twice to check global-freeze idempotence
 	err = ftKeeper.GloballyFreeze(ctx, issuer, freezableDenom)
@@ -1152,7 +1152,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 
 	// try to global-unfreeze from non issuer address
 	err = ftKeeper.GloballyUnfreeze(ctx, randomAddr, freezableDenom)
-	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// unfreeze twice to check global-unfreeze idempotence
 	err = ftKeeper.GloballyUnfreeze(ctx, issuer, freezableDenom)
@@ -1169,12 +1169,12 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(freezableDenom, sdkmath.NewInt(10)))
 	// send
 	err = bankKeeper.SendCoins(ctx, recipient, randomAddr, coinsToSend)
-	assertT.ErrorIs(err, types.ErrGloballyFrozen)
+	requireT.ErrorIs(err, types.ErrGloballyFrozen)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
 		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
-	assertT.ErrorIs(err, types.ErrGloballyFrozen)
+	requireT.ErrorIs(err, types.ErrGloballyFrozen)
 
 	// unfreeze, try to send & verify balance
 	err = ftKeeper.GloballyUnfreeze(ctx, issuer, freezableDenom)
@@ -1248,7 +1248,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	// try to whitelist from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
-	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// try to whitelist the issuer (issuer can't be whitelisted)
 	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, issuer, sdk.NewCoin(denom, sdkmath.NewInt(1)))
@@ -1276,7 +1276,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 
 	// test query all whitelisted balances
 	allBalances, pageRes, err := ftKeeper.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{})
-	assertT.NoError(err)
+	requireT.NoError(err)
 	assertT.Len(allBalances, 1)
 	assertT.EqualValues(1, pageRes.GetTotal())
 	assertT.EqualValues(recipient.String(), allBalances[0].Address)
@@ -1312,7 +1312,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 
 	// reduce whitelisting limit below the current balance
 	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
-	assertT.NoError(err)
+	requireT.NoError(err)
 }
 
 func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
@@ -1430,7 +1430,6 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 
 func TestKeeper_IBC(t *testing.T) {
 	requireT := require.New(t)
-	assertT := assert.New(t)
 
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
@@ -1477,7 +1476,7 @@ func TestKeeper_IBC(t *testing.T) {
 		recipient,
 		sdk.NewCoins(sdk.NewCoin(denomWithoutIBC, sdkmath.NewInt(100))),
 	)
-	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// transferring denom with enabled IBC should succeed
 	err = bankKeeper.SendCoins(
@@ -1486,7 +1485,7 @@ func TestKeeper_IBC(t *testing.T) {
 		recipient,
 		sdk.NewCoins(sdk.NewCoin(denomWithIBC, sdkmath.NewInt(100))),
 	)
-	assertT.NoError(err)
+	requireT.NoError(err)
 }
 
 // TestKeeper_AllInOne tests send and multi send with tokens that have all features enabled
@@ -1589,13 +1588,13 @@ func TestKeeper_GetIssuerTokens(t *testing.T) {
 		Limit: 3,
 	})
 	requireT.NoError(err)
-	requireT.Equal(3, len(tokens))
+	requireT.Len(tokens, 3)
 
 	tokens, _, err = ftKeeper.GetIssuerTokens(ctx, addr, &query.PageRequest{
 		Limit: uint64(numberOfTokens + 1),
 	})
 	requireT.NoError(err)
-	requireT.Equal(numberOfTokens, len(tokens))
+	requireT.Len(tokens, numberOfTokens)
 }
 
 type bankAssertion struct {
