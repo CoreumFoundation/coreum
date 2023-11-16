@@ -38,6 +38,8 @@ Currently, we have values for the above variables as follows:
 - `TxSizeCostPerByte`: 10
 - `FreeSignatures`: 1
 - `FreeBytes`: 2048
+- `WriteCostPerByte`: 30
+- `WriteCostFlat`: 2000
 
 
 To summarize user pays FixedGas as long as `GasForBytes + GasForSignatures <= TxBaseGas`.
@@ -73,6 +75,8 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 
 | Message Type | Gas |
 |--------------|-----|
+| `/coreum.asset.nft.v1.MsgIssueClass`                                   | [special case](#special-cases) |
+| `/coreum.asset.nft.v1.MsgMint`                                         | [special case](#special-cases) |
 | `/cosmos.authz.v1beta1.MsgExec`                                        | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgMultiSend`                                    | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgSend`                                         | [special case](#special-cases) |
@@ -92,8 +96,6 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 | `/coreum.asset.nft.v1.MsgClassFreeze`                                  | 8000                           |
 | `/coreum.asset.nft.v1.MsgClassUnfreeze`                                | 5000                           |
 | `/coreum.asset.nft.v1.MsgFreeze`                                       | 8000                           |
-| `/coreum.asset.nft.v1.MsgIssueClass`                                   | 16000                          |
-| `/coreum.asset.nft.v1.MsgMint`                                         | 39000                          |
 | `/coreum.asset.nft.v1.MsgRemoveFromClassWhitelist`                     | 3500                           |
 | `/coreum.asset.nft.v1.MsgRemoveFromWhitelist`                          | 3500                           |
 | `/coreum.asset.nft.v1.MsgUnfreeze`                                     | 5000                           |
@@ -160,6 +162,20 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 `DeterministicGasForMsg = authzMsgExecOverhead + Sum(DeterministicGas(ChildMsg))`
 
 `authzMsgExecOverhead` is currently equal to `1500`.
+
+##### `/coreum.asset.nft.v1.MsgIssueClass`
+
+`DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte + WriteCostFlat`
+
+`WriteCostFlat` is added only if `Len(msg.Data)` is positive.
+`msgGas` is currently equal to `16000`.
+
+##### `/coreum.asset.nft.v1.MsgMint`
+
+`DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte + WriteCostFlat`
+
+`WriteCostFlat` is added only if `Len(msg.Data)` is positive.
+`msgGas` is currently equal to `39000`.
 
 ### Nondeterministic messages
 

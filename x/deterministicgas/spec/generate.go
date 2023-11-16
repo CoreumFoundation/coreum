@@ -9,6 +9,7 @@ import (
 	"strings"
 	"text/template"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
@@ -74,6 +75,7 @@ func main() {
 	}
 
 	authParams := auth.DefaultParams()
+	storeConfig := storetypes.KVGasConfig()
 	err = template.Must(template.New("README.md").Parse(readmeTmpl)).Execute(file, struct {
 		GeneratorComment  string
 		SigVerifyCost     uint64
@@ -82,11 +84,15 @@ func main() {
 		TxBaseGas         uint64
 		FreeBytes         uint64
 		FreeSignatures    uint64
+		WriteCostPerByte  uint64
+		WriteCostFlat     uint64
 
 		MsgIssueGasPrice              uint64
 		BankSendPerCoinGas            uint64
 		BankMultiSendPerOperationsGas uint64
 		AuthzExecOverhead             uint64
+		NFTMsgIssueClassCost          uint64
+		NFTMsgMintCost                uint64
 
 		DetermMsgsSpecialCases []deterministicgas.MsgURL
 		DetermMsgs             []determMsg
@@ -102,11 +108,15 @@ func main() {
 		TxSizeCostPerByte: authParams.TxSizeCostPerByte,
 		FreeBytes:         cfg.FreeBytes,
 		FreeSignatures:    cfg.FreeSignatures,
+		WriteCostPerByte:  storeConfig.WriteCostPerByte,
+		WriteCostFlat:     storeConfig.WriteCostFlat,
 
 		MsgIssueGasPrice:              msgIssueGasPrice,
 		BankSendPerCoinGas:            deterministicgas.BankSendPerCoinGas,
 		BankMultiSendPerOperationsGas: deterministicgas.BankMultiSendPerOperationsGas,
 		AuthzExecOverhead:             deterministicgas.AuthzExecOverhead,
+		NFTMsgIssueClassCost:          deterministicgas.NFTMsgIssueClassCost,
+		NFTMsgMintCost:                deterministicgas.NFTMsgMintCost,
 
 		DetermMsgsSpecialCases: determSpeicialCaseMsgURLs,
 		DetermMsgs:             determMsgs,

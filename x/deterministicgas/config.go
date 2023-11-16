@@ -38,6 +38,8 @@ const (
 	BankSendPerCoinGas            = 50000
 	BankMultiSendPerOperationsGas = 35000
 	AuthzExecOverhead             = 1500
+	NFTMsgIssueClassCost          = 16_000
+	NFTMsgMintCost                = 39_000
 )
 
 type (
@@ -85,8 +87,8 @@ func DefaultConfig() Config {
 
 		// asset/nft
 		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                     constantGasFunc(26_000),
-		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):               dataGasFunc(16_000),
-		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     dataGasFunc(39_000),
+		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):               dataGasFunc(NFTMsgIssueClassCost),
+		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     dataGasFunc(NFTMsgMintCost),
 		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):                   constantGasFunc(8_000),
 		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):                 constantGasFunc(5_000),
 		MsgToMsgURL(&assetnfttypes.MsgClassFreeze{}):              constantGasFunc(8_000),
