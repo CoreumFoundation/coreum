@@ -169,6 +169,7 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 				feature: types.ClassFeature_whitelisting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
+				//nolint:testifylint // We don't want to use `require` here.
 				if assert.ErrorIs(t, err, cosmoserrors.ErrUnauthorized) {
 					return
 				}
@@ -185,6 +186,7 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 				feature: types.ClassFeature_whitelisting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
+				//nolint:testifylint // We don't want to use `require` here.
 				if assert.ErrorIs(t, err, types.ErrFeatureDisabled) {
 					return
 				}
@@ -206,8 +208,6 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 
 func TestValidateClassFeatures(t *testing.T) {
 	t.Parallel()
-
-	assertT := assert.New(t)
 
 	type testCase struct {
 		Name     string
@@ -298,11 +298,12 @@ func TestValidateClassFeatures(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
+			requireT := require.New(t)
 			err := types.ValidateClassFeatures(tc.Features)
 			if tc.Ok {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.Error(err)
+				requireT.Error(err)
 			}
 		})
 	}

@@ -59,7 +59,7 @@ func (s *TestSuite) TestBalance() {
 			"",
 			2,
 			func(index int, require *require.Assertions, res *nft.QueryBalanceResponse, expBalance uint64) {
-				require.Equal(res.Amount, expBalance, "the error occurred on:%d", index)
+				require.Equal(expBalance, res.Amount, "the error occurred on:%d", index)
 			},
 		},
 	}
@@ -286,7 +286,7 @@ func (s *TestSuite) TestNFTs() {
 			},
 			"",
 			func(index int, require *require.Assertions, res *nft.QueryNFTsResponse) {
-				require.Len(res.Nfts, 0, "the error occurred on:%d", index)
+				require.Empty(res.Nfts, "the error occurred on:%d", index)
 			},
 		},
 		{
@@ -305,7 +305,7 @@ func (s *TestSuite) TestNFTs() {
 			},
 			"",
 			func(index int, require *require.Assertions, res *nft.QueryNFTsResponse) {
-				require.Len(res.Nfts, 0, "the error occurred on:%d", index)
+				require.Empty(res.Nfts, "the error occurred on:%d", index)
 			},
 		},
 		{
@@ -454,7 +454,7 @@ func (s *TestSuite) TestNFT() {
 			},
 			"",
 			func(index int, require *require.Assertions, res *nft.QueryNFTResponse) {
-				require.Equal(*res.Nft, expNFT, "the error occurred on:%d", index)
+				require.Equal(expNFT, *res.Nft, "the error occurred on:%d", index)
 			},
 		},
 	}
@@ -563,7 +563,7 @@ func (s *TestSuite) TestClasses() {
 			},
 			"",
 			func(index int, require *require.Assertions, res *nft.QueryClassesResponse) {
-				require.Len(res.Classes, 0)
+				require.Empty(res.Classes)
 			},
 		},
 		{

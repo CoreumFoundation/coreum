@@ -139,7 +139,7 @@ func TestKeeper_GetClasses(t *testing.T) {
 	// get issuer 2 classes
 	classes, _, err = nftKeeper.GetClasses(ctx, &issuer2, &query.PageRequest{Limit: query.MaxLimit})
 	requireT.NoError(err)
-	requireT.Equal(2, len(classes))
+	requireT.Len(classes, 2)
 	sort.Slice(classes, func(i, j int) bool {
 		return classes[i].Symbol < classes[j].Symbol
 	})
