@@ -556,6 +556,69 @@ func TestAssetNFTMint(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
 }
 
+// TestAssetNFTWithMaxData tests that class and NFT with data of maximum length works.
+func TestAssetNFTWithMaxData(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	authParams, err := authtypes.NewQueryClient(chain.ClientContext).Params(ctx, &authtypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	const (
+		extraBytesIssue = 3395
+		extraBytesMint  = 3441
+	)
+
+	data, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize-3)}) // 3 bytes added by Any
+	requireT.NoError(err)
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Data:   data,
+	}
+
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender: issuer.String(),
+		ID:     "id-1",
+		Data:   data,
+	}
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			issueMsg,
+			mintMsg,
+			&assetnfttypes.MsgMint{},
+		},
+		NondeterministicMessagesGas: (extraBytesIssue + extraBytesMint) * authParams.Params.TxSizeCostPerByte,
+		Amount:                      chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+	})
+
+	resp, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)+extraBytesIssue*authParams.Params.TxSizeCostPerByte),
+		issueMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(len(resp.Tx.GetValue()), chain.DeterministicGasConfig.FreeBytes+extraBytesIssue)
+
+	mintMsg.ClassID = assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	resp, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)+extraBytesMint*authParams.Params.TxSizeCostPerByte),
+		mintMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(len(resp.Tx.GetValue()), chain.DeterministicGasConfig.FreeBytes+extraBytesMint)
+}
+
 // TestAssetNFTMintFeeProposal tests proposal upgrading mint fee.
 func TestAssetNFTMintFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
