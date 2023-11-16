@@ -258,7 +258,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 		ProposalId: proposal1.Id,
 	})
 	requireT.NoError(err)
-	requireT.Equal(proposalInfo.Proposal.Status, group.PROPOSAL_STATUS_WITHDRAWN)
+	requireT.Equal(group.PROPOSAL_STATUS_WITHDRAWN, proposalInfo.Proposal.Status)
 
 	// Submit proposal #2
 	submitProposalMsg.Metadata = "Issue asset FT #2 using group"
@@ -286,7 +286,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 			ProposalId: proposal2.Id,
 		})
 		requireT.NoError(err)
-		requireT.Equal(proposalInfo.Proposal.Status, group.PROPOSAL_STATUS_SUBMITTED)
+		requireT.Equal(group.PROPOSAL_STATUS_SUBMITTED, proposalInfo.Proposal.Status)
 	})
 
 	// Execute proposal #2 (first try)
@@ -307,8 +307,8 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 		ProposalId: proposal2.Id,
 	})
 	requireT.NoError(err)
-	requireT.Equal(proposal2Info.Proposal.Status, group.PROPOSAL_STATUS_ACCEPTED)
-	requireT.Equal(proposal2Info.Proposal.ExecutorResult, group.PROPOSAL_EXECUTOR_RESULT_FAILURE)
+	requireT.Equal(group.PROPOSAL_STATUS_ACCEPTED, proposal2Info.Proposal.Status)
+	requireT.Equal(group.PROPOSAL_EXECUTOR_RESULT_FAILURE, proposal2Info.Proposal.ExecutorResult)
 
 	// Fund group policy account with issuance fee
 	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(groupPolicy.Address), integration.BalancesOptions{

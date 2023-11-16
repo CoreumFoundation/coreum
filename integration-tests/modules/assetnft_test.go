@@ -190,7 +190,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		Issuer: issuer.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(assetNftClassesRes.Classes))
+	requireT.Len(assetNftClassesRes.Classes, 1)
 	requireT.Equal(uint64(1), assetNftClassesRes.Pagination.Total)
 	requireT.Equal(expectedClass, assetNftClassesRes.Classes[0])
 }
@@ -2310,7 +2310,7 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetnfttypes.SendAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
 	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{
@@ -2341,7 +2341,7 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 	updatedGrant = assetnfttypes.SendAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
 	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{

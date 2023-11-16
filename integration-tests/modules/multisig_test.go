@@ -23,13 +23,13 @@ func TestMultisigAddressGeneration(t *testing.T) {
 	assert.Equal(t, "devcore15lu0zdjkqzvh7x7pevp3n08anzt49sz8l0t42r", accAddr1.String())
 
 	signerKeyInfo1, err := chain.ClientContext.Keyring().KeyByAddress(accAddr1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	accAddr2 := chain.ImportMnemonic("dinner liar trust decrease angry apart ladder dance leisure flock super hollow such much ridge planet pill crazy inherit limit submit size absurd drive")
 	assert.Equal(t, "devcore13ym5fg96sg442mgpta0xnd064dcv9tqsh58rjx", accAddr2.String())
 
 	signerKeyInfo2, err := chain.ClientContext.Keyring().KeyByAddress(accAddr2)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	signer1PubKey, err := signerKeyInfo1.GetPubKey()
 	require.NoError(t, err)

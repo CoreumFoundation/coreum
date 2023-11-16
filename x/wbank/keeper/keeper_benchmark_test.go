@@ -19,15 +19,16 @@ import (
 )
 
 func Benchmark100KDenomBankSend(b *testing.B) {
+	requireT := require.New(b)
+
 	simApp := createSimApp(b)
 	bankKeeper := simApp.BankKeeper
 	sdkContext := simApp.NewUncachedContext(false, types.Header{})
 	chainConfig, err := config.NetworkConfigByChainID(constant.ChainIDDev)
-	require.NoError(b, err)
+	requireT.NoError(err)
 	singleCoinDenom := chainConfig.Denom()
 	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdkmath.NewInt(1_000_000_000)))
-	err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
-	assert.NoError(b, err)
+	requireT.NoError(bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins))
 
 	testAction := func(b *testing.B, numberOfDenoms int) {
 		b.StopTimer()
@@ -35,8 +36,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 		for i := 0; i < numberOfDenoms; i++ {
 			denoms[i] = fmt.Sprintf("test-denom-%d", i)
 			coins := sdk.NewCoins(sdk.NewCoin(denoms[i], sdkmath.NewInt(1_000_000_000)))
-			err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
-			assert.NoError(b, err)
+			requireT.NoError(bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins))
 		}
 
 		addresses := make([]sdk.AccAddress, b.N)
@@ -46,8 +46,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 
 			denom := denoms[b.N%len(denoms)]
 			amount := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
-			err = bankKeeper.SendCoinsFromModuleToAccount(sdkContext, minttypes.ModuleName, address, amount)
-			assert.NoError(b, err)
+			requireT.NoError(bankKeeper.SendCoinsFromModuleToAccount(sdkContext, minttypes.ModuleName, address, amount))
 		}
 
 		b.StartTimer()
@@ -56,8 +55,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 			toAddress := addresses[(i+1)%len(addresses)]
 			denom := denoms[b.N%len(denoms)]
 			amount := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
-			err = bankKeeper.SendCoins(sdkContext, fromAddress, toAddress, amount)
-			assert.NoError(b, err)
+			requireT.NoError(bankKeeper.SendCoins(sdkContext, fromAddress, toAddress, amount))
 		}
 	}
 
@@ -72,21 +70,21 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 }
 
 func Benchmark100KDenomBankGetSupply(b *testing.B) {
+	requireT := require.New(b)
+
 	simApp := createSimApp(b)
 	bankKeeper := simApp.BankKeeper
 	sdkContext := simApp.NewUncachedContext(false, types.Header{})
 
 	chainConfig, err := config.NetworkConfigByChainID(constant.ChainIDDev)
-	require.NoError(b, err)
+	requireT.NoError(err)
 	singleCoinDenom := chainConfig.Denom()
 	coin := sdk.NewCoin(singleCoinDenom, sdkmath.NewInt(1_000_000_000))
 	coins := sdk.NewCoins(coin)
-	err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
-	assert.NoError(b, err)
+	requireT.NoError(bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins))
 	b.Run("test-single-get-supply", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			supply := bankKeeper.GetSupply(sdkContext, singleCoinDenom)
-			assert.NoError(b, err)
 			assert.EqualValues(b, coin.String(), supply.String())
 		}
 	})
@@ -97,8 +95,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 		denom := fmt.Sprintf("test-denom-%d", i)
 		denoms = append(denoms, denom)
 		coins := sdk.NewCoins(sdk.NewCoin(denom, mintValue))
-		err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
-		assert.NoError(b, err)
+		requireT.NoError(bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins))
 	}
 
 	b.Run("test-100k-get-supply", func(b *testing.B) {

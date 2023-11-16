@@ -307,7 +307,7 @@ func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, dis
 	communityPoolRes, err := distributionClient.CommunityPool(ctx, &distributiontypes.QueryCommunityPoolRequest{})
 	requireT.NoError(err)
 
-	requireT.Equal(1, len(communityPoolRes.Pool))
+	requireT.Len(communityPoolRes.Pool, 1)
 	poolDecCoin := communityPoolRes.Pool[0]
 	poolIntCoin := sdk.NewCoin(poolDecCoin.Denom, poolDecCoin.Amount.TruncateInt())
 	requireT.True(poolIntCoin.IsPositive())
