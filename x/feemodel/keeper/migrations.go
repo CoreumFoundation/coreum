@@ -15,7 +15,7 @@ type Migrator struct {
 
 // FeeModelMigrationKeeper specifies the methods of the keeper needed by migration.
 type FeeModelMigrationKeeper interface {
-	SetParams(sdk.Context, types.Params) error
+	SetParams(ctx sdk.Context, params types.Params) error
 }
 
 // NewMigrator returns a new Migrator.

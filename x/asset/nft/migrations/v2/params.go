@@ -15,7 +15,7 @@ type ParamsKeeper interface {
 
 // NFTKeeper specifies methods of the nft keeper required by the migration.
 type NFTKeeper interface {
-	SetParams(sdk.Context, types.Params) error
+	SetParams(ctx sdk.Context, params types.Params) error
 }
 
 // MigrateParams migrates params of the nft module from the params module to inside the nft module.

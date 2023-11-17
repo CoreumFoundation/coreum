@@ -286,7 +286,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 	requireT.NoError(err)
 
 	denom := assetfttypes.BuildDenom(msg1.Subunit, issuer1)
-	requireT.Equal(1, len(gotToken.Tokens))
+	requireT.Len(gotToken.Tokens, 1)
 	requireT.Equal(assetfttypes.Token{
 		Denom:              denom,
 		Issuer:             issuer1.String(),
@@ -3223,7 +3223,7 @@ func TestBareToken(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	assertT.NoError(err)
+	requireT.NoError(err)
 
 	// try to burn from non-issuer account (must fail)
 	sendMsg := &banktypes.MsgSend{
@@ -3237,7 +3237,7 @@ func TestBareToken(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	assertT.NoError(err)
+	requireT.NoError(err)
 
 	burnMsg = &assetfttypes.MsgBurn{
 		Sender: recipient.String(),
@@ -3249,7 +3249,7 @@ func TestBareToken(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+	requireT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 
 	// try to whitelist
 	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
@@ -3263,7 +3263,7 @@ func TestBareToken(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
-	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+	requireT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 
 	// try to freeze
 	freezeMsg := &assetfttypes.MsgFreeze{
@@ -3277,7 +3277,7 @@ func TestBareToken(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
 		freezeMsg,
 	)
-	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+	requireT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 
 	// try to globally freeze
 	globalFreezeMsg := &assetfttypes.MsgGloballyFreeze{
@@ -3290,7 +3290,7 @@ func TestBareToken(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globalFreezeMsg)),
 		globalFreezeMsg,
 	)
-	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+	requireT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 }
 
 // TestAuthz tests the authz module works well with assetft module.
@@ -3360,7 +3360,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(2, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 2)
 
 	// try to whitelist and freeze using the authz
 	msgFreeze := &assetfttypes.MsgFreeze{
@@ -3462,7 +3462,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 
 	// try to mint using the authz
 	msgMint := &assetfttypes.MsgMint{
@@ -3494,7 +3494,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetfttypes.MintAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
 	requireT.EqualValues("499", updatedGrant.MintLimit.AmountOf(denom).String())
@@ -3546,7 +3546,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(0, len(gransRes.Grants))
+	requireT.Empty(gransRes.Grants)
 }
 
 // TestAuthzMintAuthorizationLimit_GrantFromNonIssuer tests the authz MintLimitAuthorization msg works as expected if
@@ -3623,7 +3623,7 @@ func TestAuthzMintAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 
 	// try to mint using the authz
 	msgMint := &assetfttypes.MsgMint{
@@ -3727,7 +3727,7 @@ func TestAuthzMintAuthorizationLimit_MultipleCoins(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 
 	// try to mint using the authz
 	msgMint := &assetfttypes.MsgMint{
@@ -3755,7 +3755,7 @@ func TestAuthzMintAuthorizationLimit_MultipleCoins(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetfttypes.BurnAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
 	requireT.EqualValues("499", updatedGrant.BurnLimit.AmountOf(denom1).String())
@@ -3817,7 +3817,7 @@ func TestAuthzBurnAuthorizationLimit(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 
 	// try to burn using the authz
 	msgBurn := &assetfttypes.MsgBurn{
@@ -3849,7 +3849,7 @@ func TestAuthzBurnAuthorizationLimit(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetfttypes.BurnAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
 	requireT.EqualValues("499", updatedGrant.BurnLimit.AmountOf(denom).String())
@@ -3901,7 +3901,7 @@ func TestAuthzBurnAuthorizationLimit(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(0, len(gransRes.Grants))
+	requireT.Empty(gransRes.Grants)
 
 	supply, err = bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
@@ -4015,7 +4015,7 @@ func TestAuthzBurnAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 
 	// try to burn using the authz when burning is enabled
 	msgBurn := &assetfttypes.MsgBurn{

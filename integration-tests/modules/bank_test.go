@@ -298,7 +298,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 
 	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
+	require.Len(t, tokenIssuedEvts, numOfTokens)
 
 	for _, e := range tokenIssuedEvts {
 		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
@@ -444,7 +444,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 
 	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
+	require.Len(t, tokenIssuedEvts, numOfTokens)
 
 	for _, e := range tokenIssuedEvts {
 		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))

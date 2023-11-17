@@ -11,6 +11,7 @@ import (
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/app"
 	"github.com/CoreumFoundation/coreum/v3/pkg/client"
@@ -104,7 +105,11 @@ func init() {
 
 	// ********** Coreum **********
 
-	coreumGRPCClient := integration.DialGRPCClient(coreumGRPCAddress)
+	coreumGRPCClient, err := integration.DialGRPCClient(coreumGRPCAddress)
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
+
 	coreumSettings := integration.QueryChainSettings(queryCtx, coreumGRPCClient)
 
 	coreumClientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
@@ -150,7 +155,8 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		defer queryCtxCancel()
 		// ********** Gaia **********
 
-		gaiaGRPClient := integration.DialGRPCClient(gaiaGRPCAddress)
+		gaiaGRPClient, err := integration.DialGRPCClient(gaiaGRPCAddress)
+		require.NoError(t, err)
 		gaiaSettings := integration.QueryChainSettings(queryCtx, gaiaGRPClient)
 		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		gaiaSettings.GasAdjustment = 1.5
@@ -170,7 +176,8 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 
 		// ********** Osmosis **********
 
-		osmosisGRPClient := integration.DialGRPCClient(osmosisGRPCAddress)
+		osmosisGRPClient, err := integration.DialGRPCClient(osmosisGRPCAddress)
+		require.NoError(t, err)
 		osmosisChainSettings := integration.QueryChainSettings(queryCtx, osmosisGRPClient)
 		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		osmosisChainSettings.GasAdjustment = 1.5
