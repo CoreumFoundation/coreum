@@ -21,6 +21,7 @@ import (
 //go:embed README.tmpl.md
 var readmeTmpl string
 
+//nolint:funlen
 func main() {
 	type determMsg struct {
 		Type deterministicgas.MsgURL
