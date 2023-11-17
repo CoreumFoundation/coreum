@@ -31,15 +31,6 @@ func (nut *nftMigrationTest) Before(t *testing.T) {
 
 	issuer := chain.GenAccount()
 	nut.issuer = issuer
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&assetnfttypes.MsgMint{},
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
 
 	// issue nft class and mint nfts
 	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
@@ -75,6 +66,11 @@ func (nut *nftMigrationTest) Before(t *testing.T) {
 			Data:    data,
 		},
 	}
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: issueAndMint,
+		Amount:   chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+	})
 
 	_, err = client.BroadcastTx(
 		ctx,
