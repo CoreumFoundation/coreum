@@ -15,7 +15,7 @@ type ParamsKeeper interface {
 
 // FTKeeper specifies methods of the ft keeper required by the migration.
 type FTKeeper interface {
-	SetParams(sdk.Context, types.Params) error
+	SetParams(ctx sdk.Context, params types.Params) error
 }
 
 // MigrateParams migrates params of the ft module from the params module to inside the ft module.

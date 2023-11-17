@@ -40,11 +40,12 @@ func TestValidatePrecision(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprint(tc), func(t *testing.T) {
+			requireT := require.New(t)
 			err := types.ValidatePrecision(tc.precision)
 			if tc.expectError {
-				assert.ErrorIs(t, err, types.ErrInvalidInput)
+				requireT.ErrorIs(err, types.ErrInvalidInput)
 			} else {
-				assert.NoError(t, err)
+				requireT.NoError(err)
 			}
 		})
 	}
@@ -192,8 +193,6 @@ func TestValidateSymbol(t *testing.T) {
 func TestValidateFeatures(t *testing.T) {
 	t.Parallel()
 
-	assertT := assert.New(t)
-
 	type testCase struct {
 		Name     string
 		Features []types.Feature
@@ -290,11 +289,12 @@ func TestValidateFeatures(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
+			requireT := require.New(t)
 			err := types.ValidateFeatures(tc.Features)
 			if tc.Ok {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.Error(err)
+				requireT.Error(err)
 			}
 		})
 	}
@@ -371,12 +371,12 @@ func TestValidateBurnRate(t *testing.T) {
 		tc := tc
 		name := fmt.Sprintf("%+v", tc)
 		t.Run(name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := parseAndValidate(tc.rate)
 			if tc.invalid {
-				assertT.Error(err)
+				requireT.Error(err)
 			} else {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			}
 		})
 	}
@@ -453,12 +453,12 @@ func TestValidateSendCommissionRate(t *testing.T) {
 		tc := tc
 		name := fmt.Sprintf("%+v", tc)
 		t.Run(name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := parseAndValidate(tc.rate)
 			if tc.invalid {
-				assertT.Error(err)
+				requireT.Error(err)
 			} else {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			}
 		})
 	}
@@ -537,6 +537,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 				feature: types.Feature_minting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
+				//nolint:testifylint // We don't want to use `require` here.
 				if assert.ErrorIs(t, err, cosmoserrors.ErrUnauthorized) {
 					return
 				}
@@ -553,6 +554,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 				feature: types.Feature_minting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
+				//nolint:testifylint // We don't want to use `require` here.
 				if assert.ErrorIs(t, err, types.ErrFeatureDisabled) {
 					return
 				}

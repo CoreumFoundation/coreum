@@ -661,7 +661,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		Grantee: contractAddr,
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 
 	// ********** Transfer **********
 
@@ -794,7 +794,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		Grantee: contractAddr,
 	})
 	requireT.NoError(err)
-	requireT.Equal(2, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 2)
 	updatedGrant := assetnfttypes.SendAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[1].Authorization.Value, &updatedGrant)
 	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{
@@ -1892,7 +1892,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	var burntNFTQueryRes assetnfttypes.QueryBurntNFTResponse
 	requireT.NoError(json.Unmarshal(queryOut, &burntNFTQueryRes))
-	requireT.Equal(burntNFTQueryRes.Burnt, true)
+	requireT.True(burntNFTQueryRes.Burnt)
 
 	// ********** BurntNFTsInClass **********
 
@@ -1905,7 +1905,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	var burntNFTsInClassQueryRes assetnfttypes.QueryBurntNFTsInClassResponse
 	requireT.NoError(json.Unmarshal(queryOut, &burntNFTsInClassQueryRes))
-	requireT.Equal(burntNFTsInClassQueryRes.NftIds, []string{"id-1"})
+	requireT.Equal([]string{"id-1"}, burntNFTsInClassQueryRes.NftIds)
 
 	// ********** Balance **********
 

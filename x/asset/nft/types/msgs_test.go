@@ -10,7 +10,6 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
@@ -183,12 +182,12 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := tc.messageFunc().ValidateBasic()
 			if tc.expectedError == nil {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
 	}
@@ -313,12 +312,12 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := tc.messageFunc().ValidateBasic()
 			if tc.expectedError == nil {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
 	}
@@ -374,12 +373,12 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := tc.messageFunc().ValidateBasic()
 			if tc.expectedError == nil {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
 	}
@@ -435,12 +434,12 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := tc.messageFunc().ValidateBasic()
 			if tc.expectedError == nil {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
 	}
@@ -496,12 +495,12 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := tc.messageFunc().ValidateBasic()
 			if tc.expectedError == nil {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
 	}
@@ -567,12 +566,12 @@ func TestMsgAddToWhitelist_ValidateBasic(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := tc.messageFunc().ValidateBasic()
 			if tc.expectedError == nil {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
 	}
@@ -638,12 +637,12 @@ func TestMsgRemoveFromWhitelist_ValidateBasic(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			err := tc.messageFunc().ValidateBasic()
 			if tc.expectedError == nil {
-				assertT.NoError(err)
+				requireT.NoError(err)
 			} else {
-				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
 	}
