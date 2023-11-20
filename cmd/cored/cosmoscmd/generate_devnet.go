@@ -114,7 +114,6 @@ func GenerateDevnetCmd() *cobra.Command {
 					validatorName, mnemonic, nodeID,
 				)
 			}
-
 			// write same genesis to all validators
 			for _, validatorName := range validatorNames {
 				validatorOutputPath := filepath.Join(outputPath, validatorName, string(network.ChainID()))
@@ -130,7 +129,6 @@ func GenerateDevnetCmd() *cobra.Command {
 					return errors.Wrap(err, "failed to write genesis bytes to file")
 				}
 			}
-
 			fmt.Printf("\nAll validators are successfully generated.\n")
 
 			return nil

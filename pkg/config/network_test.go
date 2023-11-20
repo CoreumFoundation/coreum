@@ -117,7 +117,7 @@ func TestNetworkNotMutable(t *testing.T) {
 		WithGenesisTx([]byte("test string"))
 
 	assertT.Len(provider.FundedAccounts, 1)
-	assertT.Len(provider.GenTxs, 0)
+	assertT.Empty(provider.GenTxs)
 
 	assertT.Len(provider2.FundedAccounts, 2)
 	assertT.Len(provider2.GenTxs, 1)
@@ -128,7 +128,7 @@ func TestNetworkNotMutable(t *testing.T) {
 	provider = n.Provider.(config.DynamicConfigProvider)
 
 	assertT.Len(provider.FundedAccounts, 1)
-	assertT.Len(provider.GenTxs, 0)
+	assertT.Empty(provider.GenTxs)
 }
 
 func TestGenesisHash(t *testing.T) {
