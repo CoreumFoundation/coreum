@@ -2,12 +2,11 @@ package cosmoscmd
 
 import (
 	"fmt"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/samber/lo"
 	"os"
 	"path/filepath"
 
 	sdkmath "cosmossdk.io/math"
+	tmos "github.com/cometbft/cometbft/libs/os"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -19,6 +18,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/v3/app"
