@@ -20,8 +20,6 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          # FIXME(dzmitryhil) remove once me merge the crust
-          ref: dzmitryhil/cored-darwin-cored-client-release
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Login to DockerHub
