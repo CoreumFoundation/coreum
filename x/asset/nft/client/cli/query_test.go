@@ -29,7 +29,7 @@ func TestQueryClassAndNFT(t *testing.T) {
 
 	testNetwork := network.New(t)
 
-	symbol := "nft" + uuid.NewString()[:4]
+	symbol := "nft" + uuid.NewString()[:4] //nolint:goconst
 	name := "class name"
 	description := "class description"
 	uri := "https://my-class-meta.invalid/1"

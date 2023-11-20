@@ -6,7 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var params = Params{
@@ -16,33 +16,35 @@ var params = Params{
 }
 
 func TestParamsValidation(t *testing.T) {
-	assert.NoError(t, params.ValidateBasic())
+	requireT := require.New(t)
+
+	requireT.NoError(params.ValidateBasic())
 
 	testParams := params
 	testParams.IssueFee = sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)
-	assert.NoError(t, params.ValidateBasic())
+	requireT.NoError(params.ValidateBasic())
 
 	testParams = params
 	testParams.IssueFee = sdk.Coin{}
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.IssueFee = sdk.Coin{Denom: sdk.DefaultBondDenom}
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.IssueFee = sdk.Coin{Amount: sdk.OneInt()}
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.IssueFee = sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: sdkmath.NewInt(-10_000_000)}
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.TokenUpgradeGracePeriod = 0
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
 	testParams.TokenUpgradeGracePeriod = -1
-	assert.Error(t, testParams.ValidateBasic())
+	requireT.Error(testParams.ValidateBasic())
 }

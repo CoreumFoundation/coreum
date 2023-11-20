@@ -139,7 +139,7 @@ func TestAuthz(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(1, len(gransRes.Grants))
+	requireT.Len(gransRes.Grants, 1)
 
 	// try to send using the authz
 	txResult, err = client.BroadcastTx(
@@ -173,7 +173,7 @@ func TestAuthz(t *testing.T) {
 		Grantee: grantee.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(0, len(gransRes.Grants))
+	requireT.Empty(gransRes.Grants)
 
 	// try to send with the revoked grant
 	_, err = client.BroadcastTx(

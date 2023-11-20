@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -330,7 +331,7 @@ func issue(requireT *require.Assertions, ctx client.Context, token types.Token, 
 	}
 	// args
 	args := []string{
-		token.Symbol, token.Subunit, fmt.Sprint(token.Precision), initialAmount.String(), token.Description, // args
+		token.Symbol, token.Subunit, strconv.FormatUint(uint64(token.Precision), 10), initialAmount.String(), token.Description, // args
 	}
 	// flags
 	if len(features) > 0 {
