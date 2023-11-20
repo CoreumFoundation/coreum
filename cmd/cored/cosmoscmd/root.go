@@ -173,6 +173,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig config.EncodingConfig) {
 		clientconfig.Cmd(),
 		pruning.Cmd(newApp, app.DefaultNodeHome),
 		snapshot.Cmd(newApp),
+		GenerateDevnetCmd(),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)

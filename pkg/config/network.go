@@ -1,10 +1,7 @@
 package config
 
 import (
-	"embed"
-	"encoding/json"
-	"io"
-	"io/fs"
+	_ "embed"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -28,16 +25,10 @@ var (
 	//go:embed genesis/genesis.v3.tmpl.json
 	GenesisV3Template string
 
-	//go:embed genesis/gentx/coreum-devnet-1
-	devGenTxsFS embed.FS
-
 	networkConfigs map[constant.ChainID]NetworkConfig
 )
 
 func init() {
-	// 10m delegated and 1m extra to the txs
-	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(11_000_000_000_000)))
-
 	// configs
 	networkConfigs = map[constant.ChainID]NetworkConfig{
 		constant.ChainIDMain: {
@@ -78,66 +69,16 @@ func init() {
 					},
 				},
 				FundedAccounts: []FundedAccount{
-					// Staker of validator Mercury
-					{
-						Address:  "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6",
-						Balances: devStakerValidatorBalance,
-					},
-					// Staker of validator Venus
-					{
-						Address:  "devcore105ct3vl89ar53jrj23zl6e09cmqwym2ua5hegf",
-						Balances: devStakerValidatorBalance,
-					},
-					// Staker of validator Earth
-					{
-						Address:  "devcore14x46r5eflga696sd5my900euvlplu2prhny5ae",
-						Balances: devStakerValidatorBalance,
-					},
-					// Faucet's account storing the rest of total supply
+					// Faucet's account
 					{
 						Address:  "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
 						Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))), // 100m faucet
 					},
 				},
-				GenTxs: readGenTxs(devGenTxsFS),
 			},
-			NodeConfig: NodeConfig{
-				SeedPeers: []string{
-					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.135.242.117:26656",
-					"88d1266e086bfe33589886cc10d4c58e85a69d14@34.135.191.69:26656",
-				},
-			},
+			NodeConfig: NodeConfig{},
 		},
 	}
-}
-
-func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
-	genTxs := make([]json.RawMessage, 0)
-	err := fs.WalkDir(genTxsFs, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			panic("can't open GenTxs FS")
-		}
-		if d.IsDir() {
-			return nil
-		}
-
-		file, err := genTxsFs.Open(path)
-		if err != nil {
-			panic(errors.Errorf("can't open file %q from GenTxs FS", path))
-		}
-		defer file.Close()
-		txBytes, err := io.ReadAll(file)
-		if err != nil {
-			panic(errors.Errorf("can't read file %+v from GenTxs FS", file))
-		}
-		genTxs = append(genTxs, txBytes)
-		return nil
-	})
-	if err != nil {
-		panic("can't read files from GenTxs FS")
-	}
-
-	return genTxs
 }
 
 // GovConfig contains gov module configs.
