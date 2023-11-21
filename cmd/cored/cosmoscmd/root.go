@@ -311,6 +311,7 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 	flagSet.ParseErrorsWhitelist.UnknownFlags = true
 	broadcastMode := flagSet.StringP(flags.FlagBroadcastMode, "b", "", "")
 	originalOutputFormat := flagSet.StringP(flags.FlagOutput, "o", "", "")
+	dryRun := flagSet.Bool(flags.FlagDryRun, false, "")
 	// Dummy flag to turn off printing usage of this flag set
 	flagSet.BoolP(flagHelp, "h", false, "")
 	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here
@@ -324,9 +325,12 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 	// wrapper behaves correctly.
 	if *broadcastMode == broadcastModeBlock {
 		removeFlag(os.Args, "-b")
-		removeFlag(os.Args, "-o")
 		os.Args = append(removeFlag(os.Args, "--"+flags.FlagBroadcastMode), "--"+flags.FlagBroadcastMode, flags.BroadcastSync)
-		os.Args = append(removeFlag(os.Args, "--"+flags.FlagOutput), "--"+flags.FlagOutput, "json")
+
+		if !*dryRun {
+			removeFlag(os.Args, "-o")
+			os.Args = append(removeFlag(os.Args, "--"+flags.FlagOutput), "--"+flags.FlagOutput, "json")
+		}
 	}
 
 	// Iterate over all the "tx" subcommands.
@@ -341,8 +345,8 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 			broadcastModeFlag.Usage = `Transaction broadcasting mode (sync|async|block)`
 		}
 
-		// We install our wrapper only if this is "block" broadcast mode.
-		if *broadcastMode != broadcastModeBlock {
+		// We install our wrapper only if this is "block" broadcast mode and not a dry run.
+		if *broadcastMode != broadcastModeBlock || *dryRun {
 			continue
 		}
 
