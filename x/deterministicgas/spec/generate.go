@@ -86,7 +86,6 @@ func main() {
 		FreeBytes         uint64
 		FreeSignatures    uint64
 		WriteCostPerByte  uint64
-		WriteCostFlat     uint64
 
 		MsgIssueGasPrice              uint64
 		BankSendPerCoinGas            uint64
@@ -110,14 +109,13 @@ func main() {
 		FreeBytes:         cfg.FreeBytes,
 		FreeSignatures:    cfg.FreeSignatures,
 		WriteCostPerByte:  storeConfig.WriteCostPerByte,
-		WriteCostFlat:     storeConfig.WriteCostFlat,
 
 		MsgIssueGasPrice:              msgIssueGasPrice,
 		BankSendPerCoinGas:            deterministicgas.BankSendPerCoinGas,
 		BankMultiSendPerOperationsGas: deterministicgas.BankMultiSendPerOperationsGas,
 		AuthzExecOverhead:             deterministicgas.AuthzExecOverhead,
-		NFTMsgIssueClassCost:          deterministicgas.NFTMsgIssueClassCost,
-		NFTMsgMintCost:                deterministicgas.NFTMsgMintCost,
+		NFTMsgIssueClassCost:          deterministicgas.NFTIssueClassBaseGas,
+		NFTMsgMintCost:                deterministicgas.NFTMintBaseGas,
 
 		DetermMsgsSpecialCases: determSpeicialCaseMsgURLs,
 		DetermMsgs:             determMsgs,

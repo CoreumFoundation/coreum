@@ -39,8 +39,6 @@ Currently, we have values for the above variables as follows:
 - `FreeSignatures`: 1
 - `FreeBytes`: 2048
 - `WriteCostPerByte`: 30
-- `WriteCostFlat`: 2000
-
 
 To summarize user pays FixedGas as long as `GasForBytes + GasForSignatures <= TxBaseGas`.
 If `GasForBytes + GasForSignatures > TxBaseGas` user will have to pay anything above `TxBaseGas` on top of `FixedGas`. 
@@ -165,16 +163,14 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 ##### `/coreum.asset.nft.v1.MsgIssueClass`
 
-`DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte + WriteCostFlat`
+`DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte`
 
-`WriteCostFlat` is added only if `Len(msg.Data)` is positive.
 `msgGas` is currently equal to `16000`.
 
 ##### `/coreum.asset.nft.v1.MsgMint`
 
-`DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte + WriteCostFlat`
+`DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte`
 
-`WriteCostFlat` is added only if `Len(msg.Data)` is positive.
 `msgGas` is currently equal to `39000`.
 
 ### Nondeterministic messages
