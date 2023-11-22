@@ -42,7 +42,7 @@ func GenerateDevnetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate-devnet",
 		Short: "Generate devnet configuration files",
-		Long:  `Generate devnet validators's and node's configuration files.`,
+		Long:  `Generate devnet validators' and nodes' configuration files.`,
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			network := app.ChosenNetwork
