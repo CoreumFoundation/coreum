@@ -108,11 +108,7 @@ func GenerateDevnetCmd() *cobra.Command {
 				); err != nil {
 					return err
 				}
-
-				fmt.Printf(
-					"\nGenerated validator `%s`:\nMnemonic: %s\nNode ID: %s\n",
-					validatorName, mnemonic, nodeID,
-				)
+				fmt.Printf("\nGenerated validator `%s`:\nMnemonic: %s\nNode ID: %s\n", validatorName, mnemonic, nodeID)
 			}
 
 			genDocBytes, err := network.EncodeGenesis()
