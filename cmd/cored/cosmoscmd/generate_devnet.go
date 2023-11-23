@@ -42,7 +42,7 @@ func GenerateDevnetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate-devnet",
 		Short: "Generate devnet configuration files",
-		Long:  `Generate devnet validators' and nodes' configuration files.`,
+		Long:  `Generate devnet validators' and nodes' configuration files and genesis,`,
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			network := app.ChosenNetwork
@@ -114,13 +114,15 @@ func GenerateDevnetCmd() *cobra.Command {
 					validatorName, mnemonic, nodeID,
 				)
 			}
+
+			genDocBytes, err := network.EncodeGenesis()
+			if err != nil {
+				return err
+			}
+
 			// write same genesis to all validators
 			for _, validatorName := range validatorNames {
 				validatorOutputPath := filepath.Join(outputPath, validatorName, string(network.ChainID()))
-				genDocBytes, err := network.EncodeGenesis()
-				if err != nil {
-					return err
-				}
 				genPath := filepath.Join(validatorOutputPath, nodeConfigDirName, genesisFileName)
 				if tmos.FileExists(genPath) {
 					return errors.Errorf("genesis already exists: %s", genPath)
