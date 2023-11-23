@@ -3,6 +3,7 @@ package deterministicgas
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/armon/go-metrics"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -37,6 +38,8 @@ const (
 	BankSendPerCoinGas            = 50000
 	BankMultiSendPerOperationsGas = 35000
 	AuthzExecOverhead             = 1500
+	NFTIssueClassBaseGas          = 16_000
+	NFTMintBaseGas                = 39_000
 )
 
 type (
@@ -84,8 +87,8 @@ func DefaultConfig() Config {
 
 		// asset/nft
 		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                     constantGasFunc(26_000),
-		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):               constantGasFunc(16_000),
-		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     constantGasFunc(39_000),
+		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):               dataGasFunc(NFTIssueClassBaseGas),
+		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     dataGasFunc(NFTMintBaseGas),
 		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):                   constantGasFunc(8_000),
 		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):                 constantGasFunc(5_000),
 		MsgToMsgURL(&assetnfttypes.MsgClassFreeze{}):              constantGasFunc(8_000),
@@ -353,6 +356,23 @@ func (cfg *Config) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc
 			totalGas += gas
 		}
 		return totalGas, true
+	}
+}
+
+func dataGasFunc(constGas uint64) gasByMsgFunc {
+	return func(msg sdk.Msg) (uint64, bool) {
+		var dataLen int
+		switch m := msg.(type) {
+		case *assetnfttypes.MsgIssueClass:
+			dataLen = len(m.Data.GetValue())
+		case *assetnfttypes.MsgMint:
+			dataLen = len(m.Data.GetValue())
+		default:
+			return 0, false
+		}
+
+		storeConfig := storetypes.KVGasConfig()
+		return uint64(dataLen)*storeConfig.WriteCostPerByte + constGas, true
 	}
 }
 

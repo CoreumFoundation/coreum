@@ -30,32 +30,7 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	nftClient := nft.NewQueryClient(chain.ClientContext)
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{}, //nolint:staticcheck // we are testing deprecated handlers
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
-
-	// issue new NFT class
-	issueMsg := &assetnfttypes.MsgIssueClass{
-		Issuer: issuer.String(),
-		Symbol: "NFTClassSymbol",
-	}
-	_, err := client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
-		issueMsg,
-	)
-	requireT.NoError(err)
-
-	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
-
-	// mint new token in that class
+	// prepare mint message
 	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
 	data, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonData})
 	requireT.NoError(err)
@@ -69,11 +44,38 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	mintMsg := &assetnfttypes.MsgMint{
 		Sender:  issuer.String(),
 		ID:      "id-1",
-		ClassID: classID,
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
 		Data:    data,
 	}
+
+	nftClient := nft.NewQueryClient(chain.ClientContext)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+			mintMsg,
+			&nft.MsgSend{}, //nolint:staticcheck // we are testing deprecated handlers
+		},
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+	})
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+
+	// mint new token in that class
+	mintMsg.ClassID = classID
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),

@@ -51,72 +51,13 @@ func TestAssetNFTIssueClass(t *testing.T) {
 
 	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-		},
-	})
+	// prepare issue message
 
-	// issue new NFT class with invalid data type
-
-	data, err := codectypes.NewAnyWithValue(&assetnfttypes.MsgMint{})
+	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
+	data, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonData})
 	requireT.NoError(err)
 
 	issueMsg := &assetnfttypes.MsgIssueClass{
-		Issuer:      issuer.String(),
-		Symbol:      "symbol",
-		Name:        "name",
-		Description: "description",
-		URI:         "https://my-class-meta.invalid/1",
-		URIHash:     "content-hash",
-		Data:        data,
-		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning,
-		},
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
-		issueMsg,
-	)
-	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
-
-	// issue new NFT class with too long data
-
-	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)})
-	requireT.NoError(err)
-
-	issueMsg = &assetnfttypes.MsgIssueClass{
-		Issuer:      issuer.String(),
-		Symbol:      "symbol",
-		Name:        "name",
-		Description: "description",
-		URI:         "https://my-class-meta.invalid/1",
-		URIHash:     "content-hash",
-		Data:        data,
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
-		issueMsg,
-	)
-	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
-
-	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
-
-	// issue new NFT class
-	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonData})
-	requireT.NoError(err)
-
-	// we need to do this, otherwise assertion fails because some private fields are set differently
-	dataToCompare := &codectypes.Any{
-		TypeUrl: data.TypeUrl,
-		Value:   data.Value,
-	}
-
-	issueMsg = &assetnfttypes.MsgIssueClass{
 		Issuer:      issuer.String(),
 		Symbol:      "symbol",
 		Name:        "name",
@@ -130,6 +71,68 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		},
 		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			issueMsg,
+		},
+	})
+
+	// issue new NFT class with invalid data type
+
+	invalidData, err := codectypes.NewAnyWithValue(&assetnfttypes.MsgMint{})
+	requireT.NoError(err)
+
+	invalidIssueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		Data:        invalidData,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+		},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(invalidIssueMsg)),
+		invalidIssueMsg,
+	)
+	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
+
+	// issue new NFT class with too long data
+
+	invalidData, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)})
+	requireT.NoError(err)
+
+	invalidIssueMsg = &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		Data:        invalidData,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(invalidIssueMsg)),
+		invalidIssueMsg,
+	)
+	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
+
+	// issue new NFT class
+
+	// we need to do this, otherwise assertion fails because some private fields are set differently
+	dataToCompare := &codectypes.Any{
+		TypeUrl: data.TypeUrl,
+		Value:   data.Value,
+	}
+
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
@@ -356,11 +359,24 @@ func TestAssetNFTMint(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 
+	// prepare mint message
+	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
+	data, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonData})
+	requireT.NoError(err)
+
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      "id-1",
+		URI:     "https://my-class-meta.invalid/1",
+		URIHash: "content-hash",
+		Data:    data,
+	}
+
 	nftClient := nft.NewQueryClient(chain.ClientContext)
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
+			mintMsg,
 			&nft.MsgSend{},
 			&assetnfttypes.MsgMint{},
 		},
@@ -372,7 +388,7 @@ func TestAssetNFTMint(t *testing.T) {
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 	}
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -384,51 +400,47 @@ func TestAssetNFTMint(t *testing.T) {
 
 	// mint with invalid data type
 
-	data, err := codectypes.NewAnyWithValue(&assetnfttypes.MsgMint{})
+	invalidData, err := codectypes.NewAnyWithValue(&assetnfttypes.MsgMint{})
 	requireT.NoError(err)
 
-	mintMsg := &assetnfttypes.MsgMint{
+	invalidMintMsg := &assetnfttypes.MsgMint{
 		Sender:  issuer.String(),
 		ID:      "id-1",
 		ClassID: classID,
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
-		Data:    data,
+		Data:    invalidData,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
-		mintMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(invalidMintMsg)),
+		invalidMintMsg,
 	)
 	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
 
 	// mint with too long data
 
-	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)})
+	invalidData, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)})
 	requireT.NoError(err)
 
-	mintMsg = &assetnfttypes.MsgMint{
+	invalidMintMsg = &assetnfttypes.MsgMint{
 		Sender:  issuer.String(),
 		ID:      "id-1",
 		ClassID: classID,
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
-		Data:    data,
+		Data:    invalidData,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
-		mintMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(invalidMintMsg)),
+		invalidMintMsg,
 	)
 	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
 
-	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
-
 	// mint new token in that class
-	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonData})
-	requireT.NoError(err)
 
 	// we need to do this, otherwise assertion fails because some private fields are set differently
 	dataToCompare := &codectypes.Any{
@@ -436,14 +448,7 @@ func TestAssetNFTMint(t *testing.T) {
 		Value:   data.Value,
 	}
 
-	mintMsg = &assetnfttypes.MsgMint{
-		Sender:  issuer.String(),
-		ID:      "id-1",
-		ClassID: classID,
-		URI:     "https://my-class-meta.invalid/1",
-		URIHash: "content-hash",
-		Data:    data,
-	}
+	mintMsg.ClassID = classID
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
@@ -554,6 +559,69 @@ func TestAssetNFTMint(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
+}
+
+// TestAssetNFTWithMaxData tests that class and NFT with data of maximum length works.
+func TestAssetNFTWithMaxData(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	authParams, err := authtypes.NewQueryClient(chain.ClientContext).Params(ctx, &authtypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	const (
+		extraBytesIssue = 3395
+		extraBytesMint  = 3441
+	)
+
+	data, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize-3)}) // 3 bytes added by Any
+	requireT.NoError(err)
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Data:   data,
+	}
+
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender: issuer.String(),
+		ID:     "id-1",
+		Data:   data,
+	}
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			issueMsg,
+			mintMsg,
+			&assetnfttypes.MsgMint{},
+		},
+		NondeterministicMessagesGas: (extraBytesIssue + extraBytesMint) * authParams.Params.TxSizeCostPerByte,
+		Amount:                      chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+	})
+
+	resp, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)+extraBytesIssue*authParams.Params.TxSizeCostPerByte),
+		issueMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(len(resp.Tx.GetValue()), chain.DeterministicGasConfig.FreeBytes+extraBytesIssue)
+
+	mintMsg.ClassID = assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	resp, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)+extraBytesMint*authParams.Params.TxSizeCostPerByte),
+		mintMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(len(resp.Tx.GetValue()), chain.DeterministicGasConfig.FreeBytes+extraBytesMint)
 }
 
 // TestAssetNFTMintFeeProposal tests proposal upgrading mint fee.
