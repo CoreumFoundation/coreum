@@ -37,7 +37,7 @@ Currently, we have values for the above variables as follows:
 - `TxSizeCostPerByte`: {{ .TxSizeCostPerByte }}
 - `FreeSignatures`: {{ .FreeSignatures }}
 - `FreeBytes`: {{ .FreeBytes }}
-
+- `WriteCostPerByte`: {{ .WriteCostPerByte }}
 
 To summarize user pays FixedGas as long as `GasForBytes + GasForSignatures <= TxBaseGas`.
 If `GasForBytes + GasForSignatures > TxBaseGas` user will have to pay anything above `TxBaseGas` on top of `FixedGas`. 
@@ -101,6 +101,18 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 `DeterministicGasForMsg = authzMsgExecOverhead + Sum(DeterministicGas(ChildMsg))`
 
 `authzMsgExecOverhead` is currently equal to `{{ .AuthzExecOverhead }}`.
+
+##### `/coreum.asset.nft.v1.MsgIssueClass`
+
+`DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte`
+
+`msgGas` is currently equal to `{{ .NFTMsgIssueClassCost }}`.
+
+##### `/coreum.asset.nft.v1.MsgMint`
+
+`DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte`
+
+`msgGas` is currently equal to `{{ .NFTMsgMintCost }}`.
 
 ### Nondeterministic messages
 
