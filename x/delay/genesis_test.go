@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v4/x/delay/types"
 )
 
 func TestInitAndExportGenesis(t *testing.T) {

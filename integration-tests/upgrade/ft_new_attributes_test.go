@@ -9,10 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
-	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
 type ftURIAttributesTest struct {

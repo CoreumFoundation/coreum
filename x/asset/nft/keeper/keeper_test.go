@@ -15,11 +15,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v3/testutil/event"
-	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/keeper"
-	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v4/testutil/event"
+	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
 )
 
 func TestKeeper_IssueClass(t *testing.T) {

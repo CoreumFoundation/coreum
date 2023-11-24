@@ -8,9 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
 
 // BeforeSendCoins checks that a transfer request is allowed or not.

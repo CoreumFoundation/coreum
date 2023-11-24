@@ -39,9 +39,9 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/CoreumFoundation/coreum/v3/app"
-	coreumclient "github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/app"
+	coreumclient "github.com/CoreumFoundation/coreum/v4/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 )
 
 const ledgerAppName = "Coreum"

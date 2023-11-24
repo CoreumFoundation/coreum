@@ -16,8 +16,8 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
-	"github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v4/x/nft"
+	"github.com/CoreumFoundation/coreum/v4/x/nft/keeper"
 )
 
 var (

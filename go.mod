@@ -1,4 +1,4 @@
-module github.com/CoreumFoundation/coreum/v3
+module github.com/CoreumFoundation/coreum/v4
 
 go 1.20
 

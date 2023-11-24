@@ -5,7 +5,7 @@ import (
 
 	cosmosnft "github.com/cosmos/cosmos-sdk/x/nft"
 
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	"github.com/CoreumFoundation/coreum/v4/x/nft"
 )
 
 var _ nft.MsgServer = Keeper{}
