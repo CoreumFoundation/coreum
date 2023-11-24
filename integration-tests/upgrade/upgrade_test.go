@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev3 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v3"
+	appupgradev4 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4"
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
@@ -35,28 +35,21 @@ func TestUpgrade(t *testing.T) {
 	requireT.NoError(err)
 
 	switch infoRes.ApplicationVersion.Version {
-	case "v2.0.2":
-		upgradeV3(t)
+	case "v3.0.0":
+		upgradeV3ToV4(t)
 	default:
 		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
 }
 
-func upgradeV3(t *testing.T) {
-	tests := []upgradeTest{
-		&paramsMigrationTest{},
-		&wasmMigrationTest{},
-		&ibcUpgradeTest{},
-		&govMigrationTest{},
-		&nftMigrationTest{},
-		&ftURIAttributesTest{},
-	}
+func upgradeV3ToV4(t *testing.T) {
+	tests := []upgradeTest{}
 
 	for _, test := range tests {
 		test.Before(t)
 	}
 
-	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
+	runUpgrade(t, appupgradev4.Name, 30)
 
 	for _, test := range tests {
 		test.After(t)
@@ -68,7 +61,6 @@ func upgradeV3(t *testing.T) {
 // We also use deprecated v1beta1 gov because v1 doesn't exist in cored v2.0.2.
 func runUpgrade(
 	t *testing.T,
-	oldBinaryVersion string,
 	upgradeName string,
 	blocksToWait int64,
 ) {
@@ -85,8 +77,6 @@ func runUpgrade(
 	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-	// we start with the old binary version
-	require.Equal(t, oldBinaryVersion, infoBeforeRes.ApplicationVersion.Version)
 
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
