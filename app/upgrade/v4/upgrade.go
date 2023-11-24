@@ -12,8 +12,6 @@ import (
 const Name = "v4"
 
 // New makes an upgrade handler for v3 upgrade.
-//
-//nolint:funlen
 func New() upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
