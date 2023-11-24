@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -85,45 +88,50 @@ func runUpgrade(
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.LegacyGovernance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
 	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 
 	t.Logf("Creating proposal for upgrading, upgradeName:%s, upgradeHeight:%d", upgradeName, upgradeHeight)
 
-	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposalV1Beta1(
+	msgUpgrade := &upgradetypes.MsgSoftwareUpgrade{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Plan: upgradetypes.Plan{
+			Name:   upgradeName,
+			Height: upgradeHeight,
+		},
+	}
+
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
 		ctx,
 		proposer,
-		upgradetypes.NewSoftwareUpgradeProposal(
-			"Upgrade "+upgradeName,
-			"Running "+upgradeName+" in integration tests",
-			upgradetypes.Plan{
-				Name:   upgradeName,
-				Height: upgradeHeight,
-			},
-		))
+		[]sdk.Msg{msgUpgrade},
+		"Upgrade chain",
+		"Upgrade "+upgradeName,
+		"Running "+upgradeName+" in integration tests",
+	)
 
 	requireT.NoError(err)
-	proposalID, err := chain.LegacyGovernance.Propose(ctx, t, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 	t.Logf("Upgrade proposal has been submitted, proposalID:%d", proposalID)
 
 	// Verify that voting period started.
-	proposal, err := chain.LegacyGovernance.GetProposal(ctx, proposalID)
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
-	err = chain.LegacyGovernance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime: %s", proposal.VotingEndTime)
 
 	// Wait for proposal result.
-	finalStatus, err := chain.LegacyGovernance.WaitForVotingToFinalize(ctx, proposalID)
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// Verify that upgrade plan is there waiting to be applied.
 	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})
