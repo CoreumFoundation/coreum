@@ -26,6 +26,11 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
 )
 
+const (
+	nodeConfigDirName = "config"
+	genesisFileName   = "genesis.json"
+)
+
 //nolint:tagliatelle,tagalign // default structure
 type printInfo struct {
 	Moniker    string          `json:"moniker" yaml:"moniker"`
@@ -112,12 +117,12 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			configDir := filepath.Join(clientCtx.HomeDir, "config")
+			configDir := filepath.Join(clientCtx.HomeDir, nodeConfigDirName)
 			if err := os.MkdirAll(configDir, 0o700); err != nil {
 				return errors.Wrap(err, "unable to make config directory")
 			}
 
-			if err := os.WriteFile(filepath.Join(configDir, "genesis.json"), genDocBytes, 0644); err != nil {
+			if err := os.WriteFile(filepath.Join(configDir, genesisFileName), genDocBytes, 0644); err != nil {
 				return errors.Wrap(err, "unable to write genesis bytes to file")
 			}
 

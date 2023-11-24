@@ -116,19 +116,19 @@ func TestNetworkNotMutable(t *testing.T) {
 		WithAccount(sdk.AccAddress(pubKey.Address()), sdk.NewCoins(sdk.NewInt64Coin("someTestToken", 1000))).
 		WithGenesisTx([]byte("test string"))
 
-	assertT.Len(provider.FundedAccounts, 4)
-	assertT.Len(provider.GenTxs, 3)
+	assertT.Len(provider.FundedAccounts, 1)
+	assertT.Empty(provider.GenTxs)
 
-	assertT.Len(provider2.FundedAccounts, 5)
-	assertT.Len(provider2.GenTxs, 4)
+	assertT.Len(provider2.FundedAccounts, 2)
+	assertT.Len(provider2.GenTxs, 1)
 
 	// re-init the config and check that length remains the same
 	n, err = config.NetworkConfigByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
 	provider = n.Provider.(config.DynamicConfigProvider)
 
-	assertT.Len(provider.FundedAccounts, 4)
-	assertT.Len(provider.GenTxs, 3)
+	assertT.Len(provider.FundedAccounts, 1)
+	assertT.Empty(provider.GenTxs)
 }
 
 func TestGenesisHash(t *testing.T) {
