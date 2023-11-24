@@ -22,7 +22,7 @@ require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-00010101000000-000000000000
 	github.com/CosmWasm/wasmd v0.44.0
-	github.com/cometbft/cometbft v0.37.2
+	github.com/cometbft/cometbft v0.37.2 // indirect
 	github.com/cosmos/cosmos-sdk v0.47.5
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.10
