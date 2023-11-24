@@ -100,7 +100,7 @@ jobs:
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-linter-cache-3
+          key: ${{ runner.os }}-linter-cache-4
       - name: Get Date
         id: get-year-week
         run: |
