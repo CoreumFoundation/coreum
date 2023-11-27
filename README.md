@@ -10,6 +10,13 @@ proven Bonded Proof of Stake (BPoS).
 
 Read more on [our website](https://www.coreum.com) and [documentation portal](https://docs.coreum.dev).
 
+## Binaries
+
+We share different binaries to be downloaded from our [Releases](https://github.com/CoreumFoundation/coreum/releases) page:
+
+* `cored-linux-[amd64 | arm64]` - fully featured node & client binaries compiled for linux (supports Ledger devices).
+* `cored-client-darwin-[amd64 | arm64]` - client-only binaries for Darwin, which might be used to prepare and send transactions but not to run the node. This binary does not support Ledger devices
+
 ## Build and Play
 
 Coreum blockchain is under development and all the features are going to be added progressively over time.
@@ -37,6 +44,12 @@ $ $COREUM_PATH/crust/bin/crust build images
 ```
 
 After the command completes you may find executable `$COREUM_PATH/crust/bin/cored`, being both blockchain node and client.
+
+NOTE: If you only need to build `cored` binary, use this command to speed up building:
+
+```
+$ $COREUM_PATH/crust/bin/crust build/cored
+```
 
 ### Start local chain
 
