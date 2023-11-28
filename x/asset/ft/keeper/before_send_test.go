@@ -11,12 +11,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/CoreumFoundation/coreum/v3/pkg/config"
-	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
-	assetftkeeper "github.com/CoreumFoundation/coreum/v3/x/asset/ft/keeper"
-	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v3/x/wasm/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
+	assetftkeeper "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper"
+	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
 
 func TestMain(m *testing.M) {

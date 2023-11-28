@@ -13,10 +13,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	coreumclitestutil "github.com/CoreumFoundation/coreum/v3/testutil/cli"
-	"github.com/CoreumFoundation/coreum/v3/testutil/network"
-	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/client/cli"
-	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
+	"github.com/CoreumFoundation/coreum/v4/testutil/network"
+	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
 )
 
 const nftID = "nft-1"

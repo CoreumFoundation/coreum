@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/nft"
 	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
 
-	"github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
+	"github.com/CoreumFoundation/coreum/v4/x/wnft/keeper"
 )
 
 // AppModuleBasic implements the basic application module for the wrapped nft module.

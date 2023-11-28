@@ -8,16 +8,19 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev3 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3"
-	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
-	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
+	appupgradev4 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4"
+	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
+	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
 
 type upgradeTest interface {
@@ -35,28 +38,21 @@ func TestUpgrade(t *testing.T) {
 	requireT.NoError(err)
 
 	switch infoRes.ApplicationVersion.Version {
-	case "v2.0.2":
-		upgradeV3(t)
+	case "v3.0.0":
+		upgradeV3ToV4(t)
 	default:
 		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
 }
 
-func upgradeV3(t *testing.T) {
-	tests := []upgradeTest{
-		&paramsMigrationTest{},
-		&wasmMigrationTest{},
-		&ibcUpgradeTest{},
-		&govMigrationTest{},
-		&nftMigrationTest{},
-		&ftURIAttributesTest{},
-	}
+func upgradeV3ToV4(t *testing.T) {
+	tests := []upgradeTest{}
 
 	for _, test := range tests {
 		test.Before(t)
 	}
 
-	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
+	runUpgrade(t, appupgradev4.Name, 30)
 
 	for _, test := range tests {
 		test.After(t)
@@ -68,7 +64,6 @@ func upgradeV3(t *testing.T) {
 // We also use deprecated v1beta1 gov because v1 doesn't exist in cored v2.0.2.
 func runUpgrade(
 	t *testing.T,
-	oldBinaryVersion string,
 	upgradeName string,
 	blocksToWait int64,
 ) {
@@ -85,8 +80,6 @@ func runUpgrade(
 	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-	// we start with the old binary version
-	require.Equal(t, oldBinaryVersion, infoBeforeRes.ApplicationVersion.Version)
 
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
@@ -95,45 +88,50 @@ func runUpgrade(
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.LegacyGovernance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
 	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 
 	t.Logf("Creating proposal for upgrading, upgradeName:%s, upgradeHeight:%d", upgradeName, upgradeHeight)
 
-	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposalV1Beta1(
+	msgUpgrade := &upgradetypes.MsgSoftwareUpgrade{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Plan: upgradetypes.Plan{
+			Name:   upgradeName,
+			Height: upgradeHeight,
+		},
+	}
+
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
 		ctx,
 		proposer,
-		upgradetypes.NewSoftwareUpgradeProposal(
-			"Upgrade "+upgradeName,
-			"Running "+upgradeName+" in integration tests",
-			upgradetypes.Plan{
-				Name:   upgradeName,
-				Height: upgradeHeight,
-			},
-		))
+		[]sdk.Msg{msgUpgrade},
+		"Upgrade chain",
+		"Upgrade "+upgradeName,
+		"Running "+upgradeName+" in integration tests",
+	)
 
 	requireT.NoError(err)
-	proposalID, err := chain.LegacyGovernance.Propose(ctx, t, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 	t.Logf("Upgrade proposal has been submitted, proposalID:%d", proposalID)
 
 	// Verify that voting period started.
-	proposal, err := chain.LegacyGovernance.GetProposal(ctx, proposalID)
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
-	err = chain.LegacyGovernance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime: %s", proposal.VotingEndTime)
 
 	// Wait for proposal result.
-	finalStatus, err := chain.LegacyGovernance.WaitForVotingToFinalize(ctx, proposalID)
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// Verify that upgrade plan is there waiting to be applied.
 	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})

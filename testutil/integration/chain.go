@@ -28,10 +28,10 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/CoreumFoundation/coreum/v3/app"
-	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/pkg/config"
-	coreumkeyring "github.com/CoreumFoundation/coreum/v3/pkg/keyring"
+	"github.com/CoreumFoundation/coreum/v4/app"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config"
+	coreumkeyring "github.com/CoreumFoundation/coreum/v4/pkg/keyring"
 )
 
 // ChainSettings represent common settings for the chains.

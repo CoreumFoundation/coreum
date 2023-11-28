@@ -33,12 +33,12 @@ import (
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v3/app/upgrade"
-	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
-	cnftkeeper "github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v4/app/upgrade"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
+	cnftkeeper "github.com/CoreumFoundation/coreum/v4/x/nft/keeper"
 )
 
 // References:

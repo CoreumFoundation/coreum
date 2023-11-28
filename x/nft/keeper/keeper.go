@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
-	wnftkeeper "github.com/CoreumFoundation/coreum/v3/x/wnft/keeper"
+	"github.com/CoreumFoundation/coreum/v4/x/nft"
+	wnftkeeper "github.com/CoreumFoundation/coreum/v4/x/wnft/keeper"
 )
 
 // StoreKey is the store key string for nft.

@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
-	"github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v4/x/nft"
+	"github.com/CoreumFoundation/coreum/v4/x/nft/keeper"
 )
 
 func TestGRPCQuery(t *testing.T) {

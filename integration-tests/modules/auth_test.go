@@ -20,12 +20,12 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
-	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/deterministicgas"
+	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v4/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
 )
 
 // TestAuthFeeLimits verifies that invalid message gas won't be accepted.

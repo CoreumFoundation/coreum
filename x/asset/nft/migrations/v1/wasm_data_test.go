@@ -13,9 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
-	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/nft/migrations/v1"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	v1 "github.com/CoreumFoundation/coreum/v4/x/asset/nft/migrations/v1"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
 )
 
 func TestMigrateWasmCreatedNFTData(t *testing.T) {
