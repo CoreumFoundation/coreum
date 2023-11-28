@@ -13,9 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
-	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
+	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
 
 func TestFeeGrant(t *testing.T) {

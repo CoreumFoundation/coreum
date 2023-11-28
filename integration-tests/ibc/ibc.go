@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
+	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
 
 // ConvertToIBCDenom returns the IBC denom based on the channelID and denom.

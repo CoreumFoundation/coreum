@@ -10,9 +10,9 @@ import (
 	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/pkg/errors"
 
-	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/wasm/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v4/x/wasm/types"
 )
 
 // assetFTMsg represents asset ft module messages integrated with the wasm handler.

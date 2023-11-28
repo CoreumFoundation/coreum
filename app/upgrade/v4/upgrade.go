@@ -1,6 +1,4 @@
-package v2patch1
-
-// This patch is supposed to be used on testnet only for upgrading from v2.0.0 (v2 plan) to v2.0.1 (v2patch1 plan).
+package v4
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,14 +9,14 @@ import (
 )
 
 // Name defines the upgrade name.
-const Name = "v2patch1"
+const Name = "v4"
 
-// New makes an upgrade handler for v2patch1 upgrade.
-func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
+// New makes an upgrade handler for v3 upgrade.
+func New() upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
 		Upgrade: func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-			return mm.RunMigrations(ctx, configurator, vm)
+			return vm, nil
 		},
 	}
 }

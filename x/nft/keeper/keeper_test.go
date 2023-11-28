@@ -13,9 +13,9 @@ import (
 	cosmosnft "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
-	nftkeeper "github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v4/x/nft"
+	nftkeeper "github.com/CoreumFoundation/coreum/v4/x/nft/keeper"
 )
 
 const (

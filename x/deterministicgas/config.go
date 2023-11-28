@@ -28,9 +28,9 @@ import (
 	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/samber/lo"
 
-	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	cnfttypes "github.com/CoreumFoundation/coreum/v3/x/nft"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	cnfttypes "github.com/CoreumFoundation/coreum/v4/x/nft"
 )
 
 // These constants define gas for messages which have custom calculation logic.

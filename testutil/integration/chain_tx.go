@@ -11,7 +11,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 )
 
 // BroadcastTxWithSigner prepares the tx with the provided signer address and broadcasts it.
