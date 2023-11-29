@@ -1,9 +1,9 @@
 name: ci
 on:
   push:
-    branches: [ master ]
+    branches: [ release-v3 ]
   pull_request:
-    branches: [ master ]
+    branches: [ release-v3 ]
   schedule:
     - cron: '0 1 * * 1' # At 01:00 on Monday
   workflow_dispatch:
@@ -75,6 +75,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          ref: release-v3
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
