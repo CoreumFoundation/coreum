@@ -520,11 +520,6 @@ func New(
 	)
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
-	// TODO (v4): remove cnftModule.RegisterServices alongside the module when we drop deprecated handlers of the module.
-	cnftmodule.
-		NewAppModule(app.AppCodec(), cnftkeeper.NewKeeper(app.NFTKeeper)).
-		RegisterServices(app.configurator)
-
 	// Create Transfer Keepers
 	app.TransferKeeper = wibctransferkeeper.NewTransferKeeperWrapper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
@@ -820,6 +815,11 @@ func New(
 	app.ModuleManager.RegisterServices(app.configurator)
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
+
+	// TODO (v4): remove cnftModule.RegisterServices alongside the module when we drop deprecated handlers of the module.
+	cnftmodule.
+		NewAppModule(app.AppCodec(), cnftkeeper.NewKeeper(app.NFTKeeper)).
+		RegisterServices(app.configurator)
 
 	reflectionSvc, err := runtimeservices.NewReflectionService()
 	if err != nil {
