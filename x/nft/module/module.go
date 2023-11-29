@@ -89,24 +89,17 @@ func (AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // AppModule implements the sdk.AppModule interface.
 type AppModule struct {
-	AppModuleBasic
-	keeper keeper.Keeper
 	// TODO(v4): To be removed together with module.
 	//   This todo comes from cosmos-sdk code and will be remove together with nft module once we drop back-compatibility.
-	// TODO accountKeeper,bankKeeper will be replaced by query service
-	accountKeeper nft.AccountKeeper
-	bankKeeper    nft.BankKeeper
-	registry      codectypes.InterfaceRegistry
+	AppModuleBasic
+	keeper keeper.Keeper
 }
 
 // NewAppModule creates a new AppModule object.
-func NewAppModule(cdc codec.Codec, keeper keeper.Keeper, ak nft.AccountKeeper, bk nft.BankKeeper, registry codectypes.InterfaceRegistry) AppModule {
+func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
 		keeper:         keeper,
-		accountKeeper:  ak,
-		bankKeeper:     bk,
-		registry:       registry,
 	}
 }
 

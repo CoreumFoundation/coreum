@@ -815,6 +815,11 @@ func New(
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
 
+	// TODO (v4): remove cnftModule.RegisterServices alongside the module when we drop deprecated handlers of the module.
+	cnftmodule.
+		NewAppModule(app.AppCodec(), cnftkeeper.NewKeeper(app.NFTKeeper)).
+		RegisterServices(app.configurator)
+
 	reflectionSvc, err := runtimeservices.NewReflectionService()
 	if err != nil {
 		panic(err)
@@ -1089,14 +1094,14 @@ func (app *App) RegisterAPIRoutes(apiSvr *serverapi.Server, _ serverconfig.APICo
 	// Register grpc-gateway routes for all modules.
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
+	// TODO(v4) remove alongside the cnft module
 	// Regsiter cnft routes.
 	// We register the tx and query handlers here, since we don't want to introduce a new module to the
 	// list of app.Modules where we have to handle genesis registration and migraitons. we only need to
 	// keep these deprecated handlers around to give time to users to migrate.
-	cnftKeeper := cnftkeeper.NewKeeper(app.NFTKeeper)
-	cnftModule := cnftmodule.NewAppModule(app.AppCodec(), cnftKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
-	cnftModule.RegisterServices(app.configurator)
-	cnftModule.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	cnftmodule.
+		NewAppModule(app.AppCodec(), cnftkeeper.NewKeeper(app.NFTKeeper)).
+		RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register app's OpenAPI routes.
 	apiSvr.Router.Handle("/static/openapi.json", http.FileServer(http.FS(docs.Docs)))
