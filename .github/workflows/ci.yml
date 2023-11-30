@@ -63,11 +63,8 @@ jobs:
 
     runs-on: ubuntu-22.04
     steps:
-      - name: Retrieve go version
-        id: goversion
-        run: echo "GO_VERSION=$(go version)" >> $GITHUB_OUTPUT
       - name: Go version used to build crust tool
-        run: echo ${{ steps.goversion.outputs.GO_VERSION }}
+        run: go version
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
@@ -79,7 +76,14 @@ jobs:
           repository: CoreumFoundation/crust
           path: crust
       - name: Set up crust
-        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+        run: | 
+          echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+          crust build/crust
+      - name: Retrieve go version
+        id: goversion
+        run: echo "GO_VERSION=$(go version)" >> $GITHUB_OUTPUT
+      - name: Print go version
+        run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup go cache
         uses: actions/cache@v3
         if: ${{ matrix.go-cache }}
