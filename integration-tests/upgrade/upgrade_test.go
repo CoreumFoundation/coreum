@@ -8,6 +8,10 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
@@ -16,6 +20,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev3 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3"
+	appupgradev3patch1 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3/v3patch1"
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
@@ -37,6 +42,10 @@ func TestUpgrade(t *testing.T) {
 	switch infoRes.ApplicationVersion.Version {
 	case "v2.0.2":
 		upgradeV3(t)
+	case "v3.0.0":
+		// Here we are testing the v3patch1 upgrade which will only run on testnet.
+		// It is OK to remove this test after we complete the migration there.
+		runUpgrade(t, "v3.0.0", appupgradev3patch1.Name, 30)
 	default:
 		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
@@ -56,17 +65,126 @@ func upgradeV3(t *testing.T) {
 		test.Before(t)
 	}
 
-	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
+	runUpgradeLegacy(t, "v2.0.2", appupgradev3.Name, 30)
 
 	for _, test := range tests {
 		test.After(t)
 	}
 }
 
+func runUpgrade(
+	t *testing.T,
+	oldBinaryVersion string,
+	upgradeName string,
+	blocksToWait int64,
+) {
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	upgradeClient := upgradetypes.NewQueryClient(chain.ClientContext)
+
+	// Verify that there is no ongoing upgrade plan.
+	currentPlan, err := upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})
+	requireT.NoError(err)
+	requireT.Nil(currentPlan.Plan)
+
+	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
+	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	requireT.NoError(err)
+	// we start with the old binary version
+	require.Equal(t, oldBinaryVersion, infoBeforeRes.ApplicationVersion.Version)
+
+	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
+
+	upgradeHeight := latestBlockRes.SdkBlock.Header.Height + blocksToWait
+
+	// Create new proposer.
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
+
+	t.Logf("Creating proposal for upgrading, upgradeName:%s, upgradeHeight:%d", upgradeName, upgradeHeight)
+
+	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Plan: upgradetypes.Plan{
+			Name:   upgradeName,
+			Height: upgradeHeight,
+		},
+	}
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, []sdk.Msg{upgradeMsg}, upgradeName, upgradeName, upgradeName)
+	requireT.NoError(err)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
+	requireT.NoError(err)
+	t.Logf("Upgrade proposal has been submitted, proposalID:%d", proposalID)
+
+	// Verify that voting period started.
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
+
+	// Vote yes from all vote accounts.
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
+	requireT.NoError(err)
+
+	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime: %s", proposal.VotingEndTime)
+
+	// Wait for proposal result.
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
+
+	// Verify that upgrade plan is there waiting to be applied.
+	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})
+	requireT.NoError(err)
+	requireT.NotNil(currentPlan.Plan)
+	assert.Equal(t, upgradeName, currentPlan.Plan.Name)
+	assert.Equal(t, upgradeHeight, currentPlan.Plan.Height)
+
+	// Verify that we are before the upgrade
+	infoWaitingBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
+	requireT.Less(infoWaitingBlockRes.SdkBlock.Header.Height, upgradeHeight)
+
+	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height)) //nolint:staticcheck
+	defer cancel()
+	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.Block.Header.Height) //nolint:staticcheck
+	err = retry.Do(retryCtx, time.Second, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		var err error
+		infoAfterBlockRes, err := tmQueryClient.GetLatestBlock(requestCtx, &tmservice.GetLatestBlockRequest{})
+		if err != nil {
+			return retry.Retryable(err)
+		}
+		if infoAfterBlockRes.SdkBlock.Header.Height >= upgradeHeight+1 {
+			return nil
+		}
+		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height)) //nolint:staticcheck
+	})
+	requireT.NoError(err)
+
+	// Verify that upgrade was applied on chain.
+	appliedPlan, err := upgradeClient.AppliedPlan(ctx, &upgradetypes.QueryAppliedPlanRequest{
+		Name: upgradeName,
+	})
+	requireT.NoError(err)
+	assert.Equal(t, upgradeHeight, appliedPlan.Height)
+	t.Logf("Upgrade passed, applied plan height: %d", appliedPlan.Height)
+
+	// The new binary isn't equal to initial
+	infoAfterRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	requireT.NoError(err)
+	t.Logf("New binary version: %s", infoAfterRes.ApplicationVersion.Version)
+	assert.NotEqual(t, infoAfterRes.ApplicationVersion.Version, infoBeforeRes.ApplicationVersion.Version)
+}
+
 // Note that inside this method we use deprecated Block attributed of GetLatestBlockResponse (latestBlockRes.Block)
 // because we interact with older version of SDK before upgrade, and it doesn't have new SdkBlock attribute set.
 // We also use deprecated v1beta1 gov because v1 doesn't exist in cored v2.0.2.
-func runUpgrade(
+func runUpgradeLegacy(
 	t *testing.T,
 	oldBinaryVersion string,
 	upgradeName string,

@@ -116,6 +116,7 @@ import (
 	appupgradev2 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v2"
 	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v2/v2patch1"
 	appupgradev3 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3"
+	appupgradev3patch1 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3/v3patch1"
 	"github.com/CoreumFoundation/coreum/v3/docs"
 	"github.com/CoreumFoundation/coreum/v3/pkg/config"
 	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
@@ -925,6 +926,7 @@ func New(
 			app.GovKeeper,
 			*app.StakingKeeper,
 		),
+		appupgradev3patch1.New(app.ModuleManager, app.configurator),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
