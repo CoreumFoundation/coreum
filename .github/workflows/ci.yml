@@ -78,7 +78,7 @@ jobs:
       - name: Set up crust
         run: | 
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-          crust build/crust
+          crust/bin/crust build/crust
       - name: Retrieve go version
         id: goversion
         run: echo "GO_VERSION=$(go version)" >> $GITHUB_OUTPUT
