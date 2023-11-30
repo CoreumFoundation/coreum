@@ -63,8 +63,11 @@ jobs:
 
     runs-on: ubuntu-22.04
     steps:
+      - name: Retrieve go version
+        id: goversion
+        run: echo "GO_VERSION=$(go version)" >> $GITHUB_OUTPUT
       - name: Go version used to build crust tool
-        run: go version
+        run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
@@ -84,7 +87,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup WASM cache
         uses: actions/cache@v3
         if: ${{ matrix.wasm-cache }}
@@ -100,7 +103,7 @@ jobs:
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-linter-cache-4
+          key: ${{ runner.os }}-linter-cache-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Get Date
         id: get-year-week
         run: |
