@@ -1,4 +1,4 @@
-package v2patch1
+package v3patch1
 
 // This patch is supposed to be used on testnet only for upgrading from v3.0.0 (v3 plan) to v3.0.1 (v3patch1 plan).
 
