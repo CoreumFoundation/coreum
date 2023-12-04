@@ -42,7 +42,7 @@ func TestContinuousAndDelayedVestingAccountCreationAndBankSend(t *testing.T) {
 		Amount:   amountToVest,
 	})
 
-	vestingDuration := 10 * time.Second
+	vestingDuration := 30 * time.Second
 	vestingCoin := chain.NewCoin(amountToVest)
 	createAccMsg := &vestingtypes.MsgCreateVestingAccount{
 		FromAddress: creator.String(),
@@ -459,7 +459,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	vestingDuration := 10 * time.Second
+	vestingDuration := 30 * time.Second
 	createAccMsg := &vestingtypes.MsgCreateVestingAccount{
 		FromAddress: issuer.String(),
 		ToAddress:   vestingAcc.String(),
