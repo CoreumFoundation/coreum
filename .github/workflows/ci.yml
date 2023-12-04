@@ -76,7 +76,14 @@ jobs:
           repository: CoreumFoundation/crust
           path: crust
       - name: Set up crust
-        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+        run: | 
+          echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+          crust/bin/crust build/crust
+      - name: Retrieve go version
+        id: goversion
+        run: echo "GO_VERSION=$(go version)" >> $GITHUB_OUTPUT
+      - name: Print go version
+        run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup go cache
         uses: actions/cache@v3
         if: ${{ matrix.go-cache }}
@@ -84,7 +91,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup WASM cache
         uses: actions/cache@v3
         if: ${{ matrix.wasm-cache }}
@@ -100,7 +107,7 @@ jobs:
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-linter-cache-4
+          key: ${{ runner.os }}-linter-cache-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Get Date
         id: get-year-week
         run: |
