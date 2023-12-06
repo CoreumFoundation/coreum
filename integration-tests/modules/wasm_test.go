@@ -122,6 +122,115 @@ const (
 	ftMethodWhitelistedBalances ftMethod = "whitelisted_balances"
 )
 
+// TestContractInstantiation tests contract instantiation using two instantiation methods.
+func TestContractInstantiation(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	admin := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.BankSendWASM,
+	)
+	requireT.NoError(err)
+
+	// instantiate
+
+	contractAddr1, err := chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	// instantiate again
+
+	contractAddr2, err := chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+	requireT.NotEqual(contractAddr1, contractAddr2)
+
+	// instantiate2 for the first time
+
+	contractAddr3, err := chain.Wasm.InstantiateWASMContract2(
+		ctx,
+		txf,
+		admin,
+		[]byte{0x00},
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	// try instantiate2 again using the same salt - should fail
+
+	_, err = chain.Wasm.InstantiateWASMContract2(
+		ctx,
+		txf,
+		admin,
+		[]byte{0x00},
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
+			Label:      "bank_send",
+		},
+	)
+	requireT.ErrorContains(err, "duplicate")
+
+	// instantiate2 with different salt - should succeed
+
+	contractAddr4, err := chain.Wasm.InstantiateWASMContract2(
+		ctx,
+		txf,
+		admin,
+		[]byte{0x01},
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+	requireT.NotEqual(contractAddr3, contractAddr4)
+}
+
 // TestWASMBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
 func TestWASMBankSendContract(t *testing.T) {
@@ -2170,7 +2279,7 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 
 	// Instantiate the smart contract. It should fail because its account holds some funds.
 
-	_, err = chain.Wasm.InstantiateWASMContract(
+	_, err = chain.Wasm.InstantiateWASMContract2(
 		ctx,
 		txf,
 		admin,
@@ -2223,7 +2332,7 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 
 	// Instantiate the smart contract. It should fail because its account holds some funds.
 
-	_, err = chain.Wasm.InstantiateWASMContract(
+	_, err = chain.Wasm.InstantiateWASMContract2(
 		ctx,
 		txf,
 		admin,

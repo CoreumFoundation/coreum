@@ -4793,7 +4793,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	// instantiate contract again using non-issuer account, fees should apply.
 	salt, err := chain.Wasm.GenerateSalt()
 	requireT.NoError(err)
-	contractAddr, err = chain.Wasm.InstantiateWASMContract(
+	contractAddr, err = chain.Wasm.InstantiateWASMContract2(
 		ctx,
 		txf,
 		admin,
