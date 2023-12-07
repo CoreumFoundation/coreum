@@ -246,7 +246,11 @@ func (w Wasm) InstantiateWASMContract(
 		return "", err
 	}
 
-	contractAddr, err := event.FindStringEventAttribute(res.Events, wasmtypes.EventTypeInstantiate, wasmtypes.AttributeKeyContractAddr)
+	contractAddr, err := event.FindStringEventAttribute(
+		res.Events,
+		wasmtypes.EventTypeInstantiate,
+		wasmtypes.AttributeKeyContractAddr,
+	)
 	if err != nil {
 		return "", err
 	}
