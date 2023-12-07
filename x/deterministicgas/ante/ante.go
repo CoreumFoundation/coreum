@@ -25,7 +25,7 @@ func NewSetInfiniteGasMeterDecorator(deterministicGasConfig deterministicgas.Con
 func (sigmd SetInfiniteGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	// This is done to return an error early if user provided gas amount which can't even cover the constant fee charged on the real
 	// gas meter in `ChargeFixedGasDecorator`. This will save resources on running preliminary ante decorators.
-	ctx.GasMeter().ConsumeGas(sigmd.deterministicGasConfig.FixedGas, "Fixed")
+	ctx.GasMeter().ConsumeGas(sigmd.deterministicGasConfig.FixedGas, "Fixed: signature verification and tx size")
 
 	// Set infinite gas meter for ante handler
 	return next(ctx.WithGasMeter(sdk.NewInfiniteGasMeter()), tx, simulate)
@@ -98,10 +98,10 @@ func (cfgd ChargeFixedGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simul
 
 	gasConsumed := ctx.GasMeter().GasConsumed()
 	bonus := cfgd.deterministicGasConfig.TxBaseGas(params)
+	gasMeter.ConsumeGas(cfgd.deterministicGasConfig.FixedGas, "Fixed: signature verification and tx size")
 	if gasConsumed > bonus {
-		gasMeter.ConsumeGas(gasConsumed-bonus, "OverBonus")
+		gasMeter.ConsumeGas(gasConsumed-bonus, "OverBonus: signature verification and tx size")
 	}
-	gasMeter.ConsumeGas(cfgd.deterministicGasConfig.FixedGas, "Fixed")
 
 	return next(ctx.WithGasMeter(gasMeter), tx, simulate)
 }
