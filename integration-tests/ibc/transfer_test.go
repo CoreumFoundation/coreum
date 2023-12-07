@@ -32,7 +32,9 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
-	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
+	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+	)
 
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
@@ -48,13 +50,20 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
-	txRes, err := coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient)
+	txRes, err := coreumChain.ExecuteIBCTransfer(
+		ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient,
+	)
 	requireT.NoError(err)
 	requireT.EqualValues(txRes.GasUsed, coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}))
 
-	expectedGaiaRecipientBalance := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)
+	expectedGaiaRecipientBalance := sdk.NewCoin(
+		ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom),
+		sendToGaiaCoin.Amount,
+	)
 	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, expectedGaiaRecipientBalance))
-	_, err = gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaRecipient, expectedGaiaRecipientBalance, coreumChain.Chain.ChainContext, coreumSender)
+	_, err = gaiaChain.ExecuteIBCTransfer(
+		ctx, t, gaiaRecipient, expectedGaiaRecipientBalance, coreumChain.Chain.ChainContext, coreumSender,
+	)
 	requireT.NoError(err)
 
 	expectedCoreumSenderBalance := sdk.NewCoin(sendToGaiaCoin.Denom, expectedGaiaRecipientBalance.Amount)
@@ -71,7 +80,9 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
-	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
+	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID,
+	)
 	sendToCoreumCoin := gaiaChain.NewCoin(sdkmath.NewInt(1000))
 
 	// Generate accounts
@@ -94,10 +105,15 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	})
 
 	// Send from gaiaAccount to coreumToCoreumSender
-	_, err := gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaAccount1, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumToCoreumSender)
+	_, err := gaiaChain.ExecuteIBCTransfer(
+		ctx, t, gaiaAccount1, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumToCoreumSender,
+	)
 	requireT.NoError(err)
 
-	expectedBalanceAtCoreum := sdk.NewCoin(ConvertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
+	expectedBalanceAtCoreum := sdk.NewCoin(
+		ConvertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom),
+		sendToCoreumCoin.Amount,
+	)
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumToCoreumSender, expectedBalanceAtCoreum))
 
 	// Send from coreumToCoreumSender to coreumToGaiaSender
@@ -123,7 +139,9 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	assert.Equal(t, expectedBalanceAtCoreum.Amount.String(), queryBalanceResponse.Balance.Amount.String())
 
 	// Send from coreumToGaiaSender back to gaiaAccount
-	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumToGaiaSender, expectedBalanceAtCoreum, gaiaChain.ChainContext, gaiaAccount2)
+	_, err = coreumChain.ExecuteIBCTransfer(
+		ctx, t, coreumToGaiaSender, expectedBalanceAtCoreum, gaiaChain.ChainContext, gaiaAccount2,
+	)
 	requireT.NoError(err)
 	expectedGaiaSenderBalance := sdk.NewCoin(sendToCoreumCoin.Denom, expectedBalanceAtCoreum.Amount)
 	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaAccount2, expectedGaiaSenderBalance))
@@ -137,7 +155,9 @@ func TestTimedOutTransfer(t *testing.T) {
 	coreumChain := chains.Coreum
 	osmosisChain := chains.Osmosis
 
-	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+	)
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer retryCancel()
@@ -157,7 +177,9 @@ func TestTimedOutTransfer(t *testing.T) {
 			Amount:   sendToOsmosisCoin.Amount,
 		})
 
-		_, err := coreumChain.ExecuteTimingOutIBCTransfer(ctx, t, coreumSender, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisRecipient)
+		_, err := coreumChain.ExecuteTimingOutIBCTransfer(
+			ctx, t, coreumSender, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisRecipient,
+		)
 		switch {
 		case err == nil:
 		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
@@ -187,7 +209,12 @@ func TestTimedOutTransfer(t *testing.T) {
 			// In this goroutine we check if funds were delivered to the other chain.
 			// If this happens it means timeout didn't occur and we must try again.
 
-			if err := osmosisChain.AwaitForBalance(parallelCtx, t, osmosisRecipient, sdk.NewCoin(ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom), sendToOsmosisCoin.Amount)); err == nil {
+			if err := osmosisChain.AwaitForBalance(
+				parallelCtx,
+				t,
+				osmosisRecipient,
+				sdk.NewCoin(ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom), sendToOsmosisCoin.Amount),
+			); err == nil {
 				select {
 				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
 					parallelCancel()
@@ -229,7 +256,9 @@ func TestRejectedTransfer(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
-	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
+	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+	)
 
 	// Bank module rejects transfers targeting some module accounts. We use this feature to test that
 	// this type of IBC transfer is rejected by the receiving chain.

@@ -22,7 +22,8 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
 )
 
-// TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
+// TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal
+// work correctly.
 func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	t.Parallel()
 
@@ -108,7 +109,10 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
-	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
+	t.Logf(
+		"Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s",
+		proposal.VotingEndTime,
+	)
 
 	// wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
@@ -123,7 +127,8 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	requireT.Equal(sdk.NewCoins(poolCoin), communityPoolRecipientBalancesRes.Balances)
 }
 
-// TestDistributionWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
+// TestDistributionWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and
+// gas is deterministic.
 func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	t.Parallel()
 
@@ -153,8 +158,11 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	// *** Create new validator to use it in the test and capture all required balances. ***
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
-	validatorStakerAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
+	// we multiply not to conflict with the tests which increases the min amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2))
+	validatorStakerAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, validatorStakingAmount, validatorStakingAmount,
+	)
 	require.NoError(t, err)
 	defer deactivateValidator()
 
@@ -225,7 +233,8 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		Messages: []sdk.Msg{withdrawRewardMsg},
 	})
 
-	delegatorReward := delegatorBalanceAfterWithdrawal.Amount.Sub(delegatorBalanceBeforeWithdrawal.Amount.Sub(feeSpentOnWithdrawReward))
+	delegatorReward := delegatorBalanceAfterWithdrawal.Amount.
+		Sub(delegatorBalanceBeforeWithdrawal.Amount.Sub(feeSpentOnWithdrawReward))
 	requireT.True(delegatorReward.IsPositive())
 	t.Logf("Withdrawing of the delegator reward is done, amount:%s", delegatorReward.String())
 
@@ -298,12 +307,17 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
 
-	validatorStakerCommissionReward := validatorStakerBalanceAfterWithdrawal.Amount.Sub(validatorStakerBalanceBeforeWithdrawal.Amount.Sub(feeSpentOnWithdrawCommission))
+	validatorStakerCommissionReward := validatorStakerBalanceAfterWithdrawal.Amount.
+		Sub(validatorStakerBalanceBeforeWithdrawal.Amount.Sub(feeSpentOnWithdrawCommission))
 	requireT.True(validatorStakerCommissionReward.IsPositive())
 	t.Logf("Withdrawing of the validator commission is done, amount:%s", validatorStakerCommissionReward.String())
 }
 
-func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, distributionClient distributiontypes.QueryClient) sdk.Coin {
+func getCommunityPoolCoin(
+	ctx context.Context,
+	requireT *require.Assertions,
+	distributionClient distributiontypes.QueryClient,
+) sdk.Coin {
 	communityPoolRes, err := distributionClient.CommunityPool(ctx, &distributiontypes.QueryCommunityPoolRequest{})
 	requireT.NoError(err)
 

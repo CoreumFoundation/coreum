@@ -73,8 +73,12 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	coreumChain := chains.Coreum
 	osmosisChain := chains.Osmosis
 
-	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
-	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID)
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+	)
+	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
+	)
 
 	coreumAdmin := coreumChain.GenAccount()
 	osmosisRecipient := osmosisChain.GenAccount()
@@ -151,7 +155,10 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(sdk.ZeroInt().String(), contractBalance.Balance.Amount.String())
 
-	expectedOsmosisRecipientBalance := sdk.NewCoin(ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom), sendToOsmosisCoin.Amount)
+	expectedOsmosisRecipientBalance := sdk.NewCoin(
+		ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom),
+		sendToOsmosisCoin.Amount,
+	)
 	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisRecipient, expectedOsmosisRecipientBalance))
 }
 
@@ -242,9 +249,17 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	)
 	defer closerFunc()
 
-	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, coreumIBCPort, osmosisChain.ChainSettings.ChainID)
-	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(ctx, t, osmosisIBCPort, coreumChain.ChainSettings.ChainID)
-	t.Logf("Channels are ready coreum channel ID:%s, osmosis channel ID:%s", coreumToOsmosisChannelID, osmosisToCoreumChannelID)
+	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx, t, coreumIBCPort, osmosisChain.ChainSettings.ChainID,
+	)
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
+		ctx, t, osmosisIBCPort, coreumChain.ChainSettings.ChainID,
+	)
+	t.Logf(
+		"Channels are ready coreum channel ID:%s, osmosis channel ID:%s",
+		coreumToOsmosisChannelID,
+		osmosisToCoreumChannelID,
+	)
 
 	t.Logf("Sendng two IBC transactions from coreum contract to osmosis contract")
 	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
@@ -270,7 +285,8 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
 }
 
-// executeWasmIncrement executes increment method on the contract which calls another contract and increments the counter.
+// executeWasmIncrement executes increment method on the contract which calls another contract and increments
+// the counter.
 func executeWasmIncrement(
 	ctx context.Context,
 	requireT *require.Assertions,
@@ -324,7 +340,11 @@ func awaitWasmCounterValue(
 		require.NoError(t, err)
 
 		if queryCountRes.Count != expectedCount {
-			return retry.Retryable(errors.Errorf("counter is still not equal to expected, current:%d, expected:%d", queryCountRes.Count, expectedCount))
+			return retry.Retryable(errors.Errorf(
+				"counter is still not equal to expected, current:%d, expected:%d",
+				queryCountRes.Count,
+				expectedCount,
+			))
 		}
 
 		return nil

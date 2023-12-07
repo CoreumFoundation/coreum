@@ -146,7 +146,8 @@ func TestAuthMultisig(t *testing.T) {
 	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 
 	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(amountToSendFromMultisigAccount), // for gas estimation to work wee need account to exist on chain so we fund it with to be sent amount.
+		// for gas estimation to work wee need account to exist on chain so we fund it with to be sent amount.
+		Amount: sdkmath.NewInt(amountToSendFromMultisigAccount),
 	})
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
@@ -171,7 +172,8 @@ func TestAuthMultisig(t *testing.T) {
 
 	// fund the multisig account
 	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(int64(gasEstimation)), // because of 6/7 multisig gas exceeds FixedGas, and we need to fund it to pay fees.
+		// because of 6/7 multisig gas exceeds FixedGas, and we need to fund it to pay fees.
+		Amount: sdkmath.NewInt(int64(gasEstimation)),
 	})
 
 	_, err = chain.SignAndBroadcastMultisigTx(
@@ -207,8 +209,8 @@ func TestAuthMultisig(t *testing.T) {
 	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
 }
 
-// TestAuthUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
-// used to sign transaction.
+// TestAuthUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account
+// sequence number used to sign transaction.
 func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 	t.Parallel()
 
@@ -330,7 +332,10 @@ func TestGasEstimation(t *testing.T) {
 				},
 			},
 			// single signature no extra bytes.
-			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + (1*deterministicgas.AuthzExecOverhead + 1*deterministicgas.BankSendPerCoinGas),
+			expectedGas: dgc.FixedGas +
+				1*deterministicgas.BankSendPerCoinGas +
+				1*deterministicgas.AuthzExecOverhead +
+				1*deterministicgas.BankSendPerCoinGas,
 		},
 	}
 	for _, tt := range testsDeterm {
@@ -486,7 +491,9 @@ func TestAuthSignModeDirectAux(t *testing.T) {
 	txBuilder := chain.ClientContext.TxConfig().NewTxBuilder()
 	requireT.NoError(txBuilder.AddAuxSignerData(tipperSignerData))
 	txBuilder.SetFeePayer(feePayer)
-	txBuilder.SetFeeAmount(sdk.NewCoins(chain.NewCoin(chain.ChainSettings.GasPrice.Mul(sdk.NewDecFromInt(sdk.NewIntFromUint64(gas))).Ceil().RoundInt())))
+	txBuilder.SetFeeAmount(sdk.NewCoins(
+		chain.NewCoin(chain.ChainSettings.GasPrice.Mul(sdk.NewDecFromInt(sdk.NewIntFromUint64(gas))).Ceil().RoundInt()),
+	))
 	txBuilder.SetGasLimit(gas)
 
 	requireT.NoError(clienttx.Sign(chain.TxFactory().

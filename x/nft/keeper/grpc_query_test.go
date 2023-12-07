@@ -378,7 +378,8 @@ func (s *TestSuite) TestNFTs() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.NFTs(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
+			//nolint:staticcheck // we are testing deprecated handlers
+			result, err := s.queryClient.NFTs(gocontext.Background(), req)
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -467,7 +468,8 @@ func (s *TestSuite) TestNFT() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.NFT(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
+			//nolint:staticcheck // we are testing deprecated handlers
+			result, err := s.queryClient.NFT(gocontext.Background(), req)
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -536,7 +538,8 @@ func (s *TestSuite) TestClass() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Class(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
+			//nolint:staticcheck // we are testing deprecated handlers
+			result, err := s.queryClient.Class(gocontext.Background(), req)
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -598,7 +601,8 @@ func (s *TestSuite) TestClasses() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Classes(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
+			//nolint:staticcheck // we are testing deprecated handlers
+			result, err := s.queryClient.Classes(gocontext.Background(), req)
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {

@@ -15,6 +15,8 @@ import (
 )
 
 // TestMultisigAddressGeneration checks if the same multisig address is generated every time.
+//
+//nolint:lll // this code contains mnemonic that cannot be broken down.
 func TestMultisigAddressGeneration(t *testing.T) {
 	t.Parallel()
 	_, chain := integrationtests.NewCoreumTestingContext(t)

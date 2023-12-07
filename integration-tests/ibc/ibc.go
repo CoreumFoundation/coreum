@@ -75,7 +75,12 @@ func CreateIBCChannelsAndConnect(
 		pathName,
 	))
 	closerFunc := func() {
-		require.NoError(t, relayerSrcChain.CloseChannel(ctx, relayerDstChain, 5, 5*time.Second, srcChain.ChainSettings.ChainID, srcChainPort, "", pathName))
+		require.NoError(
+			t,
+			relayerSrcChain.CloseChannel(
+				ctx, relayerDstChain, 5, 5*time.Second, srcChain.ChainSettings.ChainID, srcChainPort, "", pathName,
+			),
+		)
 	}
 	return closerFunc
 }
@@ -108,7 +113,9 @@ func setupRelayerChain(
 	relayerSrcChainProvider, err := relayerSrcChainConfig.NewProvider(log, t.TempDir(), false, chain.ChainSettings.ChainID)
 	require.NoError(t, err)
 	require.NoError(t, relayerSrcChainProvider.Init(ctx))
-	relayerSrcChainKeyInfo, err := relayerSrcChainProvider.AddKey(relayerKeyName, chain.ChainSettings.CoinType, string(hd.Secp256k1Type))
+	relayerSrcChainKeyInfo, err := relayerSrcChainProvider.AddKey(
+		relayerKeyName, chain.ChainSettings.CoinType, string(hd.Secp256k1Type),
+	)
 	require.NoError(t, err)
 	_, relayerKeyBytes, err := bech32.DecodeAndConvert(relayerSrcChainKeyInfo.Address)
 	require.NoError(t, err)
