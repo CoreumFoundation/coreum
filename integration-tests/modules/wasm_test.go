@@ -2258,6 +2258,125 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 	requireT.Equal(amount.String(), qres.Balance.String())
 }
 
+// TestVestingToWASMContract verifies that smart contract instantiated on top of vesting accunt receives funds correctly.
+func TestVestingToWASMContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	admin := chain.GenAccount()
+	recipient := chain.GenAccount()
+	amount := chain.NewCoin(sdkmath.NewInt(500))
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Deploy smart contract.
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.BankSendWASM,
+	)
+	requireT.NoError(err)
+
+	// Predict the address of smart contract.
+
+	salt, err := chain.Wasm.GenerateSalt()
+	requireT.NoError(err)
+
+	contract, err := chain.Wasm.PredictWASMContractAddress(
+		ctx,
+		admin,
+		salt,
+		codeID,
+	)
+	requireT.NoError(err)
+
+	// Create vesting account using address of the smart contract.
+
+	vestingDuration := 30 * time.Second
+	createVestingAccMsg := &vestingtypes.MsgCreateVestingAccount{
+		FromAddress: admin.String(),
+		ToAddress:   contract.String(),
+		Amount:      sdk.NewCoins(amount),
+		EndTime:     time.Now().Add(vestingDuration).Unix(),
+		Delayed:     true,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createVestingAccMsg)),
+		createVestingAccMsg,
+	)
+	requireT.NoError(err)
+
+	// Instantiate the smart contract.
+
+	contractAddr, err := chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		salt,
+		integration.InstantiateConfig{
+			CodeID:     codeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	// Check that this is still a vesting account.
+
+	authClient := authtypes.NewQueryClient(chain.ClientContext)
+	accountRes, err := authClient.Account(ctx, &authtypes.QueryAccountRequest{
+		Address: contractAddr,
+	})
+	requireT.NoError(err)
+	requireT.Equal("/cosmos.vesting.v1beta1.DelayedVestingAccount", accountRes.Account.TypeUrl)
+
+	// Await vesting time to unlock the vesting coins
+
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(vestingDuration):
+	}
+
+	// Verify funds are there.
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	qres, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr,
+		Denom:   amount.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amount.String(), qres.Balance.String())
+
+	// Send sth to verify that funds has been vested.
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: contractAddr,
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdk.OneInt())),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(contract),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+}
+
 func randStringWithLength(n int) string {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 	b := make([]rune, n)
