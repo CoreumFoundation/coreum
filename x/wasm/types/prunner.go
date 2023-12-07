@@ -11,5 +11,5 @@ type AccountPruner struct{}
 
 // CleanupExistingAccount informs wasm module to reject smart contract instantiation if account exists.
 func (ap AccountPruner) CleanupExistingAccount(_ sdk.Context, _ authtypes.AccountI) (bool, error) {
-	return false, nil
+	return true, nil
 }

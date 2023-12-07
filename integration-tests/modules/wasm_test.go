@@ -2118,12 +2118,12 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 
 // TestWASMContractInstantiationIsRejectedIfThereAreTokensOnItsAccount verifies that smart contract instantiation
 // is rejected if account exists.
-func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
+func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-
 	admin := chain.GenAccount()
+	amount := chain.NewCoin(sdkmath.NewInt(500))
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
@@ -2162,15 +2162,15 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 	msg := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   contract.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(500))),
+		Amount:      sdk.NewCoins(amount),
 	}
 
 	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, msg)
 	requireT.NoError(err)
 
-	// Instantiate the smart contract. It should fail because its account holds some funds.
+	// Instantiate the smart contract.
 
-	_, err = chain.Wasm.InstantiateWASMContract(
+	contractAddr1, err := chain.Wasm.InstantiateWASMContract(
 		ctx,
 		txf,
 		admin,
@@ -2182,7 +2182,7 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 			Label:      "bank_send",
 		},
 	)
-	requireT.ErrorContains(err, "contract account already exists")
+	requireT.NoError(err)
 
 	// Predict the address of another smart contract.
 
@@ -2197,16 +2197,14 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// Create vesting account using address of the smart cotntract.
+	// Create vesting account using address of the smart contract.
 
 	createVestingAccMsg := &vestingtypes.MsgCreateVestingAccount{
 		FromAddress: admin.String(),
 		ToAddress:   contract.String(),
-		Amount: sdk.NewCoins(
-			chain.NewCoin(sdkmath.NewInt(10000)),
-		),
-		EndTime: time.Now().Unix(),
-		Delayed: true,
+		Amount:      sdk.NewCoins(amount),
+		EndTime:     time.Now().Unix(),
+		Delayed:     true,
 	}
 
 	_, err = client.BroadcastTx(
@@ -2221,9 +2219,17 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 
 	requireT.NoError(client.AwaitNextBlocks(ctx, clientCtx, 1))
 
-	// Instantiate the smart contract. It should fail because its account holds some funds.
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	qres, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contract.String(),
+		Denom:   amount.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amount.String(), qres.Balance.String())
 
-	_, err = chain.Wasm.InstantiateWASMContract(
+	// Instantiate the smart contract.
+
+	contractAddr2, err := chain.Wasm.InstantiateWASMContract(
 		ctx,
 		txf,
 		admin,
@@ -2235,7 +2241,21 @@ func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
 			Label:      "bank_send",
 		},
 	)
-	requireT.ErrorContains(err, "contract account already exists")
+	requireT.NoError(err)
+
+	qres, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr1,
+		Denom:   amount.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amount.String(), qres.Balance.String())
+
+	qres, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr2,
+		Denom:   amount.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amount.String(), qres.Balance.String())
 }
 
 func randStringWithLength(n int) string {
