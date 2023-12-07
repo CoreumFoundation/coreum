@@ -58,7 +58,7 @@ func (w Wasm) DeployAndInstantiateWASMContract(
 	}
 
 	initConfig.CodeID = codeID
-	contractAddr, err := w.InstantiateWASMContract(ctx, txf, fromAddress, salt, initConfig)
+	contractAddr, err := w.InstantiateWASMContract2(ctx, txf, fromAddress, salt, initConfig)
 	if err != nil {
 		return "", 0, err
 	}
@@ -170,8 +170,8 @@ func (w Wasm) PredictWASMContractAddress(
 	return keeper.BuildContractAddressPredictable(resp.DataHash, fromAddress, salt, []byte{}), nil
 }
 
-// InstantiateWASMContract instantiates the contract and returns the contract address.
-func (w Wasm) InstantiateWASMContract(
+// InstantiateWASMContract2 instantiates the contract using MsgInstantiateContract2 and returns the contract address.
+func (w Wasm) InstantiateWASMContract2(
 	ctx context.Context,
 	txf client.Factory,
 	fromAddress sdk.AccAddress,
@@ -208,6 +208,45 @@ func (w Wasm) InstantiateWASMContract(
 		wasmtypes.EventTypeInstantiate,
 		wasmtypes.AttributeKeyContractAddr,
 	)
+	if err != nil {
+		return "", err
+	}
+
+	return contractAddr, nil
+}
+
+// InstantiateWASMContract instantiates the contract using MsgInstantiateContract and returns the contract address.
+func (w Wasm) InstantiateWASMContract(
+	ctx context.Context,
+	txf client.Factory,
+	fromAddress sdk.AccAddress,
+	req InstantiateConfig,
+) (string, error) {
+	funds := sdk.NewCoins()
+	if amount := req.Amount; !amount.Amount.IsNil() {
+		funds = funds.Add(amount)
+	}
+
+	msg := &wasmtypes.MsgInstantiateContract{
+		Sender: w.chainCtx.MustConvertToBech32Address(fromAddress),
+		Admin: func() string {
+			if req.Admin != nil {
+				return w.chainCtx.MustConvertToBech32Address(req.Admin)
+			}
+			return ""
+		}(),
+		CodeID: req.CodeID,
+		Label:  req.Label,
+		Msg:    wasmtypes.RawContractMessage(req.Payload),
+		Funds:  funds,
+	}
+
+	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
+	if err != nil {
+		return "", err
+	}
+
+	contractAddr, err := event.FindStringEventAttribute(res.Events, wasmtypes.EventTypeInstantiate, wasmtypes.AttributeKeyContractAddr)
 	if err != nil {
 		return "", err
 	}
