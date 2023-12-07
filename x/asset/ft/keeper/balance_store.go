@@ -19,7 +19,8 @@ func newBalanceStore(cdc codec.BinaryCodec, store sdk.KVStore, pref []byte) bala
 	}
 }
 
-// balanceStore is the unified store for getting balance of an accounts, currently it is used by freezing and whitelisting.
+// balanceStore is the unified store for getting balance of an accounts, currently it is used
+// by freezing and whitelisting.
 type balanceStore struct {
 	store prefix.Store
 	cdc   codec.BinaryCodec
@@ -69,7 +70,11 @@ func (s balanceStore) IterateAllBalances(cb func(sdk.AccAddress, sdk.Coin) bool)
 	for ; iterator.Valid(); iterator.Next() {
 		address, err := types.AddressFromBalancesStore(iterator.Key())
 		if err != nil {
-			return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid address in the balances store saved with key: %s", string(iterator.Key()))
+			return sdkerrors.Wrapf(
+				cosmoserrors.ErrInvalidAddress,
+				"invalid address in the balances store saved with key: %s",
+				string(iterator.Key()),
+			)
 		}
 
 		var balance sdk.Coin
@@ -92,7 +97,11 @@ func (s balanceStore) SetBalance(coin sdk.Coin) {
 	}
 }
 
-func collectBalances(cdc codec.BinaryCodec, store sdk.KVStore, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
+func collectBalances(
+	cdc codec.BinaryCodec,
+	store sdk.KVStore,
+	pagination *query.PageRequest,
+) ([]types.Balance, *query.PageResponse, error) {
 	var balances []types.Balance
 	mapAddressToBalancesIdx := make(map[string]int)
 	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {

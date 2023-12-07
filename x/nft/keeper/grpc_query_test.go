@@ -69,7 +69,8 @@ func (s *TestSuite) TestBalance() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Balance(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
+			//nolint:staticcheck // we are testing deprecated handlers
+			result, err := s.queryClient.Balance(gocontext.Background(), req)
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -160,7 +161,8 @@ func (s *TestSuite) TestOwner() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Owner(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
+			//nolint:staticcheck // we are testing deprecated handlers
+			result, err := s.queryClient.Owner(gocontext.Background(), req)
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {
@@ -245,7 +247,8 @@ func (s *TestSuite) TestSupply() {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
-			result, err := s.queryClient.Supply(gocontext.Background(), req) //nolint:staticcheck // we are testing deprecated handlers
+			//nolint:staticcheck // we are testing deprecated handlers
+			result, err := s.queryClient.Supply(gocontext.Background(), req)
 			if tc.expError == "" {
 				require.NoError(err)
 			} else {

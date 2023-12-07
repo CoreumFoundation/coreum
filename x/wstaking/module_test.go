@@ -10,8 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestAppModuleOriginalStakingModule_GetConsensusVersion checks that the wrapped module still uses the save consensus version.
+// TestAppModuleOriginalStakingModule_GetConsensusVersion checks that the wrapped module still uses the save
+// consensus version.
 func TestAppModuleOriginalStakingModule_GetConsensusVersion(t *testing.T) {
-	stakingModule := staking.NewAppModule(&codec.AminoCodec{}, nil, authkeeper.AccountKeeper{}, bankkeeper.BaseKeeper{}, nil)
+	stakingModule := staking.NewAppModule(
+		&codec.AminoCodec{}, nil, authkeeper.AccountKeeper{}, bankkeeper.BaseKeeper{}, nil,
+	)
 	require.Equal(t, uint64(4), stakingModule.ConsensusVersion())
 }

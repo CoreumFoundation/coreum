@@ -99,11 +99,21 @@ func (c CoreumChain) ComputeNeededBalanceFromOptions(options BalancesOptions) sd
 		totalAmount = totalAmount.Add(amt)
 	}
 
-	return totalAmount.Add(options.GasPrice.Mul(sdkmath.LegacyNewDec(int64(options.NondeterministicMessagesGas))).Ceil().RoundInt()).Add(options.Amount)
+	return totalAmount.
+		Add(options.GasPrice.
+			Mul(sdkmath.LegacyNewDec(int64(options.NondeterministicMessagesGas))).
+			Ceil().
+			RoundInt()).
+		Add(options.Amount)
 }
 
 // FundAccountWithOptions computes the needed balances and fund account with it.
-func (c CoreumChain) FundAccountWithOptions(ctx context.Context, t *testing.T, address sdk.AccAddress, options BalancesOptions) {
+func (c CoreumChain) FundAccountWithOptions(
+	ctx context.Context,
+	t *testing.T,
+	address sdk.AccAddress,
+	options BalancesOptions,
+) {
 	t.Helper()
 
 	amount := c.ComputeNeededBalanceFromOptions(options)
@@ -113,8 +123,14 @@ func (c CoreumChain) FundAccountWithOptions(ctx context.Context, t *testing.T, a
 	})
 }
 
-// CreateValidator creates a new validator on the chain and returns the staker addresses, validator addresses and callback function to deactivate it.
-func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingAmount, selfDelegationAmount sdkmath.Int) (sdk.AccAddress, sdk.ValAddress, func(), error) {
+// CreateValidator creates a new validator on the chain and returns the staker addresses,
+// validator addresses and callback function to deactivate it.
+func (c CoreumChain) CreateValidator(
+	ctx context.Context,
+	t *testing.T,
+	stakingAmount,
+	selfDelegationAmount sdkmath.Int,
+) (sdk.AccAddress, sdk.ValAddress, func(), error) {
 	t.Helper()
 	SkipUnsafe(ctx, t)
 
@@ -133,7 +149,11 @@ func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingA
 		cosmosed25519.GenPrivKey().PubKey(),
 		c.NewCoin(stakingAmount),
 		stakingtypes.Description{Moniker: fmt.Sprintf("testing-staker-%s", staker)},
-		stakingtypes.NewCommissionRates(sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1")),
+		stakingtypes.NewCommissionRates(
+			sdk.MustNewDecFromStr("0.1"),
+			sdk.MustNewDecFromStr("0.1"),
+			sdk.MustNewDecFromStr("0.1"),
+		),
 		selfDelegationAmount,
 	)
 	require.NoError(t, err)

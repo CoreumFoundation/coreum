@@ -82,7 +82,10 @@ func (csk ConcurrentSafeKeyring) ExportPrivKeyArmor(uid, encryptPassphrase strin
 }
 
 // ExportPrivKeyArmorByAddress exports priv key armor by address.
-func (csk ConcurrentSafeKeyring) ExportPrivKeyArmorByAddress(address sdk.Address, encryptPassphrase string) (armor string, err error) {
+func (csk ConcurrentSafeKeyring) ExportPrivKeyArmorByAddress(
+	address sdk.Address,
+	encryptPassphrase string,
+) (armor string, err error) {
 	csk.mu.RLock()
 	defer csk.mu.RUnlock()
 
@@ -129,7 +132,12 @@ func (csk ConcurrentSafeKeyring) DeleteByAddress(address sdk.Address) error {
 // another key is already stored under the same name or address.
 //
 // A passphrase set to the empty string will set the passphrase to the DefaultBIP39Passphrase value.
-func (csk ConcurrentSafeKeyring) NewMnemonic(uid string, language keyring.Language, hdPath, bip39Passphrase string, algo keyring.SignatureAlgo) (*keyring.Record, string, error) {
+func (csk ConcurrentSafeKeyring) NewMnemonic(
+	uid string,
+	language keyring.Language,
+	hdPath, bip39Passphrase string,
+	algo keyring.SignatureAlgo,
+) (*keyring.Record, string, error) {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
 
@@ -138,7 +146,10 @@ func (csk ConcurrentSafeKeyring) NewMnemonic(uid string, language keyring.Langua
 
 // NewAccount converts a mnemonic to a private key and BIP-39 HD Path and persists it.
 // It fails if there is an existing key Info with the same address.
-func (csk ConcurrentSafeKeyring) NewAccount(uid, mnemonic, bip39Passphrase, hdPath string, algo keyring.SignatureAlgo) (*keyring.Record, error) {
+func (csk ConcurrentSafeKeyring) NewAccount(
+	uid, mnemonic, bip39Passphrase, hdPath string,
+	algo keyring.SignatureAlgo,
+) (*keyring.Record, error) {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
 
@@ -146,7 +157,12 @@ func (csk ConcurrentSafeKeyring) NewAccount(uid, mnemonic, bip39Passphrase, hdPa
 }
 
 // SaveLedgerKey retrieves a public key reference from a Ledger device and persists it.
-func (csk ConcurrentSafeKeyring) SaveLedgerKey(uid string, algo keyring.SignatureAlgo, hrp string, coinType, account, index uint32) (*keyring.Record, error) {
+func (csk ConcurrentSafeKeyring) SaveLedgerKey(
+	uid string,
+	algo keyring.SignatureAlgo,
+	hrp string,
+	coinType, account, index uint32,
+) (*keyring.Record, error) {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
 

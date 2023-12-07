@@ -9,6 +9,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/nft"
 )
 
+//nolint:lll // we don't care about test strings
 func TestAmino(t *testing.T) {
 	const address = "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"
 

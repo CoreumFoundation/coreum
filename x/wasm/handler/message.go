@@ -284,12 +284,18 @@ func NewMessengerWrapper(parentMessenger wasmkeeper.Messenger) *MessengerWrapper
 	}
 }
 
-// DispatchMsg sets smart contract sender in the context, in case the executed message handlers sends tokens from the smart contract account.
+// DispatchMsg sets smart contract sender in the context, in case the executed message handlers sends tokens
+// from the smart contract account.
 func (m *MessengerWrapper) DispatchMsg(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
 	contractIBCPortID string,
 	msg wasmvmtypes.CosmosMsg,
 ) (events []sdk.Event, data [][]byte, err error) {
-	return m.parentMessenger.DispatchMsg(types.WithSmartContractSender(ctx, contractAddr.String()), contractAddr, contractIBCPortID, msg)
+	return m.parentMessenger.DispatchMsg(
+		types.WithSmartContractSender(ctx, contractAddr.String()),
+		contractAddr,
+		contractIBCPortID,
+		msg,
+	)
 }

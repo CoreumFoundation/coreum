@@ -30,7 +30,9 @@ type QueryService struct {
 }
 
 // MinGasPrice returns current minimum gas price required by the network.
-func (qs QueryService) MinGasPrice(ctx context.Context, req *types.QueryMinGasPriceRequest) (*types.QueryMinGasPriceResponse, error) {
+func (qs QueryService) MinGasPrice(
+	ctx context.Context, req *types.QueryMinGasPriceRequest,
+) (*types.QueryMinGasPriceResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -41,7 +43,9 @@ func (qs QueryService) MinGasPrice(ctx context.Context, req *types.QueryMinGasPr
 }
 
 // RecommendedGasPrice returns an estimation of gas in the future blocks.
-func (qs QueryService) RecommendedGasPrice(ctx context.Context, req *types.QueryRecommendedGasPriceRequest) (*types.QueryRecommendedGasPriceResponse, error) {
+func (qs QueryService) RecommendedGasPrice(
+	ctx context.Context, req *types.QueryRecommendedGasPriceRequest,
+) (*types.QueryRecommendedGasPriceResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}

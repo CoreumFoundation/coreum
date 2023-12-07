@@ -24,7 +24,9 @@ func NewDenyMessagesDecorator(msgs ...sdk.Msg) DenyMessagesDecorator {
 }
 
 // AnteHandle resets the gas limit inside GasMeter.
-func (dmd DenyMessagesDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (dmd DenyMessagesDecorator) AnteHandle(
+	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
+) (sdk.Context, error) {
 	for _, msg := range tx.GetMsgs() {
 		msgName := proto.MessageName(msg)
 		if _, exists := dmd.deniedMessages[msgName]; exists {

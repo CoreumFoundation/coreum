@@ -186,7 +186,10 @@ func (ms MsgServer) GloballyFreeze(goCtx context.Context, req *types.MsgGlobally
 }
 
 // GloballyUnfreeze globally unfreezes fungible token.
-func (ms MsgServer) GloballyUnfreeze(goCtx context.Context, req *types.MsgGloballyUnfreeze) (*types.EmptyResponse, error) {
+func (ms MsgServer) GloballyUnfreeze(
+	goCtx context.Context,
+	req *types.MsgGloballyUnfreeze,
+) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
@@ -201,7 +204,10 @@ func (ms MsgServer) GloballyUnfreeze(goCtx context.Context, req *types.MsgGlobal
 }
 
 // SetWhitelistedLimit sets the limit of how many tokens account may hold.
-func (ms MsgServer) SetWhitelistedLimit(goCtx context.Context, req *types.MsgSetWhitelistedLimit) (*types.EmptyResponse, error) {
+func (ms MsgServer) SetWhitelistedLimit(
+	goCtx context.Context,
+	req *types.MsgSetWhitelistedLimit,
+) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {

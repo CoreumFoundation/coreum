@@ -30,7 +30,9 @@ func NewFeeDecorator(keeper Keeper) FeeDecorator {
 }
 
 // AnteHandle handles transaction in ante decorator.
-func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (fd FeeDecorator) AnteHandle(
+	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
+) (sdk.Context, error) {
 	if ctx.BlockHeight() == 0 || simulate || ctx.ChainID() == testutilconstant.SimAppChainID {
 		// Don't enforce fee model on genesis block and during simulation
 		return next(ctx, tx, simulate)
@@ -66,7 +68,11 @@ func (fd FeeDecorator) actOnFeeModelOutput(ctx sdk.Context, feeTx sdk.FeeTx) err
 	feeRequired := sdk.NewDecCoinFromDec(minGasPrice.Denom, gasDeclared.Mul(minGasPrice.Amount))
 
 	if feeOffered.IsLT(feeRequired) {
-		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeOffered, feeRequired)
+		return sdkerrors.Wrapf(
+			cosmoserrors.ErrInsufficientFee,
+			"insufficient fees; got: %s required: %s",
+			feeOffered, feeRequired,
+		)
 	}
 	return nil
 }

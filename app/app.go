@@ -181,7 +181,8 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
 			[]govclient.ProposalHandler{
-				// TODO(v4): Remove once IBC upgrades to the new param management mechanism. Check ibc-go/modules/core/02-client/types/params.go
+				// TODO(v4): Remove once IBC upgrades to the new param management mechanism.
+				// Check ibc-go/modules/core/02-client/types/params.go
 				paramsclient.ProposalHandler,
 				ibcclientclient.UpdateClientProposalHandler,
 				ibcclientclient.UpgradeProposalHandler,
@@ -221,7 +222,8 @@ var (
 		wasmtypes.ModuleName:           {authtypes.Burner},
 		assetfttypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
 		assetnfttypes.ModuleName:       {authtypes.Burner},
-		nft.ModuleName:                 {}, // the line is required by the nft module to have the module account stored in the account keeper
+		// the line is required by the nft module to have the module account stored in the account keeper
+		nft.ModuleName: {},
 	}
 )
 
@@ -326,11 +328,15 @@ func New(
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
 	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey, stakingtypes.StoreKey, crisistypes.StoreKey, minttypes.StoreKey,
-		distrtypes.StoreKey, slashingtypes.StoreKey, govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
-		feegrant.StoreKey, evidencetypes.StoreKey, capabilitytypes.StoreKey, consensusparamtypes.StoreKey, wasmtypes.StoreKey, feemodeltypes.StoreKey,
-		assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey,
-		delaytypes.StoreKey, customparamstypes.StoreKey, group.StoreKey,
+		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey,
+		stakingtypes.StoreKey, crisistypes.StoreKey, minttypes.StoreKey,
+		distrtypes.StoreKey, slashingtypes.StoreKey, govtypes.StoreKey,
+		paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
+		evidencetypes.StoreKey, capabilitytypes.StoreKey, consensusparamtypes.StoreKey,
+		wasmtypes.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey,
+		assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey,
+		ibctransfertypes.StoreKey, delaytypes.StoreKey, customparamstypes.StoreKey,
+		group.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -354,7 +360,11 @@ func New(
 	)
 
 	// set the BaseApp's parameter store
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
+		appCodec,
+		keys[consensusparamtypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
 	bApp.SetParamStore(&app.ConsensusParamsKeeper)
 
 	// add capability keeper and ScopeToModule for ibc module
@@ -403,12 +413,16 @@ func New(
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
 		app.DelayKeeper,
-		// pointer is used here because there is cycle in keeper dependencies: AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
+		// pointer is used here because there is cycle in keeper dependencies:
+		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	err := delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))
+	err := delayRouter.RegisterHandler(
+		&assetfttypes.DelayedTokenUpgradeV1{},
+		assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -417,7 +431,8 @@ func New(
 		appCodec,
 		keys[banktypes.StoreKey],
 		app.AccountKeeper,
-		// pointer is used here because there is cycle in keeper dependencies: AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
+		// pointer is used here because there is cycle in keeper dependencies:
+		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,
 		app.ModuleAccountAddrs(),
 		app.AssetFTKeeper,
@@ -514,7 +529,8 @@ func New(
 		appCodec,
 		keys[assetnfttypes.StoreKey],
 		nftKeeper,
-		// for the assetnft we use the clear bank keeper without the assets integration because it interacts only with native token.
+		// for the assetnft we use the clear bank keeper without the assets integration
+		// because it interacts only with native token.
 		originalBankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -533,7 +549,8 @@ func New(
 	// See: https://docs.cosmos.network/main/modules/gov#proposal-messages
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-		// TODO(v4): Remove once IBC upgrades to the new param management mechanism. Check ibc-go/modules/core/02-client/types/params.go
+		// TODO(v4): Remove once IBC upgrades to the new param management mechanism.
+		// Check ibc-go/modules/core/02-client/types/params.go
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
@@ -646,8 +663,14 @@ func New(
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, wibctransfer.NewPurposeMiddleware(transfer.NewIBCModule(app.TransferKeeper.Keeper)))
-	ibcRouter.AddRoute(wasmtypes.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper))
+	ibcRouter.AddRoute(
+		ibctransfertypes.ModuleName,
+		wibctransfer.NewPurposeMiddleware(transfer.NewIBCModule(app.TransferKeeper.Keeper)),
+	)
+	ibcRouter.AddRoute(
+		wasmtypes.ModuleName,
+		wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper),
+	)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	/****  Module Options ****/
@@ -662,13 +685,26 @@ func New(
 		app.BankKeeper.BaseKeeper,
 		app.ParamsKeeper,
 	)
-	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper, app.NFTKeeper.Keeper, app.WasmKeeper, app.ParamsKeeper)
+	assetNFTModule := assetnft.NewAppModule(
+		appCodec,
+		app.AssetNFTKeeper,
+		app.NFTKeeper.Keeper,
+		app.WasmKeeper,
+		app.ParamsKeeper,
+	)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper, app.ParamsKeeper)
 
 	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
 
 	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper, app.ParamsKeeper)
-	wstakingModule := wstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName), app.CustomParamsKeeper)
+	wstakingModule := wstaking.NewAppModule(
+		appCodec,
+		app.StakingKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.GetSubspace(stakingtypes.ModuleName),
+		app.CustomParamsKeeper,
+	)
 
 	delayModule := delay.NewAppModule(app.DelayKeeper)
 	// NOTE: Any module instantiated in the module manager that is later modified
@@ -685,24 +721,45 @@ func New(
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		groupmodule.NewAppModule(appCodec, app.GroupKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, app.GetSubspace(minttypes.ModuleName)),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
-		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
+		slashing.NewAppModule(
+			appCodec,
+			app.SlashingKeeper,
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.StakingKeeper,
+			app.GetSubspace(slashingtypes.ModuleName),
+		),
+		distr.NewAppModule(
+			appCodec, app.DistrKeeper,
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.StakingKeeper,
+			app.GetSubspace(distrtypes.ModuleName),
+		),
 		wstakingModule,
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		wibctransfer.NewAppModule(app.TransferKeeper),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
+		wasm.NewAppModule(
+			appCodec,
+			&app.WasmKeeper,
+			app.StakingKeeper,
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.MsgServiceRouter(),
+			app.GetSubspace(wasmtypes.ModuleName),
+		),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		feeModule,
 		assetFTModule,
 		assetNFTModule,
 		wnftModule,
 		customParamsModule,
 		delayModule,
-		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
+		// always be last to make sure that it checks for all invariants and not only part of them
+		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -810,8 +867,11 @@ func New(
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 
-	app.configurator = module.NewConfigurator(app.appCodec,
-		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig), app.GRPCQueryRouter())
+	app.configurator = module.NewConfigurator(
+		app.appCodec,
+		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig),
+		app.GRPCQueryRouter(),
+	)
 	app.ModuleManager.RegisterServices(app.configurator)
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
@@ -835,7 +895,12 @@ func New(
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
 	// transactions
 	overrideModules := map[string]module.AppModuleSimulation{
-		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
+		authtypes.ModuleName: auth.NewAppModule(
+			app.appCodec,
+			app.AccountKeeper,
+			authsims.RandomGenesisAccounts,
+			app.GetSubspace(authtypes.ModuleName),
+		),
 	}
 
 	app.sm = module.NewSimulationManagerFromAppModules(app.ModuleManager.Modules, overrideModules)
@@ -1143,7 +1208,11 @@ func GetMaccPerms() map[string][]string {
 }
 
 // initParamsKeeper init params keeper and its subspaces.
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
+func initParamsKeeper(
+	appCodec codec.BinaryCodec,
+	legacyAmino *codec.LegacyAmino,
+	key, tkey storetypes.StoreKey,
+) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	paramsKeeper.Subspace(authtypes.ModuleName)

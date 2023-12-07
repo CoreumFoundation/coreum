@@ -15,7 +15,9 @@ import (
 // In the old binary, the encoded binary was stored in the keeper by smart contracts, and in the new
 // binary it is fixed to store the original data. So we need to migrate the data
 // stored by smart contracts with the old binary and store the decoded format of the old data.
-func MigrateWasmCreatedNFTData(ctx sdk.Context, nftKeeper NFTKeeper, assetNFTKeeper AssetNFTKeeper, wasmKeeper WasmKeeper) error {
+func MigrateWasmCreatedNFTData(
+	ctx sdk.Context, nftKeeper NFTKeeper, assetNFTKeeper AssetNFTKeeper, wasmKeeper WasmKeeper,
+) error {
 	return assetNFTKeeper.IterateAllClassDefinitions(ctx, func(cd types.ClassDefinition) (bool, error) {
 		issuerAddress, err := sdk.AccAddressFromBech32(cd.Issuer)
 		if err != nil {

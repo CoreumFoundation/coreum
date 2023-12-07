@@ -119,7 +119,13 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 }
 
 // ApplyRate calculates how the burn or commission amount should be calculated.
-func (k Keeper) ApplyRate(ctx sdk.Context, rate sdk.Dec, issuer, sender sdk.AccAddress, outOps accountOperationMap) sdkmath.Int {
+func (k Keeper) ApplyRate(
+	ctx sdk.Context,
+	rate sdk.Dec,
+	issuer,
+	sender sdk.AccAddress,
+	outOps accountOperationMap,
+) sdkmath.Int {
 	// We decided that rates should not be charged on incoming IBC transfers.
 	// According to our current protocol, it cannot be done because sender pays the rates, meaning that escrow address
 	// would be charged leading to breaking the IBC mechanics.
@@ -141,8 +147,9 @@ func (k Keeper) ApplyRate(ctx sdk.Context, rate sdk.Dec, issuer, sender sdk.AccA
 		return sdk.ZeroInt()
 	}
 	// Since burning & send commissions are not applied when sending to/from token issuer or from any smart contract,
-	// we can't simply apply original burn rate or send commission rates when bank multisend contains issuer or smart contract in
-	// input or issuer in outputs. To recalculate new adjusted amount we exclude amount sent to issuers.
+	// we can't simply apply original burn rate or send commission rates when bank multisend contains issuer or smart
+	//  contract in input or issuer in outputs.
+	// To recalculate new adjusted amount we exclude amount sent to issuers.
 
 	// Examples
 	// burn_rate: 10%

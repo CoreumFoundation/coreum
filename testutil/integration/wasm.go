@@ -95,7 +95,11 @@ func (w Wasm) ExecuteWASMContract(
 }
 
 // QueryWASMContract queries the contract with the requested payload.
-func (w Wasm) QueryWASMContract(ctx context.Context, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
+func (w Wasm) QueryWASMContract(
+	ctx context.Context,
+	contractAddr string,
+	payload json.RawMessage,
+) (json.RawMessage, error) {
 	query := &wasmtypes.QuerySmartContractStateRequest{
 		Address:   contractAddr,
 		QueryData: wasmtypes.RawContractMessage(payload),
@@ -104,14 +108,22 @@ func (w Wasm) QueryWASMContract(ctx context.Context, contractAddr string, payloa
 	wasmClient := wasmtypes.NewQueryClient(w.chainCtx.ClientContext)
 	resp, err := wasmClient.SmartContractState(ctx, query)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "WASMQueryClient returned an error after smart contract state queryWASMContract")
+		return nil, sdkerrors.Wrap(
+			err,
+			"WASMQueryClient returned an error after smart contract state queryWASMContract",
+		)
 	}
 
 	return json.RawMessage(resp.Data), nil
 }
 
 // DeployWASMContract the wasm contract and returns its codeID.
-func (w Wasm) DeployWASMContract(ctx context.Context, txf client.Factory, fromAddress sdk.AccAddress, wasmData []byte) (uint64, error) {
+func (w Wasm) DeployWASMContract(
+	ctx context.Context,
+	txf client.Factory,
+	fromAddress sdk.AccAddress,
+	wasmData []byte,
+) (uint64, error) {
 	msg := &wasmtypes.MsgStoreCode{
 		Sender:       w.chainCtx.MustConvertToBech32Address(fromAddress),
 		WASMByteCode: wasmData,
@@ -191,7 +203,11 @@ func (w Wasm) InstantiateWASMContract(
 		return "", err
 	}
 
-	contractAddr, err := event.FindStringEventAttribute(res.Events, wasmtypes.EventTypeInstantiate, wasmtypes.AttributeKeyContractAddr)
+	contractAddr, err := event.FindStringEventAttribute(
+		res.Events,
+		wasmtypes.EventTypeInstantiate,
+		wasmtypes.AttributeKeyContractAddr,
+	)
 	if err != nil {
 		return "", err
 	}

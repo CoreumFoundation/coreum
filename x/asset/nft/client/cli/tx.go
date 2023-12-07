@@ -70,6 +70,7 @@ func CmdTxIssueClass() *cobra.Command {
 	allowedFeaturesString := strings.Join(allowedFeatures, ",")
 
 	cmd := &cobra.Command{
+		//nolint:lll // breaking this down will make it look worse when printed to user screen.
 		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] --from [issuer] --%s=%s --uri https://my-token-meta.invalid/1 --uri_hash e000624 --data-file [path]", FeaturesFlag, allowedFeaturesString),
 		Args:  cobra.ExactArgs(3),
 		Short: "Issue new non-fungible token class",
@@ -146,7 +147,12 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 		},
 	}
 
-	cmd.Flags().StringSlice(FeaturesFlag, []string{}, fmt.Sprintf("Features to be enabled on non-fungible token. e.g --%s=%s", FeaturesFlag, allowedFeaturesString))
+	cmd.Flags().StringSlice(
+		FeaturesFlag,
+		[]string{},
+		fmt.Sprintf("Features to be enabled on non-fungible token. e.g --%s=%s", FeaturesFlag, allowedFeaturesString),
+	)
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
 	cmd.Flags().String(RoyaltyRateFlag, "0", fmt.Sprintf("%s is a number between 0 and 1, and will be used to determine royalties sent to issuer, when an nft in this class is traded.", RoyaltyRateFlag))
 	cmd.Flags().String(URIFlag, "", "Class URI.")
 	cmd.Flags().String(URIHashFlag, "", "Class URI hash.")
@@ -160,6 +166,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 // CmdTxMint returns Mint cobra command.
 func CmdTxMint() *cobra.Command {
 	cmd := &cobra.Command{
+		//nolint:lll // breaking this down will make it look worse when printed to user screen.
 		Use:   "mint [class-id] [id] --from [sender] --uri https://my-token-meta.invalid/1 --uri_hash e000624 --data-file [path]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Mint new non-fungible token",
@@ -217,6 +224,7 @@ $ %s tx %s mint abc-%s id1 --from [sender] --data-file [path]
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+	//nolint:lll // breaking it down will make it look worse when printed to user screen
 	cmd.Flags().String(RecipientFlag, "", "Address to send minted token to, if not specified minted token is sent to the class issuer")
 	cmd.Flags().String(URIFlag, "", "NFT URI.")
 	cmd.Flags().String(URIHashFlag, "", "NFT URI hash.")

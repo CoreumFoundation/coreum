@@ -21,7 +21,13 @@ func AddTestAddrsIncremental(s *App, ctx sdk.Context, accNum int, accAmt sdkmath
 	return addTestAddrs(s, ctx, accNum, accAmt, createIncrementalAccounts)
 }
 
-func addTestAddrs(s *App, ctx sdk.Context, accNum int, accAmt sdkmath.Int, strategy GenerateAccountStrategy) []sdk.AccAddress {
+func addTestAddrs(
+	s *App,
+	ctx sdk.Context,
+	accNum int,
+	accAmt sdkmath.Int,
+	strategy GenerateAccountStrategy,
+) []sdk.AccAddress {
 	testAddrs := strategy(accNum)
 
 	initCoins := sdk.NewCoins(sdk.NewCoin(s.StakingKeeper.BondDenom(ctx), accAmt))

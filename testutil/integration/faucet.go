@@ -31,8 +31,9 @@ type Faucet struct {
 	queue    chan fundingRequest
 
 	// muCh is used to serve the same purpose as `sync.Mutex` to protect `fundingWallet` against being used
-	// to broadcast many transactions in parallel by different integration tests. The difference between this and `sync.Mutex`
-	// is that test may exit immediately when `ctx` is canceled, without waiting for mutex to be unlocked.
+	// to broadcast many transactions in parallel by different integration tests. The difference between this
+	// and `sync.Mutex` is that test may exit immediately when `ctx` is canceled, without waiting for mutex
+	// to be unlocked.
 	muCh chan struct{}
 }
 
@@ -65,7 +66,11 @@ func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccoun
 	const maxAccountsPerRequest = 20
 
 	if len(accountsToFund) > maxAccountsPerRequest {
-		return errors.Errorf("the number of accounts to fund (%d) is greater than the allowed maximum (%d)", len(accountsToFund), maxAccountsPerRequest)
+		return errors.Errorf(
+			"the number of accounts to fund (%d) is greater than the allowed maximum (%d)",
+			len(accountsToFund),
+			maxAccountsPerRequest,
+		)
 	}
 
 	req := fundingRequest{
@@ -76,13 +81,14 @@ func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccoun
 	// This `select` block is essential for understanding how the algorithm works.
 	// It decides if the caller of the function is the leader of the transaction or just a regular participant.
 	// There are 3 possible scenarios:
-	// - `<-tf.muCh` succeeds - the caller becomes a leader of the transaction. Its responsibility is to collect requests from
-	//    other participants, broadcast transaction and await it.
-	// - `tf.queue <- req` succeeds - the caller becomes a participant and his request was accepted by the leader, accounts will be funded in coming block
-	//   Caller waits until `<-req.FundedCh` succeeds, meaning that accounts were successfully funded or process failed.
-	// - none of the above - meaning that current leader finished the process of collecting requests from participants and now
-	//   transaction is broadcasted or awaited. Once it is finished `muCh` is unlocked and another caller will become a new leader
-	//   accepting requests from other participants again.
+	// - `<-tf.muCh` succeeds - the caller becomes a leader of the transaction. Its responsibility is to collect
+	// requests from other participants, broadcast transaction and await it.
+	// - `tf.queue <- req` succeeds - the caller becomes a participant and his request was accepted by the leader,
+	// accounts will be funded in coming block Caller waits until `<-req.FundedCh` succeeds, meaning that accounts
+	// were successfully funded or process failed.
+	// - none of the above - meaning that current leader finished the process of collecting requests from
+	// participants and now transaction is broadcasted or awaited. Once it is finished `muCh` is unlocked and
+	// another caller will become a new leader accepting requests from other participants again.
 
 	select {
 	case <-ctx.Done():

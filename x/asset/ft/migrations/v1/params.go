@@ -10,7 +10,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
-// InitialTokenUpgradeDecisionPeriod is the period applied on top of the current block time to produce initial value of upgrade decision timeout.
+// InitialTokenUpgradeDecisionPeriod is the period applied on top of the current block time to
+// produce initial value of upgrade decision timeout.
 const InitialTokenUpgradeDecisionPeriod = time.Hour * 24 * 21
 
 // ParamsKeeper specifies methods of params keeper required by the migration.

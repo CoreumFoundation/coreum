@@ -38,7 +38,12 @@ func (c ChainContext) ExecuteIBCTransfer(
 	receiver := recipientChainContext.MustConvertToBech32Address(recipientAddress)
 	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, receiver, coin.String())
 
-	recipientChannelID := c.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, recipientChainContext.ChainSettings.ChainID)
+	recipientChannelID := c.AwaitForIBCChannelID(
+		ctx,
+		t,
+		ibctransfertypes.PortID,
+		recipientChainContext.ChainSettings.ChainID,
+	)
 	height, err := c.GetLatestConsensusHeight(
 		ctx,
 		ibctransfertypes.PortID,
@@ -81,7 +86,12 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 	receiver := recipientChainContext.MustConvertToBech32Address(recipientAddress)
 	t.Logf("Sending timing out IBC transfer from %s, to %s, %s.", sender, receiver, coin.String())
 
-	recipientChannelID := c.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, recipientChainContext.ChainSettings.ChainID)
+	recipientChannelID := c.AwaitForIBCChannelID(
+		ctx,
+		t,
+		ibctransfertypes.PortID,
+		recipientChainContext.ChainSettings.ChainID,
+	)
 
 	tmQueryClient := tmservice.NewServiceClient(recipientChainContext.ClientContext)
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
@@ -121,7 +131,11 @@ func (c ChainContext) AwaitForBalance(
 ) error {
 	t.Helper()
 
-	t.Logf("Waiting for account %s balance, expected amount: %s.", c.MustConvertToBech32Address(address), expectedBalance.String())
+	t.Logf(
+		"Waiting for account %s balance, expected amount: %s.",
+		c.MustConvertToBech32Address(address),
+		expectedBalance.String(),
+	)
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
 	retryCtx, retryCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer retryCancel()
@@ -138,7 +152,11 @@ func (c ChainContext) AwaitForBalance(
 		}
 
 		if balancesRes.Balances.AmountOf(expectedBalance.Denom).String() != expectedBalance.Amount.String() {
-			return retry.Retryable(errors.Errorf("balance of %s is not as expected, all balances: %s", expectedBalance.String(), balancesRes.Balances.String()))
+			return retry.Retryable(errors.Errorf(
+				"balance of %s is not as expected, all balances: %s",
+				expectedBalance.String(),
+				balancesRes.Balances.String()),
+			)
 		}
 
 		return nil
@@ -176,10 +194,12 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 				continue
 			}
 
-			channelClientStateRes, err := ibcChannelClient.ChannelClientState(requestCtx, &ibcchanneltypes.QueryChannelClientStateRequest{
-				PortId:    ch.PortId,
-				ChannelId: ch.ChannelId,
-			})
+			channelClientStateRes, err := ibcChannelClient.ChannelClientState(
+				requestCtx,
+				&ibcchanneltypes.QueryChannelClientStateRequest{
+					PortId:    ch.PortId,
+					ChannelId: ch.ChannelId,
+				})
 			if err != nil {
 				return err
 			}
@@ -196,7 +216,11 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 			}
 		}
 
-		return retry.Retryable(errors.Errorf("waiting for the %s channel on the %s to open", peerChainID, c.ChainSettings.ChainID))
+		return retry.Retryable(errors.Errorf(
+			"waiting for the %s channel on the %s to open",
+			peerChainID,
+			c.ChainSettings.ChainID,
+		))
 	}))
 
 	t.Logf("Got %s chain channel on %s chain, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID)
@@ -205,7 +229,10 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 }
 
 // GetLatestConsensusHeight returns the latest consensus height  for provided IBC port and channelID.
-func (c ChainContext) GetLatestConsensusHeight(ctx context.Context, portID, channelID string) (ibcclienttypes.Height, error) {
+func (c ChainContext) GetLatestConsensusHeight(
+	ctx context.Context,
+	portID, channelID string,
+) (ibcclienttypes.Height, error) {
 	queryClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
 	req := &ibcchanneltypes.QueryChannelClientStateRequest{
 		PortId:    portID,
@@ -218,24 +245,40 @@ func (c ChainContext) GetLatestConsensusHeight(ctx context.Context, portID, chan
 	}
 
 	var clientState exported.ClientState
-	if err := c.ClientContext.InterfaceRegistry().UnpackAny(clientRes.IdentifiedClientState.ClientState, &clientState); err != nil {
+	if err := c.ClientContext.InterfaceRegistry().UnpackAny(
+		clientRes.IdentifiedClientState.ClientState,
+		&clientState,
+	); err != nil {
 		return ibcclienttypes.Height{}, err
 	}
 
 	clientHeight, ok := clientState.GetLatestHeight().(ibcclienttypes.Height)
 	if !ok {
-		return ibcclienttypes.Height{}, sdkerrors.Wrapf(cosmoserrors.ErrInvalidHeight, "invalid height type. expected type: %T, got: %T",
-			ibcclienttypes.Height{}, clientHeight)
+		return ibcclienttypes.Height{},
+			sdkerrors.Wrapf(
+				cosmoserrors.ErrInvalidHeight,
+				"invalid height type. expected type: %T, got: %T",
+				ibcclienttypes.Height{},
+				clientHeight,
+			)
 	}
 
 	return clientHeight, nil
 }
 
 // AwaitForIBCClientAndConnectionIDs returns the clientID and channel for the peer chain.
-func (c ChainContext) AwaitForIBCClientAndConnectionIDs(ctx context.Context, t *testing.T, peerChainID string) (string, string) {
+func (c ChainContext) AwaitForIBCClientAndConnectionIDs(
+	ctx context.Context,
+	t *testing.T,
+	peerChainID string,
+) (string, string) {
 	t.Helper()
 
-	t.Logf("Waiting for IBC client and connection for the chain %s, on the chain: %s.", peerChainID, c.ChainSettings.ChainID)
+	t.Logf(
+		"Waiting for IBC client and connection for the chain %s, on the chain: %s.",
+		peerChainID,
+		c.ChainSettings.ChainID,
+	)
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()

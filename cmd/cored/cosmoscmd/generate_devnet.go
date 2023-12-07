@@ -38,6 +38,8 @@ const (
 )
 
 // GenerateDevnetCmd returns a command that generates devnet files needed to start the devnet.
+//
+//nolint:funlen // breaking down this function will make it less maintainable.
 func GenerateDevnetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate-devnet",
@@ -59,7 +61,10 @@ func GenerateDevnetCmd() *cobra.Command {
 			}
 			duplicatedNames := lo.FindDuplicates(validatorNames)
 			if len(duplicatedNames) != 0 {
-				return errors.Wrap(err, fmt.Sprintf("it is prohibited to use duplicatd validator names, duplicates: %v", duplicatedNames))
+				return errors.Wrap(
+					err,
+					fmt.Sprintf("it is prohibited to use duplicatd validator names, duplicates: %v", duplicatedNames),
+				)
 			}
 
 			outputPath, err := cmd.Flags().GetString(FlagOutputPath)
@@ -180,7 +185,10 @@ func addValidatorToNetwork(
 	}
 
 	// 10m delegated and 1m extra to the txs
-	networkProvider = networkProvider.WithAccount(stakerAddress, sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(11_000_000_000_000))))
+	networkProvider = networkProvider.WithAccount(
+		stakerAddress,
+		sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(11_000_000_000_000))),
+	)
 	stakerSelfDelegationAmount := sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(10_000_000_000_000))
 	commission := stakingtypes.CommissionRates{
 		Rate:          sdk.MustNewDecFromStr("0.1"),

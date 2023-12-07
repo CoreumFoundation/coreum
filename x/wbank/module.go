@@ -26,7 +26,9 @@ type AppModule struct {
 }
 
 // NewAppModule creates a new bank AppModule object.
-func NewAppModule(cdc codec.Codec, keeper keeper.BaseKeeperWrapper, accountKeeper banktypes.AccountKeeper, ss bankexported.Subspace) AppModule {
+func NewAppModule(
+	cdc codec.Codec, keeper keeper.BaseKeeperWrapper, accountKeeper banktypes.AccountKeeper, ss bankexported.Subspace,
+) AppModule {
 	bankModule := bank.NewAppModule(cdc, keeper.BaseKeeper, accountKeeper, ss)
 	return AppModule{
 		AppModule:      bankModule,

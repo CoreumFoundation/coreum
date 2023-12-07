@@ -127,7 +127,9 @@ func New(
 					return nil, fmt.Errorf("no keyTable defined for subspace: %s", subspace.Name())
 				}
 
-				// Reference x/mint inside cosmos-sdk: https://github.com/cosmos/cosmos-sdk/pull/12363/files#diff-eff63269a2122bd0bc1c08f3d029aa99812aa47ce9fd85ef531dc3e04327ffc5L36
+				// Reference x/mint inside cosmos-sdk:
+				// https://github.com/cosmos/cosmos-sdk/pull/12363/files#diff-eff63269a2122bd0bc1c08f3d029aa99812aa47ce9fd85ef531dc3e04327ffc5L36
+				//nolint:lll // breaking down urls is not possible
 				if !subspace.HasKeyTable() {
 					subspace.WithKeyTable(keyTable)
 				}
@@ -166,7 +168,8 @@ func New(
 			params.AllowedClients = append(params.AllowedClients, ibccoreexported.Localhost)
 			ibcClientKeeper.SetParams(ctx, params)
 
-			// Set values for new params: min_initial_deposit_ratio, burn_vote_quorum, burn_proposal_deposit_prevote, burn_vote_veto
+			// Set values for new params: min_initial_deposit_ratio, burn_vote_quorum,
+			// burn_proposal_deposit_prevote, burn_vote_veto
 			govParams := govKeeper.GetParams(ctx)
 			govParams.MinInitialDepositRatio = sdk.NewDec(50).Quo(sdk.NewDec(100)).String()
 			govParams.BurnVoteQuorum = false

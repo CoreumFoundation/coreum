@@ -73,7 +73,13 @@ func DeconstructDenom(denom string) (prefix string, issuer sdk.AccAddress, err e
 
 	address, err := sdk.AccAddressFromBech32(denomParts[1])
 	if err != nil {
-		return "", nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address %q in denom: %s, err:%s", denomParts[1], denom, err)
+		return "", nil, sdkerrors.Wrapf(
+			ErrInvalidDenom,
+			"invalid issuer address %q in denom: %s, err:%s",
+			denomParts[1],
+			denom,
+			err,
+		)
 	}
 
 	if err := ValidateSubunit(denomParts[0]); err != nil {
@@ -165,7 +171,12 @@ func (def Definition) CheckFeatureAllowed(addr sdk.AccAddress, feature Feature) 
 		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
 	}
 
-	return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
+	return sdkerrors.Wrapf(
+		cosmoserrors.ErrUnauthorized,
+		"address %s is unauthorized to perform %q related operations",
+		addr.String(),
+		feature.String(),
+	)
 }
 
 // IsFeatureAllowed returns true if feature is allowed for the address.

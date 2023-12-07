@@ -28,7 +28,10 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 }
 
 // UpdateStakingParams is a governance operation that sets staking parameters.
-func (m MsgServer) UpdateStakingParams(ctx context.Context, req *types.MsgUpdateStakingParams) (*types.EmptyResponse, error) {
+func (m MsgServer) UpdateStakingParams(
+	ctx context.Context,
+	req *types.MsgUpdateStakingParams,
+) (*types.EmptyResponse, error) {
 	if err := m.keeper.UpdateStakingParams(sdk.UnwrapSDKContext(ctx), req.Authority, req.StakingParams); err != nil {
 		return nil, err
 	}

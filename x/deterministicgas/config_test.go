@@ -344,7 +344,11 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 					},
 				),
 			),
-			expectedGas:             authzMsgExecOverhead + authzMsgExecOverhead + bankSendPerCoinGas + 2*bankMultiSendPerOperationGas + bankSendPerCoinGas,
+			expectedGas: authzMsgExecOverhead +
+				authzMsgExecOverhead +
+				bankSendPerCoinGas +
+				2*bankMultiSendPerOperationGas +
+				bankSendPerCoinGas,
 			expectedIsDeterministic: true,
 		},
 		{

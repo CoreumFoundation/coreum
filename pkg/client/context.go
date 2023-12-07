@@ -452,7 +452,12 @@ func (c Context) PrintProto(toPrint gogoproto.Message) error {
 }
 
 // NewStream implements the grpc ClientConn.NewStream method.
-func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+func (c Context) NewStream(
+	ctx context.Context,
+	desc *grpc.StreamDesc,
+	method string,
+	opts ...grpc.CallOption,
+) (grpc.ClientStream, error) {
 	if c.GRPCClient() != nil {
 		return c.GRPCClient().NewStream(ctx, desc, method, opts...)
 	}
@@ -465,7 +470,12 @@ func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method st
 }
 
 // Invoke invokes GRPC method.
-func (c Context) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
+func (c Context) Invoke(
+	ctx context.Context,
+	method string,
+	req, reply interface{},
+	opts ...grpc.CallOption,
+) (err error) {
 	if c.GRPCClient() != nil {
 		return c.GRPCClient().Invoke(ctx, method, req, reply, opts...)
 	}

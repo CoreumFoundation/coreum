@@ -55,7 +55,11 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	}
 
 	minDeposit := govParams.MinDeposit[0]
-	return g.chainCtx.NewCoin(minDeposit.Amount.Add(g.chainCtx.ChainSettings.GasPrice.Mul(sdk.NewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
+	return g.chainCtx.NewCoin(minDeposit.Amount.Add(
+		g.chainCtx.ChainSettings.GasPrice.
+			Mul(sdk.NewDec(int64(submitProposalGas))).
+			Ceil().
+			RoundInt())), nil
 }
 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
@@ -80,7 +84,10 @@ func (g Governance) ProposeAndVote(
 	err = g.VoteAll(ctx, option, proposal.Id)
 	require.NoError(t, err)
 
-	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
+	t.Logf(
+		"Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s",
+		proposal.VotingEndTime,
+	)
 
 	finalStatus, err := g.WaitForVotingToFinalize(ctx, proposalID)
 	require.NoError(t, err)
@@ -92,7 +99,8 @@ func (g Governance) ProposeAndVote(
 	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 }
 
-// ProposalFromMsgAndVote creates a new proposal from list of sdk.Msg, votes from all staker accounts and awaits for the final status.
+// ProposalFromMsgAndVote creates a new proposal from list of sdk.Msg, votes from all staker accounts and awaits
+// for the final status.
 func (g Governance) ProposalFromMsgAndVote(
 	ctx context.Context,
 	t *testing.T,
@@ -135,7 +143,11 @@ func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypesv1.M
 		return 0, err
 	}
 
-	proposalID, err := event.FindUint64EventAttribute(result.Events, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
+	proposalID, err := event.FindUint64EventAttribute(
+		result.Events,
+		govtypes.EventTypeSubmitProposal,
+		govtypes.AttributeKeyProposalID,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -179,7 +191,11 @@ func (g Governance) VoteAll(ctx context.Context, option govtypesv1.VoteOption, p
 }
 
 // VoteAllWeighted votes for the proposalID from all voting accounts with the provided WeightedVoteOptions.
-func (g Governance) VoteAllWeighted(ctx context.Context, options govtypesv1.WeightedVoteOptions, proposalID uint64) error {
+func (g Governance) VoteAllWeighted(
+	ctx context.Context,
+	options govtypesv1.WeightedVoteOptions,
+	proposalID uint64,
+) error {
 	return g.voteAll(ctx, func(voter sdk.AccAddress) sdk.Msg {
 		return &govtypesv1.MsgVoteWeighted{
 			ProposalId: proposalID,
@@ -287,7 +303,9 @@ func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (*govtyp
 // QueryGovParams returns all governance params.
 func (g Governance) QueryGovParams(ctx context.Context) (*govtypesv1.Params, error) {
 	govParams, err := g.govClient.Params(ctx, &govtypesv1.QueryParamsRequest{
-		ParamsType: govtypesv1.ParamTallying, // strange decision by cosmos. Even though it always returns all params (inside Params field) ParamsType is still required (probably legacy from v45).
+		// strange decision by cosmos. Even though it always returns all params (inside Params field)
+		// ParamsType is still required (probably legacy from v45).
+		ParamsType: govtypesv1.ParamTallying,
 	})
 	if err != nil {
 		return nil, err

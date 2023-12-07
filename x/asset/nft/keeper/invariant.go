@@ -64,7 +64,8 @@ func FreezingInvariant(k Keeper) sdk.Invariant {
 	}
 }
 
-// OriginalClassExistsInvariant checks that all the registered Classes have counterpart on the original Cosmos SDK nft module.
+// OriginalClassExistsInvariant checks that all the registered Classes have counterpart on the original
+// Cosmos SDK nft module.
 func OriginalClassExistsInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (

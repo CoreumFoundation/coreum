@@ -10,7 +10,8 @@ import (
 type Purpose string
 
 const (
-	// PurposeOut is used when IBC transfer from Coreum to peered chain is initialized by executing ibctransfertypes.MsgTransfer message.
+	// PurposeOut is used when IBC transfer from Coreum to peered chain is initialized by executing
+	// ibctransfertypes.MsgTransfer message.
 	PurposeOut Purpose = "ibcTransferOut"
 	// PurposeIn is used when incoming IBC transfer comes from peered chain to Coreum.
 	PurposeIn Purpose = "ibcTransferIn"

@@ -28,7 +28,10 @@ type QueryService struct {
 }
 
 // StakingParams returns staking params of the model.
-func (qs QueryService) StakingParams(ctx context.Context, req *types.QueryStakingParamsRequest) (*types.QueryStakingParamsResponse, error) {
+func (qs QueryService) StakingParams(
+	ctx context.Context,
+	req *types.QueryStakingParamsRequest,
+) (*types.QueryStakingParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}

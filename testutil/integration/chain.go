@@ -140,7 +140,9 @@ func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
 }
 
 // GenMultisigAccount generates a multisig account.
-func (c ChainContext) GenMultisigAccount(signersCount, multisigThreshold int) (*sdkmultisig.LegacyAminoPubKey, []string, error) {
+func (c ChainContext) GenMultisigAccount(
+	signersCount, multisigThreshold int,
+) (*sdkmultisig.LegacyAminoPubKey, []string, error) {
 	keyNamesSet := []string{}
 	publicKeySet := make([]cryptotypes.PubKey, 0, signersCount)
 	for i := 0; i < signersCount; i++ {
@@ -261,7 +263,12 @@ type Chain struct {
 }
 
 // NewChain creates an instance of the new Chain.
-func NewChain(grpcClient *grpc.ClientConn, rpcClient rpcclient.Client, chainSettings ChainSettings, fundingMnemonic string) Chain {
+func NewChain(
+	grpcClient *grpc.ClientConn,
+	rpcClient rpcclient.Client,
+	chainSettings ChainSettings,
+	fundingMnemonic string,
+) Chain {
 	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
 
 	clientCtxConfig := client.DefaultContextConfig()

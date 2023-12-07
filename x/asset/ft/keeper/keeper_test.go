@@ -40,7 +40,11 @@ func TestKeeper_Issue(t *testing.T) {
 	requireT.NoError(ftKeeper.SetParams(ctx, ftParams))
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(sdk.NewCoin(ftParams.IssueFee.Denom, ftParams.IssueFee.Amount.MulRaw(5)))))
+	requireT.NoError(testApp.FundAccount(
+		ctx,
+		addr,
+		sdk.NewCoins(sdk.NewCoin(ftParams.IssueFee.Denom, ftParams.IssueFee.Amount.MulRaw(5)))),
+	)
 
 	settings := types.IssueSettings{
 		Issuer:        addr,
@@ -59,7 +63,11 @@ func TestKeeper_Issue(t *testing.T) {
 
 	// verify issue fee was burnt
 
-	burntStr, err := event.FindStringEventAttribute(ctx.EventManager().ABCIEvents(), banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	burntStr, err := event.FindStringEventAttribute(
+		ctx.EventManager().ABCIEvents(),
+		banktypes.EventTypeCoinBurn,
+		sdk.AttributeKeyAmount,
+	)
 	requireT.NoError(err)
 	requireT.Equal(ftParams.IssueFee.String(), burntStr)
 

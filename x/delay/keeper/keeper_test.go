@@ -95,7 +95,9 @@ func TestDelayedExecution(t *testing.T) {
 	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-id-3", delayed3, 3*time.Second))
 	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-id-4", delayed4, 3*time.Second))
 
-	requireT.Error(delayKeeper.StoreDelayedExecution(ctx, "delayed-id-4", delayed1, time.Date(1969, 12, 31, 23, 59, 59, 0, time.UTC)))
+	requireT.Error(delayKeeper.StoreDelayedExecution(
+		ctx, "delayed-id-4", delayed1, time.Date(1969, 12, 31, 23, 59, 59, 0, time.UTC),
+	))
 
 	delayedItems, err := delayKeeper.ExportDelayedItems(ctx)
 	requireT.NoError(err)

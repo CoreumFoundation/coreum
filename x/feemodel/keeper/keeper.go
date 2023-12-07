@@ -90,7 +90,8 @@ func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Par
 	return k.SetParams(ctx, params)
 }
 
-// GetShortEMAGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block.
+// GetShortEMAGas retrieves average gas used by previous blocks, used as a representation of
+// smoothed gas used by latest block.
 func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(shortEMAGasKey)
@@ -106,7 +107,8 @@ func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
 	return currentEMAGas.Int64()
 }
 
-// SetShortEMAGas sets average gas used by previous blocks, used as a representation of smoothed gas used by latest block.
+// SetShortEMAGas sets average gas used by previous blocks, used as a representation of smoothed gas
+// used by latest block.
 func (k Keeper) SetShortEMAGas(ctx sdk.Context, emaGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -118,7 +120,8 @@ func (k Keeper) SetShortEMAGas(ctx sdk.Context, emaGas int64) {
 	store.Set(shortEMAGasKey, bz)
 }
 
-// GetLongEMAGas retrieves long average gas used by previous blocks, used for determining average block load where maximum discount is applied.
+// GetLongEMAGas retrieves long average gas used by previous blocks, used for determining average block
+// load where maximum discount is applied.
 func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(longEMAGasKey)
@@ -134,7 +137,8 @@ func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
 	return emaGas.Int64()
 }
 
-// SetLongEMAGas sets long average gas used by previous blocks, used for determining average block load where maximum discount is applied.
+// SetLongEMAGas sets long average gas used by previous blocks, used for determining average block load where
+// maximum discount is applied.
 func (k Keeper) SetLongEMAGas(ctx sdk.Context, emaGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -175,7 +179,11 @@ func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
 	shortEMABlockLength := k.GetParams(ctx).Model.ShortEmaBlockLength
 	if after > shortEMABlockLength {
-		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(cosmoserrors.ErrInvalidRequest, "after blocks must be lower than or equal to %d", shortEMABlockLength)
+		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(
+			cosmoserrors.ErrInvalidRequest,
+			"after blocks must be lower than or equal to %d",
+			shortEMABlockLength,
+		)
 	}
 
 	// if no after value is provided shortEMABlockLength is taken as default value

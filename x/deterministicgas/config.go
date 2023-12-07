@@ -182,6 +182,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&ibctransfertypes.MsgTransfer{}): constantGasFunc(54_000),
 	}
 
+	//nolint:lll // we would like to keep the comments here inline
 	registerNondeterministicGasFuncs(
 		&cfg,
 		[]sdk.Msg{

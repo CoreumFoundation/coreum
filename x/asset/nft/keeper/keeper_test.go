@@ -203,7 +203,11 @@ func TestKeeper_Mint(t *testing.T) {
 
 	// verify issue fee was burnt
 
-	burntStr, err := event.FindStringEventAttribute(ctx.EventManager().ABCIEvents(), banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	burntStr, err := event.FindStringEventAttribute(
+		ctx.EventManager().ABCIEvents(),
+		banktypes.EventTypeCoinBurn,
+		sdk.AttributeKeyAmount,
+	)
 	requireT.NoError(err)
 	requireT.Equal(nftParams.MintFee.String(), burntStr)
 
@@ -272,7 +276,11 @@ func TestKeeper_MintWithRecipient(t *testing.T) {
 
 	// verify issue fee was burnt
 
-	burntStr, err := event.FindStringEventAttribute(ctx.EventManager().ABCIEvents(), banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	burntStr, err := event.FindStringEventAttribute(
+		ctx.EventManager().ABCIEvents(),
+		banktypes.EventTypeCoinBurn,
+		sdk.AttributeKeyAmount,
+	)
 	requireT.NoError(err)
 	requireT.Equal(nftParams.MintFee.String(), burntStr)
 
@@ -802,7 +810,9 @@ func TestKeeper_Whitelist(t *testing.T) {
 	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	requireT.NoError(assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient2))
 
-	whitelistedNftAccounts, _, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: query.MaxLimit})
+	whitelistedNftAccounts, _, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(
+		ctx, classID, nftID, &query.PageRequest{Limit: query.MaxLimit},
+	)
 	requireT.NoError(err)
 	requireT.Len(whitelistedNftAccounts, 2)
 	requireT.ElementsMatch(whitelistedNftAccounts, []string{
@@ -811,12 +821,16 @@ func TestKeeper_Whitelist(t *testing.T) {
 	})
 
 	incrementallyQueriedAccounts := []string{}
-	whitelistedNftAccounts, pageRes, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: 1})
+	whitelistedNftAccounts, pageRes, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(
+		ctx, classID, nftID, &query.PageRequest{Limit: 1},
+	)
 	requireT.NoError(err)
 	requireT.Len(whitelistedNftAccounts, 1)
 	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, whitelistedNftAccounts...)
 
-	whitelistedNftAccounts, pageRes, err = assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Key: pageRes.GetNextKey()})
+	whitelistedNftAccounts, pageRes, err = assetNFTKeeper.GetWhitelistedAccountsForNFT(
+		ctx, classID, nftID, &query.PageRequest{Key: pageRes.GetNextKey()},
+	)
 	requireT.NoError(err)
 	requireT.Len(whitelistedNftAccounts, 1)
 	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, whitelistedNftAccounts...)
@@ -981,7 +995,9 @@ func TestKeeper_ClassWhitelist(t *testing.T) {
 	requireT.NoError(err)
 	requireT.True(isWhitelisted)
 
-	whitelistedNftAccounts, _, err := assetNFTKeeper.GetClassWhitelistedAccounts(ctx, classID, &query.PageRequest{Limit: query.MaxLimit})
+	whitelistedNftAccounts, _, err := assetNFTKeeper.GetClassWhitelistedAccounts(
+		ctx, classID, &query.PageRequest{Limit: query.MaxLimit},
+	)
 	requireT.NoError(err)
 	requireT.Len(whitelistedNftAccounts, 2)
 	requireT.ElementsMatch(whitelistedNftAccounts, []string{
@@ -990,12 +1006,16 @@ func TestKeeper_ClassWhitelist(t *testing.T) {
 	})
 
 	incrementallyQueriedAccounts := []string{}
-	whitelistedNftAccounts, pageRes, err := assetNFTKeeper.GetClassWhitelistedAccounts(ctx, classID, &query.PageRequest{Limit: 1})
+	whitelistedNftAccounts, pageRes, err := assetNFTKeeper.GetClassWhitelistedAccounts(
+		ctx, classID, &query.PageRequest{Limit: 1},
+	)
 	requireT.NoError(err)
 	requireT.Len(whitelistedNftAccounts, 1)
 	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, whitelistedNftAccounts...)
 
-	whitelistedNftAccounts, pageRes, err = assetNFTKeeper.GetClassWhitelistedAccounts(ctx, classID, &query.PageRequest{Key: pageRes.GetNextKey()})
+	whitelistedNftAccounts, pageRes, err = assetNFTKeeper.GetClassWhitelistedAccounts(
+		ctx, classID, &query.PageRequest{Key: pageRes.GetNextKey()},
+	)
 	requireT.NoError(err)
 	requireT.Len(whitelistedNftAccounts, 1)
 	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, whitelistedNftAccounts...)
@@ -1389,7 +1409,9 @@ func genNFTData(requireT *require.Assertions) *codectypes.Any {
 	return dataValue
 }
 
-func requireClassSettingsEqualClass(requireT *require.Assertions, settings types.IssueClassSettings, class types.Class) {
+func requireClassSettingsEqualClass(
+	requireT *require.Assertions, settings types.IssueClassSettings, class types.Class,
+) {
 	requireT.Equal(settings.Name, class.Name)
 	requireT.Equal(settings.Symbol, class.Symbol)
 	requireT.Equal(settings.Description, class.Description)
@@ -1399,7 +1421,14 @@ func requireClassSettingsEqualClass(requireT *require.Assertions, settings types
 	requireT.Equal(settings.Features, class.Features)
 }
 
-func assertWhitelisting(t *testing.T, ctx sdk.Context, k keeper.Keeper, classID, nftID string, account sdk.AccAddress, expectedWhitelisting bool) {
+func assertWhitelisting(
+	t *testing.T,
+	ctx sdk.Context,
+	k keeper.Keeper,
+	classID, nftID string,
+	account sdk.AccAddress,
+	expectedWhitelisting bool,
+) {
 	isWhitelisted, err := k.IsWhitelisted(ctx, classID, nftID, account)
 	require.NoError(t, err)
 	require.EqualValues(t, isWhitelisted, expectedWhitelisting)

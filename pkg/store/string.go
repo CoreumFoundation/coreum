@@ -5,7 +5,8 @@ import (
 	"unsafe"
 )
 
-// This file is copy of the sdk https://github.com/cosmos/cosmos-sdk/blob/2582f0aab7b2cbf66ade066fe570a4622cf0b098/internal/conv/string.go
+// This file is copy of the sdk
+// https://github.com/cosmos/cosmos-sdk/blob/2582f0aab7b2cbf66ade066fe570a4622cf0b098/internal/conv/string.go
 
 // UnsafeStrToBytes uses unsafe to convert string into byte array. Returned bytes
 // must not be altered after this function is called as it will cause a segmentation fault.

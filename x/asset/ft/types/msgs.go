@@ -107,7 +107,12 @@ func (m MsgIssue) ValidateBasic() error {
 	}
 
 	if len(m.Description) > MaxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", m.Description, MaxDescriptionLength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid description %q, the length must be less than %d",
+			m.Description,
+			MaxDescriptionLength,
+		)
 	}
 
 	duplicates := lo.FindDuplicates(m.Features)
@@ -116,11 +121,21 @@ func (m MsgIssue) ValidateBasic() error {
 	}
 
 	if len(m.URI) > MaxURILength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(m.URI), MaxURILength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid URI %q, the length must be less than or equal %d",
+			len(m.URI),
+			MaxURILength,
+		)
 	}
 
 	if len(m.URIHash) > MaxURIHashLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(m.URIHash), MaxURIHashLength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid URI hash %q, the length must be less than or equal %d",
+			len(m.URIHash),
+			MaxURIHashLength,
+		)
 	}
 
 	return nil

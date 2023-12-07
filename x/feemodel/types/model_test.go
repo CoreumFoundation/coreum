@@ -50,13 +50,19 @@ func TestEMAGasBeyondEscalationStartBlockGas(t *testing.T) {
 	// The question is if in such scenario we should offer discounted gas price or escalation should be applied instead.
 	// It seems obvious that price should be escalated.
 
-	nextGasPrice := feeModel.CalculateNextGasPrice(feeModel.CalculateEscalationStartBlockGas()+150, feeModel.CalculateEscalationStartBlockGas()+100)
+	nextGasPrice := feeModel.CalculateNextGasPrice(
+		feeModel.CalculateEscalationStartBlockGas()+150,
+		feeModel.CalculateEscalationStartBlockGas()+100,
+	)
 	assert.True(t, nextGasPrice.GT(gasPriceWithMaxDiscount))
 
 	// Next gas price should be the same as for long average block gas being below optimal block gas.
 	// It means that escalation was turned on.
 
-	nextGasPrice2 := feeModel.CalculateNextGasPrice(feeModel.CalculateEscalationStartBlockGas()+150, feeModel.CalculateEscalationStartBlockGas()-100)
+	nextGasPrice2 := feeModel.CalculateNextGasPrice(
+		feeModel.CalculateEscalationStartBlockGas()+150,
+		feeModel.CalculateEscalationStartBlockGas()-100,
+	)
 	assert.True(t, nextGasPrice2.Equal(nextGasPrice))
 }
 

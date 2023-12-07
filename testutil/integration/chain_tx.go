@@ -17,7 +17,12 @@ import (
 // BroadcastTxWithSigner prepares the tx with the provided signer address and broadcasts it.
 // The main difference from the client.BroadcastTx is that this function uses the custom account addresses decoding with
 // the custom chain prefixes, which allows to execute transactions for different chains.
-func (c ChainContext) BroadcastTxWithSigner(ctx context.Context, txf client.Factory, signerAddress sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
+func (c ChainContext) BroadcastTxWithSigner(
+	ctx context.Context,
+	txf client.Factory,
+	signerAddress sdk.AccAddress,
+	msgs ...sdk.Msg,
+) (*sdk.TxResponse, error) {
 	clientCtx := c.ClientContext.WithFromAddress(signerAddress)
 
 	// add account info
@@ -57,7 +62,12 @@ func (c ChainContext) BroadcastTxWithSigner(ctx context.Context, txf client.Fact
 	return client.BroadcastRawTx(ctx, clientCtx, txBytes)
 }
 
-func addAccountInfoToTxFactory(ctx context.Context, clientCtx client.Context, txf tx.Factory, address string) (client.Factory, error) {
+func addAccountInfoToTxFactory(
+	ctx context.Context,
+	clientCtx client.Context,
+	txf tx.Factory,
+	address string,
+) (client.Factory, error) {
 	if txf.AccountNumber() == 0 && txf.Sequence() == 0 {
 		req := &authtypes.QueryAccountRequest{
 			Address: address,
@@ -81,7 +91,12 @@ func addAccountInfoToTxFactory(ctx context.Context, clientCtx client.Context, tx
 	return txf, nil
 }
 
-func sign(clientCtx client.Context, txf client.Factory, signerAddress sdk.AccAddress, txBuilder sdkclient.TxBuilder) error {
+func sign(
+	clientCtx client.Context,
+	txf client.Factory,
+	signerAddress sdk.AccAddress,
+	txBuilder sdkclient.TxBuilder,
+) error {
 	signMode := txf.SignMode()
 	if signMode == signing.SignMode_SIGN_MODE_UNSPECIFIED {
 		// use the SignModeHandler's default mode if unspecified

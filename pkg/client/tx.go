@@ -107,7 +107,12 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 // The main differences between our version and the one from cosmos-sdk are:
 // - we respect context.Context
 // - it works when estimating for multisig accounts.
-func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
+func CalculateGas(
+	ctx context.Context,
+	clientCtx Context,
+	txf Factory,
+	msgs ...sdk.Msg,
+) (*sdktx.SimulateResponse, uint64, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
 		return nil, 0, err
@@ -211,7 +216,10 @@ func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sd
 		txRes, err = broadcastTxAsync(ctx, clientCtx, txBytes)
 
 	default:
-		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode())
+		return nil, errors.Errorf(
+			"unsupported broadcast mode %s; supported types: sync, async, block",
+			clientCtx.BroadcastMode(),
+		)
 	}
 	if err != nil {
 		return nil, err
@@ -313,7 +321,8 @@ func AwaitNextBlocks(
 		if res.SdkBlock != nil {
 			currentHeight = res.SdkBlock.Header.Height
 		} else {
-			// TODO(v4): Remove this in v4 version of cored. Now it is needed because we might still use it in integration tests together with v2 cored binary.
+			// TODO(v4): Remove this in v4 version of cored. Now it is needed because we might
+			// still use it in integration tests together with v2 cored binary.
 			currentHeight = res.Block.Header.Height //nolint:staticcheck // Yes, we know that this is deprecated
 		}
 
@@ -323,7 +332,10 @@ func AwaitNextBlocks(
 
 		targetHeight := heightToStart + nextBlocks
 		if currentHeight < targetHeight {
-			return retry.Retryable(errors.Errorf("target block: %d hasn't been reached yet, current: %d", targetHeight, currentHeight))
+			return retry.Retryable(errors.Errorf(
+				"target block: %d hasn't been reached yet, current: %d",
+				targetHeight, currentHeight,
+			))
 		}
 
 		return nil
@@ -400,7 +412,8 @@ func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*s
 			return nil, err
 		}
 	} else if res.TxResponse.Code != 0 {
-		return nil, errors.Wrapf(sdkerrors.ABCIError(res.TxResponse.Codespace, res.TxResponse.Code, res.TxResponse.Logs.String()),
+		return nil, errors.Wrapf(
+			sdkerrors.ABCIError(res.TxResponse.Codespace, res.TxResponse.Code, res.TxResponse.Logs.String()),
 			"transaction '%s' failed, raw log:%s", res.TxResponse.TxHash, res.TxResponse.RawLog)
 	}
 

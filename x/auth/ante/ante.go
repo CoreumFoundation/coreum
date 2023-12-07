@@ -1,5 +1,6 @@
 // This content was copied and modified based on github.com/cosmos/cosmos-sdk/x/auth/ante/ante.go
-// Original content: https://github.com/cosmos/cosmos-sdk/blob/ad9e5620fb3445c716e9de45cfcdb56e8f1745bf/x/auth/ante/ante.go
+// Original content:
+// https://github.com/cosmos/cosmos-sdk/blob/ad9e5620fb3445c716e9de45cfcdb56e8f1745bf/x/auth/ante/ante.go
 
 package ante
 
@@ -66,7 +67,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	infiniteAccountKeeper := authkeeper.NewInfiniteAccountKeeper(options.AccountKeeper)
 
 	anteDecorators := []sdk.AnteDecorator{
-		// We added 3 special decorators working together to provide deterministic gas consumption mechanism for selected message types.
+		// We added 3 special decorators working together to provide deterministic gas consumption mechanism
+		// for selected message types.
 		// The decorators are:
 		// - NewSetInfiniteGasMeterDecorator
 		// - NewAddBaseGasDecorator
@@ -74,7 +76,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		//
 		// We consume gas as follows:
 		// - constant preliminary fee (`FixedGas`) is charged on every tx to cover the cost of running some ante decorators
-		// - bonus gas is added for free to cover cost related to transaction size (`freeBytes`) and signatures (`freeSignatures`)
+		// - bonus gas is added for free to cover cost related to transaction size (`freeBytes`) and
+		//   signatures (`freeSignatures`)
 		// - at the end we compute gas available to message handlers
 		//
 		// Details:
@@ -102,12 +105,16 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
-		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit), // after setup context to enforce limits early
+		// after setup context to enforce limits early
+		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		feemodelante.NewFeeDecorator(options.FeeModelKeeper),
-		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
-		authante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
+		authante.NewDeductFeeDecorator(
+			options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker,
+		),
+		// SetPubKeyDecorator must be called before all signature verification decorators
+		authante.NewSetPubKeyDecorator(options.AccountKeeper),
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
 		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
