@@ -595,6 +595,8 @@ func New(
 			&vestingtypes.ContinuousVestingAccount{},
 			&vestingtypes.DelayedVestingAccount{},
 			&vestingtypes.PeriodicVestingAccount{},
+			&vestingtypes.BaseVestingAccount{},
+			&vestingtypes.PermanentLockedAccount{},
 		),
 		wasmkeeper.WithAccountPruner(cwasmtypes.AccountPruner{}),
 		wasmkeeper.WithCoinTransferrer(cwasmtypes.NewBankCoinTransferrer(app.BankKeeper)),
