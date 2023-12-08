@@ -2116,9 +2116,9 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	requireT.NoError(client.AwaitNextBlocks(waitCtx, chain.ClientContext, 2))
 }
 
-// TestWASMContractInstantiationIsRejectedIfThereAreTokensOnItsAccount verifies that smart contract instantiation
-// is rejected if account exists.
-func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
+// TestWASMContractInstantiationForExistingAccounts verifies that WASM contract instantiation behaves correctly when
+// instantiating contract on top of existing addresses of different types.
+func TestWASMContractInstantiationForExistingAccounts(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
