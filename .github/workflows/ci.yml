@@ -18,7 +18,8 @@ jobs:
           "test",
           "integration tests coreum-modules",
           "integration tests coreum-ibc",
-          "integration tests coreum-upgrade-v3.0.0",
+          "integration tests coreum-upgrade v2.0.2 -> v3.0.0",
+          "integration tests coreum-upgrade v3.0.0 -> v3.0.x",
           "integration tests faucet",
         ]
         include:
