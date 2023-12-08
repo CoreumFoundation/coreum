@@ -80,7 +80,11 @@ func (m *MsgIssueClass) ValidateBasic() error {
 	}
 
 	if len(m.Name) > ClassMaxNameLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid name %q, the length must be less than or equal %d", m.Name, ClassMaxNameLength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid name %q, the length must be less than or equal %d",
+			m.Name, ClassMaxNameLength,
+		)
 	}
 
 	if err := ValidateClassSymbol(m.Symbol); err != nil {
@@ -92,11 +96,21 @@ func (m *MsgIssueClass) ValidateBasic() error {
 	}
 
 	if len(m.Description) > ClassMaxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than or equal %d", m.Description, ClassMaxDescriptionLength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid description %q, the length must be less than or equal %d",
+			m.Description,
+			ClassMaxDescriptionLength,
+		)
 	}
 
 	if len(m.URI) > MaxURILength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(m.URI), MaxURILength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid URI %q, the length must be less than or equal %d",
+			len(m.URI),
+			MaxURILength,
+		)
 	}
 
 	if err := ValidateRoyaltyRate(m.RoyaltyRate); err != nil {
@@ -104,7 +118,11 @@ func (m *MsgIssueClass) ValidateBasic() error {
 	}
 
 	if len(m.URIHash) > MaxURIHashLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(m.URIHash), MaxURIHashLength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid URI hash %q, the length must be less than or equal %d",
+			len(m.URIHash), MaxURIHashLength,
+		)
 	}
 
 	duplicates := lo.FindDuplicates(m.Features)
@@ -156,11 +174,19 @@ func (m *MsgMint) ValidateBasic() error {
 	}
 
 	if len(m.URI) > MaxURILength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(m.URI), MaxURILength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid URI %q, the length must be less than or equal %d",
+			len(m.URI), MaxURILength,
+		)
 	}
 
 	if len(m.URIHash) > MaxURIHashLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(m.URIHash), MaxURIHashLength)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid URI hash %q, the length must be less than or equal %d",
+			len(m.URIHash), MaxURIHashLength,
+		)
 	}
 
 	return nil

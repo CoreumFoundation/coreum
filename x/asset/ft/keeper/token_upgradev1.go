@@ -66,7 +66,12 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 		Denom: denom,
 	}
 
-	return k.delayKeeper.DelayExecution(ctx, tokenUpgradeID(tokenUpgradeV1Version, data.Denom), data, params.TokenUpgradeGracePeriod)
+	return k.delayKeeper.DelayExecution(
+		ctx,
+		tokenUpgradeID(tokenUpgradeV1Version, data.Denom),
+		data,
+		params.TokenUpgradeGracePeriod,
+	)
 }
 
 // UpgradeTokenToV1 upgrades token to version V1.

@@ -16,12 +16,24 @@ var _ types.QueryServer = QueryService{}
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
 	GetParams(ctx sdk.Context) types.Params
-	GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error)
+	GetIssuerTokens(
+		ctx sdk.Context,
+		issuer sdk.AccAddress,
+		pagination *query.PageRequest,
+	) ([]types.Token, *query.PageResponse, error)
 	GetToken(ctx sdk.Context, denom string) (types.Token, error)
 	GetTokenUpgradeStatuses(ctx sdk.Context, denom string) types.TokenUpgradeStatuses
-	GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
+	GetFrozenBalances(
+		ctx sdk.Context,
+		addr sdk.AccAddress,
+		pagination *query.PageRequest,
+	) (sdk.Coins, *query.PageResponse, error)
 	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
+	GetWhitelistedBalances(
+		ctx sdk.Context,
+		addr sdk.AccAddress,
+		pagination *query.PageRequest,
+	) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
@@ -82,7 +94,10 @@ func (qs QueryService) Token(ctx context.Context, req *types.QueryTokenRequest) 
 }
 
 // TokenUpgradeStatuses returns the token upgrade statuses of a specified denom.
-func (qs QueryService) TokenUpgradeStatuses(ctx context.Context, req *types.QueryTokenUpgradeStatusesRequest) (*types.QueryTokenUpgradeStatusesResponse, error) {
+func (qs QueryService) TokenUpgradeStatuses(
+	ctx context.Context,
+	req *types.QueryTokenUpgradeStatusesRequest,
+) (*types.QueryTokenUpgradeStatusesResponse, error) {
 	tokenUpgradeStatuses := qs.keeper.GetTokenUpgradeStatuses(sdk.UnwrapSDKContext(ctx), req.GetDenom())
 
 	return &types.QueryTokenUpgradeStatusesResponse{
@@ -91,7 +106,10 @@ func (qs QueryService) TokenUpgradeStatuses(ctx context.Context, req *types.Quer
 }
 
 // Balance returns balance of the denom for the account.
-func (qs QueryService) Balance(goCtx context.Context, req *types.QueryBalanceRequest) (*types.QueryBalanceResponse, error) {
+func (qs QueryService) Balance(
+	goCtx context.Context,
+	req *types.QueryBalanceRequest,
+) (*types.QueryBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
@@ -110,7 +128,10 @@ func (qs QueryService) Balance(goCtx context.Context, req *types.QueryBalanceReq
 }
 
 // FrozenBalances lists frozen balances on a given account.
-func (qs QueryService) FrozenBalances(goCtx context.Context, req *types.QueryFrozenBalancesRequest) (*types.QueryFrozenBalancesResponse, error) {
+func (qs QueryService) FrozenBalances(
+	goCtx context.Context,
+	req *types.QueryFrozenBalancesRequest,
+) (*types.QueryFrozenBalancesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
@@ -128,7 +149,10 @@ func (qs QueryService) FrozenBalances(goCtx context.Context, req *types.QueryFro
 }
 
 // FrozenBalance lists frozen balance of a denom on a given account.
-func (qs QueryService) FrozenBalance(goCtx context.Context, req *types.QueryFrozenBalanceRequest) (*types.QueryFrozenBalanceResponse, error) {
+func (qs QueryService) FrozenBalance(
+	goCtx context.Context,
+	req *types.QueryFrozenBalanceRequest,
+) (*types.QueryFrozenBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
@@ -142,7 +166,10 @@ func (qs QueryService) FrozenBalance(goCtx context.Context, req *types.QueryFroz
 }
 
 // WhitelistedBalances lists whitelisted balances on a given account.
-func (qs QueryService) WhitelistedBalances(goCtx context.Context, req *types.QueryWhitelistedBalancesRequest) (*types.QueryWhitelistedBalancesResponse, error) {
+func (qs QueryService) WhitelistedBalances(
+	goCtx context.Context,
+	req *types.QueryWhitelistedBalancesRequest,
+) (*types.QueryWhitelistedBalancesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
@@ -160,7 +187,10 @@ func (qs QueryService) WhitelistedBalances(goCtx context.Context, req *types.Que
 }
 
 // WhitelistedBalance lists whitelisted balance of a denom on a given account.
-func (qs QueryService) WhitelistedBalance(goCtx context.Context, req *types.QueryWhitelistedBalanceRequest) (*types.QueryWhitelistedBalanceResponse, error) {
+func (qs QueryService) WhitelistedBalance(
+	goCtx context.Context,
+	req *types.QueryWhitelistedBalanceRequest,
+) (*types.QueryWhitelistedBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {

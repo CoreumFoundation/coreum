@@ -572,7 +572,10 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 				BurnRate:           tt.fields.BurnRate,
 				SendCommissionRate: tt.fields.SendCommissionRate,
 			}
-			tt.wantErr(t, def.CheckFeatureAllowed(tt.args.addr, tt.args.feature), fmt.Sprintf("CheckFeatureAllowed(%v, %v)", tt.args.addr, tt.args.feature))
+			tt.wantErr(t,
+				def.CheckFeatureAllowed(tt.args.addr, tt.args.feature),
+				fmt.Sprintf("CheckFeatureAllowed(%v, %v)", tt.args.addr, tt.args.feature),
+			)
 		})
 	}
 }

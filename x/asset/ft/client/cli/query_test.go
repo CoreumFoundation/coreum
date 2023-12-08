@@ -40,7 +40,12 @@ func TestQueryTokens(t *testing.T) {
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
 	var resp types.QueryTokensResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryTokens(), []string{issuer.String(), "--limit", "1"}, &resp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+		ctx,
+		cli.CmdQueryTokens(),
+		[]string{issuer.String(), "--limit", "1"},
+		&resp,
+	))
 
 	expectedToken := token
 	expectedToken.Denom = denom
@@ -80,7 +85,12 @@ func TestQueryToken(t *testing.T) {
 
 	// query balance
 	var respBalance types.QueryBalanceResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBalance(), []string{expectedToken.Issuer, denom}, &respBalance))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+		ctx,
+		cli.CmdQueryBalance(),
+		[]string{expectedToken.Issuer, denom},
+		&respBalance,
+	))
 	requireT.Equal(initialAmount.String(), respBalance.Balance.String())
 }
 

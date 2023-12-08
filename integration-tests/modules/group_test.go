@@ -159,7 +159,9 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	_, err = groupClient.Proposal(ctx, &group.QueryProposalRequest{
 		ProposalId: proposal.Id,
 	})
-	requireT.Error(err) // The proposal will be automatically pruned after execution if successful. https://docs.cosmos.network/v0.47/build/modules/group#executing-proposals
+	// The proposal will be automatically pruned after execution if successful.
+	// https://docs.cosmos.network/v0.47/build/modules/group#executing-proposals
+	requireT.Error(err)
 
 	bankClient := bank.NewQueryClient(chain.ClientContext)
 	receiverBalance, err := bankClient.Balance(ctx, &bank.QueryBalanceRequest{
@@ -433,7 +435,10 @@ func TestGroupAdministration(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(updateGroupPolicyDecisionPolicyMsg.DecisionPolicy.String(), groupPolicyInfoRes.Info.DecisionPolicy.String())
+	requireT.Equal(
+		updateGroupPolicyDecisionPolicyMsg.DecisionPolicy.String(),
+		groupPolicyInfoRes.Info.DecisionPolicy.String(),
+	)
 	requireT.Equal(updateGroupPolicyMetadataMsg.Metadata, groupPolicyInfoRes.Info.Metadata)
 
 	// Update admin in both group & group policy
@@ -471,9 +476,14 @@ func TestGroupAdministration(t *testing.T) {
 
 	// Leave group
 	memberToLeaveGroup := groupMembersNew[len(groupMembersNew)-1]
-	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(memberToLeaveGroup.String()), integration.BalancesOptions{
-		Messages: []sdk.Msg{&group.MsgLeaveGroup{}},
-	})
+	chain.FundAccountWithOptions(
+		ctx,
+		t,
+		sdk.MustAccAddressFromBech32(memberToLeaveGroup.String()),
+		integration.BalancesOptions{
+			Messages: []sdk.Msg{&group.MsgLeaveGroup{}},
+		},
+	)
 	leaveGroupMsg := &group.MsgLeaveGroup{
 		Address: memberToLeaveGroup.String(),
 		GroupId: grp.Id,
@@ -551,7 +561,9 @@ func createGroupWithPolicy(
 
 	requireT.Len(groupPolicies.GroupPolicies, 1)
 	groupPolicy := groupPolicies.GroupPolicies[0]
-	t.Logf("created group with policy, groupId: %d groupPolicyAddress:%s txHash:%s", grp.Id, groupPolicy.Address, result.TxHash)
+	t.Logf(
+		"created group with policy, groupId: %d groupPolicyAddress:%s txHash:%s",
+		grp.Id, groupPolicy.Address, result.TxHash)
 
 	return grp, groupPolicy
 }

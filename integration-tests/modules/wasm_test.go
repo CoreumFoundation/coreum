@@ -374,8 +374,10 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	wasmBankSend := &wasmtypes.MsgExecuteContract{
 		Sender:   admin.String(),
 		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(chain.ChainSettings.Denom, 5000), recipient)),
-		Funds:    sdk.Coins{},
+		Msg: wasmtypes.RawContractMessage(
+			moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(chain.ChainSettings.Denom, 5000), recipient),
+		),
+		Funds: sdk.Coins{},
 	}
 
 	bankSend := &banktypes.MsgSend{
@@ -395,8 +397,9 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	assert.Less(t, uint64(result.GasUsed), maxGasExpected)
 }
 
-// TestWASMPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
-// pinning and unpinning through proposals works correctly. We also verify that pinned smart contract consumes less gas.
+// TestWASMPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works
+// properly and then tests that pinning and unpinning through proposals works correctly. We also verify that
+// pinned smart contract consumes less gas.
 func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	t.Parallel()
 
@@ -520,9 +523,14 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
-	gasUsedAfterUnpinning := moduleswasm.IncrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1340)
+	gasUsedAfterUnpinning := moduleswasm.IncrementSimpleStateAndVerify(
+		ctx, txf, admin, chain, contractAddr, requireT, 1340,
+	)
 
-	t.Logf("Gas saved on pinned contract, gasBeforePinning:%d, gasAfterPinning:%d", gasUsedBeforePinning, gasUsedAfterPinning)
+	t.Logf(
+		"Gas saved on pinned contract, gasBeforePinning:%d, gasAfterPinning:%d",
+		gasUsedBeforePinning, gasUsedAfterPinning,
+	)
 
 	assertT := assert.New(t)
 	assertT.Less(gasUsedAfterPinning, gasUsedBeforePinning)
@@ -921,7 +929,9 @@ func TestWASMAuthzContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, nftOfferPayload, sdk.Coin{})
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, nftOfferPayload, sdk.Coin{},
+	)
 	requireT.NoError(err)
 
 	ownerResp, err := nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
@@ -939,7 +949,14 @@ func TestWASMAuthzContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), receiver, contractAddr, acceptNftOfferPayload, sdk.Coin{Denom: denom, Amount: sdkmath.NewInt(10000)})
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		receiver,
+		contractAddr,
+		acceptNftOfferPayload,
+		sdk.Coin{Denom: denom, Amount: sdkmath.NewInt(10000)},
+	)
 	requireT.NoError(err)
 
 	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
@@ -957,7 +974,8 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT.EqualValues(ownerResp.Owner, receiver.String())
 }
 
-// TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.
+// TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message
+// and core queries.
 func TestWASMFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
@@ -1379,7 +1397,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	)
 }
 
-// TestWASMNonFungibleTokenInContract verifies that smart contract is able to execute all non-fungible token message and core queries.
+// TestWASMNonFungibleTokenInContract verifies that smart contract is able to execute all non-fungible
+// token message and core queries.
 //
 //nolint:nosnakecase
 func TestWASMNonFungibleTokenInContract(t *testing.T) {
@@ -1544,7 +1563,9 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	classIDNoWhitelist := assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist))
+	classIDNoWhitelist := assetnfttypes.BuildClassID(
+		issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist),
+	)
 
 	mintNFTReq1NoWhitelist := moduleswasm.NftMintRequest{
 		ID:        "id-1",
@@ -1711,9 +1732,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, addToClassWhitelistPayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	assertNftClassWhitelistedRes, err := assetNftClient.ClassWhitelistedAccounts(ctx, &assetnfttypes.QueryClassWhitelistedAccountsRequest{
-		ClassId: classID,
-	})
+	assertNftClassWhitelistedRes, err := assetNftClient.ClassWhitelistedAccounts(
+		ctx,
+		&assetnfttypes.QueryClassWhitelistedAccountsRequest{
+			ClassId: classID,
+		})
 	requireT.NoError(err)
 	requireT.Contains(assertNftClassWhitelistedRes.Accounts, recipient.String())
 
@@ -1729,9 +1752,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, removeFromClassWhitelistPayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	assertNftClassWhitelistedRes, err = assetNftClient.ClassWhitelistedAccounts(ctx, &assetnfttypes.QueryClassWhitelistedAccountsRequest{
-		ClassId: classID,
-	})
+	assertNftClassWhitelistedRes, err = assetNftClient.ClassWhitelistedAccounts(
+		ctx,
+		&assetnfttypes.QueryClassWhitelistedAccountsRequest{
+			ClassId: classID,
+		})
 	requireT.NoError(err)
 	requireT.NotContains(assertNftClassWhitelistedRes.Accounts, recipient.String())
 
@@ -1752,7 +1777,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Id:      mintNFTReq1.ID,
 	})
 	requireT.Error(err)
-	requireT.Contains(err.Error(), nfttypes.ErrNFTNotExists.Error()) // the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
+	// the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
+	requireT.Contains(err.Error(), nfttypes.ErrNFTNotExists.Error())
 
 	// ********** Send **********
 
@@ -2210,8 +2236,10 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	executeMsg := &wasmtypes.MsgExecuteContract{
 		Sender:   admin.String(),
 		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(nativeDenom, 5000), recipient)),
-		Funds:    sdk.NewCoins(coinsToSend...),
+		Msg: wasmtypes.RawContractMessage(
+			moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(nativeDenom, 5000), recipient),
+		),
+		Funds: sdk.NewCoins(coinsToSend...),
 	}
 	_, err = client.BroadcastTx(
 		ctx,

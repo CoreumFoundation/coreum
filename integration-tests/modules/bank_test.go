@@ -109,7 +109,14 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 	}
 	t.Logf("It takes %s to fund %d accounts with MultiSend", time.Since(start), numAccountsToFund*iterationsToFund)
 
-	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
+	assertBatchAccounts(
+		ctx,
+		chain,
+		sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))),
+		fundedAccounts,
+		denom,
+		requireT,
+	)
 }
 
 // TestBankSendBatchMsgs tests BankSend message with maximum amount of accounts.
@@ -182,7 +189,14 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	}
 	t.Logf("It takes %s to fund %d accounts with BankSend", time.Since(start), numAccountsToFund*iterationsToFund)
 
-	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
+	assertBatchAccounts(
+		ctx,
+		chain,
+		sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))),
+		fundedAccounts,
+		denom,
+		requireT,
+	)
 }
 
 // TestBankSendDeterministicGas checks that transfer takes the deterministic amount of gas.
@@ -253,7 +267,8 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
 }
 
-// TestBankSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred.
+// TestBankSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more
+// coins are transferred.
 func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
@@ -390,7 +405,8 @@ func TestBankSendGasEstimation(t *testing.T) {
 	assert.Equal(t, bankSendGas, estimatedGas)
 }
 
-// TestBankMultiSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred.
+// TestBankMultiSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of
+// gas when more coins are transferred.
 func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
@@ -596,13 +612,24 @@ func TestBankMultiSend(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, qres.Balances)
 
-	recipient1AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient1.String()})
+	recipient1AllBalancesRes, err := bankClient.AllBalances(
+		ctx, &banktypes.QueryAllBalancesRequest{Address: recipient1.String()},
+	)
 	require.NoError(t, err)
-	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin(denom1, 600), sdk.NewInt64Coin(denom2, 400)), recipient1AllBalancesRes.Balances)
+	require.Equal(t,
+		sdk.NewCoins(sdk.NewInt64Coin(denom1, 600), sdk.NewInt64Coin(denom2, 400)),
+		recipient1AllBalancesRes.Balances,
+	)
 
-	recipient2AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient2.String()})
+	recipient2AllBalancesRes, err := bankClient.AllBalances(
+		ctx, &banktypes.QueryAllBalancesRequest{Address: recipient2.String()},
+	)
 	require.NoError(t, err)
-	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin(denom1, 400), sdk.NewInt64Coin(denom2, 600)), recipient2AllBalancesRes.Balances)
+	require.Equal(
+		t,
+		sdk.NewCoins(sdk.NewInt64Coin(denom1, 400), sdk.NewInt64Coin(denom2, 600)),
+		recipient2AllBalancesRes.Balances,
+	)
 }
 
 // TestTryBankMultiSendFromMultipleAccounts tests MultiSend message is prohibited form multiple accounts.
@@ -788,7 +815,8 @@ func TestBankCoreSend(t *testing.T) {
 	msg = &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(*balancesSender.Balance), // sender can't send whole balance because funds for paying fees are required.
+		// sender can't send whole balance because funds for paying fees are required.
+		Amount: sdk.NewCoins(*balancesSender.Balance),
 	}
 
 	_, err = client.BroadcastTx(

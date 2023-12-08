@@ -16,7 +16,12 @@ import (
 )
 
 // ExecTxCmd is a func to execute tx cmd.
-func ExecTxCmd(clientCtx client.Context, testNetwork *network.Network, cmd *cobra.Command, extraArgs []string) (sdk.TxResponse, error) {
+func ExecTxCmd(
+	clientCtx client.Context,
+	testNetwork *network.Network,
+	cmd *cobra.Command,
+	extraArgs []string,
+) (sdk.TxResponse, error) {
 	buf, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, extraArgs)
 	if err != nil {
 		return sdk.TxResponse{}, errors.Errorf("can't execute, %s, err:%s", cmd.Use, err)

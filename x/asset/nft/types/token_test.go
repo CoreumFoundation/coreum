@@ -201,7 +201,11 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 				Issuer:   tt.fields.Issuer,
 				Features: tt.fields.Features,
 			}
-			tt.wantErr(t, ftd.CheckFeatureAllowed(tt.args.addr, tt.args.feature), fmt.Sprintf("CheckFeatureAllowed(%v, %v)", tt.args.addr, tt.args.feature))
+			tt.wantErr(
+				t,
+				ftd.CheckFeatureAllowed(tt.args.addr, tt.args.feature),
+				fmt.Sprintf("CheckFeatureAllowed(%v, %v)", tt.args.addr, tt.args.feature),
+			)
 		})
 	}
 }

@@ -67,6 +67,7 @@ var (
 	osmosisFundingMnemonic string
 )
 
+//nolint:lll // this function contains flag description and mnemonic which cannot be broken down.
 func init() {
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 
@@ -115,7 +116,9 @@ func init() {
 	coreumClientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
 
-	coreumFeemodelParamsRes, err := feemodeltypes.NewQueryClient(coreumClientCtx).Params(queryCtx, &feemodeltypes.QueryParamsRequest{})
+	coreumFeemodelParamsRes, err := feemodeltypes.
+		NewQueryClient(coreumClientCtx).
+		Params(queryCtx, &feemodeltypes.QueryParamsRequest{})
 	if err != nil {
 		panic(errors.WithStack(err))
 	}

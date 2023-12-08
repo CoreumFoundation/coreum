@@ -39,7 +39,9 @@ func (c *configuratorMock) QueryServer() grpc.Server {
 	return c.queryServer
 }
 
-func (c *configuratorMock) RegisterMigration(moduleName string, forVersion uint64, handler module.MigrationHandler) error {
+func (c *configuratorMock) RegisterMigration(
+	moduleName string, forVersion uint64, handler module.MigrationHandler,
+) error {
 	c.capturedMigrationVersions = append(c.capturedMigrationVersions, forVersion)
 	return nil
 }

@@ -114,7 +114,8 @@ func TestAssetNFTMintLegacyNFTClient(t *testing.T) {
 	requireT.Equal(jsonData, data2.Data)
 
 	// check the owner
-	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{ //nolint:staticcheck // we are testing deprecated handlers
+	//nolint:staticcheck // we are testing deprecated handlers
+	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
 		Id:      nftMintedEvent.Id,
 	})

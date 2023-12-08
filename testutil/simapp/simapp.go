@@ -152,7 +152,10 @@ func (s *App) SendTx(
 	signerAddress := sdk.AccAddress(priv.PubKey().Address())
 	account := s.App.AccountKeeper.GetAccount(ctx, signerAddress)
 	if account == nil {
-		return sdk.GasInfo{}, nil, errors.Errorf("the account %s doesn't exist, check that it's created or state committed", signerAddress)
+		return sdk.GasInfo{}, nil, errors.Errorf(
+			"the account %s doesn't exist, check that it's created or state committed",
+			signerAddress,
+		)
 	}
 	accountNum := account.GetAccountNumber()
 	accountSeq := account.GetSequence()

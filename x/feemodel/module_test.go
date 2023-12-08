@@ -110,7 +110,11 @@ func TestInitGenesis(t *testing.T) {
 	assert.Equal(t, genesisState.Params.Model.InitialGasPrice.String(), params.Model.InitialGasPrice.String())
 	assert.Equal(t, genesisState.Params.Model.MaxGasPriceMultiplier.String(), params.Model.MaxGasPriceMultiplier.String())
 	assert.Equal(t, genesisState.Params.Model.MaxDiscount.String(), params.Model.MaxDiscount.String())
-	assert.Equal(t, genesisState.Params.Model.EscalationStartFraction.String(), params.Model.EscalationStartFraction.String())
+	assert.Equal(
+		t,
+		genesisState.Params.Model.EscalationStartFraction.String(),
+		params.Model.EscalationStartFraction.String(),
+	)
 	assert.Equal(t, genesisState.Params.Model.MaxBlockGas, params.Model.MaxBlockGas)
 	assert.Equal(t, genesisState.Params.Model.ShortEmaBlockLength, params.Model.ShortEmaBlockLength)
 	assert.Equal(t, genesisState.Params.Model.LongEmaBlockLength, params.Model.LongEmaBlockLength)

@@ -47,7 +47,9 @@ func NewKeeper(
 // It will panic if the module account does not exist. An error is returned if
 // the recipient address is black-listed or if sending the tokens fails.
 // !!! The code is the copy of the corresponding func of the bank module !!!
-func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(
+	ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins,
+) error {
 	senderAddr := k.ak.GetModuleAddress(senderModule)
 	if senderAddr == nil {
 		panic(sdkerrors.Wrapf(cosmoserrors.ErrUnknownAddress, "module account %s does not exist", senderModule))
@@ -63,7 +65,9 @@ func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderM
 // SendCoinsFromModuleToModule transfers coins from a ModuleAccount to another.
 // It will panic if either module account does not exist.
 // !!! The code is the copy of the corresponding func of the bank module !!!
-func (k BaseKeeperWrapper) SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error {
+func (k BaseKeeperWrapper) SendCoinsFromModuleToModule(
+	ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins,
+) error {
 	senderAddr := k.ak.GetModuleAddress(senderModule)
 	if senderAddr == nil {
 		panic(sdkerrors.Wrapf(cosmoserrors.ErrUnknownAddress, "module account %s does not exist", senderModule))
@@ -80,7 +84,9 @@ func (k BaseKeeperWrapper) SendCoinsFromModuleToModule(ctx sdk.Context, senderMo
 // SendCoinsFromAccountToModule transfers coins from an AccAddress to a ModuleAccount.
 // It will panic if the module account does not exist.
 // !!! The code is the copy of the corresponding func of the bank module !!!
-func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(
+	ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
+) error {
 	recipientAcc := k.ak.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
 		panic(sdkerrors.Wrapf(cosmoserrors.ErrUnknownAddress, "module account %s does not exist", recipientModule))
@@ -106,7 +112,9 @@ func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 }
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
-func (k BaseKeeperWrapper) InputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+func (k BaseKeeperWrapper) InputOutputCoins(
+	ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output,
+) error {
 	for _, input := range inputs {
 		addr, err := sdk.AccAddressFromBech32(input.Address)
 		if err != nil {
@@ -137,7 +145,9 @@ func (k BaseKeeperWrapper) InputOutputCoins(ctx sdk.Context, inputs []banktypes.
 
 // SpendableBalances implements a gRPC query handler for retrieving an account's spendable balances including asset ft
 // frozen coins.
-func (k BaseKeeperWrapper) SpendableBalances(ctx context.Context, req *banktypes.QuerySpendableBalancesRequest) (*banktypes.QuerySpendableBalancesResponse, error) {
+func (k BaseKeeperWrapper) SpendableBalances(
+	ctx context.Context, req *banktypes.QuerySpendableBalancesRequest,
+) (*banktypes.QuerySpendableBalancesResponse, error) {
 	res, err := k.BaseKeeper.SpendableBalances(ctx, req)
 	if err != nil {
 		return nil, err
@@ -155,7 +165,9 @@ func (k BaseKeeperWrapper) SpendableBalances(ctx context.Context, req *banktypes
 
 // SpendableBalanceByDenom implements a gRPC query handler for retrieving an account's spendable balance for a specific
 // denom, including asset ft frozen coins.
-func (k BaseKeeperWrapper) SpendableBalanceByDenom(ctx context.Context, req *banktypes.QuerySpendableBalanceByDenomRequest) (*banktypes.QuerySpendableBalanceByDenomResponse, error) {
+func (k BaseKeeperWrapper) SpendableBalanceByDenom(
+	ctx context.Context, req *banktypes.QuerySpendableBalanceByDenomRequest,
+) (*banktypes.QuerySpendableBalanceByDenomResponse, error) {
 	res, err := k.BaseKeeper.SpendableBalanceByDenom(ctx, req)
 	if err != nil {
 		return nil, err

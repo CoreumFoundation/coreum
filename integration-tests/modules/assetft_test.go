@@ -500,10 +500,12 @@ func TestSpendableBalanceQuery(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	recipientSpendableBalanceBeforeFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
-		Address: recipient1.String(),
-		Denom:   denom1,
-	})
+	recipientSpendableBalanceBeforeFreezeRes, err := bankClient.SpendableBalanceByDenom(
+		ctx,
+		&banktypes.QuerySpendableBalanceByDenomRequest{
+			Address: recipient1.String(),
+			Denom:   denom1,
+		})
 	requireT.NoError(err)
 	requireT.Equal(sendCoin1.Amount.String(), recipientSpendableBalanceBeforeFreezeRes.Balance.Amount.String())
 
@@ -520,12 +522,17 @@ func TestSpendableBalanceQuery(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	recipientSpendableBalanceAfterFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
-		Address: recipient1.String(),
-		Denom:   denom1,
-	})
+	recipientSpendableBalanceAfterFreezeRes, err := bankClient.SpendableBalanceByDenom(
+		ctx,
+		&banktypes.QuerySpendableBalanceByDenomRequest{
+			Address: recipient1.String(),
+			Denom:   denom1,
+		})
 	requireT.NoError(err)
-	requireT.Equal(sendCoin1.Amount.Sub(frozenCoin1.Amount).String(), recipientSpendableBalanceAfterFreezeRes.Balance.Amount.String())
+	requireT.Equal(
+		sendCoin1.Amount.Sub(frozenCoin1.Amount).String(),
+		recipientSpendableBalanceAfterFreezeRes.Balance.Amount.String(),
+	)
 
 	// freeze globally now
 	msgGloballyFreeze := &assetfttypes.MsgGloballyFreeze{
@@ -540,10 +547,12 @@ func TestSpendableBalanceQuery(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	recipientSpendableBalanceAfterGlobalFreezeRes, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
-		Address: recipient1.String(),
-		Denom:   denom1,
-	})
+	recipientSpendableBalanceAfterGlobalFreezeRes, err := bankClient.SpendableBalanceByDenom(
+		ctx,
+		&banktypes.QuerySpendableBalanceByDenomRequest{
+			Address: recipient1.String(),
+			Denom:   denom1,
+		})
 	requireT.NoError(err)
 	requireT.Equal(sdkmath.ZeroInt().String(), recipientSpendableBalanceAfterGlobalFreezeRes.Balance.Amount.String())
 
@@ -584,9 +593,11 @@ func TestSpendableBalanceQuery(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	recipientSpendableBalancesBeforeFreezeRes, err := bankClient.SpendableBalances(ctx, &banktypes.QuerySpendableBalancesRequest{
-		Address: recipient1.String(),
-	})
+	recipientSpendableBalancesBeforeFreezeRes, err := bankClient.SpendableBalances(
+		ctx,
+		&banktypes.QuerySpendableBalancesRequest{
+			Address: recipient1.String(),
+		})
 	requireT.NoError(err)
 	requireT.Len(recipientSpendableBalancesBeforeFreezeRes.Balances, 2)
 	requireT.Equal(sendCoin2.Amount.String(), recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String())
@@ -604,11 +615,16 @@ func TestSpendableBalanceQuery(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	recipientSpendableBalancesBeforeFreezeRes, err = bankClient.SpendableBalances(ctx, &banktypes.QuerySpendableBalancesRequest{
-		Address: recipient1.String(),
-	})
+	recipientSpendableBalancesBeforeFreezeRes, err = bankClient.SpendableBalances(
+		ctx,
+		&banktypes.QuerySpendableBalancesRequest{
+			Address: recipient1.String(),
+		})
 	requireT.NoError(err)
-	requireT.Equal(sendCoin2.Amount.Sub(frozenCoin2.Amount).String(), recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String())
+	requireT.Equal(
+		sendCoin2.Amount.Sub(frozenCoin2.Amount).String(),
+		recipientSpendableBalancesBeforeFreezeRes.Balances.AmountOf(denom2).String(),
+	)
 
 	// check the native denom
 	recipient2 := chain.GenAccount()
@@ -616,10 +632,12 @@ func TestSpendableBalanceQuery(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
 		Amount: amountToFund,
 	})
-	recipient2SpendableBalance, err := bankClient.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
-		Address: recipient2.String(),
-		Denom:   chain.Chain.ChainSettings.Denom,
-	})
+	recipient2SpendableBalance, err := bankClient.SpendableBalanceByDenom(
+		ctx,
+		&banktypes.QuerySpendableBalanceByDenomRequest{
+			Address: recipient2.String(),
+			Denom:   chain.Chain.ChainSettings.Denom,
+		})
 	requireT.NoError(err)
 	requireT.Equal(amountToFund.String(), recipient2SpendableBalance.Balance.Amount.String())
 }
@@ -785,7 +803,10 @@ func TestAssetFTMint(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin.Add(sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000))).String(), balance.GetBalance().String())
+	assertT.EqualValues(
+		mintCoin.Add(sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000))).String(),
+		balance.GetBalance().String(),
+	)
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
@@ -806,7 +827,10 @@ func TestAssetFTMint(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom})
+	balance, err = bankClient.Balance(
+		ctx,
+		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom},
+	)
 	requireT.NoError(err)
 	assertT.EqualValues(mintCoin.String(), balance.GetBalance().String())
 
@@ -1328,8 +1352,8 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	})
 }
 
-// TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer verifies that fees are correctly charged when smart contract
-// executes authz transfer on behalf of regular account.
+// TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer verifies that fees are correctly
+// charged when smart contract executes authz transfer on behalf of regular account.
 func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.T) {
 	t.Parallel()
 
@@ -2947,8 +2971,8 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
-// TestAssetFTSendingToNonWhitelistedSmartContractIsDenied verifies that this is not possible to send token to smart contract
-// if it is not whitelisted.
+// TestAssetFTSendingToNonWhitelistedSmartContractIsDenied verifies that this is not possible to send token to
+// smart contract if it is not whitelisted.
 func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 	t.Parallel()
 
@@ -3021,8 +3045,8 @@ func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 	requireT.ErrorIs(err, assetfttypes.ErrWhitelistedLimitExceeded)
 }
 
-// TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied verifies that this is not possible to attach token to smart contract call
-// if contract is not whitelisted.
+// TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied verifies that this is not possible to attach
+// token to smart contract call if contract is not whitelisted.
 func TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied(t *testing.T) {
 	t.Parallel()
 
@@ -3088,8 +3112,8 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied(t *testing.T)
 	requireT.ErrorContains(err, "whitelisted limit exceeded")
 }
 
-// TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied verifies that this is not possible to attach token to smart contract instantiation
-// if contract is not whitelisted.
+// TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied verifies that this is not possible
+// to attach token to smart contract instantiation if contract is not whitelisted.
 func TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied(t *testing.T) {
 	t.Parallel()
 
@@ -4061,7 +4085,8 @@ func TestAuthzBurnAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
 	requireT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 }
 
-// TestAssetFTBurnRate_OnMinting verifies both burn rate and send commission rate are not applied on received minted tokens.
+// TestAssetFTBurnRate_OnMinting verifies both burn rate and send commission rate are not applied on received
+// minted tokens.
 func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
@@ -4123,7 +4148,8 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(1500)).String(), balance.GetBalance().String())
 }
 
-// TestAssetFTBurnRate_OnBurning verifies that both burn rate and send commission rate are not applied when a token is burnt.
+// TestAssetFTBurnRate_OnBurning verifies that both burn rate and send commission rate are not applied when a
+// token is burnt.
 func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	t.Parallel()
 
@@ -4208,7 +4234,10 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 
 	issuerBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: denom})
 	requireT.NoError(err)
-	recipientBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom})
+	recipientBalance, err := bankClient.Balance(
+		ctx,
+		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom},
+	)
 	requireT.NoError(err)
 	// verify issuer balance after burning was not affected by the send commission rate
 	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(800)).String(), issuerBalance.GetBalance().String())
@@ -4318,7 +4347,10 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	recipientBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom})
+	recipientBalance, err := bankClient.Balance(
+		ctx,
+		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom},
+	)
 	requireT.NoError(err)
 	// verify recipient balance after burning
 	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(350)).String(), recipientBalance.GetBalance().String())
@@ -4333,7 +4365,10 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	requireT.Error(err)
 	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 	// verify recipient balance did not change
-	recipientBalance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom})
+	recipientBalance, err = bankClient.Balance(
+		ctx,
+		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom},
+	)
 	requireT.NoError(err)
 	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(350)).String(), recipientBalance.GetBalance().String())
 }
@@ -4343,6 +4378,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 func TestAssetFTFreeze_WithRates(t *testing.T) {
 	t.Parallel()
 
+	//nolint:lll // we don't care about test cases.
 	testData := []struct {
 		description              string
 		burnRate                 sdk.Dec
@@ -4749,8 +4785,10 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	wasmBankSend := &wasmtypes.MsgExecuteContract{
 		Sender:   issuer.String(),
 		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(denom, 100), issuer)),
-		Funds:    sdk.Coins{},
+		Msg: wasmtypes.RawContractMessage(
+			moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(denom, 100), issuer),
+		),
+		Funds: sdk.Coins{},
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -4771,8 +4809,10 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	wasmBankSend = &wasmtypes.MsgExecuteContract{
 		Sender:   issuer.String(),
 		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(denom, 100), admin)),
-		Funds:    sdk.Coins{},
+		Msg: wasmtypes.RawContractMessage(
+			moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(denom, 100), admin),
+		),
+		Funds: sdk.Coins{},
 	}
 
 	_, err = client.BroadcastTx(
@@ -4821,8 +4861,10 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	wasmBankSend = &wasmtypes.MsgExecuteContract{
 		Sender:   issuer.String(),
 		Contract: contract1.String(),
-		Msg:      wasmtypes.RawContractMessage(moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(denom, 100), contract2)),
-		Funds:    sdk.Coins{},
+		Msg: wasmtypes.RawContractMessage(
+			moduleswasm.BankSendExecuteWithdrawRequest(sdk.NewInt64Coin(denom, 100), contract2),
+		),
+		Funds: sdk.Coins{},
 	}
 
 	_, err = client.BroadcastTx(
@@ -5069,8 +5111,8 @@ func TestAssetFTAttachingToSmartContractCallIsDenied(t *testing.T) {
 	requireT.ErrorContains(err, "unauthorized")
 }
 
-// TestAssetFTAttachingToSmartContractIsDenied verifies that this is not possible to attach token to smart contract instantiation
-// if issuer blocked this operation.
+// TestAssetFTAttachingToSmartContractIsDenied verifies that this is not possible to attach token to smart contract
+// instantiation if issuer blocked this operation.
 func TestAssetFTAttachingToSmartContractInstantiationIsDenied(t *testing.T) {
 	t.Parallel()
 
@@ -5132,8 +5174,8 @@ func TestAssetFTAttachingToSmartContractInstantiationIsDenied(t *testing.T) {
 	requireT.ErrorContains(err, "unauthorized")
 }
 
-// TestAssetFTIssuingSmartContractIsAllowedToReceive verifies that issuing smart contract is allowed to receive coins even
-// if sending them to smart contract is disabled.
+// TestAssetFTIssuingSmartContractIsAllowedToReceive verifies that issuing smart contract is allowed to
+// receive coins even if sending them to smart contract is disabled.
 func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 	t.Parallel()
 
@@ -5231,8 +5273,9 @@ func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfSmartContractsAreBlocked verifies that it is possible
-// to use authz to mint and send the token on behalf of the issuing smart contract if smart contracts are blocked.
+// TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfSmartContractsAreBlocked verifies
+// that it is possible to use authz to mint and send the token on behalf of the issuing smart contract if smart
+// contracts are blocked.
 func TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfSmartContractsAreBlocked(t *testing.T) {
 	t.Parallel()
 
@@ -5367,8 +5410,9 @@ func TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfS
 	})
 }
 
-// TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied verifies that it is forbidden to execute authz
-// message to transfer coins by smart contract from regular account if smart contracts are blocked.
+// TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied verifies that it is
+// forbidden to execute authz message to transfer coins by smart contract from regular account if
+// smart contracts are blocked.
 func TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied(t *testing.T) {
 	t.Parallel()
 

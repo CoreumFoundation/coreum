@@ -15,8 +15,9 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
 
-// TestVerifyInvariantMessageIsDenied verifies that transactions containing crisis.MsgVerifyInvariant message are rejected.
-// We do it because that message does not work and Cosmos SDK team decided to not fix the bug.
+// TestVerifyInvariantMessageIsDenied verifies that transactions containing crisis.MsgVerifyInvariant
+// message are rejected. We do it because that message does not work and Cosmos SDK team decided to not
+// fix the bug.
 func TestVerifyInvariantMessageIsDenied(t *testing.T) {
 	t.Parallel()
 

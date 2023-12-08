@@ -22,7 +22,8 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
 )
 
-// TestContinuousAndDelayedVestingAccountCreationAndBankSend tests continuous and delayed vesting account can be created, and its send limit is applied.
+// TestContinuousAndDelayedVestingAccountCreationAndBankSend tests continuous and delayed vesting account can be
+// created, and its send limit is applied.
 func TestContinuousAndDelayedVestingAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
@@ -119,7 +120,8 @@ func TestContinuousAndDelayedVestingAccountCreationAndBankSend(t *testing.T) {
 	requireT.NoError(err)
 }
 
-// TestPeriodicVestingAccountCreationAndBankSend tests periodic vesting account can be created, and its send limit is applied.
+// TestPeriodicVestingAccountCreationAndBankSend tests periodic vesting account can be created, and its send limit
+// is applied.
 func TestPeriodicVestingAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
@@ -222,7 +224,8 @@ func TestPeriodicVestingAccountCreationAndBankSend(t *testing.T) {
 	requireT.NoError(err)
 }
 
-// TestPermanentLockedAccountCreationAndBankSend tests permanent locked account can be created, and its send limit is applied.
+// TestPermanentLockedAccountCreationAndBankSend tests permanent locked account can be created, and its send limit
+// is applied.
 func TestPermanentLockedAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
@@ -318,7 +321,9 @@ func TestVestingAccountStaking(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation
-	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
+	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, validatorStakingAmount, validatorStakingAmount,
+	)
 	require.NoError(t, err)
 	defer deactivateValidator()
 

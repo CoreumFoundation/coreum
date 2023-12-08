@@ -170,8 +170,16 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
-				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64(), "high amount is greater than max discount")
-				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64(), "high amount is less than initial gas price")
+				assertT.Greater(
+					high.Amount.MustFloat64(),
+					model.CalculateGasPriceWithMaxDiscount().MustFloat64(),
+					"high amount is greater than max discount",
+				)
+				assertT.Less(
+					high.Amount.MustFloat64(),
+					model.Params().InitialGasPrice.MustFloat64(),
+					"high amount is less than initial gas price",
+				)
 			},
 		},
 		{
@@ -242,8 +250,16 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.671267795027995000
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64(), "low amount is equal to max discount")
-				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*10, "high amount is much higher than the initial price. (in escalation)")
+				assertT.EqualValues(
+					low.Amount.MustFloat64(),
+					model.CalculateGasPriceWithMaxDiscount().MustFloat64(),
+					"low amount is equal to max discount",
+				)
+				assertT.Greater(
+					high.Amount.MustFloat64(),
+					model.Params().InitialGasPrice.MustFloat64()*10,
+					"high amount is much higher than the initial price. (in escalation)",
+				)
 			},
 		},
 		{
@@ -257,7 +273,11 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
-				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*300, "high amount is much higher than the initial price. (in escalation)")
+				assertT.Greater(
+					high.Amount.MustFloat64(),
+					model.Params().InitialGasPrice.MustFloat64()*300,
+					"high amount is much higher than the initial price. (in escalation)",
+				)
 			},
 		},
 	}

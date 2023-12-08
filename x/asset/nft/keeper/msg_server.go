@@ -170,7 +170,9 @@ func (ms MsgServer) AddToWhitelist(ctx context.Context, req *types.MsgAddToWhite
 }
 
 // RemoveFromWhitelist removes an account from the whitelisted list of accounts for the NFT.
-func (ms MsgServer) RemoveFromWhitelist(ctx context.Context, req *types.MsgRemoveFromWhitelist) (*types.EmptyResponse, error) {
+func (ms MsgServer) RemoveFromWhitelist(
+	ctx context.Context, req *types.MsgRemoveFromWhitelist,
+) (*types.EmptyResponse, error) {
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
@@ -189,7 +191,9 @@ func (ms MsgServer) RemoveFromWhitelist(ctx context.Context, req *types.MsgRemov
 }
 
 // AddToClassWhitelist adds an account to the whitelisted list of accounts for all the NFTs in the class.
-func (ms MsgServer) AddToClassWhitelist(ctx context.Context, req *types.MsgAddToClassWhitelist) (*types.EmptyResponse, error) {
+func (ms MsgServer) AddToClassWhitelist(
+	ctx context.Context, req *types.MsgAddToClassWhitelist,
+) (*types.EmptyResponse, error) {
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
@@ -208,7 +212,9 @@ func (ms MsgServer) AddToClassWhitelist(ctx context.Context, req *types.MsgAddTo
 }
 
 // RemoveFromClassWhitelist removes an account from the whitelisted list of accounts for the specified Class.
-func (ms MsgServer) RemoveFromClassWhitelist(ctx context.Context, req *types.MsgRemoveFromClassWhitelist) (*types.EmptyResponse, error) {
+func (ms MsgServer) RemoveFromClassWhitelist(
+	ctx context.Context, req *types.MsgRemoveFromClassWhitelist,
+) (*types.EmptyResponse, error) {
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")

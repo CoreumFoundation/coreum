@@ -17,7 +17,9 @@ type MsgServer struct {
 }
 
 // NewMsgServerImpl returns an implementation of the staking wrapped MsgServer.
-func NewMsgServerImpl(stakingMsgSrv stakingtypes.MsgServer, customParamsKeeper wstakingtypes.CustomParamsKeeper) stakingtypes.MsgServer {
+func NewMsgServerImpl(
+	stakingMsgSrv stakingtypes.MsgServer, customParamsKeeper wstakingtypes.CustomParamsKeeper,
+) stakingtypes.MsgServer {
 	return MsgServer{
 		MsgServer:          stakingMsgSrv,
 		customParamsKeeper: customParamsKeeper,
@@ -25,13 +27,17 @@ func NewMsgServerImpl(stakingMsgSrv stakingtypes.MsgServer, customParamsKeeper w
 }
 
 // CreateValidator defines wrapped method for creating a new validator.
-func (s MsgServer) CreateValidator(goCtx context.Context, msg *stakingtypes.MsgCreateValidator) (*stakingtypes.MsgCreateValidatorResponse, error) {
+func (s MsgServer) CreateValidator(
+	goCtx context.Context, msg *stakingtypes.MsgCreateValidator,
+) (*stakingtypes.MsgCreateValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	expectedMinSelfDelegation := s.customParamsKeeper.GetStakingParams(ctx).MinSelfDelegation
 	if expectedMinSelfDelegation.GT(msg.MinSelfDelegation) {
 		return nil, sdkerrors.Wrapf(
-			stakingtypes.ErrSelfDelegationBelowMinimum, "min self delegation must be greater than or equal to global min self delegation: %s", msg.MinSelfDelegation,
+			stakingtypes.ErrSelfDelegationBelowMinimum,
+			"min self delegation must be greater than or equal to global min self delegation: %s",
+			msg.MinSelfDelegation,
 		)
 	}
 

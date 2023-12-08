@@ -17,7 +17,12 @@ import (
 const Name = "v1"
 
 // New makes an upgrade handler for v1 upgrade.
-func New(mm *module.Manager, configurator module.Configurator, chosenNetwork config.NetworkConfig, assetNFTKeeper assetnftkeeper.Keeper) upgrade.Upgrade {
+func New(
+	mm *module.Manager,
+	configurator module.Configurator,
+	chosenNetwork config.NetworkConfig,
+	assetNFTKeeper assetnftkeeper.Keeper,
+) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
 		StoreUpgrades: storetypes.StoreUpgrades{

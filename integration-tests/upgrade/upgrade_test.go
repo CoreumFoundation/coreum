@@ -126,7 +126,10 @@ func runUpgrade(
 	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
-	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime: %s", proposal.VotingEndTime)
+	t.Logf(
+		"Voters have voted successfully, waiting for voting period to be finished, votingEndTime: %s",
+		proposal.VotingEndTime,
+	)
 
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
@@ -145,9 +148,18 @@ func runUpgrade(
 	requireT.NoError(err)
 	requireT.Less(infoWaitingBlockRes.Block.Header.Height, upgradeHeight) //nolint:staticcheck
 
-	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height)) //nolint:staticcheck
+	//nolint:staticcheck
+	retryCtx, cancel := context.WithTimeout(
+		ctx,
+		6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height),
+	)
 	defer cancel()
-	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.Block.Header.Height) //nolint:staticcheck
+	//nolint:staticcheck
+	t.Logf(
+		"Waiting for upgrade, upgradeHeight:%d, currentHeight:%d",
+		upgradeHeight,
+		infoWaitingBlockRes.Block.Header.Height,
+	)
 	err = retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
@@ -159,7 +171,12 @@ func runUpgrade(
 		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight+1 { //nolint:staticcheck
 			return nil
 		}
-		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height)) //nolint:staticcheck
+		//nolint:staticcheck
+		return retry.Retryable(errors.Errorf(
+			"waiting for upgraded block %d, current block: %d",
+			upgradeHeight,
+			infoAfterBlockRes.Block.Header.Height,
+		))
 	})
 	requireT.NoError(err)
 

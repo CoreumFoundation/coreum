@@ -44,12 +44,14 @@ func TestStakingProposalParamChange(t *testing.T) {
 	paramsBeforeUpgrade, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
 	requireT.NoError(err)
 
-	// Since all parameters must be supplied for MsgUpdateParams, we update current staking params and pass it to the proposal
+	// Since all parameters must be supplied for MsgUpdateParams, we update current
+	// staking params and pass it to the proposal
 	targetParams := paramsBeforeUpgrade.Params
 	targetParams.HistoricalEntries = 2 * paramsBeforeUpgrade.Params.HistoricalEntries
 	targetParams.MaxEntries = 2 * paramsBeforeUpgrade.Params.MaxEntries
 	targetParams.MaxValidators = 2 * paramsBeforeUpgrade.Params.MaxValidators
-	targetParams.MinCommissionRate = paramsBeforeUpgrade.Params.MinCommissionRate.Add(sdk.NewDecWithPrec(int64(1), int64(2)))
+	targetParams.MinCommissionRate =
+		paramsBeforeUpgrade.Params.MinCommissionRate.Add(sdk.NewDecWithPrec(int64(1), int64(2)))
 	targetParams.UnbondingTime = 2 * paramsBeforeUpgrade.Params.UnbondingTime
 
 	msgUpdateParam := &stakingtypes.MsgUpdateParams{
@@ -81,7 +83,9 @@ func TestStakingProposalParamChange(t *testing.T) {
 	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
-	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
+	t.Logf(
+		"Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s",
+		proposal.VotingEndTime)
 
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
@@ -115,7 +119,8 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	// we stake the minimum possible staking amount
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
+	// we multiply not to conflict with the tests which increases the min amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2))
 	// Setup delegator
 
 	delegator := chain.GenAccount()
@@ -131,7 +136,9 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	})
 
 	// Setup validator
-	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
+	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, validatorStakingAmount, validatorStakingAmount,
+	)
 	require.NoError(t, err)
 	defer deactivateValidator()
 
@@ -186,7 +193,9 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	require.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 
 	// Redelegate Coins
-	_, validator2Address, deactivateValidator2, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
+	_, validator2Address, deactivateValidator2, err := chain.CreateValidator(
+		ctx, t, validatorStakingAmount, validatorStakingAmount,
+	)
 	require.NoError(t, err)
 	defer deactivateValidator2()
 
@@ -271,7 +280,8 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 	notEnoughValidatorAmount := initialValidatorAmount.Quo(sdkmath.NewInt(2))
 
 	// Try to create a validator with the amount less than the minimum
-	_, _, _, err = chain.CreateValidator(ctx, t, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
+	//nolint:dogsled // we await for the error only
+	_, _, _, err = chain.CreateValidator(ctx, t, notEnoughValidatorAmount, notEnoughValidatorAmount)
 	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
 }
 
@@ -291,7 +301,9 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	initialValidatorAmount := customStakingParams.Params.MinSelfDelegation
 
 	// create new validator with min allowed self delegation
-	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, initialValidatorAmount, initialValidatorAmount)
+	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, initialValidatorAmount, initialValidatorAmount,
+	)
 	require.NoError(t, err)
 	defer deactivateValidator()
 
@@ -305,7 +317,8 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	defer changeMinSelfDelegationCustomParam(ctx, t, chain, customParamsClient, initialValidatorAmount)
 
 	// try to create a validator with the initial amount which we have increased
-	_, _, _, err = chain.CreateValidator(ctx, t, initialValidatorAmount, initialValidatorAmount) //nolint:dogsled // we await for the error only
+	//nolint:dogsled // we await for the error only
+	_, _, _, err = chain.CreateValidator(ctx, t, initialValidatorAmount, initialValidatorAmount)
 	requireT.ErrorIs(err, stakingtypes.ErrSelfDelegationBelowMinimum)
 
 	// edit validator
@@ -356,10 +369,13 @@ func TestUnbondAndCancelUnbondingDelegation(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	// we stake the minimum possible staking amount
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
+	// we multiply not to conflict with the tests which increases the min amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2))
 
 	// setup validator
-	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
+	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, validatorStakingAmount, validatorStakingAmount,
+	)
 	require.NoError(t, err)
 	defer deactivateValidator()
 
@@ -452,7 +468,9 @@ func changeMinSelfDelegationCustomParam(
 	requireT.Equal(newMinSelfDelegation.String(), customStakingParams.Params.MinSelfDelegation.String())
 }
 
-func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain integration.CoreumChain, unbondingTime time.Duration) {
+func setUnbondingTimeViaGovernance(
+	ctx context.Context, t *testing.T, chain integration.CoreumChain, unbondingTime time.Duration,
+) {
 	requireT := require.New(t)
 
 	// Create new proposer.
@@ -466,7 +484,8 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain inte
 	paramsBeforeUpgrade, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
 	requireT.NoError(err)
 
-	// Since all parameters must be supplied for MsgUpdateParams, we update current staking params and pass it to the proposal
+	// Since all parameters must be supplied for MsgUpdateParams, we update current staking params
+	// and pass it to the proposal
 	targetParams := paramsBeforeUpgrade.Params
 	targetParams.UnbondingTime = unbondingTime
 

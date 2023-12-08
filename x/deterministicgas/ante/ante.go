@@ -22,9 +22,12 @@ func NewSetInfiniteGasMeterDecorator(deterministicGasConfig deterministicgas.Con
 }
 
 // AnteHandle resets the gas limit inside GasMeter.
-func (sigmd SetInfiniteGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// This is done to return an error early if user provided gas amount which can't even cover the constant fee charged on the real
-	// gas meter in `ChargeFixedGasDecorator`. This will save resources on running preliminary ante decorators.
+func (sigmd SetInfiniteGasMeterDecorator) AnteHandle(
+	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
+) (sdk.Context, error) {
+	// This is done to return an error early if user provided gas amount which can't even cover the constant
+	// fee charged on the real gas meter in `ChargeFixedGasDecorator`. This will save resources on running
+	// preliminary ante decorators.
 	ctx.GasMeter().ConsumeGas(sigmd.deterministicGasConfig.FixedGas, "Fixed")
 
 	// Set infinite gas meter for ante handler
@@ -39,7 +42,10 @@ type AddBaseGasDecorator struct {
 }
 
 // NewAddBaseGasDecorator creates new AddBaseGasDecorator.
-func NewAddBaseGasDecorator(ak authante.AccountKeeper, deterministicGasConfig deterministicgas.Config) AddBaseGasDecorator {
+func NewAddBaseGasDecorator(
+	ak authante.AccountKeeper,
+	deterministicGasConfig deterministicgas.Config,
+) AddBaseGasDecorator {
 	return AddBaseGasDecorator{
 		ak:                     ak,
 		deterministicGasConfig: deterministicGasConfig,
@@ -47,7 +53,9 @@ func NewAddBaseGasDecorator(ak authante.AccountKeeper, deterministicGasConfig de
 }
 
 // AnteHandle resets the gas limit inside GasMeter.
-func (abgd AddBaseGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (abgd AddBaseGasDecorator) AnteHandle(
+	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
+) (sdk.Context, error) {
 	var gasMeter sdk.GasMeter
 	if simulate || ctx.BlockHeight() == 0 {
 		// During simulation and genesis initialization infinite gas meter is set inside context by `SetUpContextDecorator`.
@@ -72,7 +80,9 @@ type ChargeFixedGasDecorator struct {
 }
 
 // NewChargeFixedGasDecorator creates new ChargeFixedGasDecorator.
-func NewChargeFixedGasDecorator(ak authante.AccountKeeper, deterministicGasConfig deterministicgas.Config) ChargeFixedGasDecorator {
+func NewChargeFixedGasDecorator(
+	ak authante.AccountKeeper, deterministicGasConfig deterministicgas.Config,
+) ChargeFixedGasDecorator {
 	return ChargeFixedGasDecorator{
 		ak:                     ak,
 		deterministicGasConfig: deterministicGasConfig,
@@ -80,7 +90,9 @@ func NewChargeFixedGasDecorator(ak authante.AccountKeeper, deterministicGasConfi
 }
 
 // AnteHandle resets the gas limit inside GasMeter.
-func (cfgd ChargeFixedGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (cfgd ChargeFixedGasDecorator) AnteHandle(
+	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
+) (sdk.Context, error) {
 	// It is not needed to verify that tx really implements `GasTx` interface because it has been already done by
 	// `SetUpContextDecorator`
 	gasTx := tx.(authante.GasTx)

@@ -54,11 +54,18 @@ func (g GovernanceLegacy) ComputeProposerBalance(ctx context.Context) (sdk.Coin,
 	}
 
 	minDeposit := govParams.DepositParams.MinDeposit[0]
-	return g.chainCtx.NewCoin(minDeposit.Amount.Add(g.chainCtx.ChainSettings.GasPrice.Mul(sdk.NewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
+	return g.chainCtx.NewCoin(
+		minDeposit.Amount.Add(g.chainCtx.ChainSettings.GasPrice.
+			Mul(sdk.NewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
 }
 
 // UpdateParams goes through proposal process to update parameters.
-func (g GovernanceLegacy) UpdateParams(ctx context.Context, t *testing.T, description string, updates []paramproposal.ParamChange) {
+func (g GovernanceLegacy) UpdateParams(
+	ctx context.Context,
+	t *testing.T,
+	description string,
+	updates []paramproposal.ParamChange,
+) {
 	t.Helper()
 	// Fund accounts.
 	proposer := g.chainCtx.GenAccount()
@@ -72,7 +79,13 @@ func (g GovernanceLegacy) UpdateParams(ctx context.Context, t *testing.T, descri
 }
 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
-func (g GovernanceLegacy) ProposeAndVote(ctx context.Context, t *testing.T, proposer sdk.AccAddress, content govtypesv1beta1.Content, option govtypesv1beta1.VoteOption) {
+func (g GovernanceLegacy) ProposeAndVote(
+	ctx context.Context,
+	t *testing.T,
+	proposer sdk.AccAddress,
+	content govtypesv1beta1.Content,
+	option govtypesv1beta1.VoteOption,
+) {
 	t.Helper()
 	proposalMsg, err := g.NewMsgSubmitProposalV1Beta1(ctx, proposer, content)
 	require.NoError(t, err)
@@ -90,7 +103,10 @@ func (g GovernanceLegacy) ProposeAndVote(ctx context.Context, t *testing.T, prop
 	err = g.VoteAll(ctx, option, proposal.ProposalId)
 	require.NoError(t, err)
 
-	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
+	t.Logf(
+		"Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s",
+		proposal.VotingEndTime,
+	)
 
 	finalStatus, err := g.WaitForVotingToFinalize(ctx, proposalID)
 	require.NoError(t, err)
@@ -103,7 +119,11 @@ func (g GovernanceLegacy) ProposeAndVote(ctx context.Context, t *testing.T, prop
 }
 
 // Propose creates a new proposal.
-func (g GovernanceLegacy) Propose(ctx context.Context, t *testing.T, msg *govtypesv1beta1.MsgSubmitProposal) (uint64, error) {
+func (g GovernanceLegacy) Propose(
+	ctx context.Context,
+	t *testing.T,
+	msg *govtypesv1beta1.MsgSubmitProposal,
+) (uint64, error) {
 	SkipUnsafe(ctx, t)
 
 	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
@@ -117,7 +137,11 @@ func (g GovernanceLegacy) Propose(ctx context.Context, t *testing.T, msg *govtyp
 		return 0, err
 	}
 
-	proposalID, err := event.FindUint64EventAttribute(result.Events, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
+	proposalID, err := event.FindUint64EventAttribute(
+		result.Events,
+		govtypes.EventTypeSubmitProposal,
+		govtypes.AttributeKeyProposalID,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -152,7 +176,8 @@ func (g GovernanceLegacy) NewParamsChangeProposal(
 	return proposalMsg
 }
 
-// NewMsgSubmitProposalV1Beta1 - is a helper which initializes govtypesv1beta1.MsgSubmitProposal with govtypesv1beta1.Content.
+// NewMsgSubmitProposalV1Beta1 - is a helper which initializes govtypesv1beta1.MsgSubmitProposal
+// with govtypesv1beta1.Content.
 func (g GovernanceLegacy) NewMsgSubmitProposalV1Beta1(
 	ctx context.Context,
 	proposer sdk.AccAddress,
@@ -214,7 +239,11 @@ func (g GovernanceLegacy) VoteAll(ctx context.Context, option govtypesv1beta1.Vo
 }
 
 // VoteAllWeighted votes for the proposalID from all voting accounts with the provided WeightedVoteOptions.
-func (g GovernanceLegacy) VoteAllWeighted(ctx context.Context, options govtypesv1beta1.WeightedVoteOptions, proposalID uint64) error {
+func (g GovernanceLegacy) VoteAllWeighted(
+	ctx context.Context,
+	options govtypesv1beta1.WeightedVoteOptions,
+	proposalID uint64,
+) error {
 	return g.voteAll(ctx, func(voter sdk.AccAddress) sdk.Msg {
 		return &govtypesv1beta1.MsgVoteWeighted{
 			ProposalId: proposalID,
@@ -264,7 +293,10 @@ func (g GovernanceLegacy) voteAll(ctx context.Context, msgFunc func(sdk.AccAddre
 
 // WaitForVotingToFinalize waits for the proposal status to change to final.
 // Final statuses are: StatusPassed, StatusRejected or StatusFailed.
-func (g GovernanceLegacy) WaitForVotingToFinalize(ctx context.Context, proposalID uint64) (govtypesv1beta1.ProposalStatus, error) {
+func (g GovernanceLegacy) WaitForVotingToFinalize(
+	ctx context.Context,
+	proposalID uint64,
+) (govtypesv1beta1.ProposalStatus, error) {
 	proposal, err := g.GetProposal(ctx, proposalID)
 	if err != nil {
 		return proposal.Status, err
@@ -275,8 +307,12 @@ func (g GovernanceLegacy) WaitForVotingToFinalize(ctx context.Context, proposalI
 	if err != nil {
 		return proposal.Status, errors.WithStack(err)
 	}
-	if blockRes.Block.Header.Time.Before(proposal.VotingEndTime) { //nolint:staticcheck
-		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(blockRes.Block.Header.Time)) //nolint:staticcheck
+	//nolint:staticcheck
+	if blockRes.Block.Header.Time.Before(proposal.VotingEndTime) {
+		waitCtx, waitCancel := context.WithTimeout(
+			ctx,
+			proposal.VotingEndTime.Sub(blockRes.Block.Header.Time),
+		)
 		defer waitCancel()
 
 		<-waitCtx.Done()

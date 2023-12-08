@@ -105,7 +105,9 @@ func TestAssetNFTIssueClass(t *testing.T) {
 
 	// issue new NFT class with too long data
 
-	invalidData, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)})
+	invalidData, err = codectypes.NewAnyWithValue(
+		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)},
+	)
 	requireT.NoError(err)
 
 	invalidIssueMsg = &assetnfttypes.MsgIssueClass{
@@ -421,7 +423,9 @@ func TestAssetNFTMint(t *testing.T) {
 
 	// mint with too long data
 
-	invalidData, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)})
+	invalidData, err = codectypes.NewAnyWithValue(
+		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)},
+	)
 	requireT.NoError(err)
 
 	invalidMintMsg = &assetnfttypes.MsgMint{
@@ -578,7 +582,9 @@ func TestAssetNFTWithMaxData(t *testing.T) {
 		extraBytesMint  = 3441
 	)
 
-	data, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize-3)}) // 3 bytes added by Any
+	data, err := codectypes.NewAnyWithValue(
+		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize-3)},
+	) // 3 bytes added by Any
 	requireT.NoError(err)
 
 	// issue new NFT class
@@ -807,7 +813,8 @@ func TestAssetNFTBurn(t *testing.T) {
 		Id:      mintMsg.ID,
 	})
 	requireT.Error(err)
-	requireT.Contains(err.Error(), nft.ErrNFTNotExists.Error()) // the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
+	// the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors
+	requireT.Contains(err.Error(), nft.ErrNFTNotExists.Error())
 
 	// try to mint token with the same ID, should fail
 	_, err = client.BroadcastTx(

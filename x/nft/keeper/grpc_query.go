@@ -53,7 +53,8 @@ func (k Keeper) Supply(goCtx context.Context, r *nft.QuerySupplyRequest) (*nft.Q
 	}, nil
 }
 
-// NFTs queries all NFTs of a given class or owner (at least one must be provided), similar to tokenByIndex in ERC721Enumerable.
+// NFTs queries all NFTs of a given class or owner (at least one must be provided),
+// similar to tokenByIndex in ERC721Enumerable.
 func (k Keeper) NFTs(goCtx context.Context, r *nft.QueryNFTsRequest) (*nft.QueryNFTsResponse, error) {
 	resp, err := k.wkeeper.NFTs(goCtx, &cosmosnft.QueryNFTsRequest{
 		ClassId:    r.ClassId,

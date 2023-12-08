@@ -413,7 +413,9 @@ func txValidator1Args(testNetwork *network.Network) []string {
 	return []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, testNetwork.Validators[0].Address.String()),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(testNetwork.Config.BondDenom, sdkmath.NewInt(1000000))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(
+			sdk.NewCoin(testNetwork.Config.BondDenom, sdkmath.NewInt(1000000)),
+		).String()),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	}
 }

@@ -17,7 +17,9 @@ type Migrator struct {
 }
 
 // NewMigrator returns a new Migrator.
-func NewMigrator(keeper Keeper, nftKeeper types.NFTKeeper, wasmKeeper types.WasmKeeper, paramsKeeper types.ParamsKeeper) Migrator {
+func NewMigrator(
+	keeper Keeper, nftKeeper types.NFTKeeper, wasmKeeper types.WasmKeeper, paramsKeeper types.ParamsKeeper,
+) Migrator {
 	return Migrator{
 		keeper:       keeper,
 		nftKeeper:    nftKeeper,

@@ -159,7 +159,8 @@ func DefaultConfig() network.Config {
 }
 
 // ApplyConfigOptions updates the simapp configuration with the provided ConfigOptions.
-// We use the ApplyConfigOptions as separate function since the DefaultConfig set's the required global variables required for the ConfigOptions.
+// We use the ApplyConfigOptions as separate function since the DefaultConfig set's the required
+// global variables required for the ConfigOptions.
 func ApplyConfigOptions(cfg network.Config, options ...ConfigOption) (network.Config, error) {
 	for _, option := range options {
 		var err error

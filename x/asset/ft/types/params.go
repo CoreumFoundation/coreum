@@ -39,7 +39,11 @@ func DefaultParams() Params {
 func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyIssueFee, &m.IssueFee, validateIssueFee),
-		paramtypes.NewParamSetPair(KeyTokenUpgradeDecisionTimeout, &m.TokenUpgradeDecisionTimeout, validateTokenUpgradeDecisionTimeout),
+		paramtypes.NewParamSetPair(
+			KeyTokenUpgradeDecisionTimeout,
+			&m.TokenUpgradeDecisionTimeout,
+			validateTokenUpgradeDecisionTimeout,
+		),
 		paramtypes.NewParamSetPair(KeyTokenUpgradeGracePeriod, &m.TokenUpgradeGracePeriod, validateTokenUpgradeGracePeriod),
 	}
 }
@@ -72,7 +76,11 @@ func validateTokenUpgradeDecisionTimeout(i interface{}) error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T", i)
 	}
 	if decisionTimeout.Before(DefaultTokenUpgradeDecisionTimeout) {
-		return sdkerrors.Wrapf(ErrInvalidInput, "decision timeout cannot be set before %s", DefaultTokenUpgradeDecisionTimeout)
+		return sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"decision timeout cannot be set before %s",
+			DefaultTokenUpgradeDecisionTimeout,
+		)
 	}
 
 	return nil

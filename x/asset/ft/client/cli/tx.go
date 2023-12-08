@@ -73,6 +73,7 @@ func CmdTxIssue() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
+		//nolint:lll // breaking this down will make it look worse when printed to user screen.
 		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624",
 		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
@@ -174,8 +175,11 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
 	cmd.Flags().StringSlice(FeaturesFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
 	cmd.Flags().String(BurnRateFlag, "0", "Indicates the rate at which coins will be burnt on top of the sent amount in every send action. Must be between 0 and 1.")
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
 	cmd.Flags().String(SendCommissionRateFlag, "0", "Indicates the rate at which coins will be sent to the issuer on top of the sent amount in every send action. Must be between 0 and 1.")
 	cmd.Flags().String(URIFlag, "", "Token URI.")
 	cmd.Flags().String(URIHashFlag, "", "Token URI hash.")
@@ -228,7 +232,11 @@ $ %s tx %s mint 100000ABC-%s --from [sender]
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
-	cmd.Flags().String(RecipientFlag, "", "Address to send minted tokens to, if not specified minted tokens are sent to the issuer")
+	cmd.Flags().String(
+		RecipientFlag,
+		"",
+		"Address to send minted tokens to, if not specified minted tokens are sent to the issuer",
+	)
 
 	return cmd
 }

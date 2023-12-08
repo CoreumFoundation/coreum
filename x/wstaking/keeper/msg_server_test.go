@@ -60,7 +60,12 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 
 	// try to create with min self delegation
 	createValidatorMsg, err = stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(accountAddress), ed25519.GenPrivKey().PubKey(), selfDelegation, description, commission, minSelfDelegation,
+		sdk.ValAddress(accountAddress),
+		ed25519.GenPrivKey().PubKey(),
+		selfDelegation,
+		description,
+		commission,
+		minSelfDelegation,
 	)
 	require.NoError(t, err)
 	_, _, err = simApp.SendTx(ctx, feeAmt, gas, privateKey, createValidatorMsg)

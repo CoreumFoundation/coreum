@@ -46,12 +46,18 @@ var StoreTrue = []byte{0x01}
 func CreateClassKey(classID string) ([]byte, error) {
 	symbol, issuer, err := DeconstructClassID(classID)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidKey, "can't build class key from classID, classID:%s, err:%s", classID, err)
+		return nil, sdkerrors.Wrapf(
+			ErrInvalidKey, "can't build class key from classID, classID:%s, err:%s", classID, err,
+		)
 	}
 	// use keys in the reverse order to query by the issuer
 	classKey, err := store.JoinKeysWithLength(issuer, []byte(symbol))
 	if err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidKey, "can't join NFT class key with length, issuer:%s, symbol:%s, err:%s", issuer, symbol, err)
+		return nil, sdkerrors.Wrapf(
+			ErrInvalidKey,
+			"can't join NFT class key with length, issuer:%s, symbol:%s, err:%s",
+			issuer, symbol, err,
+		)
 	}
 
 	return store.JoinKeys(NFTClassKeyPrefix, classKey), nil
@@ -61,7 +67,11 @@ func CreateClassKey(classID string) ([]byte, error) {
 func CreateIssuerClassPrefix(issuer sdk.AccAddress) ([]byte, error) {
 	issuerKey, err := store.JoinKeysWithLength(issuer)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidKey, "can't join NFT class issuer key with length, issuer:%s, err:%s", issuer, err)
+		return nil, sdkerrors.Wrapf(
+			ErrInvalidKey,
+			"can't join NFT class issuer key with length, issuer:%s, err:%s",
+			issuer, err,
+		)
 	}
 	return store.JoinKeys(NFTClassKeyPrefix, issuerKey), nil
 }

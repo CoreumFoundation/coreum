@@ -96,7 +96,11 @@ func (k Keeper) GetTokens(ctx sdk.Context, pagination *query.PageRequest) ([]typ
 }
 
 // GetIssuerTokens returns fungible tokens issued by the issuer.
-func (k Keeper) GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error) {
+func (k Keeper) GetIssuerTokens(
+	ctx sdk.Context,
+	issuer sdk.AccAddress,
+	pagination *query.PageRequest,
+) ([]types.Token, *query.PageResponse, error) {
 	definitions, pageResponse, err := k.getIssuerDefinitions(ctx, issuer, pagination)
 	if err != nil {
 		return nil, nil, err
@@ -462,7 +466,10 @@ func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom s
 }
 
 // GetAccountsFrozenBalances returns the frozen balance on all the account.
-func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
+func (k Keeper) GetAccountsFrozenBalances(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.Balance, *query.PageResponse, error) {
 	return collectBalances(k.cdc, k.frozenBalancesStore(ctx), pagination)
 }
 
@@ -473,7 +480,11 @@ func (k Keeper) IterateAccountsFrozenBalances(ctx sdk.Context, cb func(sdk.AccAd
 }
 
 // GetFrozenBalances returns the frozen balance of an account.
-func (k Keeper) GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
+func (k Keeper) GetFrozenBalances(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	pagination *query.PageRequest,
+) (sdk.Coins, *query.PageResponse, error) {
 	return k.frozenAccountBalanceStore(ctx, addr).Balances(pagination)
 }
 
@@ -486,7 +497,8 @@ func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom str
 }
 
 // SetFrozenBalances sets the frozen balances of a specified account.
-// Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you need set zero amount use the slice []sdk.Coins.
+// Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins,
+// hence if you need set zero amount use the slice []sdk.Coins.
 func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
 	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
 	for _, coin := range coins {
@@ -539,18 +551,27 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 }
 
 // GetAccountsWhitelistedBalances returns the whitelisted balance of all the account.
-func (k Keeper) GetAccountsWhitelistedBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
-	return collectBalances(k.cdc, prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix), pagination)
+func (k Keeper) GetAccountsWhitelistedBalances(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.Balance, *query.PageResponse, error) {
+	return collectBalances(
+		k.cdc, prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix), pagination)
 }
 
-// IterateAccountsWhitelistedBalances iterates over all whitelisted balances of all accounts and applies the provided callback.
+// IterateAccountsWhitelistedBalances iterates over all whitelisted balances of all accounts
+// and applies the provided callback.
 // If true is returned from the callback, iteration is halted.
 func (k Keeper) IterateAccountsWhitelistedBalances(ctx sdk.Context, cb func(sdk.AccAddress, sdk.Coin) bool) error {
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix).IterateAllBalances(cb)
 }
 
 // GetWhitelistedBalances returns the whitelisted balance of an account.
-func (k Keeper) GetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
+func (k Keeper) GetWhitelistedBalances(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	pagination *query.PageRequest,
+) (sdk.Coins, *query.PageResponse, error) {
 	return k.whitelistedAccountBalanceStore(ctx, addr).Balances(pagination)
 }
 
@@ -560,7 +581,8 @@ func (k Keeper) GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, deno
 }
 
 // SetWhitelistedBalances sets the whitelisted balances of a specified account.
-// Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you need set zero amount use the slice []sdk.Coins.
+// Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you
+// need set zero amount use the slice []sdk.Coins.
 func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
 	whitelistedStore := k.whitelistedAccountBalanceStore(ctx, addr)
 	for _, coin := range coins {
@@ -568,7 +590,12 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 	}
 }
 
-func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount sdkmath.Int, recipient sdk.AccAddress) error {
+func (k Keeper) mintIfReceivable(
+	ctx sdk.Context,
+	def types.Definition,
+	amount sdkmath.Int,
+	recipient sdk.AccAddress,
+) error {
 	if !amount.IsPositive() {
 		return nil
 	}
@@ -587,13 +614,23 @@ func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount s
 	}
 
 	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coinsToMint); err != nil {
-		return sdkerrors.Wrapf(err, "can't send minted coins from module %s to account %s", types.ModuleName, recipient.String())
+		return sdkerrors.Wrapf(
+			err,
+			"can't send minted coins from module %s to account %s",
+			types.ModuleName,
+			recipient.String(),
+		)
 	}
 
 	return nil
 }
 
-func (k Keeper) burnIfSpendable(ctx sdk.Context, account sdk.AccAddress, def types.Definition, amount sdkmath.Int) error {
+func (k Keeper) burnIfSpendable(
+	ctx sdk.Context,
+	account sdk.AccAddress,
+	def types.Definition,
+	amount sdkmath.Int,
+) error {
 	if err := k.isCoinSpendable(ctx, account, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}
@@ -644,8 +681,14 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) && !def.IsIssuer(addr) && cwasmtypes.IsTriggeredBySmartContract(ctx) {
-		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers made by smart contracts are disabled for %s", def.Denom)
+	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
+		!def.IsIssuer(addr) &&
+		cwasmtypes.IsTriggeredBySmartContract(ctx) {
+		return sdkerrors.Wrapf(
+			cosmoserrors.ErrUnauthorized,
+			"transfers made by smart contracts are disabled for %s",
+			def.Denom,
+		)
 	}
 
 	if def.IsFeatureEnabled(types.Feature_freezing) && !def.IsIssuer(addr) {
@@ -697,12 +740,16 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 
 		finalBalance := balance.Amount.Add(amount)
 		if finalBalance.GT(whitelistedBalance.Amount) {
-			return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
+			return sdkerrors.Wrapf(
+				types.ErrWhitelistedLimitExceeded,
+				"balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
 				addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
 		}
 	}
 
-	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) && !def.IsIssuer(addr) && cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
+	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
+		!def.IsIssuer(addr) &&
+		cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
 
@@ -728,12 +775,22 @@ func (k Keeper) availableBalance(ctx sdk.Context, addr sdk.AccAddress, denom str
 	return balance.Sub(frozenBalance)
 }
 
-func (k Keeper) getDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
+func (k Keeper) getDefinitions(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.Definition, *query.PageResponse, error) {
 	return k.getDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix), pagination)
 }
 
-func (k Keeper) getIssuerDefinitions(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
-	return k.getDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateIssuerTokensPrefix(issuer)), pagination)
+func (k Keeper) getIssuerDefinitions(
+	ctx sdk.Context,
+	issuer sdk.AccAddress,
+	pagination *query.PageRequest,
+) ([]types.Definition, *query.PageResponse, error) {
+	return k.getDefinitionsFromStore(
+		prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateIssuerTokensPrefix(issuer)),
+		pagination,
+	)
 }
 
 func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (types.Token, error) {
@@ -776,7 +833,10 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 	}, nil
 }
 
-func (k Keeper) getDefinitionsFromStore(store prefix.Store, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
+func (k Keeper) getDefinitionsFromStore(
+	store prefix.Store,
+	pagination *query.PageRequest,
+) ([]types.Definition, *query.PageResponse, error) {
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,

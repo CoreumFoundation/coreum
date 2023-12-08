@@ -160,7 +160,11 @@ func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature Cla
 
 	// Features other than burning may be executed by the issuer only
 	if !nftd.IsIssuer(addr) {
-		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
+		return sdkerrors.Wrapf(
+			cosmoserrors.ErrUnauthorized,
+			"address %s is unauthorized to perform %q related operations",
+			addr.String(), feature.String(),
+		)
 	}
 	return nil
 }

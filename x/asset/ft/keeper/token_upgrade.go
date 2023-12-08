@@ -78,6 +78,10 @@ func (k Keeper) GetTokenUpgradeStatuses(ctx sdk.Context, denom string) types.Tok
 }
 
 // SetTokenUpgradeStatuses sets the token upgrade statuses of a specified denom.
-func (k Keeper) SetTokenUpgradeStatuses(ctx sdk.Context, denom string, tokenUpgradeStatuses types.TokenUpgradeStatuses) {
+func (k Keeper) SetTokenUpgradeStatuses(
+	ctx sdk.Context,
+	denom string,
+	tokenUpgradeStatuses types.TokenUpgradeStatuses,
+) {
 	ctx.KVStore(k.storeKey).Set(types.CreateTokenUpgradeStatusesKey(denom), k.cdc.MustMarshal(&tokenUpgradeStatuses))
 }
