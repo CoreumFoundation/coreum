@@ -2232,7 +2232,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 					FromAddress: vestingAccCreator.String(),
 					ToAddress:   predictedContractAddr.String(),
 					Amount:      sdk.NewCoins(amount2),
-					EndTime:     time.Now().Add(time.Minute).Unix(),
+					EndTime:     time.Now().Add(time.Hour).Unix(),
 					Delayed:     true,
 				}
 
