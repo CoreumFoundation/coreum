@@ -2123,7 +2123,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	admin := chain.GenAccount()
-	amount := chain.NewCoin(sdkmath.NewInt(500))
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
@@ -2159,6 +2159,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	// Send coins to the contract address before instantiation.
 
+	amount := chain.NewCoin(sdkmath.NewInt(500))
 	msg := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   contract.String(),
@@ -2170,7 +2171,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	// Instantiate the smart contract.
 
-	contractAddr1, err := chain.Wasm.InstantiateWASMContract(
+	contractAddr, err := chain.Wasm.InstantiateWASMContract(
 		ctx,
 		txf,
 		admin,
@@ -2183,6 +2184,23 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
+	requireT.Equal(contractAddr, contract.String())
+
+	qres, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr,
+		Denom:   amount.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amount.String(), qres.Balance.String())
+
+	// Verify account type.
+
+	authClient := authtypes.NewQueryClient(chain.ClientContext)
+	accountRes, err := authClient.Account(ctx, &authtypes.QueryAccountRequest{
+		Address: contractAddr,
+	})
+	requireT.NoError(err)
+	requireT.Equal("/cosmos.auth.v1beta1.BaseAccount", accountRes.Account.TypeUrl)
 
 	// Predict the address of another smart contract.
 
@@ -2199,6 +2217,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	// Create delayed vesting account using address of the smart contract.
 
+	amount = chain.NewCoin(sdkmath.NewInt(600))
 	createVestingAccMsg := &vestingtypes.MsgCreateVestingAccount{
 		FromAddress: admin.String(),
 		ToAddress:   contract.String(),
@@ -2219,8 +2238,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	requireT.NoError(client.AwaitNextBlocks(ctx, clientCtx, 1))
 
-	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-	qres, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	qres, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: contract.String(),
 		Denom:   amount.Denom,
 	})
@@ -2229,7 +2247,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	// Instantiate the smart contract.
 
-	contractAddr2, err := chain.Wasm.InstantiateWASMContract(
+	contractAddr, err = chain.Wasm.InstantiateWASMContract(
 		ctx,
 		txf,
 		admin,
@@ -2242,6 +2260,14 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
+	requireT.Equal(contractAddr, contract.String())
+
+	qres, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr,
+		Denom:   amount.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amount.String(), qres.Balance.String())
 
 	// Predict the address of another smart contract.
 
@@ -2258,6 +2284,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	// Create continuous vesting account using address of the smart contract.
 
+	amount = chain.NewCoin(sdkmath.NewInt(700))
 	createVestingAccMsg = &vestingtypes.MsgCreateVestingAccount{
 		FromAddress: admin.String(),
 		ToAddress:   contract.String(),
@@ -2286,7 +2313,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	// Instantiate the smart contract.
 
-	contractAddr3, err := chain.Wasm.InstantiateWASMContract(
+	contractAddr, err = chain.Wasm.InstantiateWASMContract(
 		ctx,
 		txf,
 		admin,
@@ -2299,23 +2326,10 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
+	requireT.Equal(contractAddr, contract.String())
 
 	qres, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: contractAddr1,
-		Denom:   amount.Denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(amount.String(), qres.Balance.String())
-
-	qres, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: contractAddr2,
-		Denom:   amount.Denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(amount.String(), qres.Balance.String())
-
-	qres, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: contractAddr3,
+		Address: contractAddr,
 		Denom:   amount.Denom,
 	})
 	requireT.NoError(err)
@@ -2405,6 +2419,17 @@ func TestVestingToWASMContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal("/cosmos.vesting.v1beta1.DelayedVestingAccount", accountRes.Account.TypeUrl)
+
+	// Verify that funds hasn't been vested yes.
+
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		txf,
+		admin,
+		contractAddr,
+		moduleswasm.BankSendExecuteWithdrawRequest(amount, recipient),
+		sdk.Coin{})
+	requireT.ErrorContains(err, "insufficient funds")
 
 	// Await vesting time to unlock the vesting coins
 
