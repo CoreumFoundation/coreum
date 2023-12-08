@@ -590,12 +590,6 @@ func New(
 	}
 
 	wasmOpts := []wasmkeeper.Option{
-		wasmkeeper.WithAcceptedAccountTypesOnContractInstantiation(
-			&authtypes.BaseAccount{},
-			&vestingtypes.ContinuousVestingAccount{},
-			&vestingtypes.DelayedVestingAccount{},
-		),
-		wasmkeeper.WithAccountPruner(cwasmtypes.AccountPruner{}),
 		wasmkeeper.WithCoinTransferrer(cwasmtypes.NewBankCoinTransferrer(app.BankKeeper)),
 		wasmkeeper.WithMessageHandler(wasmcustomhandler.NewMessengerWrapper(wasmkeeper.NewDefaultMessageHandler(
 			app.MsgServiceRouter(),
