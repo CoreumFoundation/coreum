@@ -18,6 +18,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,6 +30,96 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
+
+// TestProposalHalt tests proposal halting.
+func TestProposalHalt(t *testing.T) {
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	origParams := chain.QueryAssetFTParams(ctx, t)
+	govClient := govtypesv1beta1.NewQueryClient(chain.ClientContext)
+	depositParamsRes, err := govClient.Params(ctx, &govtypesv1beta1.QueryParamsRequest{
+		ParamsType: govtypesv1beta1.ParamDeposit,
+	})
+	require.NoError(t, err)
+
+	proposer := chain.GenAccount()
+	deposit := depositParamsRes.DepositParams.MinDeposit.AmountOf(chain.ChainSettings.Denom).Quo(sdk.NewInt(2))
+
+	chain.FundAccountWithOptions(ctx, t, proposer, integration.BalancesOptions{
+		Amount: deposit.Add(sdk.NewInt(1_000_000)),
+	})
+
+	// prepare proposal with the deposit period
+
+	proposalMsg, err := govtypesv1.NewMsgSubmitProposal(
+		[]sdk.Msg{
+			&assetfttypes.MsgUpdateParams{
+				Params:    origParams,
+				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			},
+		}, sdk.NewCoins(chain.NewCoin(deposit)), proposer.String(), "-", "-", "-",
+	)
+	require.NoError(t, err)
+
+	notActivatedProposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
+	require.NoError(t, err)
+
+	depositPeriodProposal, err := govClient.Proposal(ctx, &govtypesv1beta1.QueryProposalRequest{
+		ProposalId: notActivatedProposalID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, govtypesv1beta1.StatusDepositPeriod, depositPeriodProposal.Proposal.Status)
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	proposerBalanceBeforeRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: proposer.String(),
+		Denom:   chain.ChainSettings.Denom,
+	})
+
+	govModuleAddress := authtypes.NewModuleAddress(govtypes.ModuleName)
+	halfDeposit := chain.NewCoin(deposit.Quo(sdk.NewInt(2)))
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&banktypes.MsgSend{
+			FromAddress: govModuleAddress.String(),
+			ToAddress:   proposer.String(),
+			// send half of the current deposit
+			Amount: sdk.NewCoins(halfDeposit),
+		},
+	)
+
+	proposerBalanceAfterRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: proposer.String(),
+		Denom:   chain.ChainSettings.Denom,
+	})
+
+	require.Equal(t, proposerBalanceBeforeRes.Balance.Amount.Add(halfDeposit.Amount).String(), proposerBalanceAfterRes.Balance.Amount.String())
+
+	// activate the proposal by sending second half of the deposit
+	depositMsg := &govtypesv1.MsgDeposit{
+		ProposalId: notActivatedProposalID,
+		Depositor:  proposer.String(),
+		Amount:     sdk.NewCoins(halfDeposit),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(proposer),
+		chain.TxFactory().WithSimulateAndExecute(true),
+		depositMsg,
+	)
+	require.NoError(t, err)
+
+	depositPeriodProposal, err = govClient.Proposal(ctx, &govtypesv1beta1.QueryProposalRequest{
+		ProposalId: notActivatedProposalID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, govtypesv1beta1.StatusVotingPeriod, depositPeriodProposal.Proposal.Status)
+
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionNo, notActivatedProposalID)
+	require.NoError(t, err)
+}
 
 // TestAssetFTQueryParams queries parameters of asset/ft module.
 func TestAssetFTQueryParams(t *testing.T) {
