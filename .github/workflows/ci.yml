@@ -18,8 +18,8 @@ jobs:
           "test",
           "integration tests coreum-modules",
           "integration tests coreum-ibc",
-          "integration tests coreum-upgrade v2.0.2 -> v3.0.0",
-          "integration tests coreum-upgrade v3.0.0 -> v3.0.x",
+          "integration tests coreum-upgrade v2.0.2 -> latest",
+          "integration tests coreum-upgrade v3.0.1 -> latest",
           "integration tests faucet",
         ]
         include:
@@ -48,19 +48,19 @@ jobs:
             wasm-cache: true 
             linter-cache: false
             docker-cache: true
-          - ci_step: "integration tests coreum-upgrade v2.0.2 -> v3.0.0"
+          - ci_step: "integration tests coreum-upgrade v2.0.2 -> latest"
             # Note that we run upgrade tests only no module or IBC because some features in v3 are not compatible anymore.
             command: |
               crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images 
-              crust znet test --cored-version=v2.0.2 --test-groups=coreum-upgrade --timeout-commit 1s
+              crust znet test --cored-version=v2.0.2 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true
             linter-cache: false
             docker-cache: true
-          - ci_step: "integration tests coreum-upgrade v3.0.0 -> v3.0.x"
+          - ci_step: "integration tests coreum-upgrade v3.0.1 -> latest"
             command: |
               crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images 
-              crust znet test --cored-version=v3.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
+              crust znet test --cored-version=v3.0.1 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true
             linter-cache: false
@@ -86,7 +86,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: release-v3
+          ref: dzmitryhil/v3patch2-upgrade #FIXME(dzmitryhil) restore `release-v3` once it is merged
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
