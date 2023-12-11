@@ -2387,7 +2387,9 @@ func TestWASMContractInstantiationForExistingAccounts(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(tt *testing.T) {
+			// We don't run these test cases in parallel because they use the same accounts.
 			salt, err := chain.Wasm.GenerateSalt()
 			requireT.NoError(err)
 
