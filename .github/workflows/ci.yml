@@ -86,7 +86,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: dzmitryhil/v3patch2-upgrade #FIXME(dzmitryhil) restore `release-v3` once it is merged
+          ref: release-v3
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
