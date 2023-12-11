@@ -21,6 +21,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev3 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3"
 	appupgradev3patch1 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3/v3patch1"
+	appupgradev3patch2 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3/v3patch2"
 	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
 	"github.com/CoreumFoundation/coreum/v3/testutil/integration"
 )
@@ -46,6 +47,10 @@ func TestUpgrade(t *testing.T) {
 		// Here we are testing the v3patch1 upgrade which will only run on testnet.
 		// It is OK to remove this test after we complete the migration there.
 		runUpgrade(t, "v3.0.0", appupgradev3patch1.Name, 30)
+	case "v3.0.1":
+		// Here we are testing the v3patch2 upgrade which will only run on testnet.
+		// It is OK to remove this test after we complete the migration there.
+		runUpgrade(t, "v3.0.1", appupgradev3patch2.Name, 30)
 	default:
 		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
