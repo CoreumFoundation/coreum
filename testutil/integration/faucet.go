@@ -130,7 +130,7 @@ func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccoun
 
 func (f Faucet) collectRequests(ctx context.Context, leaderReq fundingRequest) ([]fundingRequest, error) {
 	const (
-		requestsPerTx   = 20
+		requestsPerTx   = 50
 		timeoutDuration = 100 * time.Millisecond
 	)
 
