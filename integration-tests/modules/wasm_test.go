@@ -2267,126 +2267,193 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	requireT.NoError(client.AwaitNextBlocks(waitCtx, chain.ClientContext, 2))
 }
 
-// TestWASMContractInstantiationIsRejectedIfThereAreTokensOnItsAccount verifies that smart contract instantiation
-// is rejected if account exists.
-func TestWASMContractInstantiationIsRejectedIfAccountExists(t *testing.T) {
+// TestWASMContractInstantiationForExistingAccounts verifies that WASM contract instantiation behaves correctly when
+// instantiating contract on top of existing addresses of different types.
+//
+//nolint:tparallel // We don't run test cases in parallel because they use same accounts.
+func TestWASMContractInstantiationForExistingAccounts(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	contractAdmin := chain.GenAccount()
+	vestingAccCreator := chain.GenAccount()
 
-	admin := chain.GenAccount()
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	amount1 := chain.NewCoin(sdkmath.NewInt(500))
+	amount2 := chain.NewCoin(sdkmath.NewInt(550))
+	amount3 := chain.NewCoin(sdkmath.NewInt(555))
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		// Funds for instantiating contracts.
+		integration.NewFundedAccount(contractAdmin, chain.NewCoin(sdkmath.NewInt(1000000))),
+		// Funds for creating vesting accounts.
+		integration.NewFundedAccount(vestingAccCreator, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 
-	// Deploy smart contract.
-
+	// Deploy smart contract to be used inside test cases.
 	codeID, err := chain.Wasm.DeployWASMContract(
 		ctx,
 		txf,
-		admin,
+		contractAdmin,
 		moduleswasm.BankSendWASM,
 	)
 	requireT.NoError(err)
 
-	// Predict the address of the smart contract.
+	testCases := []struct {
+		name                              string
+		beforeContractInstantiation       func(t *testing.T, predictedContractAddr sdk.AccAddress)
+		expectedBalanceAfterInstantiation sdk.Coin
+	}{
+		{
+			name: "banktypes.MsgSend",
+			beforeContractInstantiation: func(t *testing.T, predictedContractAddr sdk.AccAddress) {
+				msg := &banktypes.MsgSend{
+					FromAddress: vestingAccCreator.String(),
+					ToAddress:   predictedContractAddr.String(),
+					Amount:      sdk.NewCoins(amount1),
+				}
 
-	salt, err := chain.Wasm.GenerateSalt()
-	requireT.NoError(err)
+				_, err := client.BroadcastTx(
+					ctx,
+					clientCtx.WithFromAddress(vestingAccCreator),
+					chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+					msg,
+				)
+				requireT.NoError(err)
+			},
+			expectedBalanceAfterInstantiation: amount1,
+		},
+		{
+			name: "vestingtypes.MsgCreateVestingAccount (delayed, vested)",
+			beforeContractInstantiation: func(t *testing.T, predictedContractAddr sdk.AccAddress) {
+				msg := &vestingtypes.MsgCreateVestingAccount{
+					FromAddress: vestingAccCreator.String(),
+					ToAddress:   predictedContractAddr.String(),
+					Amount:      sdk.NewCoins(amount2),
+					EndTime:     time.Now().Unix(),
+					Delayed:     true,
+				}
 
-	contract, err := chain.Wasm.PredictWASMContractAddress(
-		ctx,
-		admin,
-		salt,
-		codeID,
-	)
-	requireT.NoError(err)
+				_, err := client.BroadcastTx(
+					ctx,
+					clientCtx.WithFromAddress(vestingAccCreator),
+					chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+					msg,
+				)
+				requireT.NoError(err)
 
-	// Send coins to the contract address before instantiation.
+				// Await next block to ensure that funds are vested.
+				requireT.NoError(client.AwaitNextBlocks(ctx, clientCtx, 1))
+			},
 
-	msg := &banktypes.MsgSend{
-		FromAddress: admin.String(),
-		ToAddress:   contract.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(500))),
+			expectedBalanceAfterInstantiation: chain.NewCoin(sdk.ZeroInt()),
+		},
+		{
+			name: "vestingtypes.MsgCreateVestingAccount (continuous, vested)",
+			beforeContractInstantiation: func(t *testing.T, predictedContractAddr sdk.AccAddress) {
+				msg := &vestingtypes.MsgCreateVestingAccount{
+					FromAddress: vestingAccCreator.String(),
+					ToAddress:   predictedContractAddr.String(),
+					Amount:      sdk.NewCoins(amount3),
+					EndTime:     time.Now().Unix(),
+				}
+
+				_, err := client.BroadcastTx(
+					ctx,
+					clientCtx.WithFromAddress(vestingAccCreator),
+					chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+					msg,
+				)
+				requireT.NoError(err)
+
+				// Await next block to ensure that funds are vested.
+				requireT.NoError(client.AwaitNextBlocks(ctx, clientCtx, 1))
+			},
+
+			expectedBalanceAfterInstantiation: chain.NewCoin(sdk.ZeroInt()),
+		},
+		{
+			name: "vestingtypes.MsgCreateVestingAccount (delayed, non-vested)",
+			beforeContractInstantiation: func(t *testing.T, predictedContractAddr sdk.AccAddress) {
+				msg := &vestingtypes.MsgCreateVestingAccount{
+					FromAddress: vestingAccCreator.String(),
+					ToAddress:   predictedContractAddr.String(),
+					Amount:      sdk.NewCoins(amount2),
+					EndTime:     time.Now().Add(time.Hour).Unix(),
+					Delayed:     true,
+				}
+
+				_, err := client.BroadcastTx(
+					ctx,
+					clientCtx.WithFromAddress(vestingAccCreator),
+					chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+					msg,
+				)
+				requireT.NoError(err)
+			},
+
+			expectedBalanceAfterInstantiation: chain.NewCoin(sdk.ZeroInt()),
+		},
 	}
 
-	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, msg)
-	requireT.NoError(err)
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(tt *testing.T) {
+			salt, err := chain.Wasm.GenerateSalt()
+			requireT.NoError(err)
 
-	// Instantiate the smart contract. It should fail because its account holds some funds.
+			contractAddrPredicted, err := chain.Wasm.PredictWASMContractAddress(
+				ctx,
+				contractAdmin,
+				salt,
+				codeID,
+			)
+			requireT.NoError(err)
 
-	_, err = chain.Wasm.InstantiateWASMContract2(
-		ctx,
-		txf,
-		admin,
-		salt,
-		integration.InstantiateConfig{
-			CodeID:     codeID,
-			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    moduleswasm.EmptyPayload,
-			Label:      "bank_send",
-		},
-	)
-	requireT.ErrorContains(err, "contract account already exists")
+			tc.beforeContractInstantiation(tt, contractAddrPredicted)
 
-	// Predict the address of another smart contract.
+			contractAddr, err := chain.Wasm.InstantiateWASMContract2(
+				ctx,
+				txf,
+				contractAdmin,
+				salt,
+				integration.InstantiateConfig{
+					CodeID:     codeID,
+					AccessType: wasmtypes.AccessTypeUnspecified,
+					Payload:    moduleswasm.EmptyPayload,
+					Label:      "bank_send",
+				},
+			)
+			requireT.NoError(err)
+			requireT.Equal(contractAddrPredicted.String(), contractAddr)
 
-	salt, err = chain.Wasm.GenerateSalt()
-	requireT.NoError(err)
+			authClient := authtypes.NewQueryClient(chain.ClientContext)
+			accountRes, err := authClient.Account(ctx, &authtypes.QueryAccountRequest{
+				Address: contractAddr,
+			})
+			requireT.NoError(err)
 
-	contract, err = chain.Wasm.PredictWASMContractAddress(
-		ctx,
-		admin,
-		salt,
-		codeID,
-	)
-	requireT.NoError(err)
+			// When instantiating WASM converts any account to base account.
+			// If account is not defined in acceptedAccountTypes then extra manipulation will be done with it before
+			// contract instantiation. By default, coins from vesting accounts are fully burnt and once account balance
+			// is 0 then keeper sets account to auth.BaseAccount.
+			// For more details see: github.com/CosmWasm/wasmd@v0.44.0/x/wasm/keeper/keeper.go:280
+			requireT.Equal("/cosmos.auth.v1beta1.BaseAccount", accountRes.Account.TypeUrl)
 
-	// Create vesting account using address of the smart cotntract.
-
-	createVestingAccMsg := &vestingtypes.MsgCreateVestingAccount{
-		FromAddress: admin.String(),
-		ToAddress:   contract.String(),
-		Amount: sdk.NewCoins(
-			chain.NewCoin(sdkmath.NewInt(10000)),
-		),
-		EndTime: time.Now().Unix(),
-		Delayed: true,
+			res, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+				Address: contractAddr,
+				Denom:   tc.expectedBalanceAfterInstantiation.Denom,
+			})
+			requireT.NoError(err)
+			requireT.Equal(tc.expectedBalanceAfterInstantiation.String(), res.Balance.String())
+		})
 	}
-
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createVestingAccMsg)),
-		createVestingAccMsg,
-	)
-	requireT.NoError(err)
-
-	// Await next block to ensure that funds are vested.
-
-	requireT.NoError(client.AwaitNextBlocks(ctx, clientCtx, 1))
-
-	// Instantiate the smart contract. It should fail because its account holds some funds.
-
-	_, err = chain.Wasm.InstantiateWASMContract2(
-		ctx,
-		txf,
-		admin,
-		salt,
-		integration.InstantiateConfig{
-			CodeID:     codeID,
-			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    moduleswasm.EmptyPayload,
-			Label:      "bank_send",
-		},
-	)
-	requireT.ErrorContains(err, "contract account already exists")
 }
 
 func randStringWithLength(n int) string {
