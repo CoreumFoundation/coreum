@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	fuseGasMultiplier    = 10
+	fuseGasMultiplier    = 1000
 	expectedMaxGasFactor = 5
 )
 

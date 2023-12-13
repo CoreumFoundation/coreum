@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
@@ -21,25 +23,28 @@ func init() {
 	clientcli.GetSimulatorFlags()
 }
 
-// BenchmarkSimulation run the chain simulation
-// Running using starport command:
-// `starport chain simulate -v --numBlocks 200 --blockSize 50`
-// Running as go benchmark test:
-// `go test -benchmem -run=^$ -bench ^BenchmarkSimulation ./app -NumBlocks=200 -BlockSize 50`.
-func BenchmarkSimulation(b *testing.B) {
-	clientcli.FlagEnabledValue = true
-	clientcli.FlagCommitValue = true
-
+// FullSimulation run the chain simulation
+// Running as go test:
+//
+//	`go test ./app -run TestFullAppSimulation -v -Enabled=true \
+//		-Verbose=true -NumBlocks=100 -BlockSize=200 -Commit=true -Period=5`.
+func TestFullAppSimulation(t *testing.T) {
 	cfg := clientcli.NewConfigFromFlags()
 	cfg.ChainID = testutilconstant.SimAppChainID
 
-	db, dir, logger, _, err := simtestutil.SetupSimulation(cfg, "goleveldb-app-sim", "Simulation", true, true)
-	require.NoError(b, err, "simulation setup failed")
+	db, dir, logger, _, err := simtestutil.SetupSimulation(
+		cfg,
+		"goleveldb-app-sim",
+		"Simulation",
+		clientcli.FlagVerboseValue,
+		clientcli.FlagEnabledValue,
+	)
+	require.NoError(t, err, "simulation setup failed")
 
-	b.Cleanup(func() {
+	t.Cleanup(func() {
 		db.Close()
 		err = os.RemoveAll(dir)
-		require.NoError(b, err)
+		require.NoError(t, err)
 	})
 
 	network, err := config.NetworkConfigByChainID(constant.ChainIDDev)
@@ -47,20 +52,25 @@ func BenchmarkSimulation(b *testing.B) {
 		panic(err)
 	}
 	network.SetSDKConfig()
-
 	app.ChosenNetwork = network
+
+	appOptions := make(simtestutil.AppOptionsMap, 0)
+	appOptions[flags.FlagHome] = dir // ensure a unique folder
+	appOptions[server.FlagInvCheckPeriod] = clientcli.FlagPeriodValue
+
 	simApp := app.New(
 		logger,
 		db,
 		nil,
 		true,
-		simtestutil.EmptyAppOptions{},
+		appOptions,
+		fauxMerkleModeOpt,
 		baseapp.SetChainID(cfg.ChainID),
 	)
 
 	// Run randomized simulations
 	_, simParams, simErr := simulation.SimulateFromSeed(
-		b,
+		t,
 		os.Stdout,
 		simApp.GetBaseApp(),
 		simtestutil.AppStateFn(simApp.AppCodec(), simApp.SimulationManager(), simApp.DefaultGenesis()),
@@ -73,10 +83,16 @@ func BenchmarkSimulation(b *testing.B) {
 
 	// export state and simParams before the simulation error is checked
 	err = simtestutil.CheckExportSimulation(simApp, cfg, simParams)
-	require.NoError(b, err)
-	require.NoError(b, simErr)
+	require.NoError(t, err)
+	require.NoError(t, simErr)
 
 	if cfg.Commit {
 		simtestutil.PrintStats(db)
 	}
+}
+
+// fauxMerkleModeOpt returns a BaseApp option to use a dbStoreAdapter instead of
+// an IAVLStore for faster simulation speed.
+func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
+	bapp.SetFauxMerkleMode()
 }
