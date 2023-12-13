@@ -100,7 +100,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
 					if err == nil && isDeterministicDeliverTx {
-						if err := reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg)); err != nil {
+						if err := reportDeterministicGas(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg)); err != nil {
 							return nil, err
 						}
 					}
@@ -131,7 +131,7 @@ func ctxForDeterministicGas(
 	return ctx, gasBefore, exists
 }
 
-func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgURL string) error {
+func reportDeterministicGas(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgURL string) error {
 	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
 	if deterministicGas == 0 {
 		return nil
@@ -149,15 +149,9 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 		})
 	}
 
-	err := oldCtx.EventManager().EmitTypedEvent(&EventGas{
+	return errors.WithStack(oldCtx.EventManager().EmitTypedEvent(&EventGas{
 		MsgURL:           msgURL,
 		RealGas:          realGas,
 		DeterministicGas: deterministicGas,
-	})
-
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
+	}))
 }
