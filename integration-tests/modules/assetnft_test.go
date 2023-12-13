@@ -200,6 +200,88 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	requireT.Equal(expectedClass, assetNftClassesRes.Classes[0])
 }
 
+func TestAssetNFTIssueClassAndMintInSingleTx(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+
+	// prepare issue message
+
+	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
+	data, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonData})
+	requireT.NoError(err)
+
+	classSymbol := "symbol"
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      classSymbol,
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		Data:        data,
+		Features:    []assetnfttypes.ClassFeature{},
+		RoyaltyRate: sdk.ZeroDec(),
+	}
+
+	nftID := "id1"
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:    issuer.String(),
+		ClassID:   assetnfttypes.BuildClassID(classSymbol, issuer),
+		ID:        "id1",
+		URI:       "https://my-class-meta.invalid/1",
+		URIHash:   "content-hash",
+		Data:      data,
+		Recipient: issuer.String(),
+	}
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			issueMsg,
+			mintMsg,
+		},
+	})
+
+	// issue new NFT class & NFT
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg, mintMsg)),
+		issueMsg,
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	// assert that events are present
+	_, err = event.FindTypedEvents[*assetnfttypes.EventClassIssued](res.Events)
+	requireT.NoError(err)
+
+	_, err = event.FindTypedEvents[*nft.EventMint](res.Events)
+	requireT.NoError(err)
+
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+
+	// query nft class
+	_, err = assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{
+		Id: classID,
+	})
+	requireT.NoError(err)
+
+	nftClient := nft.NewQueryClient(chain.ClientContext)
+	_, err = nftClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: classID,
+		Id:      nftID,
+	})
+	requireT.NoError(err)
+
+	t.Logf("successfully issued class & NFT txid: %v, class_id: %v, nft_id: %v", res.TxHash, classID, nftID)
+}
+
 // TestAssetNFTIssueClassInvalidFeatures tests non-fungible token class creation with invalid features.
 func TestAssetNFTIssueClassInvalidFeatures(t *testing.T) {
 	requireT := require.New(t)

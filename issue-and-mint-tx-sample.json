@@ -1,0 +1,69 @@
+{
+  "body": {
+    "messages": [
+      {
+        "@type": "/coreum.asset.nft.v1.MsgIssueClass",
+        "issuer": "devcore1pfv90u5xsfh5pt6dzw5cxj8v5uyxu3q4wdqsxl",
+        "symbol": "symbol",
+        "name": "name",
+        "description": "description",
+        "uri": "https://my-class-meta.invalid/1",
+        "uri_hash": "content-hash",
+        "data": {
+          "@type": "/coreum.asset.nft.v1.DataBytes",
+          "Data": "eyJuYW1lIjogIk5hbWUiLCAiZGVzY3JpcHRpb24iOiAiRGVzY3JpcHRpb24ifQ=="
+        },
+        "features": [],
+        "royalty_rate": "0.000000000000000000"
+      },
+      {
+        "@type": "/coreum.asset.nft.v1.MsgMint",
+        "sender": "devcore1pfv90u5xsfh5pt6dzw5cxj8v5uyxu3q4wdqsxl",
+        "class_id": "symbol-devcore1pfv90u5xsfh5pt6dzw5cxj8v5uyxu3q4wdqsxl",
+        "id": "id1",
+        "uri": "https://my-class-meta.invalid/1",
+        "uri_hash": "content-hash",
+        "data": {
+          "@type": "/coreum.asset.nft.v1.DataBytes",
+          "Data": "eyJuYW1lIjogIk5hbWUiLCAiZGVzY3JpcHRpb24iOiAiRGVzY3JpcHRpb24ifQ=="
+        },
+        "recipient": "devcore1pfv90u5xsfh5pt6dzw5cxj8v5uyxu3q4wdqsxl"
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [
+      {
+        "public_key": {
+          "@type": "/cosmos.crypto.secp256k1.PubKey",
+          "key": "A2rGtRwqLrqgajUvvm2whgI/tHAXv0e+a+20tfxpD2Pi"
+        },
+        "mode_info": {
+          "single": {
+            "mode": "SIGN_MODE_DIRECT"
+          }
+        },
+        "sequence": "0"
+      }
+    ],
+    "fee": {
+      "amount": [
+        {
+          "denom": "udevcore",
+          "amount": "11743"
+        }
+      ],
+      "gas_limit": "187880",
+      "payer": "",
+      "granter": ""
+    },
+    "tip": null
+  },
+  "signatures": [
+    "LxAUfWmrC9cwwbb8MHp9qMGduyaapP0X719m/ejxNo5gWD3G096bCLGwoD/jSN91AkARI3cO3txEJx1ueH07JQ=="
+  ]
+}
