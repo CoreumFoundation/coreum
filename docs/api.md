@@ -169,6 +169,9 @@
     - [DelayedItem](#coreum.delay.v1.DelayedItem)
     - [GenesisState](#coreum.delay.v1.GenesisState)
   
+- [coreum/deterministicgas/v1/event.proto](#coreum/deterministicgas/v1/event.proto)
+    - [EventGas](#coreum.deterministicgas.v1.EventGas)
+  
 - [coreum/feemodel/v1/genesis.proto](#coreum/feemodel/v1/genesis.proto)
     - [GenesisState](#coreum.feemodel.v1.GenesisState)
   
@@ -3717,6 +3720,39 @@ GenesisState defines the module genesis state.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `delayed_items` | [DelayedItem](#coreum.delay.v1.DelayedItem) | repeated | tokens keep the fungible token state |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/deterministicgas/v1/event.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/deterministicgas/v1/event.proto
+
+
+
+<a name="coreum.deterministicgas.v1.EventGas"></a>
+
+### EventGas
+EventGas is emitted by deterministic gas module to report gas information.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `msgURL` | [string](#string) |  |  |
+| `realGas` | [uint64](#uint64) |  |  |
+| `deterministicGas` | [uint64](#uint64) |  |  |
 
 
 

@@ -74,7 +74,7 @@ func (w Wasm) ExecuteWASMContract(
 	contractAddr string,
 	payload json.RawMessage,
 	fundAmt sdk.Coin,
-) (int64, error) {
+) (*sdk.TxResponse, error) {
 	funds := sdk.NewCoins()
 	if !fundAmt.Amount.IsNil() {
 		funds = funds.Add(fundAmt)
@@ -89,9 +89,9 @@ func (w Wasm) ExecuteWASMContract(
 
 	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return res.GasUsed, nil
+	return res, nil
 }
 
 // QueryWASMContract queries the contract with the requested payload.

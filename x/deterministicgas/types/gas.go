@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
+	"github.com/pkg/errors"
 	googlegrpc "google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
@@ -99,7 +100,9 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
 					if err == nil && isDeterministicDeliverTx {
-						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg))
+						if err := reportDeterministicGas(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg)); err != nil {
+							return nil, err
+						}
 					}
 					return res, err
 				})
@@ -128,15 +131,15 @@ func ctxForDeterministicGas(
 	return ctx, gasBefore, exists
 }
 
-func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgURL string) {
+func reportDeterministicGas(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgURL string) error {
 	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
 	if deterministicGas == 0 {
-		return
+		return nil
 	}
 
-	nondeterministicGas := newCtx.GasMeter().GasConsumed()
+	realGas := newCtx.GasMeter().GasConsumed()
 
-	gasFactor := float32(nondeterministicGas) / float32(deterministicGas)
+	gasFactor := float32(realGas) / float32(deterministicGas)
 	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
 		{Name: "msg_name", Value: msgURL},
 	})
@@ -145,4 +148,10 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 			{Name: "msg_name", Value: msgURL},
 		})
 	}
+
+	return errors.WithStack(oldCtx.EventManager().EmitTypedEvent(&EventGas{
+		MsgURL:           msgURL,
+		RealGas:          realGas,
+		DeterministicGas: deterministicGas,
+	}))
 }
