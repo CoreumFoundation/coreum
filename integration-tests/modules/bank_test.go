@@ -75,7 +75,7 @@ func TestFaucet(t *testing.T) {
 	wg.Wait()
 
 	//for _, a := range accountsToFund {
-	//	integration.AssertBalance(t, ctx, chain, a, chain.NewCoin(sdk.NewInt(10)))
+	//	integration.AssertBalanceAtLeast(t, ctx, chain, a, chain.NewCoin(sdk.NewInt(10)))
 	//}
 }
 

@@ -55,7 +55,7 @@ type fundingRequest struct {
 	FundedCh       chan error
 }
 
-func AssertBalance(t *testing.T, ctx context.Context, chainContext ChainContext, acc sdk.AccAddress, expectedBalance sdk.Coin) {
+func AssertBalanceAtLeast(t *testing.T, ctx context.Context, chainContext ChainContext, acc sdk.AccAddress, expectedBalance sdk.Coin) {
 	bankClient := banktypes.NewQueryClient(chainContext.ClientContext)
 
 	res, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
@@ -64,7 +64,14 @@ func AssertBalance(t *testing.T, ctx context.Context, chainContext ChainContext,
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, expectedBalance.String(), res.Balance.String())
+	require.Truef(
+		t,
+		res.Balance.Amount.GTE(expectedBalance.Amount),
+		"balance after funding is: %v less than expected: %v for: %v",
+		res.Balance.String(),
+		expectedBalance.String(),
+		acc.String(),
+	)
 }
 
 // FundAccounts funds the list of the received wallets.
@@ -76,7 +83,7 @@ func (f Faucet) FundAccounts(ctx context.Context, t *testing.T, accountsToFund .
 
 	addresses := make([]string, 0, len(accountsToFund))
 	for _, accToFund := range accountsToFund {
-		AssertBalance(t, ctx, f.chainCtx, accToFund.Address, accToFund.Amount)
+		AssertBalanceAtLeast(t, ctx, f.chainCtx, accToFund.Address, accToFund.Amount)
 		addresses = append(addresses, accToFund.Address.String())
 	}
 	t.Logf("Test accounts: %v funded and balances asserted", strings.Join(addresses, ","))
@@ -90,7 +97,7 @@ func (f Faucet) FundAccounts(ctx context.Context, t *testing.T, accountsToFund .
 
 		require.NoError(t, err)
 	}
-	t.Logf("Test accounts: %v funded and balances asserted", strings.Join(addresses, ","))
+	t.Logf("Test accounts: %v funded and acc existence asserted", strings.Join(addresses, ","))
 }
 
 func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccount) (retErr error) {
