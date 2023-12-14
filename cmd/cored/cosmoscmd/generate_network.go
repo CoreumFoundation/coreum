@@ -128,8 +128,10 @@ func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context
 
 	// set custom params
 	customparamsGenesis := customparamstypes.DefaultGenesisState()
-	if !cfg.CustomParamsConfig.MinSelfDelegation.IsNil() &&
-		cfg.CustomParamsConfig.MinSelfDelegation.IsPositive() {
+	if !cfg.CustomParamsConfig.MinSelfDelegation.IsNil() {
+		if cfg.CustomParamsConfig.MinSelfDelegation.IsNegative() {
+			return types.GenesisDoc{}, errors.Errorf("min self delegation cannot be negative")
+		}
 		customparamsGenesis.StakingParams.MinSelfDelegation = cfg.CustomParamsConfig.MinSelfDelegation
 	}
 	appGenState[customparamstypes.ModuleName] = cdc.MustMarshalJSON(customparamsGenesis)
