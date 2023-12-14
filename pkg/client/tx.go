@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/mempool"
@@ -268,7 +269,7 @@ func AwaitTx(
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxTimeout)
 	defer cancel()
 
-	if err = retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxStatusPollInterval, func() error {
+	if err = retry.Do(timeoutCtx, 1*time.Millisecond, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 

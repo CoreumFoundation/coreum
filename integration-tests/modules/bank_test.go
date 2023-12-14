@@ -5,7 +5,9 @@ package modules
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"strings"
+	sync "sync"
 	"testing"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,70 +29,54 @@ import (
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
-//func TestFaucet(t *testing.T) {
-//	t.Parallel()
-//
-//	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-//
-//	accountsToFund := lo.Times(100, func(index int) sdk.AccAddress {
-//		return chain.GenAccount()
-//	})
-//
-//	fundBalance := sdk.NewInt(100_000_000)
-//	wg := sync.WaitGroup{}
-//	for i, a := range accountsToFund {
-//		i := i
-//
-//		wg.Add(1)
-//		go func(acc sdk.AccAddress) {
-//			defer wg.Done()
-//
-//			<-time.After(time.Duration(rand.Int()%100_000) * time.Millisecond)
-//
-//			chain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
-//				Address: acc,
-//				Amount:  chain.NewCoin(fundBalance),
-//			})
-//			assertBalance(t, ctx, chain, acc, chain.NewCoin(fundBalance))
-//			t.Logf("funded account num: %v, addr: %v", i, acc.String())
-//
-//			amount := sdkmath.NewInt(1000)
-//			msg := &assetfttypes.MsgIssue{
-//				Issuer:        acc.String(),
-//				Symbol:        "ABCNotWhitelistable",
-//				Subunit:       "uabcnotwhitelistable",
-//				Precision:     1,
-//				Description:   "ABC Description",
-//				InitialAmount: amount,
-//				Features:      []assetfttypes.Feature{},
-//			}
-//
-//			_, err := client.BroadcastTx(
-//				ctx,
-//				chain.ClientContext.WithFromAddress(acc),
-//				chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
-//				msg,
-//			)
-//			require.NoError(t, err)
-//		}(a)
-//	}
-//	wg.Wait()
-//
-//	//for _, a := range accountsToFund {
-//	//	assertBalance(t, ctx, chain, a, chain.NewCoin(sdk.NewInt(10)))
-//	//}
-//}
+func TestFaucet(t *testing.T) {
+	t.Parallel()
 
-func assertBalance(t *testing.T, ctx context.Context, chain integration.CoreumChain, acc sdk.AccAddress, expectedBalance sdk.Coin) {
-	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	res, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: acc.String(),
-		Denom:   chain.ChainSettings.Denom,
+	accountsToFund := lo.Times(400, func(index int) sdk.AccAddress {
+		return chain.GenAccount()
 	})
 
-	require.NoError(t, err)
-	require.Equal(t, expectedBalance.String(), res.Balance.String())
+	fundBalance := sdk.NewInt(100_000_000)
+	wg := sync.WaitGroup{}
+	for _, a := range accountsToFund {
+		wg.Add(1)
+		go func(acc sdk.AccAddress) {
+			defer wg.Done()
+
+			<-time.After(time.Duration(rand.Int()%20_000) * time.Millisecond)
+
+			chain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
+				Address: acc,
+				Amount:  chain.NewCoin(fundBalance),
+			})
+
+			amount := sdkmath.NewInt(1000)
+			msg := &assetfttypes.MsgIssue{
+				Issuer:        acc.String(),
+				Symbol:        "ABCNotWhitelistable",
+				Subunit:       "uabcnotwhitelistable",
+				Precision:     1,
+				Description:   "ABC Description",
+				InitialAmount: amount,
+				Features:      []assetfttypes.Feature{},
+			}
+
+			_, err := client.BroadcastTx(
+				ctx,
+				chain.ClientContext.WithFromAddress(acc),
+				chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+				msg,
+			)
+			require.NoError(t, err)
+		}(a)
+	}
+	wg.Wait()
+
+	//for _, a := range accountsToFund {
+	//	integration.AssertBalance(t, ctx, chain, a, chain.NewCoin(sdk.NewInt(10)))
+	//}
 }
 
 // TestBankMultiSendBatchOutputs tests MultiSend message with maximum amount of addresses.

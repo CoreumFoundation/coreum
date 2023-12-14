@@ -2,10 +2,12 @@ package integration
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -53,13 +55,42 @@ type fundingRequest struct {
 	FundedCh       chan error
 }
 
+func AssertBalance(t *testing.T, ctx context.Context, chainContext ChainContext, acc sdk.AccAddress, expectedBalance sdk.Coin) {
+	bankClient := banktypes.NewQueryClient(chainContext.ClientContext)
+
+	res, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   expectedBalance.Denom,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, expectedBalance.String(), res.Balance.String())
+}
+
 // FundAccounts funds the list of the received wallets.
 func (f Faucet) FundAccounts(ctx context.Context, t *testing.T, accountsToFund ...FundedAccount) {
 	t.Helper()
 
 	t.Log("Funding accounts for tests, it might take a while...")
 	require.NoError(t, f.fundAccounts(ctx, accountsToFund...))
-	t.Log("Test accounts funded")
+
+	addresses := make([]string, 0, len(accountsToFund))
+	for _, accToFund := range accountsToFund {
+		AssertBalance(t, ctx, f.chainCtx, accToFund.Address, accToFund.Amount)
+		addresses = append(addresses, accToFund.Address.String())
+	}
+	t.Logf("Test accounts: %v funded and balances asserted", strings.Join(addresses, ","))
+
+	authClient := auth.NewQueryClient(f.chainCtx.ClientContext)
+
+	for _, accToFund := range accountsToFund {
+		_, err := authClient.Account(ctx, &auth.QueryAccountRequest{
+			Address: accToFund.Address.String(),
+		})
+
+		require.NoError(t, err)
+	}
+	t.Logf("Test accounts: %v funded and balances asserted", strings.Join(addresses, ","))
 }
 
 func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccount) (retErr error) {
