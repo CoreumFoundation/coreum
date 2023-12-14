@@ -22,6 +22,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	deterministicgastypes "github.com/CoreumFoundation/coreum/v4/x/deterministicgas/types"
 )
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
@@ -231,6 +232,17 @@ func TestBankSendDeterministicGas(t *testing.T) {
 		msg)
 	require.NoError(t, err)
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
+
+	gasEvents, err := event.FindTypedEvents[*deterministicgastypes.EventGas](res.Events)
+	require.NoError(t, err)
+	require.Len(t, gasEvents, 1)
+
+	msgGas, ok := chain.DeterministicGasConfig.GasRequiredByMessage(&banktypes.MsgSend{})
+	require.True(t, ok)
+
+	require.Equal(t, "cosmos.bank.v1beta1.MsgSend", gasEvents[0].MsgURL)
+	require.Equal(t, msgGas, gasEvents[0].DeterministicGas)
+	require.Greater(t, gasEvents[0].RealGas, uint64(0))
 }
 
 // TestBankSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas.

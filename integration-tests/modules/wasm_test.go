@@ -30,9 +30,11 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	moduleswasm "github.com/CoreumFoundation/coreum/v4/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	deterministicgastypes "github.com/CoreumFoundation/coreum/v4/x/deterministicgas/types"
 )
 
 // authz models
@@ -305,7 +307,7 @@ func TestWASMBankSendContract(t *testing.T) {
 	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// send coin from the contract to test wallet
-	_, err = chain.Wasm.ExecuteWASMContract(
+	res, err := chain.Wasm.ExecuteWASMContract(
 		ctx,
 		txf,
 		admin,
@@ -333,6 +335,18 @@ func TestWASMBankSendContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NotNil(recipientBalance.Balance)
 	requireT.Equal(sdk.NewInt64Coin(nativeDenom, 5000).String(), recipientBalance.Balance.String())
+
+	// verify deterministic gas event
+	gasEvents, err := event.FindTypedEvents[*deterministicgastypes.EventGas](res.Events)
+	require.NoError(t, err)
+	require.Len(t, gasEvents, 1)
+
+	msgGas, ok := chain.DeterministicGasConfig.GasRequiredByMessage(&banktypes.MsgSend{})
+	require.True(t, ok)
+
+	require.Equal(t, "cosmos.bank.v1beta1.MsgSend", gasEvents[0].MsgURL)
+	require.Equal(t, msgGas, gasEvents[0].DeterministicGas)
+	require.Greater(t, gasEvents[0].RealGas, uint64(0))
 }
 
 // TestWASMGasBankSendAndBankSend checks that a message containing a deterministic and a

@@ -1,0 +1,11 @@
+syntax = "proto3";
+package coreum.deterministicgas.v1;
+
+option go_package = "github.com/CoreumFoundation/coreum/v4/x/deterministicgas/types";
+
+// EventGas is emitted by deterministic gas module to report gas information.
+message EventGas {
+  string msgURL = 1;
+  uint64 realGas = 2;
+  uint64 deterministicGas = 3;
+}
