@@ -1,6 +1,7 @@
 package v3patch2
 
-// This patch is supposed to be used on testnet only for upgrading from v3.0.1 (v3patch1 plan) to v3.0.2 (v3patch2 plan).
+// This patch is supposed to be used on testnet only for upgrading from v3.0.1 (v3patch1 plan)
+// to v3.0.2 (v3patch2 plan).
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
