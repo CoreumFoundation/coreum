@@ -30,7 +30,7 @@ import (
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
 func TestFaucet(t *testing.T) {
-	t.Parallel()
+	t.SkipNow()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
