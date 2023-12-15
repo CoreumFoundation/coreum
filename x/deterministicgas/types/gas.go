@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// TODO(dzmitryhil) update to 10 once if fix simulation issue.
 	fuseGasMultiplier    = 1000
 	expectedMaxGasFactor = 5
 )

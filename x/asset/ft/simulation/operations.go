@@ -63,29 +63,27 @@ func (op *OperationFactory) WeightedOperations() simulation.WeightedOperations {
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgIssue,
-			op.simulateMsgIssue(),
+			op.simulateMsgIssue,
 		),
 	}
 }
 
-func (op *OperationFactory) simulateMsgIssue() simtypes.Operation {
-	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
-		accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		senderAcc, _ := simtypes.RandomAcc(r, accs)
-		msg, skip := op.randomIssueMsg(ctx, r, senderAcc.Address)
-		if skip {
-			return simtypes.NoOpMsg(types.ModuleName, TypeMsgIssue, "skip issue"), nil, nil
-		}
-
-		err := op.sendMsg(ctx, r, chainID, []cryptotypes.PrivKey{senderAcc.PrivKey}, app, senderAcc.Address, msg)
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "invalid issuance"), nil, err
-		}
-
-		return simtypes.NewOperationMsg(msg, false, "", nil), nil, nil
+func (op *OperationFactory) simulateMsgIssue(
+	r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+	accs []simtypes.Account, chainID string,
+) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	senderAcc, _ := simtypes.RandomAcc(r, accs)
+	msg, skip := op.randomIssueMsg(ctx, r, senderAcc.Address)
+	if skip {
+		return simtypes.NoOpMsg(types.ModuleName, TypeMsgIssue, "skip issue"), nil, nil
 	}
+
+	err := op.sendMsg(ctx, r, chainID, []cryptotypes.PrivKey{senderAcc.PrivKey}, app, senderAcc.Address, msg)
+	if err != nil {
+		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "invalid issuance"), nil, err
+	}
+
+	return simtypes.NewOperationMsg(msg, false, "", nil), nil, nil
 }
 
 func (op *OperationFactory) randomIssueMsg(
@@ -110,7 +108,7 @@ func (op *OperationFactory) randomIssueMsg(
 		// TODO(dzmitryhil) fix the simulation to work with the commissions since now it is failed
 		// in the distribution EndBlocker since tries to allocate all tokens for the fee_collector
 		// and the fee_collector has the asset_ft_tokens with the SendCommissionRate and BurnRate
-		BurnRate: sdkmath.LegacyNewDec(int64(simtypes.RandIntBetween(r, 1, 1000))).QuoInt64(10000),
+		// BurnRate: sdkmath.LegacyNewDec(int64(simtypes.RandIntBetween(r, 1, 1000))).QuoInt64(10000),
 		// SendCommissionRate: sdkmath.LegacyNewDec(int64(simtypes.RandIntBetween(r, 1, 1000))).QuoInt64(10000),
 		URI:     simtypes.RandStringOfLength(r, types.MaxURILength),
 		URIHash: simtypes.RandStringOfLength(r, types.MaxURIHashLength),
@@ -126,7 +124,7 @@ func (op *OperationFactory) sendMsg(
 	ctx sdk.Context,
 	r *rand.Rand,
 	chainID string,
-	privkeys []cryptotypes.PrivKey,
+	privKeys []cryptotypes.PrivKey,
 	app *baseapp.BaseApp,
 	sender sdk.AccAddress,
 	msg *types.MsgIssue,
@@ -142,7 +140,7 @@ func (op *OperationFactory) sendMsg(
 		chainID,
 		[]uint64{account.GetAccountNumber()},
 		[]uint64{account.GetSequence()},
-		privkeys...,
+		privKeys...,
 	)
 	if err != nil {
 		return err
