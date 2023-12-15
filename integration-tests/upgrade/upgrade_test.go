@@ -41,7 +41,7 @@ func TestUpgrade(t *testing.T) {
 	case "v3.0.0", "v3.0.2":
 		upgradeV3ToV4(t)
 	default:
-		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
+		requireT.Failf("not supported version", "version: %s", infoRes.ApplicationVersion.Version)
 	}
 }
 
