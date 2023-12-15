@@ -41,7 +41,7 @@ func IncrementSimpleStateAndVerify(
 	// execute contract to increment the count
 	incrementPayload, err := MethodToEmptyBodyPayload(SimpleIncrement)
 	requireT.NoError(err)
-	gasUsed, err := chain.Wasm.ExecuteWASMContract(ctx, txf, fromAddress, contractAddr, incrementPayload, sdk.Coin{})
+	res, err := chain.Wasm.ExecuteWASMContract(ctx, txf, fromAddress, contractAddr, incrementPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check the update count
@@ -54,7 +54,7 @@ func IncrementSimpleStateAndVerify(
 	requireT.NoError(json.Unmarshal(queryOut, &response))
 	requireT.Equal(expectedValue, response.Count)
 
-	return gasUsed
+	return res.GasUsed
 }
 
 // MethodToEmptyBodyPayload is a helper function used to create a payload for the given method and empty args.
