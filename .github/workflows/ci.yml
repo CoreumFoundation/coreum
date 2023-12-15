@@ -147,7 +147,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: coreum/coverage/coreum,coreum/coverage/coreum-integration-tests
+          files: ${{ github.workspace }}/coreum/coverage/coreum,${{ github.workspace }}/coreum/coverage/coreum-integration-tests
           fail_ci_if_error: true
           verbose: true
         if: ${{ matrix.codecov }}
