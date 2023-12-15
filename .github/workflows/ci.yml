@@ -28,24 +28,28 @@ jobs:
             wasm-cache: true
             linter-cache: true
             docker-cache: false
+            codecov: true
           - ci_step: "test"
             command: "crust test/coreum"
             go-cache: true
             wasm-cache: false
             linter-cache: false
             docker-cache: false
+            codecov: false
           - ci_step: "integration tests coreum-modules"
             command: "crust build/integration-tests/coreum/modules images && crust znet test --test-groups=coreum-modules --timeout-commit 0.5s"
             go-cache: true
             wasm-cache: true
             linter-cache: false
             docker-cache: true
+            codecov: false
           - ci_step: "integration tests coreum-ibc"
             command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: true 
             linter-cache: false
             docker-cache: true
+            codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: |
               crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images 
@@ -54,12 +58,14 @@ jobs:
             wasm-cache: true
             linter-cache: false
             docker-cache: true
+            codecov: false
           - ci_step: "integration tests faucet"
             command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
             go-cache: true
             wasm-cache: false
             linter-cache: false
             docker-cache: true
+            codecov: false
 
     runs-on: ubuntu-22.04
     steps:
@@ -137,6 +143,14 @@ jobs:
         if: ${{ matrix.wasm-cache }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coreum/coverage/coreum,coreum/coverage/coreum-integration-tests
+          fail_ci_if_error: true
+          verbose: true
+        if: ${{ matrix.codecov }}
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
