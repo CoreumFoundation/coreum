@@ -29,6 +29,11 @@ func init() {
 //	`go test ./app -run TestFullAppSimulation -v -Enabled=true \
 //		-Verbose=true -NumBlocks=100 -BlockSize=200 -Commit=true -Period=5`.
 func TestFullAppSimulation(t *testing.T) {
+	if !clientcli.FlagEnabledValue {
+		t.Skip()
+		return
+	}
+
 	cfg := clientcli.NewConfigFromFlags()
 	cfg.ChainID = testutilconstant.SimAppChainID
 
