@@ -28,14 +28,14 @@ jobs:
             wasm-cache: true
             linter-cache: true
             docker-cache: false
-            codecov: true
+            codecov: false
           - ci_step: "test"
             command: "crust test/coreum"
             go-cache: true
             wasm-cache: false
             linter-cache: false
             docker-cache: false
-            codecov: false
+            codecov: true
           - ci_step: "integration tests coreum-modules"
             command: "crust build/integration-tests/coreum/modules images && crust znet test --test-groups=coreum-modules --timeout-commit 0.5s"
             go-cache: true
