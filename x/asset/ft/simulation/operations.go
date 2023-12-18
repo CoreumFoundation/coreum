@@ -99,19 +99,19 @@ func (op *OperationFactory) randomIssueMsg(
 	}
 	msg := &types.MsgIssue{
 		Issuer:        sender.String(),
-		Symbol:        simtypes.RandStringOfLength(r, 127),
-		Subunit:       strings.ToLower(simtypes.RandStringOfLength(r, 50)),
+		Symbol:        simtypes.RandStringOfLength(r, simtypes.RandIntBetween(r, 3, 127)),
+		Subunit:       strings.ToLower(simtypes.RandStringOfLength(r, simtypes.RandIntBetween(r, 1, 50))),
 		Precision:     uint32(simtypes.RandIntBetween(r, 1, 20)),
 		InitialAmount: simtypes.RandomAmount(r, sdkmath.NewIntWithDecimal(1, 30)),
-		Description:   simtypes.RandStringOfLength(r, types.MaxDescriptionLength),
+		Description:   simtypes.RandStringOfLength(r, simtypes.RandIntBetween(r, 1, types.MaxDescriptionLength)),
 		Features:      nil,
 		// TODO(dzmitryhil) fix the simulation to work with the commissions since now it is failed
 		// in the distribution EndBlocker since tries to allocate all tokens for the fee_collector
 		// and the fee_collector has the asset_ft_tokens with the SendCommissionRate and BurnRate
 		// BurnRate: sdkmath.LegacyNewDec(int64(simtypes.RandIntBetween(r, 1, 1000))).QuoInt64(10000),
 		// SendCommissionRate: sdkmath.LegacyNewDec(int64(simtypes.RandIntBetween(r, 1, 1000))).QuoInt64(10000),
-		URI:     simtypes.RandStringOfLength(r, types.MaxURILength),
-		URIHash: simtypes.RandStringOfLength(r, types.MaxURIHashLength),
+		URI:     simtypes.RandStringOfLength(r, simtypes.RandIntBetween(r, 1, types.MaxURILength)),
+		URIHash: simtypes.RandStringOfLength(r, simtypes.RandIntBetween(r, 1, types.MaxURIHashLength)),
 	}
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, true
@@ -135,7 +135,7 @@ func (op *OperationFactory) sendMsg(
 		r,
 		txGen,
 		[]sdk.Msg{msg},
-		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)},
+		sdk.Coins{},
 		simtestutil.DefaultGenTxGas,
 		chainID,
 		[]uint64{account.GetAccountNumber()},
