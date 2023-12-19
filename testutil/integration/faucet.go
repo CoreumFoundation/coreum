@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -78,8 +79,19 @@ func AssertBalanceAtLeast(t *testing.T, ctx context.Context, chainContext ChainC
 func (f Faucet) FundAccounts(ctx context.Context, t *testing.T, accountsToFund ...FundedAccount) {
 	t.Helper()
 
+	tmQueryClient := tmservice.NewServiceClient(f.chainCtx.ClientContext)
+
+	res, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	require.NoError(t, err)
+	blockBeforeFunding := res.SdkBlock.Header.Height
+
 	t.Log("Funding accounts for tests, it might take a while...")
 	require.NoError(t, f.fundAccounts(ctx, accountsToFund...))
+
+	res, err = tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	require.NoError(t, err)
+	blockAfterFunding := res.SdkBlock.Header.Height
+	t.Logf("Block before funding: %v vs after: %v", blockBeforeFunding, blockAfterFunding)
 
 	addresses := make([]string, 0, len(accountsToFund))
 	for _, accToFund := range accountsToFund {
@@ -98,6 +110,7 @@ func (f Faucet) FundAccounts(ctx context.Context, t *testing.T, accountsToFund .
 		require.NoError(t, err)
 	}
 	t.Logf("Test accounts: %v funded and acc existence asserted", strings.Join(addresses, ","))
+
 }
 
 func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccount) (retErr error) {
