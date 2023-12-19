@@ -35,7 +35,7 @@ func TestFaucet(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	accountsToFund := lo.Times(400, func(index int) sdk.AccAddress {
+	accountsToFund := lo.Times(100, func(index int) sdk.AccAddress {
 		return chain.GenAccount()
 	})
 

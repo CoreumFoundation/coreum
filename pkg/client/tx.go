@@ -9,8 +9,11 @@ package client
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
+
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/mempool"
@@ -21,7 +24,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -227,8 +229,16 @@ func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sd
 	}
 
 	if clientCtx.GetAwaitTx() {
-		txRes, err = AwaitTx(ctx, clientCtx, txRes.TxHash)
+		// TODO: If we decide to proceed with this solution we should remove timeoutCtx from other places (AwaitTx & AwaitAccountUpdate).
+		timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxTimeout)
+		defer cancel()
+
+		txRes, err = AwaitTx(timeoutCtx, clientCtx, txRes.TxHash)
 		if err != nil {
+			return nil, err
+		}
+
+		if err := AwaitAccountUpdate(timeoutCtx, clientCtx, txRes.TxHash, txBytes); err != nil {
 			return nil, err
 		}
 	}
@@ -257,6 +267,45 @@ func GetAccountInfo(
 	}
 
 	return acc, nil
+}
+
+func AwaitAccountUpdate(
+	ctx context.Context,
+	clientCtx Context,
+	txHash string,
+	txBytes []byte,
+) error {
+	txSvcClient := sdktx.NewServiceClient(clientCtx)
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxTimeout)
+	defer cancel()
+
+	err := retry.Do(timeoutCtx, 1*time.Millisecond, func() error {
+		_, err := txSvcClient.Simulate(ctx, &sdktx.SimulateRequest{
+			TxBytes: txBytes,
+		})
+
+		// possible errors:
+		// tx double-estimation failed with unexpected err: rpc error: code = Unknown desc = spendable balance 4594udevcore is smaller than 7188udevcore: insufficient funds: insufficient funds [cosmos/cosmos-sdk@v0.47.5/x/auth/ante/fee.go:132] With gas wanted: '50000000' and gas used: '5572'     assetft_test.go:4458:
+		if strings.Contains(err.Error(), "insufficient funds") {
+			return nil
+		}
+
+		// account sequence mismatch, expected 1, got 0: incorrect account sequence [cosmos/cosmos-sdk@v0.47.5/x/auth/ante/sigverify.go:269] With gas wanted: '50000000' and gas used: '20196'
+		accSequenceMismatchRgxp := regexp.MustCompile("account sequence mismatch, expected ([0-9]+), got ([0-9]+): incorrect account sequence")
+		if accSequenceMismatchRgxp.MatchString(err.Error()) {
+			return nil
+		}
+
+		if err != nil {
+			fmt.Printf("tx double-estimation failed with unexpected err: %v", err.Error())
+			return err
+		}
+
+		return retry.Retryable(errors.Errorf("transaction '%s' estimation suceeded but was expected to fail", txHash))
+	})
+
+	return errors.Wrapf(err, "AwaitAccountUpdate")
 }
 
 // AwaitTx waits until a signed transaction is included in a block, returning the result.

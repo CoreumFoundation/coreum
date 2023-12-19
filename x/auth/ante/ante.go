@@ -110,7 +110,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		feemodelante.NewFeeDecorator(options.FeeModelKeeper),
-		authante.NewDeductFeeDecorator(
+		authante.NewDeductFeeDecorator( // fails here
 			options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker,
 		),
 		// SetPubKeyDecorator must be called before all signature verification decorators
