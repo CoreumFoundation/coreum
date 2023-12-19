@@ -30,6 +30,9 @@ const (
 	// FlagOutputPath defines an output path.
 	FlagOutputPath = "output-path"
 
+	// FlagInputPath defines an input path.
+	FlagInputPath = "input-path"
+
 	// FlagValidatorName defines a name of the validator.
 	FlagValidatorName = "validator-name"
 
