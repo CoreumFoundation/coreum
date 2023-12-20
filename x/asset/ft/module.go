@@ -19,6 +19,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/client/cli"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper"
 	v1 "github.com/CoreumFoundation/coreum/v4/x/asset/ft/migrations/v1"
+	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/simulation"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
@@ -102,21 +103,24 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper       keeper.Keeper
-	bankKeeper   types.BankKeeper
-	paramsKeeper v1.ParamsKeeper
+	keeper        keeper.Keeper
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
+	paramsKeeper  v1.ParamsKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
+	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	paramsKeeper v1.ParamsKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
 		paramsKeeper:   paramsKeeper,
 	}
@@ -177,6 +181,11 @@ func (AppModule) GenerateGenesisState(_ *module.SimulationState) {}
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
 // WeightedOperations returns the all the asset ft module operations with their respective weights.
-func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
-	return nil
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	return simulation.NewOperationFactory(
+		simState.AppParams,
+		simState.Cdc,
+		am.accountKeeper,
+		am.bankKeeper,
+	).WeightedOperations()
 }

@@ -5,8 +5,15 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
+
+// AccountKeeper defines the expected account keeper interface.
+type AccountKeeper interface {
+	//nolint:inamedparam // the sdk interface
+	GetAccount(sdk.Context, sdk.AccAddress) authtypes.AccountI
+}
 
 // BankKeeper defines the expected bank interface.
 type BankKeeper interface {

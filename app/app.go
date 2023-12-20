@@ -108,6 +108,7 @@ import (
 	ibclocalhost "github.com/cosmos/ibc-go/v7/modules/light-clients/09-localhost"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
 
 	"github.com/CoreumFoundation/coreum/v4/app/openapi"
@@ -682,6 +683,7 @@ func New(
 	assetFTModule := assetft.NewAppModule(
 		appCodec,
 		app.AssetFTKeeper,
+		app.AccountKeeper,
 		app.BankKeeper.BaseKeeper,
 		app.ParamsKeeper,
 	)
@@ -903,7 +905,9 @@ func New(
 		),
 	}
 
-	app.sm = module.NewSimulationManagerFromAppModules(app.ModuleManager.Modules, overrideModules)
+	// exclude the nft simulation since it is incompatible with the asset nft
+	simModules := excludeModules(app.ModuleManager.Modules, []string{nft.ModuleName})
+	app.sm = module.NewSimulationManagerFromAppModules(simModules, overrideModules)
 	app.sm.RegisterStoreDecoders()
 
 	// initialize stores
@@ -1234,4 +1238,19 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(assetnfttypes.ModuleName)
 
 	return paramsKeeper
+}
+
+func excludeModules(modules map[string]interface{}, modulesToExclude []string) map[string]interface{} {
+	filteredModules := make(map[string]interface{}, 0)
+	modulesToExcludeMap := lo.SliceToMap(modulesToExclude, func(k string) (string, struct{}) {
+		return k, struct{}{}
+	})
+	for n, m := range modules {
+		if _, ok := modulesToExcludeMap[n]; ok {
+			continue
+		}
+		filteredModules[n] = m
+	}
+
+	return filteredModules
 }
