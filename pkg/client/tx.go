@@ -280,7 +280,7 @@ func AwaitAccountUpdate(
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxTimeout)
 	defer cancel()
 
-	fmt.Printf("AwaitAccountUpdate for: %v", clientCtx.FromAddress().String())
+	fmt.Printf("AwaitAccountUpdate for: %v\n", clientCtx.FromAddress().String())
 	err := retry.Do(timeoutCtx, 1*time.Millisecond, func() error {
 		_, err := txSvcClient.Simulate(ctx, &sdktx.SimulateRequest{
 			TxBytes: txBytes,
