@@ -260,7 +260,11 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventIssued event: %s", err)
 	}
 
-	k.logger(ctx).Debug("issued new fungible token with denom %d", denom)
+	k.logger(ctx).Debug(
+		"issued new fungible token",
+		"denom", denom,
+		"settings", settings,
+	)
 
 	return denom, nil
 }
