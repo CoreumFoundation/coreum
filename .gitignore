@@ -1,5 +1,6 @@
 .idea
 .vscode
 vendor
+/coverage
 *.iml
 go.work*
