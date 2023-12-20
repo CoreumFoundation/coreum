@@ -81,6 +81,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          ref: yaroslav/fix-integr-tests-faucet
       - name: Set up crust
         run: | 
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
