@@ -2,4 +2,5 @@ go 1.21
 
 use .
 
+use ./build
 use ./integration-tests

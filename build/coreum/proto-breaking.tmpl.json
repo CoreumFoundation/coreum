@@ -1,0 +1,7 @@
+{
+  "against_input": "{{ .AgainstInput }}",
+  "limit_to_input_files": true,
+  "input_config": {"version": "v1", "breaking": {"use": ["FILE"]}},
+  "against_input_config": {"version": "v1", "breaking": {"use": ["FILE"]}},
+  "log_level": "debug"
+}
