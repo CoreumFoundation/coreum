@@ -65,8 +65,6 @@ func TestFeeModelQueryingGasPriceRecommendation(t *testing.T) {
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
 func TestFeeModelProposalParamChange(t *testing.T) {
-	t.Parallel()
-
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)

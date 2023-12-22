@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/mempool"
@@ -268,7 +269,9 @@ func AwaitTx(
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxTimeout)
 	defer cancel()
 
-	if err = retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxStatusPollInterval, func() error {
+	txHeight := 0
+
+	if err = retry.Do(timeoutCtx, 1*time.Millisecond, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
@@ -289,11 +292,19 @@ func AwaitTx(
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
 		}
 
+		txHeight = int(txResponse.Height)
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 
+	_ = txHeight
+	//const minBlocksToWait = 3
+	//tmQueryClient := tmservice.NewServiceClient(clientCtx)
+	//res, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+
+	//txHeight + minBlocksToWait - res.
+	//
 	fmt.Printf("awaiting for next 3 blocks for tx: %v to pass\n", txHash)
 	if err := AwaitNextBlocks(ctx, clientCtx, 3); err != nil {
 		return nil, err
