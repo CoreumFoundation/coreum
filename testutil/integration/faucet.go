@@ -114,7 +114,7 @@ func (f Faucet) FundAccounts(ctx context.Context, t *testing.T, accountsToFund .
 }
 
 func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccount) (retErr error) {
-	const maxAccountsPerRequest = 20
+	const maxAccountsPerRequest = 100
 
 	if len(accountsToFund) > maxAccountsPerRequest {
 		return errors.Errorf(
@@ -182,7 +182,7 @@ func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccoun
 func (f Faucet) collectRequests(ctx context.Context, leaderReq fundingRequest) ([]fundingRequest, error) {
 	const (
 		requestsPerTx   = 20
-		timeoutDuration = 100 * time.Millisecond
+		timeoutDuration = 500 * time.Millisecond
 	)
 
 	requests := make([]fundingRequest, 0, requestsPerTx)

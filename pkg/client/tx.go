@@ -238,9 +238,9 @@ func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sd
 			return nil, err
 		}
 
-		if err := AwaitAccountUpdate(timeoutCtx, clientCtx, txRes.TxHash, txBytes); err != nil {
-			return nil, err
-		}
+		//if err := AwaitAccountUpdate(timeoutCtx, clientCtx, txRes.TxHash, txBytes); err != nil {
+		//	return nil, err
+		//}
 	}
 
 	return txRes, nil
@@ -342,6 +342,11 @@ func AwaitTx(
 
 		return nil
 	}); err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("awaiting for next 3 blocks to make sure tx succeeds fully\n")
+	if err := AwaitNextBlocks(ctx, clientCtx, 3); err != nil {
 		return nil, err
 	}
 
