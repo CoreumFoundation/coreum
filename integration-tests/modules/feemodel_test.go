@@ -65,6 +65,9 @@ func TestFeeModelQueryingGasPriceRecommendation(t *testing.T) {
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
 func TestFeeModelProposalParamChange(t *testing.T) {
+	// Since this test changes global fee config we can't run it in parallel with other tests.
+	// That's why t.Parallel() is not here.
+
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
