@@ -294,6 +294,10 @@ func AwaitTx(
 		return nil, err
 	}
 
+	fmt.Printf("awaiting for next 3 blocks for tx: %v to pass\n", txHash)
+	if err := AwaitNextBlocks(ctx, clientCtx, 3); err != nil {
+		return nil, err
+	}
 	return txResponse, nil
 }
 
