@@ -8,9 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/pkg/errors"
@@ -189,37 +187,6 @@ func (g GovernanceLegacy) NewMsgSubmitProposalV1Beta1(
 	}
 
 	msg, err := govtypesv1beta1.NewMsgSubmitProposal(content, govParams.DepositParams.MinDeposit, proposer)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return msg, nil
-}
-
-// NewMsgSubmitProposalV1 - is a helper which initializes govtypesv1.MsgSubmitProposal with govtypesv1beta1.Content.
-func (g GovernanceLegacy) NewMsgSubmitProposalV1(
-	ctx context.Context,
-	proposer sdk.AccAddress,
-	content govtypesv1beta1.Content, // That is the single place where we use govtypesv1beta1 in gov.go. Can we avoid it ?
-) (*govtypesv1.MsgSubmitProposal, error) {
-	msgExecLegacy, err := govtypesv1.NewLegacyContent(content, authtypes.NewModuleAddress(govtypes.ModuleName).String())
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	govParams, err := g.QueryGovParams(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	msg, err := govtypesv1.NewMsgSubmitProposal(
-		[]sdk.Msg{msgExecLegacy},
-		govParams.DepositParams.MinDeposit,
-		proposer.String(),
-		content.GetDescription(),
-		content.GetTitle(),
-		content.GetTitle(),
-	)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
