@@ -269,9 +269,7 @@ func AwaitTx(
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxTimeout)
 	defer cancel()
 
-	txHeight := 0
-
-	if err = retry.Do(timeoutCtx, 1*time.Millisecond, func() error {
+	if err = retry.Do(timeoutCtx, 10*time.Millisecond, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
@@ -292,24 +290,43 @@ func AwaitTx(
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
 		}
 
-		txHeight = int(txResponse.Height)
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 
-	_ = txHeight
-	//const minBlocksToWait = 3
-	//tmQueryClient := tmservice.NewServiceClient(clientCtx)
-	//res, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
-
-	//txHeight + minBlocksToWait - res.
-	//
 	fmt.Printf("awaiting for next 3 blocks for tx: %v to pass\n", txHash)
-	if err := AwaitNextBlocks(ctx, clientCtx, 3); err != nil {
+	if err := AwaitTargetHeight(ctx, clientCtx, txResponse.Height+3); err != nil {
 		return nil, err
 	}
 	return txResponse, nil
+}
+
+func AwaitTargetHeight(ctx context.Context, clientCtx Context, targetHeight int64) error {
+	tmQueryClient := tmservice.NewServiceClient(clientCtx)
+	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxNextBlocksTimeout)
+	defer cancel()
+
+	return retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxNextBlocksPollInterval, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
+		defer cancel()
+
+		res, err := tmQueryClient.GetLatestBlock(requestCtx, &tmservice.GetLatestBlockRequest{})
+		if err != nil {
+			return retry.Retryable(errors.WithStack(err))
+		}
+
+		var currentHeight = blockHeightFromResponse(res)
+
+		if currentHeight < targetHeight {
+			return retry.Retryable(errors.Errorf(
+				"target block: %d hasn't been reached yet, current: %d",
+				targetHeight, currentHeight,
+			))
+		}
+
+		return nil
+	})
 }
 
 // AwaitNextBlocks waits for next blocks.
@@ -323,7 +340,7 @@ func AwaitNextBlocks(
 	defer cancel()
 
 	heightToStart := int64(0)
-	return retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxNextBlocksPollInterval, func() error {
+	err := retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxNextBlocksPollInterval, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
@@ -332,29 +349,24 @@ func AwaitNextBlocks(
 			return retry.Retryable(errors.WithStack(err))
 		}
 
-		var currentHeight int64
-		if res.SdkBlock != nil {
-			currentHeight = res.SdkBlock.Header.Height
-		} else {
-			// TODO(v4): Remove this in v4 version of cored. Now it is needed because we might
-			// still use it in integration tests together with v2 cored binary.
-			currentHeight = res.Block.Header.Height //nolint:staticcheck // Yes, we know that this is deprecated
-		}
-
-		if heightToStart == 0 {
-			heightToStart = currentHeight
-		}
-
-		targetHeight := heightToStart + nextBlocks
-		if currentHeight < targetHeight {
-			return retry.Retryable(errors.Errorf(
-				"target block: %d hasn't been reached yet, current: %d",
-				targetHeight, currentHeight,
-			))
-		}
-
+		heightToStart = blockHeightFromResponse(res)
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return AwaitTargetHeight(timeoutCtx, clientCtx, heightToStart+nextBlocks)
+}
+
+func blockHeightFromResponse(res *tmservice.GetLatestBlockResponse) int64 {
+	if res.SdkBlock != nil {
+		return res.SdkBlock.Header.Height
+	}
+
+	// TODO(v4): Remove this in v4 version of cored. Now it is needed because we might
+	// still use it in integration tests together with v2 cored binary.
+	return res.Block.Header.Height //nolint:staticcheck // Yes, we know that this is deprecated
 }
 
 // GetGasPrice returns the current gas price of the chain.

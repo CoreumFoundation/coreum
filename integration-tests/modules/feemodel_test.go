@@ -103,7 +103,9 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
+
+	// Don't change max discount drastically just decrease it by 1%.
+	targetMaxDiscount := feeModelParamsRes.Params.Model.MaxDiscount.Mul(sdk.MustNewDecFromStr("0.99"))
 	newParams = feeModelParamsRes.Params
 	newParams.Model.MaxDiscount = targetMaxDiscount
 	requireT.NoError(err)
