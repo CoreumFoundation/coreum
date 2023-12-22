@@ -53,9 +53,11 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	})
 
 	// Create proposal with deposit less than min deposit.
-	textProposal := govtypesv1beta1.NewTextProposal("Test proposal with weighted votes", strings.Repeat("Description", 20))
+	textProposal := govtypesv1beta1.NewTextProposal("Test proposal with weighted votes",
+		strings.Repeat("Description", 20))
 
-	msgExecLegacy, err := govtypesv1.NewLegacyContent(textProposal, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	msgExecLegacy, err := govtypesv1.NewLegacyContent(textProposal,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	requireT.NoError(err)
 
 	proposalMsg, err := gov.NewMsgSubmitProposal(
