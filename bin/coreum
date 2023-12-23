@@ -10,7 +10,7 @@ REPO=$(pwd)
 BUILD_BIN="$REPO/bin/.cache/build-$VERSION"
 
 if [ ! -f "$BUILD_BIN" ]; then
-  rm -f ./bin/.cache/crust*
+  rm -f ./bin/.cache/build-*
 
   pushd build > /dev/null
   go build -trimpath -o "$BUILD_BIN" ./cmd
