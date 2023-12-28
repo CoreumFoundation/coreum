@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -237,8 +236,7 @@ func (g GovernanceLegacy) voteAll(ctx context.Context, msgFunc func(sdk.AccAddre
 		txf := g.chainCtx.TxFactory().
 			WithSimulateAndExecute(true)
 
-		clientCtx := g.chainCtx.ClientContext.
-			WithBroadcastMode(flags.BroadcastSync)
+		clientCtx := g.chainCtx.ClientContext.WithAwaitTx(false)
 
 		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
 		if err != nil {
