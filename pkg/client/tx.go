@@ -301,6 +301,7 @@ func AwaitTx(
 	return txResponse, nil
 }
 
+// AwaitTargetHeight waits for target block.
 func AwaitTargetHeight(ctx context.Context, clientCtx Context, targetHeight int64) error {
 	tmQueryClient := tmservice.NewServiceClient(clientCtx)
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxNextBlocksTimeout)
