@@ -219,6 +219,7 @@ func (g GovernanceLegacy) VoteAllWeighted(
 	})
 }
 
+//nolint:dupl // GovernanceLegacy duplicates Governance mostly with slight changes but reusing code doesn't make sense.
 func (g GovernanceLegacy) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sdk.Msg) error {
 	select {
 	case <-ctx.Done():
