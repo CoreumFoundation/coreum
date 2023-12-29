@@ -294,7 +294,6 @@ func AwaitTx(
 		return nil, err
 	}
 
-	fmt.Printf("awaiting for next 3 blocks for tx: %v to pass\n", txHash)
 	if err := AwaitTargetHeight(ctx, clientCtx, txResponse.Height+3); err != nil {
 		return nil, err
 	}
