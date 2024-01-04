@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/url"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
@@ -271,10 +272,7 @@ func NewChain(
 ) Chain {
 	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
 
-	clientCtxConfig := client.DefaultContextConfig()
-	clientCtxConfig.GasConfig.GasPriceAdjustment = sdk.NewDec(1)
-	clientCtxConfig.GasConfig.GasAdjustment = 1
-	clientCtx := client.NewContext(clientCtxConfig, app.ModuleBasics).
+	clientCtx := client.NewContext(DefaultClientContextConfig(), app.ModuleBasics).
 		WithChainID(chainSettings.ChainID).
 		WithKeyring(coreumkeyring.NewConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
 		WithBroadcastMode(flags.BroadcastSync).
@@ -295,6 +293,18 @@ func NewChain(
 		Faucet:       faucet,
 		Wasm:         NewWasm(chainCtx),
 	}
+}
+
+// DefaultClientContextConfig returns a default client context config for integration tests.
+func DefaultClientContextConfig() client.ContextConfig {
+	clientCtxConfig := client.DefaultContextConfig()
+	clientCtxConfig.GasConfig.GasPriceAdjustment = sdk.NewDec(1)
+	clientCtxConfig.GasConfig.GasAdjustment = 1
+
+	clientCtxConfig.TimeoutConfig.TxStatusPollInterval = 100 * time.Millisecond
+	clientCtxConfig.TimeoutConfig.TxNumberOfBlocksToWait = 3
+
+	return clientCtxConfig
 }
 
 // QueryChainSettings queries the chain setting using the provided GRPC client.

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sync"
 	"testing"
-	"time"
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -101,7 +100,7 @@ func init() {
 		}
 	}
 
-	queryCtx, queryCtxCancel := context.WithTimeout(ctx, getTestContextConfig().TimeoutConfig.RequestTimeout)
+	queryCtx, queryCtxCancel := context.WithTimeout(ctx, integration.DefaultClientContextConfig().TimeoutConfig.TxStatusPollInterval)
 	defer queryCtxCancel()
 
 	// ********** Coreum **********
@@ -113,7 +112,7 @@ func init() {
 
 	coreumSettings := integration.QueryChainSettings(queryCtx, coreumGRPCClient)
 
-	coreumClientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
+	coreumClientCtx := client.NewContext(integration.DefaultClientContextConfig(), app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
 
 	coreumFeemodelParamsRes, err := feemodeltypes.
@@ -200,11 +199,4 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 	})
 
 	return testCtx, chains
-}
-
-func getTestContextConfig() client.ContextConfig {
-	cfg := client.DefaultContextConfig()
-	cfg.TimeoutConfig.TxStatusPollInterval = 100 * time.Millisecond
-
-	return cfg
 }
