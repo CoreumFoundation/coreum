@@ -294,9 +294,12 @@ func AwaitTx(
 		return nil, err
 	}
 
-	if err := AwaitTargetHeight(ctx, clientCtx, txResponse.Height+3); err != nil {
-		return nil, err
+	if blocksToWait := clientCtx.config.TimeoutConfig.TxNumberOfBlocksToWait; blocksToWait > 0 {
+		if err := AwaitTargetHeight(ctx, clientCtx, int64(blocksToWait)+txResponse.Height); err != nil {
+			return nil, err
+		}
 	}
+
 	return txResponse, nil
 }
 
