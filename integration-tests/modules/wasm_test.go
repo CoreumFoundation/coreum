@@ -977,7 +977,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetnfttypes.SendAuthorization{}
-	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[1].Authorization.Value, &updatedGrant)
+	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
 	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{
 		{ClassId: classID, Id: "id-1"},
 	}, updatedGrant.Nfts)
