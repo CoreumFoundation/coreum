@@ -1410,20 +1410,36 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 	requireT.NoError(err)
 
 	// deployWASMContract and init contract with the granter.
-	initialPayload, err := json.Marshal(authz{
+	initialPayloadAuthzTransfer, err := json.Marshal(authz{
 		Granter: granter.String(),
 	})
 	requireT.NoError(err)
 
-	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+	initialPayloadAuthzStargate, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+
+	contractAddrAuthzTransfer, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		issuer,
-		moduleswasm.AuthzWASM,
+		moduleswasm.AuthzTransferWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    initialPayload,
-			Label:      "authz",
+			Payload:    initialPayloadAuthzTransfer,
+			Label:      "authzTransfer",
+		},
+	)
+	requireT.NoError(err)
+
+	contractAddrAuthzStargate, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		issuer,
+		moduleswasm.AuthzStargateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayloadAuthzStargate,
+			Label:      "authzStargate",
 		},
 	)
 	requireT.NoError(err)
@@ -1431,7 +1447,7 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 	// grant the bank send authorization
 	grantMsg, err := authztypes.NewMsgGrant(
 		granter,
-		sdk.MustAccAddressFromBech32(contractAddr),
+		sdk.MustAccAddressFromBech32(contractAddrAuthzTransfer),
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
 		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
@@ -1447,7 +1463,7 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 
 	grantMsg, err = authztypes.NewMsgGrant(
 		issuer,
-		sdk.MustAccAddressFromBech32(contractAddr),
+		sdk.MustAccAddressFromBech32(contractAddrAuthzStargate),
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
 		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
@@ -1467,7 +1483,7 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		issuer,
-		contractAddr,
+		contractAddrAuthzTransfer,
 		moduleswasm.AuthZExecuteTransferRequest(receiver.String(), sdk.NewInt64Coin(denom, 100)),
 		sdk.Coin{},
 	)
@@ -1494,9 +1510,9 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		issuer,
-		contractAddr,
+		contractAddrAuthzStargate,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
-			Grantee: contractAddr,
+			Grantee: contractAddrAuthzStargate,
 			Msgs: []*codectypes.Any{
 				msgSendAny,
 			},
@@ -1553,20 +1569,18 @@ func TestAssetFTFeesAreNotChargedWhenTokensAreTransferredFromSmartContractUsingA
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 
 	// deploy smart contract
-	initialPayload, err := json.Marshal(authz{
-		Granter: issuer.String(),
-	})
+	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		issuer,
-		moduleswasm.AuthzWASM,
+		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
-			Label:      "authz",
+			Label:      "authzStargate",
 		},
 	)
 	requireT.NoError(err)
@@ -5291,20 +5305,18 @@ func TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfS
 	)
 
 	// instantiate new contract
-	initialPayload, err := json.Marshal(authz{
-		Granter: chain.GenAccount().String(),
-	})
+	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		admin,
-		moduleswasm.AuthzWASM,
+		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
-			Label:      "authz",
+			Label:      "authzStargate",
 			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
 		},
 	)
@@ -5478,16 +5490,14 @@ func TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied
 	requireT.NoError(err)
 
 	// instantiate new contract
-	initialPayload, err := json.Marshal(authz{
-		Granter: chain.GenAccount().String(),
-	})
+	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		admin,
-		moduleswasm.AuthzWASM,
+		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,

@@ -749,20 +749,52 @@ func TestWASMAuthzContract(t *testing.T) {
 	)
 
 	// deployWASMContract and init contract with the granter.
-	initialPayload, err := json.Marshal(authz{
+	initialPayloadAuthzTransfer, err := json.Marshal(authz{
 		Granter: granter.String(),
 	})
 	requireT.NoError(err)
 
-	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+	initialPayloadAuthzStargate, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+
+	initialPayloadAuthzNftTrade, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+
+	contractAddrAuthzTransfer, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		granter,
-		moduleswasm.AuthzWASM,
+		moduleswasm.AuthzTransferWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    initialPayload,
-			Label:      "authz",
+			Payload:    initialPayloadAuthzTransfer,
+			Label:      "authzTransfer",
+		},
+	)
+	requireT.NoError(err)
+
+	contractAddrAuthzStargate, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		granter,
+		moduleswasm.AuthzStargateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayloadAuthzStargate,
+			Label:      "authzStargate",
+		},
+	)
+	requireT.NoError(err)
+
+	contractAddrAuthzNftTrade, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		granter,
+		moduleswasm.AuthzNftTradeWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayloadAuthzNftTrade,
+			Label:      "authzNftTrade",
 		},
 	)
 	requireT.NoError(err)
@@ -772,7 +804,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	// grant the bank send authorization
 	grantMsg, err := authztypes.NewMsgGrant(
 		granter,
-		sdk.MustAccAddressFromBech32(contractAddr),
+		sdk.MustAccAddressFromBech32(contractAddrAuthzTransfer),
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
 		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
@@ -789,7 +821,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	// assert granted
 	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
 		Granter: granter.String(),
-		Grantee: contractAddr,
+		Grantee: contractAddrAuthzTransfer,
 	})
 	requireT.NoError(err)
 	requireT.Len(gransRes.Grants, 1)
@@ -800,13 +832,31 @@ func TestWASMAuthzContract(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		granter,
-		contractAddr,
+		contractAddrAuthzTransfer,
 		moduleswasm.AuthZExecuteTransferRequest(receiver.String(), chain.NewCoin(totalAmountToSend)),
 		sdk.Coin{},
 	)
 	requireT.NoError(err)
 
 	// ********** Stargate **********
+
+	// grant the bank send authorization
+	grantMsg, err = authztypes.NewMsgGrant(
+		granter,
+		sdk.MustAccAddressFromBech32(contractAddrAuthzStargate),
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	txResult, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
+	)
+	require.NoError(t, err)
+	requireT.Equal(chain.GasLimitByMsgs(grantMsg), uint64(txResult.GasUsed))
 
 	msgSendAny, err := codectypes.NewAnyWithValue(&banktypes.MsgSend{
 		FromAddress: granter.String(),
@@ -819,9 +869,9 @@ func TestWASMAuthzContract(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		granter,
-		contractAddr,
+		contractAddrAuthzStargate,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
-			Grantee: contractAddr,
+			Grantee: contractAddrAuthzStargate,
 			Msgs: []*codectypes.Any{
 				msgSendAny,
 			},
@@ -904,7 +954,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	// grant the nft transfer authorization to the contract
 	grantMsg, err = authztypes.NewMsgGrant(
 		granter,
-		sdk.MustAccAddressFromBech32(contractAddr),
+		sdk.MustAccAddressFromBech32(contractAddrAuthzNftTrade),
 		assetnfttypes.NewSendAuthorization([]assetnfttypes.NFTIdentifier{
 			{ClassId: classID, Id: "id-1"},
 		}),
@@ -922,10 +972,10 @@ func TestWASMAuthzContract(t *testing.T) {
 	// assert granted
 	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
 		Granter: granter.String(),
-		Grantee: contractAddr,
+		Grantee: contractAddrAuthzNftTrade,
 	})
 	requireT.NoError(err)
-	requireT.Len(gransRes.Grants, 2)
+	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetnfttypes.SendAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[1].Authorization.Value, &updatedGrant)
 	requireT.ElementsMatch([]assetnfttypes.NFTIdentifier{
@@ -944,7 +994,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT.NoError(err)
 
 	_, err = chain.Wasm.ExecuteWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, nftOfferPayload, sdk.Coin{},
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddrAuthzNftTrade, nftOfferPayload, sdk.Coin{},
 	)
 	requireT.NoError(err)
 
@@ -953,7 +1003,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		Id:      "id-1",
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(ownerResp.Owner, contractAddr)
+	requireT.EqualValues(ownerResp.Owner, contractAddrAuthzNftTrade)
 
 	// Accept the offer
 	acceptNftOfferPayload, err := json.Marshal(map[authzNFTMethod]authzAcceptNFTOfferRequest{
@@ -967,7 +1017,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		receiver,
-		contractAddr,
+		contractAddrAuthzNftTrade,
 		acceptNftOfferPayload,
 		sdk.Coin{Denom: denom, Amount: sdkmath.NewInt(10000)},
 	)

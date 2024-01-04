@@ -16,6 +16,10 @@ var (
 	FTWASM []byte
 	//go:embed nft/artifacts/nft.wasm
 	NftWASM []byte
-	//go:embed authz/artifacts/authz.wasm
-	AuthzWASM []byte
+	//go:embed authz-transfer/artifacts/authz_transfer.wasm
+	AuthzTransferWASM []byte
+	//go:embed authz-nft-trade/artifacts/authz_nft_trade.wasm
+	AuthzNftTradeWASM []byte
+	//go:embed authz-stargate/artifacts/authz_stargate.wasm
+	AuthzStargateWASM []byte
 )
