@@ -153,6 +153,7 @@ func generateMnemonic() (string, error) {
 		return "", err
 	}
 
+	fmt.Printf("just adding a few new lines")
 	return bip39.NewMnemonic(entropySeed)
 }
 
@@ -167,6 +168,8 @@ func addValidatorToNetwork(
 	if !ok {
 		return config.NetworkConfig{}, errors.New("failed to cast network.Provider to  config.DynamicConfigProvider")
 	}
+
+	fmt.Printf("just adding a few new lines")
 
 	const signerKeyName = "signer"
 	clientCtx = clientCtx.WithFrom(signerKeyName)
@@ -212,6 +215,11 @@ func addValidatorToNetwork(
 	if err != nil {
 		return config.NetworkConfig{}, errors.Wrap(err, "failed create MsgCreateValidator transaction")
 	}
+
+	lo.Times(2, func(i int) int {
+		fmt.Printf("just adding a few new lines")
+		return 0
+	})
 
 	txf := tx.Factory{}.
 		WithChainID(string(network.ChainID())).
