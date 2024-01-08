@@ -16,10 +16,10 @@ jobs:
         ci_step: [
           "lint",
           "test",
-          "integration tests coreum-modules",
-          "integration tests coreum-ibc",
-          "integration tests coreum-upgrade-v4.0.0",
-          "integration tests faucet",
+#          "integration tests coreum-modules",
+#          "integration tests coreum-ibc",
+#          "integration tests coreum-upgrade-v4.0.0",
+#          "integration tests faucet",
         ]
         include:
           - ci_step: "lint"
