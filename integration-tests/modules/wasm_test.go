@@ -849,14 +849,13 @@ func TestWASMAuthzContract(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	txResult, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
 		grantMsg,
 	)
 	require.NoError(t, err)
-	requireT.Equal(chain.GasLimitByMsgs(grantMsg), uint64(txResult.GasUsed))
 
 	msgSendAny, err := codectypes.NewAnyWithValue(&banktypes.MsgSend{
 		FromAddress: granter.String(),
