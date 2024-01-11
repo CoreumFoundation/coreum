@@ -81,7 +81,6 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: milad/upgrade-wasmvm
       - name: Set up crust
         run: | 
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
