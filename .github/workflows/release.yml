@@ -20,6 +20,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          ref: release-v3
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Login to DockerHub
