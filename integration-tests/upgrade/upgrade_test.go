@@ -25,6 +25,11 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
 
+// Proper value for upgradeDelayInBlocks depends on block time and gov voting period.
+// upgradeDelayInBlocks*blockTime >= govVotingPeriod
+// Current value for govVotingPeriod is 20s and blockTime is customizable by flag and varies between 0.5s and 1s.
+const upgradeDelayInBlocks = 50
+
 type upgradeTest interface {
 	Before(t *testing.T)
 	After(t *testing.T)
@@ -56,7 +61,7 @@ func upgradeV3ToV4(t *testing.T) {
 		test.Before(t)
 	}
 
-	runUpgrade(t, appupgradev4.Name, 30)
+	runUpgrade(t, appupgradev4.Name, upgradeDelayInBlocks)
 
 	for _, test := range tests {
 		test.After(t)
@@ -64,7 +69,7 @@ func upgradeV3ToV4(t *testing.T) {
 }
 
 func upgradeV2ToV3(t *testing.T) {
-	runLegacyUpgrade(t, appupgradev3.Name, 30)
+	runLegacyUpgrade(t, appupgradev3.Name, upgradeDelayInBlocks)
 }
 
 func runUpgrade(
