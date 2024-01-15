@@ -100,9 +100,7 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 	if latestBlockRes.SdkBlock != nil {
 		headerTime = latestBlockRes.GetSdkBlock().GetHeader().Time
 	} else {
-		// TODO(v4): remove this "if condition" once all the connected chains have migrated to cosmos sdk v0.47.
-		// Block is deprecated in favor of SdkBlock.
-		headerTime = latestBlockRes.GetBlock().GetHeader().Time
+		headerTime = latestBlockRes.GetBlock().GetHeader().Time // we keep it to keep the compatibility with old versions
 	}
 
 	ibcSend := ibctransfertypes.MsgTransfer{
