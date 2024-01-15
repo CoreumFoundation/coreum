@@ -65,7 +65,8 @@ func TestFeeModelQueryingGasPriceRecommendation(t *testing.T) {
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
 func TestFeeModelProposalParamChange(t *testing.T) {
-	t.Parallel()
+	// Since this test changes global fee config we can't run it in parallel with other tests.
+	// That's why t.Parallel() is not here.
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -105,7 +106,9 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
+
+	// Don't change max discount drastically just decrease it by 1%.
+	targetMaxDiscount := feeModelParamsRes.Params.Model.MaxDiscount.Mul(sdk.MustNewDecFromStr("0.99"))
 	newParams = feeModelParamsRes.Params
 	newParams.Model.MaxDiscount = targetMaxDiscount
 	requireT.NoError(err)

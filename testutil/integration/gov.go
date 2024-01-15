@@ -205,6 +205,7 @@ func (g Governance) VoteAllWeighted(
 	})
 }
 
+//nolint:dupl // GovernanceLegacy duplicates Governance mostly with slight changes but reusing code doesn't make sense.
 func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sdk.Msg) error {
 	select {
 	case <-ctx.Done():
@@ -219,11 +220,9 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 	for _, staker := range g.stakerAccounts {
 		msg := msgFunc(staker)
 
-		txf := g.chainCtx.TxFactory().
-			WithSimulateAndExecute(true)
+		txf := g.chainCtx.TxFactory().WithSimulateAndExecute(true)
 
-		clientCtx := g.chainCtx.ClientContext.
-			WithAwaitTx(false)
+		clientCtx := g.chainCtx.ClientContext.WithAwaitTx(false)
 
 		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
 		if err != nil {
@@ -256,6 +255,7 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 	if err != nil {
 		return proposal.Status, errors.WithStack(err)
 	}
+
 	if blockRes.SdkBlock.Header.Time.Before(*proposal.VotingEndTime) {
 		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(blockRes.SdkBlock.Header.Time))
 		defer waitCancel()
@@ -266,7 +266,11 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 		}
 	}
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 10*time.Second)
+	params, err := g.QueryGovParams(ctx)
+	if err != nil {
+		return proposal.Status, err
+	}
+	retryCtx, retryCancel := context.WithTimeout(ctx, *params.VotingPeriod)
 	defer retryCancel()
 
 	err = retry.Do(retryCtx, time.Second, func() error {

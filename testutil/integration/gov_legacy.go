@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -220,6 +219,7 @@ func (g GovernanceLegacy) VoteAllWeighted(
 	})
 }
 
+//nolint:dupl // GovernanceLegacy duplicates Governance mostly with slight changes but reusing code doesn't make sense.
 func (g GovernanceLegacy) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sdk.Msg) error {
 	select {
 	case <-ctx.Done():
@@ -234,11 +234,9 @@ func (g GovernanceLegacy) voteAll(ctx context.Context, msgFunc func(sdk.AccAddre
 	for _, staker := range g.stakerAccounts {
 		msg := msgFunc(staker)
 
-		txf := g.chainCtx.TxFactory().
-			WithSimulateAndExecute(true)
+		txf := g.chainCtx.TxFactory().WithSimulateAndExecute(true)
 
-		clientCtx := g.chainCtx.ClientContext.
-			WithBroadcastMode(flags.BroadcastSync)
+		clientCtx := g.chainCtx.ClientContext.WithAwaitTx(false)
 
 		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
 		if err != nil {
