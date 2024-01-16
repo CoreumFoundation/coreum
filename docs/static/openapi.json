@@ -7522,6 +7522,229 @@
         ]
       }
     },
+    "/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV7ModulesAppsTransferTypesEscrowAddress",
+        "parameters": [
+          {
+            "name": "channel_id",
+            "description": "unique channel identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "port_id",
+            "description": "unique port identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryEscrowAddressResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "EscrowAddress returns the escrow address for a particular port and channel id.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/ibc/apps/transfer/v1/denom_hashes/{trace}": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV7ModulesAppsTransferTypesDenomHash",
+        "parameters": [
+          {
+            "name": "trace",
+            "description": "The denomination trace ([port_id]/[channel_id])+/[denom]",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryDenomHashResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "DenomHash queries a denomination hash information.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/ibc/apps/transfer/v1/denom_traces": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV7ModulesAppsTransferTypesDenomTraces",
+        "parameters": [
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryDenomTracesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "DenomTraces queries all denomination traces.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/ibc/apps/transfer/v1/denom_traces/{hash}": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV7ModulesAppsTransferTypesDenomTrace",
+        "parameters": [
+          {
+            "name": "hash",
+            "description": "hash (in hex format) or denom (full denom with ibc prefix) of the denomination trace information.",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryDenomTraceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "DenomTrace queries a denomination trace information.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/ibc/apps/transfer/v1/denoms/{denom}/total_escrow": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV7ModulesAppsTransferTypesTotalEscrowForDenom",
+        "parameters": [
+          {
+            "name": "denom",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryTotalEscrowForDenomResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "TotalEscrowForDenom returns the total amount of tokens in escrow based on the denom.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/ibc/apps/transfer/v1/params": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV7ModulesAppsTransferTypesParams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryParamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "Params queries all parameters of the ibc-transfer module.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/ibc/core/channel/v1/channels": {
       "get": {
         "operationId": "GithubComCosmosIbcGoV7ModulesCore04ChannelTypesChannels",
@@ -13867,6 +14090,101 @@
           }
         }
       }
+    },
+    "ibc.applications.transfer.v1.DenomTrace": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "path defines the chain of port/channel identifiers used for tracing the\nsource of the fungible token."
+        },
+        "base_denom": {
+          "type": "string",
+          "description": "base denomination of the relayed fungible token."
+        }
+      },
+      "description": "DenomTrace contains the base denomination for ICS20 fungible tokens and the\nsource tracing information path."
+    },
+    "ibc.applications.transfer.v1.Params": {
+      "type": "object",
+      "properties": {
+        "send_enabled": {
+          "type": "boolean",
+          "description": "send_enabled enables or disables all cross-chain token transfers from this\nchain."
+        },
+        "receive_enabled": {
+          "type": "boolean",
+          "description": "receive_enabled enables or disables all cross-chain token transfers to this\nchain."
+        }
+      },
+      "description": "Params defines the set of IBC transfer parameters.\nNOTE: To prevent a single token from being transferred, set the\nTransfersEnabled parameter to true and then set the bank module's SendEnabled\nparameter for the denomination to false."
+    },
+    "ibc.applications.transfer.v1.QueryDenomHashResponse": {
+      "type": "object",
+      "properties": {
+        "hash": {
+          "type": "string",
+          "description": "hash (in hex format) of the denomination trace information."
+        }
+      },
+      "description": "QueryDenomHashResponse is the response type for the Query/DenomHash RPC\nmethod."
+    },
+    "ibc.applications.transfer.v1.QueryDenomTraceResponse": {
+      "type": "object",
+      "properties": {
+        "denom_trace": {
+          "$ref": "#/definitions/ibc.applications.transfer.v1.DenomTrace",
+          "description": "denom_trace returns the requested denomination trace information."
+        }
+      },
+      "description": "QueryDenomTraceResponse is the response type for the Query/DenomTrace RPC\nmethod."
+    },
+    "ibc.applications.transfer.v1.QueryDenomTracesResponse": {
+      "type": "object",
+      "properties": {
+        "denom_traces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ibc.applications.transfer.v1.DenomTrace"
+          },
+          "description": "denom_traces returns all denominations trace information."
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse",
+          "description": "pagination defines the pagination in the response."
+        }
+      },
+      "description": "QueryConnectionsResponse is the response type for the Query/DenomTraces RPC\nmethod."
+    },
+    "ibc.applications.transfer.v1.QueryEscrowAddressResponse": {
+      "type": "object",
+      "properties": {
+        "escrow_address": {
+          "type": "string",
+          "title": "the escrow account address"
+        }
+      },
+      "description": "QueryEscrowAddressResponse is the response type of the EscrowAddress RPC method."
+    },
+    "ibc.applications.transfer.v1.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "$ref": "#/definitions/ibc.applications.transfer.v1.Params",
+          "description": "params defines the parameters of the module."
+        }
+      },
+      "description": "QueryParamsResponse is the response type for the Query/Params RPC method."
+    },
+    "ibc.applications.transfer.v1.QueryTotalEscrowForDenomResponse": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/cosmos.base.v1beta1.Coin"
+        }
+      },
+      "description": "QueryTotalEscrowForDenomResponse is the response type for TotalEscrowForDenom RPC method."
     },
     "ibc.core.channel.v1.Channel": {
       "type": "object",
