@@ -89,7 +89,7 @@ func (AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // AppModule implements the sdk.AppModule interface.
 type AppModule struct {
-	// TODO(v4): To be removed together with module.
+	// TODO(v5): To be removed together with module.
 	//   This todo comes from cosmos-sdk code and will be remove together with nft module once we drop back-compatibility.
 	AppModuleBasic
 	keeper keeper.Keeper

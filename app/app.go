@@ -878,7 +878,7 @@ func New(
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
 
-	// TODO (v4): remove cnftModule.RegisterServices alongside the module when we drop deprecated handlers of the module.
+	// TODO (v5): remove cnftModule.RegisterServices alongside the module when we drop deprecated handlers of the module.
 	cnftmodule.
 		NewAppModule(app.AppCodec(), cnftkeeper.NewKeeper(app.NFTKeeper)).
 		RegisterServices(app.configurator)
@@ -1167,7 +1167,7 @@ func (app *App) RegisterAPIRoutes(apiSvr *serverapi.Server, _ serverconfig.APICo
 	// Register grpc-gateway routes for all modules.
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
-	// TODO(v4) remove alongside the cnft module
+	// TODO(v5) remove alongside the cnft module
 	// Regsiter cnft routes.
 	// We register the tx and query handlers here, since we don't want to introduce a new module to the
 	// list of app.Modules where we have to handle genesis registration and migraitons. we only need to
