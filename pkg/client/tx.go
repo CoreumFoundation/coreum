@@ -366,9 +366,7 @@ func blockHeightFromResponse(res *tmservice.GetLatestBlockResponse) int64 {
 		return res.SdkBlock.Header.Height
 	}
 
-	// TODO(v4): Remove this in v4 version of cored. Now it is needed because we might
-	// still use it in integration tests together with v2 cored binary.
-	return res.Block.Header.Height //nolint:staticcheck // Yes, we know that this is deprecated
+	return res.Block.Header.Height //nolint:staticcheck // we keep it to keep the compatibility with old versions
 }
 
 // GetGasPrice returns the current gas price of the chain.
