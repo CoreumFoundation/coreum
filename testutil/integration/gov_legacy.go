@@ -286,7 +286,11 @@ func (g GovernanceLegacy) WaitForVotingToFinalize(
 		}
 	}
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 10*time.Second)
+	params, err := g.QueryGovParams(ctx)
+	if err != nil {
+		return proposal.Status, err
+	}
+	retryCtx, retryCancel := context.WithTimeout(ctx, params.VotingParams.VotingPeriod)
 	defer retryCancel()
 
 	err = retry.Do(retryCtx, time.Second, func() error {
