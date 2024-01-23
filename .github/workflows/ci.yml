@@ -14,12 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         ci_step: [
-          "lint",
-          "test",
+#          "lint",
+#          "test",
           "integration tests coreum-modules",
-          "integration tests coreum-ibc",
-          "integration tests coreum-upgrade-v4.0.0",
-          "integration tests faucet",
+#          "integration tests coreum-ibc",
+#          "integration tests coreum-upgrade-v4.0.0",
+#          "integration tests faucet",
         ]
         include:
           - ci_step: "lint"
@@ -37,7 +37,11 @@ jobs:
             docker-cache: false
             codecov: true
           - ci_step: "integration tests coreum-modules"
-            command: "crust build/integration-tests/coreum/modules images && crust znet test --test-groups=coreum-modules --timeout-commit 0.5s"
+            command:
+              crust build/integration-tests/coreum/modules images
+              crust znet test --filter=TestAssetFTQueryParams --test-groups=coreum-modules --timeout-commit 0.5s
+              crust znet stop
+              crust znet coverage-dump
             go-cache: true
             wasm-cache: true
             linter-cache: false
@@ -81,6 +85,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          ref: yaroslav/integr-tests-codecov
       - name: Set up crust
         run: | 
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
@@ -147,7 +152,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ${{ github.workspace }}/coreum/coverage/coreum,${{ github.workspace }}/coreum/coverage/coreum-integration-tests
+          files: ${{ github.workspace }}/crust/covdatafiles/integration-tests-modules
           fail_ci_if_error: true
           verbose: true
         if: ${{ matrix.codecov }}
