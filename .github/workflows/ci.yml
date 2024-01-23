@@ -152,7 +152,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ${{ github.workspace }}/crust/covdatafiles/integration-tests-modules
+          files: ${{ github.workspace }}/crust/covdatafiles/integration-tests-modules/*
           fail_ci_if_error: true
           verbose: true
         if: ${{ matrix.codecov }}
