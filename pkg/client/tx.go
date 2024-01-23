@@ -294,7 +294,41 @@ func AwaitTx(
 		return nil, err
 	}
 
+	if blocksToWait := clientCtx.config.TimeoutConfig.TxNumberOfBlocksToWait; blocksToWait > 0 {
+		if err := AwaitTargetHeight(ctx, clientCtx, int64(blocksToWait)+txResponse.Height); err != nil {
+			return nil, err
+		}
+	}
+
 	return txResponse, nil
+}
+
+// AwaitTargetHeight waits for target block.
+func AwaitTargetHeight(ctx context.Context, clientCtx Context, targetHeight int64) error {
+	tmQueryClient := tmservice.NewServiceClient(clientCtx)
+	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxNextBlocksTimeout)
+	defer cancel()
+
+	return retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxNextBlocksPollInterval, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
+		defer cancel()
+
+		res, err := tmQueryClient.GetLatestBlock(requestCtx, &tmservice.GetLatestBlockRequest{})
+		if err != nil {
+			return retry.Retryable(errors.WithStack(err))
+		}
+
+		var currentHeight = blockHeightFromResponse(res)
+
+		if currentHeight < targetHeight {
+			return retry.Retryable(errors.Errorf(
+				"target block: %d hasn't been reached yet, current: %d",
+				targetHeight, currentHeight,
+			))
+		}
+
+		return nil
+	})
 }
 
 // AwaitNextBlocks waits for next blocks.
@@ -308,7 +342,7 @@ func AwaitNextBlocks(
 	defer cancel()
 
 	heightToStart := int64(0)
-	return retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxNextBlocksPollInterval, func() error {
+	err := retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxNextBlocksPollInterval, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
@@ -317,29 +351,22 @@ func AwaitNextBlocks(
 			return retry.Retryable(errors.WithStack(err))
 		}
 
-		var currentHeight int64
-		if res.SdkBlock != nil {
-			currentHeight = res.SdkBlock.Header.Height
-		} else {
-			// TODO(v4): Remove this in v4 version of cored. Now it is needed because we might
-			// still use it in integration tests together with v2 cored binary.
-			currentHeight = res.Block.Header.Height //nolint:staticcheck // Yes, we know that this is deprecated
-		}
-
-		if heightToStart == 0 {
-			heightToStart = currentHeight
-		}
-
-		targetHeight := heightToStart + nextBlocks
-		if currentHeight < targetHeight {
-			return retry.Retryable(errors.Errorf(
-				"target block: %d hasn't been reached yet, current: %d",
-				targetHeight, currentHeight,
-			))
-		}
-
+		heightToStart = blockHeightFromResponse(res)
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return AwaitTargetHeight(timeoutCtx, clientCtx, heightToStart+nextBlocks)
+}
+
+func blockHeightFromResponse(res *tmservice.GetLatestBlockResponse) int64 {
+	if res.SdkBlock != nil {
+		return res.SdkBlock.Header.Height
+	}
+
+	return res.Block.Header.Height //nolint:staticcheck // we keep it to keep the compatibility with old versions
 }
 
 // GetGasPrice returns the current gas price of the chain.

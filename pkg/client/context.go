@@ -91,6 +91,11 @@ type TimeoutConfig struct {
 	TxStatusPollInterval     time.Duration
 	TxNextBlocksTimeout      time.Duration
 	TxNextBlocksPollInterval time.Duration
+	// This is an experimental feature.
+	// In AwaitTx mode, wait for at least TxNumberOfBlocksToWait after tx is included in a block.
+	// By default, it is disabled (set to 0). We use this in integration-tests only.
+	// More details about the issue we try to fix: https://github.com/cosmos/cosmos-sdk/issues/18761
+	TxNumberOfBlocksToWait int
 }
 
 // GasConfig is the part of context config holding gas parameters.
@@ -112,6 +117,7 @@ func DefaultContextConfig() ContextConfig {
 			TxStatusPollInterval:     500 * time.Millisecond,
 			TxNextBlocksTimeout:      time.Minute,
 			TxNextBlocksPollInterval: time.Second,
+			TxNumberOfBlocksToWait:   0,
 		},
 	}
 }
