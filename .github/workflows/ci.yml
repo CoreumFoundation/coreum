@@ -37,7 +37,7 @@ jobs:
             docker-cache: false
             codecov: true
           - ci_step: "integration tests coreum-modules"
-            command:
+            command: |
               crust build/integration-tests/coreum/modules images
               crust znet test --filter=TestAssetFTQueryParams --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
