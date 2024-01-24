@@ -42,7 +42,7 @@ jobs:
               crust znet test --filter=TestAssetFTQueryParams --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
               crust znet coverage-dump
-              cat ${{ github.workspace }}/crust/coverage/integration-tests-modules
+              cat /home/runner/work/coreum/coreum/crust/coverage/integration-tests-modules
             go-cache: true
             wasm-cache: true
             linter-cache: false
