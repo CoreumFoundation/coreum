@@ -46,7 +46,7 @@ jobs:
             wasm-cache: true
             linter-cache: false
             docker-cache: true
-            codecov: false
+            codecov: true
           - ci_step: "integration tests coreum-ibc"
             command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
             go-cache: true
