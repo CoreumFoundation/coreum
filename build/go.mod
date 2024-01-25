@@ -9,7 +9,7 @@ replace github.com/CoreumFoundation/coreum/v4 => ../
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-20231128071941-710434b13177
-	github.com/CoreumFoundation/crust/build v0.0.0-20231222084132-35313abc13c4
+	github.com/CoreumFoundation/crust/build v0.0.0-20240125130501-e91f8161839f
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.24.0
