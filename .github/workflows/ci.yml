@@ -46,7 +46,6 @@ jobs:
               crust znet coverage-dump
               go tool covdata percent -i=/home/runner/.cache/crust/znet/znet/app/cored-00-val/coreum-devnet-1/covdatafiles
               cat /home/runner/work/coreum/coreum/crust/coverage/integration-tests-modules
-              cat /unexisting-file
             go-cache: true
             wasm-cache: true
             linter-cache: false
@@ -162,5 +161,5 @@ jobs:
           verbose: true
         if: ${{ matrix.codecov }}
       - name: Dump docker logs on failure
-        if: failure()
+#        if: failure()
         uses: jwalton/gh-docker-logs@v2
