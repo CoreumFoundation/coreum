@@ -85,7 +85,7 @@ jobs:
         run: |
           echo "$(pwd)/coreum/bin" >> $GITHUB_PATH
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-          ls -lh
+          ls -lh coreum
           coreum/bin/coreum-builder build/me
           crust/bin/crust build/crust
       - name: Retrieve go version
