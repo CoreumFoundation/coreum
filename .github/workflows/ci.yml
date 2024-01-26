@@ -14,12 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         ci_step: [
-#          "lint",
+          "lint",
           "test",
           "integration tests coreum-modules",
-#          "integration tests coreum-ibc",
-#          "integration tests coreum-upgrade-v4.0.0",
-#          "integration tests faucet",
+          "integration tests coreum-ibc",
+          "integration tests coreum-upgrade-v4.0.0",
+          "integration tests faucet",
         ]
         include:
           - ci_step: "lint"
@@ -40,7 +40,7 @@ jobs:
           - ci_step: "integration tests coreum-modules"
             command: |
               crust build/integration-tests/coreum/modules images
-              crust znet test --filter=TestAssetFTQueryParams --test-groups=coreum-modules --timeout-commit 0.5s
+              crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
               crust znet coverage-convert
             go-cache: true
@@ -87,7 +87,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: yaroslav/integr-tests-codecov-v2
+          ref: yaroslav/integr-tests-codecov-v2 # FIXME
       - name: Set up crust
         run: | 
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
@@ -160,5 +160,5 @@ jobs:
           verbose: true
         if: ${{ matrix.codecov }}
       - name: Dump docker logs on failure
-#        if: failure()
+        if: failure()
         uses: jwalton/gh-docker-logs@v2
