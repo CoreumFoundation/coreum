@@ -2235,7 +2235,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 }
 
-// TestWASMContractInstantiationIsRejectedIfThereAreTokensOnItsAccount verifies that smart contract instantiation
+// TestWASMContractInstantiationIsNotRejectedIfAccountExists verifies that smart contract instantiation
 // is rejected if account exists.
 func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 	t.Parallel()
