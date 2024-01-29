@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+# go to root dir of repository
+pushd "$(dirname "${BASH_SOURCE[0]}")/.." > /dev/null
+
+VERSION=$(git rev-parse --short HEAD)
+REPO=$(pwd)
+BUILD_BIN="$REPO/bin/.cache/build-$VERSION"
+
+if [ ! -f "$BUILD_BIN" ]; then
+  rm -f ./bin/.cache/build-*
+
+  pushd build > /dev/null
+  go build -trimpath -o "$BUILD_BIN" ./cmd
+  popd > /dev/null
+
+  "$BUILD_BIN" build/me
+fi
+
+popd > /dev/null
+
+exec "$BUILD_BIN" "$@"
