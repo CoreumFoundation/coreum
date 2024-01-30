@@ -47,7 +47,7 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 
 	coreumPath := filepath.Join(absPath, "proto", "coreum")
 	cosmosPath := filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos")
-	ibcPath := filepath.Join(moduleDirs[cosmosIBCModule], "proto", "ibc", "core")
+	ibcPath := filepath.Join(moduleDirs[cosmosIBCModule], "proto", "ibc")
 	generateDirs := []string{
 		filepath.Join(coreumPath, "asset", "ft", "v1"),
 		filepath.Join(coreumPath, "asset", "nft", "v1"),
@@ -72,9 +72,10 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 		filepath.Join(cosmosPath, "slashing", "v1beta1"),
 		filepath.Join(cosmosPath, "staking", "v1beta1"),
 		filepath.Join(cosmosPath, "upgrade", "v1beta1"),
-		filepath.Join(ibcPath, "channel", "v1"),
-		filepath.Join(ibcPath, "client", "v1"),
-		filepath.Join(ibcPath, "connection", "v1"),
+		filepath.Join(ibcPath, "core", "channel", "v1"),
+		filepath.Join(ibcPath, "core", "client", "v1"),
+		filepath.Join(ibcPath, "core", "connection", "v1"),
+		filepath.Join(ibcPath, "applications", "transfer", "v1"),
 		filepath.Join(moduleDirs[cosmWASMModule], "proto", "cosmwasm", "wasm", "v1"),
 	}
 
