@@ -148,6 +148,7 @@ func (c Context) ChainID() string {
 	return c.clientCtx.ChainID
 }
 
+// GenerateOnly returns generate only flag inside context.
 func (c Context) GenerateOnly() bool {
 	return c.clientCtx.GenerateOnly
 }

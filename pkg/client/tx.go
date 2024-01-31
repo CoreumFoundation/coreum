@@ -84,7 +84,10 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 	return BroadcastRawTx(ctx, clientCtx, txBytes)
 }
 
-func GenerateUnsignedTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (client.TxBuilder, error) {
+// GenerateUnsignedTx generates an unsigned tx.
+func GenerateUnsignedTx(
+	ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg,
+) (client.TxBuilder, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
 		return nil, err
