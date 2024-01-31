@@ -66,7 +66,7 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 	if fromName == "" && len(clientCtx.FromAddress()) > 0 {
 		key, err := clientCtx.Keyring().KeyByAddress(clientCtx.FromAddress())
 		if err != nil {
-			return nil, errors.Errorf("failed to get key by the address %q from the keyring", clientCtx.FromAddress().String())
+			return nil, errors.Wrapf(err, "failed to get key by the address %q from the keyring", clientCtx.FromAddress().String())
 		}
 		fromName = key.Name
 	}
