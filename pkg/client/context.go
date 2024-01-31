@@ -148,6 +148,10 @@ func (c Context) ChainID() string {
 	return c.clientCtx.ChainID
 }
 
+func (c Context) GenerateOnly() bool {
+	return c.clientCtx.GenerateOnly
+}
+
 // WithChainID returns a copy of the context with an updated chain ID.
 func (c Context) WithChainID(chainID string) Context {
 	c.clientCtx = c.clientCtx.WithChainID(chainID)
