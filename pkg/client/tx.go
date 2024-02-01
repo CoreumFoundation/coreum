@@ -14,6 +14,7 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/mempool"
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -55,6 +56,46 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 	if err != nil {
 		return nil, err
 	}
+	unsignedTx, err := GenerateUnsignedTx(ctx, clientCtx, txf, msgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	// in case the name is not provided by that address, take the name by the address
+	fromName := clientCtx.FromName()
+	if fromName == "" && len(clientCtx.FromAddress()) > 0 {
+		key, err := clientCtx.Keyring().KeyByAddress(clientCtx.FromAddress())
+		if err != nil {
+			return nil, errors.Wrapf(
+				err,
+				"failed to get key by the address %q from the keyring",
+				clientCtx.FromAddress().String(),
+			)
+		}
+		fromName = key.Name
+	}
+
+	err = tx.Sign(txf, fromName, unsignedTx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	txBytes, err := clientCtx.TxConfig().TxEncoder()(unsignedTx.GetTx())
+	if err != nil {
+		return nil, err
+	}
+
+	return BroadcastRawTx(ctx, clientCtx, txBytes)
+}
+
+// GenerateUnsignedTx generates an unsigned tx.
+func GenerateUnsignedTx(
+	ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg,
+) (client.TxBuilder, error) {
+	txf, err := prepareFactory(ctx, clientCtx, txf)
+	if err != nil {
+		return nil, err
+	}
 
 	if txf.SimulateAndExecute() {
 		gasPrice, err := GetGasPrice(ctx, clientCtx)
@@ -78,28 +119,7 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 	}
 
 	unsignedTx.SetFeeGranter(clientCtx.FeeGranterAddress())
-
-	// in case the name is not provided by that address, take the name by the address
-	fromName := clientCtx.FromName()
-	if fromName == "" && len(clientCtx.FromAddress()) > 0 {
-		key, err := clientCtx.Keyring().KeyByAddress(clientCtx.FromAddress())
-		if err != nil {
-			return nil, errors.Errorf("failed to get key by the address %q from the keyring", clientCtx.FromAddress().String())
-		}
-		fromName = key.Name
-	}
-
-	err = tx.Sign(txf, fromName, unsignedTx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	txBytes, err := clientCtx.TxConfig().TxEncoder()(unsignedTx.GetTx())
-	if err != nil {
-		return nil, err
-	}
-
-	return BroadcastRawTx(ctx, clientCtx, txBytes)
+	return unsignedTx, nil
 }
 
 // CalculateGas simulates the execution of a transaction and returns the
