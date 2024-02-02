@@ -36,13 +36,19 @@ jobs:
             linter-cache: false
             docker-cache: false
             codecov: true
+            codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
-            command: "coreum-builder build/integration-tests/modules images && crust znet test --test-groups=coreum-modules --timeout-commit 0.5s"
+            command: |
+              crust build/integration-tests/coreum/modules images
+              crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
+              crust znet stop
+              crust znet coverage-convert
             go-cache: true
             wasm-cache: true
             linter-cache: false
             docker-cache: true
-            codecov: false
+            codecov: true
+            codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
             command: "coreum-builder build/integration-tests/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
             go-cache: true
@@ -81,6 +87,8 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+      - name: Set up crust
+        run: | 
       - name: Set up build system
         run: |
           echo "$(pwd)/coreum/bin" >> $GITHUB_PATH
@@ -143,7 +151,8 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ${{ github.workspace }}/coreum/coverage/coreum,${{ github.workspace }}/coreum/coverage/coreum-integration-tests
+          files: ${{ github.workspace }}/coreum/coverage/${{ matrix.codecov-name }}
+          flags: ${{ matrix.codecov-name }}
           fail_ci_if_error: true
           verbose: true
         if: ${{ matrix.codecov }}

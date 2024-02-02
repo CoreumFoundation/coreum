@@ -24,6 +24,7 @@ const (
 	testsBinDir    = "bin/.cache/integration-tests"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
+	goCoverFlag          = "-cover"
 )
 
 var (
@@ -51,6 +52,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsLocal,
+		Flags:          []string{goCoverFlag},
 	})
 }
 
