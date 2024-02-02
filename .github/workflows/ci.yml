@@ -39,7 +39,7 @@ jobs:
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             command: |
-              crust build/integration-tests/coreum/modules images
+              coreum-builder build/integration-tests/modules images
               crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
               crust znet coverage-convert
