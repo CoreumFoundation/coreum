@@ -1,7 +1,5 @@
 module github.com/CoreumFoundation/coreum/build
 
-// 1.20 is used here because still not all distros deliver 1.21.
-// Build tool installs newer go, but the tool itself must be built using a preexisting version.
 go 1.21
 
 replace github.com/CoreumFoundation/coreum/v4 => ../
@@ -20,5 +18,8 @@ require (
 	github.com/samber/lo v1.39.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	// Make sure to not bump x/exp dependency without cosmos-sdk updated because their breaking change is not compatible
+	// with cosmos-sdk v0.47.
+	// Details: https://github.com/cosmos/cosmos-sdk/issues/18415
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1 // indirect
 )

@@ -38,10 +38,10 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	if err := buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
+	if err := buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxAMD64InDocker, []string{}); err != nil {
 		return err
 	}
-	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxARM64InDocker)
+	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxARM64InDocker, []string{})
 }
 
 // ReleaseCoredImage releases cored docker images for amd64 and arm64.
