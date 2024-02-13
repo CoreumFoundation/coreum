@@ -16,6 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/git"
+	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -32,6 +33,9 @@ func breakingProto(ctx context.Context, deps build.DepsFunc) error {
 	defer os.RemoveAll(masterDir) //nolint:errcheck // error doesn't matter
 
 	if err := git.Clone(ctx, masterDir, repoPath, "crust/proto-breaking", "master"); err != nil {
+		return err
+	}
+	if err := golang.DownloadDependencies(ctx, masterDir, deps); err != nil {
 		return err
 	}
 
