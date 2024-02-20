@@ -134,7 +134,7 @@ jobs:
         if: ${{ matrix.docker-cache }}
         continue-on-error: true
         with:
-          key: ${{ runner.os }}-docker-v2-${{ steps.get-year-week.outputs.date }} # year-week key
+          key: ${{ runner.os }}-docker-v3-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Setup smart contract build cache
         uses: actions/cache@v3
         with:

@@ -143,6 +143,11 @@ type Context struct {
 	awaitTx   bool
 }
 
+// SDKContext returns wrapped SDK context.
+func (c Context) SDKContext() client.Context {
+	return c.clientCtx
+}
+
 // ChainID returns chain ID.
 func (c Context) ChainID() string {
 	return c.clientCtx.ChainID
