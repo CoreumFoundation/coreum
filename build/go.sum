@@ -1,7 +1,7 @@
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab h1:XPcSzlQ06tor/py1LkEM9FX70LIeDWB++vLuAO6eAYI=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/crust/build v0.0.0-20240221105119-5bf421828926 h1:Ycmi0PHqYWAIEfegXk/iNNMamXFVDjxHnPy8avaD7Dc=
-github.com/CoreumFoundation/crust/build v0.0.0-20240221105119-5bf421828926/go.mod h1:7g0+guH6BZLfm8oVJwwgCr8ntzIwJAQo7MC1c5wMFBo=
+github.com/CoreumFoundation/crust/build v0.0.0-20240221111501-24517d1ac71b h1:IoQS6FhpOHVKc+xnzNCUYwdIL59CPTgsXKNYlcjVetY=
+github.com/CoreumFoundation/crust/build v0.0.0-20240221111501-24517d1ac71b/go.mod h1:7g0+guH6BZLfm8oVJwwgCr8ntzIwJAQo7MC1c5wMFBo=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
