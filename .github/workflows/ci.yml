@@ -86,6 +86,11 @@ jobs:
         with:
           persist-credentials: false
           path: coreum
+      - name: Checkout faucet
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/faucet
+          path: faucet
       - name: Checkout crust
         uses: actions/checkout@v3
         with:
