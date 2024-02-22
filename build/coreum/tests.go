@@ -52,10 +52,13 @@ func BuildIntegrationTests(name string) build.CommandFunc {
 
 		deps(prerequisites...)
 
+		binOutputPath := filepath.Join(testsBinDir, repoName+"-"+name)
 		return golang.BuildTests(ctx, golang.TestBuildConfig{
-			PackagePath:   filepath.Join(testsDir, name),
-			BinOutputPath: filepath.Join(testsBinDir, repoName+"-"+name),
-			Tags:          []string{"integrationtests"},
+			PackagePath: filepath.Join(testsDir, name),
+			Flags: []string{
+				"-tags=integrationtests",
+				"-o=" + binOutputPath,
+			},
 		})
 	}
 }
