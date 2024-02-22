@@ -47,7 +47,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
-		PackagePath:    "../coreum/cmd/cored",
+		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
 		BinOutputPath:  binaryPath,
 		Parameters:     parameters,
 		CGOEnabled:     true,
@@ -84,7 +84,7 @@ func buildCoredInDocker(
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    "../coreum/cmd/cored",
+		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
 		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
 		Parameters:     parameters,
 		CGOEnabled:     true,
@@ -104,7 +104,7 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    "../coreum/cmd/cored",
+		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
 		BinOutputPath: filepath.Join(
 			"bin",
 			".cache",
