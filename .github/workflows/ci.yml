@@ -50,7 +50,9 @@ jobs:
             codecov: true
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
-            command: "coreum-builder build/integration-tests/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
+            command: |
+              coreum-builder build/integration-tests/ibc images
+              crust znet test --test-groups=coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true 
             linter-cache: false
@@ -66,7 +68,9 @@ jobs:
             docker-cache: true
             codecov: false
           - ci_step: "integration tests faucet"
-            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
+            command: |
+              faucet-builder build/integration-tests images
+              crust znet test --test-groups=faucet --timeout-commit 0.5s
             go-cache: true
             wasm-cache: false
             linter-cache: false
@@ -90,6 +94,7 @@ jobs:
       - name: Set up build system
         run: |
           echo "$(pwd)/coreum/bin" >> $GITHUB_PATH
+          echo "$(pwd)/faucet/bin" >> $GITHUB_PATH
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
           coreum/bin/coreum-builder build/me
       - name: Retrieve go version
