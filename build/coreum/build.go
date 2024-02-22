@@ -136,17 +136,7 @@ func Test(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
 }
 
-type params map[string]string
-
-func (p params) Version() string {
-	return p["github.com/cosmos/cosmos-sdk/version.Version"]
-}
-
-func (p params) Commit() string {
-	return p["github.com/cosmos/cosmos-sdk/version.Commit"]
-}
-
-func coredVersionParams(ctx context.Context, buildTags []string) (params, error) {
+func coredVersionParams(ctx context.Context, buildTags []string) (map[string]string, error) {
 	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
 		return nil, err
@@ -159,7 +149,7 @@ func coredVersionParams(ctx context.Context, buildTags []string) (params, error)
 	if version == "" {
 		version = hash
 	}
-	ps := params{
+	ps := map[string]string{
 		"github.com/cosmos/cosmos-sdk/version.Name":    blockchainName,
 		"github.com/cosmos/cosmos-sdk/version.AppName": binaryName,
 		"github.com/cosmos/cosmos-sdk/version.Version": version,
