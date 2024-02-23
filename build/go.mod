@@ -2,16 +2,12 @@ module github.com/CoreumFoundation/coreum/build
 
 go 1.21
 
-replace github.com/CoreumFoundation/crust/build => ../../crust/build
-
 replace github.com/CoreumFoundation/coreum/v4 => ../
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f
-	// FIXME (wojciech): Replace with the new commit ID before merging once
-	// https://reviewable.io/reviews/CoreumFoundation/crust/366 is merged
-	github.com/CoreumFoundation/crust/build v0.0.0-20240223102544-622c435c6408
+	github.com/CoreumFoundation/crust/build v0.0.0-20240223131002-860a2548b628
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.26.0
