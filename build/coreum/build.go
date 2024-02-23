@@ -72,12 +72,6 @@ func buildCoredInDocker(
 		return err
 	}
 
-	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
-		targetPlatform == tools.TargetPlatformLinuxARM64InDocker {
-		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
-			return err
-		}
-	}
 	if err := tools.Ensure(ctx, tools.LibWASMMuslC, targetPlatform); err != nil {
 		return err
 	}
