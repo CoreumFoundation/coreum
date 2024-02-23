@@ -50,7 +50,9 @@ jobs:
             codecov: true
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
-            command: "coreum-builder build/integration-tests/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
+            command: |
+              coreum-builder build/integration-tests/ibc images
+              crust znet test --test-groups=coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true 
             linter-cache: false
@@ -66,7 +68,9 @@ jobs:
             docker-cache: true
             codecov: false
           - ci_step: "integration tests faucet"
-            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
+            command: |
+              faucet-builder build/integration-tests images
+              crust znet test --test-groups=faucet --timeout-commit 0.5s
             go-cache: true
             wasm-cache: false
             linter-cache: false
@@ -75,26 +79,29 @@ jobs:
 
     runs-on: ubuntu-22.04
     steps:
-      - name: Go version used to build crust tool
+      - name: Go version used to build builder
         run: go version
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
           persist-credentials: false
           path: coreum
+      - name: Checkout faucet
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/faucet
+          path: faucet
       - name: Checkout crust
         uses: actions/checkout@v3
         with:
           repository: CoreumFoundation/crust
           path: crust
-      - name: Set up crust
-        run: | 
       - name: Set up build system
         run: |
           echo "$(pwd)/coreum/bin" >> $GITHUB_PATH
+          echo "$(pwd)/faucet/bin" >> $GITHUB_PATH
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
           coreum/bin/coreum-builder build/me
-          crust/bin/crust build/crust
       - name: Retrieve go version
         id: goversion
         run: echo "GO_VERSION=$(coreum/bin/go version)" >> $GITHUB_OUTPUT
