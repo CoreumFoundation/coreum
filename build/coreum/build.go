@@ -25,6 +25,7 @@ const (
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
+	binaryOutputFlag     = "-o"
 	linkStaticallyLDFlag = "-ldflags=-extldflags=-static"
 )
 
@@ -49,12 +50,12 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "../coreum/cmd/cored",
-		Envs:           []string{"CGO_ENABLED=1"},
+		CGOEnabled:     true,
 		Flags: []string{
 			goCoverFlag,
 			versionFlags,
 			"-tags=" + strings.Join(tagsLocal, ","),
-			"-o=" + binaryName,
+			fmt.Sprintf("%s=%s", binaryOutputFlag, binaryPath),
 		},
 	})
 }
@@ -85,16 +86,17 @@ func buildCoredInDocker(
 		return err
 	}
 
+	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
-		Envs:           []string{"CGO_ENABLED=1"},
+		CGOEnabled:     true,
 		Flags: append(
 			extraFlags,
 			versionFlags,
 			linkStaticallyLDFlag,
 			"-tags="+strings.Join(tagsDocker, ","),
-			"-o="+filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
+			binaryOutputFlag+"="+binOutputPath,
 		),
 	})
 }
@@ -118,12 +120,12 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
-		Envs:           []string{"CGO_ENABLED=0"},
+		CGOEnabled:     false,
 		Flags: []string{
 			versionFlags,
 			linkStaticallyLDFlag,
 			"-tags=" + strings.Join(tagsDocker, ","),
-			"-o=" + binOutputPath,
+			binaryOutputFlag + "=" + binOutputPath,
 		},
 	})
 }
