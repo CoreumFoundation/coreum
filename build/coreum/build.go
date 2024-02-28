@@ -25,8 +25,6 @@ const (
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
-	binaryOutputFlag     = "-o"
-	linkStaticallyLDFlag = "-ldflags=-extldflags=-static"
 )
 
 var (
@@ -42,20 +40,19 @@ func BuildCored(ctx context.Context, deps build.DepsFunc) error {
 
 // BuildCoredLocally builds cored locally.
 func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsLocal)
+	parameters, err := coredVersionParams(ctx, tagsLocal)
 	if err != nil {
 		return err
 	}
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
-		TargetPlatform: tools.TargetPlatformLocal,
-		PackagePath:    "../coreum/cmd/cored",
-		CGOEnabled:     true,
+		PackagePath: "../coreum/cmd/cored",
+		Envs:        []string{"CGO_ENABLED=1"},
 		Flags: []string{
 			goCoverFlag,
 			versionFlags,
 			"-tags=" + strings.Join(tagsLocal, ","),
-			fmt.Sprintf("%s=%s", binaryOutputFlag, binaryPath),
+			"-o=" + binaryName,
 		},
 	})
 }
@@ -71,7 +68,7 @@ func buildCoredInDocker(
 	targetPlatform tools.TargetPlatform,
 	extraFlags []string,
 ) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker)
+	parameters, err := coredVersionParams(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
@@ -86,47 +83,41 @@ func buildCoredInDocker(
 		return err
 	}
 
-	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
+		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
+		Parameters:     parameters,
 		CGOEnabled:     true,
-		Flags: append(
-			extraFlags,
-			versionFlags,
-			linkStaticallyLDFlag,
-			"-tags="+strings.Join(tagsDocker, ","),
-			binaryOutputFlag+"="+binOutputPath,
-		),
+		Tags:           tagsDocker,
+		Flags:          extraFlags,
+		LinkStatically: true,
 	})
 }
 
 // buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
 // used for the CLI on target platform, but can't be used to run the node.
 func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker)
+	parameters, err := coredVersionParams(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
 
-	binOutputPath := filepath.Join(
-		"bin",
-		".cache",
-		binaryName,
-		targetPlatform.String(),
-		"bin",
-		fmt.Sprintf("%s-client", binaryName),
-	)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
+		BinOutputPath: filepath.Join(
+			"bin",
+			".cache",
+			binaryName,
+			targetPlatform.String(),
+			"bin",
+			fmt.Sprintf("%s-client", binaryName),
+		),
+		Parameters:     parameters,
 		CGOEnabled:     false,
-		Flags: []string{
-			versionFlags,
-			linkStaticallyLDFlag,
-			"-tags=" + strings.Join(tagsDocker, ","),
-			binaryOutputFlag + "=" + binOutputPath,
-		},
+		Tags:           tagsDocker,
+		LinkStatically: true,
 	})
 }
 
@@ -156,15 +147,15 @@ func (p params) Commit() string {
 	return p["github.com/cosmos/cosmos-sdk/version.Commit"]
 }
 
-func coredVersionLDFlags(ctx context.Context, buildTags []string) (string, error) {
+func coredVersionParams(ctx context.Context, buildTags []string) (params, error) {
 	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	version, err := git.VersionFromTag(ctx, repoPath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if version == "" {
 		version = hash
@@ -180,12 +171,7 @@ func coredVersionLDFlags(ctx context.Context, buildTags []string) (string, error
 		ps["github.com/cosmos/cosmos-sdk/version.BuildTags"] = strings.Join(buildTags, ",")
 	}
 
-	var ldFlags []string
-	for k, v := range ps {
-		ldFlags = append(ldFlags, fmt.Sprintf("-X %s=%s", k, v))
-	}
-
-	return "-ldflags=" + strings.Join(ldFlags, " "), nil
+	return ps, nil
 }
 
 func formatProto(ctx context.Context, deps build.DepsFunc) error {
