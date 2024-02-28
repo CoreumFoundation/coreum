@@ -3,6 +3,7 @@ module github.com/CoreumFoundation/coreum/build
 go 1.21
 
 replace github.com/CoreumFoundation/crust/build => ../../crust/build
+
 replace github.com/CoreumFoundation/coreum/v4 => ../
 
 require (

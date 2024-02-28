@@ -40,17 +40,12 @@ func BuildAllIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 // BuildIntegrationTests returns function compiling integration tests.
 func BuildIntegrationTests(name string) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
-		prerequisites := []build.CommandFunc{golang.EnsureGo}
 		switch name {
-		case TestModules:
-			prerequisites = append(prerequisites, CompileModulesSmartContracts)
-		case TestUpgrade:
-			prerequisites = append(prerequisites, CompileModulesSmartContracts)
+		case TestModules, TestUpgrade:
+			deps(CompileModulesSmartContracts)
 		case TestIBC:
-			prerequisites = append(prerequisites, CompileIBCSmartContracts)
+			deps(CompileIBCSmartContracts)
 		}
-
-		deps(prerequisites...)
 
 		binOutputPath := filepath.Join(testsBinDir, repoName+"-"+name)
 		return golang.BuildTests(ctx, golang.TestBuildConfig{
