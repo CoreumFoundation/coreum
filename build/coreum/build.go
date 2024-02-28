@@ -55,7 +55,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 			goCoverFlag,
 			versionFlags,
 			"-tags=" + strings.Join(tagsLocal, ","),
-			fmt.Sprintf("%s=%s", binaryOutputFlag, binaryPath),
+			binaryOutputFlag + "=" + binaryPath,
 		},
 	})
 }
@@ -76,12 +76,6 @@ func buildCoredInDocker(
 		return err
 	}
 
-	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
-		targetPlatform == tools.TargetPlatformLinuxARM64InDocker {
-		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
-			return err
-		}
-	}
 	if err := tools.Ensure(ctx, tools.LibWASMMuslC, targetPlatform); err != nil {
 		return err
 	}
