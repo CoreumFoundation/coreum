@@ -26,6 +26,7 @@ const (
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
 	binaryOutputFlag     = "-o"
+	tagsFlag             = "-tags"
 	linkStaticallyLDFlag = "-ldflags=-extldflags=-static"
 )
 
@@ -54,7 +55,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		Flags: []string{
 			goCoverFlag,
 			versionFlags,
-			"-tags=" + strings.Join(tagsLocal, ","),
+			tagsFlag + "=" + strings.Join(tagsLocal, ","),
 			binaryOutputFlag + "=" + binaryPath,
 		},
 	})
@@ -89,7 +90,7 @@ func buildCoredInDocker(
 			extraFlags,
 			versionFlags,
 			linkStaticallyLDFlag,
-			"-tags="+strings.Join(tagsDocker, ","),
+			tagsFlag+"="+strings.Join(tagsDocker, ","),
 			binaryOutputFlag+"="+binOutputPath,
 		),
 	})
@@ -118,7 +119,7 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 		Flags: []string{
 			versionFlags,
 			linkStaticallyLDFlag,
-			"-tags=" + strings.Join(tagsDocker, ","),
+			tagsFlag + "=" + strings.Join(tagsDocker, ","),
 			binaryOutputFlag + "=" + binOutputPath,
 		},
 	})
