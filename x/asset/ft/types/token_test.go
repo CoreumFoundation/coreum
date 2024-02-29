@@ -32,7 +32,7 @@ func TestValidatePrecision(t *testing.T) {
 		{precision: 3},
 		{precision: 10},
 		{precision: types.MaxPrecision},
-		{precision: 0, expectError: true},
+		{precision: 0},
 		{precision: types.MaxPrecision + 1, expectError: true},
 		{precision: 100_000, expectError: true},
 	}

@@ -92,6 +92,96 @@ func TestAssetFTIssue(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
+
+	// check metadata
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+	metadata, err := bankClient.DenomMetadata(ctx, &banktypes.QueryDenomMetadataRequest{Denom: denom})
+	requireT.NoError(err)
+	expectedMetadata := banktypes.Metadata{
+		Description: issueMsg.Description,
+		DenomUnits: []*banktypes.DenomUnit{
+			{Denom: denom, Exponent: 0},
+			{Denom: issueMsg.Symbol, Exponent: issueMsg.Precision},
+		},
+		Base:    denom,
+		Display: issueMsg.Symbol,
+		Name:    issueMsg.Symbol,
+		Symbol:  issueMsg.Symbol,
+		URI:     issueMsg.URI,
+		URIHash: issueMsg.URIHash,
+	}
+	requireT.EqualValues(expectedMetadata, metadata.Metadata)
+}
+
+// TestAssetFTIssue tests issue functionality of fungible tokens.
+func TestAssetFTIssue_ZeroPrecision(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     0,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features:      []assetfttypes.Feature{},
+		URI:           "https://my-class-meta.invalid/1",
+		URIHash:       "content-hash",
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+
+	// verify issue fee was burnt
+	burntStr, err := event.FindStringEventAttribute(res.Events, banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	requireT.NoError(err)
+	requireT.Equal(chain.QueryAssetFTParams(ctx, t).IssueFee.String(), burntStr)
+
+	// check that balance is 0 meaning issue fee was taken
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: issuer.String(),
+		Denom:   chain.ChainSettings.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
+
+	// check metadata
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+	metadata, err := bankClient.DenomMetadata(ctx, &banktypes.QueryDenomMetadataRequest{Denom: denom})
+	requireT.NoError(err)
+	expectedMetadata := banktypes.Metadata{
+		Description: issueMsg.Description,
+		DenomUnits: []*banktypes.DenomUnit{
+			{Denom: denom, Exponent: 0},
+		},
+		Base:    denom,
+		Display: denom,
+		Name:    issueMsg.Symbol,
+		Symbol:  issueMsg.Symbol,
+		URI:     issueMsg.URI,
+		URIHash: issueMsg.URIHash,
+	}
+	requireT.EqualValues(expectedMetadata, metadata.Metadata)
 }
 
 // TestAssetFTIssueInvalidFeatures tests issue functionality of fungible tokens with invalid features.

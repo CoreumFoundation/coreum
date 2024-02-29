@@ -314,6 +314,17 @@ func (k Keeper) SetDenomMetadata(
 		URIHash: uriHash,
 	}
 
+	// we want to add
+	if precision == 0 {
+		denomMetadata.DenomUnits = []*banktypes.DenomUnit{
+			{
+				Denom:    denom,
+				Exponent: uint32(0),
+			},
+		}
+		denomMetadata.Display = denom
+	}
+
 	if err := denomMetadata.Validate(); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to validate denom metadata: %s", err)
 	}
