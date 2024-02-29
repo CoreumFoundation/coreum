@@ -39,9 +39,9 @@ jobs:
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             build: |
-              coreum-builder build/integration-tests/modules images
               crust build/me
               crust build images
+              coreum-builder build/integration-tests/modules images
             command: |
               crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
@@ -53,8 +53,11 @@ jobs:
             codecov: true
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
-            command: |
+            build: |
+              crust build/me
+              crust build images
               coreum-builder build/integration-tests/ibc images
+            command: |
               crust znet test --test-groups=coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true 
@@ -62,8 +65,11 @@ jobs:
             docker-cache: true
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
-            command: |
+            build: |
+              crust build/me
+              crust build images
               coreum-builder build/integration-tests/upgrade build/integration-tests/modules build/integration-tests/ibc images 
+            command: |
               crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true
@@ -71,9 +77,10 @@ jobs:
             docker-cache: true
             codecov: false
           - ci_step: "integration tests faucet"
-            command: |
+            build: |
               faucet-builder build/integration-tests images
               coreum-builder images
+            command: |
               crust znet test --test-groups=faucet --timeout-commit 0.5s
             go-cache: true
             wasm-cache: false
