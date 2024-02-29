@@ -38,8 +38,9 @@ jobs:
             codecov: true
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
-            command: |
+            build: |
               coreum-builder build/integration-tests/modules images
+            command: |
               crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
               crust znet coverage-convert
@@ -153,6 +154,8 @@ jobs:
             ~/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
+      - name: Build step
+        run: ${{ matrix.build }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
