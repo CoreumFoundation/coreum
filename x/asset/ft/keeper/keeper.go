@@ -314,7 +314,9 @@ func (k Keeper) SetDenomMetadata(
 		URIHash: uriHash,
 	}
 
-	// we want to add
+	// in case the precision is zero, we cannot 2 zero exponents in denom units, so
+	// we are force to have single entry in denom units and also Display must be the
+	// same as Base.
 	if precision == 0 {
 		denomMetadata.DenomUnits = []*banktypes.DenomUnit{
 			{
