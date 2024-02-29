@@ -165,6 +165,7 @@ jobs:
         if: ${{ matrix.wasm-cache }}
       - name: Build step
         run: ${{ matrix.build }}
+        if: ${{ matrix.build != '' }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
