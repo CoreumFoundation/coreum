@@ -40,6 +40,8 @@ jobs:
           - ci_step: "integration tests coreum-modules"
             build: |
               coreum-builder build/integration-tests/modules images
+              crust build/me
+              crust build images
             command: |
               crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
