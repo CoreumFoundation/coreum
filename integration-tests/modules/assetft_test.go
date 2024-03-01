@@ -66,6 +66,7 @@ func TestAssetFTIssue(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
 			issuer := chain.GenAccount()
 			chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 				Messages: []sdk.Msg{
