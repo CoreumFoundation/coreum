@@ -823,7 +823,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 
 	precision := -1
 	for _, unit := range metadata.DenomUnits {
-		if unit.Denom == metadata.Symbol {
+		if unit.Denom == metadata.Display {
 			precision = int(unit.Exponent)
 			break
 		}
