@@ -93,17 +93,17 @@ jobs:
       - name: Go version used to build builder
         run: go version
       - name: Checkout coreum
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           path: coreum
       - name: Checkout faucet
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: CoreumFoundation/faucet
           path: faucet
       - name: Checkout crust
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: CoreumFoundation/crust
           path: crust
@@ -119,7 +119,7 @@ jobs:
       - name: Print go version
         run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup go cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: ${{ matrix.go-cache }}
         with:
           path: |
@@ -127,7 +127,7 @@ jobs:
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup WASM cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: ${{ matrix.wasm-cache }}
         with:
           # we need to exclude code-hashes.json from the rest, since the invalidation condition for it is not
@@ -137,7 +137,7 @@ jobs:
             !/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-wasm-cache-${{ hashFiles('~/.cache/crust/wasm/**/*.rs') }}
       - name: Setup linter cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
@@ -154,7 +154,7 @@ jobs:
         with:
           key: ${{ runner.os }}-docker-v3-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Setup smart contract build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           # we need to cache code-hashes.json under the same key as the artifacts, since the invalidation condition
           # for both of them are the same.
