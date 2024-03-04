@@ -164,8 +164,13 @@ jobs:
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
       - name: Build step
-        run: ${{ matrix.build }}
-        if: ${{ matrix.build != '' }}
+        # run: ${{ matrix.build }}
+        # if: ${{ matrix.build != '' }}
+        run: | 
+          crust build/me
+          crust build images
+          faucet-builder build/integration-tests images
+          coreum-builder build/integration-tests/upgrade build/integration-tests/modules build/integration-tests/ibc images 
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
