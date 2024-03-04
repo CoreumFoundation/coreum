@@ -84,7 +84,7 @@ func buildCoredInDocker(
 	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    "../coreum/cmd/cored",
+		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
 		CGOEnabled:     true,
 		Flags: append(
 			extraFlags,
