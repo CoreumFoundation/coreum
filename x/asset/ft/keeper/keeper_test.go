@@ -152,6 +152,68 @@ func TestKeeper_Issue(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrInvalidInput)
 }
 
+func TestKeeper_Issue_ZeroPrecision(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     0,
+		InitialAmount: sdkmath.NewInt(777),
+		Features:      []types.Feature{types.Feature_freezing},
+		URI:           "https://my-class-meta.invalid/1",
+		URIHash:       "content-hash",
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	gotToken, err := ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	requireT.Equal(types.Token{
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Description:        settings.Description,
+		Subunit:            strings.ToLower(settings.Subunit),
+		Precision:          settings.Precision,
+		Features:           []types.Feature{types.Feature_freezing},
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+		Version:            types.CurrentTokenVersion,
+		URI:                settings.URI,
+		URIHash:            settings.URIHash,
+	}, gotToken)
+
+	// check the metadata
+	storedMetadata, found := bankKeeper.GetDenomMetaData(ctx, denom)
+	requireT.True(found)
+	requireT.Equal(banktypes.Metadata{
+		Name:        settings.Symbol,
+		Symbol:      settings.Symbol,
+		Description: settings.Description,
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    denom,
+				Exponent: 0,
+			},
+		},
+		Base:    denom,
+		Display: denom,
+		URI:     settings.URI,
+		URIHash: settings.URIHash,
+	}, storedMetadata)
+}
+
 func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
 	requireT := require.New(t)
 

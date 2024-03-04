@@ -314,6 +314,19 @@ func (k Keeper) SetDenomMetadata(
 		URIHash: uriHash,
 	}
 
+	// in case the precision is zero, we cannot 2 zero exponents in denom units, so
+	// we are force to have single entry in denom units and also Display must be the
+	// same as Base.
+	if precision == 0 {
+		denomMetadata.DenomUnits = []*banktypes.DenomUnit{
+			{
+				Denom:    denom,
+				Exponent: uint32(0),
+			},
+		}
+		denomMetadata.Display = denom
+	}
+
 	if err := denomMetadata.Validate(); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to validate denom metadata: %s", err)
 	}
@@ -810,7 +823,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 
 	precision := -1
 	for _, unit := range metadata.DenomUnits {
-		if unit.Denom == metadata.Symbol {
+		if unit.Denom == metadata.Display {
 			precision = int(unit.Exponent)
 			break
 		}
