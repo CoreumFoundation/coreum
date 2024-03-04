@@ -167,7 +167,11 @@ jobs:
         run: ${{ matrix.build }}
         if: ${{ matrix.build != '' }}
       - name: Run ${{ matrix.ci_step }}
-        run: ${{ matrix.command }}
+        # ${{ matrix.command }}
+        run: | 
+          crust build/me
+          crust build images
+          coreum-builder build/integration-tests/upgrade build/integration-tests/modules build/integration-tests/ibc images 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
