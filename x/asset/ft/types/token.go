@@ -137,8 +137,8 @@ func ValidateAssetCoins(coins sdk.Coins) error {
 
 // ValidatePrecision checks the provided precision is valid.
 func ValidatePrecision(precision uint32) error {
-	if precision == 0 || precision > MaxPrecision {
-		return sdkerrors.Wrapf(ErrInvalidInput, "precision must be between 1 and %d", MaxPrecision)
+	if precision > MaxPrecision {
+		return sdkerrors.Wrapf(ErrInvalidInput, "precision must be between 0 and %d", MaxPrecision)
 	}
 	return nil
 }
