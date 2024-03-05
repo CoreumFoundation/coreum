@@ -52,7 +52,7 @@ func BuildIntegrationTests(name string) build.CommandFunc {
 			PackagePath: filepath.Join(testsDir, name),
 			Flags: []string{
 				"-tags=integrationtests",
-				"-o=" + binOutputPath,
+				binaryOutputFlag + "=" + binOutputPath,
 			},
 		})
 	}
