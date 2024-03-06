@@ -39,7 +39,6 @@ jobs:
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             command: |
-              coreum-builder build/integration-tests/modules images
               crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
               crust znet coverage-convert
@@ -51,7 +50,6 @@ jobs:
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
             command: |
-              coreum-builder build/integration-tests/ibc images
               crust znet test --test-groups=coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true 
@@ -60,7 +58,6 @@ jobs:
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: |
-              coreum-builder build/integration-tests/upgrade build/integration-tests/modules build/integration-tests/ibc images 
               crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true
@@ -69,8 +66,6 @@ jobs:
             codecov: false
           - ci_step: "integration tests faucet"
             command: |
-              faucet-builder build/integration-tests images
-              coreum-builder images
               crust znet test --test-groups=faucet --timeout-commit 0.5s
             go-cache: true
             wasm-cache: false
@@ -153,6 +148,12 @@ jobs:
             ~/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
+      - name: Build step
+        run: | 
+          crust build/me
+          crust build images
+          faucet-builder build/integration-tests images
+          coreum-builder build/integration-tests/upgrade build/integration-tests/modules build/integration-tests/ibc images 
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
