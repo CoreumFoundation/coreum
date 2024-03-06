@@ -47,10 +47,13 @@ func BuildIntegrationTests(name string) build.CommandFunc {
 			deps(CompileIBCSmartContracts)
 		}
 
-		return golang.BuildTests(ctx, deps, golang.TestBuildConfig{
-			PackagePath:   filepath.Join(testsDir, name),
-			BinOutputPath: filepath.Join(testsBinDir, repoName+"-"+name),
-			Tags:          []string{"integrationtests"},
+		binOutputPath := filepath.Join(testsBinDir, repoName+"-"+name)
+		return golang.BuildTests(ctx, golang.TestBuildConfig{
+			PackagePath: filepath.Join(testsDir, name),
+			Flags: []string{
+				"-tags=integrationtests",
+				binaryOutputFlag + "=" + binOutputPath,
+			},
 		})
 	}
 }
