@@ -79,7 +79,6 @@ jobs:
           echo "$(pwd)/coreum/bin" >> $GITHUB_PATH
           echo "$(pwd)/faucet/bin" >> $GITHUB_PATH
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-          coreum/bin/coreum-builder build/me
       - name: Retrieve go version
         id: goversion
         run: echo "GO_VERSION=$(coreum/bin/go version)" >> $GITHUB_OUTPUT
@@ -95,7 +94,7 @@ jobs:
       - name: Setup crust cache
         uses: actions/cache@v4
         with:
-          path: | 
+          path: |
             ~/.cache/crust
           key: ${{ runner.os }}-crust-cache
       - name: Setup linter cache
@@ -115,11 +114,13 @@ jobs:
         with:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Build step
-        run: | 
+        run: |
           crust build/me
           crust build images
-          faucet-builder build/integration-tests images
+          faucet-builder buuild/integration-tests images
           coreum-builder build/integration-tests images
+          # remove previously saved znet related data
+          crust znet remove
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
