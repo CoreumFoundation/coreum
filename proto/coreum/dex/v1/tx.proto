@@ -1,0 +1,28 @@
+syntax = "proto3";
+package coreum.dex.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/v4/x/dex/types";
+option (gogoproto.goproto_getters_all) = false;
+
+// Msg defines the Msg service.
+service Msg {
+  // Issue defines a method to issue a new fungible token.
+  rpc CreateLimitOrder(MsgCreateLimitOrder) returns (EmptyResponse);
+}
+
+// MsgIssue defines message to issue new fungible token.
+message MsgCreateLimitOrder {
+  string issuer = 1;
+  string symbol = 2;
+  string subunit = 3;
+  uint32 precision = 4;
+  string initial_amount = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message EmptyResponse {}
