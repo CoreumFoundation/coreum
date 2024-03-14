@@ -117,7 +117,7 @@ jobs:
         run: |
           crust build/me
           crust build images
-          faucet-builder buuild/integration-tests images
+          faucet-builder build/integration-tests images
           coreum-builder build/integration-tests images
           # remove previously saved znet related data
           crust znet remove
