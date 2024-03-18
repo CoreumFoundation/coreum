@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum/v4/x/dex/client/cli"
 	"github.com/CoreumFoundation/coreum/v4/x/dex/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
@@ -29,19 +30,19 @@ var (
 // AppModuleBasic
 // ----------------------------------------------------------------------------
 
-// AppModuleBasic implements the AppModuleBasic interface for the asset ft module.
+// AppModuleBasic implements the AppModuleBasic interface for the dex module.
 type AppModuleBasic struct {
 	cdc codec.BinaryCodec
 }
 
-// NewAppModuleBasic return the asset ft AppModuleBasic.
+// NewAppModuleBasic returns the dex AppModuleBasic.
 func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
 	return AppModuleBasic{
 		cdc: cdc,
 	}
 }
 
-// Name returns the asset ft module's name.
+// Name returns the dex module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
@@ -56,12 +57,12 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(reg)
 }
 
-// DefaultGenesis returns the asset ft module's default genesis state.
+// DefaultGenesis returns the dex module's default genesis state.
 func (a AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesis())
 }
 
-// ValidateGenesis performs genesis state validation for the asset ft module.
+// ValidateGenesis performs genesis state validation for the dex module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
 	var genState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
@@ -70,7 +71,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncod
 	return genState.Validate()
 }
 
-// RegisterRESTRoutes registers the asset ft module's REST service handlers.
+// RegisterRESTRoutes registers the dex module's REST service handlers.
 func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
 }
 
@@ -82,14 +83,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 	// }
 }
 
-// GetTxCmd returns the asset ft module's root tx command.
+// GetTxCmd returns the dex module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	// TODO: Implement
-	// return cli.GetTxCmd()
-	return nil
+	return cli.GetTxCmd()
 }
 
-// GetQueryCmd returns the asset ft module's root query command.
+// GetQueryCmd returns the dex module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	// TODO: Implement
 	// return cli.GetQueryCmd()
@@ -100,7 +99,7 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // AppModule
 // ----------------------------------------------------------------------------
 
-// AppModule implements the AppModule interface for the asset ft module.
+// AppModule implements the AppModule interface for the dex module.
 type AppModule struct {
 	AppModuleBasic
 
@@ -118,7 +117,7 @@ func NewAppModule(
 	}
 }
 
-// Name returns the asset ft module's name.
+// Name returns the dex module's name.
 func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
@@ -126,17 +125,17 @@ func (am AppModule) Name() string {
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer())
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	// TODO: Uncomment once implemented
 	// types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper, am.bankKeeper))
 }
 
-// RegisterInvariants registers the asset ft module's invariants.
+// RegisterInvariants registers the dex module's invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 	// TODO: Implement
 }
 
-// InitGenesis performs the asset ft module's genesis initialization It returns
+// InitGenesis performs the dex module's genesis initialization It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
@@ -148,7 +147,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis returns the asset ft module's exported genesis state as raw JSON bytes.
+// ExportGenesis returns the dex module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	genState := ExportGenesis(ctx, am.keeper)
 	return cdc.MustMarshalJSON(genState)
@@ -159,13 +158,13 @@ func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 // AppModuleSimulation functions
 
-// GenerateGenesisState creates a randomized GenState of the asset ft module.
+// GenerateGenesisState creates a randomized GenState of the dex module.
 func (AppModule) GenerateGenesisState(_ *module.SimulationState) {}
 
-// RegisterStoreDecoder registers a decoder for asset ft module's types.
+// RegisterStoreDecoder registers a decoder for dex module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
-// WeightedOperations returns the all the asset ft module operations with their respective weights.
+// WeightedOperations returns the all the dex module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
 }

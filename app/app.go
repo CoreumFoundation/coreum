@@ -346,7 +346,8 @@ func New(
 		ibctransfertypes.StoreKey, delaytypes.StoreKey, customparamstypes.StoreKey,
 		group.StoreKey, dextypes.StoreKey,
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey,
+		dextypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	app := &App{
@@ -691,6 +692,7 @@ func New(
 	app.DexKeeper = dexkeeper.NewKeeper(
 		appCodec,
 		keys[dextypes.StoreKey],
+		tkeys[feemodeltypes.TransientStoreKey],
 	)
 
 	/****  Module Options ****/

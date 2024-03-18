@@ -7,17 +7,9 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/CoreumFoundation/coreum/v4/x/dex/types";
 option (gogoproto.goproto_getters_all) = false;
 
-// Msg defines the Msg service.
-service Msg {
-  // Issue defines a method to issue a new fungible token.
-  rpc CreateLimitOrder(MsgCreateLimitOrder) returns (EmptyResponse);
-}
-
 // MsgIssue defines message to issue new fungible token.
-message MsgCreateLimitOrder {
+message OrderLimit {
   string owner = 1;
   cosmos.base.v1beta1.Coin offered_amount = 2 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.DecCoin sell_price = 3 [(gogoproto.nullable) = false];
 }
-
-message EmptyResponse {}

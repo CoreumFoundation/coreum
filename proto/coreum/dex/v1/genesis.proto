@@ -1,11 +1,7 @@
 syntax = "proto3";
 package coreum.dex.v1;
 
-import "gogoproto/gogo.proto";
-
 option go_package = "github.com/CoreumFoundation/coreum/v4/x/dex/types";
 
 // GenesisState defines the module genesis state.
-message GenesisState {
-
-}
+message GenesisState {}

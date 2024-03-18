@@ -3,21 +3,40 @@ package keeper
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
 var _ types.MsgServer = MsgServer{}
 
-// MsgServer serves grpc tx requests for assets module.
+// MsgKeeper defines subscope of keeper methods required by msg service.
+type MsgKeeper interface {
+	StoreTransientOrder(ctx sdk.Context, order Order) error
+}
+
+// MsgServer serves grpc tx requests for dex module.
 type MsgServer struct {
+	keeper MsgKeeper
 }
 
 // NewMsgServer returns a new instance of the MsgServer.
-func NewMsgServer() MsgServer {
-	return MsgServer{}
+func NewMsgServer(keeper MsgKeeper) MsgServer {
+	return MsgServer{
+		keeper: keeper,
+	}
 }
 
-func (ms MsgServer) CreateLimitOrder(ctx context.Context, order *types.MsgCreateLimitOrder) (*types.EmptyResponse, error) {
-	//TODO implement me
-	panic("implement me")
+// CreateLimitOrder handles MsgCreateLimitOrder message.
+func (ms MsgServer) CreateLimitOrder(
+	ctx context.Context,
+	msg *types.MsgCreateLimitOrder,
+) (*types.EmptyResponse, error) {
+	order := types.OrderLimit(*msg)
+	err := ms.keeper.StoreTransientOrder(sdk.UnwrapSDKContext(ctx), &order)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
 }

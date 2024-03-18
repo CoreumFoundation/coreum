@@ -178,6 +178,9 @@
 - [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
     - [GenesisState](#coreum.dex.v1.GenesisState)
   
+- [coreum/dex/v1/orders.proto](#coreum/dex/v1/orders.proto)
+    - [OrderLimit](#coreum.dex.v1.OrderLimit)
+  
 - [coreum/dex/v1/tx.proto](#coreum/dex/v1/tx.proto)
     - [EmptyResponse](#coreum.dex.v1.EmptyResponse)
     - [MsgCreateLimitOrder](#coreum.dex.v1.MsgCreateLimitOrder)
@@ -3842,6 +3845,39 @@ GenesisState defines the module genesis state.
 
 
 
+<a name="coreum/dex/v1/orders.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/orders.proto
+
+
+
+<a name="coreum.dex.v1.OrderLimit"></a>
+
+### OrderLimit
+MsgIssue defines message to issue new fungible token.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `owner` | [string](#string) |  |  |
+| `offered_amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+| `sell_price` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
 <a name="coreum/dex/v1/tx.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -3867,11 +3903,9 @@ MsgIssue defines message to issue new fungible token.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `issuer` | [string](#string) |  |  |
-| `symbol` | [string](#string) |  |  |
-| `subunit` | [string](#string) |  |  |
-| `precision` | [uint32](#uint32) |  |  |
-| `initial_amount` | [string](#string) |  |  |
+| `owner` | [string](#string) |  |  |
+| `offered_amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+| `sell_price` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
 
 
 
