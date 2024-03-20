@@ -6,6 +6,33 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types";
 option (gogoproto.goproto_getters_all) = false;
 
+// DataModificationType defines possible data modification types.
+enum DataModificationType {
+  // only issuer can update
+  issuer = 0;
+  // only owner can update
+  owner = 1;
+}
+
+// DataBytes represent the data which can't be updated.
 message DataBytes {
-  bytes Data = 1;
+  bytes data = 1;
+}
+
+// DataDynamicItem contains the updatable data and modification types.
+message DataDynamicItem {
+  // contains the set of the modification types, if empty no one can update.
+  repeated DataModificationType types = 1;
+  bytes data = 2;
+}
+
+// DataDynamicIndexed contains the data and it's index in the DataDynamic.
+message DataDynamicIndexedItem {
+  uint32 index = 1;
+  bytes data = 2;
+}
+
+// DataDynamic is dynamic data which contains the list of the items allowed to be modified base on their modification types.
+message DataDynamic {
+  repeated DataDynamicItem items = 1;
 }

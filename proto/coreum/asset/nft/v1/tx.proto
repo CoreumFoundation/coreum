@@ -4,6 +4,7 @@ package coreum.asset.nft.v1;
 import "amino/amino.proto";
 import "coreum/asset/nft/v1/nft.proto";
 import "coreum/asset/nft/v1/params.proto";
+import "coreum/asset/nft/v1/types.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
@@ -18,6 +19,8 @@ service Msg {
   rpc IssueClass(MsgIssueClass) returns (EmptyResponse);
   // Mint mints new non-fungible token in the class.
   rpc Mint(MsgMint) returns (EmptyResponse);
+  // Update updates the existing non-fungible token in the class.
+  rpc Update(MsgUpdate) returns (EmptyResponse);
   // Burn burns the existing non-fungible token in the class.
   rpc Burn(MsgBurn) returns (EmptyResponse);
   // Freeze freezes an NFT
@@ -71,8 +74,17 @@ message MsgMint {
   string id = 3 [(gogoproto.customname) = "ID"];
   string uri = 4 [(gogoproto.customname) = "URI"];
   string uri_hash = 5 [(gogoproto.customname) = "URIHash"];
+  // Data can be DataBytes or DataDynamic.
   google.protobuf.Any data = 6;
   string recipient = 7;
+}
+
+// MsgUpdate defines message to update the dynamic data.
+message MsgUpdate {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+  repeated DataDynamicIndexedItem items = 4;
 }
 
 // MsgBurn defines message for the Burn method.
