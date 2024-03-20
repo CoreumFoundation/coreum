@@ -692,7 +692,7 @@ func New(
 	app.DexKeeper = dexkeeper.NewKeeper(
 		appCodec,
 		keys[dextypes.StoreKey],
-		tkeys[feemodeltypes.TransientStoreKey],
+		tkeys[dextypes.TransientStoreKey],
 	)
 
 	/****  Module Options ****/

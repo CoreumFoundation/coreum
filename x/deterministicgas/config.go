@@ -100,7 +100,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromClassWhitelist{}): constantGasFunc(3_500),
 
 		// dex
-		// FIXME (wojtek): gas values are taken our of nowhere
+		// TODO (wojtek): dex gas values are taken our of nowhere, estimate them at the end
 		MsgToMsgURL(&dextypes.MsgCreateLimitOrder{}): constantGasFunc(10_000),
 
 		// authz

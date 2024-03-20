@@ -105,6 +105,14 @@ func (k Keeper) nextDenomSequence(ctx sdk.Context) uint64 {
 	return seq.Uint64()
 }
 
+func (k Keeper) denomTransientSequences(ctx sdk.Context, denom1, denom2 string) (uint64, uint64) {
+	if strings.Compare(denom1, denom2) > 0 {
+		denom1, denom2 = denom2, denom1
+	}
+
+	return k.denomSequence(ctx, denom1), k.denomSequence(ctx, denom2)
+}
+
 func (k Keeper) denomSequence(ctx sdk.Context, denom string) uint64 {
 	store := ctx.TransientStore(k.storeKey)
 	key := types.CreateDenomMappingKey(denom)
@@ -127,12 +135,4 @@ func (k Keeper) denomSequence(ctx sdk.Context, denom string) uint64 {
 		panic(err)
 	}
 	return seq.Uint64()
-}
-
-func (k Keeper) denomTransientSequences(ctx sdk.Context, denom1, denom2 string) (uint64, uint64) {
-	if strings.Compare(denom1, denom2) > 0 {
-		denom1, denom2 = denom2, denom1
-	}
-
-	return k.denomSequence(ctx, denom1), k.denomSequence(ctx, denom2)
 }
