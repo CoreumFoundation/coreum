@@ -84,7 +84,7 @@ func (k Keeper) nextOrderTransientSequence(ctx sdk.Context) uint64 {
 }
 
 func (k Keeper) nextDenomSequence(ctx sdk.Context) uint64 {
-	store := ctx.TransientStore(k.storeKey)
+	store := ctx.KVStore(k.storeKey)
 
 	seq := sdkmath.ZeroUint()
 	bz := store.Get(types.DenomSequenceKey)
@@ -114,7 +114,7 @@ func (k Keeper) denomTransientSequences(ctx sdk.Context, denom1, denom2 string) 
 }
 
 func (k Keeper) denomSequence(ctx sdk.Context, denom string) uint64 {
-	store := ctx.TransientStore(k.storeKey)
+	store := ctx.KVStore(k.storeKey)
 	key := types.CreateDenomMappingKey(denom)
 	bz := store.Get(key)
 	if bz == nil {
