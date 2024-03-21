@@ -2262,13 +2262,13 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 		Name        string
 		Amount      sdk.Coin
 		AccountType string
-		MsgFunc     func(adminAccount sdk.AccAddress, contractAddress sdk.AccAddress, amount sdk.Coin) sdk.Msg
+		MsgFunc     func(adminAccount, contractAddress sdk.AccAddress, amount sdk.Coin) sdk.Msg
 	}{
 		{
 			Name:        "BaseAccount",
 			Amount:      chain.NewCoin(sdkmath.NewInt(500)),
 			AccountType: "/cosmos.auth.v1beta1.BaseAccount",
-			MsgFunc: func(adminAccount sdk.AccAddress, contractAddress sdk.AccAddress, amount sdk.Coin) sdk.Msg {
+			MsgFunc: func(adminAccount, contractAddress sdk.AccAddress, amount sdk.Coin) sdk.Msg {
 				return &banktypes.MsgSend{
 					FromAddress: adminAccount.String(),
 					ToAddress:   contractAddress.String(),
@@ -2280,7 +2280,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 			Name:        "DelayedVestingAccount",
 			Amount:      chain.NewCoin(sdkmath.NewInt(600)),
 			AccountType: "/cosmos.vesting.v1beta1.DelayedVestingAccount",
-			MsgFunc: func(adminAccount sdk.AccAddress, contractAddress sdk.AccAddress, amount sdk.Coin) sdk.Msg {
+			MsgFunc: func(adminAccount, contractAddress sdk.AccAddress, amount sdk.Coin) sdk.Msg {
 				return &vestingtypes.MsgCreateVestingAccount{
 					FromAddress: adminAccount.String(),
 					ToAddress:   contractAddress.String(),
@@ -2294,7 +2294,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 			Name:        "ContinuousVestingAccount",
 			Amount:      chain.NewCoin(sdkmath.NewInt(700)),
 			AccountType: "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
-			MsgFunc: func(adminAccount sdk.AccAddress, contractAddress sdk.AccAddress, amount sdk.Coin) sdk.Msg {
+			MsgFunc: func(adminAccount, contractAddress sdk.AccAddress, amount sdk.Coin) sdk.Msg {
 				return &vestingtypes.MsgCreateVestingAccount{
 					FromAddress: adminAccount.String(),
 					ToAddress:   contractAddress.String(),

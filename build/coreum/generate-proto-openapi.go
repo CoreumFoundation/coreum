@@ -165,7 +165,7 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 	return errors.WithStack(encoder.Encode(finalDoc))
 }
 
-func mergeSpecFile(file string, operationPrefix string, finalDoc swaggerDoc) error {
+func mergeSpecFile(file, operationPrefix string, finalDoc swaggerDoc) error {
 	var sd swaggerDoc
 	f, err := os.Open(file)
 	if err != nil {
@@ -184,8 +184,7 @@ func mergeSpecFile(file string, operationPrefix string, finalDoc swaggerDoc) err
 			if err := json.Unmarshal(opV[operationIDField], &opID); err != nil {
 				return errors.WithStack(err)
 			}
-			v[opK][operationIDField] =
-				json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(operationPrefix, "/", ".")), opID))
+			v[opK][operationIDField] = json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(operationPrefix, "/", ".")), opID))
 		}
 		finalDoc.Paths[k] = v
 	}
