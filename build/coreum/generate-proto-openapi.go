@@ -184,7 +184,9 @@ func mergeSpecFile(file, operationPrefix string, finalDoc swaggerDoc) error {
 			if err := json.Unmarshal(opV[operationIDField], &opID); err != nil {
 				return errors.WithStack(err)
 			}
-			v[opK][operationIDField] = json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(operationPrefix, "/", ".")), opID))
+			v[opK][operationIDField] = json.RawMessage(
+				fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(operationPrefix, "/", ".")), opID),
+			)
 		}
 		finalDoc.Paths[k] = v
 	}

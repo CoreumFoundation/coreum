@@ -16,7 +16,7 @@ enum DataModificationType {
 
 // DataBytes represent the data which can't be updated.
 message DataBytes {
-  bytes data = 1;
+  bytes Data = 1;
 }
 
 // DataDynamicItem contains the updatable data and modification types.

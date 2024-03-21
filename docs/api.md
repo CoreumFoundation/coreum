@@ -3531,7 +3531,7 @@ DataBytes represent the data which can't be updated.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `data` | [bytes](#bytes) |  |  |
+| `Data` | [bytes](#bytes) |  |  |
 
 
 

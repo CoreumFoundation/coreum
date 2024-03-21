@@ -40,7 +40,7 @@ const (
 	AuthzExecOverhead             = 1500
 	NFTIssueClassBaseGas          = 16_000
 	NFTMintBaseGas                = 39_000
-	// FIXME update to correct value
+	// FIXME update to correct value.
 	NFTUpdateBaseGas = 39_000
 )
 
