@@ -219,7 +219,8 @@ func (m MsgMint) Type() string {
 
 // ValidateBasic checks that message fields are valid.
 func (m *MsgUpdate) ValidateBasic() error {
-	// FIXME implement
+	// FIXME implement basic validation
+	// FIXME add validation on the bytes to the keeper to check that after the update the entire data less than MaxDataSize
 	panic("implement me")
 }
 

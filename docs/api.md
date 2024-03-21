@@ -3594,7 +3594,7 @@ DataModificationType defines possible data modification types.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| issuer | 0 | only issuer can update |
+| admin | 0 | only issuer can update |
 | owner | 1 | only owner can update |
 
 

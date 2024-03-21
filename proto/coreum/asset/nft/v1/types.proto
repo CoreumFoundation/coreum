@@ -9,7 +9,7 @@ option (gogoproto.goproto_getters_all) = false;
 // DataModificationType defines possible data modification types.
 enum DataModificationType {
   // only issuer can update
-  issuer = 0;
+  admin = 0;
   // only owner can update
   owner = 1;
 }
