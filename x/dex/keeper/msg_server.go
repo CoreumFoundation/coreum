@@ -12,7 +12,7 @@ var _ types.MsgServer = MsgServer{}
 
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
-	StoreTransientOrder(ctx sdk.Context, order Order) error
+	StoreTransientOrder(ctx sdk.Context, order types.Order) error
 }
 
 // MsgServer serves grpc tx requests for dex module.

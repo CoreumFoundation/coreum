@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"math"
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -19,6 +20,11 @@ const (
 var (
 	_ sdk.Msg            = &MsgCreateLimitOrder{}
 	_ legacytx.LegacyMsg = &MsgCreateLimitOrder{}
+)
+
+var (
+	minPrice = sdk.MustNewDecFromStr("0.000000000000000001")
+	maxPrice = sdk.MustNewDecFromStr(fmt.Sprintf("%d.999999999999999999", math.MaxUint64))
 )
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
@@ -41,8 +47,11 @@ func (m MsgCreateLimitOrder) ValidateBasic() error {
 	if err := m.SellPrice.Validate(); err != nil {
 		return sdkerrors.Wrapf(ErrInvalidPrice, "invalid price: %s", err.Error())
 	}
-	if m.SellPrice.IsZero() {
-		return sdkerrors.Wrap(ErrInvalidPrice, "sell price must be positive")
+	if m.SellPrice.Amount.LT(minPrice) {
+		return sdkerrors.Wrapf(ErrInvalidPrice, "price is lower than: %s", minPrice)
+	}
+	if m.SellPrice.Amount.GT(maxPrice) {
+		return sdkerrors.Wrapf(ErrInvalidPrice, "price is higher than: %s", maxPrice)
 	}
 	if m.OfferedAmount.Denom == m.SellPrice.Denom {
 		return sdkerrors.Wrap(ErrInvalidInput, "offered and requested denoms must be different")

@@ -156,6 +156,15 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // ConsensusVersion implements ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
+// EndBlock returns the end blocker for the fee module. It returns no validator
+// updates.
+func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	if err := am.keeper.ProcessTransientQueue(ctx); err != nil {
+		panic(err)
+	}
+	return nil
+}
+
 // AppModuleSimulation functions
 
 // GenerateGenesisState creates a randomized GenState of the dex module.
