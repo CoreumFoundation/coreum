@@ -172,6 +172,21 @@
 - [coreum/deterministicgas/v1/event.proto](#coreum/deterministicgas/v1/event.proto)
     - [EventGas](#coreum.deterministicgas.v1.EventGas)
   
+- [coreum/dex/v1/event.proto](#coreum/dex/v1/event.proto)
+    - [LimitOrderCreated](#coreum.dex.v1.LimitOrderCreated)
+  
+- [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
+    - [GenesisState](#coreum.dex.v1.GenesisState)
+  
+- [coreum/dex/v1/orders.proto](#coreum/dex/v1/orders.proto)
+    - [OrderLimit](#coreum.dex.v1.OrderLimit)
+  
+- [coreum/dex/v1/tx.proto](#coreum/dex/v1/tx.proto)
+    - [EmptyResponse](#coreum.dex.v1.EmptyResponse)
+    - [MsgCreateLimitOrder](#coreum.dex.v1.MsgCreateLimitOrder)
+  
+    - [Msg](#coreum.dex.v1.Msg)
+  
 - [coreum/feemodel/v1/genesis.proto](#coreum/feemodel/v1/genesis.proto)
     - [GenesisState](#coreum.feemodel.v1.GenesisState)
   
@@ -3763,6 +3778,154 @@ EventGas is emitted by deterministic gas module to report gas information.
  <!-- end enums -->
 
  <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/event.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/event.proto
+
+
+
+<a name="coreum.dex.v1.LimitOrderCreated"></a>
+
+### LimitOrderCreated
+EventIssued is emitted on MsgIssue.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |  |
+| `issuer` | [string](#string) |  |  |
+| `symbol` | [string](#string) |  |  |
+| `subunit` | [string](#string) |  |  |
+| `precision` | [uint32](#uint32) |  |  |
+| `initial_amount` | [string](#string) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/genesis.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/genesis.proto
+
+
+
+<a name="coreum.dex.v1.GenesisState"></a>
+
+### GenesisState
+GenesisState defines the module genesis state.
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/orders.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/orders.proto
+
+
+
+<a name="coreum.dex.v1.OrderLimit"></a>
+
+### OrderLimit
+MsgIssue defines message to issue new fungible token.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `owner` | [string](#string) |  |  |
+| `offered_amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+| `sell_price` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/tx.proto
+
+
+
+<a name="coreum.dex.v1.EmptyResponse"></a>
+
+### EmptyResponse
+
+
+
+
+
+
+
+<a name="coreum.dex.v1.MsgCreateLimitOrder"></a>
+
+### MsgCreateLimitOrder
+MsgIssue defines message to issue new fungible token.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `owner` | [string](#string) |  |  |
+| `offered_amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+| `sell_price` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="coreum.dex.v1.Msg"></a>
+
+### Msg
+Msg defines the Msg service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `CreateLimitOrder` | [MsgCreateLimitOrder](#coreum.dex.v1.MsgCreateLimitOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | Issue defines a method to issue a new fungible token. | |
 
  <!-- end services -->
 
