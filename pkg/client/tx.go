@@ -338,7 +338,7 @@ func AwaitTargetHeight(ctx context.Context, clientCtx Context, targetHeight int6
 			return retry.Retryable(errors.WithStack(err))
 		}
 
-		var currentHeight = blockHeightFromResponse(res)
+		currentHeight := blockHeightFromResponse(res)
 
 		if currentHeight < targetHeight {
 			return retry.Retryable(errors.Errorf(
