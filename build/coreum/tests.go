@@ -48,7 +48,7 @@ func BuildIntegrationTests(name string) build.CommandFunc {
 		}
 
 		binOutputPath := filepath.Join(testsBinDir, repoName+"-"+name)
-		return golang.BuildTests(ctx, golang.TestBuildConfig{
+		return golang.BuildTests(ctx, deps, golang.TestBuildConfig{
 			PackagePath: filepath.Join(testsDir, name),
 			Flags: []string{
 				"-tags=integrationtests",
