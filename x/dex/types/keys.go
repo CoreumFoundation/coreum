@@ -42,8 +42,8 @@ var StoreTrue = []byte{0x01}
 // CreateDenomPairKeyPrefix creates the key prefix from two denom sequence numbers.
 func CreateDenomPairKeyPrefix(prefix []byte, denom1Seq, denom2Seq uint64) []byte {
 	key := make([]byte, 0, 2*uint64ByteSize)
-	binary.BigEndian.AppendUint64(key, denom1Seq)
-	binary.BigEndian.AppendUint64(key, denom2Seq)
+	key = binary.BigEndian.AppendUint64(key, denom1Seq)
+	key = binary.BigEndian.AppendUint64(key, denom2Seq)
 	return store.JoinKeys(prefix, key)
 }
 
@@ -57,10 +57,9 @@ func CreateOrderTransientQueueKey(denom1Seq, denom2Seq, orderID uint64) []byte {
 	if denom1Seq > denom2Seq {
 		denom1Seq, denom2Seq = denom2Seq, denom1Seq
 	}
-	key := make([]byte, 0, uint64ByteSize)
-	binary.BigEndian.AppendUint64(key, orderID)
 
-	return store.JoinKeys(CreateDenomPairKeyPrefix(OrderTransientQueueKey, denom1Seq, denom2Seq), key)
+	return store.JoinKeys(CreateDenomPairKeyPrefix(OrderTransientQueueKey, denom1Seq, denom2Seq),
+		binary.BigEndian.AppendUint64(make([]byte, 0, uint64ByteSize), orderID))
 }
 
 // DecomposeOrderTransientQueueKey decomposes transient order key.
@@ -77,9 +76,9 @@ func CreateOrderQueueKey(denomOfferedSeq, denomRequestedSeq, orderID uint64, pri
 		TruncateInt()
 
 	key := make([]byte, 0, 3*uint64ByteSize)
-	binary.BigEndian.AppendUint64(key, math.MaxUint64-wholePart.Uint64())
-	binary.BigEndian.AppendUint64(key, math.MaxUint64-decPart.Uint64())
-	binary.BigEndian.AppendUint64(key, orderID)
+	key = binary.BigEndian.AppendUint64(key, math.MaxUint64-wholePart.Uint64())
+	key = binary.BigEndian.AppendUint64(key, math.MaxUint64-decPart.Uint64())
+	key = binary.BigEndian.AppendUint64(key, orderID)
 
 	return store.JoinKeys(CreateDenomPairKeyPrefix(OrderQueueKey, denomOfferedSeq, denomRequestedSeq), key)
 }
@@ -92,16 +91,13 @@ func DecomposeOrderQueueKey(key []byte) uint64 {
 // CreateOrderOwnerKey creates the key for an order assigned to an account.
 func CreateOrderOwnerKey(accountNumber, orderID uint64) []byte {
 	key := make([]byte, 0, 2*uint64ByteSize)
-	binary.BigEndian.AppendUint64(key, accountNumber)
-	binary.BigEndian.AppendUint64(key, orderID)
+	key = binary.BigEndian.AppendUint64(key, accountNumber)
+	key = binary.BigEndian.AppendUint64(key, orderID)
 
 	return store.JoinKeys(OrderOwnerKey, key)
 }
 
 // CreateOrderKey creates the key for an order.
 func CreateOrderKey(orderID uint64) []byte {
-	key := make([]byte, 0, uint64ByteSize)
-	binary.BigEndian.AppendUint64(key, orderID)
-
-	return store.JoinKeys(OrderKey, key)
+	return store.JoinKeys(OrderKey, binary.BigEndian.AppendUint64(make([]byte, 0, uint64ByteSize), orderID))
 }
