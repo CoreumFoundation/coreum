@@ -27,13 +27,13 @@ const uint64ByteSize = 8
 
 // Store keys.
 var (
-	OrderSequenceKey       = []byte{0x00}
-	OrderTransientQueueKey = []byte{0x01}
-	DenomSequenceKey       = []byte{0x02}
-	DenomMappingKey        = []byte{0x03}
-	OrderQueueKey          = []byte{0x04}
-	OrderOwnerKey          = []byte{0x05}
-	OrderKey               = []byte{0x06}
+	OrderSequenceKey          = []byte{0x00}
+	OrderTransientQueueKey    = []byte{0x01}
+	DenomSequenceKey          = []byte{0x02}
+	DenomToSequenceMappingKey = []byte{0x03}
+	OrderQueueKey             = []byte{0x04}
+	OrderOwnerKey             = []byte{0x05}
+	OrderKey                  = []byte{0x06}
 )
 
 // StoreTrue keeps a value used by stores to indicate that key is present.
@@ -49,7 +49,7 @@ func CreateDenomPairKeyPrefix(prefix []byte, denom1Seq, denom2Seq uint64) []byte
 
 // CreateDenomMappingKey creates the key for the denom-uint64 mapping.
 func CreateDenomMappingKey(denom string) []byte {
-	return store.JoinKeys(DenomMappingKey, []byte(denom))
+	return store.JoinKeys(DenomToSequenceMappingKey, []byte(denom))
 }
 
 // CreateOrderTransientQueueKey creates the key for an order inside transient queue.
@@ -72,9 +72,9 @@ func DecomposeOrderTransientQueueKey(key []byte) (uint64, uint64, uint64) {
 
 // CreateOrderQueueKey creates the key for an order inside transient queue.
 func CreateOrderQueueKey(denomOfferedSeq, denomRequestedSeq, orderID uint64, price sdk.Dec) []byte {
-
 	wholePart := price.TruncateInt()
-	decPart := price.Sub(wholePart.ToLegacyDec()).Mul(sdk.NewDecFromInt(sdk.NewIntFromUint64(1000000000000000000))).TruncateInt()
+	decPart := price.Sub(wholePart.ToLegacyDec()).Mul(sdk.NewDecFromInt(sdk.NewIntFromUint64(1000000000000000000))).
+		TruncateInt()
 
 	key := make([]byte, 0, 3*uint64ByteSize)
 	binary.BigEndian.AppendUint64(key, math.MaxUint64-wholePart.Uint64())
@@ -103,5 +103,5 @@ func CreateOrderKey(orderID uint64) []byte {
 	key := make([]byte, 0, uint64ByteSize)
 	binary.BigEndian.AppendUint64(key, orderID)
 
-	return store.JoinKeys(OrderOwnerKey, key)
+	return store.JoinKeys(OrderKey, key)
 }

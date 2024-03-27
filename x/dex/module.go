@@ -30,19 +30,19 @@ var (
 // AppModuleBasic
 // ----------------------------------------------------------------------------
 
-// AppModuleBasic implements the AppModuleBasic interface for the dex module.
+// AppModuleBasic implements the AppModuleBasic interface for the DEX module.
 type AppModuleBasic struct {
 	cdc codec.BinaryCodec
 }
 
-// NewAppModuleBasic returns the dex AppModuleBasic.
+// NewAppModuleBasic returns the DEX AppModuleBasic.
 func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
 	return AppModuleBasic{
 		cdc: cdc,
 	}
 }
 
-// Name returns the dex module's name.
+// Name returns the DEX module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
@@ -57,12 +57,12 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(reg)
 }
 
-// DefaultGenesis returns the dex module's default genesis state.
+// DefaultGenesis returns the DEX module's default genesis state.
 func (a AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesis())
 }
 
-// ValidateGenesis performs genesis state validation for the dex module.
+// ValidateGenesis performs genesis state validation for the DEX module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
 	var genState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
@@ -71,7 +71,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncod
 	return genState.Validate()
 }
 
-// RegisterRESTRoutes registers the dex module's REST service handlers.
+// RegisterRESTRoutes registers the DEX module's REST service handlers.
 func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
 }
 
@@ -83,12 +83,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 	// }
 }
 
-// GetTxCmd returns the dex module's root tx command.
+// GetTxCmd returns the DEX module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
 }
 
-// GetQueryCmd returns the dex module's root query command.
+// GetQueryCmd returns the DEX module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	// TODO: Implement
 	// return cli.GetQueryCmd()
@@ -99,7 +99,7 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // AppModule
 // ----------------------------------------------------------------------------
 
-// AppModule implements the AppModule interface for the dex module.
+// AppModule implements the AppModule interface for the DEX module.
 type AppModule struct {
 	AppModuleBasic
 
@@ -117,7 +117,7 @@ func NewAppModule(
 	}
 }
 
-// Name returns the dex module's name.
+// Name returns the DEX module's name.
 func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
@@ -130,12 +130,12 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	// types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper, am.bankKeeper))
 }
 
-// RegisterInvariants registers the dex module's invariants.
+// RegisterInvariants registers the DEX module's invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 	// TODO: Implement
 }
 
-// InitGenesis performs the dex module's genesis initialization It returns
+// InitGenesis performs the DEX module's genesis initialization It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState

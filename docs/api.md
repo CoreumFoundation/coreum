@@ -3855,13 +3855,13 @@ GenesisState defines the module genesis state.
 <a name="coreum.dex.v1.OrderLimit"></a>
 
 ### OrderLimit
-MsgIssue defines message to issue new fungible token.
+OrderLimit defines message to create new limit order.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `owner` | [string](#string) |  |  |
-| `offered_amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+| `sender` | [string](#string) |  |  |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
 | `sell_price` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
 
 
@@ -3903,8 +3903,8 @@ MsgIssue defines message to issue new fungible token.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `owner` | [string](#string) |  |  |
-| `offered_amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+| `sender` | [string](#string) |  |  |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
 | `sell_price` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
 
 

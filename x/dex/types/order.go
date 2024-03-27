@@ -20,12 +20,12 @@ type Order interface {
 
 // Account returns the account who placed the order.
 func (o *OrderLimit) Account() string {
-	return o.Owner
+	return o.Sender
 }
 
 // DenomOffered returns the offered denom.
 func (o *OrderLimit) DenomOffered() string {
-	return o.OfferedAmount.Denom
+	return o.Amount.Denom
 }
 
 // DenomRequested returns the requested denom.
@@ -35,7 +35,7 @@ func (o *OrderLimit) DenomRequested() string {
 
 // AmountOffered returns the offered amount.
 func (o *OrderLimit) AmountOffered() sdkmath.Int {
-	return o.OfferedAmount.Amount
+	return o.Amount.Amount
 }
 
 // Price returns the sell price.
@@ -45,5 +45,5 @@ func (o *OrderLimit) Price() sdk.Dec {
 
 // ReduceOfferedAmount reduces offered amount.
 func (o *OrderLimit) ReduceOfferedAmount(reduceAmount sdkmath.Int) {
-	o.OfferedAmount.Amount = o.OfferedAmount.Amount.Sub(reduceAmount)
+	o.Amount.Amount = o.Amount.Amount.Sub(reduceAmount)
 }

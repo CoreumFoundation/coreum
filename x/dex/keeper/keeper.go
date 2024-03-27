@@ -27,7 +27,7 @@ type Keeper struct {
 	cdc               codec.BinaryCodec
 	storeKey          storetypes.StoreKey
 	transientStoreKey storetypes.StoreKey
-	authKeeper        authkeeper.AccountKeeperI
+	accountKeeper     authkeeper.AccountKeeperI
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -35,13 +35,13 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	transientStoreKey storetypes.StoreKey,
-	authKeeper authkeeper.AccountKeeperI,
+	accountKeeper authkeeper.AccountKeeperI,
 ) Keeper {
 	return Keeper{
 		cdc:               cdc,
 		storeKey:          storeKey,
 		transientStoreKey: transientStoreKey,
-		authKeeper:        authKeeper,
+		accountKeeper:     accountKeeper,
 	}
 }
 
@@ -56,8 +56,8 @@ func (k Keeper) StoreTransientOrder(ctx sdk.Context, order types.Order) error {
 
 	tStore := ctx.TransientStore(k.transientStoreKey)
 	tStore.Set(types.CreateOrderTransientQueueKey(
-		k.denomSequence(ctx, order.DenomOffered()),
-		k.denomSequence(ctx, order.DenomRequested()),
+		k.createDenomSequence(ctx, order.DenomOffered()),
+		k.createDenomSequence(ctx, order.DenomRequested()),
 		k.nextOrderID(ctx),
 	), orderBytes)
 
@@ -117,7 +117,7 @@ loop:
 		}
 
 		_, _, orderID := types.DecomposeOrderTransientQueueKey(iterator.Key())
-		offeredDenomSequence := k.denomSequence(ctx, order.DenomOffered())
+		offeredDenomSequence := k.createDenomSequence(ctx, order.DenomOffered())
 
 		if denom1Sequence == offeredDenomSequence {
 			sideA = k.appendOrder(sideA, order, orderID)
@@ -274,11 +274,11 @@ func (k Keeper) persistOrders(ctx sdk.Context, orders []*orderWrapper) error {
 		if err != nil {
 			return err
 		}
-		acc := k.authKeeper.GetAccount(ctx, account)
+		acc := k.accountKeeper.GetAccount(ctx, account)
 
 		store.Set(types.CreateOrderQueueKey(
-			k.denomSequence(ctx, order.DenomOffered()),
-			k.denomSequence(ctx, order.DenomRequested()),
+			k.createDenomSequence(ctx, order.DenomOffered()),
+			k.createDenomSequence(ctx, order.DenomRequested()),
 			order.orderID,
 			order.Price(),
 		), types.StoreTrue)
@@ -297,13 +297,13 @@ func (k Keeper) dropOrder(ctx sdk.Context, order *orderWrapper) error {
 	if err != nil {
 		return err
 	}
-	acc := k.authKeeper.GetAccount(ctx, account)
+	acc := k.accountKeeper.GetAccount(ctx, account)
 
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.CreateOrderKey(order.orderID))
 	store.Delete(types.CreateOrderQueueKey(
-		k.denomSequence(ctx, order.DenomOffered()),
-		k.denomSequence(ctx, order.DenomRequested()),
+		k.createDenomSequence(ctx, order.DenomOffered()),
+		k.createDenomSequence(ctx, order.DenomRequested()),
 		order.orderID,
 		order.Price(),
 	))
@@ -359,7 +359,7 @@ func (k Keeper) nextDenomSequence(ctx sdk.Context) uint64 {
 	return seq.Uint64()
 }
 
-func (k Keeper) denomSequence(ctx sdk.Context, denom string) uint64 {
+func (k Keeper) createDenomSequence(ctx sdk.Context, denom string) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	key := types.CreateDenomMappingKey(denom)
 	bz := store.Get(key)
