@@ -36,14 +36,14 @@ func GetTxCmd() *cobra.Command {
 // CmdTxCreateLimitOrder returns CreateLimitOrder cobra command.
 func CmdTxCreateLimitOrder() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-limit-order [offered-amount] [sell-price] --from [owner]",
+		Use:   "create-limit-order [offered-amount] [sell-price] --from [sender]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Create limit order",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Creates limit-order.
 
 Example:
-$ %s tx %s create-limit-order 10wsatoshi 123.12wwei --from [issuer]
+$ %s tx %s create-limit-order 10wsatoshi 123.12wwei --from [sender]
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -54,8 +54,8 @@ $ %s tx %s create-limit-order 10wsatoshi 123.12wwei --from [issuer]
 				return errors.WithStack(err)
 			}
 
-			owner := clientCtx.GetFromAddress()
-			offeredAmount, err := sdk.ParseCoinNormalized(args[0])
+			sender := clientCtx.GetFromAddress()
+			amount, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
 				return sdkerrors.Wrap(err, "invalid offered amount")
 			}
@@ -65,9 +65,9 @@ $ %s tx %s create-limit-order 10wsatoshi 123.12wwei --from [issuer]
 			}
 
 			msg := &types.MsgCreateLimitOrder{
-				Owner:         owner.String(),
-				OfferedAmount: offeredAmount,
-				SellPrice:     sellPrice,
+				Sender:    sender.String(),
+				Amount:    amount,
+				SellPrice: sellPrice,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"math"
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -21,6 +22,11 @@ var (
 	_ legacytx.LegacyMsg = &MsgCreateLimitOrder{}
 )
 
+var (
+	minPrice = sdk.MustNewDecFromStr("0.000000000000000001")
+	maxPrice = sdk.MustNewDecFromStr(fmt.Sprintf("%d.999999999999999999", uint64(math.MaxUint64)))
+)
+
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateLimitOrder{}, fmt.Sprintf("%s/MsgCreateLimitOrder", ModuleName), nil)
@@ -28,23 +34,26 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 
 // ValidateBasic validates the message.
 func (m MsgCreateLimitOrder) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Owner); err != nil {
-		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid issuer %s", m.Owner)
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender %s", m.Sender)
 	}
 
-	if err := m.OfferedAmount.Validate(); err != nil {
-		return sdkerrors.Wrapf(ErrInvalidCoin, "invalid offered amount: %s", err.Error())
+	if err := m.Amount.Validate(); err != nil {
+		return sdkerrors.Wrapf(ErrInvalidCoin, "invalid amount: %s", err.Error())
 	}
-	if m.OfferedAmount.IsZero() {
-		return sdkerrors.Wrap(ErrInvalidCoin, "offered amount must be positive")
+	if m.Amount.IsZero() {
+		return sdkerrors.Wrap(ErrInvalidCoin, "amount must be positive")
 	}
 	if err := m.SellPrice.Validate(); err != nil {
 		return sdkerrors.Wrapf(ErrInvalidPrice, "invalid price: %s", err.Error())
 	}
-	if m.SellPrice.IsZero() {
-		return sdkerrors.Wrap(ErrInvalidPrice, "sell price must be positive")
+	if m.SellPrice.Amount.LT(minPrice) {
+		return sdkerrors.Wrapf(ErrInvalidPrice, "price is lower than: %s", minPrice)
 	}
-	if m.OfferedAmount.Denom == m.SellPrice.Denom {
+	if m.SellPrice.Amount.GT(maxPrice) {
+		return sdkerrors.Wrapf(ErrInvalidPrice, "price is higher than: %s", maxPrice)
+	}
+	if m.Amount.Denom == m.SellPrice.Denom {
 		return sdkerrors.Wrap(ErrInvalidInput, "offered and requested denoms must be different")
 	}
 
@@ -54,7 +63,7 @@ func (m MsgCreateLimitOrder) ValidateBasic() error {
 // GetSigners returns the message signers.
 func (m MsgCreateLimitOrder) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(m.Owner),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 

@@ -291,7 +291,7 @@ type App struct {
 	NFTKeeper          wnftkeeper.Wrapper
 	CustomParamsKeeper customparamskeeper.Keeper
 	DelayKeeper        delaykeeper.Keeper
-	DexKeeper          dexkeeper.Keeper
+	DEXKeeper          dexkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -689,10 +689,11 @@ func New(
 	)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
-	app.DexKeeper = dexkeeper.NewKeeper(
+	app.DEXKeeper = dexkeeper.NewKeeper(
 		appCodec,
 		keys[dextypes.StoreKey],
 		tkeys[dextypes.TransientStoreKey],
+		app.AccountKeeper,
 	)
 
 	/****  Module Options ****/
@@ -781,7 +782,7 @@ func New(
 		wnftModule,
 		customParamsModule,
 		delayModule,
-		dex.NewAppModule(appCodec, app.DexKeeper),
+		dex.NewAppModule(appCodec, app.DEXKeeper),
 		// always be last to make sure that it checks for all invariants and not only part of them
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 	)

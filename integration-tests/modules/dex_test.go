@@ -83,14 +83,14 @@ func TestCreateLimitOrder(t *testing.T) {
 	denom2 := assetfttypes.BuildDenom(msgIssue2.Subunit, issuer2)
 
 	msgOrder1 := &types.MsgCreateLimitOrder{
-		Owner:         issuer1.String(),
-		OfferedAmount: sdk.NewInt64Coin(denom1, 10),
-		SellPrice:     sdk.NewDecCoinFromDec(denom2, sdk.MustNewDecFromStr("0.5")),
+		Sender:    issuer1.String(),
+		Amount:    sdk.NewInt64Coin(denom1, 10),
+		SellPrice: sdk.NewDecCoinFromDec(denom2, sdk.MustNewDecFromStr("0.5")),
 	}
 	msgOrder2 := &types.MsgCreateLimitOrder{
-		Owner:         issuer2.String(),
-		OfferedAmount: sdk.NewInt64Coin(denom2, 5),
-		SellPrice:     sdk.NewInt64DecCoin(denom1, 2),
+		Sender:    issuer2.String(),
+		Amount:    sdk.NewInt64Coin(denom2, 5),
+		SellPrice: sdk.NewInt64DecCoin(denom1, 2),
 	}
 
 	_, err = client.BroadcastTx(

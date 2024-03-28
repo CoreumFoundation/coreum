@@ -15,8 +15,8 @@ service Msg {
 
 // MsgIssue defines message to issue new fungible token.
 message MsgCreateLimitOrder {
-  string owner = 1;
-  cosmos.base.v1beta1.Coin offered_amount = 2 [(gogoproto.nullable) = false];
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.DecCoin sell_price = 3 [(gogoproto.nullable) = false];
 }
 
