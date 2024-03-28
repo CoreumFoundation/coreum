@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
@@ -65,8 +66,7 @@ func (k Keeper) StoreTransientOrder(ctx sdk.Context, order types.Order) error {
 
 // ProcessTransientQueue processes orders stored in the transient queue and matches them.
 func (k Keeper) ProcessTransientQueue(ctx sdk.Context) error {
-	tStore := ctx.TransientStore(k.transientStoreKey)
-	iterator := storetypes.KVStorePrefixIterator(tStore, types.OrderTransientQueueKey)
+	iterator := prefix.NewStore(ctx.TransientStore(k.transientStoreKey), types.OrderTransientQueueKey).Iterator(nil, nil)
 	defer iterator.Close()
 
 	for iterator.Valid() {
@@ -80,7 +80,7 @@ func (k Keeper) ProcessTransientQueue(ctx sdk.Context) error {
 
 // ExportOrders exports persistent orders.
 func (k Keeper) ExportOrders(ctx sdk.Context) ([]types.Order, error) {
-	iterator := storetypes.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.OrderKey)
+	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), types.OrderKey).Iterator(nil, nil)
 	defer iterator.Close()
 
 	orders := []types.Order{}
@@ -99,12 +99,12 @@ func (k Keeper) processTransientOrderBook(ctx sdk.Context, iterator storetypes.I
 	denom1Sequence, denom2Sequence, _ := types.DecomposeOrderTransientQueueKey(iterator.Key())
 
 	store := ctx.KVStore(k.storeKey)
-	persistentIteratorA := storetypes.KVStorePrefixIterator(store,
-		types.CreateDenomPairKeyPrefix(types.OrderQueueKey, denom1Sequence, denom2Sequence))
+	persistentIteratorA := prefix.NewStore(store,
+		types.CreateDenomPairKeyPrefix(types.OrderQueueKey, denom1Sequence, denom2Sequence)).Iterator(nil, nil)
 	defer persistentIteratorA.Close()
 
-	persistentIteratorB := storetypes.KVStorePrefixIterator(store,
-		types.CreateDenomPairKeyPrefix(types.OrderQueueKey, denom2Sequence, denom1Sequence))
+	persistentIteratorB := prefix.NewStore(store,
+		types.CreateDenomPairKeyPrefix(types.OrderQueueKey, denom2Sequence, denom1Sequence)).Iterator(nil, nil)
 	defer persistentIteratorB.Close()
 
 	sideA, err := k.loadPersistentOrder(ctx, []*orderWrapper{}, persistentIteratorA)

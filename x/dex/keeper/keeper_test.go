@@ -68,6 +68,7 @@ func TestTransientQueue(t *testing.T) {
 					},
 				},
 			},
+			Output: []types.Order{},
 		},
 	}
 
