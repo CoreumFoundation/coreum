@@ -187,7 +187,7 @@ func (k Keeper) matchOrder(
 			return sideA, sideB, nil
 		}
 		orderB := sideB[len(sideB)-1]
-		if orderA.Order.Price().LT(sdk.OneDec().Quo(orderB.Order.Price())) {
+		if orderA.Order.Price().GT(sdk.OneDec().Quo(orderB.Order.Price())) {
 			return sideA, sideB, nil
 		}
 
