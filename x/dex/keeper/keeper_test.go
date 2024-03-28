@@ -46,6 +46,26 @@ func TestMatching(t *testing.T) {
 	})
 	requireT.NoError(err)
 
+	denomC, err := ftKeeper.Issue(ctx, assetfttypes.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "CCC",
+		Description:   "C",
+		Subunit:       "c",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+	})
+	requireT.NoError(err)
+
+	denomD, err := ftKeeper.Issue(ctx, assetfttypes.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "DDD",
+		Description:   "D",
+		Subunit:       "d",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+	})
+	requireT.NoError(err)
+
 	testCases := []struct {
 		Name   string
 		Input  [][]types.Order
@@ -225,6 +245,93 @@ func TestMatching(t *testing.T) {
 					Sender:    addr.String(),
 					Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(10)),
 					SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+				},
+			},
+		},
+		{
+			Name: "better_price_is_used_1",
+			Input: [][]types.Order{
+				{
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(15)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+					},
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(20)),
+						SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("0.25")),
+					},
+				},
+			},
+			Output: []types.Order{
+				&types.OrderLimit{
+					Sender:    addr.String(),
+					Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(5)),
+					SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+				},
+			},
+		},
+		{
+			Name: "better_price_is_used_2",
+			Input: [][]types.Order{
+				{
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(25)),
+						SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("0.5")),
+					},
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(10)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("1")),
+					},
+				},
+			},
+			Output: []types.Order{
+				&types.OrderLimit{
+					Sender:    addr.String(),
+					Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(5)),
+					SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("0.5")),
+				},
+			},
+		},
+		{
+			Name: "two_order_books",
+			Input: [][]types.Order{
+				{
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(15)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+					},
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomD, sdkmath.NewIntFromUint64(10)),
+						SellPrice: sdk.NewDecCoinFromDec(denomC, sdk.MustNewDecFromStr("1")),
+					},
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(20)),
+						SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("0.25")),
+					},
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomC, sdkmath.NewIntFromUint64(25)),
+						SellPrice: sdk.NewDecCoinFromDec(denomD, sdk.MustNewDecFromStr("0.5")),
+					},
+				},
+			},
+			Output: []types.Order{
+				&types.OrderLimit{
+					Sender:    addr.String(),
+					Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(5)),
+					SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+				},
+				&types.OrderLimit{
+					Sender:    addr.String(),
+					Amount:    sdk.NewCoin(denomC, sdkmath.NewIntFromUint64(15)),
+					SellPrice: sdk.NewDecCoinFromDec(denomD, sdk.MustNewDecFromStr("0.5")),
 				},
 			},
 		},
