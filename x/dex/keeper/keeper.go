@@ -16,7 +16,7 @@ import (
 )
 
 type orderWrapper struct {
-	types.Order
+	Order        types.Order
 	orderID      uint64
 	isPersistent bool
 	isDirty      bool
@@ -135,15 +135,16 @@ loop:
 		_, _, orderID := types.DecomposeOrderTransientQueueKey(iterator.Key())
 		offeredDenomSequence := k.createDenomSequence(ctx, order.DenomOffered())
 
+		wrappedOrder := &orderWrapper{Order: order, orderID: orderID, isDirty: true}
 		if denom1Sequence == offeredDenomSequence {
-			sideA = k.appendOrder(sideA, order, orderID)
+			sideA = k.appendOrder(sideA, wrappedOrder)
 			var err error
 			sideA, sideB, err = k.matchOrder(ctx, orderID, sideA, sideB, persistentIteratorA, persistentIteratorB)
 			if err != nil {
 				return err
 			}
 		} else {
-			sideB = k.appendOrder(sideB, order, orderID)
+			sideB = k.appendOrder(sideB, wrappedOrder)
 			var err error
 			sideB, sideA, err = k.matchOrder(ctx, orderID, sideB, sideA, persistentIteratorB, persistentIteratorA)
 			if err != nil {
@@ -158,14 +159,14 @@ loop:
 	return k.persistOrders(ctx, sideB)
 }
 
-func (k Keeper) appendOrder(side []*orderWrapper, order types.Order, orderID uint64) []*orderWrapper {
+func (k Keeper) appendOrder(side []*orderWrapper, order *orderWrapper) []*orderWrapper {
 	// TODO: Because `side` is always sorted, the algorithm below might be optimised to put the new element
 	// at the specific index, which would give the complexity of O(n) instead of O(nlogn).
-	side = append(side, &orderWrapper{Order: order, orderID: orderID, isDirty: true})
+	side = append(side, order)
 	if len(side) > 1 {
 		sort.Slice(side, func(i, j int) bool {
 			oA, oB := side[i], side[j]
-			return oA.Price().LT(oB.Price()) || (oA.Price().Equal(oB.Price()) && oA.orderID > oB.orderID)
+			return oA.Order.Price().LT(oB.Order.Price()) || (oA.Order.Price().Equal(oB.Order.Price()) && oA.orderID > oB.orderID)
 		})
 	}
 	return side
@@ -186,17 +187,17 @@ func (k Keeper) matchOrder(
 			return sideA, sideB, nil
 		}
 		orderB := sideB[len(sideB)-1]
-		if orderA.Price().LT(sdk.OneDec().Quo(orderB.Price())) {
+		if orderA.Order.Price().LT(sdk.OneDec().Quo(orderB.Order.Price())) {
 			return sideA, sideB, nil
 		}
 
-		amountA := orderA.AmountOffered()
-		amountB := amountA.ToLegacyDec().Quo(orderB.Price()).RoundInt()
-		if amountB.GT(orderB.AmountOffered()) {
-			amountB = orderB.AmountOffered()
-			amountA = amountB.ToLegacyDec().Mul(orderB.Price()).RoundInt()
-			if amountA.GT(orderA.AmountOffered()) {
-				amountA = orderA.AmountOffered()
+		amountA := orderA.Order.AmountOffered()
+		amountB := amountA.ToLegacyDec().Quo(orderB.Order.Price()).RoundInt()
+		if amountB.GT(orderB.Order.AmountOffered()) {
+			amountB = orderB.Order.AmountOffered()
+			amountA = amountB.ToLegacyDec().Mul(orderB.Order.Price()).RoundInt()
+			if amountA.GT(orderA.Order.AmountOffered()) {
+				amountA = orderA.Order.AmountOffered()
 			}
 		}
 
@@ -226,10 +227,10 @@ func (k Keeper) reduceOrder(
 	side []*orderWrapper,
 	persistentIterator storetypes.Iterator,
 ) ([]*orderWrapper, bool, error) {
-	order.ReduceOfferedAmount(amount)
+	order.Order.ReduceOfferedAmount(amount)
 	order.isDirty = true
 
-	if !order.AmountOffered().ToLegacyDec().Mul(order.Price()).RoundInt().IsZero() {
+	if !order.Order.AmountOffered().ToLegacyDec().Mul(order.Order.Price()).RoundInt().IsZero() {
 		return side, false, nil
 	}
 
@@ -265,7 +266,7 @@ func (k Keeper) loadPersistentOrder(
 	if err != nil {
 		return nil, err
 	}
-	return k.appendOrder(side, order, orderID), nil
+	return k.appendOrder(side, order), nil
 }
 
 func (k Keeper) persistOrders(ctx sdk.Context, orders []*orderWrapper) error {
@@ -287,17 +288,17 @@ func (k Keeper) persistOrders(ctx sdk.Context, orders []*orderWrapper) error {
 			continue
 		}
 
-		account, err := sdk.AccAddressFromBech32(order.Account())
+		account, err := sdk.AccAddressFromBech32(order.Order.Account())
 		if err != nil {
 			return err
 		}
 		acc := k.accountKeeper.GetAccount(ctx, account)
 
 		store.Set(types.CreateOrderQueueKey(
-			k.createDenomSequence(ctx, order.DenomOffered()),
-			k.createDenomSequence(ctx, order.DenomRequested()),
+			k.createDenomSequence(ctx, order.Order.DenomOffered()),
+			k.createDenomSequence(ctx, order.Order.DenomRequested()),
 			order.orderID,
-			order.Price(),
+			order.Order.Price(),
 		), types.StoreTrue)
 
 		store.Set(types.CreateOrderOwnerKey(
@@ -310,7 +311,7 @@ func (k Keeper) persistOrders(ctx sdk.Context, orders []*orderWrapper) error {
 }
 
 func (k Keeper) dropOrder(ctx sdk.Context, order *orderWrapper) error {
-	account, err := sdk.AccAddressFromBech32(order.Account())
+	account, err := sdk.AccAddressFromBech32(order.Order.Account())
 	if err != nil {
 		return err
 	}
@@ -319,10 +320,10 @@ func (k Keeper) dropOrder(ctx sdk.Context, order *orderWrapper) error {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.CreateOrderKey(order.orderID))
 	store.Delete(types.CreateOrderQueueKey(
-		k.createDenomSequence(ctx, order.DenomOffered()),
-		k.createDenomSequence(ctx, order.DenomRequested()),
+		k.createDenomSequence(ctx, order.Order.DenomOffered()),
+		k.createDenomSequence(ctx, order.Order.DenomRequested()),
 		order.orderID,
-		order.Price(),
+		order.Order.Price(),
 	))
 	store.Delete(types.CreateOrderOwnerKey(
 		acc.GetAccountNumber(),
@@ -401,7 +402,7 @@ func (k Keeper) createDenomSequence(ctx sdk.Context, denom string) uint64 {
 }
 
 func (k Keeper) encodeOrder(order types.Order) ([]byte, error) {
-	orderAny, err := codectypes.NewAnyWithValue(order)
+	orderAny, err := codectypes.NewAnyWithValue(order.(*types.OrderLimit))
 	if err != nil {
 		return nil, err
 	}
@@ -440,5 +441,5 @@ func (k Keeper) orderByID(ctx sdk.Context, orderID uint64) (*orderWrapper, error
 		return nil, err
 	}
 
-	return &orderWrapper{Order: order, isPersistent: true}, nil
+	return &orderWrapper{Order: order, orderID: orderID, isPersistent: true}, nil
 }

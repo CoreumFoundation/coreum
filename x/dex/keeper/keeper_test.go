@@ -17,7 +17,6 @@ import (
 
 func TestTransientQueue(t *testing.T) {
 	requireT := require.New(t)
-	assertT := assert.New(t)
 
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
@@ -53,7 +52,7 @@ func TestTransientQueue(t *testing.T) {
 		Output []types.Order
 	}{
 		{
-			Name: "two_orders_witch matching_price",
+			Name: "two_matching_orders_in_one_block",
 			Input: [][]types.Order{
 				{
 					&types.OrderLimit{
@@ -70,14 +69,47 @@ func TestTransientQueue(t *testing.T) {
 			},
 			Output: []types.Order{},
 		},
+		{
+			Name: "two_matching_orders_in_two_blocks",
+			Input: [][]types.Order{
+				{
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(10)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+					},
+				},
+				{
+					&types.OrderLimit{
+						Sender:    addr.String(),
+						Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(20)),
+						SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("0.5")),
+					},
+				},
+			},
+			Output: []types.Order{},
+		},
 	}
 
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			t.Parallel()
+			requireT := require.New(t)
+			assertT := assert.New(t)
 
+			store := ctx.TransientStore(testApp.GetKey(types.StoreKey))
+			it := store.Iterator(nil, nil)
+			for ; it.Valid(); it.Next() {
+				store.Delete(it.Key())
+			}
+
+			tStore := ctx.TransientStore(testApp.GetTKey(types.TransientStoreKey))
 			for _, orderSet := range tc.Input {
+				it := tStore.Iterator(nil, nil)
+				for ; it.Valid(); it.Next() {
+					tStore.Delete(it.Key())
+				}
+
 				for _, order := range orderSet {
 					requireT.NoError(dexKeeper.StoreTransientOrder(ctx, order))
 				}
