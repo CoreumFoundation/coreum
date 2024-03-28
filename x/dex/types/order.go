@@ -14,6 +14,7 @@ type Order interface {
 	DenomRequested() string
 	AmountOffered() sdkmath.Int
 	Price() sdk.Dec
+	String() string
 
 	ReduceOfferedAmount(reduceAmount sdkmath.Int)
 }

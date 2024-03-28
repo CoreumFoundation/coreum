@@ -27,9 +27,9 @@ const uint64ByteSize = 8
 
 // Store keys.
 var (
-	OrderSequenceKey          = []byte{0x00}
+	OrderLastIDKey            = []byte{0x00}
 	OrderTransientQueueKey    = []byte{0x01}
-	DenomSequenceKey          = []byte{0x02}
+	DenomLastSequenceKey      = []byte{0x02}
 	DenomToSequenceMappingKey = []byte{0x03}
 	OrderQueueKey             = []byte{0x04}
 	OrderOwnerKey             = []byte{0x05}

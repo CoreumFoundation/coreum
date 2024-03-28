@@ -9,7 +9,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
@@ -27,7 +26,7 @@ type Keeper struct {
 	cdc               codec.BinaryCodec
 	storeKey          storetypes.StoreKey
 	transientStoreKey storetypes.StoreKey
-	accountKeeper     authkeeper.AccountKeeperI
+	accountKeeper     types.AccountKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -35,7 +34,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	transientStoreKey storetypes.StoreKey,
-	accountKeeper authkeeper.AccountKeeperI,
+	accountKeeper types.AccountKeeper,
 ) Keeper {
 	return Keeper{
 		cdc:               cdc,
@@ -77,6 +76,23 @@ func (k Keeper) ProcessTransientQueue(ctx sdk.Context) error {
 	}
 
 	return nil
+}
+
+// ExportOrders exports persistent orders.
+func (k Keeper) ExportOrders(ctx sdk.Context) ([]types.Order, error) {
+	iterator := storetypes.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.OrderKey)
+	defer iterator.Close()
+
+	orders := []types.Order{}
+	for ; iterator.Valid(); iterator.Next() {
+		order, err := k.decodeOrder(iterator.Value())
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+
+	return orders, nil
 }
 
 func (k Keeper) processTransientOrderBook(ctx sdk.Context, iterator storetypes.Iterator) error {
@@ -253,13 +269,14 @@ func (k Keeper) loadPersistentOrder(
 }
 
 func (k Keeper) persistOrders(ctx sdk.Context, orders []*orderWrapper) error {
+	store := ctx.KVStore(k.storeKey)
+
 	for _, order := range orders {
 		if !order.isDirty {
 			continue
 		}
 
-		store := ctx.KVStore(k.storeKey)
-		orderBytes, err := k.encodeOrder(order)
+		orderBytes, err := k.encodeOrder(order.Order)
 		if err != nil {
 			return err
 		}
@@ -319,20 +336,20 @@ func (k Keeper) nextOrderID(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 
 	orderID := sdkmath.ZeroUint()
-	bz := store.Get(types.OrderSequenceKey)
+	bz := store.Get(types.OrderLastIDKey)
 
 	if bz != nil {
 		if err := orderID.Unmarshal(bz); err != nil {
 			panic(err)
 		}
 	}
-	orderID.Incr()
+	orderID = orderID.Incr()
 	bz, err := orderID.Marshal()
 	if err != nil {
 		panic(err)
 	}
 
-	store.Set(types.OrderSequenceKey, bz)
+	store.Set(types.OrderLastIDKey, bz)
 
 	return orderID.Uint64()
 }
@@ -341,20 +358,20 @@ func (k Keeper) nextDenomSequence(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 
 	seq := sdkmath.ZeroUint()
-	bz := store.Get(types.DenomSequenceKey)
+	bz := store.Get(types.DenomLastSequenceKey)
 
 	if bz != nil {
 		if err := seq.Unmarshal(bz); err != nil {
 			panic(err)
 		}
 	}
-	seq.Incr()
+	seq = seq.Incr()
 	bz, err := seq.Marshal()
 	if err != nil {
 		panic(err)
 	}
 
-	store.Set(types.DenomSequenceKey, bz)
+	store.Set(types.DenomLastSequenceKey, bz)
 
 	return seq.Uint64()
 }
