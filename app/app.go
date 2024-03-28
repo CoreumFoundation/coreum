@@ -95,6 +95,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
@@ -198,6 +201,7 @@ var (
 		groupmodule.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
+		ibchooks.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		wibctransfer.AppModuleBasic{},
@@ -273,11 +277,12 @@ type App struct {
 	UpgradeKeeper         *upgradekeeper.Keeper
 	ParamsKeeper          paramskeeper.Keeper
 	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCHooksKeeper        ibchookskeeper.Keeper
 	TransferKeeper        wibctransferkeeper.TransferKeeperWrapper
 	EvidenceKeeper        evidencekeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	WasmKeeper            wasmkeeper.Keeper
+	WasmKeeper            *wasmkeeper.Keeper
 	GroupKeeper           groupkeeper.Keeper
 
 	AssetFTKeeper      assetftkeeper.Keeper
@@ -300,6 +305,10 @@ type App struct {
 	sm *module.SimulationManager
 
 	configurator module.Configurator
+
+	Ics20WasmHooks   *ibchooks.WasmHooks
+	HooksICS4Wrapper ibchooks.ICS4Middleware
+	TransferStack    ibchooks.IBCMiddleware
 }
 
 // New returns a reference to an initialized blockchain app.
@@ -418,7 +427,7 @@ func New(
 		app.DelayKeeper,
 		// pointer is used here because there is cycle in keeper dependencies:
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
-		&app.WasmKeeper,
+		app.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -436,7 +445,7 @@ func New(
 		app.AccountKeeper,
 		// pointer is used here because there is cycle in keeper dependencies:
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
-		&app.WasmKeeper,
+		app.WasmKeeper,
 		app.ModuleAccountAddrs(),
 		app.AssetFTKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -546,6 +555,11 @@ func New(
 		app.AccountKeeper, app.BankKeeper, app.ScopedTransferKeeper,
 	)
 
+	app.keys[ibchookstypes.StoreKey] = storetypes.NewKVStoreKey(ibchookstypes.StoreKey)
+	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
+		app.keys[ibchookstypes.StoreKey],
+	)
+
 	// Register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
 	// by granting the governance module the right to execute the message.
@@ -646,7 +660,7 @@ func New(
 	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
 	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 
-	app.WasmKeeper = wasmkeeper.NewKeeper(
+	wasmKeeper := wasmkeeper.NewKeeper(
 		appCodec,
 		keys[wasmtypes.StoreKey],
 		app.AccountKeeper,
@@ -666,17 +680,31 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
+	app.WasmKeeper = &wasmKeeper
+
+	// Pass the contract keeper to all the structs (generally ICS4Wrappers for ibc middlewares) that need it
+	// The contract keeper needs to be set later
+	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
+	app.Ics20WasmHooks = &wasmHooks
+
+	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
+		app.IBCKeeper.ChannelKeeper,
+		app.Ics20WasmHooks,
+	)
+	// Hooks Middleware
 
 	// FIXME(v4): drop once we drop gov v1beta1 compatibility.
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
+	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper.Keeper)
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(
 		ibctransfertypes.ModuleName,
-		wibctransfer.NewPurposeMiddleware(transfer.NewIBCModule(app.TransferKeeper.Keeper)),
+		wibctransfer.NewPurposeMiddleware(transferIBCModule),
 	)
+	app.TransferStack = ibchooks.NewIBCMiddleware(&transferIBCModule, &app.HooksICS4Wrapper)
 	ibcRouter.AddRoute(
 		wasmtypes.ModuleName,
 		wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper),
@@ -755,7 +783,7 @@ func New(
 		wibctransfer.NewAppModule(app.TransferKeeper),
 		wasm.NewAppModule(
 			appCodec,
-			&app.WasmKeeper,
+			app.WasmKeeper,
 			app.StakingKeeper,
 			app.AccountKeeper,
 			app.BankKeeper,
@@ -982,7 +1010,7 @@ func New(
 	// requires the snapshot store to be created and registered as a BaseAppOption
 	if manager := app.SnapshotManager(); manager != nil {
 		err := manager.RegisterExtensions(
-			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
+			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), app.WasmKeeper),
 		)
 		if err != nil {
 			panic(errors.Wrapf(err, "failed to register wasm snapshot extension"))
