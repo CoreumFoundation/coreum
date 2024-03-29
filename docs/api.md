@@ -1520,8 +1520,12 @@
 <a name="coreum.asset.ft.v1.BurnAuthorization"></a>
 
 ### BurnAuthorization
+
+```
 BurnAuthorization allows the grantee to burn up to burn_limit coin from
 the granter's account.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -1536,8 +1540,12 @@ the granter's account.
 <a name="coreum.asset.ft.v1.MintAuthorization"></a>
 
 ### MintAuthorization
+
+```
 MintAuthorization allows the grantee to mint up to mint_limit coin from
 the granter's account.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -1586,7 +1594,11 @@ the granter's account.
 <a name="coreum.asset.ft.v1.EventIssued"></a>
 
 ### EventIssued
+
+```
 EventIssued is emitted on MsgIssue.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -1646,7 +1658,11 @@ EventIssued is emitted on MsgIssue.
 <a name="coreum.asset.ft.v1.Balance"></a>
 
 ### Balance
+
+```
 Balance defines an account address and balance pair used module genesis genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -1662,7 +1678,11 @@ Balance defines an account address and balance pair used module genesis genesis 
 <a name="coreum.asset.ft.v1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the module genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -1681,7 +1701,11 @@ GenesisState defines the module genesis state.
 <a name="coreum.asset.ft.v1.PendingTokenUpgrade"></a>
 
 ### PendingTokenUpgrade
+
+```
 PendingTokenUpgrade stores the version of pending token upgrade.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -1713,7 +1737,11 @@ PendingTokenUpgrade stores the version of pending token upgrade.
 <a name="coreum.asset.ft.v1.Params"></a>
 
 ### Params
+
+```
 Params store gov manageable parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -1843,7 +1871,11 @@ Params store gov manageable parameters.
 <a name="coreum.asset.ft.v1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest defines the request type for querying x/asset/ft parameters.
+```
+
 
 
 
@@ -1853,7 +1885,11 @@ QueryParamsRequest defines the request type for querying x/asset/ft parameters.
 <a name="coreum.asset.ft.v1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse defines the response type for querying x/asset/ft parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2029,7 +2065,11 @@ QueryParamsResponse defines the response type for querying x/asset/ft parameters
 <a name="coreum.asset.ft.v1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -2057,7 +2097,11 @@ Query defines the gRPC querier service.
 <a name="coreum.asset.ft.v1.Definition"></a>
 
 ### Definition
+
+```
 Definition defines the fungible token settings to store.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2079,7 +2123,11 @@ Definition defines the fungible token settings to store.
 <a name="coreum.asset.ft.v1.DelayedTokenUpgradeV1"></a>
 
 ### DelayedTokenUpgradeV1
+
+```
 DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2094,7 +2142,11 @@ DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable I
 <a name="coreum.asset.ft.v1.Token"></a>
 
 ### Token
+
+```
 Token is a full representation of the fungible token.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2121,7 +2173,11 @@ Token is a full representation of the fungible token.
 <a name="coreum.asset.ft.v1.TokenUpgradeStatuses"></a>
 
 ### TokenUpgradeStatuses
+
+```
 TokenUpgradeStatuses defines all statuses of the token migrations.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2136,7 +2192,11 @@ TokenUpgradeStatuses defines all statuses of the token migrations.
 <a name="coreum.asset.ft.v1.TokenUpgradeV1Status"></a>
 
 ### TokenUpgradeV1Status
+
+```
 TokenUpgradeV1Status defines the current status of the v1 token migration.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2155,7 +2215,12 @@ TokenUpgradeV1Status defines the current status of the v1 token migration.
 <a name="coreum.asset.ft.v1.Feature"></a>
 
 ### Feature
+
+```
 Feature defines possible features of fungible token.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -2260,7 +2325,11 @@ Feature defines possible features of fungible token.
 <a name="coreum.asset.ft.v1.MsgIssue"></a>
 
 ### MsgIssue
+
+```
 MsgIssue defines message to issue new fungible token.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2369,7 +2438,11 @@ MsgIssue defines message to issue new fungible token.
 <a name="coreum.asset.ft.v1.MsgUpgradeTokenV1"></a>
 
 ### MsgUpgradeTokenV1
+
+```
 MsgUpgradeTokenV1 is the message upgrading token to V1.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2392,7 +2465,11 @@ MsgUpgradeTokenV1 is the message upgrading token to V1.
 <a name="coreum.asset.ft.v1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -2438,7 +2515,11 @@ Msg defines the Msg service.
 <a name="coreum.asset.nft.v1.SendAuthorization"></a>
 
 ### SendAuthorization
+
+```
 SendAuthorization allows the grantee to send specific NFTs from the granter's account.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2518,7 +2599,11 @@ SendAuthorization allows the grantee to send specific NFTs from the granter's ac
 <a name="coreum.asset.nft.v1.EventClassIssued"></a>
 
 ### EventClassIssued
+
+```
 EventClassIssued is emitted on MsgIssueClass.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2704,7 +2789,11 @@ EventClassIssued is emitted on MsgIssueClass.
 <a name="coreum.asset.nft.v1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the nftasset module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2758,7 +2847,11 @@ GenesisState defines the nftasset module's genesis state.
 <a name="coreum.asset.nft.v1.Class"></a>
 
 ### Class
+
+```
 Class is a full representation of the non-fungible token class.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2782,7 +2875,11 @@ Class is a full representation of the non-fungible token class.
 <a name="coreum.asset.nft.v1.ClassDefinition"></a>
 
 ### ClassDefinition
+
+```
 ClassDefinition defines the non-fungible token class settings to store.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2802,7 +2899,12 @@ ClassDefinition defines the non-fungible token class settings to store.
 <a name="coreum.asset.nft.v1.ClassFeature"></a>
 
 ### ClassFeature
+
+```
 ClassFeature defines possible features of non-fungible token class.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -2831,7 +2933,11 @@ ClassFeature defines possible features of non-fungible token class.
 <a name="coreum.asset.nft.v1.Params"></a>
 
 ### Params
+
+```
 Params store gov manageable parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -2988,7 +3094,11 @@ Params store gov manageable parameters.
 <a name="coreum.asset.nft.v1.QueryClassRequest"></a>
 
 ### QueryClassRequest
+
+```
 QueryTokenRequest is request type for the Query/Class RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3003,7 +3113,11 @@ QueryTokenRequest is request type for the Query/Class RPC method.
 <a name="coreum.asset.nft.v1.QueryClassResponse"></a>
 
 ### QueryClassResponse
+
+```
 QueryClassResponse is response type for the Query/Class RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3050,7 +3164,11 @@ QueryClassResponse is response type for the Query/Class RPC method.
 <a name="coreum.asset.nft.v1.QueryClassesRequest"></a>
 
 ### QueryClassesRequest
+
+```
 QueryTokenRequest is request type for the Query/Classes RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3066,7 +3184,11 @@ QueryTokenRequest is request type for the Query/Classes RPC method.
 <a name="coreum.asset.nft.v1.QueryClassesResponse"></a>
 
 ### QueryClassesResponse
+
+```
 QueryClassResponse is response type for the Query/Classes RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3113,7 +3235,11 @@ QueryClassResponse is response type for the Query/Classes RPC method.
 <a name="coreum.asset.nft.v1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest defines the request type for querying x/asset/nft parameters.
+```
+
 
 
 
@@ -3123,7 +3249,11 @@ QueryParamsRequest defines the request type for querying x/asset/nft parameters.
 <a name="coreum.asset.nft.v1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse defines the response type for querying x/asset/nft parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3209,7 +3339,11 @@ QueryParamsResponse defines the response type for querying x/asset/nft parameter
 <a name="coreum.asset.nft.v1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -3284,7 +3418,11 @@ Query defines the gRPC querier service.
 <a name="coreum.asset.nft.v1.MsgBurn"></a>
 
 ### MsgBurn
+
+```
 MsgBurn defines message for the Burn method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3352,7 +3490,11 @@ MsgBurn defines message for the Burn method.
 <a name="coreum.asset.nft.v1.MsgIssueClass"></a>
 
 ### MsgIssueClass
+
+```
 MsgIssueClass defines message for the IssueClass method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3375,7 +3517,11 @@ MsgIssueClass defines message for the IssueClass method.
 <a name="coreum.asset.nft.v1.MsgMint"></a>
 
 ### MsgMint
+
+```
 MsgMint defines message for the Mint method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3470,7 +3616,11 @@ MsgMint defines message for the Mint method.
 <a name="coreum.asset.nft.v1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -3532,7 +3682,11 @@ Msg defines the Msg service.
 <a name="coreum.customparams.v1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3563,7 +3717,11 @@ GenesisState defines the module's genesis state.
 <a name="coreum.customparams.v1.StakingParams"></a>
 
 ### StakingParams
+
+```
 StakingParams defines the set of additional staking params for the staking module wrapper.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3594,7 +3752,11 @@ StakingParams defines the set of additional staking params for the staking modul
 <a name="coreum.customparams.v1.QueryStakingParamsRequest"></a>
 
 ### QueryStakingParamsRequest
+
+```
 QueryStakingParamsRequest defines the request type for querying x/customparams staking parameters.
+```
+
 
 
 
@@ -3604,7 +3766,11 @@ QueryStakingParamsRequest defines the request type for querying x/customparams s
 <a name="coreum.customparams.v1.QueryStakingParamsResponse"></a>
 
 ### QueryStakingParamsResponse
+
+```
 QueryStakingParamsResponse defines the response type for querying x/customparams staking parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3625,7 +3791,11 @@ QueryStakingParamsResponse defines the response type for querying x/customparams
 <a name="coreum.customparams.v1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -3677,7 +3847,11 @@ Query defines the gRPC querier service.
 <a name="coreum.customparams.v1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -3714,7 +3888,11 @@ Msg defines the Msg service.
 <a name="coreum.delay.v1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the module genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3745,7 +3923,11 @@ GenesisState defines the module genesis state.
 <a name="coreum.deterministicgas.v1.EventGas"></a>
 
 ### EventGas
+
+```
 EventGas is emitted by deterministic gas module to report gas information.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3778,7 +3960,11 @@ EventGas is emitted by deterministic gas module to report gas information.
 <a name="coreum.feemodel.v1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3810,6 +3996,8 @@ GenesisState defines the module's genesis state.
 <a name="coreum.feemodel.v1.ModelParams"></a>
 
 ### ModelParams
+
+```
 ModelParams define fee model params.
 There are four regions on the fee model curve
 - between 0 and "long average block gas" where gas price goes down exponentially from InitialGasPrice to gas price with maximum discount (InitialGasPrice * (1 - MaxDiscount))
@@ -3819,6 +4007,8 @@ There are four regions on the fee model curve
 
 The input (x value) for that function is calculated by taking short block gas average.
 Price (y value) being an output of the fee model is used as the minimum gas price for next block.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3839,7 +4029,11 @@ Price (y value) being an output of the fee model is used as the minimum gas pric
 <a name="coreum.feemodel.v1.Params"></a>
 
 ### Params
+
+```
 Params store gov manageable feemodel parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3870,7 +4064,11 @@ Params store gov manageable feemodel parameters.
 <a name="coreum.feemodel.v1.QueryMinGasPriceRequest"></a>
 
 ### QueryMinGasPriceRequest
+
+```
 QueryMinGasPriceRequest is the request type for the Query/MinGasPrice RPC method.
+```
+
 
 
 
@@ -3880,7 +4078,11 @@ QueryMinGasPriceRequest is the request type for the Query/MinGasPrice RPC method
 <a name="coreum.feemodel.v1.QueryMinGasPriceResponse"></a>
 
 ### QueryMinGasPriceResponse
+
+```
 QueryMinGasPriceResponse is the response type for the Query/MinGasPrice RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3895,7 +4097,11 @@ QueryMinGasPriceResponse is the response type for the Query/MinGasPrice RPC meth
 <a name="coreum.feemodel.v1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest defines the request type for querying x/feemodel parameters.
+```
+
 
 
 
@@ -3905,7 +4111,11 @@ QueryParamsRequest defines the request type for querying x/feemodel parameters.
 <a name="coreum.feemodel.v1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse defines the response type for querying x/feemodel parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -3958,7 +4168,11 @@ QueryParamsResponse defines the response type for querying x/feemodel parameters
 <a name="coreum.feemodel.v1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -4012,7 +4226,11 @@ Query defines the gRPC querier service.
 <a name="coreum.feemodel.v1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -4032,7 +4250,11 @@ Msg defines the Msg service.
 <a name="coreum.nft.v1beta1.EventBurn"></a>
 
 ### EventBurn
+
+```
 EventBurn is emitted on Burn
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4049,7 +4271,11 @@ EventBurn is emitted on Burn
 <a name="coreum.nft.v1beta1.EventMint"></a>
 
 ### EventMint
+
+```
 EventMint is emitted on Mint
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4066,7 +4292,11 @@ EventMint is emitted on Mint
 <a name="coreum.nft.v1beta1.EventSend"></a>
 
 ### EventSend
+
+```
 EventSend is emitted on Msg/Send
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4100,7 +4330,11 @@ EventSend is emitted on Msg/Send
 <a name="coreum.nft.v1beta1.Entry"></a>
 
 ### Entry
+
+```
 Entry Defines all nft owned by a person
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4116,7 +4350,11 @@ Entry Defines all nft owned by a person
 <a name="coreum.nft.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the nft module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4148,7 +4386,11 @@ GenesisState defines the nft module's genesis state.
 <a name="coreum.nft.v1beta1.Class"></a>
 
 ### Class
+
+```
 Class defines the class of the nft type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4169,7 +4411,11 @@ Class defines the class of the nft type.
 <a name="coreum.nft.v1beta1.NFT"></a>
 
 ### NFT
+
+```
 NFT defines the NFT.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4204,7 +4450,11 @@ NFT defines the NFT.
 <a name="coreum.nft.v1beta1.QueryBalanceRequest"></a>
 
 ### QueryBalanceRequest
+
+```
 QueryBalanceRequest is the request type for the Query/Balance RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4220,7 +4470,11 @@ QueryBalanceRequest is the request type for the Query/Balance RPC method
 <a name="coreum.nft.v1beta1.QueryBalanceResponse"></a>
 
 ### QueryBalanceResponse
+
+```
 QueryBalanceResponse is the response type for the Query/Balance RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4235,7 +4489,11 @@ QueryBalanceResponse is the response type for the Query/Balance RPC method
 <a name="coreum.nft.v1beta1.QueryClassRequest"></a>
 
 ### QueryClassRequest
+
+```
 QueryClassRequest is the request type for the Query/Class RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4250,7 +4508,11 @@ QueryClassRequest is the request type for the Query/Class RPC method
 <a name="coreum.nft.v1beta1.QueryClassResponse"></a>
 
 ### QueryClassResponse
+
+```
 QueryClassResponse is the response type for the Query/Class RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4265,7 +4527,11 @@ QueryClassResponse is the response type for the Query/Class RPC method
 <a name="coreum.nft.v1beta1.QueryClassesRequest"></a>
 
 ### QueryClassesRequest
+
+```
 QueryClassesRequest is the request type for the Query/Classes RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4280,7 +4546,11 @@ QueryClassesRequest is the request type for the Query/Classes RPC method
 <a name="coreum.nft.v1beta1.QueryClassesResponse"></a>
 
 ### QueryClassesResponse
+
+```
 QueryClassesResponse is the response type for the Query/Classes RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4296,7 +4566,11 @@ QueryClassesResponse is the response type for the Query/Classes RPC method
 <a name="coreum.nft.v1beta1.QueryNFTRequest"></a>
 
 ### QueryNFTRequest
+
+```
 QueryNFTRequest is the request type for the Query/NFT RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4312,7 +4586,11 @@ QueryNFTRequest is the request type for the Query/NFT RPC method
 <a name="coreum.nft.v1beta1.QueryNFTResponse"></a>
 
 ### QueryNFTResponse
+
+```
 QueryNFTResponse is the response type for the Query/NFT RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4327,7 +4605,11 @@ QueryNFTResponse is the response type for the Query/NFT RPC method
 <a name="coreum.nft.v1beta1.QueryNFTsRequest"></a>
 
 ### QueryNFTsRequest
+
+```
 QueryNFTstRequest is the request type for the Query/NFTs RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4344,7 +4626,11 @@ QueryNFTstRequest is the request type for the Query/NFTs RPC method
 <a name="coreum.nft.v1beta1.QueryNFTsResponse"></a>
 
 ### QueryNFTsResponse
+
+```
 QueryNFTsResponse is the response type for the Query/NFTs RPC methods
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4360,7 +4646,11 @@ QueryNFTsResponse is the response type for the Query/NFTs RPC methods
 <a name="coreum.nft.v1beta1.QueryOwnerRequest"></a>
 
 ### QueryOwnerRequest
+
+```
 QueryOwnerRequest is the request type for the Query/Owner RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4376,7 +4666,11 @@ QueryOwnerRequest is the request type for the Query/Owner RPC method
 <a name="coreum.nft.v1beta1.QueryOwnerResponse"></a>
 
 ### QueryOwnerResponse
+
+```
 QueryOwnerResponse is the response type for the Query/Owner RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4391,7 +4685,11 @@ QueryOwnerResponse is the response type for the Query/Owner RPC method
 <a name="coreum.nft.v1beta1.QuerySupplyRequest"></a>
 
 ### QuerySupplyRequest
+
+```
 QuerySupplyRequest is the request type for the Query/Supply RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4406,7 +4704,11 @@ QuerySupplyRequest is the request type for the Query/Supply RPC method
 <a name="coreum.nft.v1beta1.QuerySupplyResponse"></a>
 
 ### QuerySupplyResponse
+
+```
 QuerySupplyResponse is the response type for the Query/Supply RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4427,7 +4729,11 @@ QuerySupplyResponse is the response type for the Query/Supply RPC method
 <a name="coreum.nft.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -4453,9 +4759,13 @@ Query defines the gRPC querier service.
 <a name="coreum.nft.v1beta1.MsgSend"></a>
 
 ### MsgSend
+
+```
 MsgSend represents a message to send a nft from one account to another account.
 
 Deprecated: use cosmos-sdk/x/nft package instead
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4473,7 +4783,11 @@ Deprecated: use cosmos-sdk/x/nft package instead
 <a name="coreum.nft.v1beta1.MsgSendResponse"></a>
 
 ### MsgSendResponse
+
+```
 MsgSendResponse defines the Msg/Send response type.
+```
+
 
 
 
@@ -4489,7 +4803,11 @@ MsgSendResponse defines the Msg/Send response type.
 <a name="coreum.nft.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the nft Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -4537,7 +4855,11 @@ Msg defines the nft Msg service.
 <a name="cosmos.app.runtime.v1alpha1.Module"></a>
 
 ### Module
+
+```
 Module is the config object for the runtime module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4557,8 +4879,12 @@ Module is the config object for the runtime module.
 <a name="cosmos.app.runtime.v1alpha1.StoreKeyConfig"></a>
 
 ### StoreKeyConfig
+
+```
 StoreKeyConfig may be supplied to override the default module store key, which
 is the module name.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4590,6 +4916,8 @@ is the module name.
 <a name="cosmos.app.v1alpha1.Config"></a>
 
 ### Config
+
+```
 Config represents the configuration for a Cosmos SDK ABCI app.
 It is intended that all state machine logic including the version of
 baseapp and tx handlers (and possibly even Tendermint) that an app needs
@@ -4597,6 +4925,8 @@ can be described in a config object. For compatibility, the framework should
 allow a mixture of declarative and imperative app wiring, however, apps
 that strive for the maximum ease of maintainability should be able to describe
 their state machine with a config object alone.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4612,7 +4942,11 @@ their state machine with a config object alone.
 <a name="cosmos.app.v1alpha1.GolangBinding"></a>
 
 ### GolangBinding
+
+```
 GolangBinding is an explicit interface type to implementing type binding for dependency injection.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4628,7 +4962,11 @@ GolangBinding is an explicit interface type to implementing type binding for dep
 <a name="cosmos.app.v1alpha1.ModuleConfig"></a>
 
 ### ModuleConfig
+
+```
 ModuleConfig is a module configuration for an app.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4661,8 +4999,12 @@ ModuleConfig is a module configuration for an app.
 <a name="cosmos.app.v1alpha1.MigrateFromInfo"></a>
 
 ### MigrateFromInfo
+
+```
 MigrateFromInfo is information on a module version that a newer module
 can migrate from.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4677,7 +5019,11 @@ can migrate from.
 <a name="cosmos.app.v1alpha1.ModuleDescriptor"></a>
 
 ### ModuleDescriptor
+
+```
 ModuleDescriptor describes an app module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4694,7 +5040,11 @@ ModuleDescriptor describes an app module.
 <a name="cosmos.app.v1alpha1.PackageReference"></a>
 
 ### PackageReference
+
+```
 PackageReference is a reference to a protobuf package used by a module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4734,7 +5084,11 @@ PackageReference is a reference to a protobuf package used by a module.
 <a name="cosmos.app.v1alpha1.QueryConfigRequest"></a>
 
 ### QueryConfigRequest
+
+```
 QueryConfigRequest is the Query/Config request type.
+```
+
 
 
 
@@ -4744,7 +5098,11 @@ QueryConfigRequest is the Query/Config request type.
 <a name="cosmos.app.v1alpha1.QueryConfigResponse"></a>
 
 ### QueryConfigResponse
+
+```
 QueryConfigRequest is the Query/Config response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4765,7 +5123,11 @@ QueryConfigRequest is the Query/Config response type.
 <a name="cosmos.app.v1alpha1.Query"></a>
 
 ### Query
+
+```
 Query is the app module query service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -4785,7 +5147,11 @@ Query is the app module query service.
 <a name="cosmos.auth.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object for the auth module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4802,7 +5168,11 @@ Module is the config object for the auth module.
 <a name="cosmos.auth.module.v1.ModuleAccountPermission"></a>
 
 ### ModuleAccountPermission
+
+```
 ModuleAccountPermission represents permissions for a module account.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4834,9 +5204,13 @@ ModuleAccountPermission represents permissions for a module account.
 <a name="cosmos.auth.v1beta1.BaseAccount"></a>
 
 ### BaseAccount
+
+```
 BaseAccount defines a base account type. It contains all the necessary fields
 for basic account functionality. Any custom account type should extend this
 type for additional functionality (e.g. vesting).
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4854,7 +5228,11 @@ type for additional functionality (e.g. vesting).
 <a name="cosmos.auth.v1beta1.ModuleAccount"></a>
 
 ### ModuleAccount
+
+```
 ModuleAccount defines an account for modules that holds coins on a pool.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4871,9 +5249,13 @@ ModuleAccount defines an account for modules that holds coins on a pool.
 <a name="cosmos.auth.v1beta1.ModuleCredential"></a>
 
 ### ModuleCredential
+
+```
 ModuleCredential represents a unclaimable pubkey for base accounts controlled by modules.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4889,7 +5271,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.auth.v1beta1.Params"></a>
 
 ### Params
+
+```
 Params defines the parameters for the auth module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4924,7 +5310,11 @@ Params defines the parameters for the auth module.
 <a name="cosmos.auth.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the auth module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4956,9 +5346,13 @@ GenesisState defines the auth module's genesis state.
 <a name="cosmos.auth.v1beta1.AddressBytesToStringRequest"></a>
 
 ### AddressBytesToStringRequest
+
+```
 AddressBytesToStringRequest is the request type for AddressString rpc method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4973,9 +5367,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.auth.v1beta1.AddressBytesToStringResponse"></a>
 
 ### AddressBytesToStringResponse
+
+```
 AddressBytesToStringResponse is the response type for AddressString rpc method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -4990,9 +5388,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.auth.v1beta1.AddressStringToBytesRequest"></a>
 
 ### AddressStringToBytesRequest
+
+```
 AddressStringToBytesRequest is the request type for AccountBytes rpc method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5007,9 +5409,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.auth.v1beta1.AddressStringToBytesResponse"></a>
 
 ### AddressStringToBytesResponse
+
+```
 AddressStringToBytesResponse is the response type for AddressBytes rpc method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5024,9 +5430,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.auth.v1beta1.Bech32PrefixRequest"></a>
 
 ### Bech32PrefixRequest
+
+```
 Bech32PrefixRequest is the request type for Bech32Prefix rpc method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -5036,9 +5446,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.auth.v1beta1.Bech32PrefixResponse"></a>
 
 ### Bech32PrefixResponse
+
+```
 Bech32PrefixResponse is the response type for Bech32Prefix rpc method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5053,9 +5467,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.auth.v1beta1.QueryAccountAddressByIDRequest"></a>
 
 ### QueryAccountAddressByIDRequest
+
+```
 QueryAccountAddressByIDRequest is the request type for AccountAddressByID rpc method
 
 Since: cosmos-sdk 0.46.2
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5071,9 +5489,13 @@ Since: cosmos-sdk 0.46.2
 <a name="cosmos.auth.v1beta1.QueryAccountAddressByIDResponse"></a>
 
 ### QueryAccountAddressByIDResponse
+
+```
 QueryAccountAddressByIDResponse is the response type for AccountAddressByID rpc method
 
 Since: cosmos-sdk 0.46.2
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5088,9 +5510,13 @@ Since: cosmos-sdk 0.46.2
 <a name="cosmos.auth.v1beta1.QueryAccountInfoRequest"></a>
 
 ### QueryAccountInfoRequest
+
+```
 QueryAccountInfoRequest is the Query/AccountInfo request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5105,9 +5531,13 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.auth.v1beta1.QueryAccountInfoResponse"></a>
 
 ### QueryAccountInfoResponse
+
+```
 QueryAccountInfoResponse is the Query/AccountInfo response type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5122,7 +5552,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.auth.v1beta1.QueryAccountRequest"></a>
 
 ### QueryAccountRequest
+
+```
 QueryAccountRequest is the request type for the Query/Account RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5137,7 +5571,11 @@ QueryAccountRequest is the request type for the Query/Account RPC method.
 <a name="cosmos.auth.v1beta1.QueryAccountResponse"></a>
 
 ### QueryAccountResponse
+
+```
 QueryAccountResponse is the response type for the Query/Account RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5152,9 +5590,13 @@ QueryAccountResponse is the response type for the Query/Account RPC method.
 <a name="cosmos.auth.v1beta1.QueryAccountsRequest"></a>
 
 ### QueryAccountsRequest
+
+```
 QueryAccountsRequest is the request type for the Query/Accounts RPC method.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5169,9 +5611,13 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.auth.v1beta1.QueryAccountsResponse"></a>
 
 ### QueryAccountsResponse
+
+```
 QueryAccountsResponse is the response type for the Query/Accounts RPC method.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5187,7 +5633,11 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.auth.v1beta1.QueryModuleAccountByNameRequest"></a>
 
 ### QueryModuleAccountByNameRequest
+
+```
 QueryModuleAccountByNameRequest is the request type for the Query/ModuleAccountByName RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5202,7 +5652,11 @@ QueryModuleAccountByNameRequest is the request type for the Query/ModuleAccountB
 <a name="cosmos.auth.v1beta1.QueryModuleAccountByNameResponse"></a>
 
 ### QueryModuleAccountByNameResponse
+
+```
 QueryModuleAccountByNameResponse is the response type for the Query/ModuleAccountByName RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5217,9 +5671,13 @@ QueryModuleAccountByNameResponse is the response type for the Query/ModuleAccoun
 <a name="cosmos.auth.v1beta1.QueryModuleAccountsRequest"></a>
 
 ### QueryModuleAccountsRequest
+
+```
 QueryModuleAccountsRequest is the request type for the Query/ModuleAccounts RPC method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -5229,9 +5687,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.auth.v1beta1.QueryModuleAccountsResponse"></a>
 
 ### QueryModuleAccountsResponse
+
+```
 QueryModuleAccountsResponse is the response type for the Query/ModuleAccounts RPC method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5246,7 +5708,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.auth.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is the request type for the Query/Params RPC method.
+```
+
 
 
 
@@ -5256,7 +5722,11 @@ QueryParamsRequest is the request type for the Query/Params RPC method.
 <a name="cosmos.auth.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is the response type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5277,7 +5747,11 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 <a name="cosmos.auth.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -5306,9 +5780,13 @@ Query defines the gRPC querier service.
 <a name="cosmos.auth.v1beta1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5324,10 +5802,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.auth.v1beta1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -5343,7 +5825,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.auth.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the x/auth Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -5363,7 +5849,11 @@ Msg defines the x/auth Msg service.
 <a name="cosmos.authz.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the authz module.
+```
+
 
 
 
@@ -5383,14 +5873,22 @@ Module is the config object of the authz module.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/authz/v1beta1/authz.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.authz.v1beta1.GenericAuthorization"></a>
 
 ### GenericAuthorization
+
+```
 GenericAuthorization gives the grantee unrestricted permissions to execute
 the provided method on behalf of the granter's account.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5405,8 +5903,12 @@ the provided method on behalf of the granter's account.
 <a name="cosmos.authz.v1beta1.Grant"></a>
 
 ### Grant
+
+```
 Grant gives permissions to execute
 the provide method with expiration time.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5422,8 +5924,12 @@ the provide method with expiration time.
 <a name="cosmos.authz.v1beta1.GrantAuthorization"></a>
 
 ### GrantAuthorization
+
+```
 GrantAuthorization extends a grant with both the addresses of the grantee and granter.
 It is used in genesis.proto and query.proto
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5441,7 +5947,11 @@ It is used in genesis.proto and query.proto
 <a name="cosmos.authz.v1beta1.GrantQueueItem"></a>
 
 ### GrantQueueItem
+
+```
 GrantQueueItem contains the list of TypeURL of a sdk.Msg.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5466,13 +5976,21 @@ GrantQueueItem contains the list of TypeURL of a sdk.Msg.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/authz/v1beta1/event.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.authz.v1beta1.EventGrant"></a>
 
 ### EventGrant
+
+```
 EventGrant is emitted on Msg/Grant
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5489,7 +6007,11 @@ EventGrant is emitted on Msg/Grant
 <a name="cosmos.authz.v1beta1.EventRevoke"></a>
 
 ### EventRevoke
+
+```
 EventRevoke is emitted on Msg/Revoke
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5516,13 +6038,21 @@ EventRevoke is emitted on Msg/Revoke
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/authz/v1beta1/genesis.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.authz.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the authz module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5547,13 +6077,21 @@ GenesisState defines the authz module's genesis state.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/authz/v1beta1/query.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.authz.v1beta1.QueryGranteeGrantsRequest"></a>
 
 ### QueryGranteeGrantsRequest
+
+```
 QueryGranteeGrantsRequest is the request type for the Query/IssuedGrants RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5569,7 +6107,11 @@ QueryGranteeGrantsRequest is the request type for the Query/IssuedGrants RPC met
 <a name="cosmos.authz.v1beta1.QueryGranteeGrantsResponse"></a>
 
 ### QueryGranteeGrantsResponse
+
+```
 QueryGranteeGrantsResponse is the response type for the Query/GranteeGrants RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5585,7 +6127,11 @@ QueryGranteeGrantsResponse is the response type for the Query/GranteeGrants RPC 
 <a name="cosmos.authz.v1beta1.QueryGranterGrantsRequest"></a>
 
 ### QueryGranterGrantsRequest
+
+```
 QueryGranterGrantsRequest is the request type for the Query/GranterGrants RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5601,7 +6147,11 @@ QueryGranterGrantsRequest is the request type for the Query/GranterGrants RPC me
 <a name="cosmos.authz.v1beta1.QueryGranterGrantsResponse"></a>
 
 ### QueryGranterGrantsResponse
+
+```
 QueryGranterGrantsResponse is the response type for the Query/GranterGrants RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5617,7 +6167,11 @@ QueryGranterGrantsResponse is the response type for the Query/GranterGrants RPC 
 <a name="cosmos.authz.v1beta1.QueryGrantsRequest"></a>
 
 ### QueryGrantsRequest
+
+```
 QueryGrantsRequest is the request type for the Query/Grants RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5635,7 +6189,11 @@ QueryGrantsRequest is the request type for the Query/Grants RPC method.
 <a name="cosmos.authz.v1beta1.QueryGrantsResponse"></a>
 
 ### QueryGrantsResponse
+
+```
 QueryGrantsResponse is the response type for the Query/Authorizations RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5657,7 +6215,11 @@ QueryGrantsResponse is the response type for the Query/Authorizations RPC method
 <a name="cosmos.authz.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -5673,15 +6235,23 @@ Query defines the gRPC querier service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/authz/v1beta1/tx.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.authz.v1beta1.MsgExec"></a>
 
 ### MsgExec
+
+```
 MsgExec attempts to execute the provided messages using
 authorizations granted to the grantee. Each message should have only
 one signer corresponding to the granter of the authorization.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5697,7 +6267,11 @@ one signer corresponding to the granter of the authorization.
 <a name="cosmos.authz.v1beta1.MsgExecResponse"></a>
 
 ### MsgExecResponse
+
+```
 MsgExecResponse defines the Msg/MsgExecResponse response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5712,8 +6286,12 @@ MsgExecResponse defines the Msg/MsgExecResponse response type.
 <a name="cosmos.authz.v1beta1.MsgGrant"></a>
 
 ### MsgGrant
+
+```
 MsgGrant is a request type for Grant method. It declares authorization to the grantee
 on behalf of the granter with the provided expiration time.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5730,7 +6308,11 @@ on behalf of the granter with the provided expiration time.
 <a name="cosmos.authz.v1beta1.MsgGrantResponse"></a>
 
 ### MsgGrantResponse
+
+```
 MsgGrantResponse defines the Msg/MsgGrant response type.
+```
+
 
 
 
@@ -5740,8 +6322,12 @@ MsgGrantResponse defines the Msg/MsgGrant response type.
 <a name="cosmos.authz.v1beta1.MsgRevoke"></a>
 
 ### MsgRevoke
+
+```
 MsgRevoke revokes any authorization with the provided sdk.Msg type on the
 granter's account with that has been granted to the grantee.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5758,7 +6344,11 @@ granter's account with that has been granted to the grantee.
 <a name="cosmos.authz.v1beta1.MsgRevokeResponse"></a>
 
 ### MsgRevokeResponse
+
+```
 MsgRevokeResponse defines the Msg/MsgRevokeResponse response type.
+```
+
 
 
 
@@ -5774,7 +6364,11 @@ MsgRevokeResponse defines the Msg/MsgRevokeResponse response type.
 <a name="cosmos.authz.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the authz Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -5796,10 +6390,14 @@ Msg defines the authz Msg service.
 <a name="cosmos.autocli.v1.FlagOptions"></a>
 
 ### FlagOptions
+
+```
 FlagOptions are options for flags generated from rpc request fields.
 By default, all request fields are configured as flags based on the
 kebab-case name of the field. Fields can be turned into positional arguments
 instead by using RpcCommandOptions.positional_args.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5821,7 +6419,11 @@ instead by using RpcCommandOptions.positional_args.
 <a name="cosmos.autocli.v1.ModuleOptions"></a>
 
 ### ModuleOptions
+
+```
 ModuleOptions describes the CLI options for a Cosmos SDK module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5837,7 +6439,11 @@ ModuleOptions describes the CLI options for a Cosmos SDK module.
 <a name="cosmos.autocli.v1.PositionalArgDescriptor"></a>
 
 ### PositionalArgDescriptor
+
+```
 PositionalArgDescriptor describes a positional argument.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5853,8 +6459,12 @@ PositionalArgDescriptor describes a positional argument.
 <a name="cosmos.autocli.v1.RpcCommandOptions"></a>
 
 ### RpcCommandOptions
+
+```
 RpcCommandOptions specifies options for commands generated from protobuf
 rpc methods.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5896,7 +6506,11 @@ rpc methods.
 <a name="cosmos.autocli.v1.ServiceCommandDescriptor"></a>
 
 ### ServiceCommandDescriptor
+
+```
 ServiceCommandDescriptor describes a CLI command based on a protobuf service.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5945,7 +6559,11 @@ ServiceCommandDescriptor describes a CLI command based on a protobuf service.
 <a name="cosmos.autocli.v1.AppOptionsRequest"></a>
 
 ### AppOptionsRequest
+
+```
 AppOptionsRequest is the RemoteInfoService/AppOptions request type.
+```
+
 
 
 
@@ -5955,7 +6573,11 @@ AppOptionsRequest is the RemoteInfoService/AppOptions request type.
 <a name="cosmos.autocli.v1.AppOptionsResponse"></a>
 
 ### AppOptionsResponse
+
+```
 AppOptionsResponse is the RemoteInfoService/AppOptions response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -5992,8 +6614,12 @@ AppOptionsResponse is the RemoteInfoService/AppOptions response type.
 <a name="cosmos.autocli.v1.Query"></a>
 
 ### Query
+
+```
 RemoteInfoService provides clients with the information they need
 to build dynamically CLI clients for remote chains.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -6013,7 +6639,11 @@ to build dynamically CLI clients for remote chains.
 <a name="cosmos.bank.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the bank module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6045,10 +6675,14 @@ Module is the config object of the bank module.
 <a name="cosmos.bank.v1beta1.SendAuthorization"></a>
 
 ### SendAuthorization
+
+```
 SendAuthorization allows the grantee to spend up to spend_limit coins from
 the granter's account.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6080,8 +6714,12 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.bank.v1beta1.DenomUnit"></a>
 
 ### DenomUnit
+
+```
 DenomUnit represents a struct that describes a given
 denomination unit of the basic token.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6098,7 +6736,11 @@ denomination unit of the basic token.
 <a name="cosmos.bank.v1beta1.Input"></a>
 
 ### Input
+
+```
 Input models transaction input.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6114,8 +6756,12 @@ Input models transaction input.
 <a name="cosmos.bank.v1beta1.Metadata"></a>
 
 ### Metadata
+
+```
 Metadata represents a struct that describes
 a basic token.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6137,7 +6783,11 @@ a basic token.
 <a name="cosmos.bank.v1beta1.Output"></a>
 
 ### Output
+
+```
 Output models transaction outputs.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6153,7 +6803,11 @@ Output models transaction outputs.
 <a name="cosmos.bank.v1beta1.Params"></a>
 
 ### Params
+
+```
 Params defines the parameters for the bank module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6169,8 +6823,12 @@ Params defines the parameters for the bank module.
 <a name="cosmos.bank.v1beta1.SendEnabled"></a>
 
 ### SendEnabled
+
+```
 SendEnabled maps coin denom to a send_enabled status (whether a denom is
 sendable).
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6186,9 +6844,13 @@ sendable).
 <a name="cosmos.bank.v1beta1.Supply"></a>
 
 ### Supply
+
+```
 Supply represents a struct that passively keeps track of the total supply
 amounts in the network.
 This message is deprecated now that supply is indexed by denom.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6219,8 +6881,12 @@ This message is deprecated now that supply is indexed by denom.
 <a name="cosmos.bank.v1beta1.Balance"></a>
 
 ### Balance
+
+```
 Balance defines an account address and balance pair used in the bank module's
 genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6236,7 +6902,11 @@ genesis state.
 <a name="cosmos.bank.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the bank module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6271,11 +6941,15 @@ GenesisState defines the bank module's genesis state.
 <a name="cosmos.bank.v1beta1.DenomOwner"></a>
 
 ### DenomOwner
+
+```
 DenomOwner defines structure representing an account that owns or holds a
 particular denominated token. It contains the account address and account
 balance of the denominated token.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6291,7 +6965,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.bank.v1beta1.QueryAllBalancesRequest"></a>
 
 ### QueryAllBalancesRequest
+
+```
 QueryBalanceRequest is the request type for the Query/AllBalances RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6307,8 +6985,12 @@ QueryBalanceRequest is the request type for the Query/AllBalances RPC method.
 <a name="cosmos.bank.v1beta1.QueryAllBalancesResponse"></a>
 
 ### QueryAllBalancesResponse
+
+```
 QueryAllBalancesResponse is the response type for the Query/AllBalances RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6324,7 +7006,11 @@ method.
 <a name="cosmos.bank.v1beta1.QueryBalanceRequest"></a>
 
 ### QueryBalanceRequest
+
+```
 QueryBalanceRequest is the request type for the Query/Balance RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6340,7 +7026,11 @@ QueryBalanceRequest is the request type for the Query/Balance RPC method.
 <a name="cosmos.bank.v1beta1.QueryBalanceResponse"></a>
 
 ### QueryBalanceResponse
+
+```
 QueryBalanceResponse is the response type for the Query/Balance RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6355,7 +7045,11 @@ QueryBalanceResponse is the response type for the Query/Balance RPC method.
 <a name="cosmos.bank.v1beta1.QueryDenomMetadataRequest"></a>
 
 ### QueryDenomMetadataRequest
+
+```
 QueryDenomMetadataRequest is the request type for the Query/DenomMetadata RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6370,8 +7064,12 @@ QueryDenomMetadataRequest is the request type for the Query/DenomMetadata RPC me
 <a name="cosmos.bank.v1beta1.QueryDenomMetadataResponse"></a>
 
 ### QueryDenomMetadataResponse
+
+```
 QueryDenomMetadataResponse is the response type for the Query/DenomMetadata RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6386,9 +7084,13 @@ method.
 <a name="cosmos.bank.v1beta1.QueryDenomOwnersRequest"></a>
 
 ### QueryDenomOwnersRequest
+
+```
 QueryDenomOwnersRequest defines the request type for the DenomOwners RPC query,
 which queries for a paginated set of all account holders of a particular
 denomination.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6404,9 +7106,13 @@ denomination.
 <a name="cosmos.bank.v1beta1.QueryDenomOwnersResponse"></a>
 
 ### QueryDenomOwnersResponse
+
+```
 QueryDenomOwnersResponse defines the RPC response of a DenomOwners RPC query.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6422,7 +7128,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.bank.v1beta1.QueryDenomsMetadataRequest"></a>
 
 ### QueryDenomsMetadataRequest
+
+```
 QueryDenomsMetadataRequest is the request type for the Query/DenomsMetadata RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6437,8 +7147,12 @@ QueryDenomsMetadataRequest is the request type for the Query/DenomsMetadata RPC 
 <a name="cosmos.bank.v1beta1.QueryDenomsMetadataResponse"></a>
 
 ### QueryDenomsMetadataResponse
+
+```
 QueryDenomsMetadataResponse is the response type for the Query/DenomsMetadata RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6454,7 +7168,11 @@ method.
 <a name="cosmos.bank.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest defines the request type for querying x/bank parameters.
+```
+
 
 
 
@@ -6464,7 +7182,11 @@ QueryParamsRequest defines the request type for querying x/bank parameters.
 <a name="cosmos.bank.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse defines the response type for querying x/bank parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6479,9 +7201,13 @@ QueryParamsResponse defines the response type for querying x/bank parameters.
 <a name="cosmos.bank.v1beta1.QuerySendEnabledRequest"></a>
 
 ### QuerySendEnabledRequest
+
+```
 QuerySendEnabledRequest defines the RPC request for looking up SendEnabled entries.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6497,9 +7223,13 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.bank.v1beta1.QuerySendEnabledResponse"></a>
 
 ### QuerySendEnabledResponse
+
+```
 QuerySendEnabledResponse defines the RPC response of a SendEnable query.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6515,10 +7245,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.bank.v1beta1.QuerySpendableBalanceByDenomRequest"></a>
 
 ### QuerySpendableBalanceByDenomRequest
+
+```
 QuerySpendableBalanceByDenomRequest defines the gRPC request structure for
 querying an account's spendable balance for a specific denom.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6534,10 +7268,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.bank.v1beta1.QuerySpendableBalanceByDenomResponse"></a>
 
 ### QuerySpendableBalanceByDenomResponse
+
+```
 QuerySpendableBalanceByDenomResponse defines the gRPC response structure for
 querying an account's spendable balance for a specific denom.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6552,10 +7290,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.bank.v1beta1.QuerySpendableBalancesRequest"></a>
 
 ### QuerySpendableBalancesRequest
+
+```
 QuerySpendableBalancesRequest defines the gRPC request structure for querying
 an account's spendable balances.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6571,10 +7313,14 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.bank.v1beta1.QuerySpendableBalancesResponse"></a>
 
 ### QuerySpendableBalancesResponse
+
+```
 QuerySpendableBalancesResponse defines the gRPC response structure for querying
 an account's spendable balances.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6590,7 +7336,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.bank.v1beta1.QuerySupplyOfRequest"></a>
 
 ### QuerySupplyOfRequest
+
+```
 QuerySupplyOfRequest is the request type for the Query/SupplyOf RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6605,7 +7355,11 @@ QuerySupplyOfRequest is the request type for the Query/SupplyOf RPC method.
 <a name="cosmos.bank.v1beta1.QuerySupplyOfResponse"></a>
 
 ### QuerySupplyOfResponse
+
+```
 QuerySupplyOfResponse is the response type for the Query/SupplyOf RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6620,8 +7374,12 @@ QuerySupplyOfResponse is the response type for the Query/SupplyOf RPC method.
 <a name="cosmos.bank.v1beta1.QueryTotalSupplyRequest"></a>
 
 ### QueryTotalSupplyRequest
+
+```
 QueryTotalSupplyRequest is the request type for the Query/TotalSupply RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6636,8 +7394,12 @@ method.
 <a name="cosmos.bank.v1beta1.QueryTotalSupplyResponse"></a>
 
 ### QueryTotalSupplyResponse
+
+```
 QueryTotalSupplyResponse is the response type for the Query/TotalSupply RPC
 method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6659,7 +7421,11 @@ method
 <a name="cosmos.bank.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -6689,7 +7455,11 @@ Query defines the gRPC querier service.
 <a name="cosmos.bank.v1beta1.MsgMultiSend"></a>
 
 ### MsgMultiSend
+
+```
 MsgMultiSend represents an arbitrary multi-in, multi-out send message.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6705,7 +7475,11 @@ MsgMultiSend represents an arbitrary multi-in, multi-out send message.
 <a name="cosmos.bank.v1beta1.MsgMultiSendResponse"></a>
 
 ### MsgMultiSendResponse
+
+```
 MsgMultiSendResponse defines the Msg/MultiSend response type.
+```
+
 
 
 
@@ -6715,7 +7489,11 @@ MsgMultiSendResponse defines the Msg/MultiSend response type.
 <a name="cosmos.bank.v1beta1.MsgSend"></a>
 
 ### MsgSend
+
+```
 MsgSend represents a message to send coins from one account to another.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6732,7 +7510,11 @@ MsgSend represents a message to send coins from one account to another.
 <a name="cosmos.bank.v1beta1.MsgSendResponse"></a>
 
 ### MsgSendResponse
+
+```
 MsgSendResponse defines the Msg/Send response type.
+```
+
 
 
 
@@ -6742,6 +7524,8 @@ MsgSendResponse defines the Msg/Send response type.
 <a name="cosmos.bank.v1beta1.MsgSetSendEnabled"></a>
 
 ### MsgSetSendEnabled
+
+```
 MsgSetSendEnabled is the Msg/SetSendEnabled request type.
 
 Only entries to add/update/delete need to be included.
@@ -6749,6 +7533,8 @@ Existing SendEnabled entries that are not included in this
 message are left unchanged.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6765,9 +7551,13 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.bank.v1beta1.MsgSetSendEnabledResponse"></a>
 
 ### MsgSetSendEnabledResponse
+
+```
 MsgSetSendEnabledResponse defines the Msg/SetSendEnabled response type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -6777,9 +7567,13 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.bank.v1beta1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6795,10 +7589,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.bank.v1beta1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -6814,7 +7612,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.bank.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the bank Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -6837,7 +7639,11 @@ Msg defines the bank Msg service.
 <a name="cosmos.base.abci.v1beta1.ABCIMessageLog"></a>
 
 ### ABCIMessageLog
+
+```
 ABCIMessageLog defines a structure containing an indexed tx ABCI message log.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6854,8 +7660,12 @@ ABCIMessageLog defines a structure containing an indexed tx ABCI message log.
 <a name="cosmos.base.abci.v1beta1.Attribute"></a>
 
 ### Attribute
+
+```
 Attribute defines an attribute wrapper where the key and value are
 strings instead of raw bytes.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6871,7 +7681,11 @@ strings instead of raw bytes.
 <a name="cosmos.base.abci.v1beta1.GasInfo"></a>
 
 ### GasInfo
+
+```
 GasInfo defines tx execution gas context.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6887,8 +7701,12 @@ GasInfo defines tx execution gas context.
 <a name="cosmos.base.abci.v1beta1.MsgData"></a>
 
 ### MsgData
+
+```
 MsgData defines the data returned in a Result object during message
 execution.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6904,7 +7722,11 @@ execution.
 <a name="cosmos.base.abci.v1beta1.Result"></a>
 
 ### Result
+
+```
 Result is the union of ResponseFormat and ResponseCheckTx.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6922,7 +7744,11 @@ Result is the union of ResponseFormat and ResponseCheckTx.
 <a name="cosmos.base.abci.v1beta1.SearchTxsResult"></a>
 
 ### SearchTxsResult
+
+```
 SearchTxsResult defines a structure for querying txs pageable
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6942,8 +7768,12 @@ SearchTxsResult defines a structure for querying txs pageable
 <a name="cosmos.base.abci.v1beta1.SimulationResponse"></a>
 
 ### SimulationResponse
+
+```
 SimulationResponse defines the response generated when a transaction is
 successfully simulated.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6959,8 +7789,12 @@ successfully simulated.
 <a name="cosmos.base.abci.v1beta1.StringEvent"></a>
 
 ### StringEvent
+
+```
 StringEvent defines en Event object wrapper where all the attributes
 contain key/value pairs that are strings instead of raw bytes.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6976,8 +7810,12 @@ contain key/value pairs that are strings instead of raw bytes.
 <a name="cosmos.base.abci.v1beta1.TxMsgData"></a>
 
 ### TxMsgData
+
+```
 TxMsgData defines a list of MsgData. A transaction will have a MsgData object
 for each message.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -6993,8 +7831,12 @@ for each message.
 <a name="cosmos.base.abci.v1beta1.TxResponse"></a>
 
 ### TxResponse
+
+```
 TxResponse defines a structure containing relevant tx data and metadata. The
 tags are stringified and the log is JSON decoded.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7037,7 +7879,11 @@ tags are stringified and the log is JSON decoded.
 <a name="cosmos.base.kv.v1beta1.Pair"></a>
 
 ### Pair
+
+```
 Pair defines a key/value bytes tuple.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7053,7 +7899,11 @@ Pair defines a key/value bytes tuple.
 <a name="cosmos.base.kv.v1beta1.Pairs"></a>
 
 ### Pairs
+
+```
 Pairs defines a repeated slice of Pair objects.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7084,7 +7934,11 @@ Pairs defines a repeated slice of Pair objects.
 <a name="cosmos.base.node.v1beta1.ConfigRequest"></a>
 
 ### ConfigRequest
+
+```
 ConfigRequest defines the request structure for the Config gRPC query.
+```
+
 
 
 
@@ -7094,7 +7948,11 @@ ConfigRequest defines the request structure for the Config gRPC query.
 <a name="cosmos.base.node.v1beta1.ConfigResponse"></a>
 
 ### ConfigResponse
+
+```
 ConfigResponse defines the response structure for the Config gRPC query.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7115,7 +7973,11 @@ ConfigResponse defines the response structure for the Config gRPC query.
 <a name="cosmos.base.node.v1beta1.Service"></a>
 
 ### Service
+
+```
 Service defines the gRPC querier service for node related queries.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -7135,6 +7997,8 @@ Service defines the gRPC querier service for node related queries.
 <a name="cosmos.base.query.v1beta1.PageRequest"></a>
 
 ### PageRequest
+
+```
 PageRequest is to be embedded in gRPC request messages for efficient
 pagination. Ex:
 
@@ -7142,6 +8006,8 @@ pagination. Ex:
          Foo some_parameter = 1;
          PageRequest pagination = 2;
  }
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7160,6 +8026,8 @@ pagination. Ex:
 <a name="cosmos.base.query.v1beta1.PageResponse"></a>
 
 ### PageResponse
+
+```
 PageResponse is to be embedded in gRPC response messages where the
 corresponding request message has used PageRequest.
 
@@ -7167,6 +8035,8 @@ corresponding request message has used PageRequest.
          repeated Bar results = 1;
          PageResponse page = 2;
  }
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7198,7 +8068,11 @@ corresponding request message has used PageRequest.
 <a name="cosmos.base.reflection.v1beta1.ListAllInterfacesRequest"></a>
 
 ### ListAllInterfacesRequest
+
+```
 ListAllInterfacesRequest is the request type of the ListAllInterfaces RPC.
+```
+
 
 
 
@@ -7208,7 +8082,11 @@ ListAllInterfacesRequest is the request type of the ListAllInterfaces RPC.
 <a name="cosmos.base.reflection.v1beta1.ListAllInterfacesResponse"></a>
 
 ### ListAllInterfacesResponse
+
+```
 ListAllInterfacesResponse is the response type of the ListAllInterfaces RPC.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7223,8 +8101,12 @@ ListAllInterfacesResponse is the response type of the ListAllInterfaces RPC.
 <a name="cosmos.base.reflection.v1beta1.ListImplementationsRequest"></a>
 
 ### ListImplementationsRequest
+
+```
 ListImplementationsRequest is the request type of the ListImplementations
 RPC.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7239,8 +8121,12 @@ RPC.
 <a name="cosmos.base.reflection.v1beta1.ListImplementationsResponse"></a>
 
 ### ListImplementationsResponse
+
+```
 ListImplementationsResponse is the response type of the ListImplementations
 RPC.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7261,7 +8147,11 @@ RPC.
 <a name="cosmos.base.reflection.v1beta1.ReflectionService"></a>
 
 ### ReflectionService
+
+```
 ReflectionService defines a service for interface reflection.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -7276,13 +8166,21 @@ ReflectionService defines a service for interface reflection.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/base/reflection/v2alpha1/reflection.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.base.reflection.v2alpha1.AppDescriptor"></a>
 
 ### AppDescriptor
+
+```
 AppDescriptor describes a cosmos-sdk based application
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7302,8 +8200,12 @@ AppDescriptor describes a cosmos-sdk based application
 <a name="cosmos.base.reflection.v2alpha1.AuthnDescriptor"></a>
 
 ### AuthnDescriptor
+
+```
 AuthnDescriptor provides information on how to sign transactions without relying
 on the online RPCs GetTxMetadata and CombineUnsignedTxAndSignatures
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7318,7 +8220,11 @@ on the online RPCs GetTxMetadata and CombineUnsignedTxAndSignatures
 <a name="cosmos.base.reflection.v2alpha1.ChainDescriptor"></a>
 
 ### ChainDescriptor
+
+```
 ChainDescriptor describes chain information of the application
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7333,7 +8239,11 @@ ChainDescriptor describes chain information of the application
 <a name="cosmos.base.reflection.v2alpha1.CodecDescriptor"></a>
 
 ### CodecDescriptor
+
+```
 CodecDescriptor describes the registered interfaces and provides metadata information on the types
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7348,7 +8258,11 @@ CodecDescriptor describes the registered interfaces and provides metadata inform
 <a name="cosmos.base.reflection.v2alpha1.ConfigurationDescriptor"></a>
 
 ### ConfigurationDescriptor
+
+```
 ConfigurationDescriptor contains metadata information on the sdk.Config
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7363,7 +8277,11 @@ ConfigurationDescriptor contains metadata information on the sdk.Config
 <a name="cosmos.base.reflection.v2alpha1.GetAuthnDescriptorRequest"></a>
 
 ### GetAuthnDescriptorRequest
+
+```
 GetAuthnDescriptorRequest is the request used for the GetAuthnDescriptor RPC
+```
+
 
 
 
@@ -7373,7 +8291,11 @@ GetAuthnDescriptorRequest is the request used for the GetAuthnDescriptor RPC
 <a name="cosmos.base.reflection.v2alpha1.GetAuthnDescriptorResponse"></a>
 
 ### GetAuthnDescriptorResponse
+
+```
 GetAuthnDescriptorResponse is the response returned by the GetAuthnDescriptor RPC
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7388,7 +8310,11 @@ GetAuthnDescriptorResponse is the response returned by the GetAuthnDescriptor RP
 <a name="cosmos.base.reflection.v2alpha1.GetChainDescriptorRequest"></a>
 
 ### GetChainDescriptorRequest
+
+```
 GetChainDescriptorRequest is the request used for the GetChainDescriptor RPC
+```
+
 
 
 
@@ -7398,7 +8324,11 @@ GetChainDescriptorRequest is the request used for the GetChainDescriptor RPC
 <a name="cosmos.base.reflection.v2alpha1.GetChainDescriptorResponse"></a>
 
 ### GetChainDescriptorResponse
+
+```
 GetChainDescriptorResponse is the response returned by the GetChainDescriptor RPC
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7413,7 +8343,11 @@ GetChainDescriptorResponse is the response returned by the GetChainDescriptor RP
 <a name="cosmos.base.reflection.v2alpha1.GetCodecDescriptorRequest"></a>
 
 ### GetCodecDescriptorRequest
+
+```
 GetCodecDescriptorRequest is the request used for the GetCodecDescriptor RPC
+```
+
 
 
 
@@ -7423,7 +8357,11 @@ GetCodecDescriptorRequest is the request used for the GetCodecDescriptor RPC
 <a name="cosmos.base.reflection.v2alpha1.GetCodecDescriptorResponse"></a>
 
 ### GetCodecDescriptorResponse
+
+```
 GetCodecDescriptorResponse is the response returned by the GetCodecDescriptor RPC
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7438,7 +8376,11 @@ GetCodecDescriptorResponse is the response returned by the GetCodecDescriptor RP
 <a name="cosmos.base.reflection.v2alpha1.GetConfigurationDescriptorRequest"></a>
 
 ### GetConfigurationDescriptorRequest
+
+```
 GetConfigurationDescriptorRequest is the request used for the GetConfigurationDescriptor RPC
+```
+
 
 
 
@@ -7448,7 +8390,11 @@ GetConfigurationDescriptorRequest is the request used for the GetConfigurationDe
 <a name="cosmos.base.reflection.v2alpha1.GetConfigurationDescriptorResponse"></a>
 
 ### GetConfigurationDescriptorResponse
+
+```
 GetConfigurationDescriptorResponse is the response returned by the GetConfigurationDescriptor RPC
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7463,7 +8409,11 @@ GetConfigurationDescriptorResponse is the response returned by the GetConfigurat
 <a name="cosmos.base.reflection.v2alpha1.GetQueryServicesDescriptorRequest"></a>
 
 ### GetQueryServicesDescriptorRequest
+
+```
 GetQueryServicesDescriptorRequest is the request used for the GetQueryServicesDescriptor RPC
+```
+
 
 
 
@@ -7473,7 +8423,11 @@ GetQueryServicesDescriptorRequest is the request used for the GetQueryServicesDe
 <a name="cosmos.base.reflection.v2alpha1.GetQueryServicesDescriptorResponse"></a>
 
 ### GetQueryServicesDescriptorResponse
+
+```
 GetQueryServicesDescriptorResponse is the response returned by the GetQueryServicesDescriptor RPC
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7488,7 +8442,11 @@ GetQueryServicesDescriptorResponse is the response returned by the GetQueryServi
 <a name="cosmos.base.reflection.v2alpha1.GetTxDescriptorRequest"></a>
 
 ### GetTxDescriptorRequest
+
+```
 GetTxDescriptorRequest is the request used for the GetTxDescriptor RPC
+```
+
 
 
 
@@ -7498,7 +8456,11 @@ GetTxDescriptorRequest is the request used for the GetTxDescriptor RPC
 <a name="cosmos.base.reflection.v2alpha1.GetTxDescriptorResponse"></a>
 
 ### GetTxDescriptorResponse
+
+```
 GetTxDescriptorResponse is the response returned by the GetTxDescriptor RPC
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7513,8 +8475,12 @@ GetTxDescriptorResponse is the response returned by the GetTxDescriptor RPC
 <a name="cosmos.base.reflection.v2alpha1.InterfaceAcceptingMessageDescriptor"></a>
 
 ### InterfaceAcceptingMessageDescriptor
+
+```
 InterfaceAcceptingMessageDescriptor describes a protobuf message which contains
 an interface represented as a google.protobuf.Any
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7530,7 +8496,11 @@ an interface represented as a google.protobuf.Any
 <a name="cosmos.base.reflection.v2alpha1.InterfaceDescriptor"></a>
 
 ### InterfaceDescriptor
+
+```
 InterfaceDescriptor describes the implementation of an interface
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7547,7 +8517,11 @@ InterfaceDescriptor describes the implementation of an interface
 <a name="cosmos.base.reflection.v2alpha1.InterfaceImplementerDescriptor"></a>
 
 ### InterfaceImplementerDescriptor
+
+```
 InterfaceImplementerDescriptor describes an interface implementer
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7563,7 +8537,11 @@ InterfaceImplementerDescriptor describes an interface implementer
 <a name="cosmos.base.reflection.v2alpha1.MsgDescriptor"></a>
 
 ### MsgDescriptor
+
+```
 MsgDescriptor describes a cosmos-sdk message that can be delivered with a transaction
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7578,9 +8556,13 @@ MsgDescriptor describes a cosmos-sdk message that can be delivered with a transa
 <a name="cosmos.base.reflection.v2alpha1.QueryMethodDescriptor"></a>
 
 ### QueryMethodDescriptor
+
+```
 QueryMethodDescriptor describes a queryable method of a query service
 no other info is provided beside method name and tendermint queryable path
 because it would be redundant with the grpc reflection service
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7596,7 +8578,11 @@ because it would be redundant with the grpc reflection service
 <a name="cosmos.base.reflection.v2alpha1.QueryServiceDescriptor"></a>
 
 ### QueryServiceDescriptor
+
+```
 QueryServiceDescriptor describes a cosmos-sdk queryable service
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7613,7 +8599,11 @@ QueryServiceDescriptor describes a cosmos-sdk queryable service
 <a name="cosmos.base.reflection.v2alpha1.QueryServicesDescriptor"></a>
 
 ### QueryServicesDescriptor
+
+```
 QueryServicesDescriptor contains the list of cosmos-sdk queriable services
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7628,10 +8618,14 @@ QueryServicesDescriptor contains the list of cosmos-sdk queriable services
 <a name="cosmos.base.reflection.v2alpha1.SigningModeDescriptor"></a>
 
 ### SigningModeDescriptor
+
+```
 SigningModeDescriptor provides information on a signing flow of the application
 NOTE(fdymylja): here we could go as far as providing an entire flow on how
 to sign a message given a SigningModeDescriptor, but it's better to think about
 this another time
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7648,7 +8642,11 @@ this another time
 <a name="cosmos.base.reflection.v2alpha1.TxDescriptor"></a>
 
 ### TxDescriptor
+
+```
 TxDescriptor describes the accepted transaction type
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7670,7 +8668,11 @@ TxDescriptor describes the accepted transaction type
 <a name="cosmos.base.reflection.v2alpha1.ReflectionService"></a>
 
 ### ReflectionService
+
+```
 ReflectionService defines a service for application reflection.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -7695,7 +8697,11 @@ ReflectionService defines a service for application reflection.
 <a name="cosmos.base.snapshots.v1beta1.Metadata"></a>
 
 ### Metadata
+
+```
 Metadata contains SDK-specific snapshot metadata.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7710,7 +8716,11 @@ Metadata contains SDK-specific snapshot metadata.
 <a name="cosmos.base.snapshots.v1beta1.Snapshot"></a>
 
 ### Snapshot
+
+```
 Snapshot contains Tendermint state sync snapshot info.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7729,9 +8739,13 @@ Snapshot contains Tendermint state sync snapshot info.
 <a name="cosmos.base.snapshots.v1beta1.SnapshotExtensionMeta"></a>
 
 ### SnapshotExtensionMeta
+
+```
 SnapshotExtensionMeta contains metadata about an external snapshotter.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7747,9 +8761,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.base.snapshots.v1beta1.SnapshotExtensionPayload"></a>
 
 ### SnapshotExtensionPayload
+
+```
 SnapshotExtensionPayload contains payloads of an external snapshotter.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7764,9 +8782,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.base.snapshots.v1beta1.SnapshotIAVLItem"></a>
 
 ### SnapshotIAVLItem
+
+```
 SnapshotIAVLItem is an exported IAVL node.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7784,9 +8806,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.base.snapshots.v1beta1.SnapshotItem"></a>
 
 ### SnapshotItem
+
+```
 SnapshotItem is an item contained in a rootmulti.Store snapshot.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7806,10 +8832,14 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.base.snapshots.v1beta1.SnapshotKVItem"></a>
 
 ### SnapshotKVItem
+
+```
 SnapshotKVItem is an exported Key/Value Pair
 
 Since: cosmos-sdk 0.46
 Deprecated: This message was part of store/v2alpha1 which has been deleted from v0.47.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7825,10 +8855,14 @@ Deprecated: This message was part of store/v2alpha1 which has been deleted from 
 <a name="cosmos.base.snapshots.v1beta1.SnapshotSchema"></a>
 
 ### SnapshotSchema
+
+```
 SnapshotSchema is an exported schema of smt store
 
 Since: cosmos-sdk 0.46
 Deprecated: This message was part of store/v2alpha1 which has been deleted from v0.47.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7843,9 +8877,13 @@ Deprecated: This message was part of store/v2alpha1 which has been deleted from 
 <a name="cosmos.base.snapshots.v1beta1.SnapshotStoreItem"></a>
 
 ### SnapshotStoreItem
+
+```
 SnapshotStoreItem contains metadata about a snapshotted store.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7876,8 +8914,12 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.base.store.v1beta1.CommitID"></a>
 
 ### CommitID
+
+```
 CommitID defines the commitment information when a specific store is
 committed.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7893,8 +8935,12 @@ committed.
 <a name="cosmos.base.store.v1beta1.CommitInfo"></a>
 
 ### CommitInfo
+
+```
 CommitInfo defines commit information used by the multi-store when committing
 a version/height.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7911,8 +8957,12 @@ a version/height.
 <a name="cosmos.base.store.v1beta1.StoreInfo"></a>
 
 ### StoreInfo
+
+```
 StoreInfo defines store-specific commit information. It contains a reference
 between a store name and the commit ID.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7944,8 +8994,12 @@ between a store name and the commit ID.
 <a name="cosmos.base.store.v1beta1.BlockMetadata"></a>
 
 ### BlockMetadata
+
+```
 BlockMetadata contains all the abci event data of a block
 the file streamer dump them into files together with the state changes.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7965,7 +9019,11 @@ the file streamer dump them into files together with the state changes.
 <a name="cosmos.base.store.v1beta1.BlockMetadata.DeliverTx"></a>
 
 ### BlockMetadata.DeliverTx
+
+```
 DeliverTx encapulate deliver tx request and response.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -7981,11 +9039,15 @@ DeliverTx encapulate deliver tx request and response.
 <a name="cosmos.base.store.v1beta1.StoreKVPair"></a>
 
 ### StoreKVPair
+
+```
 StoreKVPair is a KVStore KVPair used for listening to state changes (Sets and Deletes)
 It optionally includes the StoreKey for the originating KVStore and a Boolean flag to distinguish between Sets and
 Deletes
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8019,7 +9081,11 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.base.tendermint.v1beta1.ABCIQueryRequest"></a>
 
 ### ABCIQueryRequest
+
+```
 ABCIQueryRequest defines the request structure for the ABCIQuery gRPC query.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8037,10 +9103,14 @@ ABCIQueryRequest defines the request structure for the ABCIQuery gRPC query.
 <a name="cosmos.base.tendermint.v1beta1.ABCIQueryResponse"></a>
 
 ### ABCIQueryResponse
+
+```
 ABCIQueryResponse defines the response structure for the ABCIQuery gRPC query.
 
 Note: This type is a duplicate of the ResponseQuery proto type defined in
 Tendermint.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8063,7 +9133,11 @@ Tendermint.
 <a name="cosmos.base.tendermint.v1beta1.GetBlockByHeightRequest"></a>
 
 ### GetBlockByHeightRequest
+
+```
 GetBlockByHeightRequest is the request type for the Query/GetBlockByHeight RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8078,7 +9152,11 @@ GetBlockByHeightRequest is the request type for the Query/GetBlockByHeight RPC m
 <a name="cosmos.base.tendermint.v1beta1.GetBlockByHeightResponse"></a>
 
 ### GetBlockByHeightResponse
+
+```
 GetBlockByHeightResponse is the response type for the Query/GetBlockByHeight RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8095,7 +9173,11 @@ GetBlockByHeightResponse is the response type for the Query/GetBlockByHeight RPC
 <a name="cosmos.base.tendermint.v1beta1.GetLatestBlockRequest"></a>
 
 ### GetLatestBlockRequest
+
+```
 GetLatestBlockRequest is the request type for the Query/GetLatestBlock RPC method.
+```
+
 
 
 
@@ -8105,7 +9187,11 @@ GetLatestBlockRequest is the request type for the Query/GetLatestBlock RPC metho
 <a name="cosmos.base.tendermint.v1beta1.GetLatestBlockResponse"></a>
 
 ### GetLatestBlockResponse
+
+```
 GetLatestBlockResponse is the response type for the Query/GetLatestBlock RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8122,7 +9208,11 @@ GetLatestBlockResponse is the response type for the Query/GetLatestBlock RPC met
 <a name="cosmos.base.tendermint.v1beta1.GetLatestValidatorSetRequest"></a>
 
 ### GetLatestValidatorSetRequest
+
+```
 GetLatestValidatorSetRequest is the request type for the Query/GetValidatorSetByHeight RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8137,7 +9227,11 @@ GetLatestValidatorSetRequest is the request type for the Query/GetValidatorSetBy
 <a name="cosmos.base.tendermint.v1beta1.GetLatestValidatorSetResponse"></a>
 
 ### GetLatestValidatorSetResponse
+
+```
 GetLatestValidatorSetResponse is the response type for the Query/GetValidatorSetByHeight RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8154,7 +9248,11 @@ GetLatestValidatorSetResponse is the response type for the Query/GetValidatorSet
 <a name="cosmos.base.tendermint.v1beta1.GetNodeInfoRequest"></a>
 
 ### GetNodeInfoRequest
+
+```
 GetNodeInfoRequest is the request type for the Query/GetNodeInfo RPC method.
+```
+
 
 
 
@@ -8164,7 +9262,11 @@ GetNodeInfoRequest is the request type for the Query/GetNodeInfo RPC method.
 <a name="cosmos.base.tendermint.v1beta1.GetNodeInfoResponse"></a>
 
 ### GetNodeInfoResponse
+
+```
 GetNodeInfoResponse is the response type for the Query/GetNodeInfo RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8180,7 +9282,11 @@ GetNodeInfoResponse is the response type for the Query/GetNodeInfo RPC method.
 <a name="cosmos.base.tendermint.v1beta1.GetSyncingRequest"></a>
 
 ### GetSyncingRequest
+
+```
 GetSyncingRequest is the request type for the Query/GetSyncing RPC method.
+```
+
 
 
 
@@ -8190,7 +9296,11 @@ GetSyncingRequest is the request type for the Query/GetSyncing RPC method.
 <a name="cosmos.base.tendermint.v1beta1.GetSyncingResponse"></a>
 
 ### GetSyncingResponse
+
+```
 GetSyncingResponse is the response type for the Query/GetSyncing RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8205,7 +9315,11 @@ GetSyncingResponse is the response type for the Query/GetSyncing RPC method.
 <a name="cosmos.base.tendermint.v1beta1.GetValidatorSetByHeightRequest"></a>
 
 ### GetValidatorSetByHeightRequest
+
+```
 GetValidatorSetByHeightRequest is the request type for the Query/GetValidatorSetByHeight RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8221,7 +9335,11 @@ GetValidatorSetByHeightRequest is the request type for the Query/GetValidatorSet
 <a name="cosmos.base.tendermint.v1beta1.GetValidatorSetByHeightResponse"></a>
 
 ### GetValidatorSetByHeightResponse
+
+```
 GetValidatorSetByHeightResponse is the response type for the Query/GetValidatorSetByHeight RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8238,7 +9356,11 @@ GetValidatorSetByHeightResponse is the response type for the Query/GetValidatorS
 <a name="cosmos.base.tendermint.v1beta1.Module"></a>
 
 ### Module
+
+```
 Module is the type for VersionInfo
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8255,11 +9377,15 @@ Module is the type for VersionInfo
 <a name="cosmos.base.tendermint.v1beta1.ProofOp"></a>
 
 ### ProofOp
+
+```
 ProofOp defines an operation used for calculating Merkle root. The data could
 be arbitrary format, providing necessary data for example neighbouring node
 hash.
 
 Note: This type is a duplicate of the ProofOp proto type defined in Tendermint.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8276,9 +9402,13 @@ Note: This type is a duplicate of the ProofOp proto type defined in Tendermint.
 <a name="cosmos.base.tendermint.v1beta1.ProofOps"></a>
 
 ### ProofOps
+
+```
 ProofOps is Merkle proof defined by the list of ProofOps.
 
 Note: This type is a duplicate of the ProofOps proto type defined in Tendermint.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8293,7 +9423,11 @@ Note: This type is a duplicate of the ProofOps proto type defined in Tendermint.
 <a name="cosmos.base.tendermint.v1beta1.Validator"></a>
 
 ### Validator
+
+```
 Validator is the type for the validator-set.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8311,7 +9445,11 @@ Validator is the type for the validator-set.
 <a name="cosmos.base.tendermint.v1beta1.VersionInfo"></a>
 
 ### VersionInfo
+
+```
 VersionInfo is the type for the GetNodeInfoResponse message.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8339,7 +9477,11 @@ VersionInfo is the type for the GetNodeInfoResponse message.
 <a name="cosmos.base.tendermint.v1beta1.Service"></a>
 
 ### Service
+
+```
 Service defines the gRPC querier service for tendermint queries.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -8365,8 +9507,12 @@ Service defines the gRPC querier service for tendermint queries.
 <a name="cosmos.base.tendermint.v1beta1.Block"></a>
 
 ### Block
+
+```
 Block is tendermint type Block, with the Header proposer address
 field converted to bech32 string.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8384,7 +9530,11 @@ field converted to bech32 string.
 <a name="cosmos.base.tendermint.v1beta1.Header"></a>
 
 ### Header
+
+```
 Header defines the structure of a Tendermint block header.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8428,10 +9578,14 @@ Header defines the structure of a Tendermint block header.
 <a name="cosmos.base.v1beta1.Coin"></a>
 
 ### Coin
+
+```
 Coin defines a token with a denomination and an amount.
 
 NOTE: The amount field is an Int which implements the custom method
 signatures required by gogoproto.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8447,10 +9601,14 @@ signatures required by gogoproto.
 <a name="cosmos.base.v1beta1.DecCoin"></a>
 
 ### DecCoin
+
+```
 DecCoin defines a token with a denomination and a decimal amount.
 
 NOTE: The amount field is an Dec which implements the custom method
 signatures required by gogoproto.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8466,7 +9624,11 @@ signatures required by gogoproto.
 <a name="cosmos.base.v1beta1.DecProto"></a>
 
 ### DecProto
+
+```
 DecProto defines a Protobuf wrapper around a Dec object.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8481,7 +9643,11 @@ DecProto defines a Protobuf wrapper around a Dec object.
 <a name="cosmos.base.v1beta1.IntProto"></a>
 
 ### IntProto
+
+```
 IntProto defines a Protobuf wrapper around an Int object.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8512,7 +9678,11 @@ IntProto defines a Protobuf wrapper around an Int object.
 <a name="cosmos.capability.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the capability module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8543,8 +9713,12 @@ Module is the config object of the capability module.
 <a name="cosmos.capability.v1beta1.Capability"></a>
 
 ### Capability
+
+```
 Capability defines an implementation of an object capability. The index
 provided to a Capability must be globally unique.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8559,8 +9733,12 @@ provided to a Capability must be globally unique.
 <a name="cosmos.capability.v1beta1.CapabilityOwners"></a>
 
 ### CapabilityOwners
+
+```
 CapabilityOwners defines a set of owners of a single Capability. The set of
 owners must be unique.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8575,8 +9753,12 @@ owners must be unique.
 <a name="cosmos.capability.v1beta1.Owner"></a>
 
 ### Owner
+
+```
 Owner defines a single capability owner. An owner is defined by the name of
 capability and the module name.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8608,7 +9790,11 @@ capability and the module name.
 <a name="cosmos.capability.v1beta1.GenesisOwners"></a>
 
 ### GenesisOwners
+
+```
 GenesisOwners defines the capability owners with their corresponding index.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8624,7 +9810,11 @@ GenesisOwners defines the capability owners with their corresponding index.
 <a name="cosmos.capability.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the capability module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8656,7 +9846,11 @@ GenesisState defines the capability module's genesis state.
 <a name="cosmos.consensus.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the consensus module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8681,13 +9875,21 @@ Module is the config object of the consensus module.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/consensus/v1/query.proto
+
+```
 Since: cosmos-sdk 0.47
+```
+
 
 
 <a name="cosmos.consensus.v1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest defines the request type for querying x/consensus parameters.
+```
+
 
 
 
@@ -8697,7 +9899,11 @@ QueryParamsRequest defines the request type for querying x/consensus parameters.
 <a name="cosmos.consensus.v1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse defines the response type for querying x/consensus parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8718,7 +9924,11 @@ QueryParamsResponse defines the response type for querying x/consensus parameter
 <a name="cosmos.consensus.v1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -8732,13 +9942,21 @@ Query defines the gRPC querier service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/consensus/v1/tx.proto
+
+```
 Since: cosmos-sdk 0.47
+```
+
 
 
 <a name="cosmos.consensus.v1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8756,8 +9974,12 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 <a name="cosmos.consensus.v1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+```
+
 
 
 
@@ -8773,7 +9995,11 @@ MsgUpdateParams message.
 <a name="cosmos.consensus.v1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the bank Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -8793,7 +10019,11 @@ Msg defines the bank Msg service.
 <a name="cosmos.crisis.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the crisis module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8825,7 +10055,11 @@ Module is the config object of the crisis module.
 <a name="cosmos.crisis.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the crisis module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8856,9 +10090,13 @@ GenesisState defines the crisis module's genesis state.
 <a name="cosmos.crisis.v1beta1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8874,10 +10112,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.crisis.v1beta1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -8887,7 +10129,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.crisis.v1beta1.MsgVerifyInvariant"></a>
 
 ### MsgVerifyInvariant
+
+```
 MsgVerifyInvariant represents a message to verify a particular invariance.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8904,7 +10150,11 @@ MsgVerifyInvariant represents a message to verify a particular invariance.
 <a name="cosmos.crisis.v1beta1.MsgVerifyInvariantResponse"></a>
 
 ### MsgVerifyInvariantResponse
+
+```
 MsgVerifyInvariantResponse defines the Msg/VerifyInvariant response type.
+```
+
 
 
 
@@ -8920,7 +10170,11 @@ MsgVerifyInvariantResponse defines the Msg/VerifyInvariant response type.
 <a name="cosmos.crisis.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the bank Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -8941,8 +10195,12 @@ Msg defines the bank Msg service.
 <a name="cosmos.crypto.ed25519.PrivKey"></a>
 
 ### PrivKey
+
+```
 Deprecated: PrivKey defines a ed25519 private key.
 NOTE: ed25519 keys must not be used in SDK apps except in a tendermint validator context.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8957,11 +10215,15 @@ NOTE: ed25519 keys must not be used in SDK apps except in a tendermint validator
 <a name="cosmos.crypto.ed25519.PubKey"></a>
 
 ### PubKey
+
+```
 PubKey is an ed25519 public key for handling Tendermint keys in SDK.
 It's needed for Any serialization and SDK compatibility.
 It must not be used in a non Tendermint key context because it doesn't implement
 ADR-28. Nevertheless, you will like to use ed25519 in app user level
 then you must create a new proto message and follow ADR-28 for Address construction.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -8986,13 +10248,21 @@ then you must create a new proto message and follow ADR-28 for Address construct
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/crypto/hd/v1/hd.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.crypto.hd.v1.BIP44Params"></a>
 
 ### BIP44Params
+
+```
 BIP44Params is used as path field in ledger item in Record.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9021,13 +10291,21 @@ BIP44Params is used as path field in ledger item in Record.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/crypto/keyring/v1/record.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.crypto.keyring.v1.Record"></a>
 
 ### Record
+
+```
 Record is used for representing a key in the keyring.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9047,7 +10325,11 @@ Record is used for representing a key in the keyring.
 <a name="cosmos.crypto.keyring.v1.Record.Ledger"></a>
 
 ### Record.Ledger
+
+```
 Ledger item
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9062,8 +10344,12 @@ Ledger item
 <a name="cosmos.crypto.keyring.v1.Record.Local"></a>
 
 ### Record.Local
+
+```
 Item is a keyring item stored in a keyring backend.
 Local item
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9078,7 +10364,11 @@ Local item
 <a name="cosmos.crypto.keyring.v1.Record.Multi"></a>
 
 ### Record.Multi
+
+```
 Multi item
+```
+
 
 
 
@@ -9088,7 +10378,11 @@ Multi item
 <a name="cosmos.crypto.keyring.v1.Record.Offline"></a>
 
 ### Record.Offline
+
+```
 Offline item
+```
+
 
 
 
@@ -9114,9 +10408,13 @@ Offline item
 <a name="cosmos.crypto.multisig.LegacyAminoPubKey"></a>
 
 ### LegacyAminoPubKey
+
+```
 LegacyAminoPubKey specifies a public key type
 which nests multiple public keys and a threshold,
 it uses legacy amino address rules.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9148,10 +10446,14 @@ it uses legacy amino address rules.
 <a name="cosmos.crypto.multisig.v1beta1.CompactBitArray"></a>
 
 ### CompactBitArray
+
+```
 CompactBitArray is an implementation of a space efficient bit array.
 This is used to ensure that the encoded data takes up a minimal amount of
 space after proto encoding.
 This is not thread safe, and is not intended for concurrent usage.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9167,9 +10469,13 @@ This is not thread safe, and is not intended for concurrent usage.
 <a name="cosmos.crypto.multisig.v1beta1.MultiSignature"></a>
 
 ### MultiSignature
+
+```
 MultiSignature wraps the signatures from a multisig.LegacyAminoPubKey.
 See cosmos.tx.v1betata1.ModeInfo.Multi for how to specify which signers
 signed and with which modes.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9200,7 +10506,11 @@ signed and with which modes.
 <a name="cosmos.crypto.secp256k1.PrivKey"></a>
 
 ### PrivKey
+
+```
 PrivKey defines a secp256k1 private key.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9215,11 +10525,15 @@ PrivKey defines a secp256k1 private key.
 <a name="cosmos.crypto.secp256k1.PubKey"></a>
 
 ### PubKey
+
+```
 PubKey defines a secp256k1 public key
 Key is the compressed form of the pubkey. The first byte depends is a 0x02 byte
 if the y-coordinate is the lexicographically largest of the two associated with
 the x-coordinate. Otherwise the first byte is a 0x03.
 This prefix is followed with the x-coordinate.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9244,13 +10558,21 @@ This prefix is followed with the x-coordinate.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/crypto/secp256r1/keys.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.crypto.secp256r1.PrivKey"></a>
 
 ### PrivKey
+
+```
 PrivKey defines a secp256r1 ECDSA private key.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9265,7 +10587,11 @@ PrivKey defines a secp256r1 ECDSA private key.
 <a name="cosmos.crypto.secp256r1.PubKey"></a>
 
 ### PubKey
+
+```
 PubKey defines a secp256r1 ECDSA public key.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9296,7 +10622,11 @@ PubKey defines a secp256r1 ECDSA public key.
 <a name="cosmos.distribution.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the distribution module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9328,6 +10658,8 @@ Module is the config object of the distribution module.
 <a name="cosmos.distribution.v1beta1.CommunityPoolSpendProposal"></a>
 
 ### CommunityPoolSpendProposal
+
+```
 CommunityPoolSpendProposal details a proposal for use of community funds,
 together with how many coins are proposed to be spent, and to which
 recipient account.
@@ -9336,6 +10668,8 @@ Deprecated: Do not use. As of the Cosmos SDK release v0.47.x, there is no
 longer a need for an explicit CommunityPoolSpendProposal. To spend community
 pool funds, a simple MsgCommunityPoolSpend can be invoked from the x/gov
 module via a v1 governance proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9353,8 +10687,12 @@ module via a v1 governance proposal.
 <a name="cosmos.distribution.v1beta1.CommunityPoolSpendProposalWithDeposit"></a>
 
 ### CommunityPoolSpendProposalWithDeposit
+
+```
 CommunityPoolSpendProposalWithDeposit defines a CommunityPoolSpendProposal
 with a deposit
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9373,8 +10711,12 @@ with a deposit
 <a name="cosmos.distribution.v1beta1.DelegationDelegatorReward"></a>
 
 ### DelegationDelegatorReward
+
+```
 DelegationDelegatorReward represents the properties
 of a delegator's delegation reward.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9390,12 +10732,16 @@ of a delegator's delegation reward.
 <a name="cosmos.distribution.v1beta1.DelegatorStartingInfo"></a>
 
 ### DelegatorStartingInfo
+
+```
 DelegatorStartingInfo represents the starting info for a delegator reward
 period. It tracks the previous validator period, the delegation's amount of
 staking token, and the creation height (to check later on if any slashes have
 occurred). NOTE: Even though validators are slashed to whole staking tokens,
 the delegators within the validator may be left with less than a full token,
 thus sdk.Dec is used.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9412,7 +10758,11 @@ thus sdk.Dec is used.
 <a name="cosmos.distribution.v1beta1.FeePool"></a>
 
 ### FeePool
+
+```
 FeePool is the global fee pool for distribution.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9427,7 +10777,11 @@ FeePool is the global fee pool for distribution.
 <a name="cosmos.distribution.v1beta1.Params"></a>
 
 ### Params
+
+```
 Params defines the set of params for the distribution module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9445,8 +10799,12 @@ Params defines the set of params for the distribution module.
 <a name="cosmos.distribution.v1beta1.ValidatorAccumulatedCommission"></a>
 
 ### ValidatorAccumulatedCommission
+
+```
 ValidatorAccumulatedCommission represents accumulated commission
 for a validator kept as a running counter, can be withdrawn at any time.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9461,9 +10819,13 @@ for a validator kept as a running counter, can be withdrawn at any time.
 <a name="cosmos.distribution.v1beta1.ValidatorCurrentRewards"></a>
 
 ### ValidatorCurrentRewards
+
+```
 ValidatorCurrentRewards represents current rewards and current
 period for a validator kept as a running counter and incremented
 each block as long as the validator's tokens remain constant.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9479,6 +10841,8 @@ each block as long as the validator's tokens remain constant.
 <a name="cosmos.distribution.v1beta1.ValidatorHistoricalRewards"></a>
 
 ### ValidatorHistoricalRewards
+
+```
 ValidatorHistoricalRewards represents historical rewards for a validator.
 Height is implicit within the store key.
 Cumulative reward ratio is the sum from the zeroeth period
@@ -9491,6 +10855,8 @@ ReferenceCount =
  + number of slashes which ended the associated period (and might need to
  read that record)
  + one per validator for the zeroeth period, set on initialization
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9506,8 +10872,12 @@ ReferenceCount =
 <a name="cosmos.distribution.v1beta1.ValidatorOutstandingRewards"></a>
 
 ### ValidatorOutstandingRewards
+
+```
 ValidatorOutstandingRewards represents outstanding (un-withdrawn) rewards
 for a validator inexpensive to track, allows simple sanity checks.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9522,10 +10892,14 @@ for a validator inexpensive to track, allows simple sanity checks.
 <a name="cosmos.distribution.v1beta1.ValidatorSlashEvent"></a>
 
 ### ValidatorSlashEvent
+
+```
 ValidatorSlashEvent represents a validator slash event.
 Height is implicit within the store key.
 This is needed to calculate appropriate amount of staking tokens
 for delegations which are withdrawn after a slash has occurred.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9541,7 +10915,11 @@ for delegations which are withdrawn after a slash has occurred.
 <a name="cosmos.distribution.v1beta1.ValidatorSlashEvents"></a>
 
 ### ValidatorSlashEvents
+
+```
 ValidatorSlashEvents is a collection of ValidatorSlashEvent messages.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9572,7 +10950,11 @@ ValidatorSlashEvents is a collection of ValidatorSlashEvent messages.
 <a name="cosmos.distribution.v1beta1.DelegatorStartingInfoRecord"></a>
 
 ### DelegatorStartingInfoRecord
+
+```
 DelegatorStartingInfoRecord used for import / export via genesis json.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9589,9 +10971,13 @@ DelegatorStartingInfoRecord used for import / export via genesis json.
 <a name="cosmos.distribution.v1beta1.DelegatorWithdrawInfo"></a>
 
 ### DelegatorWithdrawInfo
+
+```
 DelegatorWithdrawInfo is the address for where distributions rewards are
 withdrawn to by default this struct is only used at genesis to feed in
 default withdraw addresses.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9607,7 +10993,11 @@ default withdraw addresses.
 <a name="cosmos.distribution.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the distribution module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9631,8 +11021,12 @@ GenesisState defines the distribution module's genesis state.
 <a name="cosmos.distribution.v1beta1.ValidatorAccumulatedCommissionRecord"></a>
 
 ### ValidatorAccumulatedCommissionRecord
+
+```
 ValidatorAccumulatedCommissionRecord is used for import / export via genesis
 json.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9648,7 +11042,11 @@ json.
 <a name="cosmos.distribution.v1beta1.ValidatorCurrentRewardsRecord"></a>
 
 ### ValidatorCurrentRewardsRecord
+
+```
 ValidatorCurrentRewardsRecord is used for import / export via genesis json.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9664,8 +11062,12 @@ ValidatorCurrentRewardsRecord is used for import / export via genesis json.
 <a name="cosmos.distribution.v1beta1.ValidatorHistoricalRewardsRecord"></a>
 
 ### ValidatorHistoricalRewardsRecord
+
+```
 ValidatorHistoricalRewardsRecord is used for import / export via genesis
 json.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9682,7 +11084,11 @@ json.
 <a name="cosmos.distribution.v1beta1.ValidatorOutstandingRewardsRecord"></a>
 
 ### ValidatorOutstandingRewardsRecord
+
+```
 ValidatorOutstandingRewardsRecord is used for import/export via genesis json.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9698,7 +11104,11 @@ ValidatorOutstandingRewardsRecord is used for import/export via genesis json.
 <a name="cosmos.distribution.v1beta1.ValidatorSlashEventRecord"></a>
 
 ### ValidatorSlashEventRecord
+
+```
 ValidatorSlashEventRecord is used for import / export via genesis json.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9732,8 +11142,12 @@ ValidatorSlashEventRecord is used for import / export via genesis json.
 <a name="cosmos.distribution.v1beta1.QueryCommunityPoolRequest"></a>
 
 ### QueryCommunityPoolRequest
+
+```
 QueryCommunityPoolRequest is the request type for the Query/CommunityPool RPC
 method.
+```
+
 
 
 
@@ -9743,8 +11157,12 @@ method.
 <a name="cosmos.distribution.v1beta1.QueryCommunityPoolResponse"></a>
 
 ### QueryCommunityPoolResponse
+
+```
 QueryCommunityPoolResponse is the response type for the Query/CommunityPool
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9759,8 +11177,12 @@ RPC method.
 <a name="cosmos.distribution.v1beta1.QueryDelegationRewardsRequest"></a>
 
 ### QueryDelegationRewardsRequest
+
+```
 QueryDelegationRewardsRequest is the request type for the
 Query/DelegationRewards RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9776,8 +11198,12 @@ Query/DelegationRewards RPC method.
 <a name="cosmos.distribution.v1beta1.QueryDelegationRewardsResponse"></a>
 
 ### QueryDelegationRewardsResponse
+
+```
 QueryDelegationRewardsResponse is the response type for the
 Query/DelegationRewards RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9792,8 +11218,12 @@ Query/DelegationRewards RPC method.
 <a name="cosmos.distribution.v1beta1.QueryDelegationTotalRewardsRequest"></a>
 
 ### QueryDelegationTotalRewardsRequest
+
+```
 QueryDelegationTotalRewardsRequest is the request type for the
 Query/DelegationTotalRewards RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9808,8 +11238,12 @@ Query/DelegationTotalRewards RPC method.
 <a name="cosmos.distribution.v1beta1.QueryDelegationTotalRewardsResponse"></a>
 
 ### QueryDelegationTotalRewardsResponse
+
+```
 QueryDelegationTotalRewardsResponse is the response type for the
 Query/DelegationTotalRewards RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9825,8 +11259,12 @@ Query/DelegationTotalRewards RPC method.
 <a name="cosmos.distribution.v1beta1.QueryDelegatorValidatorsRequest"></a>
 
 ### QueryDelegatorValidatorsRequest
+
+```
 QueryDelegatorValidatorsRequest is the request type for the
 Query/DelegatorValidators RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9841,8 +11279,12 @@ Query/DelegatorValidators RPC method.
 <a name="cosmos.distribution.v1beta1.QueryDelegatorValidatorsResponse"></a>
 
 ### QueryDelegatorValidatorsResponse
+
+```
 QueryDelegatorValidatorsResponse is the response type for the
 Query/DelegatorValidators RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9857,8 +11299,12 @@ Query/DelegatorValidators RPC method.
 <a name="cosmos.distribution.v1beta1.QueryDelegatorWithdrawAddressRequest"></a>
 
 ### QueryDelegatorWithdrawAddressRequest
+
+```
 QueryDelegatorWithdrawAddressRequest is the request type for the
 Query/DelegatorWithdrawAddress RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9873,8 +11319,12 @@ Query/DelegatorWithdrawAddress RPC method.
 <a name="cosmos.distribution.v1beta1.QueryDelegatorWithdrawAddressResponse"></a>
 
 ### QueryDelegatorWithdrawAddressResponse
+
+```
 QueryDelegatorWithdrawAddressResponse is the response type for the
 Query/DelegatorWithdrawAddress RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9889,7 +11339,11 @@ Query/DelegatorWithdrawAddress RPC method.
 <a name="cosmos.distribution.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is the request type for the Query/Params RPC method.
+```
+
 
 
 
@@ -9899,7 +11353,11 @@ QueryParamsRequest is the request type for the Query/Params RPC method.
 <a name="cosmos.distribution.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is the response type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9914,8 +11372,12 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 <a name="cosmos.distribution.v1beta1.QueryValidatorCommissionRequest"></a>
 
 ### QueryValidatorCommissionRequest
+
+```
 QueryValidatorCommissionRequest is the request type for the
 Query/ValidatorCommission RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9930,8 +11392,12 @@ Query/ValidatorCommission RPC method
 <a name="cosmos.distribution.v1beta1.QueryValidatorCommissionResponse"></a>
 
 ### QueryValidatorCommissionResponse
+
+```
 QueryValidatorCommissionResponse is the response type for the
 Query/ValidatorCommission RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9946,7 +11412,11 @@ Query/ValidatorCommission RPC method
 <a name="cosmos.distribution.v1beta1.QueryValidatorDistributionInfoRequest"></a>
 
 ### QueryValidatorDistributionInfoRequest
+
+```
 QueryValidatorDistributionInfoRequest is the request type for the Query/ValidatorDistributionInfo RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9961,7 +11431,11 @@ QueryValidatorDistributionInfoRequest is the request type for the Query/Validato
 <a name="cosmos.distribution.v1beta1.QueryValidatorDistributionInfoResponse"></a>
 
 ### QueryValidatorDistributionInfoResponse
+
+```
 QueryValidatorDistributionInfoResponse is the response type for the Query/ValidatorDistributionInfo RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9978,8 +11452,12 @@ QueryValidatorDistributionInfoResponse is the response type for the Query/Valida
 <a name="cosmos.distribution.v1beta1.QueryValidatorOutstandingRewardsRequest"></a>
 
 ### QueryValidatorOutstandingRewardsRequest
+
+```
 QueryValidatorOutstandingRewardsRequest is the request type for the
 Query/ValidatorOutstandingRewards RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -9994,8 +11472,12 @@ Query/ValidatorOutstandingRewards RPC method.
 <a name="cosmos.distribution.v1beta1.QueryValidatorOutstandingRewardsResponse"></a>
 
 ### QueryValidatorOutstandingRewardsResponse
+
+```
 QueryValidatorOutstandingRewardsResponse is the response type for the
 Query/ValidatorOutstandingRewards RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10010,8 +11492,12 @@ Query/ValidatorOutstandingRewards RPC method.
 <a name="cosmos.distribution.v1beta1.QueryValidatorSlashesRequest"></a>
 
 ### QueryValidatorSlashesRequest
+
+```
 QueryValidatorSlashesRequest is the request type for the
 Query/ValidatorSlashes RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10029,8 +11515,12 @@ Query/ValidatorSlashes RPC method
 <a name="cosmos.distribution.v1beta1.QueryValidatorSlashesResponse"></a>
 
 ### QueryValidatorSlashesResponse
+
+```
 QueryValidatorSlashesResponse is the response type for the
 Query/ValidatorSlashes RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10052,7 +11542,11 @@ Query/ValidatorSlashes RPC method.
 <a name="cosmos.distribution.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service for distribution module.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -10081,11 +11575,15 @@ Query defines the gRPC querier service for distribution module.
 <a name="cosmos.distribution.v1beta1.MsgCommunityPoolSpend"></a>
 
 ### MsgCommunityPoolSpend
+
+```
 MsgCommunityPoolSpend defines a message for sending tokens from the community
 pool to another account. This message is typically executed via a governance
 proposal with the governance module being the executing authority.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10102,10 +11600,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.distribution.v1beta1.MsgCommunityPoolSpendResponse"></a>
 
 ### MsgCommunityPoolSpendResponse
+
+```
 MsgCommunityPoolSpendResponse defines the response to executing a
 MsgCommunityPoolSpend message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -10115,8 +11617,12 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.distribution.v1beta1.MsgFundCommunityPool"></a>
 
 ### MsgFundCommunityPool
+
+```
 MsgFundCommunityPool allows an account to directly
 fund the community pool.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10132,7 +11638,11 @@ fund the community pool.
 <a name="cosmos.distribution.v1beta1.MsgFundCommunityPoolResponse"></a>
 
 ### MsgFundCommunityPoolResponse
+
+```
 MsgFundCommunityPoolResponse defines the Msg/FundCommunityPool response type.
+```
+
 
 
 
@@ -10142,8 +11652,12 @@ MsgFundCommunityPoolResponse defines the Msg/FundCommunityPool response type.
 <a name="cosmos.distribution.v1beta1.MsgSetWithdrawAddress"></a>
 
 ### MsgSetWithdrawAddress
+
+```
 MsgSetWithdrawAddress sets the withdraw address for
 a delegator (or validator self-delegation).
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10159,8 +11673,12 @@ a delegator (or validator self-delegation).
 <a name="cosmos.distribution.v1beta1.MsgSetWithdrawAddressResponse"></a>
 
 ### MsgSetWithdrawAddressResponse
+
+```
 MsgSetWithdrawAddressResponse defines the Msg/SetWithdrawAddress response
 type.
+```
+
 
 
 
@@ -10170,9 +11688,13 @@ type.
 <a name="cosmos.distribution.v1beta1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10188,10 +11710,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.distribution.v1beta1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -10201,8 +11727,12 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward"></a>
 
 ### MsgWithdrawDelegatorReward
+
+```
 MsgWithdrawDelegatorReward represents delegation withdrawal to a delegator
 from a single validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10218,8 +11748,12 @@ from a single validator.
 <a name="cosmos.distribution.v1beta1.MsgWithdrawDelegatorRewardResponse"></a>
 
 ### MsgWithdrawDelegatorRewardResponse
+
+```
 MsgWithdrawDelegatorRewardResponse defines the Msg/WithdrawDelegatorReward
 response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10234,8 +11768,12 @@ response type.
 <a name="cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission"></a>
 
 ### MsgWithdrawValidatorCommission
+
+```
 MsgWithdrawValidatorCommission withdraws the full commission to the validator
 address.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10250,8 +11788,12 @@ address.
 <a name="cosmos.distribution.v1beta1.MsgWithdrawValidatorCommissionResponse"></a>
 
 ### MsgWithdrawValidatorCommissionResponse
+
+```
 MsgWithdrawValidatorCommissionResponse defines the
 Msg/WithdrawValidatorCommission response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10272,7 +11814,11 @@ Msg/WithdrawValidatorCommission response type.
 <a name="cosmos.distribution.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the distribution Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -10297,7 +11843,11 @@ Msg defines the distribution Msg service.
 <a name="cosmos.evidence.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the evidence module.
+```
+
 
 
 
@@ -10323,8 +11873,12 @@ Module is the config object of the evidence module.
 <a name="cosmos.evidence.v1beta1.Equivocation"></a>
 
 ### Equivocation
+
+```
 Equivocation implements the Evidence interface and defines evidence of double
 signing misbehavior.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10358,7 +11912,11 @@ signing misbehavior.
 <a name="cosmos.evidence.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the evidence module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10389,8 +11947,12 @@ GenesisState defines the evidence module's genesis state.
 <a name="cosmos.evidence.v1beta1.QueryAllEvidenceRequest"></a>
 
 ### QueryAllEvidenceRequest
+
+```
 QueryEvidenceRequest is the request type for the Query/AllEvidence RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10405,8 +11967,12 @@ method.
 <a name="cosmos.evidence.v1beta1.QueryAllEvidenceResponse"></a>
 
 ### QueryAllEvidenceResponse
+
+```
 QueryAllEvidenceResponse is the response type for the Query/AllEvidence RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10422,7 +11988,11 @@ method.
 <a name="cosmos.evidence.v1beta1.QueryEvidenceRequest"></a>
 
 ### QueryEvidenceRequest
+
+```
 QueryEvidenceRequest is the request type for the Query/Evidence RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10438,7 +12008,11 @@ QueryEvidenceRequest is the request type for the Query/Evidence RPC method.
 <a name="cosmos.evidence.v1beta1.QueryEvidenceResponse"></a>
 
 ### QueryEvidenceResponse
+
+```
 QueryEvidenceResponse is the response type for the Query/Evidence RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10459,7 +12033,11 @@ QueryEvidenceResponse is the response type for the Query/Evidence RPC method.
 <a name="cosmos.evidence.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -10480,8 +12058,12 @@ Query defines the gRPC querier service.
 <a name="cosmos.evidence.v1beta1.MsgSubmitEvidence"></a>
 
 ### MsgSubmitEvidence
+
+```
 MsgSubmitEvidence represents a message that supports submitting arbitrary
 Evidence of misbehavior such as equivocation or counterfactual signing.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10497,7 +12079,11 @@ Evidence of misbehavior such as equivocation or counterfactual signing.
 <a name="cosmos.evidence.v1beta1.MsgSubmitEvidenceResponse"></a>
 
 ### MsgSubmitEvidenceResponse
+
+```
 MsgSubmitEvidenceResponse defines the Msg/SubmitEvidence response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10518,7 +12104,11 @@ MsgSubmitEvidenceResponse defines the Msg/SubmitEvidence response type.
 <a name="cosmos.evidence.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the evidence Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -10538,7 +12128,11 @@ Msg defines the evidence Msg service.
 <a name="cosmos.feegrant.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the feegrant module.
+```
+
 
 
 
@@ -10558,13 +12152,21 @@ Module is the config object of the feegrant module.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/feegrant/v1beta1/feegrant.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.feegrant.v1beta1.AllowedMsgAllowance"></a>
 
 ### AllowedMsgAllowance
+
+```
 AllowedMsgAllowance creates allowance only for specified message types.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10580,8 +12182,12 @@ AllowedMsgAllowance creates allowance only for specified message types.
 <a name="cosmos.feegrant.v1beta1.BasicAllowance"></a>
 
 ### BasicAllowance
+
+```
 BasicAllowance implements Allowance with a one-time grant of coins
 that optionally expires. The grantee can use up to SpendLimit to cover fees.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10597,7 +12203,11 @@ that optionally expires. The grantee can use up to SpendLimit to cover fees.
 <a name="cosmos.feegrant.v1beta1.Grant"></a>
 
 ### Grant
+
+```
 Grant is stored in the KVStore to record a grant with full context
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10614,8 +12224,12 @@ Grant is stored in the KVStore to record a grant with full context
 <a name="cosmos.feegrant.v1beta1.PeriodicAllowance"></a>
 
 ### PeriodicAllowance
+
+```
 PeriodicAllowance extends Allowance to allow for both a maximum cap,
 as well as a limit per time period.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10644,13 +12258,21 @@ as well as a limit per time period.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/feegrant/v1beta1/genesis.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.feegrant.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState contains a set of fee allowances, persisted from the store
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10675,13 +12297,21 @@ GenesisState contains a set of fee allowances, persisted from the store
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/feegrant/v1beta1/query.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.feegrant.v1beta1.QueryAllowanceRequest"></a>
 
 ### QueryAllowanceRequest
+
+```
 QueryAllowanceRequest is the request type for the Query/Allowance RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10697,7 +12327,11 @@ QueryAllowanceRequest is the request type for the Query/Allowance RPC method.
 <a name="cosmos.feegrant.v1beta1.QueryAllowanceResponse"></a>
 
 ### QueryAllowanceResponse
+
+```
 QueryAllowanceResponse is the response type for the Query/Allowance RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10712,9 +12346,13 @@ QueryAllowanceResponse is the response type for the Query/Allowance RPC method.
 <a name="cosmos.feegrant.v1beta1.QueryAllowancesByGranterRequest"></a>
 
 ### QueryAllowancesByGranterRequest
+
+```
 QueryAllowancesByGranterRequest is the request type for the Query/AllowancesByGranter RPC method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10730,9 +12368,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.feegrant.v1beta1.QueryAllowancesByGranterResponse"></a>
 
 ### QueryAllowancesByGranterResponse
+
+```
 QueryAllowancesByGranterResponse is the response type for the Query/AllowancesByGranter RPC method.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10748,7 +12390,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.feegrant.v1beta1.QueryAllowancesRequest"></a>
 
 ### QueryAllowancesRequest
+
+```
 QueryAllowancesRequest is the request type for the Query/Allowances RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10764,7 +12410,11 @@ QueryAllowancesRequest is the request type for the Query/Allowances RPC method.
 <a name="cosmos.feegrant.v1beta1.QueryAllowancesResponse"></a>
 
 ### QueryAllowancesResponse
+
+```
 QueryAllowancesResponse is the response type for the Query/Allowances RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10786,7 +12436,11 @@ QueryAllowancesResponse is the response type for the Query/Allowances RPC method
 <a name="cosmos.feegrant.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -10802,14 +12456,22 @@ Query defines the gRPC querier service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/feegrant/v1beta1/tx.proto
+
+```
 Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.feegrant.v1beta1.MsgGrantAllowance"></a>
 
 ### MsgGrantAllowance
+
+```
 MsgGrantAllowance adds permission for Grantee to spend up to Allowance
 of fees from the account of Granter.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10826,7 +12488,11 @@ of fees from the account of Granter.
 <a name="cosmos.feegrant.v1beta1.MsgGrantAllowanceResponse"></a>
 
 ### MsgGrantAllowanceResponse
+
+```
 MsgGrantAllowanceResponse defines the Msg/GrantAllowanceResponse response type.
+```
+
 
 
 
@@ -10836,7 +12502,11 @@ MsgGrantAllowanceResponse defines the Msg/GrantAllowanceResponse response type.
 <a name="cosmos.feegrant.v1beta1.MsgRevokeAllowance"></a>
 
 ### MsgRevokeAllowance
+
+```
 MsgRevokeAllowance removes any existing Allowance from Granter to Grantee.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10852,7 +12522,11 @@ MsgRevokeAllowance removes any existing Allowance from Granter to Grantee.
 <a name="cosmos.feegrant.v1beta1.MsgRevokeAllowanceResponse"></a>
 
 ### MsgRevokeAllowanceResponse
+
+```
 MsgRevokeAllowanceResponse defines the Msg/RevokeAllowanceResponse response type.
+```
+
 
 
 
@@ -10868,7 +12542,11 @@ MsgRevokeAllowanceResponse defines the Msg/RevokeAllowanceResponse response type
 <a name="cosmos.feegrant.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the feegrant msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -10889,7 +12567,11 @@ Msg defines the feegrant msg service.
 <a name="cosmos.genutil.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object for the genutil module.
+```
+
 
 
 
@@ -10915,7 +12597,11 @@ Module is the config object for the genutil module.
 <a name="cosmos.genutil.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the raw genesis transaction in JSON.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10946,7 +12632,11 @@ GenesisState defines the raw genesis transaction in JSON.
 <a name="cosmos.gov.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the gov module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -10972,13 +12662,21 @@ Module is the config object of the gov module.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/gov/v1/genesis.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.gov.v1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the gov module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11010,14 +12708,22 @@ GenesisState defines the gov module's genesis state.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/gov/v1/gov.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.gov.v1.Deposit"></a>
 
 ### Deposit
+
+```
 Deposit defines an amount deposited by an account address to an active
 proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11034,7 +12740,11 @@ proposal.
 <a name="cosmos.gov.v1.DepositParams"></a>
 
 ### DepositParams
+
+```
 DepositParams defines the params for deposits on governance proposals.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11050,9 +12760,13 @@ DepositParams defines the params for deposits on governance proposals.
 <a name="cosmos.gov.v1.Params"></a>
 
 ### Params
+
+```
 Params defines the parameters for the x/gov module.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11076,7 +12790,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.gov.v1.Proposal"></a>
 
 ### Proposal
+
+```
 Proposal defines the core field members of a governance proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11103,7 +12821,11 @@ Proposal defines the core field members of a governance proposal.
 <a name="cosmos.gov.v1.TallyParams"></a>
 
 ### TallyParams
+
+```
 TallyParams defines the params for tallying votes on governance proposals.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11120,7 +12842,11 @@ TallyParams defines the params for tallying votes on governance proposals.
 <a name="cosmos.gov.v1.TallyResult"></a>
 
 ### TallyResult
+
+```
 TallyResult defines a standard tally for a governance proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11138,8 +12864,12 @@ TallyResult defines a standard tally for a governance proposal.
 <a name="cosmos.gov.v1.Vote"></a>
 
 ### Vote
+
+```
 Vote defines a vote on a governance proposal.
 A Vote consists of a proposal ID, the voter, and the vote option.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11157,7 +12887,11 @@ A Vote consists of a proposal ID, the voter, and the vote option.
 <a name="cosmos.gov.v1.VotingParams"></a>
 
 ### VotingParams
+
+```
 VotingParams defines the params for voting on governance proposals.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11172,7 +12906,11 @@ VotingParams defines the params for voting on governance proposals.
 <a name="cosmos.gov.v1.WeightedVoteOption"></a>
 
 ### WeightedVoteOption
+
+```
 WeightedVoteOption defines a unit of vote for vote split.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11190,7 +12928,12 @@ WeightedVoteOption defines a unit of vote for vote split.
 <a name="cosmos.gov.v1.ProposalStatus"></a>
 
 ### ProposalStatus
+
+```
 ProposalStatus enumerates the valid statuses of a proposal.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -11206,7 +12949,12 @@ ProposalStatus enumerates the valid statuses of a proposal.
 <a name="cosmos.gov.v1.VoteOption"></a>
 
 ### VoteOption
+
+```
 VoteOption enumerates the valid vote options for a given governance proposal.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -11229,13 +12977,21 @@ VoteOption enumerates the valid vote options for a given governance proposal.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/gov/v1/query.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.gov.v1.QueryDepositRequest"></a>
 
 ### QueryDepositRequest
+
+```
 QueryDepositRequest is the request type for the Query/Deposit RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11251,7 +13007,11 @@ QueryDepositRequest is the request type for the Query/Deposit RPC method.
 <a name="cosmos.gov.v1.QueryDepositResponse"></a>
 
 ### QueryDepositResponse
+
+```
 QueryDepositResponse is the response type for the Query/Deposit RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11266,7 +13026,11 @@ QueryDepositResponse is the response type for the Query/Deposit RPC method.
 <a name="cosmos.gov.v1.QueryDepositsRequest"></a>
 
 ### QueryDepositsRequest
+
+```
 QueryDepositsRequest is the request type for the Query/Deposits RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11282,7 +13046,11 @@ QueryDepositsRequest is the request type for the Query/Deposits RPC method.
 <a name="cosmos.gov.v1.QueryDepositsResponse"></a>
 
 ### QueryDepositsResponse
+
+```
 QueryDepositsResponse is the response type for the Query/Deposits RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11298,7 +13066,11 @@ QueryDepositsResponse is the response type for the Query/Deposits RPC method.
 <a name="cosmos.gov.v1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is the request type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11313,7 +13085,11 @@ QueryParamsRequest is the request type for the Query/Params RPC method.
 <a name="cosmos.gov.v1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is the response type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11331,7 +13107,11 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 <a name="cosmos.gov.v1.QueryProposalRequest"></a>
 
 ### QueryProposalRequest
+
+```
 QueryProposalRequest is the request type for the Query/Proposal RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11346,7 +13126,11 @@ QueryProposalRequest is the request type for the Query/Proposal RPC method.
 <a name="cosmos.gov.v1.QueryProposalResponse"></a>
 
 ### QueryProposalResponse
+
+```
 QueryProposalResponse is the response type for the Query/Proposal RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11361,7 +13145,11 @@ QueryProposalResponse is the response type for the Query/Proposal RPC method.
 <a name="cosmos.gov.v1.QueryProposalsRequest"></a>
 
 ### QueryProposalsRequest
+
+```
 QueryProposalsRequest is the request type for the Query/Proposals RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11379,8 +13167,12 @@ QueryProposalsRequest is the request type for the Query/Proposals RPC method.
 <a name="cosmos.gov.v1.QueryProposalsResponse"></a>
 
 ### QueryProposalsResponse
+
+```
 QueryProposalsResponse is the response type for the Query/Proposals RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11396,7 +13188,11 @@ method.
 <a name="cosmos.gov.v1.QueryTallyResultRequest"></a>
 
 ### QueryTallyResultRequest
+
+```
 QueryTallyResultRequest is the request type for the Query/Tally RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11411,7 +13207,11 @@ QueryTallyResultRequest is the request type for the Query/Tally RPC method.
 <a name="cosmos.gov.v1.QueryTallyResultResponse"></a>
 
 ### QueryTallyResultResponse
+
+```
 QueryTallyResultResponse is the response type for the Query/Tally RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11426,7 +13226,11 @@ QueryTallyResultResponse is the response type for the Query/Tally RPC method.
 <a name="cosmos.gov.v1.QueryVoteRequest"></a>
 
 ### QueryVoteRequest
+
+```
 QueryVoteRequest is the request type for the Query/Vote RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11442,7 +13246,11 @@ QueryVoteRequest is the request type for the Query/Vote RPC method.
 <a name="cosmos.gov.v1.QueryVoteResponse"></a>
 
 ### QueryVoteResponse
+
+```
 QueryVoteResponse is the response type for the Query/Vote RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11457,7 +13265,11 @@ QueryVoteResponse is the response type for the Query/Vote RPC method.
 <a name="cosmos.gov.v1.QueryVotesRequest"></a>
 
 ### QueryVotesRequest
+
+```
 QueryVotesRequest is the request type for the Query/Votes RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11473,7 +13285,11 @@ QueryVotesRequest is the request type for the Query/Votes RPC method.
 <a name="cosmos.gov.v1.QueryVotesResponse"></a>
 
 ### QueryVotesResponse
+
+```
 QueryVotesResponse is the response type for the Query/Votes RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11495,7 +13311,11 @@ QueryVotesResponse is the response type for the Query/Votes RPC method.
 <a name="cosmos.gov.v1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service for gov module
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -11516,13 +13336,21 @@ Query defines the gRPC querier service for gov module
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/gov/v1/tx.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.gov.v1.MsgDeposit"></a>
 
 ### MsgDeposit
+
+```
 MsgDeposit defines a message to submit a deposit to an existing proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11539,7 +13367,11 @@ MsgDeposit defines a message to submit a deposit to an existing proposal.
 <a name="cosmos.gov.v1.MsgDepositResponse"></a>
 
 ### MsgDepositResponse
+
+```
 MsgDepositResponse defines the Msg/Deposit response type.
+```
+
 
 
 
@@ -11549,8 +13381,12 @@ MsgDepositResponse defines the Msg/Deposit response type.
 <a name="cosmos.gov.v1.MsgExecLegacyContent"></a>
 
 ### MsgExecLegacyContent
+
+```
 MsgExecLegacyContent is used to wrap the legacy content field into a message.
 This ensures backwards compatibility with v1beta1.MsgSubmitProposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11566,7 +13402,11 @@ This ensures backwards compatibility with v1beta1.MsgSubmitProposal.
 <a name="cosmos.gov.v1.MsgExecLegacyContentResponse"></a>
 
 ### MsgExecLegacyContentResponse
+
+```
 MsgExecLegacyContentResponse defines the Msg/ExecLegacyContent response type.
+```
+
 
 
 
@@ -11576,8 +13416,12 @@ MsgExecLegacyContentResponse defines the Msg/ExecLegacyContent response type.
 <a name="cosmos.gov.v1.MsgSubmitProposal"></a>
 
 ### MsgSubmitProposal
+
+```
 MsgSubmitProposal defines an sdk.Msg type that supports submitting arbitrary
 proposal Content.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11597,7 +13441,11 @@ proposal Content.
 <a name="cosmos.gov.v1.MsgSubmitProposalResponse"></a>
 
 ### MsgSubmitProposalResponse
+
+```
 MsgSubmitProposalResponse defines the Msg/SubmitProposal response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11612,9 +13460,13 @@ MsgSubmitProposalResponse defines the Msg/SubmitProposal response type.
 <a name="cosmos.gov.v1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11630,10 +13482,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.gov.v1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -11643,7 +13499,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.gov.v1.MsgVote"></a>
 
 ### MsgVote
+
+```
 MsgVote defines a message to cast a vote.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11661,7 +13521,11 @@ MsgVote defines a message to cast a vote.
 <a name="cosmos.gov.v1.MsgVoteResponse"></a>
 
 ### MsgVoteResponse
+
+```
 MsgVoteResponse defines the Msg/Vote response type.
+```
+
 
 
 
@@ -11671,7 +13535,11 @@ MsgVoteResponse defines the Msg/Vote response type.
 <a name="cosmos.gov.v1.MsgVoteWeighted"></a>
 
 ### MsgVoteWeighted
+
+```
 MsgVoteWeighted defines a message to cast a vote.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11689,7 +13557,11 @@ MsgVoteWeighted defines a message to cast a vote.
 <a name="cosmos.gov.v1.MsgVoteWeightedResponse"></a>
 
 ### MsgVoteWeightedResponse
+
+```
 MsgVoteWeightedResponse defines the Msg/VoteWeighted response type.
+```
+
 
 
 
@@ -11705,7 +13577,11 @@ MsgVoteWeightedResponse defines the Msg/VoteWeighted response type.
 <a name="cosmos.gov.v1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the gov Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -11730,7 +13606,11 @@ Msg defines the gov Msg service.
 <a name="cosmos.gov.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the gov module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11767,8 +13647,12 @@ GenesisState defines the gov module's genesis state.
 <a name="cosmos.gov.v1beta1.Deposit"></a>
 
 ### Deposit
+
+```
 Deposit defines an amount deposited by an account address to an active
 proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11785,7 +13669,11 @@ proposal.
 <a name="cosmos.gov.v1beta1.DepositParams"></a>
 
 ### DepositParams
+
+```
 DepositParams defines the params for deposits on governance proposals.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11801,7 +13689,11 @@ DepositParams defines the params for deposits on governance proposals.
 <a name="cosmos.gov.v1beta1.Proposal"></a>
 
 ### Proposal
+
+```
 Proposal defines the core field members of a governance proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11824,7 +13716,11 @@ Proposal defines the core field members of a governance proposal.
 <a name="cosmos.gov.v1beta1.TallyParams"></a>
 
 ### TallyParams
+
+```
 TallyParams defines the params for tallying votes on governance proposals.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11841,7 +13737,11 @@ TallyParams defines the params for tallying votes on governance proposals.
 <a name="cosmos.gov.v1beta1.TallyResult"></a>
 
 ### TallyResult
+
+```
 TallyResult defines a standard tally for a governance proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11859,8 +13759,12 @@ TallyResult defines a standard tally for a governance proposal.
 <a name="cosmos.gov.v1beta1.TextProposal"></a>
 
 ### TextProposal
+
+```
 TextProposal defines a standard text proposal whose changes need to be
 manually updated in case of approval.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11876,8 +13780,12 @@ manually updated in case of approval.
 <a name="cosmos.gov.v1beta1.Vote"></a>
 
 ### Vote
+
+```
 Vote defines a vote on a governance proposal.
 A Vote consists of a proposal ID, the voter, and the vote option.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11895,7 +13803,11 @@ A Vote consists of a proposal ID, the voter, and the vote option.
 <a name="cosmos.gov.v1beta1.VotingParams"></a>
 
 ### VotingParams
+
+```
 VotingParams defines the params for voting on governance proposals.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11910,9 +13822,13 @@ VotingParams defines the params for voting on governance proposals.
 <a name="cosmos.gov.v1beta1.WeightedVoteOption"></a>
 
 ### WeightedVoteOption
+
+```
 WeightedVoteOption defines a unit of vote for vote split.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11930,7 +13846,12 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.gov.v1beta1.ProposalStatus"></a>
 
 ### ProposalStatus
+
+```
 ProposalStatus enumerates the valid statuses of a proposal.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -11946,7 +13867,12 @@ ProposalStatus enumerates the valid statuses of a proposal.
 <a name="cosmos.gov.v1beta1.VoteOption"></a>
 
 ### VoteOption
+
+```
 VoteOption enumerates the valid vote options for a given governance proposal.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -11975,7 +13901,11 @@ VoteOption enumerates the valid vote options for a given governance proposal.
 <a name="cosmos.gov.v1beta1.QueryDepositRequest"></a>
 
 ### QueryDepositRequest
+
+```
 QueryDepositRequest is the request type for the Query/Deposit RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -11991,7 +13921,11 @@ QueryDepositRequest is the request type for the Query/Deposit RPC method.
 <a name="cosmos.gov.v1beta1.QueryDepositResponse"></a>
 
 ### QueryDepositResponse
+
+```
 QueryDepositResponse is the response type for the Query/Deposit RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12006,7 +13940,11 @@ QueryDepositResponse is the response type for the Query/Deposit RPC method.
 <a name="cosmos.gov.v1beta1.QueryDepositsRequest"></a>
 
 ### QueryDepositsRequest
+
+```
 QueryDepositsRequest is the request type for the Query/Deposits RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12022,7 +13960,11 @@ QueryDepositsRequest is the request type for the Query/Deposits RPC method.
 <a name="cosmos.gov.v1beta1.QueryDepositsResponse"></a>
 
 ### QueryDepositsResponse
+
+```
 QueryDepositsResponse is the response type for the Query/Deposits RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12038,7 +13980,11 @@ QueryDepositsResponse is the response type for the Query/Deposits RPC method.
 <a name="cosmos.gov.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is the request type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12053,7 +13999,11 @@ QueryParamsRequest is the request type for the Query/Params RPC method.
 <a name="cosmos.gov.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is the response type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12070,7 +14020,11 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 <a name="cosmos.gov.v1beta1.QueryProposalRequest"></a>
 
 ### QueryProposalRequest
+
+```
 QueryProposalRequest is the request type for the Query/Proposal RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12085,7 +14039,11 @@ QueryProposalRequest is the request type for the Query/Proposal RPC method.
 <a name="cosmos.gov.v1beta1.QueryProposalResponse"></a>
 
 ### QueryProposalResponse
+
+```
 QueryProposalResponse is the response type for the Query/Proposal RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12100,7 +14058,11 @@ QueryProposalResponse is the response type for the Query/Proposal RPC method.
 <a name="cosmos.gov.v1beta1.QueryProposalsRequest"></a>
 
 ### QueryProposalsRequest
+
+```
 QueryProposalsRequest is the request type for the Query/Proposals RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12118,8 +14080,12 @@ QueryProposalsRequest is the request type for the Query/Proposals RPC method.
 <a name="cosmos.gov.v1beta1.QueryProposalsResponse"></a>
 
 ### QueryProposalsResponse
+
+```
 QueryProposalsResponse is the response type for the Query/Proposals RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12135,7 +14101,11 @@ method.
 <a name="cosmos.gov.v1beta1.QueryTallyResultRequest"></a>
 
 ### QueryTallyResultRequest
+
+```
 QueryTallyResultRequest is the request type for the Query/Tally RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12150,7 +14120,11 @@ QueryTallyResultRequest is the request type for the Query/Tally RPC method.
 <a name="cosmos.gov.v1beta1.QueryTallyResultResponse"></a>
 
 ### QueryTallyResultResponse
+
+```
 QueryTallyResultResponse is the response type for the Query/Tally RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12165,7 +14139,11 @@ QueryTallyResultResponse is the response type for the Query/Tally RPC method.
 <a name="cosmos.gov.v1beta1.QueryVoteRequest"></a>
 
 ### QueryVoteRequest
+
+```
 QueryVoteRequest is the request type for the Query/Vote RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12181,7 +14159,11 @@ QueryVoteRequest is the request type for the Query/Vote RPC method.
 <a name="cosmos.gov.v1beta1.QueryVoteResponse"></a>
 
 ### QueryVoteResponse
+
+```
 QueryVoteResponse is the response type for the Query/Vote RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12196,7 +14178,11 @@ QueryVoteResponse is the response type for the Query/Vote RPC method.
 <a name="cosmos.gov.v1beta1.QueryVotesRequest"></a>
 
 ### QueryVotesRequest
+
+```
 QueryVotesRequest is the request type for the Query/Votes RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12212,7 +14198,11 @@ QueryVotesRequest is the request type for the Query/Votes RPC method.
 <a name="cosmos.gov.v1beta1.QueryVotesResponse"></a>
 
 ### QueryVotesResponse
+
+```
 QueryVotesResponse is the response type for the Query/Votes RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12234,7 +14224,11 @@ QueryVotesResponse is the response type for the Query/Votes RPC method.
 <a name="cosmos.gov.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service for gov module
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -12261,7 +14255,11 @@ Query defines the gRPC querier service for gov module
 <a name="cosmos.gov.v1beta1.MsgDeposit"></a>
 
 ### MsgDeposit
+
+```
 MsgDeposit defines a message to submit a deposit to an existing proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12278,7 +14276,11 @@ MsgDeposit defines a message to submit a deposit to an existing proposal.
 <a name="cosmos.gov.v1beta1.MsgDepositResponse"></a>
 
 ### MsgDepositResponse
+
+```
 MsgDepositResponse defines the Msg/Deposit response type.
+```
+
 
 
 
@@ -12288,8 +14290,12 @@ MsgDepositResponse defines the Msg/Deposit response type.
 <a name="cosmos.gov.v1beta1.MsgSubmitProposal"></a>
 
 ### MsgSubmitProposal
+
+```
 MsgSubmitProposal defines an sdk.Msg type that supports submitting arbitrary
 proposal Content.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12306,7 +14312,11 @@ proposal Content.
 <a name="cosmos.gov.v1beta1.MsgSubmitProposalResponse"></a>
 
 ### MsgSubmitProposalResponse
+
+```
 MsgSubmitProposalResponse defines the Msg/SubmitProposal response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12321,7 +14331,11 @@ MsgSubmitProposalResponse defines the Msg/SubmitProposal response type.
 <a name="cosmos.gov.v1beta1.MsgVote"></a>
 
 ### MsgVote
+
+```
 MsgVote defines a message to cast a vote.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12338,7 +14352,11 @@ MsgVote defines a message to cast a vote.
 <a name="cosmos.gov.v1beta1.MsgVoteResponse"></a>
 
 ### MsgVoteResponse
+
+```
 MsgVoteResponse defines the Msg/Vote response type.
+```
+
 
 
 
@@ -12348,9 +14366,13 @@ MsgVoteResponse defines the Msg/Vote response type.
 <a name="cosmos.gov.v1beta1.MsgVoteWeighted"></a>
 
 ### MsgVoteWeighted
+
+```
 MsgVoteWeighted defines a message to cast a vote.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12367,9 +14389,13 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.gov.v1beta1.MsgVoteWeightedResponse"></a>
 
 ### MsgVoteWeightedResponse
+
+```
 MsgVoteWeightedResponse defines the Msg/VoteWeighted response type.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 
@@ -12385,7 +14411,11 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.gov.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the bank Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -12408,7 +14438,11 @@ Msg defines the bank Msg service.
 <a name="cosmos.group.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the group module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12434,13 +14468,21 @@ Module is the config object of the group module.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/group/v1/events.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.group.v1.EventCreateGroup"></a>
 
 ### EventCreateGroup
+
+```
 EventCreateGroup is an event emitted when a group is created.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12455,7 +14497,11 @@ EventCreateGroup is an event emitted when a group is created.
 <a name="cosmos.group.v1.EventCreateGroupPolicy"></a>
 
 ### EventCreateGroupPolicy
+
+```
 EventCreateGroupPolicy is an event emitted when a group policy is created.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12470,7 +14516,11 @@ EventCreateGroupPolicy is an event emitted when a group policy is created.
 <a name="cosmos.group.v1.EventExec"></a>
 
 ### EventExec
+
+```
 EventExec is an event emitted when a proposal is executed.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12487,7 +14537,11 @@ EventExec is an event emitted when a proposal is executed.
 <a name="cosmos.group.v1.EventLeaveGroup"></a>
 
 ### EventLeaveGroup
+
+```
 EventLeaveGroup is an event emitted when group member leaves the group.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12503,7 +14557,11 @@ EventLeaveGroup is an event emitted when group member leaves the group.
 <a name="cosmos.group.v1.EventProposalPruned"></a>
 
 ### EventProposalPruned
+
+```
 EventProposalPruned is an event emitted when a proposal is pruned.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12520,7 +14578,11 @@ EventProposalPruned is an event emitted when a proposal is pruned.
 <a name="cosmos.group.v1.EventSubmitProposal"></a>
 
 ### EventSubmitProposal
+
+```
 EventSubmitProposal is an event emitted when a proposal is created.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12535,7 +14597,11 @@ EventSubmitProposal is an event emitted when a proposal is created.
 <a name="cosmos.group.v1.EventUpdateGroup"></a>
 
 ### EventUpdateGroup
+
+```
 EventUpdateGroup is an event emitted when a group is updated.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12550,7 +14616,11 @@ EventUpdateGroup is an event emitted when a group is updated.
 <a name="cosmos.group.v1.EventUpdateGroupPolicy"></a>
 
 ### EventUpdateGroupPolicy
+
+```
 EventUpdateGroupPolicy is an event emitted when a group policy is updated.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12565,7 +14635,11 @@ EventUpdateGroupPolicy is an event emitted when a group policy is updated.
 <a name="cosmos.group.v1.EventVote"></a>
 
 ### EventVote
+
+```
 EventVote is an event emitted when a voter votes on a proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12580,7 +14654,11 @@ EventVote is an event emitted when a voter votes on a proposal.
 <a name="cosmos.group.v1.EventWithdrawProposal"></a>
 
 ### EventWithdrawProposal
+
+```
 EventWithdrawProposal is an event emitted when a proposal is withdrawn.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12605,13 +14683,21 @@ EventWithdrawProposal is an event emitted when a proposal is withdrawn.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/group/v1/genesis.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.group.v1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the group module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12643,13 +14729,21 @@ GenesisState defines the group module's genesis state.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/group/v1/query.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.group.v1.QueryGroupInfoRequest"></a>
 
 ### QueryGroupInfoRequest
+
+```
 QueryGroupInfoRequest is the Query/GroupInfo request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12664,7 +14758,11 @@ QueryGroupInfoRequest is the Query/GroupInfo request type.
 <a name="cosmos.group.v1.QueryGroupInfoResponse"></a>
 
 ### QueryGroupInfoResponse
+
+```
 QueryGroupInfoResponse is the Query/GroupInfo response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12679,7 +14777,11 @@ QueryGroupInfoResponse is the Query/GroupInfo response type.
 <a name="cosmos.group.v1.QueryGroupMembersRequest"></a>
 
 ### QueryGroupMembersRequest
+
+```
 QueryGroupMembersRequest is the Query/GroupMembers request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12695,7 +14797,11 @@ QueryGroupMembersRequest is the Query/GroupMembers request type.
 <a name="cosmos.group.v1.QueryGroupMembersResponse"></a>
 
 ### QueryGroupMembersResponse
+
+```
 QueryGroupMembersResponse is the Query/GroupMembersResponse response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12711,7 +14817,11 @@ QueryGroupMembersResponse is the Query/GroupMembersResponse response type.
 <a name="cosmos.group.v1.QueryGroupPoliciesByAdminRequest"></a>
 
 ### QueryGroupPoliciesByAdminRequest
+
+```
 QueryGroupPoliciesByAdminRequest is the Query/GroupPoliciesByAdmin request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12727,7 +14837,11 @@ QueryGroupPoliciesByAdminRequest is the Query/GroupPoliciesByAdmin request type.
 <a name="cosmos.group.v1.QueryGroupPoliciesByAdminResponse"></a>
 
 ### QueryGroupPoliciesByAdminResponse
+
+```
 QueryGroupPoliciesByAdminResponse is the Query/GroupPoliciesByAdmin response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12743,7 +14857,11 @@ QueryGroupPoliciesByAdminResponse is the Query/GroupPoliciesByAdmin response typ
 <a name="cosmos.group.v1.QueryGroupPoliciesByGroupRequest"></a>
 
 ### QueryGroupPoliciesByGroupRequest
+
+```
 QueryGroupPoliciesByGroupRequest is the Query/GroupPoliciesByGroup request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12759,7 +14877,11 @@ QueryGroupPoliciesByGroupRequest is the Query/GroupPoliciesByGroup request type.
 <a name="cosmos.group.v1.QueryGroupPoliciesByGroupResponse"></a>
 
 ### QueryGroupPoliciesByGroupResponse
+
+```
 QueryGroupPoliciesByGroupResponse is the Query/GroupPoliciesByGroup response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12775,7 +14897,11 @@ QueryGroupPoliciesByGroupResponse is the Query/GroupPoliciesByGroup response typ
 <a name="cosmos.group.v1.QueryGroupPolicyInfoRequest"></a>
 
 ### QueryGroupPolicyInfoRequest
+
+```
 QueryGroupPolicyInfoRequest is the Query/GroupPolicyInfo request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12790,7 +14916,11 @@ QueryGroupPolicyInfoRequest is the Query/GroupPolicyInfo request type.
 <a name="cosmos.group.v1.QueryGroupPolicyInfoResponse"></a>
 
 ### QueryGroupPolicyInfoResponse
+
+```
 QueryGroupPolicyInfoResponse is the Query/GroupPolicyInfo response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12805,7 +14935,11 @@ QueryGroupPolicyInfoResponse is the Query/GroupPolicyInfo response type.
 <a name="cosmos.group.v1.QueryGroupsByAdminRequest"></a>
 
 ### QueryGroupsByAdminRequest
+
+```
 QueryGroupsByAdminRequest is the Query/GroupsByAdmin request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12821,7 +14955,11 @@ QueryGroupsByAdminRequest is the Query/GroupsByAdmin request type.
 <a name="cosmos.group.v1.QueryGroupsByAdminResponse"></a>
 
 ### QueryGroupsByAdminResponse
+
+```
 QueryGroupsByAdminResponse is the Query/GroupsByAdminResponse response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12837,7 +14975,11 @@ QueryGroupsByAdminResponse is the Query/GroupsByAdminResponse response type.
 <a name="cosmos.group.v1.QueryGroupsByMemberRequest"></a>
 
 ### QueryGroupsByMemberRequest
+
+```
 QueryGroupsByMemberRequest is the Query/GroupsByMember request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12853,7 +14995,11 @@ QueryGroupsByMemberRequest is the Query/GroupsByMember request type.
 <a name="cosmos.group.v1.QueryGroupsByMemberResponse"></a>
 
 ### QueryGroupsByMemberResponse
+
+```
 QueryGroupsByMemberResponse is the Query/GroupsByMember response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12869,9 +15015,13 @@ QueryGroupsByMemberResponse is the Query/GroupsByMember response type.
 <a name="cosmos.group.v1.QueryGroupsRequest"></a>
 
 ### QueryGroupsRequest
+
+```
 QueryGroupsRequest is the Query/Groups request type.
 
 Since: cosmos-sdk 0.47.1
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12886,9 +15036,13 @@ Since: cosmos-sdk 0.47.1
 <a name="cosmos.group.v1.QueryGroupsResponse"></a>
 
 ### QueryGroupsResponse
+
+```
 QueryGroupsResponse is the Query/Groups response type.
 
 Since: cosmos-sdk 0.47.1
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12904,7 +15058,11 @@ Since: cosmos-sdk 0.47.1
 <a name="cosmos.group.v1.QueryProposalRequest"></a>
 
 ### QueryProposalRequest
+
+```
 QueryProposalRequest is the Query/Proposal request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12919,7 +15077,11 @@ QueryProposalRequest is the Query/Proposal request type.
 <a name="cosmos.group.v1.QueryProposalResponse"></a>
 
 ### QueryProposalResponse
+
+```
 QueryProposalResponse is the Query/Proposal response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12934,7 +15096,11 @@ QueryProposalResponse is the Query/Proposal response type.
 <a name="cosmos.group.v1.QueryProposalsByGroupPolicyRequest"></a>
 
 ### QueryProposalsByGroupPolicyRequest
+
+```
 QueryProposalsByGroupPolicyRequest is the Query/ProposalByGroupPolicy request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12950,7 +15116,11 @@ QueryProposalsByGroupPolicyRequest is the Query/ProposalByGroupPolicy request ty
 <a name="cosmos.group.v1.QueryProposalsByGroupPolicyResponse"></a>
 
 ### QueryProposalsByGroupPolicyResponse
+
+```
 QueryProposalsByGroupPolicyResponse is the Query/ProposalByGroupPolicy response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12966,7 +15136,11 @@ QueryProposalsByGroupPolicyResponse is the Query/ProposalByGroupPolicy response 
 <a name="cosmos.group.v1.QueryTallyResultRequest"></a>
 
 ### QueryTallyResultRequest
+
+```
 QueryTallyResultRequest is the Query/TallyResult request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12981,7 +15155,11 @@ QueryTallyResultRequest is the Query/TallyResult request type.
 <a name="cosmos.group.v1.QueryTallyResultResponse"></a>
 
 ### QueryTallyResultResponse
+
+```
 QueryTallyResultResponse is the Query/TallyResult response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -12996,7 +15174,11 @@ QueryTallyResultResponse is the Query/TallyResult response type.
 <a name="cosmos.group.v1.QueryVoteByProposalVoterRequest"></a>
 
 ### QueryVoteByProposalVoterRequest
+
+```
 QueryVoteByProposalVoterRequest is the Query/VoteByProposalVoter request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13012,7 +15194,11 @@ QueryVoteByProposalVoterRequest is the Query/VoteByProposalVoter request type.
 <a name="cosmos.group.v1.QueryVoteByProposalVoterResponse"></a>
 
 ### QueryVoteByProposalVoterResponse
+
+```
 QueryVoteByProposalVoterResponse is the Query/VoteByProposalVoter response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13027,7 +15213,11 @@ QueryVoteByProposalVoterResponse is the Query/VoteByProposalVoter response type.
 <a name="cosmos.group.v1.QueryVotesByProposalRequest"></a>
 
 ### QueryVotesByProposalRequest
+
+```
 QueryVotesByProposalRequest is the Query/VotesByProposal request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13043,7 +15233,11 @@ QueryVotesByProposalRequest is the Query/VotesByProposal request type.
 <a name="cosmos.group.v1.QueryVotesByProposalResponse"></a>
 
 ### QueryVotesByProposalResponse
+
+```
 QueryVotesByProposalResponse is the Query/VotesByProposal response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13059,7 +15253,11 @@ QueryVotesByProposalResponse is the Query/VotesByProposal response type.
 <a name="cosmos.group.v1.QueryVotesByVoterRequest"></a>
 
 ### QueryVotesByVoterRequest
+
+```
 QueryVotesByVoterRequest is the Query/VotesByVoter request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13075,7 +15273,11 @@ QueryVotesByVoterRequest is the Query/VotesByVoter request type.
 <a name="cosmos.group.v1.QueryVotesByVoterResponse"></a>
 
 ### QueryVotesByVoterResponse
+
+```
 QueryVotesByVoterResponse is the Query/VotesByVoter response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13097,7 +15299,11 @@ QueryVotesByVoterResponse is the Query/VotesByVoter response type.
 <a name="cosmos.group.v1.Query"></a>
 
 ### Query
+
+```
 Query is the cosmos.group.v1 Query service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -13124,13 +15330,21 @@ Query is the cosmos.group.v1 Query service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/group/v1/tx.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.group.v1.MsgCreateGroup"></a>
 
 ### MsgCreateGroup
+
+```
 MsgCreateGroup is the Msg/CreateGroup request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13147,7 +15361,11 @@ MsgCreateGroup is the Msg/CreateGroup request type.
 <a name="cosmos.group.v1.MsgCreateGroupPolicy"></a>
 
 ### MsgCreateGroupPolicy
+
+```
 MsgCreateGroupPolicy is the Msg/CreateGroupPolicy request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13165,7 +15383,11 @@ MsgCreateGroupPolicy is the Msg/CreateGroupPolicy request type.
 <a name="cosmos.group.v1.MsgCreateGroupPolicyResponse"></a>
 
 ### MsgCreateGroupPolicyResponse
+
+```
 MsgCreateGroupPolicyResponse is the Msg/CreateGroupPolicy response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13180,7 +15402,11 @@ MsgCreateGroupPolicyResponse is the Msg/CreateGroupPolicy response type.
 <a name="cosmos.group.v1.MsgCreateGroupResponse"></a>
 
 ### MsgCreateGroupResponse
+
+```
 MsgCreateGroupResponse is the Msg/CreateGroup response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13195,7 +15421,11 @@ MsgCreateGroupResponse is the Msg/CreateGroup response type.
 <a name="cosmos.group.v1.MsgCreateGroupWithPolicy"></a>
 
 ### MsgCreateGroupWithPolicy
+
+```
 MsgCreateGroupWithPolicy is the Msg/CreateGroupWithPolicy request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13215,7 +15445,11 @@ MsgCreateGroupWithPolicy is the Msg/CreateGroupWithPolicy request type.
 <a name="cosmos.group.v1.MsgCreateGroupWithPolicyResponse"></a>
 
 ### MsgCreateGroupWithPolicyResponse
+
+```
 MsgCreateGroupWithPolicyResponse is the Msg/CreateGroupWithPolicy response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13231,7 +15465,11 @@ MsgCreateGroupWithPolicyResponse is the Msg/CreateGroupWithPolicy response type.
 <a name="cosmos.group.v1.MsgExec"></a>
 
 ### MsgExec
+
+```
 MsgExec is the Msg/Exec request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13247,7 +15485,11 @@ MsgExec is the Msg/Exec request type.
 <a name="cosmos.group.v1.MsgExecResponse"></a>
 
 ### MsgExecResponse
+
+```
 MsgExecResponse is the Msg/Exec request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13262,7 +15504,11 @@ MsgExecResponse is the Msg/Exec request type.
 <a name="cosmos.group.v1.MsgLeaveGroup"></a>
 
 ### MsgLeaveGroup
+
+```
 MsgLeaveGroup is the Msg/LeaveGroup request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13278,7 +15524,11 @@ MsgLeaveGroup is the Msg/LeaveGroup request type.
 <a name="cosmos.group.v1.MsgLeaveGroupResponse"></a>
 
 ### MsgLeaveGroupResponse
+
+```
 MsgLeaveGroupResponse is the Msg/LeaveGroup response type.
+```
+
 
 
 
@@ -13288,7 +15538,11 @@ MsgLeaveGroupResponse is the Msg/LeaveGroup response type.
 <a name="cosmos.group.v1.MsgSubmitProposal"></a>
 
 ### MsgSubmitProposal
+
+```
 MsgSubmitProposal is the Msg/SubmitProposal request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13309,7 +15563,11 @@ MsgSubmitProposal is the Msg/SubmitProposal request type.
 <a name="cosmos.group.v1.MsgSubmitProposalResponse"></a>
 
 ### MsgSubmitProposalResponse
+
+```
 MsgSubmitProposalResponse is the Msg/SubmitProposal response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13324,7 +15582,11 @@ MsgSubmitProposalResponse is the Msg/SubmitProposal response type.
 <a name="cosmos.group.v1.MsgUpdateGroupAdmin"></a>
 
 ### MsgUpdateGroupAdmin
+
+```
 MsgUpdateGroupAdmin is the Msg/UpdateGroupAdmin request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13341,7 +15603,11 @@ MsgUpdateGroupAdmin is the Msg/UpdateGroupAdmin request type.
 <a name="cosmos.group.v1.MsgUpdateGroupAdminResponse"></a>
 
 ### MsgUpdateGroupAdminResponse
+
+```
 MsgUpdateGroupAdminResponse is the Msg/UpdateGroupAdmin response type.
+```
+
 
 
 
@@ -13351,7 +15617,11 @@ MsgUpdateGroupAdminResponse is the Msg/UpdateGroupAdmin response type.
 <a name="cosmos.group.v1.MsgUpdateGroupMembers"></a>
 
 ### MsgUpdateGroupMembers
+
+```
 MsgUpdateGroupMembers is the Msg/UpdateGroupMembers request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13368,7 +15638,11 @@ MsgUpdateGroupMembers is the Msg/UpdateGroupMembers request type.
 <a name="cosmos.group.v1.MsgUpdateGroupMembersResponse"></a>
 
 ### MsgUpdateGroupMembersResponse
+
+```
 MsgUpdateGroupMembersResponse is the Msg/UpdateGroupMembers response type.
+```
+
 
 
 
@@ -13378,7 +15652,11 @@ MsgUpdateGroupMembersResponse is the Msg/UpdateGroupMembers response type.
 <a name="cosmos.group.v1.MsgUpdateGroupMetadata"></a>
 
 ### MsgUpdateGroupMetadata
+
+```
 MsgUpdateGroupMetadata is the Msg/UpdateGroupMetadata request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13395,7 +15673,11 @@ MsgUpdateGroupMetadata is the Msg/UpdateGroupMetadata request type.
 <a name="cosmos.group.v1.MsgUpdateGroupMetadataResponse"></a>
 
 ### MsgUpdateGroupMetadataResponse
+
+```
 MsgUpdateGroupMetadataResponse is the Msg/UpdateGroupMetadata response type.
+```
+
 
 
 
@@ -13405,7 +15687,11 @@ MsgUpdateGroupMetadataResponse is the Msg/UpdateGroupMetadata response type.
 <a name="cosmos.group.v1.MsgUpdateGroupPolicyAdmin"></a>
 
 ### MsgUpdateGroupPolicyAdmin
+
+```
 MsgUpdateGroupPolicyAdmin is the Msg/UpdateGroupPolicyAdmin request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13422,7 +15708,11 @@ MsgUpdateGroupPolicyAdmin is the Msg/UpdateGroupPolicyAdmin request type.
 <a name="cosmos.group.v1.MsgUpdateGroupPolicyAdminResponse"></a>
 
 ### MsgUpdateGroupPolicyAdminResponse
+
+```
 MsgUpdateGroupPolicyAdminResponse is the Msg/UpdateGroupPolicyAdmin response type.
+```
+
 
 
 
@@ -13432,7 +15722,11 @@ MsgUpdateGroupPolicyAdminResponse is the Msg/UpdateGroupPolicyAdmin response typ
 <a name="cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy"></a>
 
 ### MsgUpdateGroupPolicyDecisionPolicy
+
+```
 MsgUpdateGroupPolicyDecisionPolicy is the Msg/UpdateGroupPolicyDecisionPolicy request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13449,7 +15743,11 @@ MsgUpdateGroupPolicyDecisionPolicy is the Msg/UpdateGroupPolicyDecisionPolicy re
 <a name="cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicyResponse"></a>
 
 ### MsgUpdateGroupPolicyDecisionPolicyResponse
+
+```
 MsgUpdateGroupPolicyDecisionPolicyResponse is the Msg/UpdateGroupPolicyDecisionPolicy response type.
+```
+
 
 
 
@@ -13459,7 +15757,11 @@ MsgUpdateGroupPolicyDecisionPolicyResponse is the Msg/UpdateGroupPolicyDecisionP
 <a name="cosmos.group.v1.MsgUpdateGroupPolicyMetadata"></a>
 
 ### MsgUpdateGroupPolicyMetadata
+
+```
 MsgUpdateGroupPolicyMetadata is the Msg/UpdateGroupPolicyMetadata request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13476,7 +15778,11 @@ MsgUpdateGroupPolicyMetadata is the Msg/UpdateGroupPolicyMetadata request type.
 <a name="cosmos.group.v1.MsgUpdateGroupPolicyMetadataResponse"></a>
 
 ### MsgUpdateGroupPolicyMetadataResponse
+
+```
 MsgUpdateGroupPolicyMetadataResponse is the Msg/UpdateGroupPolicyMetadata response type.
+```
+
 
 
 
@@ -13486,7 +15792,11 @@ MsgUpdateGroupPolicyMetadataResponse is the Msg/UpdateGroupPolicyMetadata respon
 <a name="cosmos.group.v1.MsgVote"></a>
 
 ### MsgVote
+
+```
 MsgVote is the Msg/Vote request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13505,7 +15815,11 @@ MsgVote is the Msg/Vote request type.
 <a name="cosmos.group.v1.MsgVoteResponse"></a>
 
 ### MsgVoteResponse
+
+```
 MsgVoteResponse is the Msg/Vote response type.
+```
+
 
 
 
@@ -13515,7 +15829,11 @@ MsgVoteResponse is the Msg/Vote response type.
 <a name="cosmos.group.v1.MsgWithdrawProposal"></a>
 
 ### MsgWithdrawProposal
+
+```
 MsgWithdrawProposal is the Msg/WithdrawProposal request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13531,7 +15849,11 @@ MsgWithdrawProposal is the Msg/WithdrawProposal request type.
 <a name="cosmos.group.v1.MsgWithdrawProposalResponse"></a>
 
 ### MsgWithdrawProposalResponse
+
+```
 MsgWithdrawProposalResponse is the Msg/WithdrawProposal response type.
+```
+
 
 
 
@@ -13543,7 +15865,12 @@ MsgWithdrawProposalResponse is the Msg/WithdrawProposal response type.
 <a name="cosmos.group.v1.Exec"></a>
 
 ### Exec
+
+```
 Exec defines modes of execution of a proposal on creation or on new vote.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -13559,7 +15886,11 @@ Exec defines modes of execution of a proposal on creation or on new vote.
 <a name="cosmos.group.v1.Msg"></a>
 
 ### Msg
+
+```
 Msg is the cosmos.group.v1 Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -13586,13 +15917,21 @@ Msg is the cosmos.group.v1 Msg service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/group/v1/types.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.group.v1.DecisionPolicyWindows"></a>
 
 ### DecisionPolicyWindows
+
+```
 DecisionPolicyWindows defines the different windows for voting and execution.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13608,7 +15947,11 @@ DecisionPolicyWindows defines the different windows for voting and execution.
 <a name="cosmos.group.v1.GroupInfo"></a>
 
 ### GroupInfo
+
+```
 GroupInfo represents the high-level on-chain information for a group.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13628,7 +15971,11 @@ GroupInfo represents the high-level on-chain information for a group.
 <a name="cosmos.group.v1.GroupMember"></a>
 
 ### GroupMember
+
+```
 GroupMember represents the relationship between a group and a member.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13644,7 +15991,11 @@ GroupMember represents the relationship between a group and a member.
 <a name="cosmos.group.v1.GroupPolicyInfo"></a>
 
 ### GroupPolicyInfo
+
+```
 GroupPolicyInfo represents the high-level on-chain information for a group policy.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13665,8 +16016,12 @@ GroupPolicyInfo represents the high-level on-chain information for a group polic
 <a name="cosmos.group.v1.Member"></a>
 
 ### Member
+
+```
 Member represents a group member with an account address,
 non-zero weight, metadata and added_at timestamp.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13684,9 +16039,13 @@ non-zero weight, metadata and added_at timestamp.
 <a name="cosmos.group.v1.MemberRequest"></a>
 
 ### MemberRequest
+
+```
 MemberRequest represents a group member to be used in Msg server requests.
 Contrary to `Member`, it doesn't have any `added_at` field
 since this field cannot be set as part of requests.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13703,12 +16062,16 @@ since this field cannot be set as part of requests.
 <a name="cosmos.group.v1.PercentageDecisionPolicy"></a>
 
 ### PercentageDecisionPolicy
+
+```
 PercentageDecisionPolicy is a decision policy where a proposal passes when
 it satisfies the two following conditions:
 1. The percentage of all `YES` voters' weights out of the total group weight
    is greater or equal than the given `percentage`.
 2. The voting and execution periods of the proposal respect the parameters
    given by `windows`.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13724,10 +16087,14 @@ it satisfies the two following conditions:
 <a name="cosmos.group.v1.Proposal"></a>
 
 ### Proposal
+
+```
 Proposal defines a group proposal. Any member of a group can submit a proposal
 for a group policy to decide upon.
 A proposal consists of a set of `sdk.Msg`s that will be executed if the proposal
 passes as well as some optional metadata associated with the proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13755,7 +16122,11 @@ passes as well as some optional metadata associated with the proposal.
 <a name="cosmos.group.v1.TallyResult"></a>
 
 ### TallyResult
+
+```
 TallyResult represents the sum of weighted votes for each vote option.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13773,12 +16144,16 @@ TallyResult represents the sum of weighted votes for each vote option.
 <a name="cosmos.group.v1.ThresholdDecisionPolicy"></a>
 
 ### ThresholdDecisionPolicy
+
+```
 ThresholdDecisionPolicy is a decision policy where a proposal passes when it
 satisfies the two following conditions:
 1. The sum of all `YES` voter's weights is greater or equal than the defined
    `threshold`.
 2. The voting and execution periods of the proposal respect the parameters
    given by `windows`.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13794,7 +16169,11 @@ satisfies the two following conditions:
 <a name="cosmos.group.v1.Vote"></a>
 
 ### Vote
+
+```
 Vote represents a vote for a proposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13815,7 +16194,12 @@ Vote represents a vote for a proposal.
 <a name="cosmos.group.v1.ProposalExecutorResult"></a>
 
 ### ProposalExecutorResult
+
+```
 ProposalExecutorResult defines types of proposal executor results.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -13829,7 +16213,12 @@ ProposalExecutorResult defines types of proposal executor results.
 <a name="cosmos.group.v1.ProposalStatus"></a>
 
 ### ProposalStatus
+
+```
 ProposalStatus defines proposal statuses.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -13845,7 +16234,12 @@ ProposalStatus defines proposal statuses.
 <a name="cosmos.group.v1.VoteOption"></a>
 
 ### VoteOption
+
+```
 VoteOption enumerates the valid vote options for a given proposal.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -13874,7 +16268,11 @@ VoteOption enumerates the valid vote options for a given proposal.
 <a name="cosmos.mint.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the mint module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13906,7 +16304,11 @@ Module is the config object of the mint module.
 <a name="cosmos.mint.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the mint module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13938,7 +16340,11 @@ GenesisState defines the mint module's genesis state.
 <a name="cosmos.mint.v1beta1.Minter"></a>
 
 ### Minter
+
+```
 Minter represents the minting state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13954,7 +16360,11 @@ Minter represents the minting state.
 <a name="cosmos.mint.v1beta1.Params"></a>
 
 ### Params
+
+```
 Params defines the parameters for the x/mint module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -13990,8 +16400,12 @@ Params defines the parameters for the x/mint module.
 <a name="cosmos.mint.v1beta1.QueryAnnualProvisionsRequest"></a>
 
 ### QueryAnnualProvisionsRequest
+
+```
 QueryAnnualProvisionsRequest is the request type for the
 Query/AnnualProvisions RPC method.
+```
+
 
 
 
@@ -14001,8 +16415,12 @@ Query/AnnualProvisions RPC method.
 <a name="cosmos.mint.v1beta1.QueryAnnualProvisionsResponse"></a>
 
 ### QueryAnnualProvisionsResponse
+
+```
 QueryAnnualProvisionsResponse is the response type for the
 Query/AnnualProvisions RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14017,7 +16435,11 @@ Query/AnnualProvisions RPC method.
 <a name="cosmos.mint.v1beta1.QueryInflationRequest"></a>
 
 ### QueryInflationRequest
+
+```
 QueryInflationRequest is the request type for the Query/Inflation RPC method.
+```
+
 
 
 
@@ -14027,8 +16449,12 @@ QueryInflationRequest is the request type for the Query/Inflation RPC method.
 <a name="cosmos.mint.v1beta1.QueryInflationResponse"></a>
 
 ### QueryInflationResponse
+
+```
 QueryInflationResponse is the response type for the Query/Inflation RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14043,7 +16469,11 @@ method.
 <a name="cosmos.mint.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is the request type for the Query/Params RPC method.
+```
+
 
 
 
@@ -14053,7 +16483,11 @@ QueryParamsRequest is the request type for the Query/Params RPC method.
 <a name="cosmos.mint.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is the response type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14074,7 +16508,11 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 <a name="cosmos.mint.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query provides defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -14096,9 +16534,13 @@ Query provides defines the gRPC querier service.
 <a name="cosmos.mint.v1beta1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14114,10 +16556,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.mint.v1beta1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -14133,7 +16579,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.mint.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the x/mint Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -14178,7 +16628,11 @@ Msg defines the x/mint Msg service.
 <a name="cosmos.nft.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the nft module.
+```
+
 
 
 
@@ -14204,7 +16658,11 @@ Module is the config object of the nft module.
 <a name="cosmos.nft.v1beta1.EventBurn"></a>
 
 ### EventBurn
+
+```
 EventBurn is emitted on Burn
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14221,7 +16679,11 @@ EventBurn is emitted on Burn
 <a name="cosmos.nft.v1beta1.EventMint"></a>
 
 ### EventMint
+
+```
 EventMint is emitted on Mint
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14238,7 +16700,11 @@ EventMint is emitted on Mint
 <a name="cosmos.nft.v1beta1.EventSend"></a>
 
 ### EventSend
+
+```
 EventSend is emitted on Msg/Send
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14272,7 +16738,11 @@ EventSend is emitted on Msg/Send
 <a name="cosmos.nft.v1beta1.Entry"></a>
 
 ### Entry
+
+```
 Entry Defines all nft owned by a person
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14288,7 +16758,11 @@ Entry Defines all nft owned by a person
 <a name="cosmos.nft.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the nft module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14320,7 +16794,11 @@ GenesisState defines the nft module's genesis state.
 <a name="cosmos.nft.v1beta1.Class"></a>
 
 ### Class
+
+```
 Class defines the class of the nft type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14341,7 +16819,11 @@ Class defines the class of the nft type.
 <a name="cosmos.nft.v1beta1.NFT"></a>
 
 ### NFT
+
+```
 NFT defines the NFT.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14376,7 +16858,11 @@ NFT defines the NFT.
 <a name="cosmos.nft.v1beta1.QueryBalanceRequest"></a>
 
 ### QueryBalanceRequest
+
+```
 QueryBalanceRequest is the request type for the Query/Balance RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14392,7 +16878,11 @@ QueryBalanceRequest is the request type for the Query/Balance RPC method
 <a name="cosmos.nft.v1beta1.QueryBalanceResponse"></a>
 
 ### QueryBalanceResponse
+
+```
 QueryBalanceResponse is the response type for the Query/Balance RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14407,7 +16897,11 @@ QueryBalanceResponse is the response type for the Query/Balance RPC method
 <a name="cosmos.nft.v1beta1.QueryClassRequest"></a>
 
 ### QueryClassRequest
+
+```
 QueryClassRequest is the request type for the Query/Class RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14422,7 +16916,11 @@ QueryClassRequest is the request type for the Query/Class RPC method
 <a name="cosmos.nft.v1beta1.QueryClassResponse"></a>
 
 ### QueryClassResponse
+
+```
 QueryClassResponse is the response type for the Query/Class RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14437,7 +16935,11 @@ QueryClassResponse is the response type for the Query/Class RPC method
 <a name="cosmos.nft.v1beta1.QueryClassesRequest"></a>
 
 ### QueryClassesRequest
+
+```
 QueryClassesRequest is the request type for the Query/Classes RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14452,7 +16954,11 @@ QueryClassesRequest is the request type for the Query/Classes RPC method
 <a name="cosmos.nft.v1beta1.QueryClassesResponse"></a>
 
 ### QueryClassesResponse
+
+```
 QueryClassesResponse is the response type for the Query/Classes RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14468,7 +16974,11 @@ QueryClassesResponse is the response type for the Query/Classes RPC method
 <a name="cosmos.nft.v1beta1.QueryNFTRequest"></a>
 
 ### QueryNFTRequest
+
+```
 QueryNFTRequest is the request type for the Query/NFT RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14484,7 +16994,11 @@ QueryNFTRequest is the request type for the Query/NFT RPC method
 <a name="cosmos.nft.v1beta1.QueryNFTResponse"></a>
 
 ### QueryNFTResponse
+
+```
 QueryNFTResponse is the response type for the Query/NFT RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14499,7 +17013,11 @@ QueryNFTResponse is the response type for the Query/NFT RPC method
 <a name="cosmos.nft.v1beta1.QueryNFTsRequest"></a>
 
 ### QueryNFTsRequest
+
+```
 QueryNFTstRequest is the request type for the Query/NFTs RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14516,7 +17034,11 @@ QueryNFTstRequest is the request type for the Query/NFTs RPC method
 <a name="cosmos.nft.v1beta1.QueryNFTsResponse"></a>
 
 ### QueryNFTsResponse
+
+```
 QueryNFTsResponse is the response type for the Query/NFTs RPC methods
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14532,7 +17054,11 @@ QueryNFTsResponse is the response type for the Query/NFTs RPC methods
 <a name="cosmos.nft.v1beta1.QueryOwnerRequest"></a>
 
 ### QueryOwnerRequest
+
+```
 QueryOwnerRequest is the request type for the Query/Owner RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14548,7 +17074,11 @@ QueryOwnerRequest is the request type for the Query/Owner RPC method
 <a name="cosmos.nft.v1beta1.QueryOwnerResponse"></a>
 
 ### QueryOwnerResponse
+
+```
 QueryOwnerResponse is the response type for the Query/Owner RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14563,7 +17093,11 @@ QueryOwnerResponse is the response type for the Query/Owner RPC method
 <a name="cosmos.nft.v1beta1.QuerySupplyRequest"></a>
 
 ### QuerySupplyRequest
+
+```
 QuerySupplyRequest is the request type for the Query/Supply RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14578,7 +17112,11 @@ QuerySupplyRequest is the request type for the Query/Supply RPC method
 <a name="cosmos.nft.v1beta1.QuerySupplyResponse"></a>
 
 ### QuerySupplyResponse
+
+```
 QuerySupplyResponse is the response type for the Query/Supply RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14599,7 +17137,11 @@ QuerySupplyResponse is the response type for the Query/Supply RPC method
 <a name="cosmos.nft.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -14625,7 +17167,11 @@ Query defines the gRPC querier service.
 <a name="cosmos.nft.v1beta1.MsgSend"></a>
 
 ### MsgSend
+
+```
 MsgSend represents a message to send a nft from one account to another account.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14643,7 +17189,11 @@ MsgSend represents a message to send a nft from one account to another account.
 <a name="cosmos.nft.v1beta1.MsgSendResponse"></a>
 
 ### MsgSendResponse
+
+```
 MsgSendResponse defines the Msg/Send response type.
+```
+
 
 
 
@@ -14659,7 +17209,11 @@ MsgSendResponse defines the Msg/Send response type.
 <a name="cosmos.nft.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the nft Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -14679,9 +17233,13 @@ Msg defines the nft Msg service.
 <a name="cosmos.orm.module.v1alpha1.Module"></a>
 
 ### Module
+
+```
 Module defines the ORM module which adds providers to the app container for
 module-scoped DB's. In the future it may provide gRPC services for interacting
 with ORM data.
+```
+
 
 
 
@@ -14707,7 +17265,11 @@ with ORM data.
 <a name="cosmos.orm.query.v1alpha1.GetRequest"></a>
 
 ### GetRequest
+
+```
 GetRequest is the Query/Get request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14724,7 +17286,11 @@ GetRequest is the Query/Get request type.
 <a name="cosmos.orm.query.v1alpha1.GetResponse"></a>
 
 ### GetResponse
+
+```
 GetResponse is the Query/Get response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14739,7 +17305,11 @@ GetResponse is the Query/Get response type.
 <a name="cosmos.orm.query.v1alpha1.IndexValue"></a>
 
 ### IndexValue
+
+```
 IndexValue represents the value of a field in an ORM index expression.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14761,7 +17331,11 @@ IndexValue represents the value of a field in an ORM index expression.
 <a name="cosmos.orm.query.v1alpha1.ListRequest"></a>
 
 ### ListRequest
+
+```
 ListRequest is the Query/List request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14780,7 +17354,11 @@ ListRequest is the Query/List request type.
 <a name="cosmos.orm.query.v1alpha1.ListRequest.Prefix"></a>
 
 ### ListRequest.Prefix
+
+```
 Prefix specifies the arguments to a prefix query.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14795,7 +17373,11 @@ Prefix specifies the arguments to a prefix query.
 <a name="cosmos.orm.query.v1alpha1.ListRequest.Range"></a>
 
 ### ListRequest.Range
+
+```
 Range specifies the arguments to a range query.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14811,7 +17393,11 @@ Range specifies the arguments to a range query.
 <a name="cosmos.orm.query.v1alpha1.ListResponse"></a>
 
 ### ListResponse
+
+```
 ListResponse is the Query/List response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14833,7 +17419,11 @@ ListResponse is the Query/List response type.
 <a name="cosmos.orm.query.v1alpha1.Query"></a>
 
 ### Query
+
+```
 Query is a generic gRPC service for querying ORM data.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -14854,7 +17444,11 @@ Query is a generic gRPC service for querying ORM data.
 <a name="cosmos.orm.v1.PrimaryKeyDescriptor"></a>
 
 ### PrimaryKeyDescriptor
+
+```
 PrimaryKeyDescriptor describes a table primary key.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14870,7 +17464,11 @@ PrimaryKeyDescriptor describes a table primary key.
 <a name="cosmos.orm.v1.SecondaryIndexDescriptor"></a>
 
 ### SecondaryIndexDescriptor
+
+```
 PrimaryKeyDescriptor describes a table secondary index.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14887,7 +17485,11 @@ PrimaryKeyDescriptor describes a table secondary index.
 <a name="cosmos.orm.v1.SingletonDescriptor"></a>
 
 ### SingletonDescriptor
+
+```
 TableDescriptor describes an ORM singleton table which has at most one instance.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14902,7 +17504,11 @@ TableDescriptor describes an ORM singleton table which has at most one instance.
 <a name="cosmos.orm.v1.TableDescriptor"></a>
 
 ### TableDescriptor
+
+```
 TableDescriptor describes an ORM table.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14944,7 +17550,11 @@ TableDescriptor describes an ORM table.
 <a name="cosmos.orm.v1alpha1.ModuleSchemaDescriptor"></a>
 
 ### ModuleSchemaDescriptor
+
+```
 ModuleSchemaDescriptor describe's a module's ORM schema.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14960,7 +17570,11 @@ ModuleSchemaDescriptor describe's a module's ORM schema.
 <a name="cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry"></a>
 
 ### ModuleSchemaDescriptor.FileEntry
+
+```
 FileEntry describes an ORM file used in a module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -14979,7 +17593,12 @@ FileEntry describes an ORM file used in a module.
 <a name="cosmos.orm.v1alpha1.StorageType"></a>
 
 ### StorageType
+
+```
 StorageType
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -15016,7 +17635,11 @@ StorageType
 <a name="cosmos.params.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the params module.
+```
+
 
 
 
@@ -15042,8 +17665,12 @@ Module is the config object of the params module.
 <a name="cosmos.params.v1beta1.ParamChange"></a>
 
 ### ParamChange
+
+```
 ParamChange defines an individual parameter change, for use in
 ParameterChangeProposal.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15060,7 +17687,11 @@ ParameterChangeProposal.
 <a name="cosmos.params.v1beta1.ParameterChangeProposal"></a>
 
 ### ParameterChangeProposal
+
+```
 ParameterChangeProposal defines a proposal to change one or more parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15093,7 +17724,11 @@ ParameterChangeProposal defines a proposal to change one or more parameters.
 <a name="cosmos.params.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is request type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15109,7 +17744,11 @@ QueryParamsRequest is request type for the Query/Params RPC method.
 <a name="cosmos.params.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is response type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15124,10 +17763,14 @@ QueryParamsResponse is response type for the Query/Params RPC method.
 <a name="cosmos.params.v1beta1.QuerySubspacesRequest"></a>
 
 ### QuerySubspacesRequest
+
+```
 QuerySubspacesRequest defines a request type for querying for all registered
 subspaces and all keys for a subspace.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -15137,10 +17780,14 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.params.v1beta1.QuerySubspacesResponse"></a>
 
 ### QuerySubspacesResponse
+
+```
 QuerySubspacesResponse defines the response types for querying for all
 registered subspaces and all keys for a subspace.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15155,10 +17802,14 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.params.v1beta1.Subspace"></a>
 
 ### Subspace
+
+```
 Subspace defines a parameter subspace name and all the keys that exist for
 the subspace.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15180,7 +17831,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.params.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -15225,7 +17880,11 @@ Query defines the gRPC querier service.
 <a name="cosmos.reflection.v1.FileDescriptorsRequest"></a>
 
 ### FileDescriptorsRequest
+
+```
 FileDescriptorsRequest is the Query/FileDescriptors request type.
+```
+
 
 
 
@@ -15235,7 +17894,11 @@ FileDescriptorsRequest is the Query/FileDescriptors request type.
 <a name="cosmos.reflection.v1.FileDescriptorsResponse"></a>
 
 ### FileDescriptorsResponse
+
+```
 FileDescriptorsResponse is the Query/FileDescriptors response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15256,8 +17919,12 @@ FileDescriptorsResponse is the Query/FileDescriptors response type.
 <a name="cosmos.reflection.v1.ReflectionService"></a>
 
 ### ReflectionService
+
+```
 Package cosmos.reflection.v1 provides support for inspecting protobuf
 file descriptors.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -15277,7 +17944,11 @@ file descriptors.
 <a name="cosmos.slashing.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the slashing module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15308,7 +17979,11 @@ Module is the config object of the slashing module.
 <a name="cosmos.slashing.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the slashing module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15325,7 +18000,11 @@ GenesisState defines the slashing module's genesis state.
 <a name="cosmos.slashing.v1beta1.MissedBlock"></a>
 
 ### MissedBlock
+
+```
 MissedBlock contains height and missed status as boolean.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15341,7 +18020,11 @@ MissedBlock contains height and missed status as boolean.
 <a name="cosmos.slashing.v1beta1.SigningInfo"></a>
 
 ### SigningInfo
+
+```
 SigningInfo stores validator signing info of corresponding address.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15357,8 +18040,12 @@ SigningInfo stores validator signing info of corresponding address.
 <a name="cosmos.slashing.v1beta1.ValidatorMissedBlocks"></a>
 
 ### ValidatorMissedBlocks
+
+```
 ValidatorMissedBlocks contains array of missed blocks of corresponding
 address.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15390,7 +18077,11 @@ address.
 <a name="cosmos.slashing.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is the request type for the Query/Params RPC method
+```
+
 
 
 
@@ -15400,7 +18091,11 @@ QueryParamsRequest is the request type for the Query/Params RPC method
 <a name="cosmos.slashing.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is the response type for the Query/Params RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15415,8 +18110,12 @@ QueryParamsResponse is the response type for the Query/Params RPC method
 <a name="cosmos.slashing.v1beta1.QuerySigningInfoRequest"></a>
 
 ### QuerySigningInfoRequest
+
+```
 QuerySigningInfoRequest is the request type for the Query/SigningInfo RPC
 method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15431,8 +18130,12 @@ method
 <a name="cosmos.slashing.v1beta1.QuerySigningInfoResponse"></a>
 
 ### QuerySigningInfoResponse
+
+```
 QuerySigningInfoResponse is the response type for the Query/SigningInfo RPC
 method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15447,8 +18150,12 @@ method
 <a name="cosmos.slashing.v1beta1.QuerySigningInfosRequest"></a>
 
 ### QuerySigningInfosRequest
+
+```
 QuerySigningInfosRequest is the request type for the Query/SigningInfos RPC
 method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15463,8 +18170,12 @@ method
 <a name="cosmos.slashing.v1beta1.QuerySigningInfosResponse"></a>
 
 ### QuerySigningInfosResponse
+
+```
 QuerySigningInfosResponse is the response type for the Query/SigningInfos RPC
 method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15486,7 +18197,11 @@ method
 <a name="cosmos.slashing.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query provides defines the gRPC querier service
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -15508,7 +18223,11 @@ Query provides defines the gRPC querier service
 <a name="cosmos.slashing.v1beta1.Params"></a>
 
 ### Params
+
+```
 Params represents the parameters used for by the slashing module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15527,8 +18246,12 @@ Params represents the parameters used for by the slashing module.
 <a name="cosmos.slashing.v1beta1.ValidatorSigningInfo"></a>
 
 ### ValidatorSigningInfo
+
+```
 ValidatorSigningInfo defines a validator's signing info for monitoring their
 liveness activity.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15564,7 +18287,11 @@ liveness activity.
 <a name="cosmos.slashing.v1beta1.MsgUnjail"></a>
 
 ### MsgUnjail
+
+```
 MsgUnjail defines the Msg/Unjail request type
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15579,7 +18306,11 @@ MsgUnjail defines the Msg/Unjail request type
 <a name="cosmos.slashing.v1beta1.MsgUnjailResponse"></a>
 
 ### MsgUnjailResponse
+
+```
 MsgUnjailResponse defines the Msg/Unjail response type
+```
+
 
 
 
@@ -15589,9 +18320,13 @@ MsgUnjailResponse defines the Msg/Unjail response type
 <a name="cosmos.slashing.v1beta1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15607,10 +18342,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.slashing.v1beta1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -15626,7 +18365,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.slashing.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the slashing Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -15647,7 +18390,11 @@ Msg defines the slashing Msg service.
 <a name="cosmos.staking.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the staking module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15679,9 +18426,13 @@ Module is the config object of the staking module.
 <a name="cosmos.staking.v1beta1.StakeAuthorization"></a>
 
 ### StakeAuthorization
+
+```
 StakeAuthorization defines authorization for delegate/undelegate/redelegate.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15699,7 +18450,11 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.staking.v1beta1.StakeAuthorization.Validators"></a>
 
 ### StakeAuthorization.Validators
+
+```
 Validators defines list of validator addresses.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15716,9 +18471,14 @@ Validators defines list of validator addresses.
 <a name="cosmos.staking.v1beta1.AuthorizationType"></a>
 
 ### AuthorizationType
+
+```
 AuthorizationType defines the type of staking module authorization type
 
 Since: cosmos-sdk 0.43
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -15746,7 +18506,11 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.staking.v1beta1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState defines the staking module's genesis state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15768,7 +18532,11 @@ GenesisState defines the staking module's genesis state.
 <a name="cosmos.staking.v1beta1.LastValidatorPower"></a>
 
 ### LastValidatorPower
+
+```
 LastValidatorPower required for validator set update logic.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15800,7 +18568,11 @@ LastValidatorPower required for validator set update logic.
 <a name="cosmos.staking.v1beta1.QueryDelegationRequest"></a>
 
 ### QueryDelegationRequest
+
+```
 QueryDelegationRequest is request type for the Query/Delegation RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15816,7 +18588,11 @@ QueryDelegationRequest is request type for the Query/Delegation RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegationResponse"></a>
 
 ### QueryDelegationResponse
+
+```
 QueryDelegationResponse is response type for the Query/Delegation RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15831,8 +18607,12 @@ QueryDelegationResponse is response type for the Query/Delegation RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegatorDelegationsRequest"></a>
 
 ### QueryDelegatorDelegationsRequest
+
+```
 QueryDelegatorDelegationsRequest is request type for the
 Query/DelegatorDelegations RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15848,8 +18628,12 @@ Query/DelegatorDelegations RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegatorDelegationsResponse"></a>
 
 ### QueryDelegatorDelegationsResponse
+
+```
 QueryDelegatorDelegationsResponse is response type for the
 Query/DelegatorDelegations RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15865,8 +18649,12 @@ Query/DelegatorDelegations RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegatorUnbondingDelegationsRequest"></a>
 
 ### QueryDelegatorUnbondingDelegationsRequest
+
+```
 QueryDelegatorUnbondingDelegationsRequest is request type for the
 Query/DelegatorUnbondingDelegations RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15882,8 +18670,12 @@ Query/DelegatorUnbondingDelegations RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegatorUnbondingDelegationsResponse"></a>
 
 ### QueryDelegatorUnbondingDelegationsResponse
+
+```
 QueryUnbondingDelegatorDelegationsResponse is response type for the
 Query/UnbondingDelegatorDelegations RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15899,8 +18691,12 @@ Query/UnbondingDelegatorDelegations RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegatorValidatorRequest"></a>
 
 ### QueryDelegatorValidatorRequest
+
+```
 QueryDelegatorValidatorRequest is request type for the
 Query/DelegatorValidator RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15916,8 +18712,12 @@ Query/DelegatorValidator RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegatorValidatorResponse"></a>
 
 ### QueryDelegatorValidatorResponse
+
+```
 QueryDelegatorValidatorResponse response type for the
 Query/DelegatorValidator RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15932,8 +18732,12 @@ Query/DelegatorValidator RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegatorValidatorsRequest"></a>
 
 ### QueryDelegatorValidatorsRequest
+
+```
 QueryDelegatorValidatorsRequest is request type for the
 Query/DelegatorValidators RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15949,8 +18753,12 @@ Query/DelegatorValidators RPC method.
 <a name="cosmos.staking.v1beta1.QueryDelegatorValidatorsResponse"></a>
 
 ### QueryDelegatorValidatorsResponse
+
+```
 QueryDelegatorValidatorsResponse is response type for the
 Query/DelegatorValidators RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15966,8 +18774,12 @@ Query/DelegatorValidators RPC method.
 <a name="cosmos.staking.v1beta1.QueryHistoricalInfoRequest"></a>
 
 ### QueryHistoricalInfoRequest
+
+```
 QueryHistoricalInfoRequest is request type for the Query/HistoricalInfo RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15982,8 +18794,12 @@ method.
 <a name="cosmos.staking.v1beta1.QueryHistoricalInfoResponse"></a>
 
 ### QueryHistoricalInfoResponse
+
+```
 QueryHistoricalInfoResponse is response type for the Query/HistoricalInfo RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -15998,7 +18814,11 @@ method.
 <a name="cosmos.staking.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is request type for the Query/Params RPC method.
+```
+
 
 
 
@@ -16008,7 +18828,11 @@ QueryParamsRequest is request type for the Query/Params RPC method.
 <a name="cosmos.staking.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is response type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16023,7 +18847,11 @@ QueryParamsResponse is response type for the Query/Params RPC method.
 <a name="cosmos.staking.v1beta1.QueryPoolRequest"></a>
 
 ### QueryPoolRequest
+
+```
 QueryPoolRequest is request type for the Query/Pool RPC method.
+```
+
 
 
 
@@ -16033,7 +18861,11 @@ QueryPoolRequest is request type for the Query/Pool RPC method.
 <a name="cosmos.staking.v1beta1.QueryPoolResponse"></a>
 
 ### QueryPoolResponse
+
+```
 QueryPoolResponse is response type for the Query/Pool RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16048,8 +18880,12 @@ QueryPoolResponse is response type for the Query/Pool RPC method.
 <a name="cosmos.staking.v1beta1.QueryRedelegationsRequest"></a>
 
 ### QueryRedelegationsRequest
+
+```
 QueryRedelegationsRequest is request type for the Query/Redelegations RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16067,8 +18903,12 @@ method.
 <a name="cosmos.staking.v1beta1.QueryRedelegationsResponse"></a>
 
 ### QueryRedelegationsResponse
+
+```
 QueryRedelegationsResponse is response type for the Query/Redelegations RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16084,8 +18924,12 @@ method.
 <a name="cosmos.staking.v1beta1.QueryUnbondingDelegationRequest"></a>
 
 ### QueryUnbondingDelegationRequest
+
+```
 QueryUnbondingDelegationRequest is request type for the
 Query/UnbondingDelegation RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16101,8 +18945,12 @@ Query/UnbondingDelegation RPC method.
 <a name="cosmos.staking.v1beta1.QueryUnbondingDelegationResponse"></a>
 
 ### QueryUnbondingDelegationResponse
+
+```
 QueryDelegationResponse is response type for the Query/UnbondingDelegation
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16117,8 +18965,12 @@ RPC method.
 <a name="cosmos.staking.v1beta1.QueryValidatorDelegationsRequest"></a>
 
 ### QueryValidatorDelegationsRequest
+
+```
 QueryValidatorDelegationsRequest is request type for the
 Query/ValidatorDelegations RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16134,8 +18986,12 @@ Query/ValidatorDelegations RPC method
 <a name="cosmos.staking.v1beta1.QueryValidatorDelegationsResponse"></a>
 
 ### QueryValidatorDelegationsResponse
+
+```
 QueryValidatorDelegationsResponse is response type for the
 Query/ValidatorDelegations RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16151,7 +19007,11 @@ Query/ValidatorDelegations RPC method
 <a name="cosmos.staking.v1beta1.QueryValidatorRequest"></a>
 
 ### QueryValidatorRequest
+
+```
 QueryValidatorRequest is response type for the Query/Validator RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16166,7 +19026,11 @@ QueryValidatorRequest is response type for the Query/Validator RPC method
 <a name="cosmos.staking.v1beta1.QueryValidatorResponse"></a>
 
 ### QueryValidatorResponse
+
+```
 QueryValidatorResponse is response type for the Query/Validator RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16181,8 +19045,12 @@ QueryValidatorResponse is response type for the Query/Validator RPC method
 <a name="cosmos.staking.v1beta1.QueryValidatorUnbondingDelegationsRequest"></a>
 
 ### QueryValidatorUnbondingDelegationsRequest
+
+```
 QueryValidatorUnbondingDelegationsRequest is required type for the
 Query/ValidatorUnbondingDelegations RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16198,8 +19066,12 @@ Query/ValidatorUnbondingDelegations RPC method
 <a name="cosmos.staking.v1beta1.QueryValidatorUnbondingDelegationsResponse"></a>
 
 ### QueryValidatorUnbondingDelegationsResponse
+
+```
 QueryValidatorUnbondingDelegationsResponse is response type for the
 Query/ValidatorUnbondingDelegations RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16215,7 +19087,11 @@ Query/ValidatorUnbondingDelegations RPC method.
 <a name="cosmos.staking.v1beta1.QueryValidatorsRequest"></a>
 
 ### QueryValidatorsRequest
+
+```
 QueryValidatorsRequest is request type for Query/Validators RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16231,7 +19107,11 @@ QueryValidatorsRequest is request type for Query/Validators RPC method.
 <a name="cosmos.staking.v1beta1.QueryValidatorsResponse"></a>
 
 ### QueryValidatorsResponse
+
+```
 QueryValidatorsResponse is response type for the Query/Validators RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16253,7 +19133,11 @@ QueryValidatorsResponse is response type for the Query/Validators RPC method
 <a name="cosmos.staking.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -16286,7 +19170,11 @@ Query defines the gRPC querier service.
 <a name="cosmos.staking.v1beta1.Commission"></a>
 
 ### Commission
+
+```
 Commission defines commission parameters for a given validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16302,8 +19190,12 @@ Commission defines commission parameters for a given validator.
 <a name="cosmos.staking.v1beta1.CommissionRates"></a>
 
 ### CommissionRates
+
+```
 CommissionRates defines the initial commission rates to be used for creating
 a validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16320,9 +19212,13 @@ a validator.
 <a name="cosmos.staking.v1beta1.DVPair"></a>
 
 ### DVPair
+
+```
 DVPair is struct that just has a delegator-validator pair with no other data.
 It is intended to be used as a marshalable pointer. For example, a DVPair can
 be used to construct the key to getting an UnbondingDelegation from state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16338,7 +19234,11 @@ be used to construct the key to getting an UnbondingDelegation from state.
 <a name="cosmos.staking.v1beta1.DVPairs"></a>
 
 ### DVPairs
+
+```
 DVPairs defines an array of DVPair objects.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16353,10 +19253,14 @@ DVPairs defines an array of DVPair objects.
 <a name="cosmos.staking.v1beta1.DVVTriplet"></a>
 
 ### DVVTriplet
+
+```
 DVVTriplet is struct that just has a delegator-validator-validator triplet
 with no other data. It is intended to be used as a marshalable pointer. For
 example, a DVVTriplet can be used to construct the key to getting a
 Redelegation from state.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16373,7 +19277,11 @@ Redelegation from state.
 <a name="cosmos.staking.v1beta1.DVVTriplets"></a>
 
 ### DVVTriplets
+
+```
 DVVTriplets defines an array of DVVTriplet objects.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16388,9 +19296,13 @@ DVVTriplets defines an array of DVVTriplet objects.
 <a name="cosmos.staking.v1beta1.Delegation"></a>
 
 ### Delegation
+
+```
 Delegation represents the bond with tokens held by an account. It is
 owned by one delegator, and is associated with the voting power of one
 validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16407,8 +19319,12 @@ validator.
 <a name="cosmos.staking.v1beta1.DelegationResponse"></a>
 
 ### DelegationResponse
+
+```
 DelegationResponse is equivalent to Delegation except that it contains a
 balance in addition to shares which is more suitable for client responses.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16424,7 +19340,11 @@ balance in addition to shares which is more suitable for client responses.
 <a name="cosmos.staking.v1beta1.Description"></a>
 
 ### Description
+
+```
 Description defines a validator description.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16443,10 +19363,14 @@ Description defines a validator description.
 <a name="cosmos.staking.v1beta1.HistoricalInfo"></a>
 
 ### HistoricalInfo
+
+```
 HistoricalInfo contains header and validator information for a given block.
 It is stored as part of staking module's state, which persists the `n` most
 recent HistoricalInfo
 (`n` is set by the staking module's `historical_entries` parameter).
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16462,7 +19386,11 @@ recent HistoricalInfo
 <a name="cosmos.staking.v1beta1.Params"></a>
 
 ### Params
+
+```
 Params defines the parameters for the x/staking module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16482,8 +19410,12 @@ Params defines the parameters for the x/staking module.
 <a name="cosmos.staking.v1beta1.Pool"></a>
 
 ### Pool
+
+```
 Pool is used for tracking bonded and not-bonded token supply of the bond
 denomination.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16499,8 +19431,12 @@ denomination.
 <a name="cosmos.staking.v1beta1.Redelegation"></a>
 
 ### Redelegation
+
+```
 Redelegation contains the list of a particular delegator's redelegating bonds
 from a particular source validator to a particular destination validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16518,7 +19454,11 @@ from a particular source validator to a particular destination validator.
 <a name="cosmos.staking.v1beta1.RedelegationEntry"></a>
 
 ### RedelegationEntry
+
+```
 RedelegationEntry defines a redelegation object with relevant metadata.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16538,9 +19478,13 @@ RedelegationEntry defines a redelegation object with relevant metadata.
 <a name="cosmos.staking.v1beta1.RedelegationEntryResponse"></a>
 
 ### RedelegationEntryResponse
+
+```
 RedelegationEntryResponse is equivalent to a RedelegationEntry except that it
 contains a balance in addition to shares which is more suitable for client
 responses.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16556,9 +19500,13 @@ responses.
 <a name="cosmos.staking.v1beta1.RedelegationResponse"></a>
 
 ### RedelegationResponse
+
+```
 RedelegationResponse is equivalent to a Redelegation except that its entries
 contain a balance in addition to shares which is more suitable for client
 responses.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16574,8 +19522,12 @@ responses.
 <a name="cosmos.staking.v1beta1.UnbondingDelegation"></a>
 
 ### UnbondingDelegation
+
+```
 UnbondingDelegation stores all of a single delegator's unbonding bonds
 for a single validator in an time-ordered list.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16592,7 +19544,11 @@ for a single validator in an time-ordered list.
 <a name="cosmos.staking.v1beta1.UnbondingDelegationEntry"></a>
 
 ### UnbondingDelegationEntry
+
+```
 UnbondingDelegationEntry defines an unbonding object with relevant metadata.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16612,7 +19568,11 @@ UnbondingDelegationEntry defines an unbonding object with relevant metadata.
 <a name="cosmos.staking.v1beta1.ValAddresses"></a>
 
 ### ValAddresses
+
+```
 ValAddresses defines a repeated set of validator addresses.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16627,6 +19587,8 @@ ValAddresses defines a repeated set of validator addresses.
 <a name="cosmos.staking.v1beta1.Validator"></a>
 
 ### Validator
+
+```
 Validator defines a validator, together with the total amount of the
 Validator's bond shares and their exchange rate to coins. Slashing results in
 a decrease in the exchange rate, allowing correct calculation of future
@@ -16635,6 +19597,8 @@ this validator, the validator is credited with a delegation whose number of
 bond shares is based on the amount of coins delegated divided by the current
 exchange rate. Voting power can be calculated as total bonded shares
 multiplied by exchange rate.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16661,8 +19625,12 @@ multiplied by exchange rate.
 <a name="cosmos.staking.v1beta1.ValidatorUpdates"></a>
 
 ### ValidatorUpdates
+
+```
 ValidatorUpdates defines an array of abci.ValidatorUpdate objects.
 TODO: explore moving this to proto/cosmos/base to separate modules from tendermint dependence
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16679,7 +19647,12 @@ TODO: explore moving this to proto/cosmos/base to separate modules from tendermi
 <a name="cosmos.staking.v1beta1.BondStatus"></a>
 
 ### BondStatus
+
+```
 BondStatus is the status of a validator.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -16693,7 +19666,12 @@ BondStatus is the status of a validator.
 <a name="cosmos.staking.v1beta1.Infraction"></a>
 
 ### Infraction
+
+```
 Infraction indicates the infraction a validator commited.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -16720,8 +19698,12 @@ Infraction indicates the infraction a validator commited.
 <a name="cosmos.staking.v1beta1.MsgBeginRedelegate"></a>
 
 ### MsgBeginRedelegate
+
+```
 MsgBeginRedelegate defines a SDK message for performing a redelegation
 of coins from a delegator and source validator to a destination validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16739,7 +19721,11 @@ of coins from a delegator and source validator to a destination validator.
 <a name="cosmos.staking.v1beta1.MsgBeginRedelegateResponse"></a>
 
 ### MsgBeginRedelegateResponse
+
+```
 MsgBeginRedelegateResponse defines the Msg/BeginRedelegate response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16754,9 +19740,13 @@ MsgBeginRedelegateResponse defines the Msg/BeginRedelegate response type.
 <a name="cosmos.staking.v1beta1.MsgCancelUnbondingDelegation"></a>
 
 ### MsgCancelUnbondingDelegation
+
+```
 MsgCancelUnbondingDelegation defines the SDK message for performing a cancel unbonding delegation for delegator
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16774,9 +19764,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.staking.v1beta1.MsgCancelUnbondingDelegationResponse"></a>
 
 ### MsgCancelUnbondingDelegationResponse
+
+```
 MsgCancelUnbondingDelegationResponse
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -16786,7 +19780,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.staking.v1beta1.MsgCreateValidator"></a>
 
 ### MsgCreateValidator
+
+```
 MsgCreateValidator defines a SDK message for creating a new validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16807,7 +19805,11 @@ MsgCreateValidator defines a SDK message for creating a new validator.
 <a name="cosmos.staking.v1beta1.MsgCreateValidatorResponse"></a>
 
 ### MsgCreateValidatorResponse
+
+```
 MsgCreateValidatorResponse defines the Msg/CreateValidator response type.
+```
+
 
 
 
@@ -16817,8 +19819,12 @@ MsgCreateValidatorResponse defines the Msg/CreateValidator response type.
 <a name="cosmos.staking.v1beta1.MsgDelegate"></a>
 
 ### MsgDelegate
+
+```
 MsgDelegate defines a SDK message for performing a delegation of coins
 from a delegator to a validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16835,7 +19841,11 @@ from a delegator to a validator.
 <a name="cosmos.staking.v1beta1.MsgDelegateResponse"></a>
 
 ### MsgDelegateResponse
+
+```
 MsgDelegateResponse defines the Msg/Delegate response type.
+```
+
 
 
 
@@ -16845,7 +19855,11 @@ MsgDelegateResponse defines the Msg/Delegate response type.
 <a name="cosmos.staking.v1beta1.MsgEditValidator"></a>
 
 ### MsgEditValidator
+
+```
 MsgEditValidator defines a SDK message for editing an existing validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16863,7 +19877,11 @@ MsgEditValidator defines a SDK message for editing an existing validator.
 <a name="cosmos.staking.v1beta1.MsgEditValidatorResponse"></a>
 
 ### MsgEditValidatorResponse
+
+```
 MsgEditValidatorResponse defines the Msg/EditValidator response type.
+```
+
 
 
 
@@ -16873,8 +19891,12 @@ MsgEditValidatorResponse defines the Msg/EditValidator response type.
 <a name="cosmos.staking.v1beta1.MsgUndelegate"></a>
 
 ### MsgUndelegate
+
+```
 MsgUndelegate defines a SDK message for performing an undelegation from a
 delegate and a validator.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16891,7 +19913,11 @@ delegate and a validator.
 <a name="cosmos.staking.v1beta1.MsgUndelegateResponse"></a>
 
 ### MsgUndelegateResponse
+
+```
 MsgUndelegateResponse defines the Msg/Undelegate response type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16906,9 +19932,13 @@ MsgUndelegateResponse defines the Msg/Undelegate response type.
 <a name="cosmos.staking.v1beta1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the Msg/UpdateParams request type.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -16924,10 +19954,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.staking.v1beta1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 
@@ -16943,7 +19977,11 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.staking.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the staking Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -16969,7 +20007,11 @@ Msg defines the staking Msg service.
 <a name="cosmos.tx.config.v1.Config"></a>
 
 ### Config
+
+```
 Config is the config object of the x/auth/tx package.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17001,10 +20043,14 @@ Config is the config object of the x/auth/tx package.
 <a name="cosmos.tx.signing.v1beta1.SignatureDescriptor"></a>
 
 ### SignatureDescriptor
+
+```
 SignatureDescriptor is a convenience type which represents the full data for
 a signature including the public key of the signer, signing modes and the
 signature itself. It is primarily used for coordinating signatures between
 clients.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17021,7 +20067,11 @@ clients.
 <a name="cosmos.tx.signing.v1beta1.SignatureDescriptor.Data"></a>
 
 ### SignatureDescriptor.Data
+
+```
 Data represents signature data
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17037,7 +20087,11 @@ Data represents signature data
 <a name="cosmos.tx.signing.v1beta1.SignatureDescriptor.Data.Multi"></a>
 
 ### SignatureDescriptor.Data.Multi
+
+```
 Multi is the signature data for a multisig public key
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17053,7 +20107,11 @@ Multi is the signature data for a multisig public key
 <a name="cosmos.tx.signing.v1beta1.SignatureDescriptor.Data.Single"></a>
 
 ### SignatureDescriptor.Data.Single
+
+```
 Single is the signature data for a single signer
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17069,7 +20127,11 @@ Single is the signature data for a single signer
 <a name="cosmos.tx.signing.v1beta1.SignatureDescriptors"></a>
 
 ### SignatureDescriptors
+
+```
 SignatureDescriptors wraps multiple SignatureDescriptor's.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17086,6 +20148,8 @@ SignatureDescriptors wraps multiple SignatureDescriptor's.
 <a name="cosmos.tx.signing.v1beta1.SignMode"></a>
 
 ### SignMode
+
+```
 SignMode represents a signing mode with its own security guarantees.
 
 This enum should be considered a registry of all known sign modes
@@ -17094,6 +20158,9 @@ sign modes. Apps that would like to support custom  sign modes are
 encouraged to open a small PR against this file to add a new case
 to this SignMode enum describing their sign mode so that different
 apps have a consistent version of this enum.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -17123,8 +20190,12 @@ apps have a consistent version of this enum.
 <a name="cosmos.tx.v1beta1.BroadcastTxRequest"></a>
 
 ### BroadcastTxRequest
+
+```
 BroadcastTxRequest is the request type for the Service.BroadcastTxRequest
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17140,8 +20211,12 @@ RPC method.
 <a name="cosmos.tx.v1beta1.BroadcastTxResponse"></a>
 
 ### BroadcastTxResponse
+
+```
 BroadcastTxResponse is the response type for the
 Service.BroadcastTx method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17156,10 +20231,14 @@ Service.BroadcastTx method.
 <a name="cosmos.tx.v1beta1.GetBlockWithTxsRequest"></a>
 
 ### GetBlockWithTxsRequest
+
+```
 GetBlockWithTxsRequest is the request type for the Service.GetBlockWithTxs
 RPC method.
 
 Since: cosmos-sdk 0.45.2
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17175,9 +20254,13 @@ Since: cosmos-sdk 0.45.2
 <a name="cosmos.tx.v1beta1.GetBlockWithTxsResponse"></a>
 
 ### GetBlockWithTxsResponse
+
+```
 GetBlockWithTxsResponse is the response type for the Service.GetBlockWithTxs method.
 
 Since: cosmos-sdk 0.45.2
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17195,8 +20278,12 @@ Since: cosmos-sdk 0.45.2
 <a name="cosmos.tx.v1beta1.GetTxRequest"></a>
 
 ### GetTxRequest
+
+```
 GetTxRequest is the request type for the Service.GetTx
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17211,7 +20298,11 @@ RPC method.
 <a name="cosmos.tx.v1beta1.GetTxResponse"></a>
 
 ### GetTxResponse
+
+```
 GetTxResponse is the response type for the Service.GetTx method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17227,8 +20318,12 @@ GetTxResponse is the response type for the Service.GetTx method.
 <a name="cosmos.tx.v1beta1.GetTxsEventRequest"></a>
 
 ### GetTxsEventRequest
+
+```
 GetTxsEventRequest is the request type for the Service.TxsByEvents
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17247,8 +20342,12 @@ RPC method.
 <a name="cosmos.tx.v1beta1.GetTxsEventResponse"></a>
 
 ### GetTxsEventResponse
+
+```
 GetTxsEventResponse is the response type for the Service.TxsByEvents
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17266,8 +20365,12 @@ RPC method.
 <a name="cosmos.tx.v1beta1.SimulateRequest"></a>
 
 ### SimulateRequest
+
+```
 SimulateRequest is the request type for the Service.Simulate
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17283,8 +20386,12 @@ RPC method.
 <a name="cosmos.tx.v1beta1.SimulateResponse"></a>
 
 ### SimulateResponse
+
+```
 SimulateResponse is the response type for the
 Service.SimulateRPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17300,10 +20407,14 @@ Service.SimulateRPC method.
 <a name="cosmos.tx.v1beta1.TxDecodeAminoRequest"></a>
 
 ### TxDecodeAminoRequest
+
+```
 TxDecodeAminoRequest is the request type for the Service.TxDecodeAmino
 RPC method.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17318,10 +20429,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.tx.v1beta1.TxDecodeAminoResponse"></a>
 
 ### TxDecodeAminoResponse
+
+```
 TxDecodeAminoResponse is the response type for the Service.TxDecodeAmino
 RPC method.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17336,10 +20451,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.tx.v1beta1.TxDecodeRequest"></a>
 
 ### TxDecodeRequest
+
+```
 TxDecodeRequest is the request type for the Service.TxDecode
 RPC method.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17354,10 +20473,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.tx.v1beta1.TxDecodeResponse"></a>
 
 ### TxDecodeResponse
+
+```
 TxDecodeResponse is the response type for the
 Service.TxDecode method.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17372,10 +20495,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.tx.v1beta1.TxEncodeAminoRequest"></a>
 
 ### TxEncodeAminoRequest
+
+```
 TxEncodeAminoRequest is the request type for the Service.TxEncodeAmino
 RPC method.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17390,10 +20517,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.tx.v1beta1.TxEncodeAminoResponse"></a>
 
 ### TxEncodeAminoResponse
+
+```
 TxEncodeAminoResponse is the response type for the Service.TxEncodeAmino
 RPC method.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17408,10 +20539,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.tx.v1beta1.TxEncodeRequest"></a>
 
 ### TxEncodeRequest
+
+```
 TxEncodeRequest is the request type for the Service.TxEncode
 RPC method.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17426,10 +20561,14 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.tx.v1beta1.TxEncodeResponse"></a>
 
 ### TxEncodeResponse
+
+```
 TxEncodeResponse is the response type for the
 Service.TxEncode method.
 
 Since: cosmos-sdk 0.47
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17446,7 +20585,12 @@ Since: cosmos-sdk 0.47
 <a name="cosmos.tx.v1beta1.BroadcastMode"></a>
 
 ### BroadcastMode
+
+```
 BroadcastMode specifies the broadcast mode for the TxService.Broadcast RPC method.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -17460,7 +20604,12 @@ BroadcastMode specifies the broadcast mode for the TxService.Broadcast RPC metho
 <a name="cosmos.tx.v1beta1.OrderBy"></a>
 
 ### OrderBy
+
+```
 OrderBy defines the sorting order
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -17477,7 +20626,11 @@ OrderBy defines the sorting order
 <a name="cosmos.tx.v1beta1.Service"></a>
 
 ### Service
+
+```
 Service defines a gRPC service for interacting with transactions.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -17505,8 +20658,12 @@ Service defines a gRPC service for interacting with transactions.
 <a name="cosmos.tx.v1beta1.AuthInfo"></a>
 
 ### AuthInfo
+
+```
 AuthInfo describes the fee and signer modes that are used to sign a
 transaction.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17523,12 +20680,16 @@ transaction.
 <a name="cosmos.tx.v1beta1.AuxSignerData"></a>
 
 ### AuxSignerData
+
+```
 AuxSignerData is the intermediary format that an auxiliary signer (e.g. a
 tipper) builds and sends to the fee payer (who will build and broadcast the
 actual tx). AuxSignerData is not a valid tx in itself, and will be rejected
 by the node if sent directly as-is.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17546,9 +20707,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.tx.v1beta1.Fee"></a>
 
 ### Fee
+
+```
 Fee includes the amount of coins paid in fees and the maximum
 gas to be used by the transaction. The ratio yields an effective "gasprice",
 which must be above some miminum to be accepted into the mempool.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17566,7 +20731,11 @@ which must be above some miminum to be accepted into the mempool.
 <a name="cosmos.tx.v1beta1.ModeInfo"></a>
 
 ### ModeInfo
+
+```
 ModeInfo describes the signing mode of a single or nested multisig signer.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17582,7 +20751,11 @@ ModeInfo describes the signing mode of a single or nested multisig signer.
 <a name="cosmos.tx.v1beta1.ModeInfo.Multi"></a>
 
 ### ModeInfo.Multi
+
+```
 Multi is the mode info for a multisig public key
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17598,9 +20771,13 @@ Multi is the mode info for a multisig public key
 <a name="cosmos.tx.v1beta1.ModeInfo.Single"></a>
 
 ### ModeInfo.Single
+
+```
 Single is the mode info for a single signer. It is structured as a message
 to allow for additional fields such as locale for SIGN_MODE_TEXTUAL in the
 future
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17615,7 +20792,11 @@ future
 <a name="cosmos.tx.v1beta1.SignDoc"></a>
 
 ### SignDoc
+
+```
 SignDoc is the type used for generating sign bytes for SIGN_MODE_DIRECT.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17633,10 +20814,14 @@ SignDoc is the type used for generating sign bytes for SIGN_MODE_DIRECT.
 <a name="cosmos.tx.v1beta1.SignDocDirectAux"></a>
 
 ### SignDocDirectAux
+
+```
 SignDocDirectAux is the type used for generating sign bytes for
 SIGN_MODE_DIRECT_AUX.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17656,8 +20841,12 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.tx.v1beta1.SignerInfo"></a>
 
 ### SignerInfo
+
+```
 SignerInfo describes the public key and signing mode of a single top-level
 signer.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17674,9 +20863,13 @@ signer.
 <a name="cosmos.tx.v1beta1.Tip"></a>
 
 ### Tip
+
+```
 Tip is the tip used for meta-transactions.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17692,7 +20885,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.tx.v1beta1.Tx"></a>
 
 ### Tx
+
+```
 Tx is the standard type used for broadcasting transactions.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17709,7 +20906,11 @@ Tx is the standard type used for broadcasting transactions.
 <a name="cosmos.tx.v1beta1.TxBody"></a>
 
 ### TxBody
+
+```
 TxBody is the body of a transaction that all signers sign over.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17728,11 +20929,15 @@ TxBody is the body of a transaction that all signers sign over.
 <a name="cosmos.tx.v1beta1.TxRaw"></a>
 
 ### TxRaw
+
+```
 TxRaw is a variant of Tx that pins the signer's exact binary representation
 of body and auth_info. This is used for signing, broadcasting and
 verification. The binary `serialize(tx: TxRaw)` is stored in Tendermint and
 the hash `sha256(serialize(tx: TxRaw))` becomes the "txhash", commonly used
 as the transaction ID.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17765,7 +20970,11 @@ as the transaction ID.
 <a name="cosmos.upgrade.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the upgrade module.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17796,8 +21005,12 @@ Module is the config object of the upgrade module.
 <a name="cosmos.upgrade.v1beta1.QueryAppliedPlanRequest"></a>
 
 ### QueryAppliedPlanRequest
+
+```
 QueryCurrentPlanRequest is the request type for the Query/AppliedPlan RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17812,8 +21025,12 @@ method.
 <a name="cosmos.upgrade.v1beta1.QueryAppliedPlanResponse"></a>
 
 ### QueryAppliedPlanResponse
+
+```
 QueryAppliedPlanResponse is the response type for the Query/AppliedPlan RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17828,9 +21045,13 @@ method.
 <a name="cosmos.upgrade.v1beta1.QueryAuthorityRequest"></a>
 
 ### QueryAuthorityRequest
+
+```
 QueryAuthorityRequest is the request type for Query/Authority
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -17840,9 +21061,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.upgrade.v1beta1.QueryAuthorityResponse"></a>
 
 ### QueryAuthorityResponse
+
+```
 QueryAuthorityResponse is the response type for Query/Authority
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17857,8 +21082,12 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.upgrade.v1beta1.QueryCurrentPlanRequest"></a>
 
 ### QueryCurrentPlanRequest
+
+```
 QueryCurrentPlanRequest is the request type for the Query/CurrentPlan RPC
 method.
+```
+
 
 
 
@@ -17868,8 +21097,12 @@ method.
 <a name="cosmos.upgrade.v1beta1.QueryCurrentPlanResponse"></a>
 
 ### QueryCurrentPlanResponse
+
+```
 QueryCurrentPlanResponse is the response type for the Query/CurrentPlan RPC
 method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17884,10 +21117,14 @@ method.
 <a name="cosmos.upgrade.v1beta1.QueryModuleVersionsRequest"></a>
 
 ### QueryModuleVersionsRequest
+
+```
 QueryModuleVersionsRequest is the request type for the Query/ModuleVersions
 RPC method.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17902,10 +21139,14 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.upgrade.v1beta1.QueryModuleVersionsResponse"></a>
 
 ### QueryModuleVersionsResponse
+
+```
 QueryModuleVersionsResponse is the response type for the Query/ModuleVersions
 RPC method.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17920,8 +21161,12 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateRequest"></a>
 
 ### QueryUpgradedConsensusStateRequest
+
+```
 QueryUpgradedConsensusStateRequest is the request type for the Query/UpgradedConsensusState
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17936,8 +21181,12 @@ RPC method.
 <a name="cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateResponse"></a>
 
 ### QueryUpgradedConsensusStateResponse
+
+```
 QueryUpgradedConsensusStateResponse is the response type for the Query/UpgradedConsensusState
 RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17958,7 +21207,11 @@ RPC method.
 <a name="cosmos.upgrade.v1beta1.Query"></a>
 
 ### Query
+
+```
 Query defines the gRPC upgrade querier service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -17976,15 +21229,23 @@ Query defines the gRPC upgrade querier service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/upgrade/v1beta1/tx.proto
+
+```
 Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.upgrade.v1beta1.MsgCancelUpgrade"></a>
 
 ### MsgCancelUpgrade
+
+```
 MsgCancelUpgrade is the Msg/CancelUpgrade request type.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -17999,9 +21260,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.upgrade.v1beta1.MsgCancelUpgradeResponse"></a>
 
 ### MsgCancelUpgradeResponse
+
+```
 MsgCancelUpgradeResponse is the Msg/CancelUpgrade response type.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -18011,9 +21276,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.upgrade.v1beta1.MsgSoftwareUpgrade"></a>
 
 ### MsgSoftwareUpgrade
+
+```
 MsgSoftwareUpgrade is the Msg/SoftwareUpgrade request type.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18029,9 +21298,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.upgrade.v1beta1.MsgSoftwareUpgradeResponse"></a>
 
 ### MsgSoftwareUpgradeResponse
+
+```
 MsgSoftwareUpgradeResponse is the Msg/SoftwareUpgrade response type.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -18047,7 +21320,11 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.upgrade.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the upgrade Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -18068,10 +21345,14 @@ Msg defines the upgrade Msg service.
 <a name="cosmos.upgrade.v1beta1.CancelSoftwareUpgradeProposal"></a>
 
 ### CancelSoftwareUpgradeProposal
+
+```
 CancelSoftwareUpgradeProposal is a gov Content type for cancelling a software
 upgrade.
 Deprecated: This legacy proposal is deprecated in favor of Msg-based gov
 proposals, see MsgCancelUpgrade.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18087,9 +21368,13 @@ proposals, see MsgCancelUpgrade.
 <a name="cosmos.upgrade.v1beta1.ModuleVersion"></a>
 
 ### ModuleVersion
+
+```
 ModuleVersion specifies a module and its consensus version.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18105,7 +21390,11 @@ Since: cosmos-sdk 0.43
 <a name="cosmos.upgrade.v1beta1.Plan"></a>
 
 ### Plan
+
+```
 Plan specifies information about a planned upgrade and when it should occur.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18124,10 +21413,14 @@ Plan specifies information about a planned upgrade and when it should occur.
 <a name="cosmos.upgrade.v1beta1.SoftwareUpgradeProposal"></a>
 
 ### SoftwareUpgradeProposal
+
+```
 SoftwareUpgradeProposal is a gov Content type for initiating a software
 upgrade.
 Deprecated: This legacy proposal is deprecated in favor of Msg-based gov
 proposals, see MsgSoftwareUpgrade.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18160,7 +21453,11 @@ proposals, see MsgSoftwareUpgrade.
 <a name="cosmos.vesting.module.v1.Module"></a>
 
 ### Module
+
+```
 Module is the config object of the vesting module.
+```
+
 
 
 
@@ -18186,10 +21483,14 @@ Module is the config object of the vesting module.
 <a name="cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount"></a>
 
 ### MsgCreatePeriodicVestingAccount
+
+```
 MsgCreateVestingAccount defines a message that enables creating a vesting
 account.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18207,10 +21508,14 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccountResponse"></a>
 
 ### MsgCreatePeriodicVestingAccountResponse
+
+```
 MsgCreateVestingAccountResponse defines the Msg/CreatePeriodicVestingAccount
 response type.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -18220,10 +21525,14 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount"></a>
 
 ### MsgCreatePermanentLockedAccount
+
+```
 MsgCreatePermanentLockedAccount defines a message that enables creating a permanent
 locked account.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18240,9 +21549,13 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccountResponse"></a>
 
 ### MsgCreatePermanentLockedAccountResponse
+
+```
 MsgCreatePermanentLockedAccountResponse defines the Msg/CreatePermanentLockedAccount response type.
 
 Since: cosmos-sdk 0.46
+```
+
 
 
 
@@ -18252,8 +21565,12 @@ Since: cosmos-sdk 0.46
 <a name="cosmos.vesting.v1beta1.MsgCreateVestingAccount"></a>
 
 ### MsgCreateVestingAccount
+
+```
 MsgCreateVestingAccount defines a message that enables creating a vesting
 account.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18272,7 +21589,11 @@ account.
 <a name="cosmos.vesting.v1beta1.MsgCreateVestingAccountResponse"></a>
 
 ### MsgCreateVestingAccountResponse
+
+```
 MsgCreateVestingAccountResponse defines the Msg/CreateVestingAccount response type.
+```
+
 
 
 
@@ -18288,7 +21609,11 @@ MsgCreateVestingAccountResponse defines the Msg/CreateVestingAccount response ty
 <a name="cosmos.vesting.v1beta1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the bank Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -18310,8 +21635,12 @@ Msg defines the bank Msg service.
 <a name="cosmos.vesting.v1beta1.BaseVestingAccount"></a>
 
 ### BaseVestingAccount
+
+```
 BaseVestingAccount implements the VestingAccount interface. It contains all
 the necessary fields needed for any vesting account implementation.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18330,8 +21659,12 @@ the necessary fields needed for any vesting account implementation.
 <a name="cosmos.vesting.v1beta1.ContinuousVestingAccount"></a>
 
 ### ContinuousVestingAccount
+
+```
 ContinuousVestingAccount implements the VestingAccount interface. It
 continuously vests by unlocking coins linearly with respect to time.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18347,9 +21680,13 @@ continuously vests by unlocking coins linearly with respect to time.
 <a name="cosmos.vesting.v1beta1.DelayedVestingAccount"></a>
 
 ### DelayedVestingAccount
+
+```
 DelayedVestingAccount implements the VestingAccount interface. It vests all
 coins after a specific time, but non prior. In other words, it keeps them
 locked until a specified time.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18364,7 +21701,11 @@ locked until a specified time.
 <a name="cosmos.vesting.v1beta1.Period"></a>
 
 ### Period
+
+```
 Period defines a length of time and amount of coins that will vest.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18380,8 +21721,12 @@ Period defines a length of time and amount of coins that will vest.
 <a name="cosmos.vesting.v1beta1.PeriodicVestingAccount"></a>
 
 ### PeriodicVestingAccount
+
+```
 PeriodicVestingAccount implements the VestingAccount interface. It
 periodically vests by unlocking coins during each specified period.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18398,11 +21743,15 @@ periodically vests by unlocking coins during each specified period.
 <a name="cosmos.vesting.v1beta1.PermanentLockedAccount"></a>
 
 ### PermanentLockedAccount
+
+```
 PermanentLockedAccount implements the VestingAccount interface. It does
 not ever release coins, locking them indefinitely. Coins in this account can
 still be used for delegating and for governance votes even while locked.
 
 Since: cosmos-sdk 0.43
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18449,9 +21798,13 @@ Since: cosmos-sdk 0.43
 <a name="tendermint.abci.Event"></a>
 
 ### Event
+
+```
 Event allows application developers to attach additional information to
 ResponseBeginBlock, ResponseEndBlock, ResponseCheckTx and ResponseDeliverTx.
 Later, transactions may be queried using these events.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18467,7 +21820,11 @@ Later, transactions may be queried using these events.
 <a name="tendermint.abci.EventAttribute"></a>
 
 ### EventAttribute
+
+```
 EventAttribute is a single key-value pair, associated with an event.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18566,7 +21923,11 @@ EventAttribute is a single key-value pair, associated with an event.
 <a name="tendermint.abci.RequestApplySnapshotChunk"></a>
 
 ### RequestApplySnapshotChunk
+
+```
 Applies a snapshot chunk
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18720,7 +22081,11 @@ Applies a snapshot chunk
 <a name="tendermint.abci.RequestListSnapshots"></a>
 
 ### RequestListSnapshots
+
+```
 lists available snapshots
+```
+
 
 
 
@@ -18730,7 +22095,11 @@ lists available snapshots
 <a name="tendermint.abci.RequestLoadSnapshotChunk"></a>
 
 ### RequestLoadSnapshotChunk
+
+```
 loads a snapshot chunk
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18747,7 +22116,11 @@ loads a snapshot chunk
 <a name="tendermint.abci.RequestOfferSnapshot"></a>
 
 ### RequestOfferSnapshot
+
+```
 offers a snapshot to the application
+```
+
 
 
 | Field | Type | Label | Description |
@@ -18983,7 +22356,11 @@ offers a snapshot to the application
 <a name="tendermint.abci.ResponseException"></a>
 
 ### ResponseException
+
+```
 nondeterministic
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19161,9 +22538,13 @@ nondeterministic
 <a name="tendermint.abci.TxResult"></a>
 
 ### TxResult
+
+```
 TxResult contains results of executing the transaction.
 
 One usage is indexing transaction results.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19181,7 +22562,11 @@ One usage is indexing transaction results.
 <a name="tendermint.abci.Validator"></a>
 
 ### Validator
+
+```
 Validator
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19197,7 +22582,11 @@ Validator
 <a name="tendermint.abci.ValidatorUpdate"></a>
 
 ### ValidatorUpdate
+
+```
 ValidatorUpdate
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19213,7 +22602,11 @@ ValidatorUpdate
 <a name="tendermint.abci.VoteInfo"></a>
 
 ### VoteInfo
+
+```
 VoteInfo
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19233,6 +22626,7 @@ VoteInfo
 ### CheckTxType
 
 
+
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | NEW | 0 |  |
@@ -19243,6 +22637,7 @@ VoteInfo
 <a name="tendermint.abci.MisbehaviorType"></a>
 
 ### MisbehaviorType
+
 
 
 | Name | Number | Description |
@@ -19256,6 +22651,7 @@ VoteInfo
 <a name="tendermint.abci.ResponseApplySnapshotChunk.Result"></a>
 
 ### ResponseApplySnapshotChunk.Result
+
 
 
 | Name | Number | Description |
@@ -19274,6 +22670,7 @@ VoteInfo
 ### ResponseOfferSnapshot.Result
 
 
+
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | UNKNOWN | 0 | `Unknown result, abort all snapshot restoration` |
@@ -19288,6 +22685,7 @@ VoteInfo
 <a name="tendermint.abci.ResponseProcessProposal.ProposalStatus"></a>
 
 ### ResponseProcessProposal.ProposalStatus
+
 
 
 | Name | Number | Description |
@@ -19340,7 +22738,11 @@ VoteInfo
 <a name="tendermint.crypto.PublicKey"></a>
 
 ### PublicKey
+
+```
 PublicKey defines the keys available for use with Validators
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19407,9 +22809,13 @@ PublicKey defines the keys available for use with Validators
 <a name="tendermint.crypto.ProofOp"></a>
 
 ### ProofOp
+
+```
 ProofOp defines an operation used for calculating Merkle root
 The data could be arbitrary format, providing nessecary data
 for example neighbouring node hash
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19426,7 +22832,11 @@ for example neighbouring node hash
 <a name="tendermint.crypto.ProofOps"></a>
 
 ### ProofOps
+
+```
 ProofOps is Merkle proof defined by the list of ProofOps
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19627,7 +23037,11 @@ ProofOps is Merkle proof defined by the list of ProofOps
 <a name="tendermint.types.DuplicateVoteEvidence"></a>
 
 ### DuplicateVoteEvidence
+
+```
 DuplicateVoteEvidence contains evidence of a validator signed two conflicting votes.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19677,7 +23091,11 @@ DuplicateVoteEvidence contains evidence of a validator signed two conflicting vo
 <a name="tendermint.types.LightClientAttackEvidence"></a>
 
 ### LightClientAttackEvidence
+
+```
 LightClientAttackEvidence contains evidence of a set of validators attempting to mislead a light client.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19712,7 +23130,11 @@ LightClientAttackEvidence contains evidence of a set of validators attempting to
 <a name="tendermint.types.BlockParams"></a>
 
 ### BlockParams
+
+```
 BlockParams contains limits on the block size.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19728,8 +23150,12 @@ BlockParams contains limits on the block size.
 <a name="tendermint.types.ConsensusParams"></a>
 
 ### ConsensusParams
+
+```
 ConsensusParams contains consensus critical parameters that determine the
 validity of blocks.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19747,7 +23173,11 @@ validity of blocks.
 <a name="tendermint.types.EvidenceParams"></a>
 
 ### EvidenceParams
+
+```
 EvidenceParams determine how we handle evidence of malfeasance.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19764,9 +23194,13 @@ EvidenceParams determine how we handle evidence of malfeasance.
 <a name="tendermint.types.HashedParams"></a>
 
 ### HashedParams
+
+```
 HashedParams is a subset of ConsensusParams.
 
 It is hashed into the Header.ConsensusHash.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19782,8 +23216,12 @@ It is hashed into the Header.ConsensusHash.
 <a name="tendermint.types.ValidatorParams"></a>
 
 ### ValidatorParams
+
+```
 ValidatorParams restrict the public key types validators can use.
 NOTE: uses ABCI pubkey naming, not Amino names.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19798,7 +23236,11 @@ NOTE: uses ABCI pubkey naming, not Amino names.
 <a name="tendermint.types.VersionParams"></a>
 
 ### VersionParams
+
+```
 VersionParams contains the ABCI application version.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19829,7 +23271,11 @@ VersionParams contains the ABCI application version.
 <a name="tendermint.types.BlockID"></a>
 
 ### BlockID
+
+```
 BlockID
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19863,7 +23309,11 @@ BlockID
 <a name="tendermint.types.Commit"></a>
 
 ### Commit
+
+```
 Commit contains the evidence that a block was committed by a set of validators.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19881,7 +23331,11 @@ Commit contains the evidence that a block was committed by a set of validators.
 <a name="tendermint.types.CommitSig"></a>
 
 ### CommitSig
+
+```
 CommitSig is a part of the Vote included in a Commit.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19899,7 +23353,11 @@ CommitSig is a part of the Vote included in a Commit.
 <a name="tendermint.types.Data"></a>
 
 ### Data
+
+```
 Data contains the set of transactions included in the block
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19914,7 +23372,11 @@ Data contains the set of transactions included in the block
 <a name="tendermint.types.Header"></a>
 
 ### Header
+
+```
 Header defines the structure of a block header.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -19975,7 +23437,11 @@ Header defines the structure of a block header.
 <a name="tendermint.types.PartSetHeader"></a>
 
 ### PartSetHeader
+
+```
 PartsetHeader
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20028,7 +23494,11 @@ PartsetHeader
 <a name="tendermint.types.TxProof"></a>
 
 ### TxProof
+
+```
 TxProof represents a Merkle proof of the presence of a transaction in the Merkle tree.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20045,8 +23515,12 @@ TxProof represents a Merkle proof of the presence of a transaction in the Merkle
 <a name="tendermint.types.Vote"></a>
 
 ### Vote
+
+```
 Vote represents a prevote, precommit, or commit vote from validators for
 consensus.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20070,7 +23544,12 @@ consensus.
 <a name="tendermint.types.BlockIDFlag"></a>
 
 ### BlockIDFlag
+
+```
 BlockIdFlag indicates which BlcokID the signature is for
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -20084,7 +23563,12 @@ BlockIdFlag indicates which BlcokID the signature is for
 <a name="tendermint.types.SignedMsgType"></a>
 
 ### SignedMsgType
+
+```
 SignedMsgType is a type of signed message in the consensus.
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -20179,9 +23663,13 @@ SignedMsgType is a type of signed message in the consensus.
 <a name="tendermint.version.App"></a>
 
 ### App
+
+```
 App includes the protocol and software version for the application.
 This information is included in ResponseInfo. The App.Protocol can be
 updated in ResponseEndBlock.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20197,9 +23685,13 @@ updated in ResponseEndBlock.
 <a name="tendermint.version.Consensus"></a>
 
 ### Consensus
+
+```
 Consensus captures the consensus rules for processing a block in the blockchain,
 including all blockchain data structures and the rules of the application's
 state transition machine.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20231,9 +23723,13 @@ state transition machine.
 <a name="cosmwasm.wasm.v1.AcceptedMessageKeysFilter"></a>
 
 ### AcceptedMessageKeysFilter
+
+```
 AcceptedMessageKeysFilter accept only the specific contract message keys in
 the json object to be executed.
 Since: wasmd 0.30
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20248,9 +23744,13 @@ Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.AcceptedMessagesFilter"></a>
 
 ### AcceptedMessagesFilter
+
+```
 AcceptedMessagesFilter accept only the specific raw contract messages to be
 executed.
 Since: wasmd 0.30
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20265,9 +23765,13 @@ Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.AllowAllMessagesFilter"></a>
 
 ### AllowAllMessagesFilter
+
+```
 AllowAllMessagesFilter is a wildcard to allow any type of contract payload
 message.
 Since: wasmd 0.30
+```
+
 
 
 
@@ -20277,7 +23781,11 @@ Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.CodeGrant"></a>
 
 ### CodeGrant
+
+```
 CodeGrant a granted permission for a single code
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20293,9 +23801,13 @@ CodeGrant a granted permission for a single code
 <a name="cosmwasm.wasm.v1.CombinedLimit"></a>
 
 ### CombinedLimit
+
+```
 CombinedLimit defines the maximal amounts that can be sent to a contract and
 the maximal number of calls executable. Both need to remain >0 to be valid.
 Since: wasmd 0.30
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20311,8 +23823,12 @@ Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.ContractExecutionAuthorization"></a>
 
 ### ContractExecutionAuthorization
+
+```
 ContractExecutionAuthorization defines authorization for wasm execute.
 Since: wasmd 0.30
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20327,8 +23843,12 @@ Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.ContractGrant"></a>
 
 ### ContractGrant
+
+```
 ContractGrant a granted permission for a single contract
 Since: wasmd 0.30
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20345,8 +23865,12 @@ Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.ContractMigrationAuthorization"></a>
 
 ### ContractMigrationAuthorization
+
+```
 ContractMigrationAuthorization defines authorization for wasm contract
 migration. Since: wasmd 0.30
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20361,8 +23885,12 @@ migration. Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.MaxCallsLimit"></a>
 
 ### MaxCallsLimit
+
+```
 MaxCallsLimit limited number of calls to the contract. No funds transferable.
 Since: wasmd 0.30
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20377,8 +23905,12 @@ Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.MaxFundsLimit"></a>
 
 ### MaxFundsLimit
+
+```
 MaxFundsLimit defines the maximal amounts that can be sent to the contract.
 Since: wasmd 0.30
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20393,8 +23925,12 @@ Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.StoreCodeAuthorization"></a>
 
 ### StoreCodeAuthorization
+
+```
 StoreCodeAuthorization defines authorization for wasm code upload.
 Since: wasmd 0.42
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20425,7 +23961,11 @@ Since: wasmd 0.42
 <a name="cosmwasm.wasm.v1.Code"></a>
 
 ### Code
+
+```
 Code struct encompasses CodeInfo and CodeBytes
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20443,7 +23983,11 @@ Code struct encompasses CodeInfo and CodeBytes
 <a name="cosmwasm.wasm.v1.Contract"></a>
 
 ### Contract
+
+```
 Contract struct encompasses ContractAddress, ContractInfo, and ContractState
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20461,7 +24005,11 @@ Contract struct encompasses ContractAddress, ContractInfo, and ContractState
 <a name="cosmwasm.wasm.v1.GenesisState"></a>
 
 ### GenesisState
+
+```
 GenesisState - genesis state of x/wasm
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20479,7 +24027,11 @@ GenesisState - genesis state of x/wasm
 <a name="cosmwasm.wasm.v1.Sequence"></a>
 
 ### Sequence
+
+```
 Sequence key and value of an id generation counter
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20511,7 +24063,11 @@ Sequence key and value of an id generation counter
 <a name="cosmwasm.wasm.v1.MsgIBCCloseChannel"></a>
 
 ### MsgIBCCloseChannel
+
+```
 MsgIBCCloseChannel port and channel need to be owned by the contract
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20526,7 +24082,11 @@ MsgIBCCloseChannel port and channel need to be owned by the contract
 <a name="cosmwasm.wasm.v1.MsgIBCSend"></a>
 
 ### MsgIBCSend
+
+```
 MsgIBCSend
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20544,7 +24104,11 @@ MsgIBCSend
 <a name="cosmwasm.wasm.v1.MsgIBCSendResponse"></a>
 
 ### MsgIBCSendResponse
+
+```
 MsgIBCSendResponse
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20575,7 +24139,11 @@ MsgIBCSendResponse
 <a name="cosmwasm.wasm.v1.CodeInfoResponse"></a>
 
 ### CodeInfoResponse
+
+```
 CodeInfoResponse contains code meta data from CodeInfo
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20593,8 +24161,12 @@ CodeInfoResponse contains code meta data from CodeInfo
 <a name="cosmwasm.wasm.v1.QueryAllContractStateRequest"></a>
 
 ### QueryAllContractStateRequest
+
+```
 QueryAllContractStateRequest is the request type for the
 Query/AllContractState RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20610,8 +24182,12 @@ Query/AllContractState RPC method
 <a name="cosmwasm.wasm.v1.QueryAllContractStateResponse"></a>
 
 ### QueryAllContractStateResponse
+
+```
 QueryAllContractStateResponse is the response type for the
 Query/AllContractState RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20627,7 +24203,11 @@ Query/AllContractState RPC method
 <a name="cosmwasm.wasm.v1.QueryCodeRequest"></a>
 
 ### QueryCodeRequest
+
+```
 QueryCodeRequest is the request type for the Query/Code RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20642,7 +24222,11 @@ QueryCodeRequest is the request type for the Query/Code RPC method
 <a name="cosmwasm.wasm.v1.QueryCodeResponse"></a>
 
 ### QueryCodeResponse
+
+```
 QueryCodeResponse is the response type for the Query/Code RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20658,7 +24242,11 @@ QueryCodeResponse is the response type for the Query/Code RPC method
 <a name="cosmwasm.wasm.v1.QueryCodesRequest"></a>
 
 ### QueryCodesRequest
+
+```
 QueryCodesRequest is the request type for the Query/Codes RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20673,7 +24261,11 @@ QueryCodesRequest is the request type for the Query/Codes RPC method
 <a name="cosmwasm.wasm.v1.QueryCodesResponse"></a>
 
 ### QueryCodesResponse
+
+```
 QueryCodesResponse is the response type for the Query/Codes RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20689,8 +24281,12 @@ QueryCodesResponse is the response type for the Query/Codes RPC method
 <a name="cosmwasm.wasm.v1.QueryContractHistoryRequest"></a>
 
 ### QueryContractHistoryRequest
+
+```
 QueryContractHistoryRequest is the request type for the Query/ContractHistory
 RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20706,8 +24302,12 @@ RPC method
 <a name="cosmwasm.wasm.v1.QueryContractHistoryResponse"></a>
 
 ### QueryContractHistoryResponse
+
+```
 QueryContractHistoryResponse is the response type for the
 Query/ContractHistory RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20723,8 +24323,12 @@ Query/ContractHistory RPC method
 <a name="cosmwasm.wasm.v1.QueryContractInfoRequest"></a>
 
 ### QueryContractInfoRequest
+
+```
 QueryContractInfoRequest is the request type for the Query/ContractInfo RPC
 method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20739,8 +24343,12 @@ method
 <a name="cosmwasm.wasm.v1.QueryContractInfoResponse"></a>
 
 ### QueryContractInfoResponse
+
+```
 QueryContractInfoResponse is the response type for the Query/ContractInfo RPC
 method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20756,8 +24364,12 @@ method
 <a name="cosmwasm.wasm.v1.QueryContractsByCodeRequest"></a>
 
 ### QueryContractsByCodeRequest
+
+```
 QueryContractsByCodeRequest is the request type for the Query/ContractsByCode
 RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20773,8 +24385,12 @@ RPC method
 <a name="cosmwasm.wasm.v1.QueryContractsByCodeResponse"></a>
 
 ### QueryContractsByCodeResponse
+
+```
 QueryContractsByCodeResponse is the response type for the
 Query/ContractsByCode RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20790,8 +24406,12 @@ Query/ContractsByCode RPC method
 <a name="cosmwasm.wasm.v1.QueryContractsByCreatorRequest"></a>
 
 ### QueryContractsByCreatorRequest
+
+```
 QueryContractsByCreatorRequest is the request type for the
 Query/ContractsByCreator RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20807,8 +24427,12 @@ Query/ContractsByCreator RPC method.
 <a name="cosmwasm.wasm.v1.QueryContractsByCreatorResponse"></a>
 
 ### QueryContractsByCreatorResponse
+
+```
 QueryContractsByCreatorResponse is the response type for the
 Query/ContractsByCreator RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20824,7 +24448,11 @@ Query/ContractsByCreator RPC method.
 <a name="cosmwasm.wasm.v1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
+
+```
 QueryParamsRequest is the request type for the Query/Params RPC method.
+```
+
 
 
 
@@ -20834,7 +24462,11 @@ QueryParamsRequest is the request type for the Query/Params RPC method.
 <a name="cosmwasm.wasm.v1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
+
+```
 QueryParamsResponse is the response type for the Query/Params RPC method.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20849,8 +24481,12 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 <a name="cosmwasm.wasm.v1.QueryPinnedCodesRequest"></a>
 
 ### QueryPinnedCodesRequest
+
+```
 QueryPinnedCodesRequest is the request type for the Query/PinnedCodes
 RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20865,8 +24501,12 @@ RPC method
 <a name="cosmwasm.wasm.v1.QueryPinnedCodesResponse"></a>
 
 ### QueryPinnedCodesResponse
+
+```
 QueryPinnedCodesResponse is the response type for the
 Query/PinnedCodes RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20882,8 +24522,12 @@ Query/PinnedCodes RPC method
 <a name="cosmwasm.wasm.v1.QueryRawContractStateRequest"></a>
 
 ### QueryRawContractStateRequest
+
+```
 QueryRawContractStateRequest is the request type for the
 Query/RawContractState RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20899,8 +24543,12 @@ Query/RawContractState RPC method
 <a name="cosmwasm.wasm.v1.QueryRawContractStateResponse"></a>
 
 ### QueryRawContractStateResponse
+
+```
 QueryRawContractStateResponse is the response type for the
 Query/RawContractState RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20915,8 +24563,12 @@ Query/RawContractState RPC method
 <a name="cosmwasm.wasm.v1.QuerySmartContractStateRequest"></a>
 
 ### QuerySmartContractStateRequest
+
+```
 QuerySmartContractStateRequest is the request type for the
 Query/SmartContractState RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20932,8 +24584,12 @@ Query/SmartContractState RPC method
 <a name="cosmwasm.wasm.v1.QuerySmartContractStateResponse"></a>
 
 ### QuerySmartContractStateResponse
+
+```
 QuerySmartContractStateResponse is the response type for the
 Query/SmartContractState RPC method
+```
+
 
 
 | Field | Type | Label | Description |
@@ -20954,7 +24610,11 @@ Query/SmartContractState RPC method
 <a name="cosmwasm.wasm.v1.Query"></a>
 
 ### Query
+
+```
 Query provides defines the gRPC querier service
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -20984,8 +24644,12 @@ Query provides defines the gRPC querier service
 <a name="cosmwasm.wasm.v1.AccessConfigUpdate"></a>
 
 ### AccessConfigUpdate
+
+```
 AccessConfigUpdate contains the code id and the access config to be
 applied.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21001,8 +24665,12 @@ applied.
 <a name="cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses"></a>
 
 ### MsgAddCodeUploadParamsAddresses
+
+```
 MsgAddCodeUploadParamsAddresses is the
 MsgAddCodeUploadParamsAddresses request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21018,8 +24686,12 @@ MsgAddCodeUploadParamsAddresses request type.
 <a name="cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddressesResponse"></a>
 
 ### MsgAddCodeUploadParamsAddressesResponse
+
+```
 MsgAddCodeUploadParamsAddressesResponse defines the response
 structure for executing a MsgAddCodeUploadParamsAddresses message.
+```
+
 
 
 
@@ -21029,7 +24701,11 @@ structure for executing a MsgAddCodeUploadParamsAddresses message.
 <a name="cosmwasm.wasm.v1.MsgClearAdmin"></a>
 
 ### MsgClearAdmin
+
+```
 MsgClearAdmin removes any admin stored for a smart contract
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21045,7 +24721,11 @@ MsgClearAdmin removes any admin stored for a smart contract
 <a name="cosmwasm.wasm.v1.MsgClearAdminResponse"></a>
 
 ### MsgClearAdminResponse
+
+```
 MsgClearAdminResponse returns empty data
+```
+
 
 
 
@@ -21055,7 +24735,11 @@ MsgClearAdminResponse returns empty data
 <a name="cosmwasm.wasm.v1.MsgExecuteContract"></a>
 
 ### MsgExecuteContract
+
+```
 MsgExecuteContract submits the given message data to a smart contract
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21073,7 +24757,11 @@ MsgExecuteContract submits the given message data to a smart contract
 <a name="cosmwasm.wasm.v1.MsgExecuteContractResponse"></a>
 
 ### MsgExecuteContractResponse
+
+```
 MsgExecuteContractResponse returns execution result data.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21088,8 +24776,12 @@ MsgExecuteContractResponse returns execution result data.
 <a name="cosmwasm.wasm.v1.MsgInstantiateContract"></a>
 
 ### MsgInstantiateContract
+
+```
 MsgInstantiateContract create a new smart contract instance for the given
 code id.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21109,8 +24801,12 @@ code id.
 <a name="cosmwasm.wasm.v1.MsgInstantiateContract2"></a>
 
 ### MsgInstantiateContract2
+
+```
 MsgInstantiateContract2 create a new smart contract instance for the given
 code id with a predicable address.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21132,7 +24828,11 @@ code id with a predicable address.
 <a name="cosmwasm.wasm.v1.MsgInstantiateContract2Response"></a>
 
 ### MsgInstantiateContract2Response
+
+```
 MsgInstantiateContract2Response return instantiation result data
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21148,7 +24848,11 @@ MsgInstantiateContract2Response return instantiation result data
 <a name="cosmwasm.wasm.v1.MsgInstantiateContractResponse"></a>
 
 ### MsgInstantiateContractResponse
+
+```
 MsgInstantiateContractResponse return instantiation result data
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21164,7 +24868,11 @@ MsgInstantiateContractResponse return instantiation result data
 <a name="cosmwasm.wasm.v1.MsgMigrateContract"></a>
 
 ### MsgMigrateContract
+
+```
 MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21182,7 +24890,11 @@ MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
 <a name="cosmwasm.wasm.v1.MsgMigrateContractResponse"></a>
 
 ### MsgMigrateContractResponse
+
+```
 MsgMigrateContractResponse returns contract migration result data.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21197,9 +24909,13 @@ MsgMigrateContractResponse returns contract migration result data.
 <a name="cosmwasm.wasm.v1.MsgPinCodes"></a>
 
 ### MsgPinCodes
+
+```
 MsgPinCodes is the MsgPinCodes request type.
 
 Since: 0.40
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21215,10 +24931,14 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgPinCodesResponse"></a>
 
 ### MsgPinCodesResponse
+
+```
 MsgPinCodesResponse defines the response structure for executing a
 MsgPinCodes message.
 
 Since: 0.40
+```
+
 
 
 
@@ -21228,8 +24948,12 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses"></a>
 
 ### MsgRemoveCodeUploadParamsAddresses
+
+```
 MsgRemoveCodeUploadParamsAddresses is the
 MsgRemoveCodeUploadParamsAddresses request type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21245,8 +24969,12 @@ MsgRemoveCodeUploadParamsAddresses request type.
 <a name="cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddressesResponse"></a>
 
 ### MsgRemoveCodeUploadParamsAddressesResponse
+
+```
 MsgRemoveCodeUploadParamsAddressesResponse defines the response
 structure for executing a MsgRemoveCodeUploadParamsAddresses message.
+```
+
 
 
 
@@ -21256,10 +24984,14 @@ structure for executing a MsgRemoveCodeUploadParamsAddresses message.
 <a name="cosmwasm.wasm.v1.MsgStoreAndInstantiateContract"></a>
 
 ### MsgStoreAndInstantiateContract
+
+```
 MsgStoreAndInstantiateContract is the MsgStoreAndInstantiateContract
 request type.
 
 Since: 0.40
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21284,10 +25016,14 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse"></a>
 
 ### MsgStoreAndInstantiateContractResponse
+
+```
 MsgStoreAndInstantiateContractResponse defines the response structure
 for executing a MsgStoreAndInstantiateContract message.
 
 Since: 0.40
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21303,10 +25039,14 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgStoreAndMigrateContract"></a>
 
 ### MsgStoreAndMigrateContract
+
+```
 MsgStoreAndMigrateContract is the MsgStoreAndMigrateContract
 request type.
 
 Since: 0.42
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21325,10 +25065,14 @@ Since: 0.42
 <a name="cosmwasm.wasm.v1.MsgStoreAndMigrateContractResponse"></a>
 
 ### MsgStoreAndMigrateContractResponse
+
+```
 MsgStoreAndMigrateContractResponse defines the response structure
 for executing a MsgStoreAndMigrateContract message.
 
 Since: 0.42
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21345,7 +25089,11 @@ Since: 0.42
 <a name="cosmwasm.wasm.v1.MsgStoreCode"></a>
 
 ### MsgStoreCode
+
+```
 MsgStoreCode submit Wasm code to the system
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21362,7 +25110,11 @@ MsgStoreCode submit Wasm code to the system
 <a name="cosmwasm.wasm.v1.MsgStoreCodeResponse"></a>
 
 ### MsgStoreCodeResponse
+
+```
 MsgStoreCodeResponse returns store result data.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21378,9 +25130,13 @@ MsgStoreCodeResponse returns store result data.
 <a name="cosmwasm.wasm.v1.MsgSudoContract"></a>
 
 ### MsgSudoContract
+
+```
 MsgSudoContract is the MsgSudoContract request type.
 
 Since: 0.40
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21397,10 +25153,14 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgSudoContractResponse"></a>
 
 ### MsgSudoContractResponse
+
+```
 MsgSudoContractResponse defines the response structure for executing a
 MsgSudoContract message.
 
 Since: 0.40
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21415,9 +25175,13 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgUnpinCodes"></a>
 
 ### MsgUnpinCodes
+
+```
 MsgUnpinCodes is the MsgUnpinCodes request type.
 
 Since: 0.40
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21433,10 +25197,14 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgUnpinCodesResponse"></a>
 
 ### MsgUnpinCodesResponse
+
+```
 MsgUnpinCodesResponse defines the response structure for executing a
 MsgUnpinCodes message.
 
 Since: 0.40
+```
+
 
 
 
@@ -21446,7 +25214,11 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgUpdateAdmin"></a>
 
 ### MsgUpdateAdmin
+
+```
 MsgUpdateAdmin sets a new admin for a smart contract
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21463,7 +25235,11 @@ MsgUpdateAdmin sets a new admin for a smart contract
 <a name="cosmwasm.wasm.v1.MsgUpdateAdminResponse"></a>
 
 ### MsgUpdateAdminResponse
+
+```
 MsgUpdateAdminResponse returns empty data
+```
+
 
 
 
@@ -21473,7 +25249,11 @@ MsgUpdateAdminResponse returns empty data
 <a name="cosmwasm.wasm.v1.MsgUpdateContractLabel"></a>
 
 ### MsgUpdateContractLabel
+
+```
 MsgUpdateContractLabel sets a new label for a smart contract
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21490,7 +25270,11 @@ MsgUpdateContractLabel sets a new label for a smart contract
 <a name="cosmwasm.wasm.v1.MsgUpdateContractLabelResponse"></a>
 
 ### MsgUpdateContractLabelResponse
+
+```
 MsgUpdateContractLabelResponse returns empty data
+```
+
 
 
 
@@ -21500,7 +25284,11 @@ MsgUpdateContractLabelResponse returns empty data
 <a name="cosmwasm.wasm.v1.MsgUpdateInstantiateConfig"></a>
 
 ### MsgUpdateInstantiateConfig
+
+```
 MsgUpdateInstantiateConfig updates instantiate config for a smart contract
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21517,7 +25305,11 @@ MsgUpdateInstantiateConfig updates instantiate config for a smart contract
 <a name="cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse"></a>
 
 ### MsgUpdateInstantiateConfigResponse
+
+```
 MsgUpdateInstantiateConfigResponse returns empty data
+```
+
 
 
 
@@ -21527,9 +25319,13 @@ MsgUpdateInstantiateConfigResponse returns empty data
 <a name="cosmwasm.wasm.v1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
+
+```
 MsgUpdateParams is the MsgUpdateParams request type.
 
 Since: 0.40
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21545,10 +25341,14 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.MsgUpdateParamsResponse"></a>
 
 ### MsgUpdateParamsResponse
+
+```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
 Since: 0.40
+```
+
 
 
 
@@ -21564,7 +25364,11 @@ Since: 0.40
 <a name="cosmwasm.wasm.v1.Msg"></a>
 
 ### Msg
+
+```
 Msg defines the wasm Msg service.
+```
+
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
@@ -21600,8 +25404,12 @@ Msg defines the wasm Msg service.
 <a name="cosmwasm.wasm.v1.AbsoluteTxPosition"></a>
 
 ### AbsoluteTxPosition
+
+```
 AbsoluteTxPosition is a unique transaction position that allows for global
 ordering of transactions.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21617,7 +25425,11 @@ ordering of transactions.
 <a name="cosmwasm.wasm.v1.AccessConfig"></a>
 
 ### AccessConfig
+
+```
 AccessConfig access control type.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21633,7 +25445,11 @@ AccessConfig access control type.
 <a name="cosmwasm.wasm.v1.AccessTypeParam"></a>
 
 ### AccessTypeParam
+
+```
 AccessTypeParam
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21648,7 +25464,11 @@ AccessTypeParam
 <a name="cosmwasm.wasm.v1.CodeInfo"></a>
 
 ### CodeInfo
+
+```
 CodeInfo is data for the uploaded contract WASM code
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21665,7 +25485,11 @@ CodeInfo is data for the uploaded contract WASM code
 <a name="cosmwasm.wasm.v1.ContractCodeHistoryEntry"></a>
 
 ### ContractCodeHistoryEntry
+
+```
 ContractCodeHistoryEntry metadata to a contract.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21683,7 +25507,11 @@ ContractCodeHistoryEntry metadata to a contract.
 <a name="cosmwasm.wasm.v1.ContractInfo"></a>
 
 ### ContractInfo
+
+```
 ContractInfo stores a WASM contract instance
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21704,7 +25532,11 @@ ContractInfo stores a WASM contract instance
 <a name="cosmwasm.wasm.v1.Model"></a>
 
 ### Model
+
+```
 Model is a struct that holds a KV pair
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21720,7 +25552,11 @@ Model is a struct that holds a KV pair
 <a name="cosmwasm.wasm.v1.Params"></a>
 
 ### Params
+
+```
 Params defines the set of wasm parameters.
+```
+
 
 
 | Field | Type | Label | Description |
@@ -21738,7 +25574,12 @@ Params defines the set of wasm parameters.
 <a name="cosmwasm.wasm.v1.AccessType"></a>
 
 ### AccessType
+
+```
 AccessType permission types
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -21752,7 +25593,12 @@ AccessType permission types
 <a name="cosmwasm.wasm.v1.ContractCodeHistoryOperationType"></a>
 
 ### ContractCodeHistoryOperationType
+
+```
 ContractCodeHistoryOperationType actions that caused a code change
+```
+
+
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
