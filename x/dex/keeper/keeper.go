@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"sort"
 
 	sdkmath "cosmossdk.io/math"
@@ -55,22 +54,18 @@ func (k Keeper) StoreTransientOrder(ctx sdk.Context, order types.Order) error {
 	}
 
 	tStore := ctx.TransientStore(k.transientStoreKey)
-	tStore.Set(types.CreateOrderTransientQueueKey(
-		k.createDenomSequence(ctx, order.DenomOffered()),
-		k.createDenomSequence(ctx, order.DenomRequested()),
-		k.nextOrderID(ctx),
-	), orderBytes)
+	tStore.Set(types.CreateOrderKey(k.nextOrderID(ctx)), orderBytes)
 
 	return nil
 }
 
 // ProcessTransientQueue processes orders stored in the transient queue and matches them.
 func (k Keeper) ProcessTransientQueue(ctx sdk.Context) error {
-	iterator := prefix.NewStore(ctx.TransientStore(k.transientStoreKey), types.OrderTransientQueueKey).Iterator(nil, nil)
+	iterator := prefix.NewStore(ctx.TransientStore(k.transientStoreKey), types.OrderKey).Iterator(nil, nil)
 	defer iterator.Close()
 
-	for iterator.Valid() {
-		if err := k.processTransientOrderBook(ctx, iterator); err != nil {
+	for ; iterator.Valid(); iterator.Next() {
+		if err := k.processTransientOrder(ctx, iterator); err != nil {
 			return err
 		}
 	}
@@ -95,8 +90,14 @@ func (k Keeper) ExportOrders(ctx sdk.Context) ([]types.Order, error) {
 	return orders, nil
 }
 
-func (k Keeper) processTransientOrderBook(ctx sdk.Context, iterator storetypes.Iterator) error {
-	denom1Sequence, denom2Sequence, _ := types.DecomposeOrderTransientQueueKey(iterator.Key())
+func (k Keeper) processTransientOrder(ctx sdk.Context, iterator storetypes.Iterator) error {
+	order, err := k.decodeOrder(iterator.Value())
+	if err != nil {
+		return err
+	}
+
+	denom1Sequence := k.createDenomSequence(ctx, order.DenomOffered())
+	denom2Sequence := k.createDenomSequence(ctx, order.DenomRequested())
 
 	store := ctx.KVStore(k.storeKey)
 	persistentIteratorA := prefix.NewStore(store,
@@ -116,41 +117,13 @@ func (k Keeper) processTransientOrderBook(ctx sdk.Context, iterator storetypes.I
 		return err
 	}
 
-	var orderBookPrefix []byte
-loop:
-	for ; iterator.Valid(); iterator.Next() {
-		prefix := iterator.Key()[:16]
-		switch {
-		case orderBookPrefix == nil:
-			orderBookPrefix = prefix
-		case !bytes.Equal(prefix, orderBookPrefix):
-			break loop
-		}
+	orderID := types.DecomposeOrderKey(iterator.Key())
+	wrappedOrder := &orderWrapper{Order: order, orderID: orderID, isDirty: true}
 
-		order, err := k.decodeOrder(iterator.Value())
-		if err != nil {
-			return err
-		}
-
-		_, _, orderID := types.DecomposeOrderTransientQueueKey(iterator.Key())
-		offeredDenomSequence := k.createDenomSequence(ctx, order.DenomOffered())
-
-		wrappedOrder := &orderWrapper{Order: order, orderID: orderID, isDirty: true}
-		if denom1Sequence == offeredDenomSequence {
-			sideA = k.appendOrder(sideA, wrappedOrder)
-			var err error
-			sideA, sideB, err = k.matchOrder(ctx, orderID, sideA, sideB, persistentIteratorA, persistentIteratorB)
-			if err != nil {
-				return err
-			}
-		} else {
-			sideB = k.appendOrder(sideB, wrappedOrder)
-			var err error
-			sideB, sideA, err = k.matchOrder(ctx, orderID, sideB, sideA, persistentIteratorB, persistentIteratorA)
-			if err != nil {
-				return err
-			}
-		}
+	sideA = k.appendOrder(sideA, wrappedOrder)
+	sideA, sideB, err = k.matchOrder(ctx, orderID, sideA, sideB, persistentIteratorA, persistentIteratorB)
+	if err != nil {
+		return err
 	}
 
 	if err := k.persistOrders(ctx, sideA); err != nil {

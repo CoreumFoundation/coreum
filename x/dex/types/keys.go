@@ -27,12 +27,11 @@ const uint64ByteSize = 8
 // Store keys.
 var (
 	OrderLastIDKey            = []byte{0x00}
-	OrderTransientQueueKey    = []byte{0x01}
-	DenomLastSequenceKey      = []byte{0x02}
-	DenomToSequenceMappingKey = []byte{0x03}
-	OrderQueueKey             = []byte{0x04}
-	OrderOwnerKey             = []byte{0x05}
-	OrderKey                  = []byte{0x06}
+	DenomLastSequenceKey      = []byte{0x01}
+	DenomToSequenceMappingKey = []byte{0x02}
+	OrderQueueKey             = []byte{0x03}
+	OrderOwnerKey             = []byte{0x04}
+	OrderKey                  = []byte{0x05}
 )
 
 // StoreTrue keeps a value used by stores to indicate that key is present.
@@ -49,23 +48,6 @@ func CreateDenomPairKeyPrefix(prefix []byte, denom1Seq, denom2Seq uint64) []byte
 // CreateDenomMappingKey creates the key for the denom-uint64 mapping.
 func CreateDenomMappingKey(denom string) []byte {
 	return store.JoinKeys(DenomToSequenceMappingKey, []byte(denom))
-}
-
-// CreateOrderTransientQueueKey creates the key for an order inside transient queue.
-func CreateOrderTransientQueueKey(denom1Seq, denom2Seq, orderID uint64) []byte {
-	if denom1Seq > denom2Seq {
-		denom1Seq, denom2Seq = denom2Seq, denom1Seq
-	}
-
-	return store.JoinKeys(CreateDenomPairKeyPrefix(OrderTransientQueueKey, denom1Seq, denom2Seq),
-		binary.BigEndian.AppendUint64(make([]byte, 0, uint64ByteSize), orderID))
-}
-
-// DecomposeOrderTransientQueueKey decomposes transient order key.
-func DecomposeOrderTransientQueueKey(key []byte) (uint64, uint64, uint64) {
-	return binary.BigEndian.Uint64(key[:uint64ByteSize]),
-		binary.BigEndian.Uint64(key[uint64ByteSize : 2*uint64ByteSize]),
-		binary.BigEndian.Uint64(key[2*uint64ByteSize:])
 }
 
 // CreateOrderQueueKey creates the key for an order inside transient queue.
@@ -97,6 +79,11 @@ func CreateOrderOwnerKey(accountNumber, orderID uint64) []byte {
 // CreateOrderKey creates the key for an order.
 func CreateOrderKey(orderID uint64) []byte {
 	return store.JoinKeys(OrderKey, binary.BigEndian.AppendUint64(make([]byte, 0, uint64ByteSize), orderID))
+}
+
+// DecomposeOrderKey decomposes order key.
+func DecomposeOrderKey(key []byte) uint64 {
+	return binary.BigEndian.Uint64(key)
 }
 
 func priceToUint64s(price sdk.Dec) (uint64, uint64) {
