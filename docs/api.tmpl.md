@@ -51,7 +51,7 @@
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 {{range .Fields -}}
-  | `{{.Name}}` | [{{.LongType}}](#{{.FullType}}) | {{.Label}} | {{if (index .Options "deprecated"|default false)}}**Deprecated.** {{end}} {{if .Description}}`{{.Description | replace "\n" " " | replace "\\`" ""}}`{{end}} {{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
+  | `{{.Name}}` | [{{.LongType}}](#{{.FullType}}) | {{.Label}} | {{if (index .Options "deprecated"|default false)}}**Deprecated.** {{end}} {{if .Description}}`{{.Description | replace "\n" " " | replace "`" ""}}`{{end}} {{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
 {{end}}
 {{end}}
 
@@ -59,7 +59,7 @@
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
 {{range .Extensions -}}
-  | `{{.Name}}` | {{.LongType}} | {{.ContainingLongType}} | {{.Number}} | {{if .Description}}`{{.Description | replace "\n" " " | replace "/`" ""}}`{{end}} {{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
+  | `{{.Name}}` | {{.LongType}} | {{.ContainingLongType}} | {{.Number}} | {{if .Description}}`{{.Description | replace "\n" " " | replace "`" ""}}`{{end}} {{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
 {{end}}
 {{end}}
 
@@ -79,7 +79,7 @@
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 {{range .Values -}}
-  | {{.Name}} | {{.Number}} | {{if .Description}}`{{.Description | replace "\n" " " | replace "\\`" ""}}`{{end}} |
+  | {{.Name}} | {{.Number}} | {{if .Description}}`{{.Description | replace "\n" " " | replace "`" ""}}`{{end}} |
 {{end}}
 
 {{end}} <!-- end enums -->
@@ -91,7 +91,7 @@
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
 {{range .Extensions -}}
-  | `{{.Name}}` | {{.LongType}} | {{.ContainingLongType}} | {{.Number}} | {{if .Description}}`{{.Description | replace "\n" " " | replace "\\`" ""}}`{{end}} {{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
+  | `{{.Name}}` | {{.LongType}} | {{.ContainingLongType}} | {{.Number}} | {{if .Description}}`{{.Description | replace "\n" " " | replace "`" ""}}`{{end}} {{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
 {{end}}
 {{end}} <!-- end HasExtensions -->
 
@@ -108,7 +108,7 @@
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 {{range .Methods -}}
-  | `{{.Name}}` | [{{.RequestLongType}}](#{{.RequestFullType}}){{if .RequestStreaming}} stream{{end}} | [{{.ResponseLongType}}](#{{.ResponseFullType}}){{if .ResponseStreaming}} stream{{end}} | {{if .Description}}`{{.Description | replace "\n" " " | replace "\\`" ""}}`{{end}} | {{with (index .Options "google.api.http")}}{{range .Rules}}{{.Method}}|{{.Pattern}}{{end}}{{end}} |
+  | `{{.Name}}` | [{{.RequestLongType}}](#{{.RequestFullType}}){{if .RequestStreaming}} stream{{end}} | [{{.ResponseLongType}}](#{{.ResponseFullType}}){{if .ResponseStreaming}} stream{{end}} | {{if .Description}}`{{.Description | replace "\n" " " | replace "`" ""}}`{{end}} | {{with (index .Options "google.api.http")}}{{range .Rules}}{{.Method}}|{{.Pattern}}{{end}}{{end}} |
 {{end}}
 {{end}} <!-- end services -->
 

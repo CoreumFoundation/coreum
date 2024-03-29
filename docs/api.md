@@ -4399,7 +4399,7 @@ Class defines the class of the nft type.
 | `name` | [string](#string) |  |  `name defines the human-readable name of the NFT classification. Optional`  |
 | `symbol` | [string](#string) |  |  `symbol is an abbreviated name for nft classification. Optional`  |
 | `description` | [string](#string) |  |  `description is a brief description of nft classification. Optional`  |
-| `uri` | [string](#string) |  |  `uri for the class metadata stored off chain. It can define schema for Class and NFT `Data` attributes. Optional`  |
+| `uri` | [string](#string) |  |  `uri for the class metadata stored off chain. It can define schema for Class and NFT Data attributes. Optional`  |
 | `uri_hash` | [string](#string) |  |  `uri_hash is a hash of the document pointed by uri. Optional`  |
 | `data` | [google.protobuf.Any](#google.protobuf.Any) |  |  `data is the app specific metadata of the NFT class. Optional`  |
 
@@ -4833,11 +4833,11 @@ Msg defines the nft Msg service.
 ### File-level Extensions
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
-| `dont_omitempty` | bool | .google.protobuf.FieldOptions | 11110005 | `dont_omitempty sets the field in the JSON object even if its value is empty, i.e. equal to the Golang zero value. To learn what the zero values are, see https://go.dev/ref/spec#The_zero_value.  Fields default to `omitempty`, which is the default behavior when this annotation is unset. When set to true, then the field value in the JSON object will be set, i.e. not `undefined`.  Example:  message Foo {   string bar = 1;   string baz = 2 [(amino.dont_omitempty) = true]; }  f := Foo{}; out := AminoJSONEncoder(&f); out == {"baz":""}`  |
-| `encoding` | string | .google.protobuf.FieldOptions | 11110003 | `encoding describes the encoding format used by Amino for the given field. The field type is chosen to be a string for flexibility, but it should ideally be short and expected to be machine-readable, for example "base64" or "utf8_json". We highly recommend to use underscores for word separation instead of spaces.  If left empty, then the Amino encoding is expected to be the same as the Protobuf one.  This annotation should not be confused with the `message_encoding` one which operates on the message level.`  |
-| `field_name` | string | .google.protobuf.FieldOptions | 11110004 | `field_name sets a different field name (i.e. key name) in the amino JSON object for the given field.  Example:  message Foo {   string bar = 1 [(amino.field_name) = "baz"]; }  Then the Amino encoding of Foo will be: `{"baz":"some value"}``  |
-| `message_encoding` | string | .google.protobuf.MessageOptions | 11110002 | `encoding describes the encoding format used by Amino for the given message. The field type is chosen to be a string for flexibility, but it should ideally be short and expected to be machine-readable, for example "base64" or "utf8_json". We highly recommend to use underscores for word separation instead of spaces.  If left empty, then the Amino encoding is expected to be the same as the Protobuf one.  This annotation should not be confused with the `encoding` one which operates on the field level.`  |
-| `name` | string | .google.protobuf.MessageOptions | 11110001 | `name is the string used when registering a concrete type into the Amino type registry, via the Amino codec's `RegisterConcrete()` method. This string MUST be at most 39 characters long, or else the message will be rejected by the Ledger hardware device.`  |
+| `dont_omitempty` | bool | .google.protobuf.FieldOptions | 11110005 | `dont_omitempty sets the field in the JSON object even if its value is empty, i.e. equal to the Golang zero value. To learn what the zero values are, see https://go.dev/ref/spec#The_zero_value.  Fields default to omitempty, which is the default behavior when this annotation is unset. When set to true, then the field value in the JSON object will be set, i.e. not undefined.  Example:  message Foo {   string bar = 1;   string baz = 2 [(amino.dont_omitempty) = true]; }  f := Foo{}; out := AminoJSONEncoder(&f); out == {"baz":""}`  |
+| `encoding` | string | .google.protobuf.FieldOptions | 11110003 | `encoding describes the encoding format used by Amino for the given field. The field type is chosen to be a string for flexibility, but it should ideally be short and expected to be machine-readable, for example "base64" or "utf8_json". We highly recommend to use underscores for word separation instead of spaces.  If left empty, then the Amino encoding is expected to be the same as the Protobuf one.  This annotation should not be confused with the message_encoding one which operates on the message level.`  |
+| `field_name` | string | .google.protobuf.FieldOptions | 11110004 | `field_name sets a different field name (i.e. key name) in the amino JSON object for the given field.  Example:  message Foo {   string bar = 1 [(amino.field_name) = "baz"]; }  Then the Amino encoding of Foo will be: {"baz":"some value"}`  |
+| `message_encoding` | string | .google.protobuf.MessageOptions | 11110002 | `encoding describes the encoding format used by Amino for the given message. The field type is chosen to be a string for flexibility, but it should ideally be short and expected to be machine-readable, for example "base64" or "utf8_json". We highly recommend to use underscores for word separation instead of spaces.  If left empty, then the Amino encoding is expected to be the same as the Protobuf one.  This annotation should not be confused with the encoding one which operates on the field level.`  |
+| `name` | string | .google.protobuf.MessageOptions | 11110001 | `name is the string used when registering a concrete type into the Amino type registry, via the Amino codec's RegisterConcrete() method. This string MUST be at most 39 characters long, or else the message will be rejected by the Ledger hardware device.`  |
 
  <!-- end HasExtensions -->
 
@@ -5914,7 +5914,7 @@ the provide method with expiration time.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `authorization` | [google.protobuf.Any](#google.protobuf.Any) |  |    |
-| `expiration` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `time when the grant will expire and will be pruned. If null, then the grant doesn't have a time expiration (other conditions  in `authorization` may apply to invalidate the grant)`  |
+| `expiration` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `time when the grant will expire and will be pruned. If null, then the grant doesn't have a time expiration (other conditions  in authorization may apply to invalidate the grant)`  |
 
 
 
@@ -6223,9 +6223,9 @@ Query defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Grants` | [QueryGrantsRequest](#cosmos.authz.v1beta1.QueryGrantsRequest) | [QueryGrantsResponse](#cosmos.authz.v1beta1.QueryGrantsResponse) | `Returns list of `Authorization`, granted to the grantee by the granter.` | GET|/cosmos/authz/v1beta1/grants |
-| `GranterGrants` | [QueryGranterGrantsRequest](#cosmos.authz.v1beta1.QueryGranterGrantsRequest) | [QueryGranterGrantsResponse](#cosmos.authz.v1beta1.QueryGranterGrantsResponse) | `GranterGrants returns list of `GrantAuthorization`, granted by granter.  Since: cosmos-sdk 0.46` | GET|/cosmos/authz/v1beta1/grants/granter/{granter} |
-| `GranteeGrants` | [QueryGranteeGrantsRequest](#cosmos.authz.v1beta1.QueryGranteeGrantsRequest) | [QueryGranteeGrantsResponse](#cosmos.authz.v1beta1.QueryGranteeGrantsResponse) | `GranteeGrants returns a list of `GrantAuthorization` by grantee.  Since: cosmos-sdk 0.46` | GET|/cosmos/authz/v1beta1/grants/grantee/{grantee} |
+| `Grants` | [QueryGrantsRequest](#cosmos.authz.v1beta1.QueryGrantsRequest) | [QueryGrantsResponse](#cosmos.authz.v1beta1.QueryGrantsResponse) | `Returns list of Authorization, granted to the grantee by the granter.` | GET|/cosmos/authz/v1beta1/grants |
+| `GranterGrants` | [QueryGranterGrantsRequest](#cosmos.authz.v1beta1.QueryGranterGrantsRequest) | [QueryGranterGrantsResponse](#cosmos.authz.v1beta1.QueryGranterGrantsResponse) | `GranterGrants returns list of GrantAuthorization, granted by granter.  Since: cosmos-sdk 0.46` | GET|/cosmos/authz/v1beta1/grants/granter/{granter} |
+| `GranteeGrants` | [QueryGranteeGrantsRequest](#cosmos.authz.v1beta1.QueryGranteeGrantsRequest) | [QueryGranteeGrantsResponse](#cosmos.authz.v1beta1.QueryGranteeGrantsResponse) | `GranteeGrants returns a list of GrantAuthorization by grantee.  Since: cosmos-sdk 0.46` | GET|/cosmos/authz/v1beta1/grants/grantee/{grantee} |
 
  <!-- end services -->
 
@@ -7464,7 +7464,7 @@ MsgMultiSend represents an arbitrary multi-in, multi-out send message.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `inputs` | [Input](#cosmos.bank.v1beta1.Input) | repeated |  `Inputs, despite being `repeated`, only allows one sender input. This is checked in MsgMultiSend's ValidateBasic.`  |
+| `inputs` | [Input](#cosmos.bank.v1beta1.Input) | repeated |  `Inputs, despite being repeated, only allows one sender input. This is checked in MsgMultiSend's ValidateBasic.`  |
 | `outputs` | [Output](#cosmos.bank.v1beta1.Output) | repeated |    |
 
 
@@ -9162,7 +9162,7 @@ GetBlockByHeightResponse is the response type for the Query/GetBlockByHeight RPC
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `block_id` | [tendermint.types.BlockID](#tendermint.types.BlockID) |  |    |
-| `block` | [tendermint.types.Block](#tendermint.types.Block) |  |  `Deprecated: please use `sdk_block` instead`  |
+| `block` | [tendermint.types.Block](#tendermint.types.Block) |  |  `Deprecated: please use sdk_block instead`  |
 | `sdk_block` | [Block](#cosmos.base.tendermint.v1beta1.Block) |  |  `Since: cosmos-sdk 0.47`  |
 
 
@@ -9197,7 +9197,7 @@ GetLatestBlockResponse is the response type for the Query/GetLatestBlock RPC met
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `block_id` | [tendermint.types.BlockID](#tendermint.types.BlockID) |  |    |
-| `block` | [tendermint.types.Block](#tendermint.types.Block) |  |  `Deprecated: please use `sdk_block` instead`  |
+| `block` | [tendermint.types.Block](#tendermint.types.Block) |  |  `Deprecated: please use sdk_block instead`  |
 | `sdk_block` | [Block](#cosmos.base.tendermint.v1beta1.Block) |  |  `Since: cosmos-sdk 0.47`  |
 
 
@@ -9552,7 +9552,7 @@ Header defines the structure of a Tendermint block header.
 | `app_hash` | [bytes](#bytes) |  |  `state after txs from the previous block`  |
 | `last_results_hash` | [bytes](#bytes) |  |  `root hash of all results from the txs from the previous block`  |
 | `evidence_hash` | [bytes](#bytes) |  |  `consensus info  evidence included in the block`  |
-| `proposer_address` | [string](#string) |  |  `proposer_address is the original block proposer address, formatted as a Bech32 string. In Tendermint, this type is `bytes`, but in the SDK, we convert it to a Bech32 string for better UX.  original proposer of the block`  |
+| `proposer_address` | [string](#string) |  |  `proposer_address is the original block proposer address, formatted as a Bech32 string. In Tendermint, this type is bytes, but in the SDK, we convert it to a Bech32 string for better UX.  original proposer of the block`  |
 
 
 
@@ -9908,7 +9908,7 @@ QueryParamsResponse defines the response type for querying x/consensus parameter
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `params` | [tendermint.types.ConsensusParams](#tendermint.types.ConsensusParams) |  |  `params are the tendermint consensus params stored in the consensus module. Please note that `params.version` is not populated in this response, it is tracked separately in the x/upgrade module.`  |
+| `params` | [tendermint.types.ConsensusParams](#tendermint.types.ConsensusParams) |  |  `params are the tendermint consensus params stored in the consensus module. Please note that params.version is not populated in this response, it is tracked separately in the x/upgrade module.`  |
 
 
 
@@ -12234,7 +12234,7 @@ as well as a limit per time period.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `basic` | [BasicAllowance](#cosmos.feegrant.v1beta1.BasicAllowance) |  |  `basic specifies a struct of `BasicAllowance``  |
+| `basic` | [BasicAllowance](#cosmos.feegrant.v1beta1.BasicAllowance) |  |  `basic specifies a struct of BasicAllowance`  |
 | `period` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  `period specifies the time duration in which period_spend_limit coins can be spent before that allowance is reset`  |
 | `period_spend_limit` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `period_spend_limit specifies the maximum number of coins that can be spent in the period`  |
 | `period_can_spend` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `period_can_spend is the number of coins left to be spent before the period_reset time`  |
@@ -12685,9 +12685,9 @@ GenesisState defines the gov module's genesis state.
 | `deposits` | [Deposit](#cosmos.gov.v1.Deposit) | repeated |  `deposits defines all the deposits present at genesis.`  |
 | `votes` | [Vote](#cosmos.gov.v1.Vote) | repeated |  `votes defines all the votes present at genesis.`  |
 | `proposals` | [Proposal](#cosmos.gov.v1.Proposal) | repeated |  `proposals defines all the proposals present at genesis.`  |
-| `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use `params` instead. deposit_params defines all the paramaters of related to deposit.`  |
-| `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use `params` instead. voting_params defines all the paramaters of related to voting.`  |
-| `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use `params` instead. tally_params defines all the paramaters of related to tally.`  |
+| `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. deposit_params defines all the paramaters of related to deposit.`  |
+| `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. voting_params defines all the paramaters of related to voting.`  |
+| `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. tally_params defines all the paramaters of related to tally.`  |
 | `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the paramaters of x/gov module.  Since: cosmos-sdk 0.47`  |
 
 
@@ -13094,9 +13094,9 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use `params` instead. voting_params defines the parameters related to voting.`  |
-| `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use `params` instead. deposit_params defines the parameters related to deposit.`  |
-| `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use `params` instead. tally_params defines the parameters related to tally.`  |
+| `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. voting_params defines the parameters related to voting.`  |
+| `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. deposit_params defines the parameters related to deposit.`  |
+| `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. tally_params defines the parameters related to tally.`  |
 | `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the paramaters of x/gov module.  Since: cosmos-sdk 0.47`  |
 
 
@@ -13792,7 +13792,7 @@ A Vote consists of a proposal ID, the voter, and the vote option.
 | ----- | ---- | ----- | ----------- |
 | `proposal_id` | [uint64](#uint64) |  |  `proposal_id defines the unique id of the proposal.`  |
 | `voter` | [string](#string) |  |  `voter is the voter address of the proposal.`  |
-| `option` | [VoteOption](#cosmos.gov.v1beta1.VoteOption) |  | **Deprecated.**  `Deprecated: Prefer to use `options` instead. This field is set in queries if and only if `len(options) == 1` and that option has weight 1. In all other cases, this field will default to VOTE_OPTION_UNSPECIFIED.`  |
+| `option` | [VoteOption](#cosmos.gov.v1beta1.VoteOption) |  | **Deprecated.**  `Deprecated: Prefer to use options instead. This field is set in queries if and only if len(options) == 1 and that option has weight 1. In all other cases, this field will default to VOTE_OPTION_UNSPECIFIED.`  |
 | `options` | [WeightedVoteOption](#cosmos.gov.v1beta1.WeightedVoteOption) | repeated |  `options is the weighted vote options.  Since: cosmos-sdk 0.43`  |
 
 
@@ -15047,7 +15047,7 @@ Since: cosmos-sdk 0.47.1
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `groups` | [GroupInfo](#cosmos.group.v1.GroupInfo) | repeated |  ``groups` is all the groups present in state.`  |
+| `groups` | [GroupInfo](#cosmos.group.v1.GroupInfo) | repeated |  `groups is all the groups present in state.`  |
 | `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  |  `pagination defines the pagination in the response.`  |
 
 
@@ -15319,7 +15319,7 @@ Query is the cosmos.group.v1 Query service.
 | `VotesByProposal` | [QueryVotesByProposalRequest](#cosmos.group.v1.QueryVotesByProposalRequest) | [QueryVotesByProposalResponse](#cosmos.group.v1.QueryVotesByProposalResponse) | `VotesByProposal queries a vote by proposal id.` | GET|/cosmos/group/v1/votes_by_proposal/{proposal_id} |
 | `VotesByVoter` | [QueryVotesByVoterRequest](#cosmos.group.v1.QueryVotesByVoterRequest) | [QueryVotesByVoterResponse](#cosmos.group.v1.QueryVotesByVoterResponse) | `VotesByVoter queries a vote by voter.` | GET|/cosmos/group/v1/votes_by_voter/{voter} |
 | `GroupsByMember` | [QueryGroupsByMemberRequest](#cosmos.group.v1.QueryGroupsByMemberRequest) | [QueryGroupsByMemberResponse](#cosmos.group.v1.QueryGroupsByMemberResponse) | `GroupsByMember queries groups by member address.` | GET|/cosmos/group/v1/groups_by_member/{address} |
-| `TallyResult` | [QueryTallyResultRequest](#cosmos.group.v1.QueryTallyResultRequest) | [QueryTallyResultResponse](#cosmos.group.v1.QueryTallyResultResponse) | `TallyResult returns the tally result of a proposal. If the proposal is still in voting period, then this query computes the current tally state, which might not be final. On the other hand, if the proposal is final, then it simply returns the `final_tally_result` state stored in the proposal itself.` | GET|/cosmos/group/v1/proposals/{proposal_id}/tally |
+| `TallyResult` | [QueryTallyResultRequest](#cosmos.group.v1.QueryTallyResultRequest) | [QueryTallyResultResponse](#cosmos.group.v1.QueryTallyResultResponse) | `TallyResult returns the tally result of a proposal. If the proposal is still in voting period, then this query computes the current tally state, which might not be final. On the other hand, if the proposal is final, then it simply returns the final_tally_result state stored in the proposal itself.` | GET|/cosmos/group/v1/proposals/{proposal_id}/tally |
 | `Groups` | [QueryGroupsRequest](#cosmos.group.v1.QueryGroupsRequest) | [QueryGroupsResponse](#cosmos.group.v1.QueryGroupsResponse) | `Groups queries all groups in state.  Since: cosmos-sdk 0.47.1` | GET|/cosmos/group/v1/groups |
 
  <!-- end services -->
@@ -15550,7 +15550,7 @@ MsgSubmitProposal is the Msg/SubmitProposal request type.
 | `group_policy_address` | [string](#string) |  |  `group_policy_address is the account address of group policy.`  |
 | `proposers` | [string](#string) | repeated |  `proposers are the account addresses of the proposers. Proposers signatures will be counted as yes votes.`  |
 | `metadata` | [string](#string) |  |  `metadata is any arbitrary metadata attached to the proposal.`  |
-| `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `messages is a list of `sdk.Msg`s that will be executed if the proposal passes.`  |
+| `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `messages is a list of sdk.Msgs that will be executed if the proposal passes.`  |
 | `exec` | [Exec](#cosmos.group.v1.Exec) |  |  `exec defines the mode of execution of the proposal, whether it should be executed immediately on creation or not. If so, proposers signatures are considered as Yes votes.`  |
 | `title` | [string](#string) |  |  `title is the title of the proposal.  Since: cosmos-sdk 0.47`  |
 | `summary` | [string](#string) |  |  `summary is the summary of the proposal.  Since: cosmos-sdk 0.47`  |
@@ -15937,7 +15937,7 @@ DecisionPolicyWindows defines the different windows for voting and execution.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `voting_period` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  `voting_period is the duration from submission of a proposal to the end of voting period Within this times votes can be submitted with MsgVote.`  |
-| `min_execution_period` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  `min_execution_period is the minimum duration after the proposal submission where members can start sending MsgExec. This means that the window for sending a MsgExec transaction is: `[ submission + min_execution_period ; submission + voting_period + max_execution_period]` where max_execution_period is a app-specific config, defined in the keeper. If not set, min_execution_period will default to 0.  Please make sure to set a `min_execution_period` that is smaller than `voting_period + max_execution_period`, or else the above execution window is empty, meaning that all proposals created with this decision policy won't be able to be executed.`  |
+| `min_execution_period` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  `min_execution_period is the minimum duration after the proposal submission where members can start sending MsgExec. This means that the window for sending a MsgExec transaction is: [ submission + min_execution_period ; submission + voting_period + max_execution_period] where max_execution_period is a app-specific config, defined in the keeper. If not set, min_execution_period will default to 0.  Please make sure to set a min_execution_period that is smaller than voting_period + max_execution_period, or else the above execution window is empty, meaning that all proposals created with this decision policy won't be able to be executed.`  |
 
 
 
@@ -16076,7 +16076,7 @@ it satisfies the two following conditions:
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `percentage` | [string](#string) |  |  `percentage is the minimum percentage of the weighted sum of `YES` votes must meet for a proposal to succeed.`  |
+| `percentage` | [string](#string) |  |  `percentage is the minimum percentage of the weighted sum of YES votes must meet for a proposal to succeed.`  |
 | `windows` | [DecisionPolicyWindows](#cosmos.group.v1.DecisionPolicyWindows) |  |  `windows defines the different windows for voting and execution.`  |
 
 
@@ -16105,12 +16105,12 @@ passes as well as some optional metadata associated with the proposal.
 | `proposers` | [string](#string) | repeated |  `proposers are the account addresses of the proposers.`  |
 | `submit_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `submit_time is a timestamp specifying when a proposal was submitted.`  |
 | `group_version` | [uint64](#uint64) |  |  `group_version tracks the version of the group at proposal submission. This field is here for informational purposes only.`  |
-| `group_policy_version` | [uint64](#uint64) |  |  `group_policy_version tracks the version of the group policy at proposal submission. When a decision policy is changed, existing proposals from previous policy versions will become invalid with the `ABORTED` status. This field is here for informational purposes only.`  |
+| `group_policy_version` | [uint64](#uint64) |  |  `group_policy_version tracks the version of the group policy at proposal submission. When a decision policy is changed, existing proposals from previous policy versions will become invalid with the ABORTED status. This field is here for informational purposes only.`  |
 | `status` | [ProposalStatus](#cosmos.group.v1.ProposalStatus) |  |  `status represents the high level position in the life cycle of the proposal. Initial value is Submitted.`  |
 | `final_tally_result` | [TallyResult](#cosmos.group.v1.TallyResult) |  |  `final_tally_result contains the sums of all weighted votes for this proposal for each vote option. It is empty at submission, and only populated after tallying, at voting period end or at proposal execution, whichever happens first.`  |
-| `voting_period_end` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `voting_period_end is the timestamp before which voting must be done. Unless a successful MsgExec is called before (to execute a proposal whose tally is successful before the voting period ends), tallying will be done at this point, and the `final_tally_result`and `status` fields will be accordingly updated.`  |
+| `voting_period_end` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `voting_period_end is the timestamp before which voting must be done. Unless a successful MsgExec is called before (to execute a proposal whose tally is successful before the voting period ends), tallying will be done at this point, and the final_tally_resultand status fields will be accordingly updated.`  |
 | `executor_result` | [ProposalExecutorResult](#cosmos.group.v1.ProposalExecutorResult) |  |  `executor_result is the final result of the proposal execution. Initial value is NotRun.`  |
-| `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `messages is a list of `sdk.Msg`s that will be executed if the proposal passes.`  |
+| `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `messages is a list of sdk.Msgs that will be executed if the proposal passes.`  |
 | `title` | [string](#string) |  |  `title is the title of the proposal  Since: cosmos-sdk 0.47`  |
 | `summary` | [string](#string) |  |  `summary is a short summary of the proposal  Since: cosmos-sdk 0.47`  |
 
@@ -16158,7 +16158,7 @@ satisfies the two following conditions:
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `threshold` | [string](#string) |  |  `threshold is the minimum weighted sum of `YES` votes that must be met or exceeded for a proposal to succeed.`  |
+| `threshold` | [string](#string) |  |  `threshold is the minimum weighted sum of YES votes that must be met or exceeded for a proposal to succeed.`  |
 | `windows` | [DecisionPolicyWindows](#cosmos.group.v1.DecisionPolicyWindows) |  |  `windows defines the different windows for voting and execution.`  |
 
 
@@ -16807,7 +16807,7 @@ Class defines the class of the nft type.
 | `name` | [string](#string) |  |  `name defines the human-readable name of the NFT classification. Optional`  |
 | `symbol` | [string](#string) |  |  `symbol is an abbreviated name for nft classification. Optional`  |
 | `description` | [string](#string) |  |  `description is a brief description of nft classification. Optional`  |
-| `uri` | [string](#string) |  |  `uri for the class metadata stored off chain. It can define schema for Class and NFT `Data` attributes. Optional`  |
+| `uri` | [string](#string) |  |  `uri for the class metadata stored off chain. It can define schema for Class and NFT Data attributes. Optional`  |
 | `uri_hash` | [string](#string) |  |  `uri_hash is a hash of the document pointed by uri. Optional`  |
 | `data` | [google.protobuf.Any](#google.protobuf.Any) |  |  `data is the app specific metadata of the NFT class. Optional`  |
 
@@ -18258,10 +18258,10 @@ liveness activity.
 | ----- | ---- | ----- | ----------- |
 | `address` | [string](#string) |  |    |
 | `start_height` | [int64](#int64) |  |  `Height at which validator was first a candidate OR was unjailed`  |
-| `index_offset` | [int64](#int64) |  |  `Index which is incremented each time the validator was a bonded in a block and may have signed a precommit or not. This in conjunction with the `SignedBlocksWindow` param determines the index in the `MissedBlocksBitArray`.`  |
+| `index_offset` | [int64](#int64) |  |  `Index which is incremented each time the validator was a bonded in a block and may have signed a precommit or not. This in conjunction with the SignedBlocksWindow param determines the index in the MissedBlocksBitArray.`  |
 | `jailed_until` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `Timestamp until which the validator is jailed due to liveness downtime.`  |
 | `tombstoned` | [bool](#bool) |  |  `Whether or not a validator has been tombstoned (killed out of validator set). It is set once the validator commits an equivocation or for any other configured misbehiavor.`  |
-| `missed_blocks_counter` | [int64](#int64) |  |  `A counter kept to avoid unnecessary array reads. Note that `Sum(MissedBlocksBitArray)` always equals `MissedBlocksCounter`.`  |
+| `missed_blocks_counter` | [int64](#int64) |  |  `A counter kept to avoid unnecessary array reads. Note that Sum(MissedBlocksBitArray) always equals MissedBlocksCounter.`  |
 
 
 
@@ -20167,9 +20167,9 @@ apps have a consistent version of this enum.
 | SIGN_MODE_UNSPECIFIED | 0 | `SIGN_MODE_UNSPECIFIED specifies an unknown signing mode and will be rejected.` |
 | SIGN_MODE_DIRECT | 1 | `SIGN_MODE_DIRECT specifies a signing mode which uses SignDoc and is verified with raw bytes from Tx.` |
 | SIGN_MODE_TEXTUAL | 2 | `SIGN_MODE_TEXTUAL is a future signing mode that will verify some human-readable textual representation on top of the binary representation from SIGN_MODE_DIRECT. It is currently not supported.` |
-| SIGN_MODE_DIRECT_AUX | 3 | `SIGN_MODE_DIRECT_AUX specifies a signing mode which uses SignDocDirectAux. As opposed to SIGN_MODE_DIRECT, this sign mode does not require signers signing over other signers' `signer_info`. It also allows for adding Tips in transactions.  Since: cosmos-sdk 0.46` |
+| SIGN_MODE_DIRECT_AUX | 3 | `SIGN_MODE_DIRECT_AUX specifies a signing mode which uses SignDocDirectAux. As opposed to SIGN_MODE_DIRECT, this sign mode does not require signers signing over other signers' signer_info. It also allows for adding Tips in transactions.  Since: cosmos-sdk 0.46` |
 | SIGN_MODE_LEGACY_AMINO_JSON | 127 | `SIGN_MODE_LEGACY_AMINO_JSON is a backwards compatibility mode which uses Amino JSON and will be removed in the future.` |
-| SIGN_MODE_EIP_191 | 191 | `SIGN_MODE_EIP_191 specifies the sign mode for EIP 191 signing on the Cosmos SDK. Ref: https://eips.ethereum.org/EIPS/eip-191  Currently, SIGN_MODE_EIP_191 is registered as a SignMode enum variant, but is not implemented on the SDK by default. To enable EIP-191, you need to pass a custom `TxConfig` that has an implementation of `SignModeHandler` for EIP-191. The SDK may decide to fully support EIP-191 in the future.  Since: cosmos-sdk 0.45.2` |
+| SIGN_MODE_EIP_191 | 191 | `SIGN_MODE_EIP_191 specifies the sign mode for EIP 191 signing on the Cosmos SDK. Ref: https://eips.ethereum.org/EIPS/eip-191  Currently, SIGN_MODE_EIP_191 is registered as a SignMode enum variant, but is not implemented on the SDK by default. To enable EIP-191, you need to pass a custom TxConfig that has an implementation of SignModeHandler for EIP-191. The SDK may decide to fully support EIP-191 in the future.  Since: cosmos-sdk 0.45.2` |
 
 
  <!-- end enums -->
@@ -20670,7 +20670,7 @@ transaction.
 | ----- | ---- | ----- | ----------- |
 | `signer_infos` | [SignerInfo](#cosmos.tx.v1beta1.SignerInfo) | repeated |  `signer_infos defines the signing modes for the required signers. The number and order of elements must match the required signers from TxBody's messages. The first element is the primary signer and the one which pays the fee.`  |
 | `fee` | [Fee](#cosmos.tx.v1beta1.Fee) |  |  `Fee is the fee and gas limit for the transaction. The first signer is the primary signer and the one which pays the fee. The fee can be calculated based on the cost of evaluating the body and doing signature verification of the signers. This can be estimated via simulation.`  |
-| `tip` | [Tip](#cosmos.tx.v1beta1.Tip) |  |  `Tip is the optional tip used for transactions fees paid in another denom.  This field is ignored if the chain didn't enable tips, i.e. didn't add the `TipDecorator` in its posthandler.  Since: cosmos-sdk 0.46`  |
+| `tip` | [Tip](#cosmos.tx.v1beta1.Tip) |  |  `Tip is the optional tip used for transactions fees paid in another denom.  This field is ignored if the chain didn't enable tips, i.e. didn't add the TipDecorator in its posthandler.  Since: cosmos-sdk 0.46`  |
 
 
 
@@ -20831,7 +20831,7 @@ Since: cosmos-sdk 0.46
 | `chain_id` | [string](#string) |  |  `chain_id is the identifier of the chain this transaction targets. It prevents signed transactions from being used on another chain by an attacker.`  |
 | `account_number` | [uint64](#uint64) |  |  `account_number is the account number of the account in state.`  |
 | `sequence` | [uint64](#uint64) |  |  `sequence is the sequence number of the signing account.`  |
-| `tip` | [Tip](#cosmos.tx.v1beta1.Tip) |  |  `Tip is the optional tip used for transactions fees paid in another denom. It should be left empty if the signer is not the tipper for this transaction.  This field is ignored if the chain didn't enable tips, i.e. didn't add the `TipDecorator` in its posthandler.`  |
+| `tip` | [Tip](#cosmos.tx.v1beta1.Tip) |  |  `Tip is the optional tip used for transactions fees paid in another denom. It should be left empty if the signer is not the tipper for this transaction.  This field is ignored if the chain didn't enable tips, i.e. didn't add the TipDecorator in its posthandler.`  |
 
 
 
@@ -20916,7 +20916,7 @@ TxBody is the body of a transaction that all signers sign over.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `messages is a list of messages to be executed. The required signers of those messages define the number and order of elements in AuthInfo's signer_infos and Tx's signatures. Each required signer address is added to the list only the first time it occurs. By convention, the first required signer (usually from the first message) is referred to as the primary signer and pays the fee for the whole transaction.`  |
-| `memo` | [string](#string) |  |  `memo is any arbitrary note/comment to be added to the transaction. WARNING: in clients, any publicly exposed text should not be called memo, but should be called `note` instead (see https://github.com/cosmos/cosmos-sdk/issues/9122).`  |
+| `memo` | [string](#string) |  |  `memo is any arbitrary note/comment to be added to the transaction. WARNING: in clients, any publicly exposed text should not be called memo, but should be called note instead (see https://github.com/cosmos/cosmos-sdk/issues/9122).`  |
 | `timeout_height` | [uint64](#uint64) |  |  `timeout is the block height after which this transaction will not be processed by the chain`  |
 | `extension_options` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `extension_options are arbitrary options that can be added by chains when the default options are not sufficient. If any of these are present and can't be handled, the transaction will be rejected`  |
 | `non_critical_extension_options` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `extension_options are arbitrary options that can be added by chains when the default options are not sufficient. If any of these are present and can't be handled, they will be ignored`  |
