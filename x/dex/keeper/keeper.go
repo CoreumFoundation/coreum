@@ -166,7 +166,7 @@ func (k Keeper) appendOrder(side []*orderWrapper, order *orderWrapper) []*orderW
 	if len(side) > 1 {
 		sort.Slice(side, func(i, j int) bool {
 			oA, oB := side[i], side[j]
-			return oA.Order.Price().LT(oB.Order.Price()) || (oA.Order.Price().Equal(oB.Order.Price()) && oA.orderID > oB.orderID)
+			return oA.Order.Price().GT(oB.Order.Price()) || (oA.Order.Price().Equal(oB.Order.Price()) && oA.orderID > oB.orderID)
 		})
 	}
 	return side

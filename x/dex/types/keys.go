@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/binary"
-	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -71,13 +70,11 @@ func DecomposeOrderTransientQueueKey(key []byte) (uint64, uint64, uint64) {
 
 // CreateOrderQueueKey creates the key for an order inside transient queue.
 func CreateOrderQueueKey(denomOfferedSeq, denomRequestedSeq, orderID uint64, price sdk.Dec) []byte {
-	wholePart := price.TruncateInt()
-	decPart := price.Sub(wholePart.ToLegacyDec()).Mul(sdk.NewDecFromInt(sdk.NewIntFromUint64(1000000000000000000))).
-		TruncateInt()
+	wholePart, decPart := priceToUint64s(price)
 
 	key := make([]byte, 0, 3*uint64ByteSize)
-	key = binary.BigEndian.AppendUint64(key, math.MaxUint64-wholePart.Uint64())
-	key = binary.BigEndian.AppendUint64(key, math.MaxUint64-decPart.Uint64())
+	key = binary.BigEndian.AppendUint64(key, wholePart)
+	key = binary.BigEndian.AppendUint64(key, decPart)
 	key = binary.BigEndian.AppendUint64(key, orderID)
 
 	return store.JoinKeys(CreateDenomPairKeyPrefix(OrderQueueKey, denomOfferedSeq, denomRequestedSeq), key)
@@ -100,4 +97,12 @@ func CreateOrderOwnerKey(accountNumber, orderID uint64) []byte {
 // CreateOrderKey creates the key for an order.
 func CreateOrderKey(orderID uint64) []byte {
 	return store.JoinKeys(OrderKey, binary.BigEndian.AppendUint64(make([]byte, 0, uint64ByteSize), orderID))
+}
+
+func priceToUint64s(price sdk.Dec) (uint64, uint64) {
+	wholePart := price.TruncateInt()
+	decPart := price.Sub(wholePart.ToLegacyDec()).Mul(sdk.NewDecFromInt(sdk.NewIntFromUint64(1000000000000000000))).
+		TruncateInt()
+
+	return wholePart.Uint64(), decPart.Uint64()
 }

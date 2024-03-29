@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"math"
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -24,7 +23,7 @@ var (
 
 var (
 	minPrice = sdk.MustNewDecFromStr("0.000000000000000001")
-	maxPrice = sdk.MustNewDecFromStr(fmt.Sprintf("%d.999999999999999999", uint64(math.MaxUint64)))
+	maxPrice = sdk.MustNewDecFromStr("999999999999999999.999999999999999999")
 )
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
