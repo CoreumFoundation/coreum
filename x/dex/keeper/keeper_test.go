@@ -523,7 +523,7 @@ func TestMatching(t *testing.T) {
 			},
 		},
 		{
-			Name: "orders_in_persistent_store_are_matched_according_to_order_ids_iff_prices_are_the_same_1",
+			Name: "orders_in_persistent_store_are_matched_according_to_order_ids_if_prices_are_the_same_1",
 			Input: [][]types.Order{
 				{
 					&types.OrderLimit{
@@ -554,7 +554,7 @@ func TestMatching(t *testing.T) {
 			},
 		},
 		{
-			Name: "orders_in_persistent_store_are_matched_according_to_order_ids_iff_prices_are_the_same_2",
+			Name: "orders_in_persistent_store_are_matched_according_to_order_ids_if_prices_are_the_same_2",
 			Input: [][]types.Order{
 				{
 					&types.OrderLimit{
@@ -595,7 +595,7 @@ func TestMatching(t *testing.T) {
 			},
 		},
 		{
-			Name: "orders_in_transient_store_are_matched_according_to_order_ids_iff_prices_are_the_same_1",
+			Name: "orders_in_transient_store_are_matched_according_to_order_ids_if_prices_are_the_same_1",
 			Input: [][]types.Order{
 				{
 					&types.OrderLimit{
@@ -624,7 +624,7 @@ func TestMatching(t *testing.T) {
 			},
 		},
 		{
-			Name: "orders_in_transient_store_are_matched_according_to_order_ids_iff_prices_are_the_same_2",
+			Name: "orders_in_transient_store_are_matched_according_to_order_ids_if_prices_are_the_same_2",
 			Input: [][]types.Order{
 				{
 					&types.OrderLimit{
@@ -658,6 +658,124 @@ func TestMatching(t *testing.T) {
 				&types.OrderLimit{
 					Sender:    addr2.String(),
 					Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(5)),
+					SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+				},
+			},
+		},
+		{
+			Name: "orders_are_matched_from_persistent_and_transient_stores_in_correct_order_1",
+			Input: [][]types.Order{
+				{
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(30)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("3")),
+					},
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(10)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("1")),
+					},
+				},
+				{
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(20)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+					},
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(110)),
+						SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("0.1")),
+					},
+				},
+			},
+			Output: []types.Order{
+				&types.OrderLimit{
+					Sender:    addr1.String(),
+					Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(10)),
+					SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("3")),
+				},
+			},
+		},
+		{
+			Name: "orders_are_matched_from_persistent_and_transient_stores_in_correct_order_2",
+			Input: [][]types.Order{
+				{
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(50)),
+						SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("10")),
+					},
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(30)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("3")),
+					},
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(10)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("1")),
+					},
+				},
+				{
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(20)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+					},
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(110)),
+						SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("0.1")),
+					},
+				},
+			},
+			Output: []types.Order{
+				&types.OrderLimit{
+					Sender:    addr1.String(),
+					Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(50)),
+					SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("10")),
+				},
+				&types.OrderLimit{
+					Sender:    addr1.String(),
+					Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(10)),
+					SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("3")),
+				},
+			},
+		},
+		{
+			Name: "two_step_matching",
+			Input: [][]types.Order{
+				{
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(20)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("3")),
+					},
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(10)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("1")),
+					},
+				},
+				{
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomB, sdkmath.NewIntFromUint64(110)),
+						SellPrice: sdk.NewDecCoinFromDec(denomA, sdk.MustNewDecFromStr("0.1")),
+					},
+					&types.OrderLimit{
+						Sender:    addr1.String(),
+						Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(20)),
+						SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
+					},
+				},
+			},
+			Output: []types.Order{
+				&types.OrderLimit{
+					Sender:    addr1.String(),
+					Amount:    sdk.NewCoin(denomA, sdkmath.NewIntFromUint64(16)),
 					SellPrice: sdk.NewDecCoinFromDec(denomB, sdk.MustNewDecFromStr("2")),
 				},
 			},
