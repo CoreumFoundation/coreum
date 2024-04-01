@@ -140,7 +140,7 @@
     - [MsgRemoveFromClassWhitelist](#coreum.asset.nft.v1.MsgRemoveFromClassWhitelist)
     - [MsgRemoveFromWhitelist](#coreum.asset.nft.v1.MsgRemoveFromWhitelist)
     - [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze)
-    - [MsgUpdate](#coreum.asset.nft.v1.MsgUpdate)
+    - [MsgUpdateData](#coreum.asset.nft.v1.MsgUpdateData)
     - [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams)
   
     - [Msg](#coreum.asset.nft.v1.Msg)
@@ -151,7 +151,7 @@
     - [DataDynamicIndexedItem](#coreum.asset.nft.v1.DataDynamicIndexedItem)
     - [DataDynamicItem](#coreum.asset.nft.v1.DataDynamicItem)
   
-    - [DataModificationType](#coreum.asset.nft.v1.DataModificationType)
+    - [DataEditor](#coreum.asset.nft.v1.DataEditor)
   
 - [coreum/customparams/v1/genesis.proto](#coreum/customparams/v1/genesis.proto)
     - [GenesisState](#coreum.customparams.v1.GenesisState)
@@ -3451,10 +3451,10 @@ MsgMint defines message for the Mint method.
 
 
 
-<a name="coreum.asset.nft.v1.MsgUpdate"></a>
+<a name="coreum.asset.nft.v1.MsgUpdateData"></a>
 
-### MsgUpdate
-MsgUpdate defines message to update the dynamic data.
+### MsgUpdateData
+MsgUpdateData defines message to update the dynamic data.
 
 
 | Field | Type | Label | Description |
@@ -3500,7 +3500,7 @@ Msg defines the Msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `IssueClass` | [MsgIssueClass](#coreum.asset.nft.v1.MsgIssueClass) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | IssueClass creates new non-fungible token class. | |
 | `Mint` | [MsgMint](#coreum.asset.nft.v1.MsgMint) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | Mint mints new non-fungible token in the class. | |
-| `Update` | [MsgUpdate](#coreum.asset.nft.v1.MsgUpdate) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | Update updates the existing non-fungible token in the class. | |
+| `UpdateData` | [MsgUpdateData](#coreum.asset.nft.v1.MsgUpdateData) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | UpdateData updates the existing non-fungible token data in the class. | |
 | `Burn` | [MsgBurn](#coreum.asset.nft.v1.MsgBurn) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | Burn burns the existing non-fungible token in the class. | |
 | `Freeze` | [MsgFreeze](#coreum.asset.nft.v1.MsgFreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | Freeze freezes an NFT | |
 | `Unfreeze` | [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | Unfreeze removes the freeze effect already put on an NFT | |
@@ -3526,7 +3526,7 @@ Msg defines the Msg service.
 <a name="coreum.asset.nft.v1.DataBytes"></a>
 
 ### DataBytes
-DataBytes represent the data which can't be updated.
+DataBytes represents the immutable data.
 
 
 | Field | Type | Label | Description |
@@ -3577,7 +3577,7 @@ DataDynamicItem contains the updatable data and modification types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `types` | [DataModificationType](#coreum.asset.nft.v1.DataModificationType) | repeated | contains the set of the modification types, if empty no one can update. |
+| `editors` | [DataEditor](#coreum.asset.nft.v1.DataEditor) | repeated | contains the set of the data editors, if empty no one can update. |
 | `data` | [bytes](#bytes) |  |  |
 
 
@@ -3587,15 +3587,15 @@ DataDynamicItem contains the updatable data and modification types.
  <!-- end messages -->
 
 
-<a name="coreum.asset.nft.v1.DataModificationType"></a>
+<a name="coreum.asset.nft.v1.DataEditor"></a>
 
-### DataModificationType
-DataModificationType defines possible data modification types.
+### DataEditor
+DataEditor defines possible data editors.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| admin | 0 | only issuer can update |
-| owner | 1 | only owner can update |
+| admin | 0 |  |
+| owner | 1 |  |
 
 
  <!-- end enums -->

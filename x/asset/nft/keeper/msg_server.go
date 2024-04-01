@@ -101,8 +101,8 @@ func (ms MsgServer) Mint(ctx context.Context, req *types.MsgMint) (*types.EmptyR
 	return &types.EmptyResponse{}, nil
 }
 
-// Update updates  the dynamic data.
-func (ms MsgServer) Update(_ context.Context, _ *types.MsgUpdate) (*types.EmptyResponse, error) {
+// UpdateData updates the dynamic data.
+func (ms MsgServer) UpdateData(_ context.Context, _ *types.MsgUpdateData) (*types.EmptyResponse, error) {
 	// FIXME implement me
 	panic("implement me")
 }

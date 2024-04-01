@@ -91,7 +91,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                     constantGasFunc(26_000),
 		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):               dataGasFunc(NFTIssueClassBaseGas),
 		MsgToMsgURL(&assetnfttypes.MsgMint{}):                     dataGasFunc(NFTMintBaseGas),
-		MsgToMsgURL(&assetnfttypes.MsgUpdate{}):                   dataGasFunc(NFTUpdateBaseGas),
+		MsgToMsgURL(&assetnfttypes.MsgUpdateData{}):               dataGasFunc(NFTUpdateBaseGas),
 		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):                   constantGasFunc(8_000),
 		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):                 constantGasFunc(5_000),
 		MsgToMsgURL(&assetnfttypes.MsgClassFreeze{}):              constantGasFunc(8_000),
@@ -371,7 +371,7 @@ func dataGasFunc(constGas uint64) gasByMsgFunc {
 			dataLen = len(m.Data.GetValue())
 		case *assetnfttypes.MsgMint:
 			dataLen = len(m.Data.GetValue())
-		case *assetnfttypes.MsgUpdate:
+		case *assetnfttypes.MsgUpdateData:
 			dataLen = lo.Reduce(m.Items, func(agg int, item *assetnfttypes.DataDynamicIndexedItem, _ int) int {
 				if item == nil {
 					return agg
