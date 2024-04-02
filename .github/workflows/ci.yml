@@ -122,6 +122,7 @@ jobs:
         # FIXME (wojciech): Execute `download` commands for crust and faucet builders once available
         run: |
           coreum-builder download
+          crust znet remove
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
