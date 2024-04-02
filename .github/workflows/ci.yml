@@ -48,7 +48,7 @@ jobs:
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: |
-              coreum-builder build/integration-tests/upgrade build images
+              coreum-builder build/integration-tests build images
               crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
             linter-cache: false
             codecov: false
