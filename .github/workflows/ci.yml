@@ -118,11 +118,15 @@ jobs:
         continue-on-error: true
         with:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
-      - name: Download dependencies
+      - name: Prepare dependencies
         # FIXME (wojciech): Execute `download` commands for crust and faucet builders once available
         run: |
-          coreum-builder download
+          crust build/me
+          crust build
           crust znet remove
+          coreum-builder build/me
+          coreum-builder download
+          faucet-builder build/me
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
