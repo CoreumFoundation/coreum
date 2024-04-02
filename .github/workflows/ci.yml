@@ -33,6 +33,7 @@ jobs:
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             command: |
+              coreum-builder build/integration-tests/modules images
               crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
               crust znet coverage-convert
@@ -41,16 +42,20 @@ jobs:
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
             command: |
+              coreum-builder build/integration-tests/ibc images
               crust znet test --test-groups=coreum-ibc --timeout-commit 1s
             linter-cache: false
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: |
+              coreum-builder build/integration-tests/upgrade images
               crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
             linter-cache: false
             codecov: false
           - ci_step: "integration tests faucet"
             command: |
+              coreum-builder images
+              faucet-builder build/integration-tests images
               crust znet test --test-groups=faucet --timeout-commit 0.5s
             linter-cache: false
             codecov: false
@@ -113,14 +118,10 @@ jobs:
         continue-on-error: true
         with:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
-      - name: Build step
+      - name: Download dependencies
+        # FIXME (wojciech): Execute `download` commands for crust and faucet builders once available
         run: |
-          crust build/me
-          crust build images
-          faucet-builder build/integration-tests images
-          coreum-builder build/integration-tests images
-          # remove previously saved znet related data
-          crust znet remove
+          coreum-builder download
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov

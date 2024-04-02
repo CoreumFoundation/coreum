@@ -5,9 +5,9 @@ go 1.21
 replace github.com/CoreumFoundation/coreum/v4 => ../
 
 require (
-	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
+	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f
-	github.com/CoreumFoundation/crust/build v0.0.0-20240315073401-1192a9abf980
+	github.com/CoreumFoundation/crust/build v0.0.0-20240329143651-7ca0f7b8aa03
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 )

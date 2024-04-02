@@ -141,6 +141,11 @@ func Test(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
 }
 
+// DownloadDependencies downloads go dependencies.
+func DownloadDependencies(ctx context.Context, deps build.DepsFunc) error {
+	return golang.DownloadDependencies(ctx, repoPath, deps)
+}
+
 func coredVersionLDFlags(ctx context.Context, buildTags []string) (string, error) {
 	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
