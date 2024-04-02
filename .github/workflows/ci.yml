@@ -33,7 +33,7 @@ jobs:
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             command: |
-              coreum-builder build/integration-tests/modules images
+              coreum-builder build/integration-tests/modules build images
               crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
               crust znet stop
               crust znet coverage-convert
@@ -42,19 +42,19 @@ jobs:
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
             command: |
-              coreum-builder build/integration-tests/ibc images
+              coreum-builder build/integration-tests/ibc build images
               crust znet test --test-groups=coreum-ibc --timeout-commit 1s
             linter-cache: false
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: |
-              coreum-builder build/integration-tests/upgrade images
+              coreum-builder build/integration-tests/upgrade build images
               crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
             linter-cache: false
             codecov: false
           - ci_step: "integration tests faucet"
             command: |
-              coreum-builder images
+              coreum-builder build images
               faucet-builder build/integration-tests images
               crust znet test --test-groups=faucet --timeout-commit 0.5s
             linter-cache: false
@@ -95,7 +95,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
+          key: ${{ runner.os }}-go-v2-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup crust cache
         uses: actions/cache@v4
         with:
