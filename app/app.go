@@ -560,6 +560,10 @@ func New(
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
 		app.keys[ibchookstypes.StoreKey],
 	)
+	// Pass the contract keeper to all the structs (generally ICS4Wrappers for ibc middlewares) that need it
+	// The contract keeper needs to be set later
+	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
+	app.Ics20WasmHooks = &wasmHooks
 
 	// Register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
@@ -683,14 +687,8 @@ func New(
 	)
 	app.WasmKeeper = &wasmKeeper
 	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
-
-	// Pass the contract keeper to all the structs (generally ICS4Wrappers for ibc middlewares) that need it
-	// The contract keeper needs to be set later
-	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
-	app.Ics20WasmHooks = &wasmHooks
-
+	//app.Ics20WasmHooks.ContractKeeper = app.ContractKeeper // TODO: check me
 	app.Ics20WasmHooks.ContractKeeper = app.WasmKeeper
-
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
 		app.Ics20WasmHooks,
@@ -701,8 +699,8 @@ func New(
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
-	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper.Keeper)
 	// Create static IBC router, add transfer route, then set and seal it
+	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper.Keeper)
 	hooksTransferModule := ibchooks.NewIBCMiddleware(&transferIBCModule, &app.HooksICS4Wrapper)
 	app.TransferStack = &hooksTransferModule
 
@@ -832,6 +830,7 @@ func New(
 		group.ModuleName,
 		paramstypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		ibchookstypes.ModuleName,
 		wasmtypes.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
@@ -862,6 +861,7 @@ func New(
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		ibchookstypes.ModuleName,
 		wasmtypes.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
@@ -898,6 +898,7 @@ func New(
 		feegrant.ModuleName,
 		group.ModuleName,
 		consensusparamtypes.ModuleName,
+		ibchookstypes.ModuleName,
 		wasmtypes.ModuleName,
 		feemodeltypes.ModuleName,
 		nft.ModuleName,
