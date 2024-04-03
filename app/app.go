@@ -283,6 +283,7 @@ type App struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	WasmKeeper            *wasmkeeper.Keeper
+	ContractKeeper        *wasmkeeper.PermissionedKeeper
 	GroupKeeper           groupkeeper.Keeper
 
 	AssetFTKeeper      assetftkeeper.Keeper
@@ -306,9 +307,9 @@ type App struct {
 
 	configurator module.Configurator
 
+	TransferStack    *ibchooks.IBCMiddleware
 	Ics20WasmHooks   *ibchooks.WasmHooks
 	HooksICS4Wrapper ibchooks.ICS4Middleware
-	TransferStack    ibchooks.IBCMiddleware
 }
 
 // New returns a reference to an initialized blockchain app.
@@ -681,11 +682,14 @@ func New(
 		wasmOpts...,
 	)
 	app.WasmKeeper = &wasmKeeper
+	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
 
 	// Pass the contract keeper to all the structs (generally ICS4Wrappers for ibc middlewares) that need it
 	// The contract keeper needs to be set later
 	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
 	app.Ics20WasmHooks = &wasmHooks
+
+	app.Ics20WasmHooks.ContractKeeper = app.WasmKeeper
 
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
@@ -699,13 +703,14 @@ func New(
 
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper.Keeper)
 	// Create static IBC router, add transfer route, then set and seal it
+	hooksTransferModule := ibchooks.NewIBCMiddleware(&transferIBCModule, &app.HooksICS4Wrapper)
+	app.TransferStack = &hooksTransferModule
+
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(
 		ibctransfertypes.ModuleName,
-		wibctransfer.NewPurposeMiddleware(transferIBCModule),
-	)
-	app.TransferStack = ibchooks.NewIBCMiddleware(&transferIBCModule, &app.HooksICS4Wrapper)
-	ibcRouter.AddRoute(
+		app.TransferStack,
+	).AddRoute(
 		wasmtypes.ModuleName,
 		wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper),
 	)
