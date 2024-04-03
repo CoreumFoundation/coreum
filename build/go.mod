@@ -7,11 +7,14 @@ replace github.com/CoreumFoundation/coreum/v4 => ../
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f
-	github.com/CoreumFoundation/crust/build v0.0.0-20240314081929-af265f0b38bd
+	github.com/CoreumFoundation/crust/build v0.0.0-20240315073401-1192a9abf980
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
-	go.uber.org/zap v1.27.0
-	golang.org/x/mod v0.16.0
+)
+
+require (
+	go.uber.org/zap v1.27.0 // indirect
+	golang.org/x/mod v0.16.0 // indirect
 )
 
 require (
