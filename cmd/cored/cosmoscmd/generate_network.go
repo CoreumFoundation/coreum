@@ -25,6 +25,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -161,12 +162,28 @@ func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context
 
 	// mint params
 	mintGenesis := minttypes.DefaultGenesisState()
-	mintGenesis.Params.BlocksPerYear = 6311520
-	mintGenesis.Params.InflationMin = sdk.MustNewDecFromStr("0.07")
+	mintGenesis.Params.BlocksPerYear = 17900000
+	mintGenesis.Params.InflationMin = sdk.MustNewDecFromStr("0")
 	mintGenesis.Params.InflationMax = sdk.MustNewDecFromStr("0.20")
-	mintGenesis.Minter.Inflation = sdk.MustNewDecFromStr("0.13")
+	mintGenesis.Params.InflationRateChange = sdk.MustNewDecFromStr("0.13")
+	mintGenesis.Minter.Inflation = sdk.MustNewDecFromStr("0.1")
 
 	appGenState[minttypes.ModuleName] = cdc.MustMarshalJSON(mintGenesis)
+
+	// slashing params
+	slashingGenesis := slashingtypes.DefaultGenesisState()
+	slashingGenesis.Params.DowntimeJailDuration = 60 * time.Second
+	slashingGenesis.Params.SignedBlocksWindow = 34000
+	slashingGenesis.Params.SlashFractionDowntime = sdk.MustNewDecFromStr("0.005")
+
+	appGenState[slashingtypes.ModuleName] = cdc.MustMarshalJSON(slashingGenesis)
+
+	// staking params
+	stakingGenesis := stakingtypes.DefaultGenesisState()
+	stakingGenesis.Params.MaxValidators = 32
+	stakingGenesis.Params.UnbondingTime = 168 * time.Hour
+
+	appGenState[stakingtypes.ModuleName] = cdc.MustMarshalJSON(stakingGenesis)
 
 	// genutil state
 	genutilState := genutiltypes.DefaultGenesisState()
