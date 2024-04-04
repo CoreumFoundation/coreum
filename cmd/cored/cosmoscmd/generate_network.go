@@ -111,6 +111,7 @@ func GenerateGenesisCmd() *cobra.Command {
 	return cmd
 }
 
+//nolint:funlen
 func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context) (types.GenesisDoc, error) {
 	cdc := cosmosClientCtx.Codec
 	appGenState := app.ModuleBasics.DefaultGenesis(cdc)

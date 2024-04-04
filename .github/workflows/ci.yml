@@ -118,7 +118,7 @@ jobs:
           crust build/me
           crust build images
           faucet-builder build/integration-tests images
-          coreum-builder build/integration-tests images
+          coreum-builder build/integration-tests build images
           # remove previously saved znet related data
           crust znet remove
       - name: Run ${{ matrix.ci_step }}
