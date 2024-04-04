@@ -101,6 +101,12 @@ func (ms MsgServer) Mint(ctx context.Context, req *types.MsgMint) (*types.EmptyR
 	return &types.EmptyResponse{}, nil
 }
 
+// UpdateData updates the dynamic data.
+func (ms MsgServer) UpdateData(_ context.Context, _ *types.MsgUpdateData) (*types.EmptyResponse, error) {
+	// FIXME implement me
+	panic("implement me")
+}
+
 // Burn burns the non-fungible token.
 func (ms MsgServer) Burn(ctx context.Context, req *types.MsgBurn) (*types.EmptyResponse, error) {
 	owner, err := sdk.AccAddressFromBech32(req.Sender)
