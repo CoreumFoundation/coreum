@@ -18,8 +18,8 @@ const (
 	TestUpgrade = "upgrade"
 )
 
-// BuildAllIntegrationTests builds all the coreum integration tests.
-func BuildAllIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
+// RunAllIntegrationTests runs all the coreum integration tests.
+func RunAllIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	entries, err := os.ReadDir(testsDir)
 	if err != nil {
 		return errors.WithStack(err)
@@ -31,14 +31,14 @@ func BuildAllIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 			continue
 		}
 
-		actions = append(actions, BuildIntegrationTests(e.Name()))
+		actions = append(actions, RunIntegrationTests(e.Name()))
 	}
 	deps(actions...)
 	return nil
 }
 
-// BuildIntegrationTests returns function compiling integration tests.
-func BuildIntegrationTests(name string) build.CommandFunc {
+// RunIntegrationTests returns function running integration tests.
+func RunIntegrationTests(name string) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		switch name {
 		case TestModules, TestUpgrade:
@@ -47,12 +47,10 @@ func BuildIntegrationTests(name string) build.CommandFunc {
 			deps(CompileIBCSmartContracts)
 		}
 
-		binOutputPath := filepath.Join(testsBinDir, repoName+"-"+name)
-		return golang.BuildTests(ctx, deps, golang.TestBuildConfig{
+		return golang.RunTests(ctx, deps, golang.TestConfig{
 			PackagePath: filepath.Join(testsDir, name),
 			Flags: []string{
 				"-tags=integrationtests",
-				binaryOutputFlag + "=" + binOutputPath,
 			},
 		})
 	}

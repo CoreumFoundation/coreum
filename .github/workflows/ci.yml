@@ -33,8 +33,9 @@ jobs:
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             command: |
-              coreum-builder build/integration-tests/modules build images
-              crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
+              coreum-builder build images
+              crust znet start --profiles=3cored --timeout-commit 0.5s
+              coreum-builder integration-tests/modules
               crust znet stop
               crust znet coverage-convert
             linter-cache: false
@@ -42,14 +43,16 @@ jobs:
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
             command: |
-              coreum-builder build/integration-tests/ibc build images
-              crust znet test --test-groups=coreum-ibc --timeout-commit 1s
+              coreum-builder build images
+              crust znet start --profiles=3cored,ibc --timeout-commit 1s
+              coreum-builder integration-tests/ibc
             linter-cache: false
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: |
-              coreum-builder build/integration-tests build images
-              crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
+              coreum-builder build images
+              crust znet start --cored-version=v3.0.2 --profiles=3cored,ibc --timeout-commit 1s
+              coreum-builder integration-tests/upgrade integration-tests/modules integration-tests/ibc
             linter-cache: false
             codecov: false
           - ci_step: "integration tests faucet"
