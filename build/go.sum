@@ -5,6 +5,8 @@ github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go
 github.com/CoreumFoundation/crust/build v0.0.0-20240315073401-1192a9abf980 h1:LuUyiUvzYdvqBLSlMfLMCfAp79tLnUi3rQutve0UW94=
 github.com/CoreumFoundation/crust/build v0.0.0-20240315073401-1192a9abf980/go.mod h1:ZUxc7Pskj95EYmPMp8kU6yyeyZ5PcWuixfbVfIlGTVs=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
+github.com/coinbase/rosetta-sdk-go v0.8.4 h1:VtHv2c3kVeja2H/mbInBPnx5sTlkbyuTzPQomU/2Kkg=
+github.com/coinbase/rosetta-sdk-go v0.8.4/go.mod h1:hFaqXH62zEgjZ/NFj58Sip1+JCEckTLM+xgmAUkbSIQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

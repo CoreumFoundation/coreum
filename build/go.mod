@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	github.com/coinbase/rosetta-sdk-go v0.8.4 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/mod v0.16.0 // indirect
 )
