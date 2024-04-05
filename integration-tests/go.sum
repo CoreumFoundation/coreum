@@ -355,8 +355,6 @@ github.com/cockroachdb/pebble v0.0.0-20230226194802-02d779ffbc46/go.mod h1:9lRMC
 github.com/cockroachdb/redact v1.1.5 h1:u1PMllDkdFfPWaNGMyLD1+so+aq3uUItthCFqzwPJ30=
 github.com/cockroachdb/redact v1.1.5/go.mod h1:BVNblN9mBWFyMyqK1k3AAiSxhvhfK2oOZZ2lK+dpvRg=
 github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd/go.mod h1:sE/e/2PUdi/liOCUjSTXgM1o87ZssimdTWN964YiIeI=
-github.com/coinbase/rosetta-sdk-go v0.8.4 h1:VtHv2c3kVeja2H/mbInBPnx5sTlkbyuTzPQomU/2Kkg=
-github.com/coinbase/rosetta-sdk-go v0.8.4/go.mod h1:hFaqXH62zEgjZ/NFj58Sip1+JCEckTLM+xgmAUkbSIQ=
 github.com/coinbase/rosetta-sdk-go/types v1.0.0 h1:jpVIwLcPoOeCR6o1tU+Xv7r5bMONNbHU7MuEHboiFuA=
 github.com/coinbase/rosetta-sdk-go/types v1.0.0/go.mod h1:eq7W2TMRH22GTW0N0beDnN931DW0/WOI1R2sdHNHG4c=
 github.com/cometbft/cometbft v0.37.4 h1:xyvvEqlyfK8MgNIIKVJaMsuIp03wxOcFmVkT26+Ikpg=
