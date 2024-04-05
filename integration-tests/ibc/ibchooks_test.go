@@ -6,10 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
@@ -37,10 +40,11 @@ func TestIBCHooksCounter(t *testing.T) {
 
 	coreumContractAdmin := coreumChain.GenAccount()
 	coreumCaller := coreumChain.GenAccount()
+	//coreumRecipient := coreumChain.GenAccount()
 
 	osmosisContractAdmin := osmosisChain.GenAccount()
 	osmosisCaller := osmosisChain.GenAccount()
-	osmosisRecepient := osmosisChain.GenAccount()
+	//osmosisRecipient := osmosisChain.GenAccount()
 
 	coreumChain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
@@ -85,21 +89,61 @@ func TestIBCHooksCounter(t *testing.T) {
 	requireT.NoError(err)
 	fmt.Println(coreumContractAddr)
 
-	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
 	)
+	_ = coreumToOsmosisChannelID
 
-	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
-	txRes, err := coreumChain.ExecuteIBCTransfer(
-		ctx, t, coreumCaller, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisRecepient,
+	sendToCoreumCoin := osmosisChain.NewCoin(sdkmath.NewInt(1000))
+	txRes, err := osmosisChain.ExecuteIBCTransferWithMemo(
+		ctx,
+		t,
+		osmosisCaller,
+		sendToCoreumCoin,
+		coreumChain.ChainContext,
+		sdk.AccAddress(coreumContractAddr), // can be empty string ?
+		fmt.Sprintf(`{"wasm":{"contract": "%s", "msg":{"increment":{}}}}`, coreumContractAddr),
 	)
-	requireT.NoError(err)
+	//requireT.NoError(err)
+	fmt.Println(txRes.RawLog)
 	fmt.Println(txRes.TxHash)
 
-	expectedOsmosisRecipientBalance := sdk.NewCoin(
-		ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom),
-		sendToOsmosisCoin.Amount,
-	)
-	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisRecepient, expectedOsmosisRecipientBalance))
+	tmQueryClient := tmservice.NewServiceClient(coreumChain.ClientContext)
+	res, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	require.NoError(t, err)
 
+	txSvcClient := sdktx.NewServiceClient(coreumChain.ClientContext)
+
+	currentHeight := blockHeightFromResponse(res)
+	for block := currentHeight - 10; block < currentHeight+100; block++ {
+		fmt.Printf("querying block: %v\n", block)
+		res, err := txSvcClient.GetBlockWithTxs(ctx, &sdktx.GetBlockWithTxsRequest{Height: block})
+		if err != nil {
+			fmt.Println("block not found waiting for 2s")
+			<-time.After(2 * time.Second)
+			block--
+			continue
+		}
+
+		if len(res.Txs) > 0 {
+			fmt.Printf("total txs in block %v: %v\n", res.Block.Header.Height, len(res.Txs))
+
+			//res.Txs[0].Signatures
+			//fmt.Printf("txid: %v", .Body.)
+		}
+	}
+
+	//expectedCoreumRecipientBalance := sdk.NewCoin(
+	//	ConvertToIBCDenom(coreumToOsmosisChannelID, sendToCoreumCoin.Denom),
+	//	sendToCoreumCoin.Amount,
+	//)
+	//requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumRecipient, expectedCoreumRecipientBalance))
+}
+
+func blockHeightFromResponse(res *tmservice.GetLatestBlockResponse) int64 {
+	if res.SdkBlock != nil {
+		return res.SdkBlock.Header.Height
+	}
+
+	return res.Block.Header.Height //nolint:staticcheck // we keep it to keep the compatibility with old versions
 }

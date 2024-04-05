@@ -114,7 +114,7 @@ func DefaultContextConfig() ContextConfig {
 		TimeoutConfig: TimeoutConfig{
 			RequestTimeout:           10 * time.Second,
 			TxTimeout:                time.Minute,
-			TxStatusPollInterval:     500 * time.Millisecond,
+			TxStatusPollInterval:     5000 * time.Millisecond,
 			TxNextBlocksTimeout:      time.Minute,
 			TxNextBlocksPollInterval: time.Second,
 			TxNumberOfBlocksToWait:   0,
