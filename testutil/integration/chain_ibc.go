@@ -29,14 +29,14 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 	senderAddress sdk.AccAddress,
 	coin sdk.Coin,
 	recipientChainContext ChainContext,
-	recipientAddress sdk.AccAddress,
+	recipientAddress string,
 	memo string,
 ) (*sdk.TxResponse, error) {
 	t.Helper()
 
 	sender := c.MustConvertToBech32Address(senderAddress)
-	receiver := recipientChainContext.MustConvertToBech32Address(recipientAddress)
-	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, receiver, coin.String())
+	//receiver := recipientChainContext.MustConvertToBech32Address(recipientAddress)
+	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, recipientAddress, coin.String())
 
 	recipientChannelID := c.AwaitForIBCChannelID(
 		ctx,
@@ -56,7 +56,7 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 		SourceChannel: recipientChannelID,
 		Token:         coin,
 		Sender:        sender,
-		Receiver:      receiver,
+		Receiver:      recipientAddress,
 		TimeoutHeight: ibcclienttypes.Height{
 			RevisionNumber: height.RevisionNumber,
 			RevisionHeight: height.RevisionHeight + 1000,

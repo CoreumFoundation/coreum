@@ -40,7 +40,7 @@ func TestIBCHooksCounter(t *testing.T) {
 
 	coreumContractAdmin := coreumChain.GenAccount()
 	coreumCaller := coreumChain.GenAccount()
-	//coreumRecipient := coreumChain.GenAccount()
+	coreumRecipient := coreumChain.GenAccount()
 
 	osmosisContractAdmin := osmosisChain.GenAccount()
 	osmosisCaller := osmosisChain.GenAccount()
@@ -49,24 +49,26 @@ func TestIBCHooksCounter(t *testing.T) {
 	coreumChain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
 			Address: coreumContractAdmin,
-			Amount:  coreumChain.NewCoin(sdkmath.NewInt(2000000)),
+			Amount:  coreumChain.NewCoin(sdkmath.NewInt(20_000_000)),
 		},
 		integration.FundedAccount{
 			Address: coreumCaller,
-			Amount:  coreumChain.NewCoin(sdkmath.NewInt(2000000)),
+			Amount:  coreumChain.NewCoin(sdkmath.NewInt(20_000_000)),
 		},
 	)
 
 	osmosisChain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
 			Address: osmosisContractAdmin,
-			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(2000000)),
+			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000_000)),
 		},
 		integration.FundedAccount{
 			Address: osmosisCaller,
-			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(2000000)),
+			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000_000)),
 		},
 	)
+
+	// ***** Deploy contract *****//
 
 	// instantiate the contract and set the initial counter state.
 	initialPayload, err := json.Marshal(ibcwasm.HooksCounterState{
@@ -89,19 +91,41 @@ func TestIBCHooksCounter(t *testing.T) {
 	requireT.NoError(err)
 	fmt.Println(coreumContractAddr)
 
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+	)
+
+	// ***** Send funds to Osmosis ****//
+
+	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
+	txRes, err := coreumChain.ExecuteIBCTransfer(
+		ctx, t, coreumCaller, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisCaller,
+	)
+	requireT.NoError(err)
+	fmt.Println(txRes.TxHash)
+
+	expectedOsmosisRecipientBalance := sdk.NewCoin(
+		ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom),
+		sendToOsmosisCoin.Amount,
+	)
+	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisCaller, expectedOsmosisRecipientBalance))
+
+	sendToCoreumCoin := sdk.NewCoin(expectedOsmosisRecipientBalance.Denom, expectedOsmosisRecipientBalance.Amount.Quo(sdk.NewInt(2)))
+
+	// ***** Send IBC Hook Tx *****///
+
 	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
 		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
 	)
 	_ = coreumToOsmosisChannelID
 
-	sendToCoreumCoin := osmosisChain.NewCoin(sdkmath.NewInt(1000))
-	txRes, err := osmosisChain.ExecuteIBCTransferWithMemo(
+	txRes, err = osmosisChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
 		osmosisCaller,
 		sendToCoreumCoin,
 		coreumChain.ChainContext,
-		sdk.AccAddress(coreumContractAddr), // can be empty string ?
+		coreumContractAddr, // can be empty string ?
 		fmt.Sprintf(`{"wasm":{"contract": "%s", "msg":{"increment":{}}}}`, coreumContractAddr),
 	)
 	//requireT.NoError(err)
@@ -115,7 +139,7 @@ func TestIBCHooksCounter(t *testing.T) {
 	txSvcClient := sdktx.NewServiceClient(coreumChain.ClientContext)
 
 	currentHeight := blockHeightFromResponse(res)
-	for block := currentHeight - 10; block < currentHeight+100; block++ {
+	for block := currentHeight - 10; block < currentHeight+25; block++ {
 		fmt.Printf("querying block: %v\n", block)
 		res, err := txSvcClient.GetBlockWithTxs(ctx, &sdktx.GetBlockWithTxsRequest{Height: block})
 		if err != nil {
@@ -133,11 +157,21 @@ func TestIBCHooksCounter(t *testing.T) {
 		}
 	}
 
-	//expectedCoreumRecipientBalance := sdk.NewCoin(
-	//	ConvertToIBCDenom(coreumToOsmosisChannelID, sendToCoreumCoin.Denom),
-	//	sendToCoreumCoin.Amount,
-	//)
-	//requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumRecipient, expectedCoreumRecipientBalance))
+	// ***** Send IBC Transfer back *****///
+
+	if true {
+		txRes, err = osmosisChain.ExecuteIBCTransfer(
+			ctx, t, osmosisCaller, sendToCoreumCoin, coreumChain.ChainContext, coreumRecipient,
+		)
+		requireT.NoError(err)
+		fmt.Println(txRes.TxHash)
+
+		expectedCoreumRecipientBalance := coreumChain.NewCoin(sendToCoreumCoin.Amount)
+		requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumRecipient, expectedCoreumRecipientBalance))
+
+		fmt.Println("sleeping before sending IBC hook tx")
+		<-time.After(time.Second * 10)
+	}
 }
 
 func blockHeightFromResponse(res *tmservice.GetLatestBlockResponse) int64 {
