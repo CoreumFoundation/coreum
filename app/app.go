@@ -282,7 +282,7 @@ type App struct {
 	EvidenceKeeper        evidencekeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	WasmKeeper            *wasmkeeper.Keeper
+	WasmKeeper            wasmkeeper.Keeper
 	ContractKeeper        *wasmkeeper.PermissionedKeeper
 	GroupKeeper           groupkeeper.Keeper
 
@@ -428,7 +428,7 @@ func New(
 		app.DelayKeeper,
 		// pointer is used here because there is cycle in keeper dependencies:
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
-		app.WasmKeeper,
+		&app.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -446,7 +446,7 @@ func New(
 		app.AccountKeeper,
 		// pointer is used here because there is cycle in keeper dependencies:
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
-		app.WasmKeeper,
+		&app.WasmKeeper,
 		app.ModuleAccountAddrs(),
 		app.AssetFTKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -685,10 +685,10 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
-	app.WasmKeeper = &wasmKeeper
+	app.WasmKeeper = wasmKeeper
 	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
 	//app.Ics20WasmHooks.ContractKeeper = app.ContractKeeper // TODO: check me
-	app.Ics20WasmHooks.ContractKeeper = app.WasmKeeper
+	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
 		app.Ics20WasmHooks,
@@ -786,7 +786,7 @@ func New(
 		wibctransfer.NewAppModule(app.TransferKeeper),
 		wasm.NewAppModule(
 			appCodec,
-			app.WasmKeeper,
+			&app.WasmKeeper,
 			app.StakingKeeper,
 			app.AccountKeeper,
 			app.BankKeeper,
@@ -1016,7 +1016,7 @@ func New(
 	// requires the snapshot store to be created and registered as a BaseAppOption
 	if manager := app.SnapshotManager(); manager != nil {
 		err := manager.RegisterExtensions(
-			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), app.WasmKeeper),
+			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
 		)
 		if err != nil {
 			panic(errors.Wrapf(err, "failed to register wasm snapshot extension"))
