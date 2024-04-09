@@ -17,11 +17,9 @@ import (
 const (
 	blockchainName = "coreum"
 	binaryName     = "cored"
-	repoName       = "coreum"
 	repoPath       = "."
 	binaryPath     = "bin/" + binaryName
 	testsDir       = repoPath + "/integration-tests"
-	testsBinDir    = "bin/.cache/integration-tests"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
