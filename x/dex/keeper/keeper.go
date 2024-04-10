@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"sort"
-
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -18,7 +16,6 @@ type orderWrapper struct {
 	Order        types.Order
 	orderID      uint64
 	isPersistent bool
-	isDirty      bool
 }
 
 // Keeper is the dex module keeper.
@@ -100,68 +97,38 @@ func (k Keeper) processTransientOrder(ctx sdk.Context, iterator storetypes.Itera
 	denom2Sequence := k.createDenomSequence(ctx, order.DenomRequested())
 
 	store := ctx.KVStore(k.storeKey)
-	persistentIteratorA := prefix.NewStore(store,
+	iteratorA := prefix.NewStore(store,
 		types.CreateDenomPairKeyPrefix(types.OrderQueueKey, denom1Sequence, denom2Sequence)).Iterator(nil, nil)
-	defer persistentIteratorA.Close()
+	defer iteratorA.Close()
 
-	persistentIteratorB := prefix.NewStore(store,
+	iteratorB := prefix.NewStore(store,
 		types.CreateDenomPairKeyPrefix(types.OrderQueueKey, denom2Sequence, denom1Sequence)).Iterator(nil, nil)
-	defer persistentIteratorB.Close()
-
-	sideA, err := k.loadPersistentOrder(ctx, []*orderWrapper{}, persistentIteratorA)
-	if err != nil {
-		return err
-	}
-	sideB, err := k.loadPersistentOrder(ctx, []*orderWrapper{}, persistentIteratorB)
-	if err != nil {
-		return err
-	}
+	defer iteratorB.Close()
 
 	orderID := types.DecomposeOrderKey(iterator.Key())
-	wrappedOrder := &orderWrapper{Order: order, orderID: orderID, isDirty: true}
+	wrappedOrder := &orderWrapper{Order: order, orderID: orderID}
 
-	sideA = k.appendOrder(sideA, wrappedOrder)
-	sideA, sideB, err = k.matchOrder(ctx, orderID, sideA, sideB, persistentIteratorA, persistentIteratorB)
+	orderA, err := k.loadPersistentOrder(ctx, iteratorA)
 	if err != nil {
 		return err
 	}
 
-	if err := k.persistOrders(ctx, sideA); err != nil {
-		return err
+	if orderA != nil && orderA.Order.Price().LTE(order.Price()) {
+		return k.persistOrder(ctx, wrappedOrder)
 	}
-	return k.persistOrders(ctx, sideB)
+
+	return k.matchOrder(ctx, wrappedOrder, iteratorB)
 }
 
-func (k Keeper) appendOrder(side []*orderWrapper, order *orderWrapper) []*orderWrapper {
-	// TODO: Because `side` is always sorted, the algorithm below might be optimised to put the new element
-	// at the specific index, which would give the complexity of O(n) instead of O(nlogn).
-	side = append(side, order)
-	if len(side) > 1 {
-		sort.Slice(side, func(i, j int) bool {
-			oA, oB := side[i], side[j]
-			return oA.Order.Price().GT(oB.Order.Price()) || (oA.Order.Price().Equal(oB.Order.Price()) && oA.orderID > oB.orderID)
-		})
-	}
-	return side
-}
-
-func (k Keeper) matchOrder(
-	ctx sdk.Context,
-	orderID uint64,
-	sideA, sideB []*orderWrapper,
-	persistentIteratorA, persistentIteratorB storetypes.Iterator,
-) ([]*orderWrapper, []*orderWrapper, error) {
-	orderA := sideA[len(sideA)-1]
-	if orderA.orderID != orderID {
-		return sideA, sideB, nil
-	}
+func (k Keeper) matchOrder(ctx sdk.Context, orderA *orderWrapper, iteratorB storetypes.Iterator) error {
+	var fullyMatchedA bool
 	for {
-		if len(sideB) == 0 {
-			return sideA, sideB, nil
+		orderB, err := k.loadPersistentOrder(ctx, iteratorB)
+		if err != nil {
+			return err
 		}
-		orderB := sideB[len(sideB)-1]
-		if orderA.Order.Price().GT(sdk.OneDec().Quo(orderB.Order.Price())) {
-			return sideA, sideB, nil
+		if orderB == nil || orderA.Order.Price().GT(sdk.OneDec().Quo(orderB.Order.Price())) {
+			break
 		}
 
 		amountA := orderA.Order.AmountOffered()
@@ -174,111 +141,87 @@ func (k Keeper) matchOrder(
 			}
 		}
 
-		var err error
-		var fullyMatched bool
-		sideA, fullyMatched, err = k.reduceOrder(ctx, orderA, amountA, sideA, persistentIteratorA)
-		if err != nil {
-			return nil, nil, err
-		}
-		sideB, _, err = k.reduceOrder(ctx, orderB, amountB, sideB, persistentIteratorB)
-		if err != nil {
-			return nil, nil, err
-		}
-
 		// TODO: execute bank transfers
 
+		fullyMatched, err := k.reduceOrder(orderB, amountB)
+		if err != nil {
+			return err
+		}
 		if fullyMatched {
-			return sideA, sideB, nil
+			if err := k.dropOrder(ctx, orderB); err != nil {
+				return err
+			}
+		} else {
+			if err := k.persistOrder(ctx, orderB); err != nil {
+				return err
+			}
+		}
+
+		fullyMatchedA, err = k.reduceOrder(orderA, amountA)
+		if err != nil {
+			return err
+		}
+		if fullyMatchedA {
+			return nil
 		}
 	}
+
+	return k.persistOrder(ctx, orderA)
 }
 
-func (k Keeper) reduceOrder(
-	ctx sdk.Context,
-	order *orderWrapper,
-	amount sdkmath.Int,
-	side []*orderWrapper,
-	persistentIterator storetypes.Iterator,
-) ([]*orderWrapper, bool, error) {
+func (k Keeper) reduceOrder(order *orderWrapper, amount sdkmath.Int) (bool, error) {
 	order.Order.ReduceOfferedAmount(amount)
-	order.isDirty = true
 
 	if !order.Order.AmountOffered().ToLegacyDec().Mul(order.Order.Price()).RoundInt().IsZero() {
-		return side, false, nil
+		return false, nil
 	}
 
-	side = side[:len(side)-1]
-
-	if !order.isPersistent {
-		return side, true, nil
-	}
-
-	if err := k.dropOrder(ctx, order); err != nil {
-		return nil, false, err
-	}
-
-	side, err := k.loadPersistentOrder(ctx, side, persistentIterator)
-	if err != nil {
-		return nil, false, err
-	}
-	return side, true, nil
+	return true, nil
 }
 
 func (k Keeper) loadPersistentOrder(
 	ctx sdk.Context,
-	side []*orderWrapper,
 	iterator storetypes.Iterator,
-) ([]*orderWrapper, error) {
+) (*orderWrapper, error) {
 	if !iterator.Valid() {
-		return side, nil
+		return nil, nil
 	}
 	orderID := types.DecomposeOrderQueueKey(iterator.Key())
 	iterator.Next()
 
-	order, err := k.orderByID(ctx, orderID)
-	if err != nil {
-		return nil, err
-	}
-	return k.appendOrder(side, order), nil
+	return k.orderByID(ctx, orderID)
 }
 
-func (k Keeper) persistOrders(ctx sdk.Context, orders []*orderWrapper) error {
-	store := ctx.KVStore(k.storeKey)
-
-	for _, order := range orders {
-		if !order.isDirty {
-			continue
-		}
-
-		orderBytes, err := k.encodeOrder(order.Order)
-		if err != nil {
-			return err
-		}
-
-		store.Set(types.CreateOrderKey(order.orderID), orderBytes)
-
-		if order.isPersistent {
-			continue
-		}
-
-		account, err := sdk.AccAddressFromBech32(order.Order.Account())
-		if err != nil {
-			return err
-		}
-		acc := k.accountKeeper.GetAccount(ctx, account)
-
-		store.Set(types.CreateOrderQueueKey(
-			k.createDenomSequence(ctx, order.Order.DenomOffered()),
-			k.createDenomSequence(ctx, order.Order.DenomRequested()),
-			order.orderID,
-			order.Order.Price(),
-		), types.StoreTrue)
-
-		store.Set(types.CreateOrderOwnerKey(
-			acc.GetAccountNumber(),
-			order.orderID,
-		), types.StoreTrue)
+func (k Keeper) persistOrder(ctx sdk.Context, order *orderWrapper) error {
+	orderBytes, err := k.encodeOrder(order.Order)
+	if err != nil {
+		return err
 	}
+
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.CreateOrderKey(order.orderID), orderBytes)
+
+	if order.isPersistent {
+		return nil
+	}
+
+	account, err := sdk.AccAddressFromBech32(order.Order.Account())
+	if err != nil {
+		return err
+	}
+	acc := k.accountKeeper.GetAccount(ctx, account)
+
+	store.Set(types.CreateOrderQueueKey(
+		k.createDenomSequence(ctx, order.Order.DenomOffered()),
+		k.createDenomSequence(ctx, order.Order.DenomRequested()),
+		order.orderID,
+		order.Order.Price(),
+	), types.StoreTrue)
+
+	store.Set(types.CreateOrderOwnerKey(
+		acc.GetAccountNumber(),
+		order.orderID,
+	), types.StoreTrue)
 
 	return nil
 }
