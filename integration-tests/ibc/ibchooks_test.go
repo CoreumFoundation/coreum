@@ -25,29 +25,16 @@ import (
 )
 
 func TestIBCHooksCounter(t *testing.T) {
-	// we don't enable the t.Parallel here since that test uses the config unseal hack because of the cosmos relayer
-	// implementation
-	//restoreSDKConfig := unsealSDKConfig()
-	//defer restoreSDKConfig()
-
-	// channelIBCVersion is the version defined in the ibc.rs in the smart contract
-	//const channelIBCVersion = "counter-1"
-
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	osmosisChain := chains.Osmosis
 
-	//coreumWasmClient := wasmtypes.NewQueryClient(coreumChain.ClientContext)
-	//osmosisWasmClient := wasmtypes.NewQueryClient(osmosisChain.ClientContext)
-
 	coreumContractAdmin := coreumChain.GenAccount()
-	coreumCaller := coreumChain.GenAccount()
-	//coreumRecipient := coreumChain.GenAccount()
+	coreumSender := coreumChain.GenAccount()
 
-	osmosisContractAdmin := osmosisChain.GenAccount()
-	osmosisCaller := osmosisChain.GenAccount()
-	//osmosisRecipient := osmosisChain.GenAccount()
+	osmosisHookCaller1 := osmosisChain.GenAccount()
+	osmosisHookCaller2 := osmosisChain.GenAccount()
 
 	coreumChain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
@@ -55,18 +42,18 @@ func TestIBCHooksCounter(t *testing.T) {
 			Amount:  coreumChain.NewCoin(sdkmath.NewInt(20_000_000)),
 		},
 		integration.FundedAccount{
-			Address: coreumCaller,
+			Address: coreumSender,
 			Amount:  coreumChain.NewCoin(sdkmath.NewInt(20_000_000)),
 		},
 	)
 
 	osmosisChain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
-			Address: osmosisContractAdmin,
+			Address: osmosisHookCaller1,
 			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000_000)),
 		},
 		integration.FundedAccount{
-			Address: osmosisCaller,
+			Address: osmosisHookCaller2,
 			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000_000)),
 		},
 	)
@@ -75,7 +62,7 @@ func TestIBCHooksCounter(t *testing.T) {
 
 	// instantiate the contract and set the initial counter state.
 	initialPayload, err := json.Marshal(ibcwasm.HooksCounterState{
-		Count: 2024,
+		Count: 2024, // This is the initial counter value for contract instantiator. We don't use this value.
 	})
 	requireT.NoError(err)
 
@@ -97,112 +84,108 @@ func TestIBCHooksCounter(t *testing.T) {
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
 		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
 	)
+	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
+	)
 
 	// ***** Send funds to Osmosis ****//
 
 	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
-	txRes, err := coreumChain.ExecuteIBCTransfer(
-		ctx, t, coreumCaller, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisCaller,
+	_, err = coreumChain.ExecuteIBCTransfer(
+		ctx, t, coreumSender, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisHookCaller1,
 	)
 	requireT.NoError(err)
-	fmt.Println(txRes.TxHash)
 
 	expectedOsmosisRecipientBalance := sdk.NewCoin(
 		ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom),
 		sendToOsmosisCoin.Amount,
 	)
-	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisCaller, expectedOsmosisRecipientBalance))
+	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisHookCaller1, expectedOsmosisRecipientBalance))
+
+	// ***** Send IBC Hook Txs *****///
 
 	sendToCoreumCoin := sdk.NewCoin(expectedOsmosisRecipientBalance.Denom, expectedOsmosisRecipientBalance.Amount.Quo(sdk.NewInt(2)))
 
-	// ***** Send IBC Hook Tx *****///
-
-	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
+	sendOsmosisToCoreumCoin := osmosisChain.NewCoin(sdk.NewInt(10_000))
+	expectedOsmosisOnCoreumBalance := sdk.NewCoin(
+		ConvertToIBCDenom(coreumToOsmosisChannelID, sendOsmosisToCoreumCoin.Denom),
+		sendOsmosisToCoreumCoin.Amount,
 	)
 
-	ibcHookCallerOnCoreumAddr, err := ibchookskeeper.DeriveIntermediateSender(coreumToOsmosisChannelID, osmosisChain.MustConvertToBech32Address(osmosisCaller), coreumChain.Chain.ChainSettings.AddressPrefix)
+	ibcHookCallerOnCoreumAddr1, err := ibchookskeeper.DeriveIntermediateSender(
+		coreumToOsmosisChannelID,
+		osmosisChain.MustConvertToBech32Address(osmosisHookCaller1),
+		coreumChain.Chain.ChainSettings.AddressPrefix)
 	requireT.NoError(err)
-	fmt.Println(ibcHookCallerOnCoreumAddr)
 
-	txRes, err = osmosisChain.ExecuteIBCTransferWithMemo(
+	ibcHookCallerOnCoreumAddr2, err := ibchookskeeper.DeriveIntermediateSender(
+		coreumToOsmosisChannelID,
+		osmosisChain.MustConvertToBech32Address(osmosisHookCaller2),
+		coreumChain.Chain.ChainSettings.AddressPrefix)
+	requireT.NoError(err)
+
+	requireT.NotEqual(ibcHookCallerOnCoreumAddr1, ibcHookCallerOnCoreumAddr2)
+
+	ibcHookMemo := fmt.Sprintf(`{"wasm":{"contract": "%s", "msg":{"increment":{}}}}`, coreumContractAddr)
+	// Caller1 first iteration.
+	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
-		osmosisCaller,
+		osmosisHookCaller1,
 		sendToCoreumCoin,
 		coreumChain.ChainContext,
-		coreumContractAddr, // can be empty string ?
-		fmt.Sprintf(`{"wasm":{"contract": "%s", "msg":{"increment":{}}}}`, coreumContractAddr),
+		coreumContractAddr,
+		ibcHookMemo,
 	)
 	awaitHooksContractState(
 		ctx,
 		t,
 		coreumChain,
 		coreumContractAddr,
-		ibcHookCallerOnCoreumAddr,
+		ibcHookCallerOnCoreumAddr1,
 		0,
 		sdk.Coins{coreumChain.NewCoin(sendToCoreumCoin.Amount)},
 	)
 
-	txRes, err = osmosisChain.ExecuteIBCTransferWithMemo(
+	// Caller1 second iteration.
+	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
-		osmosisCaller,
+		osmosisHookCaller1,
 		sendToCoreumCoin,
 		coreumChain.ChainContext,
-		coreumContractAddr, // can be empty string ?
-		fmt.Sprintf(`{"wasm":{"contract": "%s", "msg":{"increment":{}}}}`, coreumContractAddr),
+		coreumContractAddr,
+		ibcHookMemo,
 	)
 	awaitHooksContractState(
 		ctx,
 		t,
 		coreumChain,
 		coreumContractAddr,
-		ibcHookCallerOnCoreumAddr,
+		ibcHookCallerOnCoreumAddr1,
 		1,
 		sdk.Coins{coreumChain.NewCoin(sendToCoreumCoin.Amount.Add(sendToCoreumCoin.Amount))},
 	)
 
-	//tmQueryClient := tmservice.NewServiceClient(coreumChain.ClientContext)
-	//res, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
-	//require.NoError(t, err)
-
-	//txSvcClient := sdktx.NewServiceClient(coreumChain.ClientContext)
-	//
-	//currentHeight := blockHeightFromResponse(res)
-	//for block := currentHeight - 10; block < currentHeight+25; block++ {
-	//	fmt.Printf("querying block: %v\n", block)
-	//	res, err := txSvcClient.GetBlockWithTxs(ctx, &sdktx.GetBlockWithTxsRequest{Height: block})
-	//	if err != nil {
-	//		fmt.Println("block not found waiting for 2s")
-	//		<-time.After(2 * time.Second)
-	//		block--
-	//		continue
-	//	}
-	//
-	//	if len(res.Txs) > 0 {
-	//		fmt.Printf("total txs in block %v: %v\n", res.Block.Header.Height, len(res.Txs))
-	//
-	//		//res.Txs[0].Signatures
-	//		//fmt.Printf("txid: %v", .Body.)
-	//	}
-	//}
-
-	// ***** Send IBC Transfer back *****///
-
-	//if true {
-	//	txRes, err = osmosisChain.ExecuteIBCTransfer(
-	//		ctx, t, osmosisCaller, sendToCoreumCoin, coreumChain.ChainContext, coreumRecipient,
-	//	)
-	//	requireT.NoError(err)
-	//	fmt.Println(txRes.TxHash)
-	//
-	//	expectedCoreumRecipientBalance := coreumChain.NewCoin(sendToCoreumCoin.Amount)
-	//	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumRecipient, expectedCoreumRecipientBalance))
-	//
-	//	fmt.Println("sleeping before sending IBC hook tx")
-	//	<-time.After(time.Second * 10)
-	//}
+	// Caller2 first iteration.
+	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
+		ctx,
+		t,
+		osmosisHookCaller2,
+		sendOsmosisToCoreumCoin,
+		coreumChain.ChainContext,
+		coreumContractAddr,
+		ibcHookMemo,
+	)
+	awaitHooksContractState(
+		ctx,
+		t,
+		coreumChain,
+		coreumContractAddr,
+		ibcHookCallerOnCoreumAddr2,
+		0,
+		sdk.Coins{expectedOsmosisOnCoreumBalance},
+	)
 }
 
 func awaitHooksContractState(
@@ -260,5 +243,4 @@ func awaitHooksContractState(
 
 		return nil
 	}))
-
 }
