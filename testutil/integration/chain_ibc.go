@@ -23,55 +23,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 )
 
-// ExecuteIBCTransferWithMemo todo move.
-func (c ChainContext) ExecuteIBCTransferWithMemo(
-	ctx context.Context,
-	t *testing.T,
-	senderAddress sdk.AccAddress,
-	coin sdk.Coin,
-	recipientChainContext ChainContext,
-	recipientAddress string,
-	memo string,
-) (*sdk.TxResponse, error) {
-	t.Helper()
-
-	sender := c.MustConvertToBech32Address(senderAddress)
-	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, recipientAddress, coin.String())
-
-	recipientChannelID := c.AwaitForIBCChannelID(
-		ctx,
-		t,
-		ibctransfertypes.PortID,
-		recipientChainContext.ChainSettings.ChainID,
-	)
-	height, err := c.GetLatestConsensusHeight(
-		ctx,
-		ibctransfertypes.PortID,
-		recipientChannelID,
-	)
-	require.NoError(t, err)
-
-	ibcSend := ibctransfertypes.MsgTransfer{
-		SourcePort:    ibctransfertypes.PortID,
-		SourceChannel: recipientChannelID,
-		Token:         coin,
-		Sender:        sender,
-		Receiver:      recipientAddress,
-		TimeoutHeight: ibcclienttypes.Height{
-			RevisionNumber: height.RevisionNumber,
-			RevisionHeight: height.RevisionHeight + 1000,
-		},
-		Memo: memo,
-	}
-
-	return c.BroadcastTxWithSigner(
-		ctx,
-		c.TxFactory().WithSimulateAndExecute(true),
-		senderAddress,
-		&ibcSend,
-	)
-}
-
 // ExecuteIBCTransfer executes IBC transfer transaction.
 func (c ChainContext) ExecuteIBCTransfer(
 	ctx context.Context,

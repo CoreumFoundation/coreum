@@ -1,4 +1,4 @@
-# Counter contract from [Osmosis Labs](https://github.com/osmosis-labs/osmosis/commit/64393a14e18b2562d72a3892eec716197a3716c7)
+# Counter contract from [IBC Apps](https://github.com/cosmos/ibc-apps/tree/26f3ad8f58e4ffc7769c6766cb42b954181dc100/modules/ibc-hooks)
 
 This contract is a modification of the standard cosmwasm `counter` contract.
 Namely, it tracks a counter, _by sender_.

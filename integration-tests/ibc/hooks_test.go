@@ -14,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -57,7 +58,7 @@ func TestIBCHooksCounter(t *testing.T) {
 		},
 	)
 
-	// ***** Deploy contract *****//
+	// ********** Deploy contract **********
 
 	// instantiate the contract and set the initial counter state.
 	initialPayload, err := json.Marshal(ibcwasm.HooksCounterState{
@@ -78,7 +79,6 @@ func TestIBCHooksCounter(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
-	fmt.Println(coreumContractAddr)
 
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
 		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
@@ -87,7 +87,7 @@ func TestIBCHooksCounter(t *testing.T) {
 		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
 	)
 
-	// ***** Send funds to Osmosis ****//
+	// ********** Send funds to Osmosis **********
 
 	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
 	_, err = coreumChain.ExecuteIBCTransfer(
@@ -101,7 +101,7 @@ func TestIBCHooksCounter(t *testing.T) {
 	)
 	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisHookCaller1, expectedOsmosisRecipientBalance))
 
-	// ***** Send IBC Hook Txs *****///
+	// ********** Send IBC Hook Txs **********
 
 	sendToCoreumCoin := sdk.NewCoin(
 		expectedOsmosisRecipientBalance.Denom,
@@ -126,13 +126,15 @@ func TestIBCHooksCounter(t *testing.T) {
 		coreumChain.Chain.ChainSettings.AddressPrefix)
 	requireT.NoError(err)
 
+	// Verify that hook caller is separate for each sender address.
 	requireT.NotEqual(ibcHookCallerOnCoreumAddr1, ibcHookCallerOnCoreumAddr2)
 
 	ibcHookMemo := fmt.Sprintf(`{"wasm":{"contract": "%s", "msg":{"increment":{}}}}`, coreumContractAddr)
 	// Caller1 first iteration.
-	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
+	_, err = executeIBCTransferWithMemo(
 		ctx,
 		t,
+		osmosisChain,
 		osmosisHookCaller1,
 		sendToCoreumCoin,
 		coreumChain.ChainContext,
@@ -151,9 +153,10 @@ func TestIBCHooksCounter(t *testing.T) {
 	)
 
 	// Caller1 second iteration.
-	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
+	_, err = executeIBCTransferWithMemo(
 		ctx,
 		t,
+		osmosisChain,
 		osmosisHookCaller1,
 		sendToCoreumCoin,
 		coreumChain.ChainContext,
@@ -172,9 +175,10 @@ func TestIBCHooksCounter(t *testing.T) {
 	)
 
 	// Caller2 first iteration.
-	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
+	_, err = executeIBCTransferWithMemo(
 		ctx,
 		t,
+		osmosisChain,
 		osmosisHookCaller2,
 		sendOsmosisToCoreumCoin,
 		coreumChain.ChainContext,
@@ -250,4 +254,54 @@ func awaitHooksContractState(
 
 		return nil
 	}))
+}
+
+// executeIBCTransferWithMemo is similar to ChainContext.ExecuteIBCTransfer method but it also supports memo.
+func executeIBCTransferWithMemo(
+	ctx context.Context,
+	t *testing.T,
+	srcChain integration.Chain,
+	senderAddress sdk.AccAddress,
+	coin sdk.Coin,
+	recipientChainContext integration.ChainContext,
+	recipientAddress string,
+	memo string,
+) (*sdk.TxResponse, error) {
+	t.Helper()
+
+	sender := srcChain.MustConvertToBech32Address(senderAddress)
+	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, recipientAddress, coin.String())
+
+	recipientChannelID := srcChain.AwaitForIBCChannelID(
+		ctx,
+		t,
+		ibctransfertypes.PortID,
+		recipientChainContext.ChainSettings.ChainID,
+	)
+	height, err := srcChain.GetLatestConsensusHeight(
+		ctx,
+		ibctransfertypes.PortID,
+		recipientChannelID,
+	)
+	require.NoError(t, err)
+
+	ibcSend := ibctransfertypes.MsgTransfer{
+		SourcePort:    ibctransfertypes.PortID,
+		SourceChannel: recipientChannelID,
+		Token:         coin,
+		Sender:        sender,
+		Receiver:      recipientAddress,
+		TimeoutHeight: ibcclienttypes.Height{
+			RevisionNumber: height.RevisionNumber,
+			RevisionHeight: height.RevisionHeight + 1000,
+		},
+		Memo: memo,
+	}
+
+	return srcChain.BroadcastTxWithSigner(
+		ctx,
+		srcChain.TxFactory().WithSimulateAndExecute(true),
+		senderAddress,
+		&ibcSend,
+	)
 }

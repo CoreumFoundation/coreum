@@ -283,7 +283,6 @@ type App struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	WasmKeeper            wasmkeeper.Keeper
-	ContractKeeper        *wasmkeeper.PermissionedKeeper
 	GroupKeeper           groupkeeper.Keeper
 
 	AssetFTKeeper      assetftkeeper.Keeper
@@ -307,7 +306,8 @@ type App struct {
 
 	configurator module.Configurator
 
-	TransferStack    *ibchooks.IBCMiddleware
+	TransferStack *ibchooks.IBCMiddleware
+	// IBC Hooks.
 	Ics20WasmHooks   *ibchooks.WasmHooks
 	HooksICS4Wrapper ibchooks.ICS4Middleware
 }
@@ -560,8 +560,6 @@ func New(
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
 		app.keys[ibchookstypes.StoreKey],
 	)
-	// Pass the contract keeper to all the structs (generally ICS4Wrappers for ibc middlewares) that need it
-	// The contract keeper needs to be set later
 	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
 	app.Ics20WasmHooks = &wasmHooks
 
@@ -665,7 +663,7 @@ func New(
 	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
 	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 
-	wasmKeeper := wasmkeeper.NewKeeper(
+	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		keys[wasmtypes.StoreKey],
 		app.AccountKeeper,
@@ -685,9 +683,8 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
-	app.WasmKeeper = wasmKeeper
-	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
-	// app.Ics20WasmHooks.ContractKeeper = app.ContractKeeper // TODO: check me
+
+	// Pass the contract keeper to all the structs (generally ICS4Wrappers for ibc middlewares) that need it
 	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
@@ -699,11 +696,12 @@ func New(
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
-	// Create static IBC router, add transfer route, then set and seal it
+	// Hooks Middleware
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper.Keeper)
 	hooksTransferModule := ibchooks.NewIBCMiddleware(&transferIBCModule, &app.HooksICS4Wrapper)
 	app.TransferStack = &hooksTransferModule
 
+	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(
 		ibctransfertypes.ModuleName,
