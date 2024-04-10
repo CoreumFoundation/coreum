@@ -58,8 +58,9 @@ jobs:
           - ci_step: "integration tests faucet"
             command: |
               coreum-builder build images
-              faucet-builder build/integration-tests images
-              crust znet test --test-groups=faucet --timeout-commit 0.5s
+              faucet-builder images
+              crust znet start --profiles=faucet --timeout-commit 0.5s
+              faucet-builder integration-tests
             linter-cache: false
             codecov: false
 
@@ -122,7 +123,7 @@ jobs:
         with:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Prepare dependencies
-        # FIXME (wojciech): Execute `download` commands for crust and faucet builders once available
+        # FIXME (wojciech): Execute `download` commands for crust builder once available
         run: |
           crust build/me
           crust build
@@ -130,6 +131,7 @@ jobs:
           coreum-builder build/me
           coreum-builder download
           faucet-builder build/me
+          faucet-builder download
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
