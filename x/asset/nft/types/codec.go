@@ -11,6 +11,7 @@ import (
 // RegisterInterfaces registers the asset module tx interfaces.
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterInterface(proto.MessageName((*DataBytes)(nil)), (*proto.Message)(nil), (*DataBytes)(nil))
+	registry.RegisterInterface(proto.MessageName((*DataDynamic)(nil)), (*proto.Message)(nil), (*DataDynamic)(nil))
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgIssueClass{},
 		&MsgMint{},

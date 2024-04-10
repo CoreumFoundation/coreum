@@ -696,6 +696,9 @@ func getDataFromFile(cmd *cobra.Command) (*codectypes.Any, error) {
 		return nil, errors.WithStack(err)
 	}
 
+	// FIXME update mint CLI
+	// FIXME add update CLI
+
 	dataAny, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: data})
 	if err != nil {
 		return nil, errors.WithStack(err)

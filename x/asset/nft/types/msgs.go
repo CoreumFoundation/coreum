@@ -94,7 +94,7 @@ func (m *MsgIssueClass) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if err := ValidateData(m.Data); err != nil {
+	if err := ValidateClassData(m.Data); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
@@ -168,7 +168,7 @@ func (m *MsgMint) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if err := ValidateData(m.Data); err != nil {
+	if err := ValidateNFTData(m.Data); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
@@ -219,9 +219,31 @@ func (m MsgMint) Type() string {
 
 // ValidateBasic checks that message fields are valid.
 func (m *MsgUpdateData) ValidateBasic() error {
-	// FIXME implement basic validation
-	// FIXME add validation on the bytes to the keeper to check that after the update the entire data less than MaxDataSize
-	panic("implement me")
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+	}
+	if err := ValidateTokenID(m.ID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	if _, _, err := DeconstructClassID(m.ClassID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	if len(m.Items) == 0 {
+		return sdkerrors.Wrap(ErrInvalidInput, "nothing to update")
+	}
+
+	duplicates := lo.FindDuplicates(lo.Map(m.Items,
+		func(item DataDynamicIndexedItem, _ int) uint32 {
+			return item.Index
+		},
+	))
+	if len(duplicates) != 0 {
+		return sdkerrors.Wrapf(ErrInvalidInput, "duplicated index of DataDynamicIndexedItem, duplicates: %v", duplicates)
+	}
+
+	return nil
 }
 
 // GetSigners returns the required signers of this message type.
