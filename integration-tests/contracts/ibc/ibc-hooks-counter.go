@@ -24,6 +24,8 @@ type HooksCounterState struct {
 }
 
 // HooksTotalFundsState is a structure that represents response returned from get_total_funds.
+//
+//nolint:tagliatelle // wasm requirements
 type HooksTotalFundsState struct {
 	TotalFunds sdk.Coins `json:"total_funds"`
 }

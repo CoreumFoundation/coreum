@@ -12,11 +12,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-
-	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
@@ -104,7 +103,10 @@ func TestIBCHooksCounter(t *testing.T) {
 
 	// ***** Send IBC Hook Txs *****///
 
-	sendToCoreumCoin := sdk.NewCoin(expectedOsmosisRecipientBalance.Denom, expectedOsmosisRecipientBalance.Amount.Quo(sdk.NewInt(2)))
+	sendToCoreumCoin := sdk.NewCoin(
+		expectedOsmosisRecipientBalance.Denom,
+		expectedOsmosisRecipientBalance.Amount.Quo(sdk.NewInt(2)),
+	)
 
 	sendOsmosisToCoreumCoin := osmosisChain.NewCoin(sdk.NewInt(10_000))
 	expectedOsmosisOnCoreumBalance := sdk.NewCoin(
@@ -137,6 +139,7 @@ func TestIBCHooksCounter(t *testing.T) {
 		coreumContractAddr,
 		ibcHookMemo,
 	)
+	requireT.NoError(err)
 	awaitHooksContractState(
 		ctx,
 		t,
@@ -157,6 +160,7 @@ func TestIBCHooksCounter(t *testing.T) {
 		coreumContractAddr,
 		ibcHookMemo,
 	)
+	requireT.NoError(err)
 	awaitHooksContractState(
 		ctx,
 		t,
@@ -177,6 +181,7 @@ func TestIBCHooksCounter(t *testing.T) {
 		coreumContractAddr,
 		ibcHookMemo,
 	)
+	requireT.NoError(err)
 	awaitHooksContractState(
 		ctx,
 		t,
@@ -210,6 +215,7 @@ func awaitHooksContractState(
 				Addr: callerAddr,
 			},
 		})
+		require.NoError(t, err)
 		queryCountOut, err := coreumChain.Wasm.QueryWASMContract(ctx, contractAddr, getCountPayload)
 		require.NoError(t, err)
 
@@ -228,6 +234,7 @@ func awaitHooksContractState(
 				Addr: callerAddr,
 			},
 		})
+		require.NoError(t, err)
 		queryTotalFundsOut, err := coreumChain.Wasm.QueryWASMContract(ctx, contractAddr, getTotalFundsPayload)
 		require.NoError(t, err)
 		var totalFundsResponse ibcwasm.HooksTotalFundsState
