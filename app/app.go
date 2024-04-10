@@ -687,7 +687,7 @@ func New(
 	)
 	app.WasmKeeper = wasmKeeper
 	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
-	//app.Ics20WasmHooks.ContractKeeper = app.ContractKeeper // TODO: check me
+	// app.Ics20WasmHooks.ContractKeeper = app.ContractKeeper // TODO: check me
 	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,

@@ -23,6 +23,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 )
 
+// ExecuteIBCTransferWithMemo todo move.
 func (c ChainContext) ExecuteIBCTransferWithMemo(
 	ctx context.Context,
 	t *testing.T,
@@ -35,7 +36,6 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 	t.Helper()
 
 	sender := c.MustConvertToBech32Address(senderAddress)
-	//receiver := recipientChainContext.MustConvertToBech32Address(recipientAddress)
 	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, recipientAddress, coin.String())
 
 	recipientChannelID := c.AwaitForIBCChannelID(
