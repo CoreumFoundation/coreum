@@ -75,6 +75,7 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 |--------------|-----|
 | `/coreum.asset.nft.v1.MsgIssueClass`                                   | [special case](#special-cases) |
 | `/coreum.asset.nft.v1.MsgMint`                                         | [special case](#special-cases) |
+| `/coreum.asset.nft.v1.MsgUpdateData`                                   | [special case](#special-cases) |
 | `/cosmos.authz.v1beta1.MsgExec`                                        | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgMultiSend`                                    | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgSend`                                         | [special case](#special-cases) |
