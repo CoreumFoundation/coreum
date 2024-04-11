@@ -560,8 +560,6 @@ func New(
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
 		app.keys[ibchookstypes.StoreKey],
 	)
-	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
-	app.Ics20WasmHooks = &wasmHooks
 
 	// Register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
@@ -684,8 +682,8 @@ func New(
 		wasmOpts...,
 	)
 
-	// Pass the contract keeper to all the structs (generally ICS4Wrappers for ibc middlewares) that need it
-	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
+	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, &app.WasmKeeper, ChosenNetwork.Provider.GetAddressPrefix())
+	app.Ics20WasmHooks = &wasmHooks
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
 		app.Ics20WasmHooks,
