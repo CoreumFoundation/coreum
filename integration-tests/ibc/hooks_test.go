@@ -129,6 +129,11 @@ func TestIBCHooksCounter(t *testing.T) {
 	// Verify that hook caller is separate for each sender address.
 	requireT.NotEqual(ibcHookCallerOnCoreumAddr1, ibcHookCallerOnCoreumAddr2)
 
+	// Tx memo contains info to call WASM contract this info is propagated into IBC FungibleTokenPacketData,
+	// and will be used by ibc-hook middleware to build wasm.MsgExecuteContract.
+	// For more info check:
+	// https://github.com/cosmos/ibc-apps/tree/main/modules/ibc-hooks#how-do-ibc-hooks-work
+	// https://github.com/cosmos/ibc/blob/main/spec/app/ics-020-fungible-token-transfer/README.md#using-the-memo-field
 	ibcHookMemo := fmt.Sprintf(`{"wasm":{"contract": "%s", "msg":{"increment":{}}}}`, coreumContractAddr)
 	// Caller1 first iteration.
 	_, err = executeIBCTransferWithMemo(
@@ -142,7 +147,7 @@ func TestIBCHooksCounter(t *testing.T) {
 		ibcHookMemo,
 	)
 	requireT.NoError(err)
-	awaitHooksContractState(
+	awaitHooksCounterContractState(
 		ctx,
 		t,
 		coreumChain,
@@ -164,7 +169,7 @@ func TestIBCHooksCounter(t *testing.T) {
 		ibcHookMemo,
 	)
 	requireT.NoError(err)
-	awaitHooksContractState(
+	awaitHooksCounterContractState(
 		ctx,
 		t,
 		coreumChain,
@@ -186,7 +191,7 @@ func TestIBCHooksCounter(t *testing.T) {
 		ibcHookMemo,
 	)
 	requireT.NoError(err)
-	awaitHooksContractState(
+	awaitHooksCounterContractState(
 		ctx,
 		t,
 		coreumChain,
@@ -197,7 +202,7 @@ func TestIBCHooksCounter(t *testing.T) {
 	)
 }
 
-func awaitHooksContractState(
+func awaitHooksCounterContractState(
 	ctx context.Context,
 	t *testing.T,
 	coreumChain integration.CoreumChain,
