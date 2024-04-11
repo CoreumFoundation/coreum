@@ -1,5 +1,3 @@
-//go:build integrationtests
-
 package modules
 
 import (
@@ -22,4 +20,6 @@ var (
 	AuthzNftTradeWASM []byte
 	//go:embed authz-stargate/artifacts/authz_stargate.wasm
 	AuthzStargateWASM []byte
+	//go:embed asset-extension/artifacts/asset_extension.wasm
+	AssetExtensionWasm []byte
 )

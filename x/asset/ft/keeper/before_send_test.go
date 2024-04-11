@@ -44,7 +44,7 @@ func TestApplyRate(t *testing.T) {
 	issuer := genAccount()
 	dummyAddress := genAccount()
 	key := sdk.NewKVStoreKey(types.StoreKey)
-	assetFTKeeper := assetftkeeper.NewKeeper(nil, key, nil, nil, nil, "")
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, key, nil, nil, nil, nil, "")
 
 	testCases := []struct {
 		name         string

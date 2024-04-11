@@ -2120,6 +2120,7 @@ Definition defines the fungible token settings to store.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `extension_cw_address` | [string](#string) |  |    |
 
 
 
@@ -2236,6 +2237,7 @@ Feature defines possible features of fungible token.
 | whitelisting | 3 |  |
 | ibc | 4 |  |
 | block_smart_contracts | 5 |  |
+| extensions | 6 |  |
 
 
  <!-- end enums -->
@@ -2351,6 +2353,7 @@ MsgIssue defines message to issue new fungible token.
 | `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `wasm_code_id` | [uint64](#uint64) |  |  `wasm_code_id must be provided in case you want to use wasm extensions. It is the code id of wasm byte code that is already uploaded by the issuer.`  |
 
 
 

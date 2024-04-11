@@ -5,3 +5,4 @@ vendor
 /bin
 *.iml
 go.work*
+**/wasm-data/wasm/*

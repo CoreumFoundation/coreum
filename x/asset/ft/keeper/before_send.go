@@ -1,11 +1,13 @@
 package keeper
 
 import (
+	"encoding/json"
 	"sort"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
@@ -69,6 +71,7 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 		return sdkerrors.Wrapf(err, "invalid address %s", input.Address)
 	}
 
+	assetFTmoduleAddress := authtypes.NewModuleAddress(types.ModuleName)
 	for _, coin := range input.Coins {
 		def, err := k.GetDefinition(ctx, coin.Denom)
 		if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
@@ -83,16 +86,61 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 		}
 
 		burnAmount := k.ApplyRate(ctx, def.BurnRate, issuer, sender, outOps)
-		if burnAmount.IsPositive() {
-			if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
+		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
+
+		if def.IsFeatureEnabled(types.Feature_extensions) {
+			// We need this if statement so we will not have an infinite loop. Otherwise
+			// when we call Execute method if wasm keeper, in which we have funds transfer,
+			// then we will end up in an infinite recursoin.
+			if sender.Equals(assetFTmoduleAddress) {
+				continue
+			}
+
+			extenstionContract, err := sdk.AccAddressFromBech32(def.ExtensionCwAddress)
+			if err != nil {
 				return err
 			}
+			attachedFunds := sdk.NewCoins(coin).
+				Add(sdk.NewCoin(def.Denom, commissionAmount)).
+				Add(sdk.NewCoin(def.Denom, burnAmount))
+
+			// we first send accounts to module account and then attach funds with module account as
+			// the caller of the smart contract.
+			k.bankKeeper.SendCoins(ctx, sender, assetFTmoduleAddress, attachedFunds)
+			contractMsg := map[string]interface{}{
+				"transfer": map[string]interface{}{
+					"sender":     sender.String(),
+					"amount":     coin.Amount,
+					"recipients": outOps,
+				},
+			}
+			contractMsgBytes, err := json.Marshal(contractMsg)
+			if err != nil {
+				return err
+			}
+			_, err = k.wasmPermissionedKeeper.Execute(
+				ctx,
+				extenstionContract,
+				assetFTmoduleAddress,
+				contractMsgBytes,
+				attachedFunds,
+			)
+			if err != nil {
+				return err
+			}
+			// We will not enforce any policies if the token has extensions. It is up to the contract
+			// to enforce them as needed. As a result we will skip the next operations in this for loop.
+			continue
 		}
 
-		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
 		if commissionAmount.IsPositive() {
 			commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
 			if err := k.bankKeeper.SendCoins(ctx, sender, issuer, commissionCoin); err != nil {
+				return err
+			}
+		}
+		if burnAmount.IsPositive() {
+			if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
 				return err
 			}
 		}
@@ -108,9 +156,6 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 			}
 			return k.isCoinReceivable(ctx, accountAddr, def, amount)
 		}); err != nil {
-			return err
-		}
-		if err != nil {
 			return err
 		}
 	}

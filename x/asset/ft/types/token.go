@@ -57,6 +57,7 @@ type IssueSettings struct {
 	Features           []Feature
 	BurnRate           sdk.Dec
 	SendCommissionRate sdk.Dec
+	WasmCodeID         uint64
 }
 
 // BuildDenom builds the denom string from the symbol and issuer address.

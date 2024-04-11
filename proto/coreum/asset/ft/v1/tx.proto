@@ -75,6 +75,9 @@ message MsgIssue {
   ];
   string uri = 10 [(gogoproto.customname) = "URI"];
   string uri_hash = 11 [(gogoproto.customname) = "URIHash"];
+  // wasm_code_id must be provided in case you want to use wasm extensions.
+  // It is the code id of wasm byte code that is already uploaded by the issuer.
+  uint64 wasm_code_id = 12;
 }
 
 message MsgMint {

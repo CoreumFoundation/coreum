@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
@@ -24,12 +25,13 @@ import (
 
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc         codec.BinaryCodec
-	storeKey    storetypes.StoreKey
-	bankKeeper  types.BankKeeper
-	delayKeeper types.DelayKeeper
-	wasmKeeper  cwasmtypes.WasmKeeper
-	authority   string
+	cdc                    codec.BinaryCodec
+	storeKey               storetypes.StoreKey
+	bankKeeper             types.BankKeeper
+	delayKeeper            types.DelayKeeper
+	wasmKeeper             cwasmtypes.WasmKeeper
+	wasmPermissionedKeeper types.WasmPermissionedKeeper
+	authority              string
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -39,15 +41,17 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
+	wasmPermissionedKeeper types.WasmPermissionedKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:         cdc,
-		storeKey:    storeKey,
-		bankKeeper:  bankKeeper,
-		delayKeeper: delayKeeper,
-		wasmKeeper:  wasmKeeper,
-		authority:   authority,
+		cdc:                    cdc,
+		storeKey:               storeKey,
+		bankKeeper:             bankKeeper,
+		delayKeeper:            delayKeeper,
+		wasmKeeper:             wasmKeeper,
+		wasmPermissionedKeeper: wasmPermissionedKeeper,
+		authority:              authority,
 	}
 }
 
@@ -223,6 +227,27 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		Version:            version,
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
+	}
+
+	if definition.IsFeatureEnabled(types.Feature_extensions) {
+		assetFTModuleAddress := authtypes.NewModuleAddress(types.ModuleName)
+
+		contractAddress, _, err := k.wasmPermissionedKeeper.Instantiate2(
+			ctx,
+			settings.WasmCodeID,
+			settings.Issuer,
+			assetFTModuleAddress,
+			[]byte("{}"),
+			"",
+			sdk.NewCoins(),
+			ctx.BlockHeader().AppHash,
+			true,
+		)
+		if err != nil {
+			return "", sdkerrors.Wrapf(err, "error instantiating cw contract")
+		}
+
+		definition.ExtensionCwAddress = contractAddress.String()
 	}
 
 	if err := k.SetDenomMetadata(
