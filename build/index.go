@@ -13,14 +13,38 @@ var Commands = map[string]build.Command{
 	"download": {Fn: coreum.DownloadDependencies, Description: "Downloads go dependencies"},
 	"generate": {Fn: coreum.Generate, Description: "Generates artifacts"},
 	"images":   {Fn: coreum.BuildCoredDockerImage, Description: "Builds cored docker image"},
-	"integration-tests": {Fn: coreum.RunAllIntegrationTests,
-		Description: "Runs all the integration tests"},
-	"integration-tests/ibc": {Fn: coreum.RunIntegrationTests(coreum.TestIBC),
-		Description: "Runs IBC integration tests"},
-	"integration-tests/modules": {Fn: coreum.RunIntegrationTests(coreum.TestModules),
-		Description: "Runs modules integration tests"},
-	"integration-tests/upgrade": {Fn: coreum.RunIntegrationTests(coreum.TestUpgrade),
-		Description: "Runs upgrade integration tests"},
+	"integration-tests": {
+		Fn:          coreum.RunAllIntegrationTests(false),
+		Description: "Runs all safe integration tests",
+	},
+	"integration-tests-unsafe": {
+		Fn:          coreum.RunAllIntegrationTests(true),
+		Description: "Runs all the integration tests including unsafe",
+	},
+	"integration-tests/ibc": {
+		Fn:          coreum.RunIntegrationTests(coreum.TestIBC, false),
+		Description: "Runs safe IBC integration tests",
+	},
+	"integration-tests-unsafe/ibc": {
+		Fn:          coreum.RunIntegrationTests(coreum.TestIBC, true),
+		Description: "Runs all IBC integration tests including unsafe",
+	},
+	"integration-tests/modules": {
+		Fn:          coreum.RunIntegrationTests(coreum.TestModules, false),
+		Description: "Runs safe modules integration tests",
+	},
+	"integration-tests-unsafe/modules": {
+		Fn:          coreum.RunIntegrationTests(coreum.TestModules, true),
+		Description: "Runs all modules integration tests including unsafe",
+	},
+	"integration-tests/upgrade": {
+		Fn:          coreum.RunIntegrationTests(coreum.TestUpgrade, false),
+		Description: "Runs safe upgrade integration tests",
+	},
+	"integration-tests-unsafe/upgrade": {
+		Fn:          coreum.RunIntegrationTests(coreum.TestUpgrade, true),
+		Description: "Runs all upgrade integration tests including unsafe",
+	},
 	"lint":           {Fn: coreum.Lint, Description: "Lints code"},
 	"release":        {Fn: coreum.ReleaseCored, Description: "Releases cored binary"},
 	"release/images": {Fn: coreum.ReleaseCoredImage, Description: "Releases cored docker images"},

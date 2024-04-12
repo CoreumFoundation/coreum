@@ -19,26 +19,28 @@ const (
 )
 
 // RunAllIntegrationTests runs all the coreum integration tests.
-func RunAllIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
-	entries, err := os.ReadDir(testsDir)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	actions := make([]build.CommandFunc, 0, len(entries))
-	for _, e := range entries {
-		if !e.IsDir() || e.Name() == "contracts" {
-			continue
+func RunAllIntegrationTests(runUnsafe bool) build.CommandFunc {
+	return func(ctx context.Context, deps build.DepsFunc) error {
+		entries, err := os.ReadDir(testsDir)
+		if err != nil {
+			return errors.WithStack(err)
 		}
 
-		actions = append(actions, RunIntegrationTests(e.Name()))
+		actions := make([]build.CommandFunc, 0, len(entries))
+		for _, e := range entries {
+			if !e.IsDir() || e.Name() == "contracts" {
+				continue
+			}
+
+			actions = append(actions, RunIntegrationTests(e.Name(), runUnsafe))
+		}
+		deps(actions...)
+		return nil
 	}
-	deps(actions...)
-	return nil
 }
 
 // RunIntegrationTests returns function running integration tests.
-func RunIntegrationTests(name string) build.CommandFunc {
+func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		switch name {
 		case TestModules, TestUpgrade:
@@ -47,11 +49,13 @@ func RunIntegrationTests(name string) build.CommandFunc {
 			deps(CompileIBCSmartContracts)
 		}
 
+		flags := []string{"-tags=integrationtests"}
+		if runUnsafe {
+			flags = append(flags, "-args", "--run-unsafe") // Pass extra flags to tests binary not to go test.
+		}
 		return golang.RunTests(ctx, deps, golang.TestConfig{
 			PackagePath: filepath.Join(testsDir, name),
-			Flags: []string{
-				"-tags=integrationtests",
-			},
+			Flags:       flags,
 		})
 	}
 }
