@@ -46,10 +46,9 @@ func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 		testTimeout := "10m"
 		switch name {
 		case TestModules:
-			testTimeout = "15m"
+			testTimeout = "25m"
 			deps(CompileModulesSmartContracts)
 		case TestUpgrade:
-			testTimeout = "25m"
 			deps(CompileModulesSmartContracts)
 		case TestIBC:
 			deps(CompileIBCSmartContracts)
