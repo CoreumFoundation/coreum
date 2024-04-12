@@ -2,6 +2,7 @@ package coreum
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -42,16 +43,21 @@ func RunAllIntegrationTests(runUnsafe bool) build.CommandFunc {
 // RunIntegrationTests returns function running integration tests.
 func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
+		testTimeout := "10m"
 		switch name {
-		case TestModules, TestUpgrade:
+		case TestModules:
+			testTimeout = "15m"
+			deps(CompileModulesSmartContracts)
+		case TestUpgrade:
+			testTimeout = "25m"
 			deps(CompileModulesSmartContracts)
 		case TestIBC:
 			deps(CompileIBCSmartContracts)
 		}
 
-		flags := []string{"-tags=integrationtests"}
+		flags := []string{"-tags=integrationtests", fmt.Sprintf("-timeout=%v", testTimeout)}
 		if runUnsafe {
-			flags = append(flags, "-args", "--run-unsafe") // Pass extra flags to tests binary not to go test.
+			flags = append(flags, "--run-unsafe")
 		}
 		return golang.RunTests(ctx, deps, golang.TestConfig{
 			PackagePath: filepath.Join(testsDir, name),
