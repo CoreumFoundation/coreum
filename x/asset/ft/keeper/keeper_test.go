@@ -1264,6 +1264,86 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(freezableDenom, sdkmath.NewInt(12)), balance)
 }
 
+func TestKeeper_Clawback(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{types.Feature_clawback},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	clawbackDisabledSettings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     1,
+		Description:   "ABC Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{},
+	}
+
+	clawbackDisabledDenom, err := ftKeeper.Issue(ctx, clawbackDisabledSettings)
+	requireT.NoError(err)
+	_, err = ftKeeper.GetToken(ctx, clawbackDisabledDenom)
+	requireT.NoError(err)
+
+	from := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, issuer, from, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(100)),
+		sdk.NewCoin(clawbackDisabledDenom, sdkmath.NewInt(100)),
+	))
+	requireT.NoError(err)
+
+	// try to clawback non-existent denom
+	nonExistentDenom := types.BuildDenom("nonexist", issuer)
+	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(nonExistentDenom, sdkmath.NewInt(10)))
+	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
+
+	// try to clawback clawbackDisabled Token
+	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(clawbackDisabledDenom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	// try to clawback from non issuer address
+	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.Clawback(ctx, randomAddr, from, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to clawback 0 balance
+	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(denom, sdkmath.NewInt(0)))
+	requireT.ErrorIs(err, cosmoserrors.ErrInvalidCoins)
+
+	// try to clawback more than balance
+	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(denom, sdkmath.NewInt(110)))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+
+	// clawback, query balance
+	issuerBalanceBefore := bankKeeper.GetBalance(ctx, issuer, denom)
+	accountBalanceBefore := bankKeeper.GetBalance(ctx, from, denom)
+	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(denom, sdkmath.NewInt(40)))
+	requireT.NoError(err)
+	issuerBalanceAfter := bankKeeper.GetBalance(ctx, issuer, denom)
+	accountBalanceAfter := bankKeeper.GetBalance(ctx, from, denom)
+	requireT.Equal(issuerBalanceBefore.Add(sdk.NewCoin(denom, sdkmath.NewInt(40))), issuerBalanceAfter)
+	requireT.Equal(accountBalanceBefore.Sub(sdk.NewCoin(denom, sdkmath.NewInt(40))), accountBalanceAfter)
+}
+
 func TestKeeper_Whitelist(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)

@@ -19,6 +19,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgSetFrozen{},
 		&MsgGloballyFreeze{},
 		&MsgGloballyUnfreeze{},
+		&MsgClawback{},
 		&MsgSetWhitelistedLimit{},
 		&MsgUpgradeTokenV1{},
 	)
