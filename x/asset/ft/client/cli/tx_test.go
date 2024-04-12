@@ -273,6 +273,43 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 	requireT.False(resp.Token.GloballyFrozen)
 }
 
+func TestClawback(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_clawback,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdkmath.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	account := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	coin := sdk.NewInt64Coin(denom, 100)
+
+	args := append([]string{testNetwork.Validators[0].Address.String(), account.String(), coin.String()}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, bankcli.NewSendTxCmd(), args)
+	requireT.NoError(err)
+
+	var balanceRsp banktypes.QueryAllBalancesResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{account.String()}, &balanceRsp))
+	requireT.Equal(sdkmath.NewInt(100).String(), balanceRsp.Balances.AmountOf(denom).String())
+
+	args = append([]string{account.String(), coin.String()}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClawback(), args)
+	requireT.NoError(err)
+
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{account.String()}, &balanceRsp))
+	requireT.Equal(sdkmath.NewInt(0).String(), balanceRsp.Balances.AmountOf(denom).String())
+}
+
 func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)

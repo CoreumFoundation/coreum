@@ -21,6 +21,7 @@ const (
 	TypeMsgUnfreeze            = "unfreeze"
 	TypeMsgGloballyFreeze      = "globally-freeze"
 	TypeMsgGloballyUnfreeze    = "globally-unfreeze"
+	TypeMsgClawback            = "clawback"
 	TypeMsgSetWhitelistedLimit = "set-whitelisted-limit"
 	TypeMsgUpgradeTokenV1      = "upgrade-token-v1"
 	TypeMsgUpdateParams        = "update-params"
@@ -52,6 +53,8 @@ var (
 	_ legacytx.LegacyMsg = &MsgGloballyFreeze{}
 	_ sdk.Msg            = &MsgGloballyUnfreeze{}
 	_ legacytx.LegacyMsg = &MsgGloballyUnfreeze{}
+	_ sdk.Msg            = &MsgClawback{}
+	_ legacytx.LegacyMsg = &MsgClawback{}
 	_ sdk.Msg            = &MsgSetWhitelistedLimit{}
 	_ legacytx.LegacyMsg = &MsgSetWhitelistedLimit{}
 	_ sdk.Msg            = &MsgUpgradeTokenV1{}
@@ -428,6 +431,49 @@ func (m MsgGloballyUnfreeze) Route() string {
 // Type returns message type for LegacyMsg.
 func (m MsgGloballyUnfreeze) Type() string {
 	return TypeMsgGloballyUnfreeze
+}
+
+func (m MsgClawback) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	if err != nil {
+		return err
+	}
+
+	if issuer.String() == m.Account {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be clawed back")
+	}
+
+	if issuer.String() != m.Sender {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only issuer can claw back balance")
+	}
+
+	return m.Coin.Validate()
+}
+
+func (m MsgClawback) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(m.Sender),
+	}
+}
+
+func (m MsgClawback) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgClawback) Route() string {
+	return RouterKey
+}
+
+func (m MsgClawback) Type() string {
+	return TypeMsgClawback
 }
 
 // ValidateBasic checks that message fields are valid.

@@ -55,6 +55,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxSetFrozen(),
 		CmdTxGloballyFreeze(),
 		CmdTxGloballyUnfreeze(),
+		CmdTxClawback(),
 		CmdTxSetWhitelistedLimit(),
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
@@ -402,6 +403,48 @@ $ %s tx %s set-frozen [account_address] 100000ABC-%s --from [sender]
 			}
 
 			msg := &types.MsgSetFrozen{
+				Sender:  sender.String(),
+				Account: account,
+				Coin:    amount,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxClawback returns Clawback cobra command.
+func CmdTxClawback() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "clawback [account_address] [amount] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Confiscates any amount of fungible token from the specific account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Confiscate a portion of fungible token.
+
+Example:
+$ %s tx %s clawback [account_address] 100000ABC-%s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			account := args[0]
+			amount, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgClawback{
 				Sender:  sender.String(),
 				Account: account,
 				Coin:    amount,

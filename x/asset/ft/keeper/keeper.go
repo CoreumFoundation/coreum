@@ -532,6 +532,31 @@ func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezeKey(denom))
 }
 
+// Clawback confiscates specified token from the specified account.
+func (k Keeper) Clawback(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "clawback amount should be positive")
+	}
+
+	if err := k.clawbackChecks(ctx, sender, addr, coin); err != nil {
+		return err
+	}
+
+	if err := k.bankKeeper.SendCoins(ctx, addr, sender, sdk.NewCoins(coin)); err != nil {
+		return sdkerrors.Wrapf(err, "can't send coins from account %s to issuer %s", addr.String(), sender.String())
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventAmountClawedBack{
+		Account: addr.String(),
+		Denom:   coin.Denom,
+		Amount:  coin.Amount,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventAmountClawedBack event: %s", err)
+	}
+
+	return nil
+}
+
 // SetWhitelistedBalance sets whitelisted limit for the account.
 func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if coin.IsNil() || coin.IsNegative() {
@@ -922,6 +947,19 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
 	return bytes.Equal(ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom)), types.StoreTrue)
+}
+
+func (k Keeper) clawbackChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+	def, err := k.GetDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	if def.IsIssuer(addr) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be clawed back")
+	}
+
+	return def.CheckFeatureAllowed(sender, types.Feature_clawback)
 }
 
 // whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account.
