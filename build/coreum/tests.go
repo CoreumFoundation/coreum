@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/pkg/errors"
 
@@ -54,7 +55,11 @@ func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 			deps(CompileIBCSmartContracts)
 		}
 
-		flags := []string{"-tags=integrationtests", fmt.Sprintf("-timeout=%v", testTimeout)}
+		flags := []string{
+			"-tags=integrationtests",
+			fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
+			fmt.Sprintf("-timeout=%v", testTimeout),
+		}
 		if runUnsafe {
 			flags = append(flags, "--run-unsafe")
 		}
