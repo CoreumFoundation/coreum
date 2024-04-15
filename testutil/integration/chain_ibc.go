@@ -23,7 +23,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 )
 
-var AwaitForBalanceTimeout = 2 * time.Minute
+var AwaitForBalanceTimeout = 30 * time.Second
 
 // ExecuteIBCTransfer executes IBC transfer transaction.
 func (c ChainContext) ExecuteIBCTransfer(
