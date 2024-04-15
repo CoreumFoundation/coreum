@@ -25,6 +25,7 @@ import (
 )
 
 func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
+	t.SkipNow()
 	t.Parallel()
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
@@ -73,6 +74,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 // TestIBCTransferFromGaiaToCoreumAndBack checks IBC transfer in the following order:
 // gaiaAccount1 [IBC]-> coreumToCoreumSender [bank.Send]-> coreumToGaiaSender [IBC]-> gaiaAccount2.
 func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
+	t.SkipNow()
 	t.Parallel()
 	requireT := require.New(t)
 

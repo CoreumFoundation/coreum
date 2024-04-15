@@ -53,7 +53,7 @@ func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 
 		flags := []string{
 			"-tags=integrationtests",
-			fmt.Sprintf("-parallel=%d", runtime.NumCPU()),
+			fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
 			"-timeout=1h",
 		}
 		if runUnsafe {

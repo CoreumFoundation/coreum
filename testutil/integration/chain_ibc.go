@@ -23,6 +23,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 )
 
+var AwaitForBalanceTimeout = 2 * time.Minute
+
 // ExecuteIBCTransfer executes IBC transfer transaction.
 func (c ChainContext) ExecuteIBCTransfer(
 	ctx context.Context,
@@ -135,7 +137,7 @@ func (c ChainContext) AwaitForBalance(
 		expectedBalance.String(),
 	)
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
-	retryCtx, retryCancel := context.WithTimeout(ctx, 5*time.Minute)
+	retryCtx, retryCancel := context.WithTimeout(ctx, AwaitForBalanceTimeout)
 	defer retryCancel()
 	err := retry.Do(retryCtx, 100*time.Millisecond, func() error {
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
