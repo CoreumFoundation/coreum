@@ -23,6 +23,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 )
 
+// AwaitForBalanceTimeout is duration to await for account to have a specific balance.
 var AwaitForBalanceTimeout = 30 * time.Second
 
 // ExecuteIBCTransfer executes IBC transfer transaction.
