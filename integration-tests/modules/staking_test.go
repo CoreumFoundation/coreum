@@ -289,7 +289,8 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 // TestValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
 // delegation is higher than current validator self delegation.
 func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
-	t.Parallel()
+	// Since this test changes global staking config we can't run it in parallel with other tests.
+	// That's why t.Parallel() is not here.
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
