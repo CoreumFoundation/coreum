@@ -19,8 +19,8 @@ service Msg {
   rpc IssueClass(MsgIssueClass) returns (EmptyResponse);
   // Mint mints new non-fungible token in the class.
   rpc Mint(MsgMint) returns (EmptyResponse);
-  // UpdateData updates the existing non-fungible token data in the class.
-  rpc UpdateData(MsgUpdateData) returns (EmptyResponse);
+  // UpdateNFTData updates the existing non-fungible token data in the class.
+  rpc UpdateNFTData(MsgUpdateNFTData) returns (EmptyResponse);
   // Burn burns the existing non-fungible token in the class.
   rpc Burn(MsgBurn) returns (EmptyResponse);
   // Freeze freezes an NFT
@@ -79,8 +79,8 @@ message MsgMint {
   string recipient = 7;
 }
 
-// MsgUpdateData defines message to update the dynamic data.
-message MsgUpdateData {
+// MsgUpdateNFTData defines message to update the dynamic data.
+message MsgUpdateNFTData {
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];

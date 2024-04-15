@@ -283,7 +283,7 @@ func TestAssetNFTUpdate(t *testing.T) {
 	requireT.Equal(dataDynamic, storedDataDynamic)
 
 	// update stored NFT
-	msgUpdateData := &assetnfttypes.MsgUpdateData{
+	msgUpdateNFTData := &assetnfttypes.MsgUpdateNFTData{
 		Sender:  owner.String(),
 		ClassID: mintMsg.ClassID,
 		ID:      mintMsg.ID,
@@ -296,18 +296,18 @@ func TestAssetNFTUpdate(t *testing.T) {
 	}
 	chain.FundAccountWithOptions(ctx, t, owner, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			msgUpdateData,
+			msgUpdateNFTData,
 		},
 	})
 
 	txRes, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(owner),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateData)),
-		msgUpdateData,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateNFTData)),
+		msgUpdateNFTData,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(txRes.GasUsed, chain.GasLimitByMsgs(msgUpdateData))
+	requireT.EqualValues(txRes.GasUsed, chain.GasLimitByMsgs(msgUpdateNFTData))
 
 	storedNFT, err = nftClient.NFT(ctx, &nft.QueryNFTRequest{
 		ClassId: mintMsg.ClassID,
@@ -317,20 +317,20 @@ func TestAssetNFTUpdate(t *testing.T) {
 
 	var updatedDataDynamic assetnfttypes.DataDynamic
 	requireT.NoError(updatedDataDynamic.Unmarshal(storedNFT.Nft.Data.Value))
-	requireT.Equal(string(msgUpdateData.Items[0].Data), string(updatedDataDynamic.Items[0].Data))
+	requireT.Equal(string(msgUpdateNFTData.Items[0].Data), string(updatedDataDynamic.Items[0].Data))
 
 	// try to update from issuer
-	msgUpdateData.Sender = issuer.String()
+	msgUpdateNFTData.Sender = issuer.String()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			msgUpdateData,
+			msgUpdateNFTData,
 		},
 	})
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateData)),
-		msgUpdateData,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateNFTData)),
+		msgUpdateNFTData,
 	)
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }

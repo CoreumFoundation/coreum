@@ -213,7 +213,7 @@ func TestCmdMintDataDynamic(t *testing.T) {
 	requireT.Equal(items, gotDataDynamic.Items)
 }
 
-func TestCmdUpdateData(t *testing.T) {
+func TestCmdUpdateNFTData(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
@@ -269,16 +269,16 @@ func TestCmdUpdateData(t *testing.T) {
 	dataToUpdate, err := json.Marshal(dataDynamicIndexedItems)
 	require.NoError(t, err)
 
-	updateDataFile := filepath.Join(t.TempDir(), "update")
-	require.NoError(t, os.WriteFile(updateDataFile, dataToUpdate, 0o600))
+	updateNFTDataFile := filepath.Join(t.TempDir(), "update")
+	require.NoError(t, os.WriteFile(updateNFTDataFile, dataToUpdate, 0o600))
 
 	args = []string{
 		classID,
 		nftID,
-		fmt.Sprintf("--%s=%s", cli.DataFileFlag, updateDataFile),
+		fmt.Sprintf("--%s=%s", cli.DataFileFlag, updateNFTDataFile),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpdateData(), args)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpdateNFTData(), args)
 	requireT.NoError(err)
 
 	// query stored

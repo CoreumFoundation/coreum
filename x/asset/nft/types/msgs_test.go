@@ -443,9 +443,9 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgUpdateData_ValidateBasic(t *testing.T) {
+func TestMsgUpdateNFTData_ValidateBasic(t *testing.T) {
 	sender := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	validMessage := types.MsgUpdateData{
+	validMessage := types.MsgUpdateNFTData{
 		Sender:  sender.String(),
 		ClassID: fmt.Sprintf("symbol-%s", sender.String()),
 		ID:      "my-id",
@@ -462,19 +462,19 @@ func TestMsgUpdateData_ValidateBasic(t *testing.T) {
 	}
 	testCases := []struct {
 		name          string
-		messageFunc   func() *types.MsgUpdateData
+		messageFunc   func() *types.MsgUpdateNFTData
 		expectedError error
 	}{
 		{
 			name: "valid_msg",
-			messageFunc: func() *types.MsgUpdateData {
+			messageFunc: func() *types.MsgUpdateNFTData {
 				msg := validMessage
 				return &msg
 			},
 		},
 		{
 			name: "invalid_id",
-			messageFunc: func() *types.MsgUpdateData {
+			messageFunc: func() *types.MsgUpdateNFTData {
 				msg := validMessage
 				msg.ID = invalidNFTID
 				return &msg
@@ -483,7 +483,7 @@ func TestMsgUpdateData_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid_sender",
-			messageFunc: func() *types.MsgUpdateData {
+			messageFunc: func() *types.MsgUpdateNFTData {
 				msg := validMessage
 				msg.Sender = invalidAccount
 				return &msg
@@ -492,7 +492,7 @@ func TestMsgUpdateData_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid_classID",
-			messageFunc: func() *types.MsgUpdateData {
+			messageFunc: func() *types.MsgUpdateNFTData {
 				msg := validMessage
 				msg.ClassID = "x"
 				return &msg
@@ -501,7 +501,7 @@ func TestMsgUpdateData_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid_empty_items",
-			messageFunc: func() *types.MsgUpdateData {
+			messageFunc: func() *types.MsgUpdateNFTData {
 				msg := validMessage
 				msg.Items = nil
 				return &msg
@@ -510,7 +510,7 @@ func TestMsgUpdateData_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid_duplicated_index",
-			messageFunc: func() *types.MsgUpdateData {
+			messageFunc: func() *types.MsgUpdateNFTData {
 				msg := validMessage
 				msg.Items = []types.DataDynamicIndexedItem{
 					{

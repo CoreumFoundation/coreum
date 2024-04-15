@@ -50,7 +50,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdTxIssueClass(),
 		CmdTxMint(),
-		CmdTxUpdateData(),
+		CmdTxUpdateNFTData(),
 		CmdTxBurn(),
 		CmdTxFreeze(),
 		CmdTxUnfreeze(),
@@ -245,11 +245,11 @@ $ %s tx %s mint abc-%s id1 --%s [sender] --%s [path]
 	return cmd
 }
 
-// CmdTxUpdateData returns UpdateData cobra command.
-func CmdTxUpdateData() *cobra.Command {
+// CmdTxUpdateNFTData returns update NFT data cobra command.
+func CmdTxUpdateNFTData() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: fmt.Sprintf(
-			"update-data [class-id] [id] --%s [sender] --%s [path]", flags.FlagFrom, DataFileFlag,
+			"update-nft-data [class-id] [id] --%s [sender] --%s [path]", flags.FlagFrom, DataFileFlag,
 		),
 		Args:  cobra.ExactArgs(2),
 		Short: "Update non-fungible token data",
@@ -257,7 +257,7 @@ func CmdTxUpdateData() *cobra.Command {
 			fmt.Sprintf(`Update non-fungible token data.
 
 Example:
-$ %s tx %s update-data abc-%s id1 --%s [sender] --%s [path]
+$ %s tx %s update-nft-data abc-%s id1 --%s [sender] --%s [path]
 `,
 				version.AppName, types.ModuleName, constant.AddressSampleTest, flags.FlagFrom, DataFileFlag,
 			),
@@ -282,7 +282,7 @@ $ %s tx %s update-data abc-%s id1 --%s [sender] --%s [path]
 				return errors.Wrapf(err, "failed to unmarshal data to []types.DataDynamicIndexedItem type")
 			}
 
-			msg := &types.MsgUpdateData{
+			msg := &types.MsgUpdateNFTData{
 				Sender:  sender.String(),
 				ClassID: classID,
 				ID:      ID,

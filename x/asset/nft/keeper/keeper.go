@@ -364,8 +364,8 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 	return nil
 }
 
-// UpdateData updates non-fungible token data.
-func (k Keeper) UpdateData(
+// UpdateNFTData updates non-fungible token data.
+func (k Keeper) UpdateNFTData(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	classID, id string,
