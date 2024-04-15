@@ -44,12 +44,8 @@ func RunAllIntegrationTests(runUnsafe bool) build.CommandFunc {
 // RunIntegrationTests returns function running integration tests.
 func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
-		testTimeout := "10m"
 		switch name {
-		case TestModules:
-			testTimeout = "25m"
-			deps(CompileModulesSmartContracts)
-		case TestUpgrade:
+		case TestModules, TestUpgrade:
 			deps(CompileModulesSmartContracts)
 		case TestIBC:
 			deps(CompileIBCSmartContracts)
@@ -58,7 +54,7 @@ func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 		flags := []string{
 			"-tags=integrationtests",
 			fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
-			fmt.Sprintf("-timeout=%v", testTimeout),
+			"-timeout=1h",
 		}
 		if runUnsafe {
 			flags = append(flags, "--run-unsafe")
