@@ -135,7 +135,7 @@ func (c ChainContext) AwaitForBalance(
 		expectedBalance.String(),
 	)
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
-	retryCtx, retryCancel := context.WithTimeout(ctx, 60*time.Second)
+	retryCtx, retryCancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer retryCancel()
 	err := retry.Do(retryCtx, 100*time.Millisecond, func() error {
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
