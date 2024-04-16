@@ -272,7 +272,7 @@ $ %s tx %s update-nft-data abc-%s id1 --%s [sender] --%s [path]
 			classID := args[0]
 			ID := args[1]
 
-			data, err := getDataFromFile(cmd)
+			data, err := readDataFromFile(cmd)
 			if err != nil {
 				return err
 			}
@@ -748,7 +748,7 @@ func getExpireTime(cmd *cobra.Command) (*time.Time, error) {
 }
 
 func getProtoDataFromFile(cmd *cobra.Command) (*codectypes.Any, error) {
-	data, err := getDataFromFile(cmd)
+	data, err := readDataFromFile(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -789,7 +789,7 @@ func getProtoDataFromFile(cmd *cobra.Command) (*codectypes.Any, error) {
 	return dataAny, nil
 }
 
-func getDataFromFile(cmd *cobra.Command) ([]byte, error) {
+func readDataFromFile(cmd *cobra.Command) ([]byte, error) {
 	if !cmd.Flags().Changed(DataFileFlag) {
 		return nil, nil
 	}
