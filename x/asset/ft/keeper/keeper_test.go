@@ -1320,8 +1320,13 @@ func TestKeeper_Clawback(t *testing.T) {
 	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(clawbackDisabledDenom, sdkmath.NewInt(10)))
 	requireT.ErrorIs(err, types.ErrFeatureDisabled)
 
-	// try to clawback from non issuer address
+	// try to clawback by non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.Clawback(ctx, randomAddr, from, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to clawback from issuer address
+	randomAddr = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Clawback(ctx, randomAddr, from, sdk.NewCoin(denom, sdkmath.NewInt(10)))
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
