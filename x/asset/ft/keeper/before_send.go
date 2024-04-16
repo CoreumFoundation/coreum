@@ -96,7 +96,7 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 				continue
 			}
 
-			extenstionContract, err := sdk.AccAddressFromBech32(def.ExtensionCwAddress)
+			extensionContract, err := sdk.AccAddressFromBech32(def.ExtensionCwAddress)
 			if err != nil {
 				return err
 			}
@@ -106,7 +106,10 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 
 			// we first send accounts to module account and then attach funds with module account as
 			// the caller of the smart contract.
-			k.bankKeeper.SendCoins(ctx, sender, assetFTmoduleAddress, attachedFunds)
+			err = k.bankKeeper.SendCoins(ctx, sender, assetFTmoduleAddress, attachedFunds)
+			if err != nil {
+				return err
+			}
 			contractMsg := map[string]interface{}{
 				"transfer": map[string]interface{}{
 					"sender":     sender.String(),
@@ -120,13 +123,13 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 			}
 			_, err = k.wasmPermissionedKeeper.Execute(
 				ctx,
-				extenstionContract,
+				extensionContract,
 				assetFTmoduleAddress,
 				contractMsgBytes,
 				attachedFunds,
 			)
 			if err != nil {
-				return err
+				return types.ErrExtensionCallFailed.Wrapf("was error: %s", err)
 			}
 			// We will not enforce any policies if the token has extensions. It is up to the contract
 			// to enforce them as needed. As a result we will skip the next operations in this for loop.

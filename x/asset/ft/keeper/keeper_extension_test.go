@@ -43,8 +43,6 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		Features:      []types.Feature{types.Feature_extensions},
-		URI:           "https://my-class-meta.invalid/1",
-		URIHash:       "content-hash",
 		WasmCodeID:    codeID,
 	}
 
@@ -106,5 +104,5 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	// the POC contract is written as such that sending 7 will fail.
 	// TODO replace with more meningful checks.
 	err = bankKeeper.SendCoins(ctx, settings.Issuer, reciever, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(7))))
-	requireT.Error(err)
+	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
 }
