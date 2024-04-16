@@ -294,19 +294,22 @@ func TestClawback(t *testing.T) {
 
 	coin := sdk.NewInt64Coin(denom, 100)
 
-	args := append([]string{testNetwork.Validators[0].Address.String(), account.String(), coin.String()}, txValidator1Args(testNetwork)...)
+	valAddr := testNetwork.Validators[0].Address.String()
+	args := append([]string{valAddr, account.String(), coin.String()}, txValidator1Args(testNetwork)...)
 	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, bankcli.NewSendTxCmd(), args)
 	requireT.NoError(err)
 
 	var balanceRsp banktypes.QueryAllBalancesResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{account.String()}, &balanceRsp))
+	args = []string{account.String()}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), args, &balanceRsp))
 	requireT.Equal(sdkmath.NewInt(100).String(), balanceRsp.Balances.AmountOf(denom).String())
 
 	args = append([]string{account.String(), coin.String()}, txValidator1Args(testNetwork)...)
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClawback(), args)
 	requireT.NoError(err)
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{account.String()}, &balanceRsp))
+	args = []string{account.String()}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), args, &balanceRsp))
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRsp.Balances.AmountOf(denom).String())
 }
 

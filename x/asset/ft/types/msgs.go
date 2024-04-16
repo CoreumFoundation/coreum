@@ -433,6 +433,7 @@ func (m MsgGloballyUnfreeze) Type() string {
 	return TypeMsgGloballyUnfreeze
 }
 
+// ValidateBasic checks that message fields are valid.
 func (m MsgClawback) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
@@ -458,20 +459,24 @@ func (m MsgClawback) ValidateBasic() error {
 	return m.Coin.Validate()
 }
 
+// GetSigners returns the required signers of this message type.
 func (m MsgClawback) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgClawback) GetSignBytes() []byte {
 	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
 }
 
+// Route returns message route for LegacyMsg.
 func (m MsgClawback) Route() string {
 	return RouterKey
 }
 
+// Type returns message type for LegacyMsg.
 func (m MsgClawback) Type() string {
 	return TypeMsgClawback
 }

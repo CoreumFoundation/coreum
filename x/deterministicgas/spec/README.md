@@ -80,6 +80,7 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 | `/cosmos.bank.v1beta1.MsgMultiSend`                                    | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgSend`                                         | [special case](#special-cases) |
 | `/coreum.asset.ft.v1.MsgBurn`                                          | 35000                          |
+| `/coreum.asset.ft.v1.MsgClawback`                                      | 8500                           |
 | `/coreum.asset.ft.v1.MsgFreeze`                                        | 8500                           |
 | `/coreum.asset.ft.v1.MsgGloballyFreeze`                                | 5000                           |
 | `/coreum.asset.ft.v1.MsgGloballyUnfreeze`                              | 5000                           |

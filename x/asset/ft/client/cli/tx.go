@@ -417,6 +417,8 @@ $ %s tx %s set-frozen [account_address] 100000ABC-%s --from [sender]
 }
 
 // CmdTxClawback returns Clawback cobra command.
+//
+//nolint:dupl // most code is identical, but reusing logic is not beneficial here.
 func CmdTxClawback() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clawback [account_address] [amount] --from [sender]",
