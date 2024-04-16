@@ -35,7 +35,9 @@ jobs:
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             command: |
-              crust znet test --test-groups=coreum-modules --timeout-commit 0.5s
+              coreum-builder build images
+              crust znet start --profiles=3cored --timeout-commit 0.5s
+              coreum-builder integration-tests-unsafe/modules
               crust znet stop
               crust znet coverage-convert
             linter-cache: false
@@ -43,17 +45,25 @@ jobs:
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
             command: |
-              crust znet test --test-groups=coreum-ibc --timeout-commit 1s
+              coreum-builder build images
+              crust znet start --profiles=3cored,ibc --timeout-commit 1s
+              coreum-builder integration-tests-unsafe/ibc
             linter-cache: false
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
+            # TODO(yaroslav): Return back IBC tests.
             command: |
-              crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s
+              coreum-builder build images
+              crust znet start --cored-version=v3.0.2 --profiles=3cored,ibc --timeout-commit 1s
+              coreum-builder integration-tests-unsafe/upgrade integration-tests-unsafe/modules
             linter-cache: false
             codecov: false
           - ci_step: "integration tests faucet"
             command: |
-              crust znet test --test-groups=faucet --timeout-commit 0.5s
+              coreum-builder build images
+              faucet-builder images
+              crust znet start --profiles=faucet --timeout-commit 0.5s
+              faucet-builder integration-tests
             linter-cache: false
             codecov: false
 
@@ -92,7 +102,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
+          key: ${{ runner.os }}-go-v2-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup crust cache
         uses: actions/cache@v4
         with:
@@ -115,14 +125,16 @@ jobs:
         continue-on-error: true
         with:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
-      - name: Build step
+      - name: Prepare dependencies
+        # FIXME (wojciech): Execute `download` commands for crust builder once available
         run: |
           crust build/me
-          crust build images
-          faucet-builder build/integration-tests images
-          coreum-builder build/integration-tests build images
-          # remove previously saved znet related data
+          crust build
           crust znet remove
+          coreum-builder build/me
+          coreum-builder download
+          faucet-builder build/me
+          faucet-builder download
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
