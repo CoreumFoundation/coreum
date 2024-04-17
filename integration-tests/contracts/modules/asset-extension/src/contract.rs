@@ -33,15 +33,15 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Transfer {
+        ExecuteMsg::ExtensionTransfer {
             sender,
             amount,
             recipients,
-        } => execute_transfer(deps, env, info, sender, amount, recipients),
+        } => execute_extension_transfer(deps, env, info, sender, amount, recipients),
     }
 }
 
-pub fn execute_transfer(
+pub fn execute_extension_transfer(
     _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,

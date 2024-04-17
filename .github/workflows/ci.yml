@@ -27,7 +27,7 @@ jobs:
             linter-cache: true
             codecov: false
           - ci_step: "test"
-            command: "coreum-builder test"
+            command: "coreum-builder wasm test"
             linter-cache: false
             codecov: true
             codecov-name: coreum

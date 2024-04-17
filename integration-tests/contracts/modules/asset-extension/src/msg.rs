@@ -7,7 +7,7 @@ pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Transfer {
+    ExtensionTransfer {
         sender: String,
         amount: Uint128,
         recipients: HashMap<String, Uint128>,

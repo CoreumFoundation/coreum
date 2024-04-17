@@ -15,6 +15,12 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
 
+type ExtensionTransferMsg struct {
+	Sender     string
+	Amount     sdkmath.Int
+	Recipients map[string]sdkmath.Int
+}
+
 // BeforeSendCoins checks that a transfer request is allowed or not.
 func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
 	return k.applyFeatures(
@@ -158,10 +164,10 @@ func (k Keeper) executeAssetExtension(
 		return err
 	}
 	contractMsg := map[string]interface{}{
-		"transfer": map[string]interface{}{
-			"sender":     sender.String(),
-			"amount":     sendAmount.Amount,
-			"recipients": outOps,
+		"extension_transfer": ExtensionTransferMsg{
+			Sender:     sender.String(),
+			Amount:     sendAmount.Amount,
+			Recipients: outOps,
 		},
 	}
 	contractMsgBytes, err := json.Marshal(contractMsg)
