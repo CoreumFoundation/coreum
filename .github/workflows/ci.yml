@@ -84,7 +84,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: "57f3800"
+          ref: "57f3800c540843690f96bb6d913818264aff5b2e"
       - name: Set up build system
         run: |
           echo "$(pwd)/coreum/bin" >> $GITHUB_PATH
