@@ -87,6 +87,7 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 | `/coreum.asset.ft.v1.MsgMint`                                          | 31000                          |
 | `/coreum.asset.ft.v1.MsgSetFrozen`                                     | 8500                           |
 | `/coreum.asset.ft.v1.MsgSetWhitelistedLimit`                           | 9000                           |
+| `/coreum.asset.ft.v1.MsgTransferAdmin`                                 | 1                              |
 | `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 8500                           |
 | `/coreum.asset.ft.v1.MsgUpgradeTokenV1`                                | 25000                          |
 | `/coreum.asset.nft.v1.MsgAddToClassWhitelist`                          | 7000                           |

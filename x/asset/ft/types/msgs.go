@@ -22,6 +22,7 @@ const (
 	TypeMsgGloballyFreeze      = "globally-freeze"
 	TypeMsgGloballyUnfreeze    = "globally-unfreeze"
 	TypeMsgSetWhitelistedLimit = "set-whitelisted-limit"
+	TypeMsgTransferAdmin       = "transfer-admin"
 	TypeMsgUpgradeTokenV1      = "upgrade-token-v1"
 	TypeMsgUpdateParams        = "update-params"
 )
@@ -54,6 +55,8 @@ var (
 	_ legacytx.LegacyMsg = &MsgGloballyUnfreeze{}
 	_ sdk.Msg            = &MsgSetWhitelistedLimit{}
 	_ legacytx.LegacyMsg = &MsgSetWhitelistedLimit{}
+	_ sdk.Msg            = &MsgTransferAdmin{}
+	_ legacytx.LegacyMsg = &MsgTransferAdmin{}
 	_ sdk.Msg            = &MsgUpgradeTokenV1{}
 	_ legacytx.LegacyMsg = &MsgUpgradeTokenV1{}
 	_ sdk.Msg            = &MsgUpdateParams{}
@@ -472,6 +475,46 @@ func (m MsgSetWhitelistedLimit) Route() string {
 // Type returns message type for LegacyMsg.
 func (m MsgSetWhitelistedLimit) Type() string {
 	return TypeMsgSetWhitelistedLimit
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m MsgTransferAdmin) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	_, _, err := DeconstructDenom(m.Denom)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetSigners returns the required signers of this message type.
+func (m MsgTransferAdmin) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(m.Sender),
+	}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgTransferAdmin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgTransferAdmin) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgTransferAdmin) Type() string {
+	return TypeMsgTransferAdmin
 }
 
 // ValidateBasic checks that message fields are valid.

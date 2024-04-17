@@ -10,6 +10,7 @@
     - [MintAuthorization](#coreum.asset.ft.v1.MintAuthorization)
   
 - [coreum/asset/ft/v1/event.proto](#coreum/asset/ft/v1/event.proto)
+    - [EventAdminTransfered](#coreum.asset.ft.v1.EventAdminTransfered)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
     - [EventWhitelistedAmountChanged](#coreum.asset.ft.v1.EventWhitelistedAmountChanged)
@@ -63,6 +64,7 @@
     - [MsgMint](#coreum.asset.ft.v1.MsgMint)
     - [MsgSetFrozen](#coreum.asset.ft.v1.MsgSetFrozen)
     - [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit)
+    - [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin)
     - [MsgUnfreeze](#coreum.asset.ft.v1.MsgUnfreeze)
     - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
     - [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1)
@@ -1579,6 +1581,23 @@ the granter's account.
 
 
 
+<a name="coreum.asset.ft.v1.EventAdminTransfered"></a>
+
+### EventAdminTransfered
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |    |
+| `previous_admin` | [string](#string) |  |    |
+| `current_admin` | [string](#string) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.EventFrozenAmountChanged"></a>
 
 ### EventFrozenAmountChanged
@@ -1621,6 +1640,7 @@ EventIssued is emitted on MsgIssue.
 | `send_commission_rate` | [string](#string) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `admin` | [string](#string) |  |    |
 
 
 
@@ -2120,6 +2140,7 @@ Definition defines the fungible token settings to store.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `admin` | [string](#string) |  |    |
 
 
 
@@ -2170,6 +2191,7 @@ Token is a full representation of the fungible token.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `admin` | [string](#string) |  |    |
 
 
 
@@ -2408,6 +2430,23 @@ MsgIssue defines message to issue new fungible token.
 
 
 
+<a name="coreum.asset.ft.v1.MsgTransferAdmin"></a>
+
+### MsgTransferAdmin
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |    |
+| `account` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.MsgUnfreeze"></a>
 
 ### MsgUnfreeze
@@ -2488,6 +2527,7 @@ Msg defines the Msg service.
 | `GloballyFreeze` | [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `GloballyFreeze freezes fungible token so no operations are allowed with it before unfrozen. This operation is idempotent so global freeze of already frozen token does nothing.` |  |
 | `GloballyUnfreeze` | [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it. This operation is idempotent so global unfreezing of non-frozen token does nothing.` |  |
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.` |  |
+| `TransferAdmin` | [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TransferAdmin changes admin of a fungible token.` |  |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
 
