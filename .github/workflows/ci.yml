@@ -53,7 +53,9 @@ jobs:
             command: |
               coreum-builder build images
               crust znet start --cored-version=v3.0.2 --profiles=3cored,ibc --timeout-commit 1s
-              coreum-builder integration-tests-unsafe/upgrade integration-tests-unsafe/modules integration-tests-unsafe/ibc
+              coreum-builder integration-tests-unsafe/upgrade integration-tests-unsafe/modules
+              sleep 30
+              coreum-builder integration-tests-unsafe/ibc
             linter-cache: false
             codecov: false
           - ci_step: "integration tests faucet"
