@@ -1600,6 +1600,126 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 }
 
+func TestKeeper_TransferAdmin(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	newAdmin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// try to transfer admin of non-existent denom
+	nonExistentDenom := types.BuildDenom("nonexist", issuer)
+	err = ftKeeper.TransferAdmin(ctx, issuer, newAdmin, nonExistentDenom)
+	requireT.ErrorIs(err, types.ErrTokenNotFound)
+
+	// try to transfer admin from non admin address
+	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.TransferAdmin(ctx, randomAddr, newAdmin, denom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// transfer admin, query admin of definition
+	err = ftKeeper.TransferAdmin(ctx, issuer, newAdmin, denom)
+	requireT.NoError(err)
+	def, err := ftKeeper.GetDefinition(ctx, denom)
+	requireT.NoError(err)
+	requireT.Equal(newAdmin.String(), def.GetAdmin())
+
+	// try to transfer from issuer which is not admin anymore
+	err = ftKeeper.TransferAdmin(ctx, issuer, randomAddr, denom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to transfer from admin back to the original issuer
+	err = ftKeeper.TransferAdmin(ctx, newAdmin, issuer, denom)
+	requireT.NoError(err)
+}
+
+func TestKeeper_TransferAdmin_FreezeUnfreeze(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{types.Feature_freezing},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))))
+	requireT.NoError(err)
+
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, denom)
+	requireT.NoError(err)
+
+	// try to freeze from issuer address which is non admin anymore
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// freeze, query frozen
+	err = ftKeeper.Freeze(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
+	requireT.NoError(err)
+	frozenBalance := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(40)).String(), frozenBalance.String())
+
+	// test query all frozen
+	allBalances, pageRes, err := ftKeeper.GetAccountsFrozenBalances(ctx, &query.PageRequest{})
+	requireT.NoError(err)
+	assertT.Len(allBalances, 1)
+	assertT.EqualValues(1, pageRes.GetTotal())
+	assertT.EqualValues(recipient.String(), allBalances[0].Address)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(40))).String(), allBalances[0].Coins.String())
+
+	// try to unfreeze from issuer address which is non admin anymore
+	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
+	assertT.True(sdkerrors.IsOf(err, cosmoserrors.ErrUnauthorized))
+
+	// set absolute frozen amount
+	err = ftKeeper.SetFrozen(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), frozenBalance)
+
+	// unfreeze, query frozen
+	err = ftKeeper.Unfreeze(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), frozenBalance)
+}
+
 func TestKeeper_IBC(t *testing.T) {
 	requireT := require.New(t)
 
