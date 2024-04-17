@@ -16,9 +16,9 @@ import (
 )
 
 type ExtensionTransferMsg struct {
-	Sender     string
-	Amount     sdkmath.Int
-	Recipients map[string]sdkmath.Int
+	Sender     string                 `json:"sender,omitempty"`
+	Amount     sdkmath.Int            `json:"amount,omitempty"`
+	Recipients map[string]sdkmath.Int `json:"recipients,omitempty"`
 }
 
 // BeforeSendCoins checks that a transfer request is allowed or not.
