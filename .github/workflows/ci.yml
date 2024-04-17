@@ -84,7 +84,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: "yaroslav/clear-packets"
+          ref: "57f3800"
       - name: Set up build system
         run: |
           echo "$(pwd)/coreum/bin" >> $GITHUB_PATH
