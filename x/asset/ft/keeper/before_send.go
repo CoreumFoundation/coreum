@@ -15,7 +15,7 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
 
-// extension method calls
+// extension method calls.
 const (
 	ExtenstionTransferMethod = "extension_transfer"
 )
