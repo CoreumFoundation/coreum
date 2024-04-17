@@ -871,7 +871,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		Version:            definition.Version,
 		URI:                definition.URI,
 		URIHash:            definition.URIHash,
-		Admin:              definition.Admin,
+		Admin:              definition.GetAdmin(),
 	}, nil
 }
 
