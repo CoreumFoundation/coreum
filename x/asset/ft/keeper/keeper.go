@@ -239,6 +239,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		Version:            version,
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
+		Admin:              settings.Issuer.String(),
 	}
 
 	if definition.IsFeatureEnabled(types.Feature_extension) {
@@ -302,6 +303,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		SendCommissionRate: settings.SendCommissionRate,
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
+		Admin:              settings.Issuer.String(),
 	}); err != nil {
 		return "", sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventIssued event: %s", err)
 	}
@@ -614,7 +616,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if def.IsIssuer(addr) {
+	if def.IsAdmin(addr) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
@@ -676,6 +678,28 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 	for _, coin := range coins {
 		whitelistedStore.SetBalance(coin)
 	}
+}
+
+// TransferAdmin changes admin of a fungible token.
+func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, denom string) error {
+	def, err := k.GetDefinition(ctx, denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
+	}
+
+	if !def.IsAdmin(sender) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can transfer administration of an account")
+	}
+
+	subunit, issuer, err := types.DeconstructDenom(denom)
+	if err != nil {
+		return err
+	}
+
+	def.Admin = addr.String()
+	k.SetDefinition(ctx, issuer, subunit, def)
+
+	return nil
 }
 
 func (k Keeper) mintIfReceivable(
@@ -757,7 +781,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_freezing) && k.isGloballyFrozen(ctx, def.Denom) && !def.IsIssuer(addr) {
+	if def.IsFeatureEnabled(types.Feature_freezing) && k.isGloballyFrozen(ctx, def.Denom) && !def.IsAdmin(addr) {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
@@ -770,7 +794,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 	}
 
 	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
-		!def.IsIssuer(addr) &&
+		!def.IsAdmin(addr) &&
 		cwasmtypes.IsTriggeredBySmartContract(ctx) {
 		return sdkerrors.Wrapf(
 			cosmoserrors.ErrUnauthorized,
@@ -779,7 +803,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		)
 	}
 
-	if def.IsFeatureEnabled(types.Feature_freezing) && !def.IsIssuer(addr) {
+	if def.IsFeatureEnabled(types.Feature_freezing) && !def.IsAdmin(addr) {
 		availableBalance := k.availableBalance(ctx, addr, def.Denom)
 		if !availableBalance.Amount.GTE(amount) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s",
@@ -822,7 +846,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.IsIssuer(addr) {
+	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.IsAdmin(addr) {
 		balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
 		whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
 
@@ -836,7 +860,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 	}
 
 	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
-		!def.IsIssuer(addr) &&
+		!def.IsAdmin(addr) &&
 		cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
@@ -986,7 +1010,7 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if def.IsIssuer(addr) {
+	if def.IsAdmin(addr) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
