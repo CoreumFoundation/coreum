@@ -57,6 +57,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxGloballyUnfreeze(),
 		CmdTxClawback(),
 		CmdTxSetWhitelistedLimit(),
+		CmdTxTransferAdmin(),
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
 	)
@@ -570,6 +571,49 @@ $ %s tx %s globally-unfreeze ABC-%s --from [sender]
 			msg := &types.MsgGloballyUnfreeze{
 				Sender: sender.String(),
 				Denom:  denom,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxTransferAdmin returns TransferAdmin cobra command.
+func CmdTxTransferAdmin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer-admin [account_address] [denom] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Change admin of a fungible token to the specific account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Change admin of a fungible token.
+
+Example:
+$ %s tx %s transfer-admin [account_address] ABC-%s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			account := args[0]
+			denom := args[1]
+			err = sdk.ValidateDenom(denom)
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid denom")
+			}
+
+			msg := &types.MsgTransferAdmin{
+				Sender:  sender.String(),
+				Account: account,
+				Denom:   denom,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

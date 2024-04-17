@@ -26,6 +26,7 @@ type MsgKeeper interface {
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	Clawback(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
+	TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, denom string) error
 	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
@@ -242,6 +243,27 @@ func (ms MsgServer) SetWhitelistedLimit(
 	}
 
 	err = ms.keeper.SetWhitelistedBalance(ctx, sender, account, req.Coin)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// TransferAdmin changes admin of a fungible token.
+func (ms MsgServer) TransferAdmin(goCtx context.Context, req *types.MsgTransferAdmin) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	err = ms.keeper.TransferAdmin(ctx, sender, account, req.Denom)
 	if err != nil {
 		return nil, err
 	}
