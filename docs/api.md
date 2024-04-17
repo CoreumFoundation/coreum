@@ -2275,9 +2275,9 @@ Feature defines possible features of fungible token.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `code_id` | [uint64](#uint64) |  |  `code_id is the reference to the stored WASM code`  |
-| `label` | [string](#string) |  |  `Label is optional metadata to be stored with a contract instance.`  |
-| `instantiation_msg` | [bytes](#bytes) |  |  `Msg json encoded message to be passed to the contract on instantiation`  |
-| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `Funds coins that are transferred to the contract on instantiation`  |
+| `label` | [string](#string) |  |  `label is optional metadata to be stored with a contract instance.`  |
+| `instantiation_msg` | [bytes](#bytes) |  |  `msg json encoded message to be passed to the contract on instantiation`  |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `funds coins that are transferred to the contract on instantiation`  |
 
 
 

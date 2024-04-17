@@ -90,11 +90,11 @@ var xxx_messageInfo_MsgIssue proto.InternalMessageInfo
 type ExtensionSettings struct {
 	// code_id is the reference to the stored WASM code
 	CodeId uint64 `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
-	// Label is optional metadata to be stored with a contract instance.
+	// label is optional metadata to be stored with a contract instance.
 	Label string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
-	// Msg json encoded message to be passed to the contract on instantiation
+	// msg json encoded message to be passed to the contract on instantiation
 	InstantiationMsg []byte `protobuf:"bytes,3,opt,name=instantiation_msg,json=instantiationMsg,proto3" json:"instantiation_msg,omitempty"`
-	// Funds coins that are transferred to the contract on instantiation
+	// funds coins that are transferred to the contract on instantiation
 	Funds github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,4,rep,name=funds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"funds"`
 }
 
