@@ -93,6 +93,7 @@ func TestKeeper_Issue(t *testing.T) {
 		Version:            types.CurrentTokenVersion,
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
+		Admin:              settings.Issuer.String(),
 	}, gotToken)
 
 	// check the metadata
@@ -192,6 +193,7 @@ func TestKeeper_Issue_ZeroPrecision(t *testing.T) {
 		Version:            types.CurrentTokenVersion,
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
+		Admin:              settings.Issuer.String(),
 	}, gotToken)
 
 	// check the metadata
