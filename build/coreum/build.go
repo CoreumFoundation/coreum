@@ -17,15 +17,12 @@ import (
 const (
 	blockchainName = "coreum"
 	binaryName     = "cored"
-	repoName       = "coreum"
 	repoPath       = "."
 	binaryPath     = "bin/" + binaryName
 	testsDir       = repoPath + "/integration-tests"
-	testsBinDir    = "bin/.cache/integration-tests"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
-	binaryOutputFlag     = "-o"
 	tagsFlag             = "-tags"
 	linkStaticallyLDFlag = "-ldflags=-extldflags=-static"
 )
@@ -51,12 +48,12 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
 		Flags: []string{
 			goCoverFlag,
 			versionFlags,
 			tagsFlag + "=" + strings.Join(tagsLocal, ","),
-			binaryOutputFlag + "=" + binaryPath,
 		},
 	})
 }
@@ -85,13 +82,13 @@ func buildCoredInDocker(
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		BinOutputPath:  binOutputPath,
 		CGOEnabled:     true,
 		Flags: append(
 			extraFlags,
 			versionFlags,
 			linkStaticallyLDFlag,
 			tagsFlag+"="+strings.Join(tagsDocker, ","),
-			binaryOutputFlag+"="+binOutputPath,
 		),
 	})
 }
@@ -115,12 +112,12 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		BinOutputPath:  binOutputPath,
 		CGOEnabled:     false,
 		Flags: []string{
 			versionFlags,
 			linkStaticallyLDFlag,
 			tagsFlag + "=" + strings.Join(tagsDocker, ","),
-			binaryOutputFlag + "=" + binOutputPath,
 		},
 	})
 }
@@ -139,6 +136,11 @@ func Lint(ctx context.Context, deps build.DepsFunc) error {
 // Test run unit tests in coreum repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
+}
+
+// DownloadDependencies downloads go dependencies.
+func DownloadDependencies(ctx context.Context, deps build.DepsFunc) error {
+	return golang.DownloadDependencies(ctx, repoPath, deps)
 }
 
 func coredVersionLDFlags(ctx context.Context, buildTags []string) (string, error) {
