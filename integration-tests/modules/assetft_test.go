@@ -347,6 +347,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		Version:            gotToken.Tokens[0].Version, // test should work with all versions
 		URI:                msg1.URI,
 		URIHash:            msg1.URIHash,
+		Admin:              issuer1.String(),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 		},
