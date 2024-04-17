@@ -184,7 +184,7 @@ func (def Definition) CheckFeatureAllowed(addr sdk.AccAddress, feature Feature) 
 func (def Definition) IsFeatureAllowed(addr sdk.Address, feature Feature) bool {
 	featureEnabled := def.IsFeatureEnabled(feature)
 	// issuer can use any enabled feature and burning even if it is disabled
-	if def.IsIssuer(addr) {
+	if def.IsAdmin(addr) {
 		return featureEnabled || feature == Feature_burning
 	}
 
@@ -197,9 +197,17 @@ func (def Definition) IsFeatureEnabled(feature Feature) bool {
 	return lo.Contains(def.Features, feature)
 }
 
-// IsIssuer returns true if the addr is the issuer.
-func (def Definition) IsIssuer(addr sdk.Address) bool {
-	return def.Issuer == addr.String()
+// IsAdmin returns true if the addr is the admin.
+func (def Definition) IsAdmin(addr sdk.Address) bool {
+	return def.GetAdmin() == addr.String()
+}
+
+// GetAdmin returns admin of the token or the issuer if token doesn't have an admin.
+func (def Definition) GetAdmin() string {
+	if len(def.Admin) == 0 {
+		return def.Issuer
+	}
+	return def.Admin
 }
 
 // ValidateFeatures verifies that provided features belong to the defined set.
