@@ -71,8 +71,8 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 
 ### Deterministic messages
 
-| Message Type | Gas                            |
-|--------------|--------------------------------|
+| Message Type | Gas |
+|--------------|-----|
 | `/coreum.asset.nft.v1.MsgIssueClass`                                   | [special case](#special-cases) |
 | `/coreum.asset.nft.v1.MsgMint`                                         | [special case](#special-cases) |
 | `/coreum.asset.nft.v1.MsgUpdateData`                                   | [special case](#special-cases) |
