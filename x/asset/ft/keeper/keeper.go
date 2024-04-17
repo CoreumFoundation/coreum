@@ -172,6 +172,8 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 
 // IssueVersioned issues new fungible token and sets its version.
 // To be used only in unit tests !!!
+//
+//nolint:funlen // breaking down this function will make it less readable.
 func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, version uint32) (string, error) {
 	if err := types.ValidateSubunit(settings.Subunit); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
@@ -230,16 +232,19 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 	}
 
 	if definition.IsFeatureEnabled(types.Feature_extensions) {
+		if settings.ExtensionSettings == nil {
+			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
+		}
 		assetFTModuleAddress := authtypes.NewModuleAddress(types.ModuleName)
 
 		contractAddress, _, err := k.wasmPermissionedKeeper.Instantiate2(
 			ctx,
-			settings.WasmCodeID,
+			settings.ExtensionSettings.CodeId,
 			settings.Issuer,
 			assetFTModuleAddress,
-			[]byte("{}"),
-			"",
-			sdk.NewCoins(),
+			settings.ExtensionSettings.InstantiationMsg,
+			settings.ExtensionSettings.Label,
+			settings.ExtensionSettings.Funds,
 			ctx.BlockHeader().AppHash,
 			true,
 		)

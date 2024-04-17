@@ -261,18 +261,19 @@ type App struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
-	AccountKeeper           authkeeper.AccountKeeper
-	AuthzKeeper             authzkeeper.Keeper
-	CapabilityKeeper        *capabilitykeeper.Keeper
-	StakingKeeper           *stakingkeeper.Keeper
-	SlashingKeeper          slashingkeeper.Keeper
-	MintKeeper              mintkeeper.Keeper
-	DistrKeeper             distrkeeper.Keeper
-	GovKeeper               govkeeper.Keeper
-	CrisisKeeper            *crisiskeeper.Keeper
-	UpgradeKeeper           *upgradekeeper.Keeper
-	ParamsKeeper            paramskeeper.Keeper
-	IBCKeeper               *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	AccountKeeper    authkeeper.AccountKeeper
+	AuthzKeeper      authzkeeper.Keeper
+	CapabilityKeeper *capabilitykeeper.Keeper
+	StakingKeeper    *stakingkeeper.Keeper
+	SlashingKeeper   slashingkeeper.Keeper
+	MintKeeper       mintkeeper.Keeper
+	DistrKeeper      distrkeeper.Keeper
+	GovKeeper        govkeeper.Keeper
+	CrisisKeeper     *crisiskeeper.Keeper
+	UpgradeKeeper    *upgradekeeper.Keeper
+	ParamsKeeper     paramskeeper.Keeper
+	// IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCKeeper               *ibckeeper.Keeper
 	TransferKeeper          wibctransferkeeper.TransferKeeperWrapper
 	EvidenceKeeper          evidencekeeper.Keeper
 	FeeGrantKeeper          feegrantkeeper.Keeper

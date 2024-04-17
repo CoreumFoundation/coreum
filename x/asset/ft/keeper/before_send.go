@@ -71,7 +71,6 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 		return sdkerrors.Wrapf(err, "invalid address %s", input.Address)
 	}
 
-	assetFTmoduleAddress := authtypes.NewModuleAddress(types.ModuleName)
 	for _, coin := range input.Coins {
 		def, err := k.GetDefinition(ctx, coin.Denom)
 		if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
@@ -89,47 +88,8 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
 
 		if def.IsFeatureEnabled(types.Feature_extensions) {
-			// We need this if statement so we will not have an infinite loop. Otherwise
-			// when we call Execute method if wasm keeper, in which we have funds transfer,
-			// then we will end up in an infinite recursoin.
-			if sender.Equals(assetFTmoduleAddress) {
-				continue
-			}
-
-			extensionContract, err := sdk.AccAddressFromBech32(def.ExtensionCwAddress)
-			if err != nil {
+			if err := k.executeAssetExtension(ctx, sender, def, coin, commissionAmount, burnAmount, outOps); err != nil {
 				return err
-			}
-			attachedFunds := sdk.NewCoins(coin).
-				Add(sdk.NewCoin(def.Denom, commissionAmount)).
-				Add(sdk.NewCoin(def.Denom, burnAmount))
-
-			// we first send accounts to module account and then attach funds with module account as
-			// the caller of the smart contract.
-			err = k.bankKeeper.SendCoins(ctx, sender, assetFTmoduleAddress, attachedFunds)
-			if err != nil {
-				return err
-			}
-			contractMsg := map[string]interface{}{
-				"transfer": map[string]interface{}{
-					"sender":     sender.String(),
-					"amount":     coin.Amount,
-					"recipients": outOps,
-				},
-			}
-			contractMsgBytes, err := json.Marshal(contractMsg)
-			if err != nil {
-				return err
-			}
-			_, err = k.wasmPermissionedKeeper.Execute(
-				ctx,
-				extensionContract,
-				assetFTmoduleAddress,
-				contractMsgBytes,
-				attachedFunds,
-			)
-			if err != nil {
-				return types.ErrExtensionCallFailed.Wrapf("was error: %s", err)
 			}
 			// We will not enforce any policies if the token has extensions. It is up to the contract
 			// to enforce them as needed. As a result we will skip the next operations in this for loop.
@@ -163,6 +123,61 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 		}
 	}
 
+	return nil
+}
+
+func (k Keeper) executeAssetExtension(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	def types.Definition,
+	sendAmount sdk.Coin,
+	commissionAmount sdkmath.Int,
+	burnAmount sdkmath.Int,
+	outOps accountOperationMap,
+) error {
+	assetFTmoduleAddress := authtypes.NewModuleAddress(types.ModuleName)
+	// We need this if statement so we will not have an infinite loop. Otherwise
+	// when we call Execute method if wasm keeper, in which we have funds transfer,
+	// then we will end up in an infinite recursoin.
+	if sender.Equals(assetFTmoduleAddress) {
+		return nil
+	}
+
+	extensionContract, err := sdk.AccAddressFromBech32(def.ExtensionCwAddress)
+	if err != nil {
+		return err
+	}
+	attachedFunds := sdk.NewCoins(sendAmount).
+		Add(sdk.NewCoin(def.Denom, commissionAmount)).
+		Add(sdk.NewCoin(def.Denom, burnAmount))
+
+	// we first send funds to module account and then attach funds with module account as
+	// the caller of the smart contract.
+	err = k.bankKeeper.SendCoins(ctx, sender, assetFTmoduleAddress, attachedFunds)
+	if err != nil {
+		return err
+	}
+	contractMsg := map[string]interface{}{
+		"transfer": map[string]interface{}{
+			"sender":     sender.String(),
+			"amount":     sendAmount.Amount,
+			"recipients": outOps,
+		},
+	}
+	contractMsgBytes, err := json.Marshal(contractMsg)
+	if err != nil {
+		return err
+	}
+	_, err = k.wasmPermissionedKeeper.Execute(
+		ctx,
+		extensionContract,
+		assetFTmoduleAddress,
+		contractMsgBytes,
+		attachedFunds,
+	)
+	if err != nil {
+		return types.ErrExtensionCallFailed.Wrapf("was error: %s", err)
+	}
 	return nil
 }
 

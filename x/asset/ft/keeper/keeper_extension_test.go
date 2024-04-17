@@ -32,7 +32,9 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	codeID, _, err := testApp.WasmGovPermissionKeeper.Create(ctx, addr, moduleswasm.AssetExtensionWasm, &wasmtypes.AllowEverybody)
+	codeID, _, err := testApp.WasmGovPermissionKeeper.Create(
+		ctx, addr, moduleswasm.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
 	requireT.NoError(err)
 
 	settings := types.IssueSettings{
@@ -43,7 +45,10 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		Features:      []types.Feature{types.Feature_extensions},
-		WasmCodeID:    codeID,
+		ExtensionSettings: &types.ExtensionSettings{
+			CodeId:           codeID,
+			InstantiationMsg: []byte("{}"),
+		},
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
@@ -96,13 +101,13 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(denom, settings.InitialAmount).String(), issuedAssetBalance.String())
 
 	// send 1 coin will succeed
-	reciever := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, settings.Issuer, reciever, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))))
+	receiver := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))))
 	requireT.NoError(err)
 
 	// send 7 coin will fail.
 	// the POC contract is written as such that sending 7 will fail.
 	// TODO replace with more meningful checks.
-	err = bankKeeper.SendCoins(ctx, settings.Issuer, reciever, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(7))))
+	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(7))))
 	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
 }

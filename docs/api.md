@@ -55,6 +55,7 @@
   
 - [coreum/asset/ft/v1/tx.proto](#coreum/asset/ft/v1/tx.proto)
     - [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse)
+    - [ExtensionSettings](#coreum.asset.ft.v1.ExtensionSettings)
     - [MsgBurn](#coreum.asset.ft.v1.MsgBurn)
     - [MsgFreeze](#coreum.asset.ft.v1.MsgFreeze)
     - [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze)
@@ -2265,6 +2266,24 @@ Feature defines possible features of fungible token.
 
 
 
+<a name="coreum.asset.ft.v1.ExtensionSettings"></a>
+
+### ExtensionSettings
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  |  `code_id is the reference to the stored WASM code`  |
+| `label` | [string](#string) |  |  `Label is optional metadata to be stored with a contract instance.`  |
+| `instantiation_msg` | [bytes](#bytes) |  |  `Msg json encoded message to be passed to the contract on instantiation`  |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `Funds coins that are transferred to the contract on instantiation`  |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.MsgBurn"></a>
 
 ### MsgBurn
@@ -2353,7 +2372,7 @@ MsgIssue defines message to issue new fungible token.
 | `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
-| `wasm_code_id` | [uint64](#uint64) |  |  `wasm_code_id must be provided in case you want to use wasm extensions. It is the code id of wasm byte code that is already uploaded by the issuer.`  |
+| `extension_settings` | [ExtensionSettings](#coreum.asset.ft.v1.ExtensionSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
 
 
 
