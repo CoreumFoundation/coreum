@@ -15,10 +15,12 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
 
+// extension method calls
 const (
 	ExtenstionTransferMethod = "extension_transfer"
 )
 
+// ExtensionTransferMsg contains the fields passed to extension method call.
 type ExtensionTransferMsg struct {
 	Sender     string                 `json:"sender,omitempty"`
 	Amount     sdkmath.Int            `json:"amount,omitempty"`
