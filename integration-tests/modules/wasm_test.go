@@ -1124,6 +1124,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
 		URI:                issuanceReq.URI,
 		URIHash:            issuanceReq.URIHash,
+		Admin:              contractAddr,
 	}
 	requireT.Equal(
 		expectedToken, tokenRes.Token,
