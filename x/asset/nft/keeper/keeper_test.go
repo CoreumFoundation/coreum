@@ -364,6 +364,20 @@ func TestKeeper_UpdateNFTData(t *testing.T) {
 			errorContains: "sender is not authorized to update the item",
 		},
 		{
+			name: "negative_admin_update_prohibited_item",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 1,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return admin
+			},
+			wantErr:       cosmoserrors.ErrUnauthorized,
+			errorContains: "sender is not authorized to update the item",
+		},
+		{
 			name: "negative_random_acc_update_prohibited_item",
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
