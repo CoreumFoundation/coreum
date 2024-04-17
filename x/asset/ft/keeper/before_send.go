@@ -15,6 +15,10 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
 
+const (
+	ExtenstionTransferMethod = "extension_transfer"
+)
+
 type ExtensionTransferMsg struct {
 	Sender     string                 `json:"sender,omitempty"`
 	Amount     sdkmath.Int            `json:"amount,omitempty"`
@@ -164,7 +168,7 @@ func (k Keeper) executeAssetExtension(
 		return err
 	}
 	contractMsg := map[string]interface{}{
-		"extension_transfer": ExtensionTransferMsg{
+		ExtenstionTransferMethod: ExtensionTransferMsg{
 			Sender:     sender.String(),
 			Amount:     sendAmount.Amount,
 			Recipients: outOps,
