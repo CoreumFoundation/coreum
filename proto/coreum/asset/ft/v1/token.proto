@@ -38,6 +38,7 @@ message Definition {
   uint32 version = 6;
   string uri = 7 [(gogoproto.customname) = "URI"];
   string uri_hash = 8 [(gogoproto.customname) = "URIHash"];
+  string admin = 9;
 }
 
 // Token is a full representation of the fungible token.
@@ -67,6 +68,7 @@ message Token {
   uint32 version = 11;
   string uri = 12 [(gogoproto.customname) = "URI"];
   string uri_hash = 13 [(gogoproto.customname) = "URIHash"];
+  string admin = 14;
 }
 
 // DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.

@@ -9276,6 +9276,9 @@
         },
         "uri_hash": {
           "type": "string"
+        },
+        "admin": {
+          "type": "string"
         }
       },
       "description": "Token is a full representation of the fungible token."

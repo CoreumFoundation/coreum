@@ -500,6 +500,67 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 	}
 }
 
+func TestMsgTransferAdmin_ValidateBasic(t *testing.T) {
+	testCases := []struct {
+		name                string
+		message             types.MsgTransferAdmin
+		expectedError       error
+		expectedErrorString string
+	}{
+		{
+			name: "valid msg",
+			message: types.MsgTransferAdmin{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Denom:   "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+		},
+		{
+			name: "invalid sender address",
+			message: types.MsgTransferAdmin{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Denom:   "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid account",
+			message: types.MsgTransferAdmin{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
+				Denom:   "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid denom",
+			message: types.MsgTransferAdmin{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Denom:   "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+			},
+			expectedErrorString: "invalid denom",
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			err := tc.message.ValidateBasic()
+			switch {
+			case tc.expectedError == nil && tc.expectedErrorString == "":
+				requireT.NoError(err)
+			case tc.expectedErrorString != "":
+				requireT.Contains(err.Error(), tc.expectedErrorString)
+			default:
+				requireT.ErrorIs(err, tc.expectedError)
+			}
+		})
+	}
+}
+
 //nolint:lll // we don't care about test strings
 func TestAmino(t *testing.T) {
 	const address = "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"

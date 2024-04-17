@@ -41,6 +41,9 @@ service Msg {
   // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
   rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
 
+  // TransferAdmin changes admin of a fungible token.
+  rpc TransferAdmin(MsgTransferAdmin) returns (EmptyResponse);
+
   // TokenUpgradeV1 upgrades token to version V1.
   rpc UpgradeTokenV1(MsgUpgradeTokenV1) returns (EmptyResponse);
 
@@ -120,6 +123,12 @@ message MsgSetWhitelistedLimit {
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgTransferAdmin {
+  string sender = 1;
+  string account = 2;
+  string denom = 3;
 }
 
 // MsgUpgradeTokenV1 is the message upgrading token to V1.
