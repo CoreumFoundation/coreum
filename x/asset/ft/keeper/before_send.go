@@ -96,8 +96,8 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 			return sdkerrors.Wrapf(err, "invalid address %s", def.Issuer)
 		}
 
-		burnAmount := k.ApplyRate(ctx, def.BurnRate, issuer, sender, outOps)
-		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
+		burnAmount := k.CalculateRate(ctx, def.BurnRate, issuer, sender, outOps)
+		commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
 
 		if def.IsFeatureEnabled(types.Feature_extensions) {
 			if err := k.executeAssetExtension(ctx, sender, def, coin, commissionAmount, burnAmount, outOps); err != nil {
@@ -193,8 +193,8 @@ func (k Keeper) executeAssetExtension(
 	return nil
 }
 
-// ApplyRate calculates how the burn or commission amount should be calculated.
-func (k Keeper) ApplyRate(
+// CalculateRate calculates how the burn or commission amount should be calculated.
+func (k Keeper) CalculateRate(
 	ctx sdk.Context,
 	rate sdk.Dec,
 	issuer,

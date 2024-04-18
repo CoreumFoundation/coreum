@@ -242,7 +242,7 @@ func TestApplyRate(t *testing.T) {
 				}
 			}
 
-			appliedRate := assetFTKeeper.ApplyRate(
+			appliedRate := assetFTKeeper.CalculateRate(
 				ctx,
 				sdk.MustNewDecFromStr(tc.rate),
 				sdk.MustAccAddressFromBech32(issuer),
