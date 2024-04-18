@@ -199,15 +199,7 @@ func (def Definition) IsFeatureEnabled(feature Feature) bool {
 
 // IsAdmin returns true if the addr is the admin.
 func (def Definition) IsAdmin(addr sdk.Address) bool {
-	return def.GetAdmin() == addr.String()
-}
-
-// GetAdmin returns admin of the token or the issuer if token doesn't have an admin.
-func (def Definition) GetAdmin() string {
-	if len(def.Admin) == 0 {
-		return def.Issuer
-	}
-	return def.Admin
+	return def.Admin == addr.String()
 }
 
 // ValidateFeatures verifies that provided features belong to the defined set.
