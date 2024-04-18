@@ -26,7 +26,7 @@ require (
 	github.com/CosmWasm/wasmd v0.44.0
 	github.com/cometbft/cometbft v0.37.5
 	github.com/cometbft/cometbft-db v0.8.0
-	github.com/cosmos/cosmos-sdk v0.47.9
+	github.com/cosmos/cosmos-sdk v0.47.10
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-go/v7 v7.3.1
 	github.com/golang/protobuf v1.5.4
