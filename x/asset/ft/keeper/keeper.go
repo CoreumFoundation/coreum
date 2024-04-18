@@ -620,6 +620,8 @@ func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, deno
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can transfer administration of an account")
 	}
 
+	previousAdmin := def.Admin
+
 	subunit, issuer, err := types.DeconstructDenom(denom)
 	if err != nil {
 		return err
@@ -627,6 +629,14 @@ func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, deno
 
 	def.Admin = addr.String()
 	k.SetDefinition(ctx, issuer, subunit, def)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminTransfered{
+		Denom:         denom,
+		PreviousAdmin: previousAdmin,
+		CurrentAdmin:  def.Admin,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventFrozenAmountChanged event: %s", err)
+	}
 
 	return nil
 }
