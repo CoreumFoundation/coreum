@@ -1642,7 +1642,7 @@ func TestKeeper_TransferAdmin(t *testing.T) {
 	requireT.NoError(err)
 	def, err := ftKeeper.GetDefinition(ctx, denom)
 	requireT.NoError(err)
-	requireT.Equal(newAdmin.String(), def.GetAdmin())
+	requireT.Equal(newAdmin.String(), def.Admin)
 
 	// try to transfer from issuer which is not admin anymore
 	err = ftKeeper.TransferAdmin(ctx, issuer, randomAddr, denom)
