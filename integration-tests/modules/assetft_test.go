@@ -2156,7 +2156,7 @@ func TestAssetFTClawback(t *testing.T) {
 	}
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(from),
+		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
 		clawbackMsg,
 	)
