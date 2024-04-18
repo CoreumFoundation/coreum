@@ -2,7 +2,10 @@ module github.com/CoreumFoundation/coreum/build
 
 go 1.21
 
-replace github.com/CoreumFoundation/coreum/v4 => ../
+replace (
+	github.com/CoreumFoundation/coreum/v4 => ../
+	golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
+)
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68
