@@ -2116,7 +2116,7 @@ func TestAssetFTClawback(t *testing.T) {
 		clawbackMsg,
 	)
 	requireT.Error(err)
-	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// clawback 400 tokens
 	clawbackMsg = &assetfttypes.MsgClawback{
@@ -2161,7 +2161,7 @@ func TestAssetFTClawback(t *testing.T) {
 		clawbackMsg,
 	)
 	requireT.Error(err)
-	assertT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 }
 
 // TestAssetFTFreezeUnfreezable checks freeze functionality on unfreezable fungible tokens.
