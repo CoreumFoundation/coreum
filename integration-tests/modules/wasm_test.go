@@ -1358,7 +1358,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	var wasmTokenRes assetfttypes.QueryTokenResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokenRes))
 	wasmTokenRes.Token.Version = expectedToken.Version // test should work with any version
-	// TODO(masih): Remove this line, once https://github.com/CoreumFoundation/coreum-wasm-sdk/pull/12 is merged
+	// TODO(masih): Remove this line, once WASM contract is updated
 	wasmTokenRes.Token.Admin = wasmTokenRes.Token.Issuer
 	requireT.Equal(
 		expectedToken, wasmTokenRes.Token,
@@ -1377,6 +1377,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	var wasmTokensRes assetfttypes.QueryTokensResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokensRes))
 	wasmTokensRes.Tokens[0].Version = expectedToken.Version
+	// TODO(masih): Remove this line, once WASM contract is updated
+	wasmTokensRes.Tokens[0].Admin = wasmTokensRes.Tokens[0].Issuer
 	requireT.Equal(
 		expectedToken, wasmTokensRes.Tokens[0],
 	)
