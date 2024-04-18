@@ -371,9 +371,19 @@ func (k Keeper) UpdateNFTData(
 	classID, id string,
 	itemsToUpdate []types.DataDynamicIndexedItem,
 ) error {
-	if err := k.isNFTUpdatable(ctx, classID, id); err != nil {
+	// the IsFrozen includes both class and NFT freezing check
+	isFrozen, err := k.IsFrozen(ctx, classID, id)
+	if err != nil {
+		if errors.Is(err, types.ErrFeatureDisabled) {
+			return nil
+		}
 		return err
 	}
+	if isFrozen {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, id)
+	}
+
+	return nil
 
 	storedNFT, found := k.nftKeeper.GetNFT(ctx, classID, id)
 	if !found {
@@ -1152,12 +1162,6 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		)
 	}
 
-	return k.isNFTUpdatable(ctx, classID, nftID)
-}
-
-// TODO: probably we should path naming `is` -> `validate` here and for all similar.
-// The `is` funcs should rerun bool not error.
-func (k Keeper) isNFTUpdatable(ctx sdk.Context, classID, nftID string) error {
 	// the IsFrozen includes both class and NFT freezing check
 	isFrozen, err := k.IsFrozen(ctx, classID, nftID)
 	if err != nil {
@@ -1173,6 +1177,7 @@ func (k Keeper) isNFTUpdatable(ctx sdk.Context, classID, nftID string) error {
 	return nil
 }
 
+// TODO: probably we should path naming `is` -> `validate` here and for all similar.
 func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver sdk.AccAddress) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	// we return nil here, since we want the original tests of the nft module to pass, but they
