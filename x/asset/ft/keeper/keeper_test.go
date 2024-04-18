@@ -1273,6 +1273,7 @@ func TestKeeper_Clawback(t *testing.T) {
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
+	accountKeeper := testApp.AccountKeeper
 
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -1283,7 +1284,10 @@ func TestKeeper_Clawback(t *testing.T) {
 		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdkmath.NewInt(666),
-		Features:      []types.Feature{types.Feature_clawback},
+		Features: []types.Feature{
+			types.Feature_clawback,
+			types.Feature_freezing,
+		},
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
@@ -1327,7 +1331,12 @@ func TestKeeper_Clawback(t *testing.T) {
 
 	// try to clawback from issuer address
 	randomAddr = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = ftKeeper.Clawback(ctx, randomAddr, from, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	err = ftKeeper.Clawback(ctx, randomAddr, issuer, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to clawback from module address
+	moduleAddr := accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress()
+	err = ftKeeper.Clawback(ctx, issuer, moduleAddr, sdk.NewCoin(denom, sdkmath.NewInt(10)))
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// try to clawback 0 balance
@@ -1347,6 +1356,14 @@ func TestKeeper_Clawback(t *testing.T) {
 	accountBalanceAfter := bankKeeper.GetBalance(ctx, from, denom)
 	requireT.Equal(issuerBalanceBefore.Add(sdk.NewCoin(denom, sdkmath.NewInt(40))), issuerBalanceAfter)
 	requireT.Equal(accountBalanceBefore.Sub(sdk.NewCoin(denom, sdkmath.NewInt(40))), accountBalanceAfter)
+
+	// clawback frozen token, query balance
+	err = ftKeeper.Freeze(ctx, issuer, from, sdk.NewCoin(denom, sdkmath.NewInt(60)))
+	requireT.NoError(err)
+	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(denom, sdkmath.NewInt(60)))
+	requireT.NoError(err)
+	accountBalance := bankKeeper.GetBalance(ctx, from, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), accountBalance)
 }
 
 func TestKeeper_Whitelist(t *testing.T) {

@@ -443,17 +443,9 @@ func (m MsgClawback) ValidateBasic() error {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	_, _, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
-	}
-
-	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be clawed back")
-	}
-
-	if issuer.String() != m.Sender {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only issuer can claw back balance")
 	}
 
 	return m.Coin.Validate()

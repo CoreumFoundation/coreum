@@ -6,6 +6,10 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v4/x/wasm"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -13,23 +17,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v4/x/wasm"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
 
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc         codec.BinaryCodec
-	storeKey    storetypes.StoreKey
-	bankKeeper  types.BankKeeper
-	delayKeeper types.DelayKeeper
-	wasmKeeper  cwasmtypes.WasmKeeper
-	authority   string
+	cdc           codec.BinaryCodec
+	storeKey      storetypes.StoreKey
+	bankKeeper    types.BankKeeper
+	delayKeeper   types.DelayKeeper
+	wasmKeeper    cwasmtypes.WasmKeeper
+	accountKeeper types.AccountKeeper
+	authority     string
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -39,15 +40,17 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
+	accountKeeper types.AccountKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:         cdc,
-		storeKey:    storeKey,
-		bankKeeper:  bankKeeper,
-		delayKeeper: delayKeeper,
-		wasmKeeper:  wasmKeeper,
-		authority:   authority,
+		cdc:           cdc,
+		storeKey:      storeKey,
+		bankKeeper:    bankKeeper,
+		delayKeeper:   delayKeeper,
+		wasmKeeper:    wasmKeeper,
+		accountKeeper: accountKeeper,
+		authority:     authority,
 	}
 }
 
@@ -538,7 +541,7 @@ func (k Keeper) Clawback(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "clawback amount should be positive")
 	}
 
-	if err := k.clawbackChecks(ctx, sender, addr, coin); err != nil {
+	if err := k.validateClawbackAllowed(ctx, sender, addr, coin); err != nil {
 		return err
 	}
 
@@ -949,7 +952,7 @@ func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
 	return bytes.Equal(ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom)), types.StoreTrue)
 }
 
-func (k Keeper) clawbackChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
@@ -957,6 +960,10 @@ func (k Keeper) clawbackChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 
 	if def.IsIssuer(addr) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be clawed back")
+	}
+
+	if _, isModuleAccount := k.accountKeeper.GetAccount(ctx, addr).(*authtypes.ModuleAccount); isModuleAccount {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "claw back from module accounts is prohibited")
 	}
 
 	return def.CheckFeatureAllowed(sender, types.Feature_clawback)

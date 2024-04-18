@@ -456,30 +456,6 @@ func TestMsgClawback_ValidateBasic(t *testing.T) {
 			},
 			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
-		{
-			name: "issuer clawback",
-			message: types.MsgClawback{
-				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdkmath.NewInt(100),
-				},
-			},
-			expectedError: cosmoserrors.ErrUnauthorized,
-		},
-		{
-			name: "clawback by non-issuer",
-			message: types.MsgClawback{
-				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
-				Coin: sdk.Coin{
-					Denom:  "abc-devcore1yetewq7jcujq7cqdes4qxxaqakzthwu72xfsnh",
-					Amount: sdkmath.NewInt(100),
-				},
-			},
-			expectedError: cosmoserrors.ErrUnauthorized,
-		},
 	}
 
 	for _, testCase := range testCases {

@@ -2051,23 +2051,12 @@ func TestAssetFTClawback(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgClawback{},
+			&assetfttypes.MsgClawback{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.FundAccountWithOptions(ctx, t, from, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&banktypes.MsgMultiSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgMultiSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgClawback{},
-		},
-	})
 	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			&assetfttypes.MsgFreeze{},
 			&assetfttypes.MsgClawback{},
 		},
 	})
@@ -2127,7 +2116,7 @@ func TestAssetFTClawback(t *testing.T) {
 		clawbackMsg,
 	)
 	requireT.Error(err)
-	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// clawback 400 tokens
 	clawbackMsg = &assetfttypes.MsgClawback{
@@ -2172,7 +2161,7 @@ func TestAssetFTClawback(t *testing.T) {
 		clawbackMsg,
 	)
 	requireT.Error(err)
-	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	assertT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 }
 
 // TestAssetFTFreezeUnfreezable checks freeze functionality on unfreezable fungible tokens.
