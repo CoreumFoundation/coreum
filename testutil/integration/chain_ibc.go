@@ -24,7 +24,7 @@ import (
 )
 
 // AwaitForBalanceTimeout is duration to await for account to have a specific balance.
-var AwaitForBalanceTimeout = 2 * time.Minute
+var AwaitForBalanceTimeout = 30 * time.Second
 
 // ExecuteIBCTransfer executes IBC transfer transaction.
 func (c ChainContext) ExecuteIBCTransfer(
