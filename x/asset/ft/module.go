@@ -144,6 +144,9 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	if err := cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3); err != nil {
 		panic(err)
 	}
+	if err := cfg.RegisterMigration(types.ModuleName, 3, m.Migrate3to4); err != nil {
+		panic(err)
+	}
 }
 
 // RegisterInvariants registers the asset ft module's invariants.
@@ -170,7 +173,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 3 }
+func (AppModule) ConsensusVersion() uint64 { return 4 }
 
 // AppModuleSimulation functions
 
