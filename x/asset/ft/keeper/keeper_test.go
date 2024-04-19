@@ -1500,126 +1500,6 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 }
 
-func TestKeeper_TransferAdmin(t *testing.T) {
-	requireT := require.New(t)
-
-	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-
-	ftKeeper := testApp.AssetFTKeeper
-
-	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-
-	settings := types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "DEF",
-		Subunit:       "def",
-		Precision:     1,
-		Description:   "DEF Desc",
-		InitialAmount: sdkmath.NewInt(666),
-		Features:      []types.Feature{},
-	}
-
-	denom, err := ftKeeper.Issue(ctx, settings)
-	requireT.NoError(err)
-
-	newAdmin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-
-	// try to transfer admin of non-existent denom
-	nonExistentDenom := types.BuildDenom("nonexist", issuer)
-	err = ftKeeper.TransferAdmin(ctx, issuer, newAdmin, nonExistentDenom)
-	requireT.ErrorIs(err, types.ErrTokenNotFound)
-
-	// try to transfer admin from non admin address
-	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = ftKeeper.TransferAdmin(ctx, randomAddr, newAdmin, denom)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
-	// transfer admin, query admin of definition
-	err = ftKeeper.TransferAdmin(ctx, issuer, newAdmin, denom)
-	requireT.NoError(err)
-	def, err := ftKeeper.GetDefinition(ctx, denom)
-	requireT.NoError(err)
-	requireT.Equal(newAdmin.String(), def.Admin)
-
-	// try to transfer from issuer which is not admin anymore
-	err = ftKeeper.TransferAdmin(ctx, issuer, randomAddr, denom)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
-	// try to transfer from admin back to the original issuer
-	err = ftKeeper.TransferAdmin(ctx, newAdmin, issuer, denom)
-	requireT.NoError(err)
-}
-
-func TestKeeper_TransferAdmin_FreezeUnfreeze(t *testing.T) {
-	requireT := require.New(t)
-	assertT := assert.New(t)
-
-	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-
-	ftKeeper := testApp.AssetFTKeeper
-	bankKeeper := testApp.BankKeeper
-
-	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-
-	settings := types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "DEF",
-		Subunit:       "def",
-		Precision:     1,
-		Description:   "DEF Desc",
-		InitialAmount: sdkmath.NewInt(666),
-		Features:      []types.Feature{types.Feature_freezing},
-	}
-
-	denom, err := ftKeeper.Issue(ctx, settings)
-	requireT.NoError(err)
-
-	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))))
-	requireT.NoError(err)
-
-	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-
-	err = ftKeeper.TransferAdmin(ctx, issuer, admin, denom)
-	requireT.NoError(err)
-
-	// try to freeze from issuer address which is non admin anymore
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
-	// freeze, query frozen
-	err = ftKeeper.Freeze(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
-	requireT.NoError(err)
-	frozenBalance := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(40)).String(), frozenBalance.String())
-
-	// test query all frozen
-	allBalances, pageRes, err := ftKeeper.GetAccountsFrozenBalances(ctx, &query.PageRequest{})
-	requireT.NoError(err)
-	assertT.Len(allBalances, 1)
-	assertT.EqualValues(1, pageRes.GetTotal())
-	assertT.EqualValues(recipient.String(), allBalances[0].Address)
-	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(40))).String(), allBalances[0].Coins.String())
-
-	// try to unfreeze from issuer address which is non admin anymore
-	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
-	assertT.True(sdkerrors.IsOf(err, cosmoserrors.ErrUnauthorized))
-
-	// set absolute frozen amount
-	err = ftKeeper.SetFrozen(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
-	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), frozenBalance)
-
-	// unfreeze, query frozen
-	err = ftKeeper.Unfreeze(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
-	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), frozenBalance)
-}
-
 func TestKeeper_IBC(t *testing.T) {
 	requireT := require.New(t)
 
@@ -1818,4 +1698,794 @@ func newBankAsserter(
 		bk:  bk,
 		ctx: ctx,
 	}
+}
+
+func TestKeeper_TransferAdmin(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	newAdmin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// try to transfer admin of non-existent denom
+	nonExistentDenom := types.BuildDenom("nonexist", issuer)
+	err = ftKeeper.TransferAdmin(ctx, issuer, newAdmin, nonExistentDenom)
+	requireT.ErrorIs(err, types.ErrTokenNotFound)
+
+	// try to transfer admin from non admin address
+	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.TransferAdmin(ctx, randomAddr, newAdmin, denom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// transfer admin, query admin of definition
+	err = ftKeeper.TransferAdmin(ctx, issuer, newAdmin, denom)
+	requireT.NoError(err)
+	def, err := ftKeeper.GetDefinition(ctx, denom)
+	requireT.NoError(err)
+	requireT.Equal(newAdmin.String(), def.Admin)
+
+	// try to transfer from issuer which is not admin anymore
+	err = ftKeeper.TransferAdmin(ctx, issuer, randomAddr, denom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to transfer from admin back to the original issuer
+	err = ftKeeper.TransferAdmin(ctx, newAdmin, issuer, denom)
+	requireT.NoError(err)
+}
+
+func TestKeeper_TransferAdmin_Mint(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	originalIssuerAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	adminAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	// Issue an unmintable fungible token
+	settings := types.IssueSettings{
+		Issuer:        originalIssuerAddr,
+		Symbol:        "NotMintable",
+		Subunit:       "notmintable",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(777),
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_burning,
+		},
+	}
+
+	unmintableDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unmintableDenom)
+
+	// transfer the unmintableDenom to new admin
+	err = ftKeeper.TransferAdmin(ctx, originalIssuerAddr, adminAddr, unmintableDenom)
+	requireT.NoError(err)
+
+	// try to mint unmintable token
+	err = ftKeeper.Mint(ctx, adminAddr, adminAddr, sdk.NewCoin(unmintableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	// Issue a mintable fungible token
+	settings = types.IssueSettings{
+		Issuer:        originalIssuerAddr,
+		Symbol:        "mintable",
+		Subunit:       "mintable",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(777),
+		Features: []types.Feature{
+			types.Feature_minting,
+		},
+	}
+
+	mintableDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	// transfer the mintableDenom to new admin
+	err = ftKeeper.TransferAdmin(ctx, originalIssuerAddr, adminAddr, mintableDenom)
+	requireT.NoError(err)
+
+	// try to mint as non-issuer
+	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = ftKeeper.Mint(ctx, randomAddr, randomAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to mint as original issuer
+	err = ftKeeper.Mint(ctx, originalIssuerAddr, originalIssuerAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// mint tokens and check balance and total supply
+	err = ftKeeper.Mint(ctx, adminAddr, adminAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+
+	balance := bankKeeper.GetBalance(ctx, adminAddr, mintableDenom)
+	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)).String(), balance.String())
+
+	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	requireT.NoError(err)
+	requireT.EqualValues(sdkmath.NewInt(877), totalSupply.Supply.AmountOf(mintableDenom))
+
+	// mint to another account as original issuer
+	err = ftKeeper.Mint(ctx, originalIssuerAddr, randomAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// mint to another account
+	err = ftKeeper.Mint(ctx, adminAddr, randomAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+
+	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
+	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)), balance)
+
+	totalSupply, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	requireT.NoError(err)
+	requireT.EqualValues(sdkmath.NewInt(977), totalSupply.Supply.AmountOf(mintableDenom))
+}
+
+func TestKeeper_TransferAdmin_Burn(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	originalIssuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	admin := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	// Issue an unburnable fungible token
+	settings := types.IssueSettings{
+		Issuer:        originalIssuer,
+		Symbol:        "NotBurnable",
+		Subunit:       "notburnable",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(877),
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_minting,
+		},
+	}
+
+	unburnableDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unburnableDenom)
+
+	// transfer the unburnableDenom to new admin
+	err = ftKeeper.TransferAdmin(ctx, originalIssuer, admin, unburnableDenom)
+	requireT.NoError(err)
+
+	// send to admin address as original issuer
+	err = bankKeeper.SendCoins(ctx, originalIssuer, admin, sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(777))))
+	requireT.NoError(err)
+
+	// send to new recipient address as admin
+	err = bankKeeper.SendCoins(ctx, admin, recipient, sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(100))))
+	requireT.NoError(err)
+
+	// try to burn unburnable token from the recipient account
+	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(unburnableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	// try to burn unburnable token from the original issuer account
+	err = ftKeeper.Burn(ctx, originalIssuer, sdk.NewCoin(unburnableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	// try to burn unburnable token from the admin account
+	err = ftKeeper.Burn(ctx, admin, sdk.NewCoin(unburnableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+
+	// Issue a burnable fungible token
+	settings = types.IssueSettings{
+		Issuer:        originalIssuer,
+		Symbol:        "burnable",
+		Subunit:       "burnable",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(877),
+		Features: []types.Feature{
+			types.Feature_burning,
+			types.Feature_freezing,
+		},
+	}
+
+	burnableDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	// transfer the burnableDenom to new admin
+	err = ftKeeper.TransferAdmin(ctx, originalIssuer, admin, burnableDenom)
+	requireT.NoError(err)
+
+	// send to admin address as original issuer
+	err = bankKeeper.SendCoins(ctx, originalIssuer, admin, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(777))))
+	requireT.NoError(err)
+
+	// send to new recipient address
+	err = bankKeeper.SendCoins(ctx, admin, recipient, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(200))))
+	requireT.NoError(err)
+
+	// try to burn as non-admin
+	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(50)))
+	requireT.NoError(err)
+
+	// try to burn as original issuer
+	err = ftKeeper.Burn(ctx, originalIssuer, sdk.NewCoin(burnableDenom, sdkmath.NewInt(50)))
+	requireT.NoError(err)
+
+	// burn tokens and check balance and total supply
+	err = ftKeeper.Burn(ctx, admin, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+
+	balance := bankKeeper.GetBalance(ctx, admin, burnableDenom)
+	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(477)), balance)
+
+	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	requireT.NoError(err)
+	requireT.EqualValues(sdkmath.NewInt(677), totalSupply.Supply.AmountOf(burnableDenom))
+
+	// try to freeze the original issuer
+	err = ftKeeper.Freeze(ctx, originalIssuer, admin, sdk.NewCoin(burnableDenom, sdkmath.NewInt(600)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to freeze the admin (admin can't be frozen)
+	err = ftKeeper.Freeze(ctx, admin, admin, sdk.NewCoin(burnableDenom, sdkmath.NewInt(600)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to burn non-admin frozen coins
+	err = ftKeeper.Freeze(ctx, admin, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+}
+
+func TestKeeper_TransferAdmin_FreezeUnfreeze(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{types.Feature_freezing},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))))
+	requireT.NoError(err)
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, denom)
+	requireT.NoError(err)
+
+	// try to freeze from issuer address which is non admin anymore
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// freeze, query frozen
+	err = ftKeeper.Freeze(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
+	requireT.NoError(err)
+	frozenBalance := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(40)).String(), frozenBalance.String())
+
+	// test query all frozen
+	allBalances, pageRes, err := ftKeeper.GetAccountsFrozenBalances(ctx, &query.PageRequest{})
+	requireT.NoError(err)
+	assertT.Len(allBalances, 1)
+	assertT.EqualValues(1, pageRes.GetTotal())
+	assertT.EqualValues(recipient.String(), allBalances[0].Address)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(40))).String(), allBalances[0].Coins.String())
+
+	// try to unfreeze from issuer address which is non admin anymore
+	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
+	assertT.True(sdkerrors.IsOf(err, cosmoserrors.ErrUnauthorized))
+
+	// set absolute frozen amount
+	err = ftKeeper.SetFrozen(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), frozenBalance)
+
+	// unfreeze, query frozen
+	err = ftKeeper.Unfreeze(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), frozenBalance)
+}
+
+func TestKeeper_TransferAdmin_GlobalFreezeUnfreeze(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	freezableSettings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "FREEZE",
+		Subunit:       "freeze",
+		Precision:     6,
+		Description:   "FREEZE Desc",
+		InitialAmount: sdkmath.NewInt(877),
+		Features:      []types.Feature{types.Feature_freezing},
+	}
+
+	freezableDenom, err := ftKeeper.Issue(ctx, freezableSettings)
+	requireT.NoError(err)
+
+	_, err = ftKeeper.GetToken(ctx, freezableDenom)
+	requireT.NoError(err)
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, freezableDenom)
+	requireT.NoError(err)
+
+	token, err := ftKeeper.GetToken(ctx, freezableDenom)
+	requireT.NoError(err)
+	assertT.Equal(admin.String(), token.Admin)
+
+	unfreezableSettings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "NOFREEZE",
+		Subunit:       "nofreeze",
+		Precision:     6,
+		Description:   "NOFREEZE Desc",
+		InitialAmount: sdkmath.NewInt(877),
+		Features:      []types.Feature{},
+	}
+
+	unfreezableDenom, err := ftKeeper.Issue(ctx, unfreezableSettings)
+	requireT.NoError(err)
+	_, err = ftKeeper.GetToken(ctx, unfreezableDenom)
+	requireT.NoError(err)
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, unfreezableDenom)
+	requireT.NoError(err)
+
+	token, err = ftKeeper.GetToken(ctx, unfreezableDenom)
+	requireT.NoError(err)
+	assertT.Equal(admin.String(), token.Admin)
+
+	err = bankKeeper.SendCoins(ctx, issuer, admin, sdk.NewCoins(
+		sdk.NewCoin(freezableDenom, sdkmath.NewInt(777)),
+		sdk.NewCoin(unfreezableDenom, sdkmath.NewInt(777)),
+	))
+	requireT.NoError(err)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, admin, recipient, sdk.NewCoins(
+		sdk.NewCoin(freezableDenom, sdkmath.NewInt(100)),
+		sdk.NewCoin(unfreezableDenom, sdkmath.NewInt(100)),
+	))
+	requireT.NoError(err)
+
+	// try to global-freeze non-existent
+	nonExistentDenom := types.BuildDenom("nonexist", admin)
+	err = ftKeeper.GloballyFreeze(ctx, admin, nonExistentDenom)
+	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
+
+	// try to global-freeze unfreezable Token
+	err = ftKeeper.GloballyFreeze(ctx, admin, unfreezableDenom)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	// try to global-freeze from original issuer address which is not admin anymore
+	err = ftKeeper.GloballyFreeze(ctx, issuer, freezableDenom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to global-freeze from non admin address
+	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.GloballyFreeze(ctx, randomAddr, freezableDenom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// freeze twice to check global-freeze idempotence
+	err = ftKeeper.GloballyFreeze(ctx, admin, freezableDenom)
+	requireT.NoError(err)
+	err = ftKeeper.GloballyFreeze(ctx, admin, freezableDenom)
+	requireT.NoError(err)
+	frozenToken, err := ftKeeper.GetToken(ctx, freezableDenom)
+	requireT.NoError(err)
+	assertT.True(frozenToken.GloballyFrozen)
+
+	// try to global-unfreeze from original issuer address which is not admin anymore
+	err = ftKeeper.GloballyUnfreeze(ctx, issuer, freezableDenom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to global-unfreeze from non admin address
+	err = ftKeeper.GloballyUnfreeze(ctx, randomAddr, freezableDenom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// unfreeze twice to check global-unfreeze idempotence
+	err = ftKeeper.GloballyUnfreeze(ctx, admin, freezableDenom)
+	requireT.NoError(err)
+	err = ftKeeper.GloballyUnfreeze(ctx, admin, freezableDenom)
+	requireT.NoError(err)
+	unfrozenToken, err := ftKeeper.GetToken(ctx, freezableDenom)
+	requireT.NoError(err)
+	assertT.False(unfrozenToken.GloballyFrozen)
+
+	// freeze, try to send & verify balance
+	err = ftKeeper.GloballyFreeze(ctx, admin, freezableDenom)
+	requireT.NoError(err)
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(freezableDenom, sdkmath.NewInt(10)))
+	// send
+	err = bankKeeper.SendCoins(ctx, recipient, randomAddr, coinsToSend)
+	requireT.ErrorIs(err, types.ErrGloballyFrozen)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
+	requireT.ErrorIs(err, types.ErrGloballyFrozen)
+
+	// unfreeze, try to send & verify balance
+	err = ftKeeper.GloballyUnfreeze(ctx, admin, freezableDenom)
+	requireT.NoError(err)
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(freezableDenom, sdkmath.NewInt(6)))
+	// send
+	err = bankKeeper.SendCoins(ctx, recipient, randomAddr, coinsToSend)
+	requireT.NoError(err)
+	balance := bankKeeper.GetBalance(ctx, randomAddr, freezableDenom)
+	requireT.Equal(sdk.NewCoin(freezableDenom, sdkmath.NewInt(6)), balance)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
+	requireT.NoError(err)
+	balance = bankKeeper.GetBalance(ctx, randomAddr, freezableDenom)
+	requireT.Equal(sdk.NewCoin(freezableDenom, sdkmath.NewInt(12)), balance)
+}
+
+func TestKeeper_TransferAdmin_Whitelist(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(766),
+		Features:      []types.Feature{types.Feature_whitelisting},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, denom)
+	requireT.NoError(err)
+
+	unwhitelistableSettings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     1,
+		Description:   "ABC Desc",
+		InitialAmount: sdkmath.NewInt(766),
+		Features:      []types.Feature{},
+	}
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	unwhitelistableDenom, err := ftKeeper.Issue(ctx, unwhitelistableSettings)
+	requireT.NoError(err)
+	_, err = ftKeeper.GetToken(ctx, unwhitelistableDenom)
+	requireT.NoError(err)
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, unwhitelistableDenom)
+	requireT.NoError(err)
+
+	err = bankKeeper.SendCoins(ctx, issuer, admin, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(666)),
+		sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(666)),
+	))
+	requireT.NoError(err)
+
+	// whitelisting fails on unwhitelistable token
+	err = ftKeeper.SetWhitelistedBalance(ctx, admin, recipient, sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(1)))
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	// try to whitelist non-existent denom
+	nonExistentDenom := types.BuildDenom("nonexist", admin)
+	err = ftKeeper.SetWhitelistedBalance(ctx, admin, recipient, sdk.NewCoin(nonExistentDenom, sdkmath.NewInt(10)))
+	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
+
+	// try to whitelist from original issuer which is not admin anymore
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to whitelist from non admin address
+	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to whitelist the admin (admin can't be whitelisted)
+	err = ftKeeper.SetWhitelistedBalance(ctx, admin, admin, sdk.NewCoin(denom, sdkmath.NewInt(1)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to whitelist the original issuer which is not admin anymore
+	err = ftKeeper.SetWhitelistedBalance(ctx, admin, issuer, sdk.NewCoin(denom, sdkmath.NewInt(1)))
+	requireT.NoError(err)
+
+	// set whitelisted balance to 0
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(0))))
+	whitelistedBalance := ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)).String(), whitelistedBalance.String())
+
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	// send
+	err = bankKeeper.SendCoins(ctx, admin, recipient, coinsToSend)
+	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: admin.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
+	requireT.True(types.ErrWhitelistedLimitExceeded.Is(err))
+
+	// set whitelisted balance to 100
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100))))
+	whitelistedBalance = ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), whitelistedBalance.String())
+
+	// test query all whitelisted balances
+	allBalances, pageRes, err := ftKeeper.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{})
+	requireT.NoError(err)
+	assertT.Len(allBalances, 2)
+	assertT.EqualValues(2, pageRes.GetTotal())
+	assertT.EqualValues(recipient.String(), allBalances[0].Address)
+	assertT.EqualValues(issuer.String(), allBalances[1].Address)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))).String(), allBalances[0].Coins.String())
+
+	coinsToSend = sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(50)),
+		sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(50)),
+	)
+	// send
+	err = bankKeeper.SendCoins(ctx, admin, recipient, coinsToSend)
+	requireT.NoError(err)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: admin.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
+	requireT.NoError(err)
+
+	// try to send more
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1)))
+	// send
+	err = bankKeeper.SendCoins(ctx, admin, recipient, coinsToSend)
+	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: admin.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
+	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
+
+	// try to whitelist from non admin address
+	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
+	assertT.True(sdkerrors.IsOf(err, cosmoserrors.ErrUnauthorized))
+
+	// reduce whitelisting limit below the current balance
+	err = ftKeeper.SetWhitelistedBalance(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
+	requireT.NoError(err)
+}
+
+func TestKeeper_TransferAdmin_IBC(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settingsWithoutIBC := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(766),
+	}
+
+	denomWithoutIBC, err := ftKeeper.Issue(ctx, settingsWithoutIBC)
+	requireT.NoError(err)
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, denomWithoutIBC)
+	requireT.NoError(err)
+
+	settingsWithIBC := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     1,
+		Description:   "ABC Desc",
+		InitialAmount: sdkmath.NewInt(766),
+		Features:      []types.Feature{types.Feature_ibc},
+	}
+
+	denomWithIBC, err := ftKeeper.Issue(ctx, settingsWithIBC)
+	requireT.NoError(err)
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, denomWithIBC)
+	requireT.NoError(err)
+
+	err = bankKeeper.SendCoins(ctx, issuer, admin, sdk.NewCoins(
+		sdk.NewCoin(denomWithoutIBC, sdkmath.NewInt(666)),
+		sdk.NewCoin(denomWithIBC, sdkmath.NewInt(666)),
+	))
+	requireT.NoError(err)
+
+	// Trick the ctx to look like an outgoing IBC,
+	// so we may use regular bank send to test the logic.
+	ctx = wibctransfertypes.WithPurpose(ctx, wibctransfertypes.PurposeOut)
+
+	// transferring denom with disabled IBC should fail
+	err = bankKeeper.SendCoins(
+		ctx,
+		admin,
+		recipient,
+		sdk.NewCoins(sdk.NewCoin(denomWithoutIBC, sdkmath.NewInt(100))),
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// transferring denom with enabled IBC should succeed
+	err = bankKeeper.SendCoins(
+		ctx,
+		admin,
+		recipient,
+		sdk.NewCoins(sdk.NewCoin(denomWithIBC, sdkmath.NewInt(100))),
+	)
+	requireT.NoError(err)
+
+	// transferring denom with enabled IBC should succeed
+	err = bankKeeper.SendCoins(
+		ctx,
+		issuer,
+		recipient,
+		sdk.NewCoins(sdk.NewCoin(denomWithIBC, sdkmath.NewInt(100))),
+	)
+	requireT.NoError(err)
+}
+
+// TestKeeper_AllInOne tests send and multi send with tokens that have all features enabled
+// and applied while the admin is transferred from issuer.
+func TestKeeper_TransferAdmin_AllInOne(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(1100),
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_burning,
+			types.Feature_minting,
+			types.Feature_whitelisting,
+		},
+		BurnRate:           sdk.MustNewDecFromStr("0.1"),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.05"),
+	}
+
+	bondDenom := testApp.StakingKeeper.BondDenom(ctx)
+	// fund with the native coin
+	err := testApp.FundAccount(ctx, issuer, sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(1000))))
+	requireT.NoError(err)
+
+	denom1, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	err = ftKeeper.TransferAdmin(ctx, issuer, admin, denom1)
+	requireT.NoError(err)
+
+	err = bankKeeper.SendCoins(ctx, issuer, admin, sdk.NewCoins(
+		sdk.NewCoin(bondDenom, sdkmath.NewInt(1000)),
+		sdk.NewCoin(denom1, sdkmath.NewInt(1000)),
+	))
+	requireT.NoError(err)
+
+	recipient1 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// freeze denom1 partially on the recipient1 as original issuer which is not admin anymore
+	err = ftKeeper.Freeze(ctx, issuer, recipient1, sdk.NewCoin(denom1, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// freeze denom1 partially on the recipient1
+	err = ftKeeper.Freeze(ctx, admin, recipient1, sdk.NewCoin(denom1, sdkmath.NewInt(10)))
+	requireT.NoError(err)
+
+	// whitelist recipients as original issuer which is not admin anymore
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient1, sdk.NewCoin(denom1, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient2, sdk.NewCoin(denom1, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// whitelist recipients
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, admin, recipient1, sdk.NewCoin(denom1, sdkmath.NewInt(10))))
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, admin, recipient2, sdk.NewCoin(denom1, sdkmath.NewInt(10))))
+
+	// multi-send valid amount
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{
+			{Address: admin.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdkmath.NewInt(20)),
+				sdk.NewCoin(bondDenom, sdkmath.NewInt(40)),
+			)},
+		},
+		[]banktypes.Output{
+			// the recipient1 has frozen balance so that amount can be received
+			{Address: recipient1.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdkmath.NewInt(10)),
+				sdk.NewCoin(bondDenom, sdkmath.NewInt(20)),
+			)},
+			// the recipient2 has whitelisted balance so that is the max amount recipient2 can receive
+			{Address: recipient2.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdkmath.NewInt(10)),
+				sdk.NewCoin(bondDenom, sdkmath.NewInt(20)),
+			)},
+		})
+	requireT.NoError(err)
 }
