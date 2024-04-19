@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -2381,6 +2382,11 @@ func TestKeeper_TransferAdmin_Whitelist(t *testing.T) {
 	requireT.NoError(err)
 	assertT.Len(allBalances, 2)
 	assertT.EqualValues(2, pageRes.GetTotal())
+
+	if recipient.String() != allBalances[0].Address {
+		slices.Reverse(allBalances)
+	}
+
 	assertT.EqualValues(recipient.String(), allBalances[0].Address)
 	assertT.EqualValues(issuer.String(), allBalances[1].Address)
 	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))).String(), allBalances[0].Coins.String())
