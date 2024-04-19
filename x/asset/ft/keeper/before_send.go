@@ -77,22 +77,22 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 
 		outOps := outputs[coin.Denom]
 
-		issuer, err := sdk.AccAddressFromBech32(def.Issuer)
+		admin, err := sdk.AccAddressFromBech32(def.Admin)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "invalid address %s", def.Issuer)
+			return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
 		}
 
-		burnAmount := k.ApplyRate(ctx, def.BurnRate, issuer, sender, outOps)
+		burnAmount := k.ApplyRate(ctx, def.BurnRate, admin, sender, outOps)
 		if burnAmount.IsPositive() {
 			if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
 				return err
 			}
 		}
 
-		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, issuer, sender, outOps)
+		commissionAmount := k.ApplyRate(ctx, def.SendCommissionRate, admin, sender, outOps)
 		if commissionAmount.IsPositive() {
 			commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
-			if err := k.bankKeeper.SendCoins(ctx, sender, issuer, commissionCoin); err != nil {
+			if err := k.bankKeeper.SendCoins(ctx, sender, admin, commissionCoin); err != nil {
 				return err
 			}
 		}
@@ -110,9 +110,6 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 		}); err != nil {
 			return err
 		}
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -122,7 +119,7 @@ func (k Keeper) applyRules(ctx sdk.Context, input banktypes.Input, outputs group
 func (k Keeper) ApplyRate(
 	ctx sdk.Context,
 	rate sdk.Dec,
-	issuer,
+	admin,
 	sender sdk.AccAddress,
 	outOps accountOperationMap,
 ) sdkmath.Int {
@@ -146,10 +143,10 @@ func (k Keeper) ApplyRate(
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
 		return sdk.ZeroInt()
 	}
-	// Since burning & send commissions are not applied when sending to/from token issuer or from any smart contract,
-	// we can't simply apply original burn rate or send commission rates when bank multisend contains issuer or smart
-	//  contract in input or issuer in outputs.
-	// To recalculate new adjusted amount we exclude amount sent to issuers.
+	// Since burning & send commissions are not applied when sending to/from token admin or from any smart contract,
+	// we can't simply apply original burn rate or send commission rates when bank multisend contains admin or smart
+	//  contract in input or admin in outputs.
+	// To recalculate new adjusted amount we exclude amount sent to admins.
 
 	// Examples
 	// burn_rate: 10%
@@ -159,7 +156,7 @@ func (k Keeper) ApplyRate(
 
 	// outputs:
 	// 75
-	// 25 <-- issuer
+	// 25 <-- admin
 
 	// In this case commissioned amount is: 75
 	// Expected commission: 75 * 10% = 7.5
@@ -168,7 +165,7 @@ func (k Keeper) ApplyRate(
 		return sdk.ZeroInt()
 	}
 
-	if sender.String() == issuer.String() {
+	if sender.String() == admin.String() {
 		return sdk.ZeroInt()
 	}
 
@@ -178,7 +175,7 @@ func (k Keeper) ApplyRate(
 	}
 
 	taxableOutputSum := sdk.NewInt(0)
-	issuerStr := issuer.String()
+	issuerStr := admin.String()
 	for account, amount := range outOps {
 		if account == issuerStr {
 			continue
