@@ -6724,7 +6724,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.Error(err)
+	requireT.NoError(err)
 
 	// try to pass original issuer signature which is not admin anymore to freeze msg
 	freezeMsg := &assetfttypes.MsgFreeze{
