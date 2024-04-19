@@ -5956,7 +5956,7 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 		Subunit:       "uabcmintable",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdkmath.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(2000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_minting,
@@ -5994,6 +5994,19 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 	requireT.NoError(err)
 	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
 	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   admin.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
 
 	// try to pass non-admin signature to msg
 	mintMsg = &assetfttypes.MsgMint{
