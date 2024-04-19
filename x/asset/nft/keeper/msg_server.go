@@ -17,7 +17,7 @@ var _ types.MsgServer = MsgServer{}
 type MsgKeeper interface {
 	IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (string, error)
 	Mint(ctx sdk.Context, settings types.MintSettings) error
-	UpdateNFTData(
+	UpdateData(
 		ctx sdk.Context,
 		sender sdk.AccAddress,
 		classID, ID string,
@@ -107,14 +107,14 @@ func (ms MsgServer) Mint(ctx context.Context, req *types.MsgMint) (*types.EmptyR
 	return &types.EmptyResponse{}, nil
 }
 
-// UpdateNFTData updates the dynamic data.
-func (ms MsgServer) UpdateNFTData(ctx context.Context, req *types.MsgUpdateNFTData) (*types.EmptyResponse, error) {
+// UpdateData updates the dynamic data.
+func (ms MsgServer) UpdateData(ctx context.Context, req *types.MsgUpdateData) (*types.EmptyResponse, error) {
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
 	}
 
-	if err := ms.keeper.UpdateNFTData(
+	if err := ms.keeper.UpdateData(
 		sdk.UnwrapSDKContext(ctx),
 		sender,
 		req.ClassID,

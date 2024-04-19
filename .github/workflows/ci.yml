@@ -14,8 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         ci_step: [
-# FIXME(dzmitryhil) - expected proto breaking change, will be fixed after the merge
-#          "lint",
+          "lint",
           "test",
           "integration tests coreum-modules",
           "integration tests coreum-ibc",
@@ -23,11 +22,10 @@ jobs:
           "integration tests faucet",
         ]
         include:
-# # FIXME(dzmitryhil) - expected proto breaking change, will be fixed after the merge
-#          - ci_step: "lint"
-#            command: "coreum-builder lint"
-#            linter-cache: true
-#            codecov: false
+          - ci_step: "lint"
+            command: "coreum-builder lint"
+            linter-cache: true
+            codecov: false
           - ci_step: "test"
             command: "coreum-builder test"
             linter-cache: false

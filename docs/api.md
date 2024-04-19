@@ -140,7 +140,7 @@
     - [MsgRemoveFromClassWhitelist](#coreum.asset.nft.v1.MsgRemoveFromClassWhitelist)
     - [MsgRemoveFromWhitelist](#coreum.asset.nft.v1.MsgRemoveFromWhitelist)
     - [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze)
-    - [MsgUpdateNFTData](#coreum.asset.nft.v1.MsgUpdateNFTData)
+    - [MsgUpdateData](#coreum.asset.nft.v1.MsgUpdateData)
     - [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams)
   
     - [Msg](#coreum.asset.nft.v1.Msg)
@@ -3597,12 +3597,12 @@ MsgMint defines message for the Mint method.
 
 
 
-<a name="coreum.asset.nft.v1.MsgUpdateNFTData"></a>
+<a name="coreum.asset.nft.v1.MsgUpdateData"></a>
 
-### MsgUpdateNFTData
+### MsgUpdateData
 
 ```
-MsgUpdateNFTData defines message to update the dynamic data.
+MsgUpdateData defines message to update the dynamic data.
 ```
 
 
@@ -3654,7 +3654,7 @@ Msg defines the Msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `IssueClass` | [MsgIssueClass](#coreum.asset.nft.v1.MsgIssueClass) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `IssueClass creates new non-fungible token class.` |  |
 | `Mint` | [MsgMint](#coreum.asset.nft.v1.MsgMint) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `Mint mints new non-fungible token in the class.` |  |
-| `UpdateNFTData` | [MsgUpdateNFTData](#coreum.asset.nft.v1.MsgUpdateNFTData) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `UpdateNFTData updates the existing non-fungible token data in the class.` |  |
+| `UpdateData` | [MsgUpdateData](#coreum.asset.nft.v1.MsgUpdateData) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `UpdateData updates the existing non-fungible token data in the class.` |  |
 | `Burn` | [MsgBurn](#coreum.asset.nft.v1.MsgBurn) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `Burn burns the existing non-fungible token in the class.` |  |
 | `Freeze` | [MsgFreeze](#coreum.asset.nft.v1.MsgFreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `Freeze freezes an NFT` |  |
 | `Unfreeze` | [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `Unfreeze removes the freeze effect already put on an NFT` |  |

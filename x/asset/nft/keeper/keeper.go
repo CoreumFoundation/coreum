@@ -364,8 +364,8 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 	return nil
 }
 
-// UpdateNFTData updates non-fungible token data.
-func (k Keeper) UpdateNFTData(
+// UpdateData updates non-fungible token data.
+func (k Keeper) UpdateData(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	classID, id string,
@@ -382,8 +382,6 @@ func (k Keeper) UpdateNFTData(
 	if isFrozen {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, id)
 	}
-
-	return nil
 
 	storedNFT, found := k.nftKeeper.GetNFT(ctx, classID, id)
 	if !found {

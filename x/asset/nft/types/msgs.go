@@ -16,7 +16,7 @@ import (
 const (
 	TypeMsgIssueClass               = "issue-class"
 	TypeMsgMint                     = "mint"
-	TypeMsgUpdateNFTData            = "update-nft-data"
+	TypeMsgUpdateData               = "update-data"
 	TypeMsgBurn                     = "burn"
 	TypeMsgFreeze                   = "freeze"
 	TypeMsgUnfreeze                 = "unfreeze"
@@ -37,7 +37,7 @@ type msgAndLegacyMsg interface {
 var (
 	_ msgAndLegacyMsg = &MsgIssueClass{}
 	_ msgAndLegacyMsg = &MsgMint{}
-	_ msgAndLegacyMsg = &MsgUpdateNFTData{}
+	_ msgAndLegacyMsg = &MsgUpdateData{}
 	_ msgAndLegacyMsg = &MsgBurn{}
 	_ msgAndLegacyMsg = &MsgFreeze{}
 	_ msgAndLegacyMsg = &MsgUnfreeze{}
@@ -63,7 +63,7 @@ const (
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgIssueClass{}, fmt.Sprintf("%s/MsgIssueClass", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgMint{}, fmt.Sprintf("%s/MsgMint", ModuleName), nil)
-	cdc.RegisterConcrete(&MsgUpdateNFTData{}, fmt.Sprintf("%s/MsgUpdateNFTData", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgUpdateData{}, fmt.Sprintf("%s/MsgUpdateData", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgBurn{}, fmt.Sprintf("%s/MsgBurn", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgFreeze{}, fmt.Sprintf("%s/MsgFreeze", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgUnfreeze{}, fmt.Sprintf("%s/MsgUnfreeze", ModuleName), nil)
@@ -218,7 +218,7 @@ func (m MsgMint) Type() string {
 }
 
 // ValidateBasic checks that message fields are valid.
-func (m *MsgUpdateNFTData) ValidateBasic() error {
+func (m *MsgUpdateData) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
 	}
@@ -247,25 +247,25 @@ func (m *MsgUpdateNFTData) ValidateBasic() error {
 }
 
 // GetSigners returns the required signers of this message type.
-func (m *MsgUpdateNFTData) GetSigners() []sdk.AccAddress {
+func (m *MsgUpdateData) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
 // GetSignBytes returns sign bytes for LegacyMsg.
-func (m MsgUpdateNFTData) GetSignBytes() []byte {
+func (m MsgUpdateData) GetSignBytes() []byte {
 	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
-func (m MsgUpdateNFTData) Route() string {
+func (m MsgUpdateData) Route() string {
 	return RouterKey
 }
 
 // Type returns message type for LegacyMsg.
-func (m MsgUpdateNFTData) Type() string {
-	return TypeMsgUpdateNFTData
+func (m MsgUpdateData) Type() string {
+	return TypeMsgUpdateData
 }
 
 // ValidateBasic checks that message fields are valid.

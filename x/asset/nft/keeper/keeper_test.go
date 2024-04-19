@@ -229,7 +229,7 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
 }
 
-func TestKeeper_UpdateNFTData(t *testing.T) {
+func TestKeeper_UpdateData(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.NewContext(false, tmproto.Header{})
@@ -462,7 +462,7 @@ func TestKeeper_UpdateNFTData(t *testing.T) {
 				requireT.NoError(testApp.AssetNFTKeeper.Freeze(ctx, issuer, classID, nftBefore.Id))
 			}
 
-			err = testApp.AssetNFTKeeper.UpdateNFTData(ctx, sender, nftBefore.ClassId, nftBefore.Id, tt.itemsToUpdate)
+			err = testApp.AssetNFTKeeper.UpdateData(ctx, sender, nftBefore.ClassId, nftBefore.Id, tt.itemsToUpdate)
 			if tt.wantErr != nil {
 				requireT.ErrorIs(tt.wantErr, err)
 				requireT.ErrorContains(err, tt.errorContains)
