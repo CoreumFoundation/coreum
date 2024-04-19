@@ -6119,3 +6119,979 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 	)
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
+
+// TestAssetFTTransferAdminBurn tests burn functionality of fungible tokens after transferring admin.
+func TestAssetFTTransferAdminBurn(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	recipient := chain.GenAccount()
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgTransferAdmin{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgTransferAdmin{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgBurn{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
+	})
+
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgBurn{},
+			&assetfttypes.MsgBurn{},
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgBurn{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
+	})
+
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgBurn{},
+			&assetfttypes.MsgBurn{},
+		},
+	})
+
+	// Issue an unburnable fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCNotBurnable",
+		Subunit:       "uabcnotburnable",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_freezing,
+		},
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	unburnable := fungibleTokenIssuedEvts[0].Denom
+
+	// Transfer administration of unburnable fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   unburnable,
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+
+	requireT.NoError(err)
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// try to burn unburnable token from original issuer which is not admin anymore
+	burnMsg := &assetfttypes.MsgBurn{
+		Sender: issuer.String(),
+		Coin: sdk.Coin{
+			Denom:  unburnable,
+			Amount: sdkmath.NewInt(900),
+		},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to burn unburnable token from admin
+	burnMsg = &assetfttypes.MsgBurn{
+		Sender: admin.String(),
+		Coin: sdk.Coin{
+			Denom:  unburnable,
+			Amount: sdkmath.NewInt(900),
+		},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	// send some coins to the recipient
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(unburnable, sdkmath.NewInt(100))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// try to burn unburnable token from recipient
+	burnMsg = &assetfttypes.MsgBurn{
+		Sender: recipient.String(),
+		Coin: sdk.Coin{
+			Denom:  unburnable,
+			Amount: sdkmath.NewInt(1000),
+		},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.True(assetfttypes.ErrFeatureDisabled.Is(err))
+
+	// Issue a burnable fungible token
+	issueMsg = &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCBurnable",
+		Subunit:       "uabcburnable",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_burning,
+		},
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	burnableDenom := fungibleTokenIssuedEvts[0].Denom
+
+	// Transfer administration of burnable fungible token
+	transferAdminMsg = &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   burnableDenom,
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+
+	requireT.NoError(err)
+	adminTransferredEvts, err = event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// send some coins to the recipient
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(100))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// try to pass non-admin signature to msg
+	burnMsg = &assetfttypes.MsgBurn{
+		Sender: recipient.String(),
+		Coin:   sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	// burn tokens and check balance and total supply
+	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
+	requireT.NoError(err)
+	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(600))
+
+	burnMsg = &assetfttypes.MsgBurn{
+		Sender: issuer.String(),
+		Coin:   burnCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	burnMsg = &assetfttypes.MsgBurn{
+		Sender: admin.String(),
+		Coin:   burnCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: admin.String(), Denom: burnableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(300)).String(), balance.GetBalance().String())
+
+	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
+}
+
+// TestAssetFTTransferAdminFreeze checks freeze functionality of fungible tokens after transferring admin.
+func TestAssetFTTransferAdminFreeze(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	clientCtx := chain.ClientContext
+
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+	bankClient := banktypes.NewQueryClient(clientCtx)
+
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	recipient := chain.GenAccount()
+	randomAddress := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgTransferAdmin{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgUnfreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgUnfreeze{},
+			&assetfttypes.MsgUnfreeze{},
+			&assetfttypes.MsgSetFrozen{},
+			&assetfttypes.MsgUnfreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+	})
+	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgFreeze{},
+		},
+	})
+
+	// Issue the new fungible token
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1100),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_freezing,
+		},
+	}
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   admin.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdkmath.NewInt(1000)),
+		),
+	}
+
+	// Transfer administration of fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   assetfttypes.BuildDenom(msg.Subunit, issuer),
+	}
+
+	msgList := []sdk.Msg{
+		msg, msgSend, transferAdminMsg,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	denom := fungibleTokenIssuedEvts[0].Denom
+
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	msgSend = &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   recipient.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdkmath.NewInt(1000)),
+		),
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+
+	// try to pass original issuer signature which is not admin anymore to freeze msg
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+
+	// try to pass non-admin signature to freeze msg
+	freezeMsg = &assetfttypes.MsgFreeze{
+		Sender:  randomAddress.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(randomAddress),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+
+	// freeze 400 tokens
+	freezeMsg = &assetfttypes.MsgFreeze{
+		Sender:  admin.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(freezeMsg))
+
+	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(0),
+		CurrentAmount:  sdkmath.NewInt(400),
+	}, fungibleTokenFreezeEvts[0])
+
+	// query frozen tokens
+	frozenBalance, err := ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), frozenBalance.Balance)
+
+	frozenBalances, err := ftClient.FrozenBalances(ctx, &assetfttypes.QueryFrozenBalancesRequest{
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), frozenBalances.Balances)
+
+	// try to send more than available (650) (600 is available)
+	recipient2 := chain.GenAccount()
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(650)))
+	// send
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	// multi-send
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+
+	// try to send available tokens (300 + 300)
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(300)))
+	// send
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	balance1, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(700)).String(), balance1.GetBalance().String())
+	// multi-send
+	multiSendMsg = &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.NoError(err)
+	balance1, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)).String(), balance1.GetBalance().String())
+
+	// try to unfreeze 200 tokens as original issuer which is not admin anymore
+	unfreezeMsg := &assetfttypes.MsgUnfreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// unfreeze 200 tokens and try to send 250 tokens
+	unfreezeMsg = &assetfttypes.MsgUnfreeze{
+		Sender:  admin.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
+
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(400),
+		CurrentAmount:  sdkmath.NewInt(200),
+	}, fungibleTokenFreezeEvts[0])
+
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(250))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+
+	// send available tokens (200)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(200))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// unfreeze 400 tokens (frozen balance is 200), it should give error
+	unfreezeMsg = &assetfttypes.MsgUnfreeze{
+		Sender:  admin.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+
+	// set absolute frozen amount to 250
+	setFrozenMsg := &assetfttypes.MsgSetFrozen{
+		Sender:  admin.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(250)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(setFrozenMsg)),
+		setFrozenMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(setFrozenMsg))
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(200),
+		CurrentAmount:  sdkmath.NewInt(250),
+	}, fungibleTokenFreezeEvts[0])
+
+	frozenBalance, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(250)), frozenBalance.Balance)
+
+	// unfreeze 250 tokens and observer current frozen amount is zero
+	unfreezeMsg = &assetfttypes.MsgUnfreeze{
+		Sender:  admin.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(250)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
+
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(250),
+		CurrentAmount:  sdkmath.NewInt(0),
+	}, fungibleTokenFreezeEvts[0])
+}
+
+// TestAssetFTTransferAdminFreezeAdminAccount checks that freezing the admin account is not possible after transferring admin.
+func TestAssetFTTransferAdminFreezeAdminAccount(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgTransferAdmin{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// Issue an freezable fungible token
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     1,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+
+	denom := assetfttypes.BuildDenom(msg.Subunit, issuer)
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+	requireT.NoError(err)
+
+	// Transfer administration of fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   denom,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+
+	requireT.NoError(err)
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// freeze issuer account
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  admin.String(),
+		Account: issuer.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.NoError(err)
+
+	// try to freeze admin account
+	freezeMsg = &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
+// TestAssetFTTransferAdminGloballyFreeze checks global freeze functionality of fungible tokens after transferring admin.
+func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	recipient := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgTransferAdmin{},
+			&assetfttypes.MsgGloballyFreeze{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&assetfttypes.MsgGloballyUnfreeze{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgGloballyFreeze{},
+			&assetfttypes.MsgGloballyUnfreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+		},
+	})
+
+	// Issue the new fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        admin.String(),
+		Symbol:        "FREEZE",
+		Subunit:       "freeze",
+		Precision:     6,
+		Description:   "FREEZE Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	denom := fungibleTokenIssuedEvts[0].Denom
+
+	// Transfer administration of fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   denom,
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+
+	requireT.NoError(err)
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// try to Globally freeze Token as original issuer which is not admin anymore.
+	globFreezeMsg := &assetfttypes.MsgGloballyFreeze{
+		Sender: issuer.String(),
+		Denom:  denom,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globFreezeMsg)),
+		globFreezeMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// Globally freeze Token.
+	globFreezeMsg = &assetfttypes.MsgGloballyFreeze{
+		Sender: admin.String(),
+		Denom:  denom,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globFreezeMsg)),
+		globFreezeMsg,
+	)
+	requireT.NoError(err)
+
+	// Try to send Token.
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
+	// send
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// multi-send
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.NoError(err)
+
+	// send from recipient
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   admin.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.True(assetfttypes.ErrGloballyFrozen.Is(err))
+
+	// multi-send
+	multiSendMsg = &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: admin.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.True(assetfttypes.ErrGloballyFrozen.Is(err))
+
+	// try to Globally unfreeze Token as original issuer which is not admin anymore.
+	globUnfreezeMsg := &assetfttypes.MsgGloballyUnfreeze{
+		Sender: issuer.String(),
+		Denom:  denom,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globUnfreezeMsg)),
+		globUnfreezeMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// Globally unfreeze Token.
+	globUnfreezeMsg = &assetfttypes.MsgGloballyUnfreeze{
+		Sender: admin.String(),
+		Denom:  denom,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globUnfreezeMsg)),
+		globUnfreezeMsg,
+	)
+	requireT.NoError(err)
+
+	// Try to send Token from admin.
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// Try to send Token from recipient.
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   admin.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+}
