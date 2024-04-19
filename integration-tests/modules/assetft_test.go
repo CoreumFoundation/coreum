@@ -6724,6 +6724,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
+	requireT.Error(err)
 
 	// try to pass original issuer signature which is not admin anymore to freeze msg
 	freezeMsg := &assetfttypes.MsgFreeze{
@@ -7316,4 +7317,439 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 		sendMsg,
 	)
 	requireT.NoError(err)
+}
+
+// TestAssetFTTransferAdminWhitelist checks whitelist functionality of fungible tokens after transferring admin.
+func TestAssetFTTransferAdminWhitelist(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	clientCtx := chain.ClientContext
+
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+	bankClient := banktypes.NewQueryClient(clientCtx)
+
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	nonIssuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgTransferAdmin{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, nonIssuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+	})
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
+
+	// Issue the new fungible token
+	amount := sdkmath.NewInt(20000)
+	subunit := "ucba"
+	denom := assetfttypes.BuildDenom(subunit, issuer)
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: amount,
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+
+	requireT.NoError(err)
+
+	// Transfer administration of fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   denom,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+
+	requireT.NoError(err)
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// try to pass original signature which is not admin anymore to whitelist msg
+	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to pass non-admin signature to whitelist msg
+	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  nonIssuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(nonIssuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+
+	// try to send to recipient before it is whitelisted (balance 0, whitelist limit 0)
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	// send
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+
+	// multi-send
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+
+	// whitelist 400 tokens
+	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  admin.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(whitelistMsg))
+
+	// query whitelisted tokens
+	whitelistedBalance, err := ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), whitelistedBalance.Balance)
+
+	whitelistedBalances, err := ftClient.WhitelistedBalances(ctx, &assetfttypes.QueryWhitelistedBalancesRequest{
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), whitelistedBalances.Balances)
+
+	// try to receive more than whitelisted (600) (possible 400)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(600))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+
+	// try to send whitelisted balance (400)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)).String(), balance.GetBalance().String())
+
+	// try to send one more
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+
+	// whitelist one more
+	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  admin.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(401)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(whitelistMsg))
+
+	// query whitelisted tokens
+	whitelistedBalance, err = ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(401)), whitelistedBalance.Balance)
+
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(401)).String(), balance.GetBalance().String())
+
+	// Verify that admin has no whitelisted balance
+	whitelistedBalance, err = ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
+		Account: admin.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.ZeroInt()), whitelistedBalance.Balance)
+
+	// Send something to admin, it should succeed despite the fact that admin is not whitelisted
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   admin.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: admin.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(19609)).String(), balance.GetBalance().String())
+
+	// Set whitelisted balance to 0 for recipient
+	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  admin.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.ZeroInt()),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	requireT.NoError(err)
+
+	// Transfer to recipient should fail now
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt())),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+}
+
+// TestAssetFTTransferAdminWhitelistAdminAccount checks whitelisting on admin account
+// is not possible after transferring admin.
+func TestAssetFTTransferAdminWhitelistAdminAccount(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgTransferAdmin{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// Issue a whitelistable fungible token
+	subunit := "uabcwhitelistable"
+	denom := assetfttypes.BuildDenom(subunit, admin)
+	amount := sdkmath.NewInt(1000)
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCWhitelistable",
+		Subunit:       subunit,
+		Description:   "ABC Description",
+		Precision:     1,
+		InitialAmount: amount,
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+
+	requireT.NoError(err)
+
+	// Transfer administration of fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   denom,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+
+	requireT.NoError(err)
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// try to whitelist admin account
+	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// whitelist original issuer account
+	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  admin.String(),
+		Account: issuer.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
