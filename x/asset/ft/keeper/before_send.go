@@ -182,7 +182,7 @@ func (k Keeper) invokeAssetExtension(
 func (k Keeper) CalculateRate(
 	ctx sdk.Context,
 	rate sdk.Dec,
-	issuer,
+	admin,
 	sender sdk.AccAddress,
 	receiver sdk.AccAddress,
 	amount sdk.Coin,
@@ -212,7 +212,7 @@ func (k Keeper) CalculateRate(
 		return sdk.ZeroInt()
 	}
 
-	if issuer.Equals(sender) || issuer.Equals(receiver) {
+	if admin.Equals(sender) || admin.Equals(receiver) {
 		return sdk.ZeroInt()
 	}
 
