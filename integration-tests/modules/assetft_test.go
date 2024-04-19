@@ -5765,9 +5765,9 @@ func TestAssetFTTransferAdmin(t *testing.T) {
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(transferAdminMsg))
 
-	fungibleTokenTransferAdminEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransfered](res.Events)
+	fungibleTokenTransferAdminEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventAdminTransfered{
+	assertT.EqualValues(&assetfttypes.EventAdminTransferred{
 		Denom:         denom,
 		PreviousAdmin: issuer.String(),
 		CurrentAdmin:  admin.String(),
@@ -5818,4 +5818,304 @@ func TestAssetFTTransferAdmin(t *testing.T) {
 		PreviousAmount: sdkmath.NewInt(0),
 		CurrentAmount:  sdkmath.NewInt(400),
 	}, fungibleTokenFreezeEvts[0])
+}
+
+// TestAssetFTTransferAdminMint tests mint functionality of fungible tokens after transferring admin.
+func TestAssetFTTransferAdminMint(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	wasmAdmin := chain.GenAccount()
+	randomAddress := chain.GenAccount()
+	recipient := chain.GenAccount()
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgTransferAdmin{},
+			&assetfttypes.MsgMint{},
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgTransferAdmin{},
+			&assetfttypes.MsgMint{},
+			&assetfttypes.MsgMint{},
+			&assetfttypes.MsgMint{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
+	})
+
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgMint{},
+			&assetfttypes.MsgMint{},
+			&assetfttypes.MsgMint{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
+	})
+
+	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgMint{},
+		},
+	})
+
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(wasmAdmin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	// Issue an unmintable fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCNotMintable",
+		Subunit:       "uabcnotmintable",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
+		},
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	unmintableDenom := fungibleTokenIssuedEvts[0].Denom
+
+	// Transfer administration of unmintable fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   unmintableDenom,
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+
+	requireT.NoError(err)
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// try to mint unmintable token as original issuer which is not admin anymore
+	mintMsg := &assetfttypes.MsgMint{
+		Sender: issuer.String(),
+		Coin: sdk.Coin{
+			Denom:  unmintableDenom,
+			Amount: sdkmath.NewInt(1000),
+		},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.True(assetfttypes.ErrFeatureDisabled.Is(err))
+
+	// try to mint unmintable token as admin
+	mintMsg = &assetfttypes.MsgMint{
+		Sender: admin.String(),
+		Coin: sdk.Coin{
+			Denom:  unmintableDenom,
+			Amount: sdkmath.NewInt(1000),
+		},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.True(assetfttypes.ErrFeatureDisabled.Is(err))
+
+	// Issue a mintable fungible token
+	issueMsg = &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCMintable",
+		Subunit:       "uabcmintable",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_minting,
+		},
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	mintableDenom := fungibleTokenIssuedEvts[0].Denom
+
+	// Transfer administration of mintable fungible token
+	transferAdminMsg = &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   mintableDenom,
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+
+	requireT.NoError(err)
+	adminTransferredEvts, err = event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// try to pass non-admin signature to msg
+	mintMsg = &assetfttypes.MsgMint{
+		Sender: randomAddress.String(),
+		Coin:   sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(randomAddress),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+
+	// try to pass original issuer signature to msg which is not admin anymore
+	mintMsg = &assetfttypes.MsgMint{
+		Sender: issuer.String(),
+		Coin:   sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+
+	// mint tokens and check balance and total supply
+	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
+	requireT.NoError(err)
+	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(1600))
+	mintMsg = &assetfttypes.MsgMint{
+		Sender: admin.String(),
+		Coin:   mintCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: admin.String(), Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(
+		mintCoin.Add(sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000))).String(),
+		balance.GetBalance().String(),
+	)
+
+	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
+
+	// mint tokens to recipient as original issuer which is not admin anymore
+	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(10))
+	mintMsg = &assetfttypes.MsgMint{
+		Sender:    issuer.String(),
+		Recipient: recipient.String(),
+		Coin:      mintCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+
+	// mint tokens to recipient as admin
+	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(10))
+	mintMsg = &assetfttypes.MsgMint{
+		Sender:    admin.String(),
+		Recipient: recipient.String(),
+		Coin:      mintCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err = bankClient.Balance(
+		ctx,
+		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom},
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin.String(), balance.GetBalance().String())
+
+	newSupply2, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin, newSupply2.GetAmount().Sub(newSupply.GetAmount()))
+
+	// sending to smart contract is blocked so minting to it should fail
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		wasmAdmin,
+		moduleswasm.BankSendWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	mintMsg = &assetfttypes.MsgMint{
+		Sender:    issuer.String(),
+		Recipient: contractAddr,
+		Coin:      mintCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }

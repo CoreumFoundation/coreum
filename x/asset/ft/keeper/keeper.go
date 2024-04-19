@@ -630,7 +630,7 @@ func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, deno
 	def.Admin = addr.String()
 	k.SetDefinition(ctx, issuer, subunit, def)
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminTransfered{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminTransferred{
 		Denom:         denom,
 		PreviousAdmin: previousAdmin,
 		CurrentAdmin:  def.Admin,
