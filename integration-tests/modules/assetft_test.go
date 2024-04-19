@@ -6718,7 +6718,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 		),
 	}
 
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -6870,7 +6870,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
 	}
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
@@ -6999,7 +6999,8 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 	}, fungibleTokenFreezeEvts[0])
 }
 
-// TestAssetFTTransferAdminFreezeAdminAccount checks that freezing the admin account is not possible after transferring admin.
+// TestAssetFTTransferAdminFreezeAdminAccount checks that freezing the admin account
+// is not possible after transferring admin.
 func TestAssetFTTransferAdminFreezeAdminAccount(t *testing.T) {
 	t.Parallel()
 
@@ -7097,7 +7098,8 @@ func TestAssetFTTransferAdminFreezeAdminAccount(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
-// TestAssetFTTransferAdminGloballyFreeze checks global freeze functionality of fungible tokens after transferring admin.
+// TestAssetFTTransferAdminGloballyFreeze checks global freeze functionality of fungible tokens
+// after transferring admin.
 func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	t.Parallel()
 
