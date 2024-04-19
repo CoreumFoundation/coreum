@@ -371,16 +371,8 @@ func (k Keeper) UpdateData(
 	classID, id string,
 	itemsToUpdate []types.DataDynamicIndexedItem,
 ) error {
-	// the IsFrozen includes both class and NFT freezing check
-	isFrozen, err := k.IsFrozen(ctx, classID, id)
-	if err != nil {
-		if errors.Is(err, types.ErrFeatureDisabled) {
-			return nil
-		}
+	if err := k.validateNFTNotFrozen(ctx, classID, id); err != nil {
 		return err
-	}
-	if isFrozen {
-		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, id)
 	}
 
 	storedNFT, found := k.nftKeeper.GetNFT(ctx, classID, id)
@@ -1160,6 +1152,10 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		)
 	}
 
+	return k.validateNFTNotFrozen(ctx, classID, nftID)
+}
+
+func (k Keeper) validateNFTNotFrozen(ctx sdk.Context, classID string, nftID string) error {
 	// the IsFrozen includes both class and NFT freezing check
 	isFrozen, err := k.IsFrozen(ctx, classID, nftID)
 	if err != nil {
