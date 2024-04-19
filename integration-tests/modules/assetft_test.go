@@ -5842,6 +5842,7 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgTransferAdmin{},
+			&banktypes.MsgSend{},
 			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
 			&assetfttypes.MsgMint{},
@@ -6077,7 +6078,7 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 		mintMsg,
 	)
 	requireT.Error(err)
-	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized) // TODO: Failed with err = nil or another error
 
 	// mint tokens to recipient as admin
 	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(10))
@@ -6130,7 +6131,7 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized) // TODO: failed with insufficient funds
 }
 
 // TestAssetFTTransferAdminBurn tests burn functionality of fungible tokens after transferring admin.
@@ -6232,7 +6233,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(admin),
+		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
@@ -6875,7 +6876,7 @@ func TestAssetFTTransferAdminFreezeAdminAccount(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
 		freezeMsg,
 	)
-	requireT.NoError(err)
+	requireT.NoError(err) // TODO: Failing with : issuer's balance can't be frozen: unauthorized: unauthorized
 
 	// try to freeze admin account
 	freezeMsg = &assetfttypes.MsgFreeze{
@@ -6969,7 +6970,7 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 		transferAdminMsg,
 	)
 
-	requireT.NoError(err)
+	requireT.NoError(err) // TODO: Failed with: failed to execute message; message index: 0: only admin can transfer administration of an account: unauthorized
 	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
 	requireT.NoError(err)
 	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
@@ -7170,10 +7171,10 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 	denom := assetfttypes.BuildDenom(subunit, issuer)
 	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
-		Symbol:        "ABC",
-		Subunit:       "uabc",
+		Symbol:        "CBA",
+		Subunit:       "ucba",
 		Precision:     6,
-		Description:   "ABC Description",
+		Description:   "CBA Description",
 		InitialAmount: amount,
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
@@ -7473,7 +7474,7 @@ func TestAssetFTTransferAdminWhitelistAdminAccount(t *testing.T) {
 
 	// Issue a whitelistable fungible token
 	subunit := "uabcwhitelistable"
-	denom := assetfttypes.BuildDenom(subunit, admin)
+	denom := assetfttypes.BuildDenom(subunit, issuer)
 	amount := sdkmath.NewInt(1000)
 	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
