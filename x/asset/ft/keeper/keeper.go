@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
@@ -235,13 +234,12 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		if settings.ExtensionSettings == nil {
 			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
 		}
-		assetFTModuleAddress := authtypes.NewModuleAddress(types.ModuleName)
 
 		contractAddress, _, err := k.wasmPermissionedKeeper.Instantiate2(
 			ctx,
 			settings.ExtensionSettings.CodeId,
 			settings.Issuer,
-			assetFTModuleAddress,
+			settings.Issuer,
 			settings.ExtensionSettings.InstantiationMsg,
 			settings.ExtensionSettings.Label,
 			settings.ExtensionSettings.Funds,

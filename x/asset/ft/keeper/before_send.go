@@ -7,7 +7,6 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
@@ -147,11 +146,11 @@ func (k Keeper) executeAssetExtension(
 	burnAmount sdkmath.Int,
 	outOps accountOperationMap,
 ) error {
-	assetFTmoduleAddress := authtypes.NewModuleAddress(types.ModuleName)
 	// We need this if statement so we will not have an infinite loop. Otherwise
 	// when we call Execute method if wasm keeper, in which we have funds transfer,
 	// then we will end up in an infinite recursoin.
-	if sender.Equals(assetFTmoduleAddress) {
+	_, isReceiverExtensionContract := outOps[def.ExtensionCwAddress]
+	if isReceiverExtensionContract && len(outOps) == 1 {
 		return nil
 	}
 
@@ -163,12 +162,6 @@ func (k Keeper) executeAssetExtension(
 		Add(sdk.NewCoin(def.Denom, commissionAmount)).
 		Add(sdk.NewCoin(def.Denom, burnAmount))
 
-	// we first send funds to module account and then attach funds with module account as
-	// the caller of the smart contract.
-	err = k.bankKeeper.SendCoins(ctx, sender, assetFTmoduleAddress, attachedFunds)
-	if err != nil {
-		return err
-	}
 	contractMsg := map[string]interface{}{
 		ExtenstionTransferMethod: ExtensionTransferMsg{
 			Sender:     sender.String(),
@@ -180,10 +173,11 @@ func (k Keeper) executeAssetExtension(
 	if err != nil {
 		return err
 	}
+
 	_, err = k.wasmPermissionedKeeper.Execute(
 		ctx,
 		extensionContract,
-		assetFTmoduleAddress,
+		sender,
 		contractMsgBytes,
 		attachedFunds,
 	)
