@@ -5,15 +5,16 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/require"
+
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 	assetftkeeper "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper"
 	testcontracts "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper/test-contracts"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
 )
 
 // TestAssetFTIssue tests issue functionality of fungible tokens.
@@ -68,7 +69,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	requireT.NoError(err)
 
 	receiver := chain.GenAccount()
-	//sending 1 will succeed
+	// sending 1 will succeed
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issueMsg.Issuer,
 		ToAddress:   receiver.String(),
@@ -82,7 +83,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	//sending 7 will fail
+	// sending 7 will fail
 	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(7)))
 	_, err = client.BroadcastTx(
 		ctx,
