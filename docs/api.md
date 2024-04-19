@@ -2172,6 +2172,7 @@ Token is a full representation of the fungible token.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `extension_cw_address` | [string](#string) |  |    |
 
 
 

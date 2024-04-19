@@ -33,11 +33,9 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::ExtensionTransfer {
-            sender,
-            amount,
-            recipients,
-        } => execute_extension_transfer(deps, env, info, sender, amount, recipients),
+        ExecuteMsg::ExtensionTransfer { amount, recipients } => {
+            execute_extension_transfer(deps, env, info, amount, recipients)
+        }
     }
 }
 
@@ -45,7 +43,6 @@ pub fn execute_extension_transfer(
     _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _sender: String,
     amount: Uint128,
     _recipients: HashMap<String, Uint128>,
 ) -> Result<Response, ContractError> {

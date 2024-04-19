@@ -13,8 +13,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	moduleswasm "github.com/CoreumFoundation/coreum/v4/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	testcontracts "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper/test-contracts"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
@@ -33,7 +33,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	codeID, _, err := testApp.WasmGovPermissionKeeper.Create(
-		ctx, addr, moduleswasm.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+		ctx, addr, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
 	)
 	requireT.NoError(err)
 

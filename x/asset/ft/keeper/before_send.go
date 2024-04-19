@@ -21,7 +21,6 @@ const (
 
 // ExtensionTransferMsg contains the fields passed to extension method call.
 type ExtensionTransferMsg struct {
-	Sender     string                 `json:"sender,omitempty"`
 	Amount     sdkmath.Int            `json:"amount,omitempty"`
 	Recipients map[string]sdkmath.Int `json:"recipients,omitempty"`
 }
@@ -164,7 +163,6 @@ func (k Keeper) executeAssetExtension(
 
 	contractMsg := map[string]interface{}{
 		ExtenstionTransferMethod: ExtensionTransferMsg{
-			Sender:     sender.String(),
 			Amount:     sendAmount.Amount,
 			Recipients: outOps,
 		},

@@ -9277,6 +9277,9 @@
         },
         "uri_hash": {
           "type": "string"
+        },
+        "extension_cw_address": {
+          "type": "string"
         }
       },
       "description": "Token is a full representation of the fungible token."

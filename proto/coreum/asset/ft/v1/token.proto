@@ -69,6 +69,7 @@ message Token {
   uint32 version = 11;
   string uri = 12 [(gogoproto.customname) = "URI"];
   string uri_hash = 13 [(gogoproto.customname) = "URIHash"];
+  string extension_cw_address = 14;
 }
 
 // DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.
