@@ -10,7 +10,7 @@
     - [MintAuthorization](#coreum.asset.ft.v1.MintAuthorization)
   
 - [coreum/asset/ft/v1/event.proto](#coreum/asset/ft/v1/event.proto)
-    - [EventAdminTransfered](#coreum.asset.ft.v1.EventAdminTransfered)
+    - [EventAdminTransferred](#coreum.asset.ft.v1.EventAdminTransferred)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
     - [EventWhitelistedAmountChanged](#coreum.asset.ft.v1.EventWhitelistedAmountChanged)
@@ -1581,9 +1581,9 @@ the granter's account.
 
 
 
-<a name="coreum.asset.ft.v1.EventAdminTransfered"></a>
+<a name="coreum.asset.ft.v1.EventAdminTransferred"></a>
 
-### EventAdminTransfered
+### EventAdminTransferred
 
 
 
