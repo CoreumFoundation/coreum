@@ -6429,7 +6429,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
+	assertT.EqualValues(burnCoin.Add(burnCoin), oldSupply.GetAmount().Sub(newSupply.GetAmount()))
 }
 
 // TestAssetFTTransferAdminFreeze checks freeze functionality of fungible tokens after transferring admin.
