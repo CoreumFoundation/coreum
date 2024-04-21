@@ -6617,7 +6617,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 	// burn tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(300))
+	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(600))
 
 	burnMsg = &assetfttypes.MsgBurn{
 		Sender: issuer.String(),
@@ -6645,7 +6645,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: admin.String(), Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(300)).String(), balance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(400)).String(), balance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
