@@ -6493,7 +6493,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 	requireT.NoError(err)
 
 	// send some coins to the recipient
-	sendMsg := &banktypes.MsgSend{
+	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(unburnable, sdkmath.NewInt(100))),
@@ -7255,9 +7255,9 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	requireT.ErrorIs(err, assetfttypes.ErrGloballyFrozen)
 
 	// Try to send Token.
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
 	// send
-	sendMsg := &banktypes.MsgSend{
+	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount:      coinsToSend,
