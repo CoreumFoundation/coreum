@@ -6377,6 +6377,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgTransferAdmin{},
 			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
 			&assetfttypes.MsgBurn{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
@@ -6531,7 +6532,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 		Subunit:       "uabcburnable",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdkmath.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(2000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_burning,
@@ -6569,6 +6570,21 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 	requireT.NoError(err)
 	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
 	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// send some coins to the new admin
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   admin.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(1000))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
 
 	// send some coins to the recipient
 	sendMsg = &banktypes.MsgSend{
@@ -7158,6 +7174,7 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgGloballyFreeze{},
 			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
 			&assetfttypes.MsgGloballyUnfreeze{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
@@ -7288,7 +7305,7 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// multi-send
+	// multi-send from original issuer that is not admin anymore
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs:  []banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
 		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
@@ -7296,6 +7313,19 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.ErrorIs(err, assetfttypes.ErrGloballyFrozen)
+
+	// multi-send
+	multiSendMsg = &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: admin.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
 		multiSendMsg,
 	)
