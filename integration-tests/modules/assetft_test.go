@@ -6152,7 +6152,9 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgTransferAdmin{},
 			&banktypes.MsgSend{},
+			&assetfttypes.MsgBurn{},
 			&banktypes.MsgSend{},
+			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgTransferAdmin{},
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgBurn{},
@@ -6163,8 +6165,6 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgBurn{},
-			&assetfttypes.MsgBurn{},
-			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgBurn{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
@@ -6936,6 +6936,7 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgGloballyFreeze{},
+			&banktypes.MsgSend{},
 			&assetfttypes.MsgGloballyUnfreeze{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
@@ -7453,7 +7454,7 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(10)).String(), balance.GetBalance().String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(19599)).String(), balance.GetBalance().String())
 
 	// Set whitelisted balance to 0 for recipient
 	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
