@@ -6970,7 +6970,9 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 		transferAdminMsg,
 	)
 
-	requireT.NoError(err) // TODO: Failed with: failed to execute message; message index: 0: only admin can transfer administration of an account: unauthorized
+	// TODO: Failed with: failed to execute message;
+	// TODO: // message index: 0: only admin can transfer administration of an account: unauthorized
+	requireT.NoError(err)
 	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
 	requireT.NoError(err)
 	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)

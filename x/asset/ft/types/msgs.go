@@ -246,13 +246,9 @@ func (m MsgFreeze) ValidateBasic() error {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	_, _, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
-	}
-
-	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	return m.Coin.Validate()
@@ -329,13 +325,9 @@ func (m MsgSetFrozen) ValidateBasic() error {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	_, _, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
-	}
-
-	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	return m.Coin.Validate()
@@ -443,13 +435,9 @@ func (m MsgSetWhitelistedLimit) ValidateBasic() error {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	_, _, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
-	}
-
-	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
 	return m.Coin.Validate()
