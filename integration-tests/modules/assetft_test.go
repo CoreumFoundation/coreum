@@ -6540,7 +6540,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 
 	res, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(admin),
+		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
@@ -7254,17 +7254,17 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	)
 	requireT.ErrorIs(err, assetfttypes.ErrGloballyFrozen)
 
-	// Try to send Token.
+	// Try to send Token as admin.
 	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
 	// send
 	sendMsg = &banktypes.MsgSend{
-		FromAddress: issuer.String(),
+		FromAddress: admin.String(),
 		ToAddress:   recipient.String(),
 		Amount:      coinsToSend,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
+		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
@@ -7669,7 +7669,7 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(19599)).String(), balance.GetBalance().String())
 
 	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: admin.String(),
+		Address: issuer.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
