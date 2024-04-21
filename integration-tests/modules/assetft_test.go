@@ -6381,7 +6381,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 	// burn tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(600))
+	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(300))
 
 	burnMsg = &assetfttypes.MsgBurn{
 		Sender: issuer.String(),
@@ -6393,7 +6393,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.NoError(err)
 
 	burnMsg = &assetfttypes.MsgBurn{
 		Sender: admin.String(),
@@ -6925,6 +6925,7 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgTransferAdmin{},
+			&banktypes.MsgSend{},
 			&assetfttypes.MsgGloballyFreeze{},
 			&banktypes.MsgSend{},
 			&banktypes.MsgMultiSend{},
@@ -6956,7 +6957,7 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 		Subunit:       "freeze",
 		Precision:     6,
 		Description:   "FREEZE Description",
-		InitialAmount: sdkmath.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(2000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 		},
@@ -6993,6 +6994,22 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
 	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
 
+	// Try to send Token as admin.
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1000)))
+	// send
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   admin.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
 	// try to Globally freeze Token as original issuer which is not admin anymore.
 	globFreezeMsg := &assetfttypes.MsgGloballyFreeze{
 		Sender: issuer.String(),
@@ -7020,9 +7037,9 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	requireT.NoError(err)
 
 	// Try to send Token as original issuer which is not admin anymore.
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
 	// send
-	sendMsg := &banktypes.MsgSend{
+	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount:      coinsToSend,
