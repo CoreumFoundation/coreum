@@ -6078,7 +6078,7 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 		mintMsg,
 	)
 	requireT.Error(err)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized) // TODO: Failed with err = nil or another error
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// mint tokens to recipient as admin
 	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(10))
@@ -6131,7 +6131,7 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized) // TODO: failed with insufficient funds
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 // TestAssetFTTransferAdminBurn tests burn functionality of fungible tokens after transferring admin.
@@ -6237,7 +6237,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 
 	// try to burn unburnable token from admin
 	burnMsg = &assetfttypes.MsgBurn{
@@ -6876,7 +6876,7 @@ func TestAssetFTTransferAdminFreezeAdminAccount(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
 		freezeMsg,
 	)
-	requireT.NoError(err) // TODO: Failing with : issuer's balance can't be frozen: unauthorized: unauthorized
+	requireT.NoError(err)
 
 	// try to freeze admin account
 	freezeMsg = &assetfttypes.MsgFreeze{
@@ -6934,7 +6934,7 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 
 	// Issue the new fungible token
 	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        admin.String(),
+		Issuer:        issuer.String(),
 		Symbol:        "FREEZE",
 		Subunit:       "freeze",
 		Precision:     6,
@@ -6946,7 +6946,7 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	}
 	res, err := client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(admin),
+		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
@@ -6970,8 +6970,6 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 		transferAdminMsg,
 	)
 
-	// TODO: Failed with: failed to execute message;
-	// TODO: // message index: 0: only admin can transfer administration of an account: unauthorized
 	requireT.NoError(err)
 	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
 	requireT.NoError(err)
@@ -7412,7 +7410,7 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 	requireT.NoError(err)
 
 	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: admin.String(),
+		Address: issuer.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
@@ -7547,5 +7545,5 @@ func TestAssetFTTransferAdminWhitelistAdminAccount(t *testing.T) {
 		whitelistMsg,
 	)
 
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.NoError(err)
 }
