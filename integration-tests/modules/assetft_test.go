@@ -6372,6 +6372,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgTransferAdmin{},
 			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
 			&assetfttypes.MsgTransferAdmin{},
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgBurn{},
@@ -6403,7 +6404,7 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 		Subunit:       "uabcnotburnable",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdkmath.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(2000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_freezing,
@@ -6441,6 +6442,21 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 	requireT.NoError(err)
 	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
 	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	// send some coins to the admin
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   admin.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(unburnable, sdkmath.NewInt(1000))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
 
 	// try to burn unburnable token from original issuer which is not admin anymore
 	burnMsg := &assetfttypes.MsgBurn{
@@ -7222,6 +7238,22 @@ func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
+	// Try to send Token as original issuer which is not admin anymore.
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
+	// send
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.ErrorIs(err, assetfttypes.ErrGloballyFrozen)
+
 	// Try to send Token.
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
 	// send
@@ -7634,7 +7666,14 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(19609)).String(), balance.GetBalance().String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(19599)).String(), balance.GetBalance().String())
+
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: admin.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1060)).String(), balance.GetBalance().String())
 
 	// Set whitelisted balance to 0 for recipient
 	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
