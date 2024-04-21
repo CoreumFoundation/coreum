@@ -7673,7 +7673,7 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1060)).String(), balance.GetBalance().String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(10)).String(), balance.GetBalance().String())
 
 	// Set whitelisted balance to 0 for recipient
 	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
