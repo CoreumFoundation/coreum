@@ -152,7 +152,7 @@ func (k Keeper) executeAssetExtension(
 	// FIXME(milad) we need to write tests in which we check
 	// 1. sending to and from smart contract.
 	// 2. calling the smart contract directly and sending from it.
-	// 3. calling smart contract directly/indireclty, in which smart contracts sends
+	// 3. calling smart contract directly/indirectly, in which smart contracts sends
 	// 	  and also receives (receive can happen by invoking another contract)
 	// 4. testing sending and receiving from smart contract that is not issuer
 	// 5. test IBC send and receives
