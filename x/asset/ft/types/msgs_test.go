@@ -551,12 +551,13 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgUnfreeze","value":{"coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgUnfreeze,
-			msg: &types.MsgUnfreeze{
-				Sender: address,
-				Coin:   coin,
+			name: types.TypeMsgSetFrozen,
+			msg: &types.MsgSetFrozen{
+				Sender:  address,
+				Account: address,
+				Coin:    coin,
 			},
-			wantAminoJSON: `{"type":"assetft/MsgUnfreeze","value":{"coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+			wantAminoJSON: `{"type":"assetft/MsgSetFrozen","value":{"account":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
 			name: types.TypeMsgGloballyFreeze,
@@ -573,14 +574,6 @@ func TestAmino(t *testing.T) {
 				Denom:  coin.Denom,
 			},
 			wantAminoJSON: `{"type":"assetft/MsgGloballyUnfreeze","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
-		},
-		{
-			name: types.TypeMsgUnfreeze,
-			msg: &types.MsgUnfreeze{
-				Sender: address,
-				Coin:   coin,
-			},
-			wantAminoJSON: `{"type":"assetft/MsgUnfreeze","value":{"coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
 			name: types.TypeMsgSetWhitelistedLimit,
