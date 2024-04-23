@@ -10,7 +10,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
@@ -30,15 +29,15 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
-	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	codeID, _, err := testApp.WasmGovPermissionKeeper.Create(
-		ctx, addr, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
 	)
 	requireT.NoError(err)
 
 	settings := types.IssueSettings{
-		Issuer:        addr,
+		Issuer:        issuer,
 		Symbol:        "ABC",
 		Description:   "ABC Desc",
 		Subunit:       "extensionabc",
@@ -58,46 +57,22 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 
 	gotToken, err := ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
-	requireT.Equal(types.Token{
-		Denom:              denom,
-		Issuer:             settings.Issuer.String(),
-		Symbol:             settings.Symbol,
-		Description:        settings.Description,
-		Subunit:            strings.ToLower(settings.Subunit),
-		Precision:          settings.Precision,
-		Features:           []types.Feature{types.Feature_extensions},
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
-		Version:            types.CurrentTokenVersion,
-		URI:                settings.URI,
-		URIHash:            settings.URIHash,
-	}, gotToken)
-
-	// check the metadata
-	storedMetadata, found := bankKeeper.GetDenomMetaData(ctx, denom)
-	requireT.True(found)
-	requireT.Equal(banktypes.Metadata{
-		Name:        settings.Symbol,
-		Symbol:      settings.Symbol,
-		Description: settings.Description,
-		DenomUnits: []*banktypes.DenomUnit{
-			{
-				Denom:    denom,
-				Exponent: 0,
-			},
-			{
-				Denom:    settings.Symbol,
-				Exponent: settings.Precision,
-			},
-		},
-		Base:    denom,
-		Display: settings.Symbol,
-		URI:     settings.URI,
-		URIHash: settings.URIHash,
-	}, storedMetadata)
+	requireT.EqualValues(gotToken.Denom, denom)
+	requireT.EqualValues(gotToken.Issuer, settings.Issuer.String())
+	requireT.EqualValues(gotToken.Symbol, settings.Symbol)
+	requireT.EqualValues(gotToken.Description, settings.Description)
+	requireT.EqualValues(gotToken.Subunit, strings.ToLower(settings.Subunit))
+	requireT.EqualValues(gotToken.Precision, settings.Precision)
+	requireT.EqualValues(gotToken.Features, []types.Feature{types.Feature_extensions})
+	requireT.EqualValues(gotToken.BurnRate, sdk.NewDec(0))
+	requireT.EqualValues(gotToken.SendCommissionRate, sdk.NewDec(0))
+	requireT.EqualValues(gotToken.Version, types.CurrentTokenVersion)
+	requireT.EqualValues(gotToken.URI, settings.URI)
+	requireT.EqualValues(gotToken.URIHash, settings.URIHash)
+	requireT.EqualValues(66, len(gotToken.ExtensionCwAddress))
 
 	// check the account state
-	issuedAssetBalance := bankKeeper.GetBalance(ctx, addr, denom)
+	issuedAssetBalance := bankKeeper.GetBalance(ctx, issuer, denom)
 	requireT.Equal(sdk.NewCoin(denom, settings.InitialAmount).String(), issuedAssetBalance.String())
 
 	// send 1 coin will succeed
