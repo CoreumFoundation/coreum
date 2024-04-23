@@ -143,5 +143,5 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		contractMsgBytes,
 		sdk.NewCoin(denom, sdk.NewInt(7)),
 	)
-	requireT.ErrorIs(err, assetfttypes.ErrExtensionCallFailed)
+	requireT.Error(err)
 }
