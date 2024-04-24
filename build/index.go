@@ -50,6 +50,8 @@ var Commands = map[string]build.Command{
 	"release/images": {Fn: coreum.ReleaseCoredImage, Description: "Releases cored docker images"},
 	"test":           {Fn: coreum.Test, Description: "Runs unit tests"},
 	"tidy":           {Fn: coreum.Tidy, Description: "Runs go mod tidy"},
-	"wasm": {Fn: coreum.CompileAllSmartContracts,
-		Description: "Builds smart contracts required by integration tests"},
+	"wasm": {
+		Fn:          coreum.CompileAllSmartContracts,
+		Description: "Builds smart contracts required by integration tests",
+	},
 }

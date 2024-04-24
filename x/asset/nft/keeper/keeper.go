@@ -5,6 +5,7 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -136,7 +137,7 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 	}
 
 	id := types.BuildClassID(settings.Symbol, settings.Issuer)
-	if err := types.ValidateData(settings.Data); err != nil {
+	if err := types.ValidateClassData(settings.Data); err != nil {
 		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
@@ -285,7 +286,7 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
-	if err := types.ValidateData(settings.Data); err != nil {
+	if err := types.ValidateNFTData(settings.Data); err != nil {
 		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
@@ -361,6 +362,74 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 	}
 
 	return nil
+}
+
+// UpdateData updates non-fungible token data.
+func (k Keeper) UpdateData(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	classID, id string,
+	itemsToUpdate []types.DataDynamicIndexedItem,
+) error {
+	if err := k.validateNFTNotFrozen(ctx, classID, id); err != nil {
+		return err
+	}
+
+	storedNFT, found := k.nftKeeper.GetNFT(ctx, classID, id)
+	if !found {
+		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, id)
+	}
+	if storedNFT.Data.TypeUrl != "/"+proto.MessageName((*types.DataDynamic)(nil)) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "nft data type %s is not updatable", storedNFT.Data.TypeUrl)
+	}
+	var dataDynamic types.DataDynamic
+	if err := dataDynamic.Unmarshal(storedNFT.Data.Value); err != nil {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "failed to unmarshal DataDynamic data")
+	}
+
+	owner := k.nftKeeper.GetOwner(ctx, classID, id)
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	if err != nil {
+		return err
+	}
+
+	// update dynamic items
+	for _, itemToUpdate := range itemsToUpdate {
+		if int(itemToUpdate.Index) > len(dataDynamic.Items)-1 {
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput, "invalid item, index %d out or range", itemToUpdate.Index,
+			)
+		}
+		storedItem := dataDynamic.Items[int(itemToUpdate.Index)]
+		if len(storedItem.Editors) == 0 {
+			return sdkerrors.Wrapf(types.ErrInvalidInput, "the item with index %d is not updatable", itemToUpdate.Index)
+		}
+		updateAllowed, err := isDataDynamicItemUpdateAllowed(sender, owner, classDefinition, storedItem)
+		if err != nil {
+			return err
+		}
+		if !updateAllowed {
+			return sdkerrors.Wrapf(
+				cosmoserrors.ErrUnauthorized,
+				"sender is not authorized to update the item with index %d",
+				itemToUpdate.Index,
+			)
+		}
+
+		dataDynamic.Items[int(itemToUpdate.Index)].Data = itemToUpdate.Data
+	}
+	data, err := codectypes.NewAnyWithValue(&dataDynamic)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrInvalidState, "failed to pack to Any type")
+	}
+	storedNFT.Data = data
+
+	// validate that final data after update is still valid
+	if err := types.ValidateNFTData(storedNFT.Data); err != nil {
+		return err
+	}
+
+	return k.nftKeeper.Update(ctx, storedNFT)
 }
 
 // Burn burns non-fungible token.
@@ -765,6 +834,30 @@ func (k Keeper) IsWhitelisted(ctx sdk.Context, classID, nftID string, account sd
 	return k.isClassWhitelisted(ctx, classID, account)
 }
 
+func isDataDynamicItemUpdateAllowed(
+	sender sdk.AccAddress,
+	owner sdk.AccAddress,
+	classDefinition types.ClassDefinition,
+	item types.DataDynamicItem,
+) (bool, error) {
+	for _, editor := range item.Editors {
+		switch editor {
+		case types.DataEditor_admin:
+			// TODO(dzmitryhil) use admin instead of issuer once the admin is introduced
+			if classDefinition.IsIssuer(sender) {
+				return true, nil
+			}
+		case types.DataEditor_owner:
+			if owner.String() == sender.String() {
+				return true, nil
+			}
+		default:
+			return false, sdkerrors.Wrapf(types.ErrInvalidState, "unsupported editor %d", editor)
+		}
+	}
+	return false, nil
+}
+
 func (k Keeper) isClassWhitelisted(ctx sdk.Context, classID string, account sdk.AccAddress) (bool, error) {
 	if !k.nftKeeper.HasClass(ctx, classID) {
 		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft class with classID:%s not found", classID)
@@ -1025,7 +1118,7 @@ func (k Keeper) SetClassWhitelisting(
 func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	// we return nil here, since we want the original tests of the nft module to pass, but they
-	// fail if we return errors for unregistered NFTs on asset. Also the original nft module
+	// fail if we return errors for unregistered NFTs on asset. Also, the original nft module
 	// does not have access to the asset module to register the NFTs
 	if types.ErrClassNotFound.Is(err) {
 		return nil
@@ -1059,6 +1152,11 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		)
 	}
 
+	return k.validateNFTNotFrozen(ctx, classID, nftID)
+}
+
+func (k Keeper) validateNFTNotFrozen(ctx sdk.Context, classID string, nftID string) error {
+	// the IsFrozen includes both class and NFT freezing check
 	isFrozen, err := k.IsFrozen(ctx, classID, nftID)
 	if err != nil {
 		if errors.Is(err, types.ErrFeatureDisabled) {
@@ -1070,19 +1168,10 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
 	}
 
-	isClassFrozen, err := k.IsClassFrozen(ctx, classID, owner)
-	if err != nil {
-		if errors.Is(err, types.ErrFeatureDisabled) {
-			return nil
-		}
-		return err
-	}
-	if isClassFrozen {
-		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is class frozen", classID, nftID)
-	}
 	return nil
 }
 
+// TODO: probably we should path naming `is` -> `validate` here and for all similar.
 func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver sdk.AccAddress) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	// we return nil here, since we want the original tests of the nft module to pass, but they

@@ -15,6 +15,7 @@ type NFTKeeper interface {
 	UpdateClass(ctx sdk.Context, class nft.Class) error
 	GetNFTsOfClass(ctx sdk.Context, classID string) []nft.NFT
 	HasClass(ctx sdk.Context, classID string) bool
+	GetNFT(ctx sdk.Context, classID, nftID string) (nft.NFT, bool)
 	HasNFT(ctx sdk.Context, classID, id string) bool
 	Mint(ctx sdk.Context, token nft.NFT, receiver sdk.AccAddress) error
 	Burn(ctx sdk.Context, classID, nftID string) error
