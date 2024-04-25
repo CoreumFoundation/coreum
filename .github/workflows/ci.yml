@@ -80,7 +80,9 @@ jobs:
           path: faucet
       - name: Checkout crust
         uses: actions/checkout@v4
+        # FIXME(dzmitryhil) update once crust is merged
         with:
+          ref: dzmitryhil/update-coreum-upgrade
           repository: CoreumFoundation/crust
           path: crust
       - name: Set up build system
@@ -105,7 +107,7 @@ jobs:
         with:
           path: |
             ~/.cache/crust
-          key: ${{ runner.os }}-crust-cache-v2
+          key: ${{ runner.os }}-crust-cache
       - name: Setup linter cache
         uses: actions/cache@v4
         if: ${{ matrix.linter-cache }}
