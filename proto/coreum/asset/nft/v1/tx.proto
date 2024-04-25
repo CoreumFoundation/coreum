@@ -84,7 +84,7 @@ message MsgUpdateData {
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
-  repeated DataDynamicIndexedItem items = 4;
+  repeated DataDynamicIndexedItem items = 4 [(gogoproto.nullable) = false];
 }
 
 // MsgBurn defines message for the Burn method.
