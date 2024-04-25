@@ -550,6 +550,7 @@ func New(
 	)
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
+	// The contract WASM keeper needs to be set later since it depends on WASM hooks.
 	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
 	app.Ics20WasmHooks = &wasmHooks
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
@@ -695,7 +696,7 @@ func New(
 		wasmOpts...,
 	)
 
-	// Hooks Middleware
+	// Set WASM keeper in WASM hooks.
 	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
 
 	// FIXME(v4): drop once we drop gov v1beta1 compatibility.
