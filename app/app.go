@@ -114,8 +114,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-
 	"github.com/CoreumFoundation/coreum/v4/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v4/app/upgrade"
 	appupgradev1 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v1"
@@ -154,7 +152,7 @@ import (
 	wbankkeeper "github.com/CoreumFoundation/coreum/v4/x/wbank/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wibctransfer"
 
-	//wibctransferkeeper "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/keeper"
+	wibctransferkeeper "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/v4/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wstaking"
@@ -281,7 +279,7 @@ type App struct {
 	ParamsKeeper          paramskeeper.Keeper
 	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	IBCHooksKeeper        ibchookskeeper.Keeper
-	TransferKeeper        ibctransferkeeper.Keeper
+	TransferKeeper        wibctransferkeeper.TransferKeeperWrapper
 	EvidenceKeeper        evidencekeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
@@ -559,7 +557,7 @@ func New(
 		app.Ics20WasmHooks,
 	)
 	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+	app.TransferKeeper = wibctransferkeeper.NewTransferKeeperWrapper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		app.GetSubspace(ibctransfertypes.ModuleName),
@@ -705,7 +703,7 @@ func New(
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
 	// Hooks Middleware
-	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
+	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper.Keeper)
 	hooksTransferModule := ibchooks.NewIBCMiddleware(&transferIBCModule, &app.HooksICS4Wrapper)
 	app.TransferStack = &hooksTransferModule
 
@@ -789,7 +787,7 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		transfer.NewAppModule(app.TransferKeeper),
+		wibctransfer.NewAppModule(app.TransferKeeper),
 		wasm.NewAppModule(
 			appCodec,
 			&app.WasmKeeper,
