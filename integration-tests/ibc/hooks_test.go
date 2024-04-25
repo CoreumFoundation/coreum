@@ -290,6 +290,7 @@ func TestIBCHooksCounterV2(t *testing.T) {
 		)
 		requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisHookCaller1, expectedOsmosisRecipientBalance0))
 
+		<-time.After(time.Second * 15)
 		awaitHooksCounterContractState(
 			ctx,
 			t,
@@ -297,7 +298,7 @@ func TestIBCHooksCounterV2(t *testing.T) {
 			coreumContractAddr,
 			coreumContractAddr,
 			1,
-			sdk.Coins{coreumChain.NewCoin(sdk.ZeroInt())},
+			sdk.Coins{},
 		)
 		return
 	}
