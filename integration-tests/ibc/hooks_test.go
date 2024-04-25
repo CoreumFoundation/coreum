@@ -202,6 +202,221 @@ func TestIBCHooksCounter(t *testing.T) {
 	)
 }
 
+func TestIBCHooksCounterV2(t *testing.T) {
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	requireT := require.New(t)
+	coreumChain := chains.Coreum
+	osmosisChain := chains.Osmosis
+
+	coreumContractAdmin := coreumChain.GenAccount()
+	coreumSender := coreumChain.GenAccount()
+
+	osmosisHookCaller1 := osmosisChain.GenAccount()
+	osmosisHookCaller2 := osmosisChain.GenAccount()
+
+	coreumChain.Faucet.FundAccounts(ctx, t,
+		integration.FundedAccount{
+			Address: coreumContractAdmin,
+			Amount:  coreumChain.NewCoin(sdkmath.NewInt(20_000_000)),
+		},
+		integration.FundedAccount{
+			Address: coreumSender,
+			Amount:  coreumChain.NewCoin(sdkmath.NewInt(20_000_000)),
+		},
+	)
+
+	osmosisChain.Faucet.FundAccounts(ctx, t,
+		integration.FundedAccount{
+			Address: osmosisHookCaller1,
+			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000_000)),
+		},
+		integration.FundedAccount{
+			Address: osmosisHookCaller2,
+			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000_000)),
+		},
+	)
+
+	// ********** Deploy contract **********
+
+	// instantiate the contract and set the initial counter state.
+	initialPayload, err := json.Marshal(ibcwasm.HooksCounterState{
+		Count: 0, // This is the initial counter value for contract admin. We don't use this value in tests.
+	})
+	requireT.NoError(err)
+
+	coreumContractAddr, _, err := coreumChain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		coreumChain.TxFactory().WithSimulateAndExecute(true),
+		coreumContractAdmin,
+		ibcwasm.IBCHooksCounter,
+		integration.InstantiateConfig{
+			Admin:      coreumContractAdmin,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "ibc_hooks_counter",
+		},
+	)
+	requireT.NoError(err)
+
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+	)
+	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
+	)
+
+	//
+
+	if true {
+		//{"ibc_callback": "osmo1contractAddr"}
+		fmt.Printf("contract address: %s\n", coreumContractAddr)
+		ibcCallbackMemo := fmt.Sprintf(`{"ibc_callback": "%s"}`, coreumContractAddr)
+		sendToOsmosisCoin0 := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
+		_, err = executeIBCTransferWithMemo(
+			ctx,
+			t,
+			coreumChain.Chain,
+			coreumSender,
+			sendToOsmosisCoin0,
+			osmosisChain.ChainContext,
+			osmosisChain.MustConvertToBech32Address(osmosisHookCaller1),
+			ibcCallbackMemo,
+		)
+		requireT.NoError(err)
+
+		expectedOsmosisRecipientBalance0 := sdk.NewCoin(
+			ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin0.Denom),
+			sendToOsmosisCoin0.Amount,
+		)
+		requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisHookCaller1, expectedOsmosisRecipientBalance0))
+
+		awaitHooksCounterContractState(
+			ctx,
+			t,
+			coreumChain,
+			coreumContractAddr,
+			coreumContractAddr,
+			1,
+			sdk.Coins{coreumChain.NewCoin(sdk.ZeroInt())},
+		)
+		return
+	}
+
+	// ********** Send funds to Osmosis **********
+
+	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
+	_, err = coreumChain.ExecuteIBCTransfer(
+		ctx, t, coreumSender, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisHookCaller1,
+	)
+	requireT.NoError(err)
+
+	expectedOsmosisRecipientBalance := sdk.NewCoin(
+		ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom),
+		sendToOsmosisCoin.Amount,
+	)
+	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisHookCaller1, expectedOsmosisRecipientBalance))
+
+	// ********** Send IBC Hook Txs **********
+
+	sendToCoreumCoin := sdk.NewCoin(
+		expectedOsmosisRecipientBalance.Denom,
+		expectedOsmosisRecipientBalance.Amount.Quo(sdk.NewInt(2)),
+	)
+
+	sendOsmosisToCoreumCoin := osmosisChain.NewCoin(sdk.NewInt(10_000))
+	expectedOsmosisOnCoreumBalance := sdk.NewCoin(
+		ConvertToIBCDenom(coreumToOsmosisChannelID, sendOsmosisToCoreumCoin.Denom),
+		sendOsmosisToCoreumCoin.Amount,
+	)
+
+	ibcHookCallerOnCoreumAddr1, err := ibchookskeeper.DeriveIntermediateSender(
+		coreumToOsmosisChannelID,
+		osmosisChain.MustConvertToBech32Address(osmosisHookCaller1),
+		coreumChain.Chain.ChainSettings.AddressPrefix)
+	requireT.NoError(err)
+
+	ibcHookCallerOnCoreumAddr2, err := ibchookskeeper.DeriveIntermediateSender(
+		coreumToOsmosisChannelID,
+		osmosisChain.MustConvertToBech32Address(osmosisHookCaller2),
+		coreumChain.Chain.ChainSettings.AddressPrefix)
+	requireT.NoError(err)
+
+	// Verify that hook caller is separate for each sender address.
+	requireT.NotEqual(ibcHookCallerOnCoreumAddr1, ibcHookCallerOnCoreumAddr2)
+
+	// Tx memo contains info to call WASM contract this info is propagated into IBC FungibleTokenPacketData,
+	// and will be used by ibc-hook middleware to build wasm.MsgExecuteContract.
+	// For more info check:
+	// https://github.com/cosmos/ibc-apps/tree/main/modules/ibc-hooks#how-do-ibc-hooks-work
+	// https://github.com/cosmos/ibc/blob/main/spec/app/ics-020-fungible-token-transfer/README.md#using-the-memo-field
+	ibcHookMemo := fmt.Sprintf(`{"wasm":{"contract": "%s", "msg":{"increment":{}}}}`, coreumContractAddr)
+	// Caller1 first iteration.
+	_, err = executeIBCTransferWithMemo(
+		ctx,
+		t,
+		osmosisChain,
+		osmosisHookCaller1,
+		sendToCoreumCoin,
+		coreumChain.ChainContext,
+		coreumContractAddr,
+		ibcHookMemo,
+	)
+	requireT.NoError(err)
+	awaitHooksCounterContractState(
+		ctx,
+		t,
+		coreumChain,
+		coreumContractAddr,
+		ibcHookCallerOnCoreumAddr1,
+		0,
+		sdk.Coins{coreumChain.NewCoin(sendToCoreumCoin.Amount)},
+	)
+
+	// Caller1 second iteration.
+	_, err = executeIBCTransferWithMemo(
+		ctx,
+		t,
+		osmosisChain,
+		osmosisHookCaller1,
+		sendToCoreumCoin,
+		coreumChain.ChainContext,
+		coreumContractAddr,
+		ibcHookMemo,
+	)
+	requireT.NoError(err)
+	awaitHooksCounterContractState(
+		ctx,
+		t,
+		coreumChain,
+		coreumContractAddr,
+		ibcHookCallerOnCoreumAddr1,
+		1,
+		sdk.Coins{coreumChain.NewCoin(sendToCoreumCoin.Amount.Add(sendToCoreumCoin.Amount))},
+	)
+
+	// Caller2 first iteration.
+	_, err = executeIBCTransferWithMemo(
+		ctx,
+		t,
+		osmosisChain,
+		osmosisHookCaller2,
+		sendOsmosisToCoreumCoin,
+		coreumChain.ChainContext,
+		coreumContractAddr,
+		ibcHookMemo,
+	)
+	requireT.NoError(err)
+	awaitHooksCounterContractState(
+		ctx,
+		t,
+		coreumChain,
+		coreumContractAddr,
+		ibcHookCallerOnCoreumAddr2,
+		0,
+		sdk.Coins{expectedOsmosisOnCoreumBalance},
+	)
+}
+
 func awaitHooksCounterContractState(
 	ctx context.Context,
 	t *testing.T,

@@ -114,6 +114,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+
 	"github.com/CoreumFoundation/coreum/v4/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v4/app/upgrade"
 	appupgradev1 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v1"
@@ -151,7 +153,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v4/x/wbank/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wibctransfer"
-	wibctransferkeeper "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/keeper"
+
+	//wibctransferkeeper "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/v4/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wstaking"
@@ -278,7 +281,7 @@ type App struct {
 	ParamsKeeper          paramskeeper.Keeper
 	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	IBCHooksKeeper        ibchookskeeper.Keeper
-	TransferKeeper        wibctransferkeeper.TransferKeeperWrapper
+	TransferKeeper        ibctransferkeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
@@ -549,11 +552,23 @@ func New(
 	)
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
+	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
+	app.Ics20WasmHooks = &wasmHooks
+	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
+		app.IBCKeeper.ChannelKeeper,
+		app.Ics20WasmHooks,
+	)
 	// Create Transfer Keepers
-	app.TransferKeeper = wibctransferkeeper.NewTransferKeeperWrapper(
-		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		app.AccountKeeper, app.BankKeeper, app.ScopedTransferKeeper,
+	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+		appCodec,
+		keys[ibctransfertypes.StoreKey],
+		app.GetSubspace(ibctransfertypes.ModuleName),
+		&app.HooksICS4Wrapper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.ScopedTransferKeeper,
 	)
 
 	app.keys[ibchookstypes.StoreKey] = storetypes.NewKVStoreKey(ibchookstypes.StoreKey)
@@ -642,7 +657,7 @@ func New(
 			app.ScopedWASMKeeper,
 			app.BankKeeper,
 			appCodec,
-			app.TransferKeeper,
+			&app.TransferKeeper,
 			wasmcustomhandler.NewCoreumMsgHandler(),
 		))),
 		wasmkeeper.WithQueryPlugins(wasmcustomhandler.NewCoreumQueryHandler(
@@ -672,7 +687,7 @@ func New(
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.ScopedWASMKeeper,
-		app.TransferKeeper,
+		&app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
@@ -682,20 +697,15 @@ func New(
 		wasmOpts...,
 	)
 
-	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, &app.WasmKeeper, ChosenNetwork.Provider.GetAddressPrefix())
-	app.Ics20WasmHooks = &wasmHooks
-	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
-		app.IBCKeeper.ChannelKeeper,
-		app.Ics20WasmHooks,
-	)
 	// Hooks Middleware
+	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
 
 	// FIXME(v4): drop once we drop gov v1beta1 compatibility.
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
 	// Hooks Middleware
-	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper.Keeper)
+	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 	hooksTransferModule := ibchooks.NewIBCMiddleware(&transferIBCModule, &app.HooksICS4Wrapper)
 	app.TransferStack = &hooksTransferModule
 
@@ -779,7 +789,7 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		wibctransfer.NewAppModule(app.TransferKeeper),
+		transfer.NewAppModule(app.TransferKeeper),
 		wasm.NewAppModule(
 			appCodec,
 			&app.WasmKeeper,
