@@ -200,6 +200,141 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	requireT.Equal(expectedClass, assetNftClassesRes.Classes[0])
 }
 
+// TestAssetNFTUpdate tests non-fungible token update.
+func TestAssetNFTUpdate(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	owner := chain.GenAccount()
+
+	nftClient := nft.NewQueryClient(chain.ClientContext)
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "symbol",
+		Name:   "name",
+		Data:   nil,
+	}
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			issueMsg,
+		},
+	})
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+
+	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
+	dataDynamic := assetnfttypes.DataDynamic{
+		Items: []assetnfttypes.DataDynamicItem{
+			{
+				Editors: []assetnfttypes.DataEditor{
+					assetnfttypes.DataEditor_owner,
+				},
+				Data: jsonData,
+			},
+		},
+	}
+	data, err := codectypes.NewAnyWithValue(&dataDynamic)
+	requireT.NoError(err)
+
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:    issuer.String(),
+		Recipient: owner.String(),
+		ID:        "id-1",
+		ClassID:   classID,
+		Data:      data,
+	}
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			mintMsg,
+		},
+	})
+
+	txRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(txRes.GasUsed, chain.GasLimitByMsgs(mintMsg))
+
+	storedNFT, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: mintMsg.ClassID,
+		Id:      mintMsg.ID,
+	})
+	requireT.NoError(err)
+
+	var storedDataDynamic assetnfttypes.DataDynamic
+	requireT.NoError(storedDataDynamic.Unmarshal(storedNFT.Nft.Data.Value))
+	requireT.Equal(dataDynamic, storedDataDynamic)
+
+	// update stored NFT
+	msgUpdateData := &assetnfttypes.MsgUpdateData{
+		Sender:  owner.String(),
+		ClassID: mintMsg.ClassID,
+		ID:      mintMsg.ID,
+		Items: []assetnfttypes.DataDynamicIndexedItem{
+			{
+				Index: 0,
+				Data:  []byte("new-data"),
+			},
+		},
+	}
+	chain.FundAccountWithOptions(ctx, t, owner, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			msgUpdateData,
+		},
+	})
+
+	txRes, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(owner),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateData)),
+		msgUpdateData,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(txRes.GasUsed, chain.GasLimitByMsgs(msgUpdateData))
+
+	storedNFT, err = nftClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: mintMsg.ClassID,
+		Id:      mintMsg.ID,
+	})
+	requireT.NoError(err)
+
+	var updatedDataDynamic assetnfttypes.DataDynamic
+	requireT.NoError(updatedDataDynamic.Unmarshal(storedNFT.Nft.Data.Value))
+	requireT.Equal(string(msgUpdateData.Items[0].Data), string(updatedDataDynamic.Items[0].Data))
+
+	// try to update from issuer
+	msgUpdateData.Sender = issuer.String()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			msgUpdateData,
+		},
+	})
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateData)),
+		msgUpdateData,
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
 // TestAssetNFTIssueClassInvalidFeatures tests non-fungible token class creation with invalid features.
 func TestAssetNFTIssueClassInvalidFeatures(t *testing.T) {
 	requireT := require.New(t)
