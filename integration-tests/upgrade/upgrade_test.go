@@ -321,6 +321,7 @@ func runLegacyUpgrade(
 	// The new binary isn't equal to initial
 	infoAfterRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
+	requireT.NotEmpty(infoAfterRes.GetApplicationVersion().Version)
 	t.Logf("New binary version: %s", infoAfterRes.ApplicationVersion.Version)
 	assert.NotEqual(t, infoAfterRes.ApplicationVersion.Version, infoBeforeRes.ApplicationVersion.Version)
 }
