@@ -15,12 +15,31 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Mint {
+    // Uses the deprecated wasm_handler
+    MintLegacy {
         id: String,
         uri: Option<String>,
         uri_hash: Option<String>,
         data: Option<Binary>,
         recipient: Option<String>,
+    },
+    MintMutable {
+        id: String,
+        uri: Option<String>,
+        uri_hash: Option<String>,
+        data: Option<Binary>,
+        recipient: Option<String>,
+    },
+    MintImmutable {
+        id: String,
+        uri: Option<String>,
+        uri_hash: Option<String>,
+        data: Option<Binary>,
+        recipient: Option<String>,
+    },
+    ModifyData {
+        id: String,
+        data: Binary,
     },
     Burn {
         id: String,
