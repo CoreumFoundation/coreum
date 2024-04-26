@@ -1,7 +1,10 @@
 package cli_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -9,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/nft"
-	cosmoscli "github.com/cosmos/cosmos-sdk/x/nft/client/cli"
+	nftcli "github.com/cosmos/cosmos-sdk/x/nft/client/cli"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -154,8 +157,138 @@ func TestCmdMintToRecipient(t *testing.T) {
 
 	var resp nft.QueryOwnerResponse
 	args = []string{classID, nftID}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscli.GetCmdQueryOwner(), args, &resp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryOwner(), args, &resp))
 	requireT.Equal(recipient.String(), resp.Owner)
+}
+
+func TestCmdMintDataDynamic(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+
+	classID := issueClass(
+		t,
+		ctx,
+		symbol,
+		"name",
+		"description",
+		"",
+		"",
+		testNetwork,
+		"0.0",
+	)
+
+	items := []types.DataDynamicItem{
+		{
+			Editors: nil,
+			Data:    []byte("my-data"),
+		},
+	}
+	data, err := json.Marshal(items)
+	require.NoError(t, err)
+
+	dataFile := filepath.Join(t.TempDir(), "data")
+	require.NoError(t, os.WriteFile(dataFile, data, 0o600))
+
+	args := []string{
+		classID,
+		nftID,
+		fmt.Sprintf("--%s=%s", cli.DataFileFlag, dataFile),
+		fmt.Sprintf("--%s=%s", cli.DataTypeFlag, cli.DataTypeDynamic),
+	}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
+	requireT.NoError(err)
+
+	// query stored
+
+	var nftRes nft.QueryNFTResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
+
+	var gotDataDynamic types.DataDynamic
+	requireT.NoError(gotDataDynamic.Unmarshal(nftRes.Nft.Data.Value))
+	requireT.Equal(items, gotDataDynamic.Items)
+}
+
+func TestCmdUpdateData(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+
+	classID := issueClass(
+		t,
+		ctx,
+		symbol,
+		"name",
+		"description",
+		"",
+		"",
+		testNetwork,
+		"0.0",
+	)
+
+	dataDynamicItems := []types.DataDynamicItem{
+		{
+			Editors: []types.DataEditor{
+				types.DataEditor_admin,
+				types.DataEditor_owner,
+			},
+			Data: []byte("initial-data"),
+		},
+	}
+	dataDynamic, err := json.Marshal(dataDynamicItems)
+	require.NoError(t, err)
+
+	initialDataFile := filepath.Join(t.TempDir(), "initial-data")
+	require.NoError(t, os.WriteFile(initialDataFile, dataDynamic, 0o600))
+
+	args := []string{
+		classID,
+		nftID,
+		fmt.Sprintf("--%s=%s", cli.DataFileFlag, initialDataFile),
+		fmt.Sprintf("--%s=%s", cli.DataTypeFlag, cli.DataTypeDynamic),
+	}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
+	requireT.NoError(err)
+
+	// update the data
+
+	dataDynamicIndexedItems := []types.DataDynamicIndexedItem{
+		{
+			Index: 0,
+			Data:  []byte("new-data"),
+		},
+	}
+	dataToUpdate, err := json.Marshal(dataDynamicIndexedItems)
+	require.NoError(t, err)
+
+	updateDataFile := filepath.Join(t.TempDir(), "update")
+	require.NoError(t, os.WriteFile(updateDataFile, dataToUpdate, 0o600))
+
+	args = []string{
+		classID,
+		nftID,
+		fmt.Sprintf("--%s=%s", cli.DataFileFlag, updateDataFile),
+	}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpdateData(), args)
+	requireT.NoError(err)
+
+	// query stored
+
+	var nftRes nft.QueryNFTResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
+
+	var gotDataDynamic types.DataDynamic
+	requireT.NoError(gotDataDynamic.Unmarshal(nftRes.Nft.Data.Value))
+	requireT.Equal(string(dataDynamicIndexedItems[0].Data), string(gotDataDynamic.Items[0].Data))
 }
 
 func TestCmdFreeze(t *testing.T) {

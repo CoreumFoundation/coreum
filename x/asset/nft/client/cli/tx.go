@@ -31,6 +31,10 @@ const (
 	URIFlag         = "uri"
 	URIHashFlag     = "uri_hash"
 	DataFileFlag    = "data-file"
+	DataTypeFlag    = "data-type"
+	// data types.
+	DataTypeBytes   = "bytes"
+	DataTypeDynamic = "dynamic"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -46,6 +50,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdTxIssueClass(),
 		CmdTxMint(),
+		CmdTxUpdateData(),
 		CmdTxBurn(),
 		CmdTxFreeze(),
 		CmdTxUnfreeze(),
@@ -126,7 +131,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 				return errors.WithStack(err)
 			}
 
-			data, err := getDataFromFile(cmd)
+			data, err := getProtoDataFromFile(cmd)
 			if err != nil {
 				return err
 			}
@@ -166,17 +171,19 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 // CmdTxMint returns Mint cobra command.
 func CmdTxMint() *cobra.Command {
 	cmd := &cobra.Command{
-		//nolint:lll // breaking this down will make it look worse when printed to user screen.
-		Use:   "mint [class-id] [id] --from [sender] --uri https://my-token-meta.invalid/1 --uri_hash e000624 --data-file [path]",
+		Use: fmt.Sprintf(
+			"mint [class-id] [id] --%s [sender] --%s https://my-token-meta.invalid/1 --%s e000624 --%s [path] --%s bytes",
+			flags.FlagFrom, URIFlag, URIHashFlag, DataFileFlag, DataTypeFlag,
+		),
 		Args:  cobra.ExactArgs(2),
 		Short: "Mint new non-fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Mint new non-fungible token.
 
 Example:
-$ %s tx %s mint abc-%s id1 --from [sender] --data-file [path]
+$ %s tx %s mint abc-%s id1 --%s [sender] --%s [path]
 `,
-				version.AppName, types.ModuleName, constant.AddressSampleTest,
+				version.AppName, types.ModuleName, constant.AddressSampleTest, flags.FlagFrom, DataFileFlag,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -204,7 +211,7 @@ $ %s tx %s mint abc-%s id1 --from [sender] --data-file [path]
 				return errors.WithStack(err)
 			}
 
-			data, err := getDataFromFile(cmd)
+			data, err := getProtoDataFromFile(cmd)
 			if err != nil {
 				return err
 			}
@@ -228,6 +235,65 @@ $ %s tx %s mint abc-%s id1 --from [sender] --data-file [path]
 	cmd.Flags().String(RecipientFlag, "", "Address to send minted token to, if not specified minted token is sent to the class issuer")
 	cmd.Flags().String(URIFlag, "", "NFT URI.")
 	cmd.Flags().String(URIHashFlag, "", "NFT URI hash.")
+	cmd.Flags().String(DataFileFlag, "", "path to the file containing data.")
+	cmd.Flags().String(
+		DataTypeFlag,
+		DataTypeBytes,
+		fmt.Sprintf("type of data in the file %v.", []string{DataTypeBytes, DataTypeDynamic}),
+	)
+
+	return cmd
+}
+
+// CmdTxUpdateData returns update NFT data cobra command.
+func CmdTxUpdateData() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: fmt.Sprintf(
+			"update-data [class-id] [id] --%s [sender] --%s [path]", flags.FlagFrom, DataFileFlag,
+		),
+		Args:  cobra.ExactArgs(2),
+		Short: "Update non-fungible token data",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Update non-fungible token data.
+
+Example:
+$ %s tx %s update-data abc-%s id1 --%s [sender] --%s [path]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest, flags.FlagFrom, DataFileFlag,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			sender := clientCtx.GetFromAddress()
+
+			classID := args[0]
+			ID := args[1]
+
+			data, err := readDataFromFile(cmd)
+			if err != nil {
+				return err
+			}
+
+			var dataDynamicIndexedItems []types.DataDynamicIndexedItem
+			if err := json.Unmarshal(data, &dataDynamicIndexedItems); err != nil {
+				return errors.Wrapf(err, "failed to unmarshal data to []types.DataDynamicIndexedItem type")
+			}
+
+			msg := &types.MsgUpdateData{
+				Sender:  sender.String(),
+				ClassID: classID,
+				ID:      ID,
+				Items:   dataDynamicIndexedItems,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().String(DataFileFlag, "", "path to the file containing data.")
 
 	return cmd
@@ -681,9 +747,51 @@ func getExpireTime(cmd *cobra.Command) (*time.Time, error) {
 	return &e, nil
 }
 
-func getDataFromFile(cmd *cobra.Command) (*codectypes.Any, error) {
+func getProtoDataFromFile(cmd *cobra.Command) (*codectypes.Any, error) {
+	data, err := readDataFromFile(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if data == nil {
+		return nil, nil //nolint:nilnil //returns nil if data flag wasn't set
+	}
+
+	// the bytes type is default and common for both class and NFT
+	dataType := DataTypeBytes
+	// if the custom data type is supported
+	if cmd.Flags().Lookup(DataTypeFlag) != nil {
+		dataType, err = cmd.Flags().GetString(DataTypeFlag)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	var dataAny *codectypes.Any
+	switch dataType {
+	case DataTypeBytes:
+		dataAny, err = codectypes.NewAnyWithValue(&types.DataBytes{Data: data})
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	case DataTypeDynamic:
+		var dataDynamicItems []types.DataDynamicItem
+		if err := json.Unmarshal(data, &dataDynamicItems); err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal data to []types.DataDynamicItem type")
+		}
+		dataAny, err = codectypes.NewAnyWithValue(&types.DataDynamic{Items: dataDynamicItems})
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	default:
+		return nil, errors.Errorf("unsupported data type %s", dataType)
+	}
+
+	return dataAny, nil
+}
+
+func readDataFromFile(cmd *cobra.Command) ([]byte, error) {
 	if !cmd.Flags().Changed(DataFileFlag) {
-		return nil, nil //nolint:nilnil
+		return nil, nil
 	}
 
 	dataFilePath, err := cmd.Flags().GetString(DataFileFlag)
@@ -695,11 +803,5 @@ func getDataFromFile(cmd *cobra.Command) (*codectypes.Any, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
-	dataAny, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: data})
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return dataAny, nil
+	return data, nil
 }

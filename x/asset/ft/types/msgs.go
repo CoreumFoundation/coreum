@@ -19,6 +19,7 @@ const (
 	TypeMsgBurn                = "burn"
 	TypeMsgFreeze              = "freeze"
 	TypeMsgUnfreeze            = "unfreeze"
+	TypeMsgSetFrozen           = "set-frozen"
 	TypeMsgGloballyFreeze      = "globally-freeze"
 	TypeMsgGloballyUnfreeze    = "globally-unfreeze"
 	TypeMsgSetWhitelistedLimit = "set-whitelisted-limit"
@@ -357,7 +358,7 @@ func (m MsgSetFrozen) Route() string {
 
 // Type returns message type for LegacyMsg.
 func (m MsgSetFrozen) Type() string {
-	return TypeMsgFreeze
+	return TypeMsgSetFrozen
 }
 
 // ValidateBasic checks that message fields are valid.
