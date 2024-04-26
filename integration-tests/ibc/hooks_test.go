@@ -256,6 +256,7 @@ func TestIBCHooksCounterWASMCallback(t *testing.T) {
 	)
 
 	// Sudo IBCAck or IBCTimeout message will be sent to the contract specified in memo.
+	// For more details check: https://github.com/cosmos/ibc-apps/blob/main/modules/ibc-hooks/wasm_hook.go#L228
 	ibcCallbackMemo := fmt.Sprintf(`{"ibc_callback": "%s"}`, coreumContractAddr)
 	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
 	_, err = executeIBCTransferWithMemo(

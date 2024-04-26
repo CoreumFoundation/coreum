@@ -161,7 +161,7 @@ pub mod sudo {
 }
 
 pub fn naive_add_coins(lhs: &Vec<Coin>, rhs: &Vec<Coin>) -> Vec<Coin> {
-    // This is a naive, inneficient  implementation of Vec<Coin> addition.
+    // This is a naive, inefficient implementation of Vec<Coin> addition.
     // This shouldn't be used in production but serves our purpose for this
     // testing contract
     let mut coins: HashMap<String, Uint128> = HashMap::new();
