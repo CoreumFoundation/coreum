@@ -4,4 +4,3 @@ vendor
 /coverage
 /bin
 *.iml
-go.work*
