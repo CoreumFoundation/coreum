@@ -2164,7 +2164,7 @@ func TestAssetFTClawback(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 }
 
-// TestAssetFTClawbackSmartContract verifies that this is possible to clawback token from smart contract
+// TestAssetFTClawbackSmartContract verifies that this is possible to clawback token from smart contract.
 func TestAssetFTClawbackSmartContract(t *testing.T) {
 	t.Parallel()
 
@@ -2179,7 +2179,7 @@ func TestAssetFTClawbackSmartContract(t *testing.T) {
 
 	clientCtx := chain.ClientContext
 
-	// Issue a fungible token which cannot be sent to the smart contract
+	// Issue a fungible token which can be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
@@ -2248,8 +2248,7 @@ func TestAssetFTClawbackSmartContract(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
 		clawbackMsg,
 	)
-	requireT.Error(err)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.NoError(err)
 }
 
 // TestAssetFTFreezeUnfreezable checks freeze functionality on unfreezable fungible tokens.
