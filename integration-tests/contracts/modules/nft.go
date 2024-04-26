@@ -32,8 +32,6 @@ type NftMintRequest struct {
 }
 
 // NftModifyDataRequest is used to modify data of mutable NFTs.
-//
-//nolint:tagliatelle
 type NftModifyDataRequest struct {
 	ID   string `json:"id"`
 	Data string `json:"data"`

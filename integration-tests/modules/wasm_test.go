@@ -32,7 +32,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/v4/x/deterministicgas/types"
 )
@@ -1738,11 +1737,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.Equal(nftOwner.Owner, mintRecipient.String())
 
 	// Check the data of the mutable NFT
-	dataBytes, err = codectypes.NewAnyWithValue(&types.DataDynamic{Items: []types.DataDynamicItem{{
+	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataDynamic{Items: []assetnfttypes.DataDynamicItem{{
 		// both admin and owner
-		Editors: []types.DataEditor{
-			types.DataEditor_admin,
-			types.DataEditor_owner,
+		Editors: []assetnfttypes.DataEditor{
+			assetnfttypes.DataEditor_admin,
+			assetnfttypes.DataEditor_owner,
 		},
 		Data: []byte("mutable_data"),
 	}}})
@@ -1771,11 +1770,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, modifyDataPayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	dataBytes, err = codectypes.NewAnyWithValue(&types.DataDynamic{Items: []types.DataDynamicItem{{
+	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataDynamic{Items: []assetnfttypes.DataDynamicItem{{
 		// both admin and owner
-		Editors: []types.DataEditor{
-			types.DataEditor_admin,
-			types.DataEditor_owner,
+		Editors: []assetnfttypes.DataEditor{
+			assetnfttypes.DataEditor_admin,
+			assetnfttypes.DataEditor_owner,
 		},
 		Data: []byte("edited_data_by_admin"),
 	}}})
@@ -1820,11 +1819,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	dataBytes, err = codectypes.NewAnyWithValue(&types.DataDynamic{Items: []types.DataDynamicItem{{
+	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataDynamic{Items: []assetnfttypes.DataDynamicItem{{
 		// both admin and owner
-		Editors: []types.DataEditor{
-			types.DataEditor_admin,
-			types.DataEditor_owner,
+		Editors: []assetnfttypes.DataEditor{
+			assetnfttypes.DataEditor_admin,
+			assetnfttypes.DataEditor_owner,
 		},
 		Data: []byte("edited_data_by_owner"),
 	}}})
