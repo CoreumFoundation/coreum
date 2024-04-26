@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -283,7 +284,6 @@ func TestIBCHooksCounterWASMCallback(t *testing.T) {
 	)
 	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisHookCaller1, expectedOsmosisRecipientBalance0))
 
-	<-time.After(time.Second * 15)
 	awaitHooksCounterContractState(
 		ctx,
 		t,
@@ -319,7 +319,12 @@ func awaitHooksCounterContractState(
 		})
 		require.NoError(t, err)
 		queryCountOut, err := coreumChain.Wasm.QueryWASMContract(ctx, contractAddr, getCountPayload)
-		require.NoError(t, err)
+		if err != nil {
+			if strings.Contains(err.Error(), "counter::state::Counter not found") {
+				return retry.Retryable(errors.New("counter is still not found for address: " + callerAddr))
+			}
+			require.NoError(t, err)
+		}
 
 		var countResponse ibcwasm.HooksCounterState
 		require.NoError(t, json.Unmarshal(queryCountOut, &countResponse))
@@ -338,7 +343,13 @@ func awaitHooksCounterContractState(
 		})
 		require.NoError(t, err)
 		queryTotalFundsOut, err := coreumChain.Wasm.QueryWASMContract(ctx, contractAddr, getTotalFundsPayload)
-		require.NoError(t, err)
+		if err != nil {
+			if strings.Contains(err.Error(), "counter::state::Counter not found") {
+				return retry.Retryable(errors.New("counter is still not found for address: " + callerAddr))
+			}
+			require.NoError(t, err)
+		}
+
 		var totalFundsResponse ibcwasm.HooksTotalFundsState
 		require.NoError(t, json.Unmarshal(queryTotalFundsOut, &totalFundsResponse))
 		if !totalFundsResponse.TotalFunds.IsEqual(expectedFunds) {

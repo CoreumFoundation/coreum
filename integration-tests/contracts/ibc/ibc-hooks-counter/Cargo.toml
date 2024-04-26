@@ -1,5 +1,5 @@
 [package]
-name = "counter"
+name = "ibc-hooks-counter"
 description = "Cosmwasm counter dapp, with permissions for testing Osmosis wasmhooks"
 version = "0.1.0"
 authors = ["osmosis contributors"]
