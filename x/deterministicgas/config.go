@@ -40,8 +40,7 @@ const (
 	AuthzExecOverhead             = 1500
 	NFTIssueClassBaseGas          = 16_000
 	NFTMintBaseGas                = 39_000
-	// FIXME update to correct value.
-	NFTUpdateBaseGas = 39_000
+	NFTUpdateBaseGas              = 40_000
 )
 
 type (
@@ -372,10 +371,7 @@ func dataGasFunc(constGas uint64) gasByMsgFunc {
 		case *assetnfttypes.MsgMint:
 			dataLen = len(m.Data.GetValue())
 		case *assetnfttypes.MsgUpdateData:
-			dataLen = lo.Reduce(m.Items, func(agg int, item *assetnfttypes.DataDynamicIndexedItem, _ int) int {
-				if item == nil {
-					return agg
-				}
+			dataLen = lo.Reduce(m.Items, func(agg int, item assetnfttypes.DataDynamicIndexedItem, _ int) int {
 				return agg + len(item.Data)
 			}, 0)
 		default:
