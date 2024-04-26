@@ -80,9 +80,7 @@ jobs:
           path: faucet
       - name: Checkout crust
         uses: actions/checkout@v4
-        # FIXME(dzmitryhil) update once crust is merged
         with:
-          ref: dzmitryhil/update-coreum-upgrade
           repository: CoreumFoundation/crust
           path: crust
       - name: Set up build system
