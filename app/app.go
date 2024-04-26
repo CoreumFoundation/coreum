@@ -712,7 +712,7 @@ func New(
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(
 		ibctransfertypes.ModuleName,
-		app.TransferStack,
+		wibctransfer.NewPurposeMiddleware(app.TransferStack),
 	).AddRoute(
 		wasmtypes.ModuleName,
 		wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper),
