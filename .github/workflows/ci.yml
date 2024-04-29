@@ -111,7 +111,7 @@ jobs:
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-linter-cache-v3-${{ steps.goversion.outputs.GO_VERSION }}
+          key: ${{ runner.os }}-linter-cache-2-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Get Date
         id: get-year-week
         run: |
