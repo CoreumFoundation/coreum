@@ -47,6 +47,8 @@ service Msg {
 
   // TransferAdmin changes admin of a fungible token.
   rpc TransferAdmin(MsgTransferAdmin) returns (EmptyResponse);
+  // DropAdmin drops admin of a fungible token.
+  rpc DropAdmin(MsgDropAdmin) returns (EmptyResponse);
 
   // TokenUpgradeV1 upgrades token to version V1.
   rpc UpgradeTokenV1(MsgUpgradeTokenV1) returns (EmptyResponse);
@@ -156,6 +158,11 @@ message MsgTransferAdmin {
   string sender = 1;
   string account = 2;
   string denom = 3;
+}
+
+message MsgDropAdmin {
+  string sender = 1;
+  string denom = 2;
 }
 
 // MsgUpgradeTokenV1 is the message upgrading token to V1.
