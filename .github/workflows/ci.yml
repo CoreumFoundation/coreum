@@ -51,7 +51,7 @@ jobs:
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: |
               coreum-builder wasm build images
-              crust znet start --cored-version=v3.0.2 --profiles=3cored,ibc --timeout-commit 1s
+              crust znet start --cored-version=v3.0.3 --profiles=3cored,ibc --timeout-commit 1s
               coreum-builder integration-tests-unsafe/upgrade integration-tests-unsafe/ibc integration-tests-unsafe/modules
             linter-cache: false
             codecov: false
