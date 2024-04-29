@@ -1068,9 +1068,8 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	// TODO: Make sure that it is going to work with the PR for separation of admin and issuer
-	if def.IsIssuer(addr) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be clawed back")
+	if def.IsAdmin(addr) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be clawed back")
 	}
 
 	if _, isModuleAccount := k.accountKeeper.GetAccount(ctx, addr).(*authtypes.ModuleAccount); isModuleAccount {
