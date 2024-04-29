@@ -7854,3 +7854,122 @@ func TestAssetFTTransferAdminWhitelistAdminAccount(t *testing.T) {
 
 	requireT.NoError(err)
 }
+
+// TestAssetFTDropAdmin checks drop admin functionality of fungible tokens.
+func TestAssetFTDropAdmin(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	clientCtx := chain.ClientContext
+
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgDropAdmin{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgUnfreeze{},
+			&assetfttypes.MsgUnfreeze{},
+			&assetfttypes.MsgUnfreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+	})
+
+	// Issue the new fungible token
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdkmath.NewInt(1000)),
+		),
+	}
+
+	msgList := []sdk.Msg{
+		msg, msgSend,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	denom := fungibleTokenIssuedEvts[0].Denom
+
+	// drop admin
+	dropAdminMsg := &assetfttypes.MsgDropAdmin{
+		Sender: issuer.String(),
+		Denom:  denom,
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(dropAdminMsg)),
+		dropAdminMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(dropAdminMsg))
+
+	fungibleTokenDropAdminEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminDropped](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventAdminDropped{
+		Denom:         denom,
+		PreviousAdmin: issuer.String(),
+	}, fungibleTokenDropAdminEvts[0])
+
+	// query token admin
+	token, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.Empty(token.Token.Admin)
+
+	// try to pass issuer signature which is not admin anymore to freeze msg
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.Error(err)
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+}
