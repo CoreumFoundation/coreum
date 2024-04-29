@@ -670,6 +670,37 @@ func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, deno
 	return nil
 }
 
+// DropAdmin drops admin of a fungible token.
+func (k Keeper) DropAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
+	def, err := k.GetDefinition(ctx, denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
+	}
+
+	if !def.IsAdmin(sender) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can drop administration of an account")
+	}
+
+	previousAdmin := def.Admin
+
+	subunit, issuer, err := types.DeconstructDenom(denom)
+	if err != nil {
+		return err
+	}
+
+	def.Admin = ""
+	k.SetDefinition(ctx, issuer, subunit, def)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminDropped{
+		Denom:         denom,
+		PreviousAdmin: previousAdmin,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventFrozenAmountChanged event: %s", err)
+	}
+
+	return nil
+}
+
 func (k Keeper) mintIfReceivable(
 	ctx sdk.Context,
 	def types.Definition,

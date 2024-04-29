@@ -2597,3 +2597,48 @@ func TestKeeper_TransferAdmin_AllInOne(t *testing.T) {
 		})
 	requireT.NoError(err)
 }
+
+func TestKeeper_DropAdmin(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        admin,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	// try to drop admin of non-existent denom
+	nonExistentDenom := types.BuildDenom("nonexist", admin)
+	err = ftKeeper.DropAdmin(ctx, admin, nonExistentDenom)
+	requireT.ErrorIs(err, types.ErrTokenNotFound)
+
+	// try to drop admin from non admin address
+	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.DropAdmin(ctx, randomAddr, denom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// drop admin, query admin of definition
+	err = ftKeeper.DropAdmin(ctx, admin, denom)
+	requireT.NoError(err)
+	def, err := ftKeeper.GetDefinition(ctx, denom)
+	requireT.NoError(err)
+	requireT.Empty(def.Admin)
+
+	// try to drop from the previous admin which is not admin anymore
+	err = ftKeeper.DropAdmin(ctx, admin, denom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
