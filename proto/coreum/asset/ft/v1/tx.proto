@@ -38,6 +38,10 @@ service Msg {
   // This operation is idempotent so global unfreezing of non-frozen token does nothing.
   rpc GloballyUnfreeze(MsgGloballyUnfreeze) returns (EmptyResponse);
 
+  // Clawback confiscates a part of fungible tokens from an account
+  // to the issuer, only if the clawback feature is enabled on that token.
+  rpc Clawback(MsgClawback) returns (EmptyResponse);
+
   // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
   rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
 
@@ -114,6 +118,12 @@ message MsgGloballyFreeze {
 message MsgGloballyUnfreeze {
   string sender = 1;
   string denom = 2;
+}
+
+message MsgClawback {
+  string sender = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgSetWhitelistedLimit {

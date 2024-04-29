@@ -14,6 +14,7 @@ enum Feature {
   whitelisting = 3;
   ibc = 4;
   block_smart_contracts = 5;
+  clawback = 6;
 }
 
 // Definition defines the fungible token settings to store.
