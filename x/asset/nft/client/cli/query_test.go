@@ -141,7 +141,7 @@ func mint(
 func issueClass(
 	t *testing.T,
 	ctx client.Context,
-	symbol, name, description, uri, uriHash string, //nolint:unparam
+	symbol, name, description, uri, uriHash string,
 	testNetwork *network.Network,
 	royaltyRate string,
 	features ...types.ClassFeature,

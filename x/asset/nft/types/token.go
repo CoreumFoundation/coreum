@@ -114,14 +114,36 @@ func ValidateTokenID(id string) error {
 	return nil
 }
 
-// ValidateData checks the provided data field is valid for NFT class or token.
-func ValidateData(data *codectypes.Any) error {
+// ValidateClassData checks the provided class data field is valid for NFT class.
+func ValidateClassData(data *codectypes.Any) error {
 	if data != nil {
 		if len(data.Value) > MaxDataSize {
 			return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", MaxDataSize)
 		}
 		if data.TypeUrl != "/"+proto.MessageName((*DataBytes)(nil)) {
 			return sdkerrors.Wrapf(ErrInvalidInput, "data field must contain %s type", proto.MessageName((*DataBytes)(nil)))
+		}
+	}
+
+	return nil
+}
+
+// ValidateNFTData checks the provided data field is valid for NFT token.
+func ValidateNFTData(data *codectypes.Any) error {
+	if data != nil {
+		if len(data.Value) > MaxDataSize {
+			return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", MaxDataSize)
+		}
+		switch data.TypeUrl {
+		case "/" + proto.MessageName((*DataBytes)(nil)):
+			// no default validation of the data
+		case "/" + proto.MessageName((*DataDynamic)(nil)):
+			if err := validateDynamicData(data); err != nil {
+				return err
+			}
+		default:
+			return sdkerrors.Wrapf(ErrInvalidInput, "data field must contain %s or %s type",
+				proto.MessageName((*DataBytes)(nil)), proto.MessageName((*DataDynamic)(nil)))
 		}
 	}
 
@@ -177,4 +199,30 @@ func (nftd ClassDefinition) IsFeatureEnabled(feature ClassFeature) bool {
 // IsIssuer returns true if the addr is the issuer.
 func (nftd ClassDefinition) IsIssuer(addr sdk.Address) bool {
 	return nftd.Issuer == addr.String()
+}
+
+func validateDynamicData(data *codectypes.Any) error {
+	var dataDynamic DataDynamic
+	if err := dataDynamic.Unmarshal(data.Value); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, "failed to unmarshal data to DataDynamic")
+	}
+	if len(dataDynamic.Items) == 0 {
+		return sdkerrors.Wrap(ErrInvalidInput, "empty items list")
+	}
+
+	for i, item := range dataDynamic.Items {
+		usedEditors := make(map[DataEditor]struct{}, 0)
+		for _, editor := range item.Editors {
+			_, exists := DataEditor_name[int32(editor)]
+			if !exists {
+				return sdkerrors.Wrapf(ErrInvalidInput, "non-existing data editor provided: %d", editor)
+			}
+			if _, found := usedEditors[editor]; found {
+				return sdkerrors.Wrapf(ErrInvalidInput, "duplicated dynamic data editor, item %d", i)
+			}
+			usedEditors[editor] = struct{}{}
+		}
+	}
+
+	return nil
 }

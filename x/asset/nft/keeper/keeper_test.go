@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"bytes"
 	"sort"
 	"strings"
 	"testing"
@@ -9,10 +10,12 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
@@ -224,6 +227,267 @@ func TestKeeper_Mint(t *testing.T) {
 	settings.Sender = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = nftKeeper.Mint(ctx, settings)
 	requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
+}
+
+func TestKeeper_UpdateData(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+
+	nftKeeper := testApp.AssetNFTKeeper
+
+	dataDynamic := types.DataDynamic{
+		Items: []types.DataDynamicItem{
+			{
+				Editors: []types.DataEditor{
+					types.DataEditor_admin,
+				},
+				Data: []byte(uuid.NewString()),
+			},
+			{
+				Editors: []types.DataEditor{
+					types.DataEditor_owner,
+				},
+				Data: []byte(uuid.NewString()),
+			},
+			{
+				Editors: []types.DataEditor{
+					types.DataEditor_admin,
+					types.DataEditor_owner,
+				},
+				Data: []byte(uuid.NewString()),
+			},
+			{
+				Editors: nil,
+				Data:    []byte(uuid.NewString()),
+			},
+		},
+	}
+
+	tests := []struct {
+		name          string
+		itemsToUpdate []types.DataDynamicIndexedItem
+		senderAddress func(issuer, admin sdk.AccAddress) sdk.AccAddress
+		isClassFrozen bool
+		isNFTFrozen   bool
+		wantErr       error
+		errorContains string
+	}{
+		{
+			name: "positive_admin_update",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 0,
+					Data:  []byte(uuid.NewString()),
+				},
+				{
+					Index: 2,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return admin
+			},
+		},
+		{
+			name: "positive_owner_update",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 1,
+					Data:  []byte(uuid.NewString()),
+				},
+				{
+					Index: 2,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return owner
+			},
+		},
+		{
+			name: "negative_frozen_nft",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 0,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return owner
+			},
+			isNFTFrozen:   true,
+			wantErr:       cosmoserrors.ErrUnauthorized,
+			errorContains: "frozen",
+		},
+		{
+			name: "negative_frozen_class",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 0,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return owner
+			},
+			isClassFrozen: true,
+			wantErr:       cosmoserrors.ErrUnauthorized,
+			errorContains: "frozen",
+		},
+		{
+			name: "negative_update_of_not_updatable_item",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 3,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return admin
+			},
+			wantErr:       types.ErrInvalidInput,
+			errorContains: "not updatable",
+		},
+		{
+			name: "negative_owner_update_prohibited_item",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 0,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return owner
+			},
+			wantErr:       cosmoserrors.ErrUnauthorized,
+			errorContains: "sender is not authorized to update the item",
+		},
+		{
+			name: "negative_admin_update_prohibited_item",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 1,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return admin
+			},
+			wantErr:       cosmoserrors.ErrUnauthorized,
+			errorContains: "sender is not authorized to update the item",
+		},
+		{
+			name: "negative_random_acc_update_prohibited_item",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 0,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+			},
+			wantErr:       cosmoserrors.ErrUnauthorized,
+			errorContains: "sender is not authorized to update the item",
+		},
+		{
+			name: "negative_out_of_range",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 4,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return admin
+			},
+			wantErr:       types.ErrInvalidInput,
+			errorContains: "out or range",
+		},
+		{
+			name: "negative_data_size_greater_than_max",
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 0,
+					Data:  bytes.Repeat([]byte{0x01}, types.MaxDataSize+1),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return admin
+			},
+			wantErr:       types.ErrInvalidInput,
+			errorContains: "invalid data",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+			owner := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+			classSettings := types.IssueClassSettings{
+				Issuer: issuer,
+				Symbol: "symbol",
+			}
+			if tt.isClassFrozen || tt.isNFTFrozen {
+				classSettings.Features = []types.ClassFeature{
+					types.ClassFeature_freezing,
+				}
+			}
+
+			classID, err := nftKeeper.IssueClass(ctx, classSettings)
+			requireT.NoError(err)
+
+			mintSettings := types.MintSettings{
+				Sender:    issuer,
+				Recipient: owner,
+				ClassID:   classID,
+				ID:        "my-id",
+				URI:       "https://my-nft-meta.invalid/1",
+				URIHash:   "content-hash",
+				Data:      marshalDataDynamic(requireT, dataDynamic),
+			}
+
+			requireT.NoError(nftKeeper.Mint(ctx, mintSettings))
+			nftBefore, found := testApp.NFTKeeper.GetNFT(ctx, classID, mintSettings.ID)
+			requireT.True(found)
+
+			sender := tt.senderAddress(issuer, owner)
+
+			if tt.isClassFrozen {
+				requireT.NoError(testApp.AssetNFTKeeper.ClassFreeze(ctx, issuer, sender, classID))
+			}
+
+			if tt.isNFTFrozen {
+				requireT.NoError(testApp.AssetNFTKeeper.Freeze(ctx, issuer, classID, nftBefore.Id))
+			}
+
+			err = testApp.AssetNFTKeeper.UpdateData(ctx, sender, nftBefore.ClassId, nftBefore.Id, tt.itemsToUpdate)
+			if tt.wantErr != nil {
+				requireT.ErrorIs(tt.wantErr, err)
+				requireT.ErrorContains(err, tt.errorContains)
+				return
+			}
+			requireT.NoError(err)
+
+			expectedDataDynamic := cloneDataDynamic(requireT, dataDynamic)
+			for i := range expectedDataDynamic.Items {
+				for _, itemToUpdate := range tt.itemsToUpdate {
+					if int(itemToUpdate.Index) == i {
+						expectedDataDynamic.Items[i].Data = itemToUpdate.Data
+					}
+				}
+			}
+			nftAfter, found := testApp.NFTKeeper.GetNFT(ctx, classID, mintSettings.ID)
+			requireT.True(found)
+			gotNFTData := unmarshalDataDynamic(requireT, nftAfter.Data)
+			requireT.Equal(expectedDataDynamic, gotNFTData)
+			requireT.Equal(nftBefore.ClassId, nftAfter.ClassId)
+			requireT.Equal(nftBefore.Id, nftAfter.Id)
+			requireT.Equal(nftBefore.Uri, nftAfter.Uri)
+			requireT.Equal(nftBefore.UriHash, nftAfter.UriHash)
+		})
+	}
 }
 
 func TestKeeper_MintWithRecipient(t *testing.T) {
@@ -1407,6 +1671,27 @@ func genNFTData(requireT *require.Assertions) *codectypes.Any {
 	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
 	requireT.NoError(err)
 	return dataValue
+}
+
+func unmarshalDataDynamic(requireT *require.Assertions, data *codectypes.Any) types.DataDynamic {
+	var dataDynamic types.DataDynamic
+	requireT.NoError(dataDynamic.Unmarshal(data.Value))
+	return dataDynamic
+}
+
+func marshalDataDynamic(requireT *require.Assertions, data types.DataDynamic) *codectypes.Any {
+	dataValue, err := codectypes.NewAnyWithValue(&data)
+	requireT.NoError(err)
+	return dataValue
+}
+
+func cloneDataDynamic(requireT *require.Assertions, data types.DataDynamic) types.DataDynamic {
+	dataValue, err := codectypes.NewAnyWithValue(&data)
+	requireT.NoError(err)
+	var dataDynamic types.DataDynamic
+	requireT.NoError(dataDynamic.Unmarshal(dataValue.Value))
+
+	return dataDynamic
 }
 
 func requireClassSettingsEqualClass(
