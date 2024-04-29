@@ -433,6 +433,53 @@ func TestTransferAdmin(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
+func TestDropAdmin(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdkmath.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+
+	// drop admin
+	args := append([]string{denom}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxDropAdmin(), args)
+	requireT.NoError(err)
+
+	// query token
+	var respToken types.QueryTokenResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+		ctx,
+		cli.CmdQueryToken(),
+		[]string{denom},
+		&respToken,
+	))
+	requireT.Empty(respToken.Token.Admin)
+
+	// try to drop admin again
+	args = append([]string{denom}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxDropAdmin(), args)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// try to freeze part of the token by previous admin
+	coinToFreeze := sdk.NewInt64Coin(denom, 100)
+	args = append([]string{recipient.String(), coinToFreeze.String()}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
 func TestUpgradeV1(t *testing.T) {
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
