@@ -76,7 +76,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			burnAmount := k.CalculateRate(ctx, def.BurnRate, issuer, sender, recipient, coin)
 			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, issuer, sender, recipient, coin)
 
-			if def.IsFeatureEnabled(types.Feature_extensions) {
+			if def.IsFeatureEnabled(types.Feature_extension) {
 				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
 					return err
 				}

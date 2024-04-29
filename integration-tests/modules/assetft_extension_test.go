@@ -49,7 +49,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_extensions,
+			assetfttypes.Feature_extension,
 		},
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",

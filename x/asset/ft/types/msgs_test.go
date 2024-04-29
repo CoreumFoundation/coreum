@@ -415,6 +415,63 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	}
 }
 
+func TestMsgClawback_ValidateBasic(t *testing.T) {
+	testCases := []struct {
+		name          string
+		message       types.MsgClawback
+		expectedError error
+	}{
+		{
+			name: "valid msg",
+			message: types.MsgClawback{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdkmath.NewInt(100),
+				},
+			},
+		},
+		{
+			name: "invalid sender address",
+			message: types.MsgClawback{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdkmath.NewInt(100),
+				},
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid account",
+			message: types.MsgClawback{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdkmath.NewInt(100),
+				},
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			err := tc.message.ValidateBasic()
+			if tc.expectedError == nil {
+				requireT.NoError(err)
+			} else {
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
 func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name                string

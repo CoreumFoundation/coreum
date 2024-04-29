@@ -24,7 +24,8 @@ const (
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
 	tagsFlag             = "-tags"
-	linkStaticallyLDFlag = "-ldflags=-extldflags=-static"
+	ldFlagsFlag          = "-ldflags"
+	linkStaticallyValue  = "-extldflags=-static"
 )
 
 var (
@@ -52,7 +53,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		CGOEnabled:     true,
 		Flags: []string{
 			goCoverFlag,
-			versionFlags,
+			convertToLdFlags(versionFlags),
 			tagsFlag + "=" + strings.Join(tagsLocal, ","),
 		},
 	})
@@ -86,8 +87,7 @@ func buildCoredInDocker(
 		CGOEnabled:     true,
 		Flags: append(
 			extraFlags,
-			versionFlags,
-			linkStaticallyLDFlag,
+			convertToLdFlags(append(versionFlags, linkStaticallyValue)),
 			tagsFlag+"="+strings.Join(tagsDocker, ","),
 		),
 	})
@@ -115,8 +115,7 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     false,
 		Flags: []string{
-			versionFlags,
-			linkStaticallyLDFlag,
+			convertToLdFlags(append(versionFlags, linkStaticallyValue)),
 			tagsFlag + "=" + strings.Join(tagsDocker, ","),
 		},
 	})
@@ -143,15 +142,15 @@ func DownloadDependencies(ctx context.Context, deps build.DepsFunc) error {
 	return golang.DownloadDependencies(ctx, repoPath, deps)
 }
 
-func coredVersionLDFlags(ctx context.Context, buildTags []string) (string, error) {
+func coredVersionLDFlags(ctx context.Context, buildTags []string) ([]string, error) {
 	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	version, err := git.VersionFromTag(ctx, repoPath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if version == "" {
 		version = hash
@@ -167,12 +166,12 @@ func coredVersionLDFlags(ctx context.Context, buildTags []string) (string, error
 		ps["github.com/cosmos/cosmos-sdk/version.BuildTags"] = strings.Join(buildTags, ",")
 	}
 
-	var ldFlags []string
+	var values []string
 	for k, v := range ps {
-		ldFlags = append(ldFlags, fmt.Sprintf("-X %s=%s", k, v))
+		values = append(values, fmt.Sprintf("-X %s=%s", k, v))
 	}
 
-	return "-ldflags=" + strings.Join(ldFlags, " "), nil
+	return values, nil
 }
 
 func formatProto(ctx context.Context, deps build.DepsFunc) error {
@@ -181,4 +180,8 @@ func formatProto(ctx context.Context, deps build.DepsFunc) error {
 	cmd := exec.Command(tools.Path("bin/buf", tools.TargetPlatformLocal), "format", "-w")
 	cmd.Dir = filepath.Join(repoPath, "proto", "coreum")
 	return libexec.Exec(ctx, cmd)
+}
+
+func convertToLdFlags(values []string) string {
+	return "-" + ldFlagsFlag + "=" + strings.Join(values, " ")
 }

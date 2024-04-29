@@ -417,6 +417,7 @@ func New(
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,
 		app.WasmGovPermissionKeeper,
+		&app.AccountKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

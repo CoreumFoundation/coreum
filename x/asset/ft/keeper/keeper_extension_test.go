@@ -43,7 +43,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 		Subunit:       "extensionabc",
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
-		Features:      []types.Feature{types.Feature_extensions},
+		Features:      []types.Feature{types.Feature_extension},
 		ExtensionSettings: &types.ExtensionSettings{
 			CodeId: codeID,
 		},
@@ -62,7 +62,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.EqualValues(gotToken.Description, settings.Description)
 	requireT.EqualValues(gotToken.Subunit, strings.ToLower(settings.Subunit))
 	requireT.EqualValues(gotToken.Precision, settings.Precision)
-	requireT.EqualValues(gotToken.Features, []types.Feature{types.Feature_extensions})
+	requireT.EqualValues(gotToken.Features, []types.Feature{types.Feature_extension})
 	requireT.EqualValues(gotToken.BurnRate, sdk.NewDec(0))
 	requireT.EqualValues(gotToken.SendCommissionRate, sdk.NewDec(0))
 	requireT.EqualValues(gotToken.Version, types.CurrentTokenVersion)

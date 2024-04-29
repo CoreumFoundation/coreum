@@ -6,3 +6,4 @@ vendor
 *.iml
 go.work*
 **/wasm-data/wasm/*
+.DS_Store

@@ -9091,7 +9091,8 @@
         "whitelisting",
         "ibc",
         "block_smart_contracts",
-        "extensions"
+        "clawback",
+        "extension"
       ],
       "default": "minting",
       "description": "Feature defines possible features of fungible token."
