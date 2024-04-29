@@ -594,23 +594,23 @@ func TestMsgTransferAdmin_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgDropAdmin_ValidateBasic(t *testing.T) {
+func TestMsgClearAdmin_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name                string
-		message             types.MsgDropAdmin
+		message             types.MsgClearAdmin
 		expectedError       error
 		expectedErrorString string
 	}{
 		{
 			name: "valid msg",
-			message: types.MsgDropAdmin{
+			message: types.MsgClearAdmin{
 				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 			},
 		},
 		{
 			name: "invalid sender address",
-			message: types.MsgDropAdmin{
+			message: types.MsgClearAdmin{
 				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 			},
@@ -618,7 +618,7 @@ func TestMsgDropAdmin_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid denom",
-			message: types.MsgDropAdmin{
+			message: types.MsgClearAdmin{
 				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 			},
