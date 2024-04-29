@@ -86,6 +86,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgClawback{}):            constantGasFunc(15_500),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9_000),
 		MsgToMsgURL(&assetfttypes.MsgTransferAdmin{}):       constantGasFunc(10_000),
+		MsgToMsgURL(&assetfttypes.MsgDropAdmin{}):           constantGasFunc(8_500),
 		// TODO(v4): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
 		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25_000),
 
