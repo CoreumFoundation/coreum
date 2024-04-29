@@ -2277,7 +2277,6 @@ Feature defines possible features of fungible token.
 | ----- | ---- | ----- | ----------- |
 | `code_id` | [uint64](#uint64) |  |  `code_id is the reference to the stored WASM code`  |
 | `label` | [string](#string) |  |  `label is optional metadata to be stored with a contract instance.`  |
-| `instantiation_msg` | [bytes](#bytes) |  |  `msg json encoded message to be passed to the contract on instantiation`  |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `funds coins that are transferred to the contract on instantiation`  |
 
 

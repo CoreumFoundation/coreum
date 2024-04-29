@@ -1,11 +1,11 @@
 use cosmwasm_std::{entry_point, StdError};
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
+use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
-use std::collections::HashMap;
 
 use crate::error::ContractError;
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::state::DENOM;
 
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -16,9 +16,11 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    DENOM.save(deps.storage, &msg.denom)?;
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -33,18 +35,18 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::ExtensionTransfer { amount, recipients } => {
-            execute_extension_transfer(deps, env, info, amount, recipients)
+        ExecuteMsg::ExtensionTransfer { amount, recipient } => {
+            execute_extension_transfer(deps, env, info, amount, recipient)
         }
     }
 }
 
 pub fn execute_extension_transfer(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     amount: Uint128,
-    _recipients: HashMap<String, Uint128>,
+    recipient: String,
 ) -> Result<Response, ContractError> {
     // TODO remove this if statement.
     // This check is intended for POC testing, it must be replaced with a more
@@ -54,7 +56,19 @@ pub fn execute_extension_transfer(
             "7 is not allowed",
         )));
     }
-    Ok(Response::new().add_attribute("method", "execute_transfer"))
+
+    let denom = DENOM.load(deps.storage)?;
+    let transfer_msg = cosmwasm_std::BankMsg::Send {
+        to_address: recipient,
+        amount: vec![Coin {
+            amount: amount,
+            denom: denom.clone(),
+        }],
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "execute_transfer")
+        .add_message(transfer_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

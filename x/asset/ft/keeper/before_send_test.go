@@ -50,175 +50,102 @@ func TestApplyRate(t *testing.T) {
 		name         string
 		rate         string
 		sender       string
-		recipients   map[string]sdkmath.Int
+		recipient    string
+		amount       sdkmath.Int
 		ibcDirection wibctransfertypes.Purpose
 		appliedRate  sdkmath.Int
 	}{
 		{
-			name:   "issuer_receiver",
-			rate:   "0.5",
-			sender: accounts[0],
-			recipients: map[string]sdkmath.Int{
-				issuer: sdkmath.NewInt(10),
-			},
+			name:        "issuer_receiver",
+			rate:        "0.5",
+			sender:      accounts[0],
+			recipient:   issuer,
+			amount:      sdkmath.NewInt(10),
 			appliedRate: sdkmath.ZeroInt(),
 		},
 		{
-			name:   "issuer_sender_two_receivers",
-			rate:   "0.5",
-			sender: issuer,
-			recipients: map[string]sdkmath.Int{
-				accounts[5]: sdkmath.NewInt(5),
-				accounts[6]: sdkmath.NewInt(5),
-			},
+			name:        "issuer_sender",
+			rate:        "0.5",
+			sender:      issuer,
+			recipient:   accounts[5],
+			amount:      sdkmath.NewInt(5),
 			appliedRate: sdkmath.ZeroInt(),
 		},
 		{
-			name:   "one_receiver",
-			rate:   "0.1",
-			sender: accounts[0],
-			recipients: map[string]sdkmath.Int{
-				accounts[10]: sdkmath.NewInt(1000),
-			},
+			name:        "non_issuer",
+			rate:        "0.1",
+			sender:      accounts[0],
+			recipient:   accounts[5],
+			amount:      sdkmath.NewInt(1000),
 			appliedRate: sdkmath.NewInt(100),
 		},
 		{
-			name:   "one_receiver_with_rounding",
-			rate:   "0.1",
-			sender: accounts[0],
-			recipients: map[string]sdkmath.Int{
-				accounts[10]: sdkmath.NewInt(1001),
-			},
+			name:        "with_rounding",
+			rate:        "0.1",
+			sender:      accounts[0],
+			recipient:   accounts[10],
+			amount:      sdkmath.NewInt(1001),
 			appliedRate: sdkmath.NewInt(101),
 		},
+
 		{
-			name:   "two_receivers_with_rounding",
-			rate:   "0.1",
-			sender: accounts[0],
-			recipients: map[string]sdkmath.Int{
-				accounts[10]: sdkmath.NewInt(501),
-				accounts[9]:  sdkmath.NewInt(501),
-			},
-			appliedRate: sdkmath.NewInt(101),
-		},
-		{
-			name:   "issuer_in_receivers",
-			rate:   "0.01",
-			sender: accounts[0],
-			recipients: map[string]sdkmath.Int{
-				issuer:       sdkmath.NewInt(30000),
-				genAccount(): sdkmath.NewInt(20000),
-				genAccount(): sdkmath.NewInt(20000),
-			},
-			appliedRate: sdkmath.NewInt(400),
-		},
-		{
-			name:   "two_receiver_with_issuer_rounding",
-			rate:   "0.01001",
-			sender: accounts[0],
-			recipients: map[string]sdkmath.Int{
-				issuer:       sdkmath.NewInt(30000),
-				genAccount(): sdkmath.NewInt(20000),
-			},
-			appliedRate: sdkmath.NewInt(201),
-		},
-		{
-			name:   "four_receivers_with_issuer",
-			rate:   "0.01",
-			sender: accounts[0],
-			recipients: map[string]sdkmath.Int{
-				issuer:       sdkmath.NewInt(2101),
-				genAccount(): sdkmath.NewInt(300),
-				genAccount(): sdkmath.NewInt(1100),
-				genAccount(): sdkmath.NewInt(3300),
-			},
-			appliedRate: sdkmath.NewInt(47),
-		},
-		{
-			name:   "sender_ibc",
-			rate:   "0.5",
-			sender: accounts[0],
-			recipients: map[string]sdkmath.Int{
-				dummyAddress: sdkmath.NewInt(10),
-			},
+			name:         "sender_ibc",
+			rate:         "0.5",
+			sender:       accounts[0],
+			recipient:    dummyAddress,
+			amount:       sdkmath.NewInt(10),
 			ibcDirection: wibctransfertypes.PurposeOut,
 			appliedRate:  sdkmath.NewInt(5),
 		},
 		{
-			name:   "issuer_sender_ibc",
-			rate:   "0.5",
-			sender: issuer,
-			recipients: map[string]sdkmath.Int{
-				dummyAddress: sdkmath.NewInt(10),
-			},
+			name:         "issuer_sender_ibc",
+			rate:         "0.5",
+			sender:       issuer,
+			recipient:    dummyAddress,
+			amount:       sdkmath.NewInt(10),
 			ibcDirection: wibctransfertypes.PurposeOut,
 			appliedRate:  sdkmath.NewInt(0),
 		},
 		{
-			name:   "one_receiver_ibc",
-			rate:   "0.5",
-			sender: dummyAddress,
-			recipients: map[string]sdkmath.Int{
-				accounts[0]: sdkmath.NewInt(10),
-			},
+			name:         "receiver_ibc",
+			rate:         "0.5",
+			sender:       dummyAddress,
+			recipient:    accounts[0],
+			amount:       sdkmath.NewInt(10),
 			ibcDirection: wibctransfertypes.PurposeIn,
 			appliedRate:  sdkmath.NewInt(0),
 		},
 		{
-			name:   "ibc_escrow_sender_issuer_receiver",
-			rate:   "0.5",
-			sender: dummyAddress,
-			recipients: map[string]sdkmath.Int{
-				issuer: sdkmath.NewInt(10),
-			},
+			name:         "ibc_escrow_sender_issuer_receiver",
+			rate:         "0.5",
+			sender:       dummyAddress,
+			recipient:    issuer,
+			amount:       sdkmath.NewInt(10),
 			ibcDirection: wibctransfertypes.PurposeIn,
 			appliedRate:  sdkmath.NewInt(0),
 		},
 		{
-			name:   "smart_contract_sender",
-			rate:   "0.5",
-			sender: smartContracts[0],
-			recipients: map[string]sdkmath.Int{
-				dummyAddress: sdkmath.NewInt(10),
-			},
+			name:        "smart_contract_sender",
+			rate:        "0.5",
+			sender:      smartContracts[0],
+			recipient:   dummyAddress,
+			amount:      sdkmath.NewInt(10),
 			appliedRate: sdkmath.NewInt(0),
 		},
 		{
-			name:   "issuer_to_smart_contract",
-			rate:   "0.5",
-			sender: issuer,
-			recipients: map[string]sdkmath.Int{
-				smartContracts[0]: sdkmath.NewInt(10),
-			},
+			name:        "issuer_to_smart_contract",
+			rate:        "0.5",
+			sender:      issuer,
+			recipient:   smartContracts[0],
+			amount:      sdkmath.NewInt(10),
 			appliedRate: sdkmath.NewInt(0),
 		},
 		{
-			name:   "smart_contract_receiver",
-			rate:   "0.5",
-			sender: dummyAddress,
-			recipients: map[string]sdkmath.Int{
-				smartContracts[0]: sdkmath.NewInt(10),
-			},
-			appliedRate: sdkmath.NewInt(5),
-		},
-		{
-			name:   "sender_to_smart_contract_and_issuer",
-			rate:   "0.5",
-			sender: dummyAddress,
-			recipients: map[string]sdkmath.Int{
-				smartContracts[0]: sdkmath.NewInt(5),
-				issuer:            sdkmath.NewInt(5),
-			},
-			appliedRate: sdkmath.NewInt(3),
-		},
-		{
-			name:   "sender_to_smart_contracts",
-			rate:   "0.5",
-			sender: dummyAddress,
-			recipients: map[string]sdkmath.Int{
-				smartContracts[0]: sdkmath.NewInt(5),
-				smartContracts[1]: sdkmath.NewInt(5),
-			},
+			name:        "smart_contract_receiver",
+			rate:        "0.5",
+			sender:      dummyAddress,
+			recipient:   smartContracts[0],
+			amount:      sdkmath.NewInt(10),
 			appliedRate: sdkmath.NewInt(5),
 		},
 	}
@@ -236,10 +163,8 @@ func TestApplyRate(t *testing.T) {
 			if len(sdk.MustAccAddressFromBech32(tc.sender)) == wasmtypes.ContractAddrLen {
 				ctx = cwasmtypes.WithSmartContractSender(ctx, tc.sender)
 			}
-			for recipient := range tc.recipients {
-				if len(sdk.MustAccAddressFromBech32(recipient)) == wasmtypes.ContractAddrLen {
-					ctx = cwasmtypes.WithSmartContractRecipient(ctx, recipient)
-				}
+			if len(sdk.MustAccAddressFromBech32(tc.recipient)) == wasmtypes.ContractAddrLen {
+				ctx = cwasmtypes.WithSmartContractRecipient(ctx, tc.recipient)
 			}
 
 			appliedRate := assetFTKeeper.CalculateRate(
@@ -247,7 +172,8 @@ func TestApplyRate(t *testing.T) {
 				sdk.MustNewDecFromStr(tc.rate),
 				sdk.MustAccAddressFromBech32(issuer),
 				sdk.MustAccAddressFromBech32(tc.sender),
-				tc.recipients)
+				sdk.MustAccAddressFromBech32(tc.recipient),
+				sdk.NewCoin("test", tc.amount))
 			assertT.EqualValues(tc.appliedRate.String(), appliedRate.String())
 		})
 	}

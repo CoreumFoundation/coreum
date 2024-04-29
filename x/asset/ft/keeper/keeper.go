@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -21,6 +22,12 @@ import (
 	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
+
+// ExtensionInstantiateMsg is the message passed to the extension cosmwasm contract.
+// The contract must be able to properly process this message.
+type ExtensionInstantiateMsg struct {
+	Denom string `json:"denom"`
+}
 
 // Keeper is the asset module keeper.
 type Keeper struct {
@@ -235,12 +242,16 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
 		}
 
+		instantiateMsgBytes, err := json.Marshal(ExtensionInstantiateMsg{
+			Denom: denom,
+		})
+
 		contractAddress, _, err := k.wasmPermissionedKeeper.Instantiate2(
 			ctx,
 			settings.ExtensionSettings.CodeId,
 			settings.Issuer,
 			settings.Issuer,
-			settings.ExtensionSettings.InstantiationMsg,
+			instantiateMsgBytes,
 			settings.ExtensionSettings.Label,
 			settings.ExtensionSettings.Funds,
 			ctx.BlockHeader().AppHash,

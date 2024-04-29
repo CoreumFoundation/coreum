@@ -45,8 +45,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(777),
 		Features:      []types.Feature{types.Feature_extensions},
 		ExtensionSettings: &types.ExtensionSettings{
-			CodeId:           codeID,
-			InstantiationMsg: []byte("{}"),
+			CodeId: codeID,
 		},
 	}
 
@@ -77,12 +76,16 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 
 	// send 1 coin will succeed
 	receiver := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))))
+	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(2))))
 	requireT.NoError(err)
+	balance := bankKeeper.GetBalance(ctx, receiver, denom)
+	requireT.EqualValues("2", balance.Amount.String())
 
 	// send 7 coin will fail.
 	// the POC contract is written as such that sending 7 will fail.
 	// TODO replace with more meningful checks.
 	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(7))))
 	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
+	balance = bankKeeper.GetBalance(ctx, receiver, denom)
+	requireT.EqualValues("2", balance.Amount.String())
 }

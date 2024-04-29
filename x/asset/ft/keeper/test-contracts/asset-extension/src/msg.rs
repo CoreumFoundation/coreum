@@ -1,16 +1,14 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
-use std::collections::HashMap;
 
 #[cw_serde]
-pub struct InstantiateMsg {}
+pub struct InstantiateMsg {
+    pub denom: String,
+}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    ExtensionTransfer {
-        amount: Uint128,
-        recipients: HashMap<String, Uint128>,
-    },
+    ExtensionTransfer { amount: Uint128, recipient: String },
 }
 
 #[cw_serde]
