@@ -575,7 +575,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 	}
 
 	if def.IsAdmin(addr) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be whitelisted")
 	}
 
 	if err = def.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil {
@@ -1009,7 +1009,7 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 	}
 
 	if def.IsAdmin(addr) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be frozen")
 	}
 
 	return def.CheckFeatureAllowed(sender, types.Feature_freezing)
