@@ -58,7 +58,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxClawback(),
 		CmdTxSetWhitelistedLimit(),
 		CmdTxTransferAdmin(),
-		CmdTxDropAdmin(),
+		CmdTxClearAdmin(),
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
 	)
@@ -625,17 +625,17 @@ $ %s tx %s transfer-admin [account_address] ABC-%s --from [sender]
 	return cmd
 }
 
-// CmdTxDropAdmin returns DropAdmin cobra command.
-func CmdTxDropAdmin() *cobra.Command {
+// CmdTxClearAdmin returns ClearAdmin cobra command.
+func CmdTxClearAdmin() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "drop-admin [denom] --from [sender]",
+		Use:   "clear-admin [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Drop admin of a fungible token",
+		Short: "Remove admin of a fungible token",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Drop admin of a fungible token.
+			fmt.Sprintf(`Remove admin of a fungible token.
 
 Example:
-$ %s tx %s drop-admin ABC-%s --from [sender]
+$ %s tx %s clear-admin ABC-%s --from [sender]
 `,
 				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
@@ -653,7 +653,7 @@ $ %s tx %s drop-admin ABC-%s --from [sender]
 				return sdkerrors.Wrap(err, "invalid denom")
 			}
 
-			msg := &types.MsgDropAdmin{
+			msg := &types.MsgClearAdmin{
 				Sender: sender.String(),
 				Denom:  denom,
 			}

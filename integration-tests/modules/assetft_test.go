@@ -7855,8 +7855,8 @@ func TestAssetFTTransferAdminWhitelistAdminAccount(t *testing.T) {
 	requireT.NoError(err)
 }
 
-// TestAssetFTDropAdmin checks drop admin functionality of fungible tokens.
-func TestAssetFTDropAdmin(t *testing.T) {
+// TestAssetFTClearAdmin checks clear admin functionality of fungible tokens.
+func TestAssetFTClearAdmin(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -7873,7 +7873,7 @@ func TestAssetFTDropAdmin(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
-			&assetfttypes.MsgDropAdmin{},
+			&assetfttypes.MsgClearAdmin{},
 			&assetfttypes.MsgFreeze{},
 			&assetfttypes.MsgFreeze{},
 			&assetfttypes.MsgUnfreeze{},
@@ -7930,26 +7930,26 @@ func TestAssetFTDropAdmin(t *testing.T) {
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvts[0].Denom
 
-	// drop admin
-	dropAdminMsg := &assetfttypes.MsgDropAdmin{
+	// clear admin
+	clearAdminMsg := &assetfttypes.MsgClearAdmin{
 		Sender: issuer.String(),
 		Denom:  denom,
 	}
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(dropAdminMsg)),
-		dropAdminMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clearAdminMsg)),
+		clearAdminMsg,
 	)
 	requireT.NoError(err)
-	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(dropAdminMsg))
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(clearAdminMsg))
 
-	fungibleTokenDropAdminEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminDropped](res.Events)
+	fungibleTokenClearAdminEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminCleared](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventAdminDropped{
+	assertT.EqualValues(&assetfttypes.EventAdminCleared{
 		Denom:         denom,
 		PreviousAdmin: issuer.String(),
-	}, fungibleTokenDropAdminEvts[0])
+	}, fungibleTokenClearAdminEvts[0])
 
 	// query token admin
 	token, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{

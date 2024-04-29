@@ -193,7 +193,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
 	assert.Len(t, nondeterministicMsgs, 62)
-	assert.Len(t, deterministicMsgs, 67)
+	assert.Len(t, deterministicMsgs, 68)
 
 	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg

@@ -433,7 +433,7 @@ func TestTransferAdmin(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
-func TestDropAdmin(t *testing.T) {
+func TestClearAdmin(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
@@ -451,9 +451,9 @@ func TestDropAdmin(t *testing.T) {
 	initialAmount := sdkmath.NewInt(777)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
-	// drop admin
+	// clear admin
 	args := append([]string{denom}, txValidator1Args(testNetwork)...)
-	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxDropAdmin(), args)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClearAdmin(), args)
 	requireT.NoError(err)
 
 	// query token
@@ -466,9 +466,9 @@ func TestDropAdmin(t *testing.T) {
 	))
 	requireT.Empty(respToken.Token.Admin)
 
-	// try to drop admin again
+	// try to clear admin again
 	args = append([]string{denom}, txValidator1Args(testNetwork)...)
-	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxDropAdmin(), args)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClearAdmin(), args)
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
