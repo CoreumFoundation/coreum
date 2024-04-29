@@ -706,21 +706,21 @@ func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, deno
 		PreviousAdmin: previousAdmin,
 		CurrentAdmin:  def.Admin,
 	}); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventFrozenAmountChanged event: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventAdminTransferred event: %s", err)
 	}
 
 	return nil
 }
 
-// DropAdmin drops admin of a fungible token.
-func (k Keeper) DropAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
+// ClearAdmin removes admin of a fungible token.
+func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
 	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
 	if !def.IsAdmin(sender) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can drop administration of an account")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can remove administration of an account")
 	}
 
 	previousAdmin := def.Admin
@@ -733,11 +733,11 @@ func (k Keeper) DropAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string) 
 	def.Admin = ""
 	k.SetDefinition(ctx, issuer, subunit, def)
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminDropped{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminCleared{
 		Denom:         denom,
 		PreviousAdmin: previousAdmin,
 	}); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventFrozenAmountChanged event: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventAdminCleared event: %s", err)
 	}
 
 	return nil
