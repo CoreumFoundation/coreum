@@ -2031,6 +2031,226 @@ func TestAssetFTFreeze(t *testing.T) {
 	}, fungibleTokenFreezeEvts[0])
 }
 
+// TestAssetFTClawback checks clawback functionality of fungible tokens.
+func TestAssetFTClawback(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	clientCtx := chain.ClientContext
+
+	bankClient := banktypes.NewQueryClient(clientCtx)
+
+	issuer := chain.GenAccount()
+	account := chain.GenAccount()
+	randomAddress := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgClawback{},
+			&assetfttypes.MsgClawback{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgClawback{},
+		},
+	})
+
+	// Issue the new fungible token
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_clawback,
+		},
+	}
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   account.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdkmath.NewInt(1000)),
+		),
+	}
+
+	msgList := []sdk.Msg{
+		msg, msgSend,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	denom := fungibleTokenIssuedEvts[0].Denom
+
+	// query account balance before clawback
+	bankRes, err := bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(account, denom))
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), bankRes.Balance.String())
+
+	// try to pass non-issuer signature to clawback msg
+	clawbackMsg := &assetfttypes.MsgClawback{
+		Sender:  randomAddress.String(),
+		Account: account.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(randomAddress),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// clawback 400 tokens
+	clawbackMsg = &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: account.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(clawbackMsg))
+
+	fungibleTokenClawbackEvts, err := event.FindTypedEvents[*assetfttypes.EventAmountClawedBack](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventAmountClawedBack{
+		Account: account.String(),
+		Denom:   denom,
+		Amount:  sdkmath.NewInt(400),
+	}, fungibleTokenClawbackEvts[0])
+
+	// query account balance after clawback
+	bankRes, err = bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(account, denom))
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(600)).String(), bankRes.Balance.String())
+
+	// try to clawback more than available (650) (600 is available)
+	coinsToClawback := sdk.NewCoin(denom, sdkmath.NewInt(650))
+
+	clawbackMsg = &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: account.String(),
+		Coin:    coinsToClawback,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+}
+
+// TestAssetFTClawbackSmartContract verifies that this is possible to clawback token from smart contract.
+func TestAssetFTClawbackSmartContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+
+	// Issue a fungible token which can be sent to the smart contract
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Description:   "ABC Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_clawback,
+		},
+		BurnRate:           sdk.ZeroDec(),
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+		Count: 1337,
+	})
+	requireT.NoError(err)
+
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		issuer,
+		moduleswasm.SimpleStateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "simple_state",
+		},
+	)
+	requireT.NoError(err)
+
+	// send coins to the smart contract
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// clawback the amount
+	clawbackMsg := &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: contractAddr,
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.NoError(err)
+}
+
 // TestAssetFTFreezeUnfreezable checks freeze functionality on unfreezable fungible tokens.
 func TestAssetFTFreezeUnfreezable(t *testing.T) {
 	t.Parallel()

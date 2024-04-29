@@ -24,6 +24,7 @@ type MsgKeeper interface {
 	SetFrozen(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
+	Clawback(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
@@ -197,6 +198,27 @@ func (ms MsgServer) GloballyUnfreeze(
 	}
 
 	if err := ms.keeper.GloballyUnfreeze(ctx, sender, req.Denom); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// Clawback confiscates a part of fungible tokens from an account to the issuer.
+func (ms MsgServer) Clawback(goCtx context.Context, req *types.MsgClawback) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	err = ms.keeper.Clawback(ctx, sender, account, req.Coin)
+	if err != nil {
 		return nil, err
 	}
 
