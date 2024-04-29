@@ -27,7 +27,7 @@ type MsgKeeper interface {
 	Clawback(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, denom string) error
-	DropAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string) error
+	ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
@@ -272,15 +272,15 @@ func (ms MsgServer) TransferAdmin(goCtx context.Context, req *types.MsgTransferA
 	return &types.EmptyResponse{}, nil
 }
 
-// DropAdmin drops admin of a fungible token.
-func (ms MsgServer) DropAdmin(goCtx context.Context, req *types.MsgDropAdmin) (*types.EmptyResponse, error) {
+// ClearAdmin removes admin of a fungible token.
+func (ms MsgServer) ClearAdmin(goCtx context.Context, req *types.MsgClearAdmin) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	err = ms.keeper.DropAdmin(ctx, sender, req.Denom)
+	err = ms.keeper.ClearAdmin(ctx, sender, req.Denom)
 	if err != nil {
 		return nil, err
 	}

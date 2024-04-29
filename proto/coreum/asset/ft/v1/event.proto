@@ -73,7 +73,7 @@ message EventAdminTransferred {
   string current_admin = 3;
 }
 
-message EventAdminDropped {
+message EventAdminCleared {
   string denom = 1;
   string previous_admin = 2;
 }

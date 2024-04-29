@@ -10,7 +10,7 @@
     - [MintAuthorization](#coreum.asset.ft.v1.MintAuthorization)
   
 - [coreum/asset/ft/v1/event.proto](#coreum/asset/ft/v1/event.proto)
-    - [EventAdminDropped](#coreum.asset.ft.v1.EventAdminDropped)
+    - [EventAdminCleared](#coreum.asset.ft.v1.EventAdminCleared)
     - [EventAdminTransferred](#coreum.asset.ft.v1.EventAdminTransferred)
     - [EventAmountClawedBack](#coreum.asset.ft.v1.EventAmountClawedBack)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
@@ -60,7 +60,7 @@
     - [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse)
     - [MsgBurn](#coreum.asset.ft.v1.MsgBurn)
     - [MsgClawback](#coreum.asset.ft.v1.MsgClawback)
-    - [MsgDropAdmin](#coreum.asset.ft.v1.MsgDropAdmin)
+    - [MsgClearAdmin](#coreum.asset.ft.v1.MsgClearAdmin)
     - [MsgFreeze](#coreum.asset.ft.v1.MsgFreeze)
     - [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze)
     - [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze)
@@ -1585,9 +1585,9 @@ the granter's account.
 
 
 
-<a name="coreum.asset.ft.v1.EventAdminDropped"></a>
+<a name="coreum.asset.ft.v1.EventAdminCleared"></a>
 
-### EventAdminDropped
+### EventAdminCleared
 
 
 
@@ -2356,9 +2356,9 @@ Feature defines possible features of fungible token.
 
 
 
-<a name="coreum.asset.ft.v1.MsgDropAdmin"></a>
+<a name="coreum.asset.ft.v1.MsgClearAdmin"></a>
 
-### MsgDropAdmin
+### MsgClearAdmin
 
 
 
@@ -2600,7 +2600,7 @@ Msg defines the Msg service.
 | `Clawback` | [MsgClawback](#coreum.asset.ft.v1.MsgClawback) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `Clawback confiscates a part of fungible tokens from an account to the issuer, only if the clawback feature is enabled on that token.` |  |
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.` |  |
 | `TransferAdmin` | [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TransferAdmin changes admin of a fungible token.` |  |
-| `DropAdmin` | [MsgDropAdmin](#coreum.asset.ft.v1.MsgDropAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `DropAdmin drops admin of a fungible token.` |  |
+| `ClearAdmin` | [MsgClearAdmin](#coreum.asset.ft.v1.MsgClearAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `ClearAdmin removes admin of a fungible token.` |  |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
 
