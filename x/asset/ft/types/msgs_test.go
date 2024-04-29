@@ -537,6 +537,55 @@ func TestMsgTransferAdmin_ValidateBasic(t *testing.T) {
 	}
 }
 
+func TestMsgDropAdmin_ValidateBasic(t *testing.T) {
+	testCases := []struct {
+		name                string
+		message             types.MsgDropAdmin
+		expectedError       error
+		expectedErrorString string
+	}{
+		{
+			name: "valid msg",
+			message: types.MsgDropAdmin{
+				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+		},
+		{
+			name: "invalid sender address",
+			message: types.MsgDropAdmin{
+				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid denom",
+			message: types.MsgDropAdmin{
+				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+			},
+			expectedErrorString: "invalid denom",
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			err := tc.message.ValidateBasic()
+			switch {
+			case tc.expectedError == nil && tc.expectedErrorString == "":
+				requireT.NoError(err)
+			case tc.expectedErrorString != "":
+				requireT.Contains(err.Error(), tc.expectedErrorString)
+			default:
+				requireT.ErrorIs(err, tc.expectedError)
+			}
+		})
+	}
+}
+
 //nolint:lll // we don't care about test strings
 func TestAmino(t *testing.T) {
 	const address = "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"

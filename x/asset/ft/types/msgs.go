@@ -23,6 +23,7 @@ const (
 	TypeMsgGloballyUnfreeze    = "globally-unfreeze"
 	TypeMsgSetWhitelistedLimit = "set-whitelisted-limit"
 	TypeMsgTransferAdmin       = "transfer-admin"
+	TypeMsgDropAdmin           = "drop-admin"
 	TypeMsgUpgradeTokenV1      = "upgrade-token-v1"
 	TypeMsgUpdateParams        = "update-params"
 )
@@ -500,9 +501,45 @@ func (m MsgTransferAdmin) Route() string {
 	return RouterKey
 }
 
+// ValidateBasic checks that message fields are valid.
+func (m MsgDropAdmin) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	_, _, err := DeconstructDenom(m.Denom)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Type returns message type for LegacyMsg.
 func (m MsgTransferAdmin) Type() string {
 	return TypeMsgTransferAdmin
+}
+
+// GetSigners returns the required signers of this message type.
+func (m MsgDropAdmin) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(m.Sender),
+	}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgDropAdmin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgDropAdmin) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgDropAdmin) Type() string {
+	return TypeMsgDropAdmin
 }
 
 // ValidateBasic checks that message fields are valid.

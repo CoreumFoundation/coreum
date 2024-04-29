@@ -57,6 +57,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxGloballyUnfreeze(),
 		CmdTxSetWhitelistedLimit(),
 		CmdTxTransferAdmin(),
+		CmdTxDropAdmin(),
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
 	)
@@ -569,6 +570,47 @@ $ %s tx %s transfer-admin [account_address] ABC-%s --from [sender]
 				Sender:  sender.String(),
 				Account: account,
 				Denom:   denom,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxDropAdmin returns DropAdmin cobra command.
+func CmdTxDropAdmin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "drop-admin [denom] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Drop admin of a fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Drop admin of a fungible token.
+
+Example:
+$ %s tx %s drop-admin ABC-%s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			denom := args[0]
+			err = sdk.ValidateDenom(denom)
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid denom")
+			}
+
+			msg := &types.MsgDropAdmin{
+				Sender: sender.String(),
+				Denom:  denom,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
