@@ -115,7 +115,7 @@ Here is the description of behavior of the clawback feature:
 
 Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled for the token.
 
-_**Disclaimer**: if the issuer claws back from the escrow address, then it will break the IBC. issuers should not do this if they want the IBC work for their token._
+_**Disclaimer**: if the issuer claws back from the escrow address, then it will break the IBC. issuers should not do this if they want the IBC to work for their token._
 
 ## Feature interoperability table
 
