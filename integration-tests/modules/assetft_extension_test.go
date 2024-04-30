@@ -41,6 +41,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	)
 	requireT.NoError(err)
 
+	attachedFund := chain.NewCoin(sdk.NewInt(10))
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
@@ -55,6 +56,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		URIHash: "content-hash",
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
 		},
 	}
 
@@ -67,6 +69,15 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		issueMsg,
 	)
 	requireT.NoError(err)
+
+	// assert that attached funds are transferred to the contract
+	token, err := assetFTClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom})
+	requireT.NoError(err)
+	contractBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: token.Token.ExtensionCWAddress,
+		Denom:   chain.ChainSettings.Denom,
+	})
+	requireT.EqualValues(contractBalance.GetBalance().String(), attachedFund.String())
 
 	recipient := chain.GenAccount()
 	// sending 1 will succeed
@@ -112,8 +123,6 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	})
 
 	recipient2 := chain.GenAccount()
-	token, err := assetFTClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom})
-	requireT.NoError(err)
 	contractMsg := map[string]interface{}{
 		assetftkeeper.ExtenstionTransferMethod: assetftkeeper.ExtensionTransferMsg{
 			Amount:    sdk.NewInt(1),
