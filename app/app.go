@@ -260,25 +260,27 @@ type App struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
-	AccountKeeper         authkeeper.AccountKeeper
-	AuthzKeeper           authzkeeper.Keeper
-	CapabilityKeeper      *capabilitykeeper.Keeper
-	StakingKeeper         *stakingkeeper.Keeper
-	SlashingKeeper        slashingkeeper.Keeper
-	MintKeeper            mintkeeper.Keeper
-	DistrKeeper           distrkeeper.Keeper
-	GovKeeper             govkeeper.Keeper
-	CrisisKeeper          *crisiskeeper.Keeper
-	UpgradeKeeper         *upgradekeeper.Keeper
-	ParamsKeeper          paramskeeper.Keeper
-	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCHooksKeeper        ibchookskeeper.Keeper
-	TransferKeeper        wibctransferkeeper.TransferKeeperWrapper
-	EvidenceKeeper        evidencekeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
-	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	WasmKeeper            wasmkeeper.Keeper
-	GroupKeeper           groupkeeper.Keeper
+	AccountKeeper    authkeeper.AccountKeeper
+	AuthzKeeper      authzkeeper.Keeper
+	CapabilityKeeper *capabilitykeeper.Keeper
+	StakingKeeper    *stakingkeeper.Keeper
+	SlashingKeeper   slashingkeeper.Keeper
+	MintKeeper       mintkeeper.Keeper
+	DistrKeeper      distrkeeper.Keeper
+	GovKeeper        govkeeper.Keeper
+	CrisisKeeper     *crisiskeeper.Keeper
+	UpgradeKeeper    *upgradekeeper.Keeper
+	ParamsKeeper     paramskeeper.Keeper
+	// IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCKeeper              *ibckeeper.Keeper
+	IBCHooksKeeper         ibchookskeeper.Keeper
+	TransferKeeper         wibctransferkeeper.TransferKeeperWrapper
+	EvidenceKeeper         evidencekeeper.Keeper
+	FeeGrantKeeper         feegrantkeeper.Keeper
+	ConsensusParamsKeeper  consensusparamkeeper.Keeper
+	WasmKeeper             wasmkeeper.Keeper
+	WasmPermissionedKeeper *wasmkeeper.PermissionedKeeper
+	GroupKeeper            groupkeeper.Keeper
 
 	AssetFTKeeper      assetftkeeper.Keeper
 	AssetNFTKeeper     assetnftkeeper.Keeper
@@ -415,6 +417,7 @@ func New(
 		app.ModuleAccountAddrs(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.WasmPermissionedKeeper = wasmkeeper.NewGovPermissionKeeper(&app.WasmKeeper)
 	app.AssetFTKeeper = assetftkeeper.NewKeeper(
 		appCodec,
 		keys[assetfttypes.StoreKey],
@@ -424,6 +427,7 @@ func New(
 		// pointer is used here because there is cycle in keeper dependencies:
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,
+		app.WasmPermissionedKeeper,
 		&app.AccountKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

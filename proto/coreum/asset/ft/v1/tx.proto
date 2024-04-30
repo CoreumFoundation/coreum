@@ -79,6 +79,23 @@ message MsgIssue {
   ];
   string uri = 10 [(gogoproto.customname) = "URI"];
   string uri_hash = 11 [(gogoproto.customname) = "URIHash"];
+  // extension_settings must be provided in case wasm extensions are enabled.
+  ExtensionIssueSettings extension_settings = 12;
+}
+
+// ExtensionIssueSettings are settings that will be used to Instantantiate the smart contract which contains
+// the source code for the extension.
+message ExtensionIssueSettings {
+  // code_id is the reference to the stored WASM code
+  uint64 code_id = 1;
+  // label is optional metadata to be stored with a contract instance.
+  string label = 2;
+  // funds coins that are transferred to the contract on instantiation
+  repeated cosmos.base.v1beta1.Coin funds = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 
 message MsgMint {

@@ -15,6 +15,7 @@ enum Feature {
   ibc = 4;
   block_smart_contracts = 5;
   clawback = 6;
+  extension = 7;
 }
 
 // Definition defines the fungible token settings to store.
@@ -39,6 +40,7 @@ message Definition {
   uint32 version = 6;
   string uri = 7 [(gogoproto.customname) = "URI"];
   string uri_hash = 8 [(gogoproto.customname) = "URIHash"];
+  string extension_cw_address = 9 [(gogoproto.customname) = "ExtensionCWAddress"];
 }
 
 // Token is a full representation of the fungible token.
@@ -68,6 +70,7 @@ message Token {
   uint32 version = 11;
   string uri = 12 [(gogoproto.customname) = "URI"];
   string uri_hash = 13 [(gogoproto.customname) = "URIHash"];
+  string extension_cw_address = 14 [(gogoproto.customname) = "ExtensionCWAddress"];
 }
 
 // DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.

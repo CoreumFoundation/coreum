@@ -56,6 +56,7 @@
   
 - [coreum/asset/ft/v1/tx.proto](#coreum/asset/ft/v1/tx.proto)
     - [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse)
+    - [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings)
     - [MsgBurn](#coreum.asset.ft.v1.MsgBurn)
     - [MsgClawback](#coreum.asset.ft.v1.MsgClawback)
     - [MsgFreeze](#coreum.asset.ft.v1.MsgFreeze)
@@ -2139,6 +2140,7 @@ Definition defines the fungible token settings to store.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `extension_cw_address` | [string](#string) |  |    |
 
 
 
@@ -2189,6 +2191,7 @@ Token is a full representation of the fungible token.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `extension_cw_address` | [string](#string) |  |    |
 
 
 
@@ -2256,6 +2259,7 @@ Feature defines possible features of fungible token.
 | ibc | 4 |  |
 | block_smart_contracts | 5 |  |
 | clawback | 6 |  |
+| extension | 7 |  |
 
 
  <!-- end enums -->
@@ -2277,6 +2281,28 @@ Feature defines possible features of fungible token.
 
 ### EmptyResponse
 
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.ExtensionIssueSettings"></a>
+
+### ExtensionIssueSettings
+
+```
+ExtensionIssueSettings are settings that will be used to Instantantiate the smart contract which contains
+the source code for the extension.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  |  `code_id is the reference to the stored WASM code`  |
+| `label` | [string](#string) |  |  `label is optional metadata to be stored with a contract instance.`  |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `funds coins that are transferred to the contract on instantiation`  |
 
 
 
@@ -2388,6 +2414,7 @@ MsgIssue defines message to issue new fungible token.
 | `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `extension_settings` | [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
 
 
 

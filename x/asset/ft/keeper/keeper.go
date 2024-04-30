@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -23,15 +24,22 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
 
+// ExtensionInstantiateMsg is the message passed to the extension cosmwasm contract.
+// The contract must be able to properly process this message.
+type ExtensionInstantiateMsg struct {
+	Denom string `json:"denom"`
+}
+
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc           codec.BinaryCodec
-	storeKey      storetypes.StoreKey
-	bankKeeper    types.BankKeeper
-	delayKeeper   types.DelayKeeper
-	wasmKeeper    cwasmtypes.WasmKeeper
-	accountKeeper types.AccountKeeper
-	authority     string
+	cdc                    codec.BinaryCodec
+	storeKey               storetypes.StoreKey
+	bankKeeper             types.BankKeeper
+	delayKeeper            types.DelayKeeper
+	wasmKeeper             cwasmtypes.WasmKeeper
+	wasmPermissionedKeeper types.WasmPermissionedKeeper
+	accountKeeper          types.AccountKeeper
+	authority              string
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -41,17 +49,19 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
+	wasmPermissionedKeeper types.WasmPermissionedKeeper,
 	accountKeeper types.AccountKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		bankKeeper:    bankKeeper,
-		delayKeeper:   delayKeeper,
-		wasmKeeper:    wasmKeeper,
-		accountKeeper: accountKeeper,
-		authority:     authority,
+		cdc:                    cdc,
+		storeKey:               storeKey,
+		bankKeeper:             bankKeeper,
+		delayKeeper:            delayKeeper,
+		wasmKeeper:             wasmKeeper,
+		wasmPermissionedKeeper: wasmPermissionedKeeper,
+		accountKeeper:          accountKeeper,
+		authority:              authority,
 	}
 }
 
@@ -172,6 +182,8 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 
 // IssueVersioned issues new fungible token and sets its version.
 // To be used only in unit tests !!!
+//
+//nolint:funlen // breaking down this function will make it less readable.
 func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, version uint32) (string, error) {
 	if err := types.ValidateSubunit(settings.Subunit); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
@@ -227,6 +239,36 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		Version:            version,
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
+	}
+
+	if definition.IsFeatureEnabled(types.Feature_extension) {
+		if settings.ExtensionSettings == nil {
+			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
+		}
+
+		instantiateMsgBytes, err := json.Marshal(ExtensionInstantiateMsg{
+			Denom: denom,
+		})
+		if err != nil {
+			return "", types.ErrInvalidInput.Wrapf("error marshalling ExtensionInstantiateMsg (%s)", err)
+		}
+
+		contractAddress, _, err := k.wasmPermissionedKeeper.Instantiate2(
+			ctx,
+			settings.ExtensionSettings.CodeId,
+			settings.Issuer,
+			settings.Issuer,
+			instantiateMsgBytes,
+			settings.ExtensionSettings.Label,
+			settings.ExtensionSettings.Funds,
+			ctx.BlockHeader().AppHash,
+			true,
+		)
+		if err != nil {
+			return "", sdkerrors.Wrapf(err, "error instantiating cw contract")
+		}
+
+		definition.ExtensionCWAddress = contractAddress.String()
 	}
 
 	if err := k.SetDenomMetadata(
@@ -876,6 +918,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		Version:            definition.Version,
 		URI:                definition.URI,
 		URIHash:            definition.URIHash,
+		ExtensionCWAddress: definition.ExtensionCWAddress,
 	}, nil
 }
 
