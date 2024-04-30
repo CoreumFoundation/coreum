@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
@@ -24,12 +25,13 @@ import (
 
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc         codec.BinaryCodec
-	storeKey    storetypes.StoreKey
-	bankKeeper  types.BankKeeper
-	delayKeeper types.DelayKeeper
-	wasmKeeper  cwasmtypes.WasmKeeper
-	authority   string
+	cdc           codec.BinaryCodec
+	storeKey      storetypes.StoreKey
+	bankKeeper    types.BankKeeper
+	delayKeeper   types.DelayKeeper
+	wasmKeeper    cwasmtypes.WasmKeeper
+	accountKeeper types.AccountKeeper
+	authority     string
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -39,15 +41,17 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
+	accountKeeper types.AccountKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:         cdc,
-		storeKey:    storeKey,
-		bankKeeper:  bankKeeper,
-		delayKeeper: delayKeeper,
-		wasmKeeper:  wasmKeeper,
-		authority:   authority,
+		cdc:           cdc,
+		storeKey:      storeKey,
+		bankKeeper:    bankKeeper,
+		delayKeeper:   delayKeeper,
+		wasmKeeper:    wasmKeeper,
+		accountKeeper: accountKeeper,
+		authority:     authority,
 	}
 }
 
@@ -532,6 +536,31 @@ func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezeKey(denom))
 }
 
+// Clawback confiscates specified token from the specified account.
+func (k Keeper) Clawback(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "clawback amount should be positive")
+	}
+
+	if err := k.validateClawbackAllowed(ctx, sender, addr, coin); err != nil {
+		return err
+	}
+
+	if err := k.bankKeeper.SendCoins(ctx, addr, sender, sdk.NewCoins(coin)); err != nil {
+		return sdkerrors.Wrapf(err, "can't send coins from account %s to issuer %s", addr.String(), sender.String())
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventAmountClawedBack{
+		Account: addr.String(),
+		Denom:   coin.Denom,
+		Amount:  coin.Amount,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventAmountClawedBack event: %s", err)
+	}
+
+	return nil
+}
+
 // SetWhitelistedBalance sets whitelisted limit for the account.
 func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if coin.IsNil() || coin.IsNegative() {
@@ -922,6 +951,24 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
 	return bytes.Equal(ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom)), types.StoreTrue)
+}
+
+func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+	def, err := k.GetDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	// TODO: Make sure that it is going to work with the PR for separation of admin and issuer
+	if def.IsIssuer(addr) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be clawed back")
+	}
+
+	if _, isModuleAccount := k.accountKeeper.GetAccount(ctx, addr).(*authtypes.ModuleAccount); isModuleAccount {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "claw back from module accounts is prohibited")
+	}
+
+	return def.CheckFeatureAllowed(sender, types.Feature_clawback)
 }
 
 // whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account.
