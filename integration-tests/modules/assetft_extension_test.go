@@ -80,10 +80,13 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		Address: token.Token.ExtensionCWAddress,
 		Denom:   chain.ChainSettings.Denom,
 	})
+	requireT.NoError(err)
 	requireT.EqualValues(contractBalance.GetBalance().String(), attachedFund.String())
 
 	// assert correct label is applied.
-	contractInfo, err := wasmClient.ContractInfo(ctx, &wasmtypes.QueryContractInfoRequest{Address: token.Token.ExtensionCWAddress})
+	contractInfo, err := wasmClient.ContractInfo(
+		ctx, &wasmtypes.QueryContractInfoRequest{Address: token.Token.ExtensionCWAddress},
+	)
 	requireT.NoError(err)
 	requireT.EqualValues(issueMsg.ExtensionSettings.Label, contractInfo.Label)
 
