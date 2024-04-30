@@ -53,7 +53,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		},
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
-		ExtensionIssueSettings: &assetfttypes.ExtensionIssueSettings{
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
 	}

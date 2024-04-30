@@ -86,7 +86,7 @@ type Definition struct {
 	Version            uint32                                 `protobuf:"varint,6,opt,name=version,proto3" json:"version,omitempty"`
 	URI                string                                 `protobuf:"bytes,7,opt,name=uri,proto3" json:"uri,omitempty"`
 	URIHash            string                                 `protobuf:"bytes,8,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
-	ExtensionCWAddress string                                 `protobuf:"bytes,9,opt,name=extension_cw_address,json=ExtensionCWAddress,proto3" json:"extension_cw_address,omitempty"`
+	ExtensionCWAddress string                                 `protobuf:"bytes,9,opt,name=extension_cw_address,json=extensionCwAddress,proto3" json:"extension_cw_address,omitempty"`
 }
 
 func (m *Definition) Reset()         { *m = Definition{} }
@@ -141,7 +141,7 @@ type Token struct {
 	Version            uint32                                 `protobuf:"varint,11,opt,name=version,proto3" json:"version,omitempty"`
 	URI                string                                 `protobuf:"bytes,12,opt,name=uri,proto3" json:"uri,omitempty"`
 	URIHash            string                                 `protobuf:"bytes,13,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
-	ExtensionCWAddress string                                 `protobuf:"bytes,14,opt,name=extension_cw_address,json=ExtensionCWAddress,proto3" json:"extension_cw_address,omitempty"`
+	ExtensionCWAddress string                                 `protobuf:"bytes,14,opt,name=extension_cw_address,json=extensionCwAddress,proto3" json:"extension_cw_address,omitempty"`
 }
 
 func (m *Token) Reset()         { *m = Token{} }

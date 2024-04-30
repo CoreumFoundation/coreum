@@ -44,7 +44,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		Features:      []types.Feature{types.Feature_extension},
-		ExtensionIssueSettings: &types.ExtensionIssueSettings{
+		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
 	}

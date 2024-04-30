@@ -242,22 +242,25 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 	}
 
 	if definition.IsFeatureEnabled(types.Feature_extension) {
-		if settings.ExtensionIssueSettings == nil {
+		if settings.ExtensionSettings == nil {
 			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
 		}
 
 		instantiateMsgBytes, err := json.Marshal(ExtensionInstantiateMsg{
 			Denom: denom,
 		})
+		if err != nil {
+			return "", types.ErrInvalidInput.Wrapf("error marshalling ExtensionInstantiateMsg (%s)", err)
+		}
 
 		contractAddress, _, err := k.wasmPermissionedKeeper.Instantiate2(
 			ctx,
-			settings.ExtensionIssueSettings.CodeId,
+			settings.ExtensionSettings.CodeId,
 			settings.Issuer,
 			settings.Issuer,
 			instantiateMsgBytes,
-			settings.ExtensionIssueSettings.Label,
-			settings.ExtensionIssueSettings.Funds,
+			settings.ExtensionSettings.Label,
+			settings.ExtensionSettings.Funds,
 			ctx.BlockHeader().AppHash,
 			true,
 		)

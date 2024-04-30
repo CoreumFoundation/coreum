@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"sort"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -222,27 +221,4 @@ func (k Keeper) CalculateRate(
 	}
 
 	return rate.MulInt(amount.Amount).Ceil().RoundInt()
-}
-
-func sortedKeys[V any](m map[string]V) []string {
-	keys := make([]string, len(m))
-	i := 0
-	for k := range m {
-		keys[i] = k
-		i++
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return keys
-}
-
-func iterateMapDeterministic[V any](m map[string]V, fn func(key string, value V) error) error {
-	keys := sortedKeys(m)
-	for _, key := range keys {
-		v := m[key]
-		if err := fn(key, v); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

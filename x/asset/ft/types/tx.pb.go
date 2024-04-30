@@ -51,7 +51,7 @@ type MsgIssue struct {
 	URI                string                                 `protobuf:"bytes,10,opt,name=uri,proto3" json:"uri,omitempty"`
 	URIHash            string                                 `protobuf:"bytes,11,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
 	// extension_settings must be provided in case wasm extensions are enabled.
-	ExtensionIssueSettings *ExtensionIssueSettings `protobuf:"bytes,12,opt,name=extension_settings,json=ExtensionIssueSettings,proto3" json:"extension_settings,omitempty"`
+	ExtensionSettings *ExtensionIssueSettings `protobuf:"bytes,12,opt,name=extension_settings,json=extensionSettings,proto3" json:"extension_settings,omitempty"`
 }
 
 func (m *MsgIssue) Reset()         { *m = MsgIssue{} }
@@ -1218,9 +1218,9 @@ func (m *MsgIssue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.ExtensionIssueSettings != nil {
+	if m.ExtensionSettings != nil {
 		{
-			size, err := m.ExtensionIssueSettings.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.ExtensionSettings.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -1940,8 +1940,8 @@ func (m *MsgIssue) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	if m.ExtensionIssueSettings != nil {
-		l = m.ExtensionIssueSettings.Size()
+	if m.ExtensionSettings != nil {
+		l = m.ExtensionSettings.Size()
 		n += 1 + l + sovTx(uint64(l))
 	}
 	return n
@@ -2595,7 +2595,7 @@ func (m *MsgIssue) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 12:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExtensionIssueSettings", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExtensionSettings", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2622,10 +2622,10 @@ func (m *MsgIssue) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ExtensionIssueSettings == nil {
-				m.ExtensionIssueSettings = &ExtensionIssueSettings{}
+			if m.ExtensionSettings == nil {
+				m.ExtensionSettings = &ExtensionIssueSettings{}
 			}
-			if err := m.ExtensionIssueSettings.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.ExtensionSettings.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
