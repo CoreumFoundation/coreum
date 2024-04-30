@@ -15,6 +15,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -266,6 +267,7 @@ func TestKeeper_UpdateData(t *testing.T) {
 
 	tests := []struct {
 		name          string
+		initialData   *codectypes.Any
 		itemsToUpdate []types.DataDynamicIndexedItem
 		senderAddress func(issuer, admin sdk.AccAddress) sdk.AccAddress
 		isClassFrozen bool
@@ -274,7 +276,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 		errorContains string
 	}{
 		{
-			name: "positive_admin_update",
+			name:        "positive_admin_update",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 0,
@@ -290,7 +293,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 			},
 		},
 		{
-			name: "positive_owner_update",
+			name:        "positive_owner_update",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 1,
@@ -306,7 +310,40 @@ func TestKeeper_UpdateData(t *testing.T) {
 			},
 		},
 		{
-			name: "negative_frozen_nft",
+			name:        "negative_initial_nil_data",
+			initialData: nil,
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 0,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return owner
+			},
+			wantErr:       types.ErrInvalidInput,
+			errorContains: "no data",
+		},
+		{
+			name: "negative_not_dynamic_data",
+			initialData: marshalDataToAny(requireT, &types.DataBytes{
+				Data: []byte{},
+			}),
+			itemsToUpdate: []types.DataDynamicIndexedItem{
+				{
+					Index: 0,
+					Data:  []byte(uuid.NewString()),
+				},
+			},
+			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
+				return owner
+			},
+			wantErr:       types.ErrInvalidInput,
+			errorContains: "is not updatable",
+		},
+		{
+			name:        "negative_frozen_nft",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 0,
@@ -321,7 +358,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 			errorContains: "frozen",
 		},
 		{
-			name: "negative_frozen_class",
+			name:        "negative_frozen_class",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 0,
@@ -336,7 +374,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 			errorContains: "frozen",
 		},
 		{
-			name: "negative_update_of_not_updatable_item",
+			name:        "negative_update_of_not_updatable_item",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 3,
@@ -350,7 +389,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 			errorContains: "not updatable",
 		},
 		{
-			name: "negative_owner_update_prohibited_item",
+			name:        "negative_owner_update_prohibited_item",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 0,
@@ -364,7 +404,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 			errorContains: "sender is not authorized to update the item",
 		},
 		{
-			name: "negative_admin_update_prohibited_item",
+			name:        "negative_admin_update_prohibited_item",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 1,
@@ -378,7 +419,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 			errorContains: "sender is not authorized to update the item",
 		},
 		{
-			name: "negative_random_acc_update_prohibited_item",
+			name:        "negative_random_acc_update_prohibited_item",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 0,
@@ -392,7 +434,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 			errorContains: "sender is not authorized to update the item",
 		},
 		{
-			name: "negative_out_of_range",
+			name:        "negative_out_of_range",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 4,
@@ -406,7 +449,8 @@ func TestKeeper_UpdateData(t *testing.T) {
 			errorContains: "out or range",
 		},
 		{
-			name: "negative_data_size_greater_than_max",
+			name:        "negative_data_size_greater_than_max",
+			initialData: marshalDataToAny(requireT, &dataDynamic),
 			itemsToUpdate: []types.DataDynamicIndexedItem{
 				{
 					Index: 0,
@@ -445,7 +489,7 @@ func TestKeeper_UpdateData(t *testing.T) {
 				ID:        "my-id",
 				URI:       "https://my-nft-meta.invalid/1",
 				URIHash:   "content-hash",
-				Data:      marshalDataDynamic(requireT, dataDynamic),
+				Data:      tt.initialData,
 			}
 
 			requireT.NoError(nftKeeper.Mint(ctx, mintSettings))
@@ -1679,8 +1723,8 @@ func unmarshalDataDynamic(requireT *require.Assertions, data *codectypes.Any) ty
 	return dataDynamic
 }
 
-func marshalDataDynamic(requireT *require.Assertions, data types.DataDynamic) *codectypes.Any {
-	dataValue, err := codectypes.NewAnyWithValue(&data)
+func marshalDataToAny(requireT *require.Assertions, data proto.Message) *codectypes.Any {
+	dataValue, err := codectypes.NewAnyWithValue(data)
 	requireT.NoError(err)
 	return dataValue
 }
