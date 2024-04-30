@@ -1155,7 +1155,7 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 	return k.validateNFTNotFrozen(ctx, classID, nftID)
 }
 
-func (k Keeper) validateNFTNotFrozen(ctx sdk.Context, classID string, nftID string) error {
+func (k Keeper) validateNFTNotFrozen(ctx sdk.Context, classID, nftID string) error {
 	// the IsFrozen includes both class and NFT freezing check
 	isFrozen, err := k.IsFrozen(ctx, classID, nftID)
 	if err != nil {

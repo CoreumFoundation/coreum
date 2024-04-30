@@ -180,6 +180,24 @@
 - [coreum/deterministicgas/v1/event.proto](#coreum/deterministicgas/v1/event.proto)
     - [EventGas](#coreum.deterministicgas.v1.EventGas)
   
+- [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
+    - [GenesisState](#coreum.dex.v1.GenesisState)
+  
+- [coreum/dex/v1/order.proto](#coreum/dex/v1/order.proto)
+    - [Order](#coreum.dex.v1.Order)
+  
+- [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
+    - [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest)
+    - [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse)
+  
+    - [Query](#coreum.dex.v1.Query)
+  
+- [coreum/dex/v1/tx.proto](#coreum/dex/v1/tx.proto)
+    - [EmptyResponse](#coreum.dex.v1.EmptyResponse)
+    - [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder)
+  
+    - [Msg](#coreum.dex.v1.Msg)
+  
 - [coreum/feemodel/v1/genesis.proto](#coreum/feemodel/v1/genesis.proto)
     - [GenesisState](#coreum.feemodel.v1.GenesisState)
   
@@ -4092,6 +4110,189 @@ EventGas is emitted by deterministic gas module to report gas information.
  <!-- end enums -->
 
  <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/genesis.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/genesis.proto
+
+
+
+<a name="coreum.dex.v1.GenesisState"></a>
+
+### GenesisState
+
+```
+GenesisState defines the module genesis state.
+```
+
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/order.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/order.proto
+
+
+
+<a name="coreum.dex.v1.Order"></a>
+
+### Order
+
+```
+Order is a single order of an orderbook.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/query.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/query.proto
+
+
+
+<a name="coreum.dex.v1.QueryOrdersRequest"></a>
+
+### QueryOrdersRequest
+
+```
+QueryOrdersRequest defines the request type for the `Orders` query.
+```
+
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryOrdersResponse"></a>
+
+### QueryOrdersResponse
+
+```
+QueryOrdersRequestResponse defines the response type for the `Orders` query.
+```
+
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="coreum.dex.v1.Query"></a>
+
+### Query
+
+```
+Query defines the gRPC query service.
+```
+
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Orders` | [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest) | [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse) | `Orders queries all orders.` | GET|/coreum/dex/v1/orders |
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/tx.proto
+
+
+
+<a name="coreum.dex.v1.EmptyResponse"></a>
+
+### EmptyResponse
+
+
+
+
+
+
+
+<a name="coreum.dex.v1.MsgPlaceOrder"></a>
+
+### MsgPlaceOrder
+
+```
+MsgPlaceOrder defines message to place an order on orderbook.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  `sender is message sender/signer.`  |
+| `order` | [Order](#coreum.dex.v1.Order) |  |  `order is an order to place on orderbook.`  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="coreum.dex.v1.Msg"></a>
+
+### Msg
+
+```
+Msg defines the Msg service.
+```
+
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `PlaceOrder` | [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `PlaceOrder is a method to place an order on orderbook.` |  |
 
  <!-- end services -->
 
