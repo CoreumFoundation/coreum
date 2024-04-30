@@ -87,7 +87,6 @@ func TestApplyRate(t *testing.T) {
 			amount:      sdkmath.NewInt(1001),
 			appliedRate: sdkmath.NewInt(101),
 		},
-
 		{
 			name:         "sender_ibc",
 			rate:         "0.5",
