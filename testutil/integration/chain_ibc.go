@@ -37,9 +37,33 @@ func (c ChainContext) ExecuteIBCTransfer(
 ) (*sdk.TxResponse, error) {
 	t.Helper()
 
+	return c.ExecuteIBCTransferWithMemo(
+		ctx,
+		t,
+		senderAddress,
+		coin,
+		recipientChainContext,
+		recipientChainContext.MustConvertToBech32Address(recipientAddress),
+		"",
+	)
+}
+
+// ExecuteIBCTransferWithMemo is similar to ExecuteIBCTransfer method
+// but it allows passing memo and allows specifying the recipient as string.
+func (c ChainContext) ExecuteIBCTransferWithMemo(
+	ctx context.Context,
+	t *testing.T,
+	senderAddress sdk.AccAddress,
+	coin sdk.Coin,
+	recipientChainContext ChainContext,
+	recipientAddress string,
+	memo string,
+) (*sdk.TxResponse, error) {
+	t.Helper()
+
 	sender := c.MustConvertToBech32Address(senderAddress)
-	receiver := recipientChainContext.MustConvertToBech32Address(recipientAddress)
-	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, receiver, coin.String())
+	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s, memo: %s.",
+		sender, recipientAddress, coin.String(), memo)
 
 	recipientChannelID := c.AwaitForIBCChannelID(
 		ctx,
@@ -59,11 +83,12 @@ func (c ChainContext) ExecuteIBCTransfer(
 		SourceChannel: recipientChannelID,
 		Token:         coin,
 		Sender:        sender,
-		Receiver:      receiver,
+		Receiver:      recipientAddress,
 		TimeoutHeight: ibcclienttypes.Height{
 			RevisionNumber: height.RevisionNumber,
 			RevisionHeight: height.RevisionHeight + 1000,
 		},
+		Memo: memo,
 	}
 
 	return c.BroadcastTxWithSigner(
