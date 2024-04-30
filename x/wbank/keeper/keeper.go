@@ -104,11 +104,7 @@ func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 		ctx = cwasmtypes.WithSmartContractRecipient(ctx, toAddr.String())
 	}
 
-	if err := k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt); err != nil {
-		return err
-	}
-
-	return k.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
+	return k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt)
 }
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
@@ -134,11 +130,7 @@ func (k BaseKeeperWrapper) InputOutputCoins(
 		}
 	}
 
-	if err := k.ftProvider.BeforeInputOutputCoins(ctx, inputs, outputs); err != nil {
-		return err
-	}
-
-	return k.BaseKeeper.InputOutputCoins(ctx, inputs, outputs)
+	return k.ftProvider.BeforeInputOutputCoins(ctx, inputs, outputs)
 }
 
 // ********** Query server **********

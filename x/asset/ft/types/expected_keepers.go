@@ -3,6 +3,7 @@ package types
 import (
 	"time"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -31,4 +32,25 @@ type BankKeeper interface {
 // DelayKeeper defines methods required from the delay keeper.
 type DelayKeeper interface {
 	DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error
+}
+
+// WasmPermissionedKeeper defines methods required from the WASM permissioned keeper.
+type WasmPermissionedKeeper interface {
+	Execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
+	Instantiate2(
+		ctx sdk.Context,
+		codeID uint64,
+		creator, admin sdk.AccAddress,
+		initMsg []byte,
+		label string,
+		deposit sdk.Coins,
+		salt []byte,
+		fixMsg bool,
+	) (sdk.AccAddress, []byte, error)
+	Create(
+		ctx sdk.Context,
+		creator sdk.AccAddress,
+		wasmCode []byte,
+		instantiateAccess *wasmtypes.AccessConfig,
+	) (codeID uint64, checksum []byte, err error)
 }
