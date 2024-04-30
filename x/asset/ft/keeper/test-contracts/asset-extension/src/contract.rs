@@ -48,6 +48,8 @@ pub fn execute_extension_transfer(
     amount: Uint128,
     recipient: String,
 ) -> Result<Response, ContractError> {
+    // TODO(milad) check that amount is present in the attached funds, and attached funds
+    // is enough to cover the transfer.
     // TODO remove this if statement.
     // This check is intended for POC testing, it must be replaced with a more
     // meaningful check.
