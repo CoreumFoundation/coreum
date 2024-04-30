@@ -14,7 +14,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -95,7 +94,7 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 
 	args := []string{
 		"--openapiv2_out=logtostderr=true,allow_merge=true,json_names_for_fields=false,fqn_for_openapi_name=true,simple_operation_ids=true,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.", //nolint:lll // breaking down this string will make it more complicated.
-		"--plugin", must.String(filepath.Abs("bin/protoc-gen-openapiv2")),
+		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-openapiv2", tools.TargetPlatformLocal)),
 	}
 
 	for _, path := range includeDirs {

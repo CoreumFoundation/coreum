@@ -99,7 +99,7 @@ func breakingProto(ctx context.Context, deps build.DepsFunc) error {
 	args := []string{
 		"--buf-breaking_out=.",
 		fmt.Sprintf("--buf-breaking_opt=%s", configBuf),
-		"--plugin", must.String(filepath.Abs("bin/protoc-gen-buf-breaking")),
+		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-buf-breaking", tools.TargetPlatformLocal)),
 	}
 
 	args = append(args, includeArgs...)
