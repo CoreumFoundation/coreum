@@ -31,7 +31,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	codeID, _, err := testApp.WasmGovPermissionKeeper.Create(
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
 		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
 	)
 	requireT.NoError(err)

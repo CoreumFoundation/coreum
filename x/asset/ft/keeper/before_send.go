@@ -81,8 +81,9 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
 					return err
 				}
-				// We will not enforce any policies if the token has extensions. It is up to the contract
-				// to enforce them as needed. As a result we will skip the next operations in this for loop.
+				// We will not enforce any policies(e.g whitelisting, burn rate, ) or perform bank transfers
+				// if the token has extensions. It is up to the contract to enforce them as needed. As a result
+				// we will skip the next operations in this for loop.
 				continue
 			}
 

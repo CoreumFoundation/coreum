@@ -267,14 +267,14 @@ type App struct {
 	UpgradeKeeper    *upgradekeeper.Keeper
 	ParamsKeeper     paramskeeper.Keeper
 	// IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCKeeper               *ibckeeper.Keeper
-	TransferKeeper          wibctransferkeeper.TransferKeeperWrapper
-	EvidenceKeeper          evidencekeeper.Keeper
-	FeeGrantKeeper          feegrantkeeper.Keeper
-	ConsensusParamsKeeper   consensusparamkeeper.Keeper
-	WasmKeeper              wasmkeeper.Keeper
-	WasmGovPermissionKeeper *wasmkeeper.PermissionedKeeper
-	GroupKeeper             groupkeeper.Keeper
+	IBCKeeper              *ibckeeper.Keeper
+	TransferKeeper         wibctransferkeeper.TransferKeeperWrapper
+	EvidenceKeeper         evidencekeeper.Keeper
+	FeeGrantKeeper         feegrantkeeper.Keeper
+	ConsensusParamsKeeper  consensusparamkeeper.Keeper
+	WasmKeeper             wasmkeeper.Keeper
+	WasmPermissionedKeeper *wasmkeeper.PermissionedKeeper
+	GroupKeeper            groupkeeper.Keeper
 
 	AssetFTKeeper      assetftkeeper.Keeper
 	AssetNFTKeeper     assetnftkeeper.Keeper
@@ -406,7 +406,7 @@ func New(
 		app.ModuleAccountAddrs(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	app.WasmGovPermissionKeeper = wasmkeeper.NewGovPermissionKeeper(&app.WasmKeeper)
+	app.WasmPermissionedKeeper = wasmkeeper.NewGovPermissionKeeper(&app.WasmKeeper)
 	app.AssetFTKeeper = assetftkeeper.NewKeeper(
 		appCodec,
 		keys[assetfttypes.StoreKey],
@@ -416,7 +416,7 @@ func New(
 		// pointer is used here because there is cycle in keeper dependencies:
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,
-		app.WasmGovPermissionKeeper,
+		app.WasmPermissionedKeeper,
 		&app.AccountKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
