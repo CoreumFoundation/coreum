@@ -28,7 +28,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = { version = "1.5.3", features = ["ibc3"] }
+cosmwasm-std = { version = "1.5.4", features = ["ibc3"] }
 cosmwasm-storage = "1.2.5"
 cw-storage-plus = "1.0.1"
 cw2 = "1.0.1"
