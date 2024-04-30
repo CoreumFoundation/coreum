@@ -95,6 +95,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/keeper"
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
 	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
@@ -113,6 +114,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
+
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward"
 
 	"github.com/CoreumFoundation/coreum/v4/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v4/app/upgrade"
@@ -145,7 +148,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v4/x/wbank/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wibctransfer"
-
+	//packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/keeper"
+	//packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	wibctransferkeeper "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/v4/x/wnft/keeper"
@@ -197,6 +201,7 @@ var (
 		ibc.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
 		ibchooks.AppModuleBasic{},
+		packetforward.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		wibctransfer.AppModuleBasic{},
@@ -274,6 +279,7 @@ type App struct {
 	// IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	IBCKeeper              *ibckeeper.Keeper
 	IBCHooksKeeper         ibchookskeeper.Keeper
+	PacketForwardKeeper    *packetforwardkeeper.Keeper
 	TransferKeeper         wibctransferkeeper.TransferKeeperWrapper
 	EvidenceKeeper         evidencekeeper.Keeper
 	FeeGrantKeeper         feegrantkeeper.Keeper
@@ -345,8 +351,9 @@ func New(
 		evidencetypes.StoreKey, capabilitytypes.StoreKey, consensusparamtypes.StoreKey,
 		wasmtypes.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey,
 		assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey,
-		ibctransfertypes.StoreKey, delaytypes.StoreKey, customparamstypes.StoreKey,
-		group.StoreKey,
+		ibctransfertypes.StoreKey, ibchookstypes.StoreKey,
+		delaytypes.StoreKey,
+		customparamstypes.StoreKey, group.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -569,7 +576,6 @@ func New(
 		app.ScopedTransferKeeper,
 	)
 
-	app.keys[ibchookstypes.StoreKey] = storetypes.NewKVStoreKey(ibchookstypes.StoreKey)
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
 		app.keys[ibchookstypes.StoreKey],
 	)
