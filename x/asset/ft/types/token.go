@@ -46,18 +46,18 @@ func init() {
 
 // IssueSettings is the model which represents the params for the fungible token issuance.
 type IssueSettings struct {
-	Issuer             sdk.AccAddress
-	Symbol             string
-	Subunit            string
-	Precision          uint32
-	Description        string
-	URI                string
-	URIHash            string
-	InitialAmount      sdkmath.Int
-	Features           []Feature
-	BurnRate           sdk.Dec
-	SendCommissionRate sdk.Dec
-	ExtensionSettings  *ExtensionSettings
+	Issuer                 sdk.AccAddress
+	Symbol                 string
+	Subunit                string
+	Precision              uint32
+	Description            string
+	URI                    string
+	URIHash                string
+	InitialAmount          sdkmath.Int
+	Features               []Feature
+	BurnRate               sdk.Dec
+	SendCommissionRate     sdk.Dec
+	ExtensionIssueSettings *ExtensionIssueSettings
 }
 
 // BuildDenom builds the denom string from the symbol and issuer address.

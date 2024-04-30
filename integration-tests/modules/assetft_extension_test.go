@@ -33,7 +33,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 			&banktypes.MsgSend{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdk.NewInt(1000_000)), // one million added for uploading wasm code
+			Add(sdk.NewInt(1_000_000)), // one million added for uploading wasm code
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -53,7 +53,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		},
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
-		ExtensionSettings: &assetfttypes.ExtensionSettings{
+		ExtensionIssueSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
 	}
@@ -126,7 +126,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		recipient,
-		token.Token.ExtensionCwAddress,
+		token.Token.ExtensionCWAddress,
 		contractMsgBytes,
 		sdk.NewCoin(denom, sdk.NewInt(1)),
 	)
@@ -153,7 +153,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		recipient,
-		token.Token.ExtensionCwAddress,
+		token.Token.ExtensionCWAddress,
 		contractMsgBytes,
 		sdk.NewCoin(denom, sdk.NewInt(7)),
 	)

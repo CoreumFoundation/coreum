@@ -56,7 +56,7 @@
   
 - [coreum/asset/ft/v1/tx.proto](#coreum/asset/ft/v1/tx.proto)
     - [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse)
-    - [ExtensionSettings](#coreum.asset.ft.v1.ExtensionSettings)
+    - [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings)
     - [MsgBurn](#coreum.asset.ft.v1.MsgBurn)
     - [MsgClawback](#coreum.asset.ft.v1.MsgClawback)
     - [MsgFreeze](#coreum.asset.ft.v1.MsgFreeze)
@@ -2287,9 +2287,14 @@ Feature defines possible features of fungible token.
 
 
 
-<a name="coreum.asset.ft.v1.ExtensionSettings"></a>
+<a name="coreum.asset.ft.v1.ExtensionIssueSettings"></a>
 
-### ExtensionSettings
+### ExtensionIssueSettings
+
+```
+ExtensionIssueSettings are settings that will be used to Instantantiate the smart contract which contains
+the source code for the extension.
+```
 
 
 
@@ -2409,7 +2414,7 @@ MsgIssue defines message to issue new fungible token.
 | `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
-| `extension_settings` | [ExtensionSettings](#coreum.asset.ft.v1.ExtensionSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
+| `extension_settings` | [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
 
 
 

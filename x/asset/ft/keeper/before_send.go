@@ -16,6 +16,8 @@ import (
 
 // extension method calls.
 const (
+	// the function name of the extension smart contract, which will be invoked
+	// when doing the transfer.
 	ExtenstionTransferMethod = "extension_transfer"
 )
 
@@ -117,6 +119,9 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 	return nil
 }
 
+// invokeAssetExtension calls the smart contract of the extension. This smart contract is
+// responsible to enforce any policies and do the final tranfer. The amount attached to the call
+// is the send amount plus the burn and commission amount.
 func (k Keeper) invokeAssetExtension(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
@@ -133,7 +138,7 @@ func (k Keeper) invokeAssetExtension(
 	// 	  and also receives (receive can happen by invoking another contract)
 	// 4. testing sending and receiving from smart contract that is not issuer
 	// 5. test IBC send and receives
-	extensionContract, err := sdk.AccAddressFromBech32(def.ExtensionCwAddress)
+	extensionContract, err := sdk.AccAddressFromBech32(def.ExtensionCWAddress)
 	if err != nil {
 		return err
 	}

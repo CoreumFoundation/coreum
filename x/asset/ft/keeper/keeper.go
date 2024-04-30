@@ -242,7 +242,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 	}
 
 	if definition.IsFeatureEnabled(types.Feature_extension) {
-		if settings.ExtensionSettings == nil {
+		if settings.ExtensionIssueSettings == nil {
 			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
 		}
 
@@ -252,12 +252,12 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 
 		contractAddress, _, err := k.wasmPermissionedKeeper.Instantiate2(
 			ctx,
-			settings.ExtensionSettings.CodeId,
+			settings.ExtensionIssueSettings.CodeId,
 			settings.Issuer,
 			settings.Issuer,
 			instantiateMsgBytes,
-			settings.ExtensionSettings.Label,
-			settings.ExtensionSettings.Funds,
+			settings.ExtensionIssueSettings.Label,
+			settings.ExtensionIssueSettings.Funds,
 			ctx.BlockHeader().AppHash,
 			true,
 		)
@@ -265,7 +265,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 			return "", sdkerrors.Wrapf(err, "error instantiating cw contract")
 		}
 
-		definition.ExtensionCwAddress = contractAddress.String()
+		definition.ExtensionCWAddress = contractAddress.String()
 	}
 
 	if err := k.SetDenomMetadata(
@@ -915,7 +915,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		Version:            definition.Version,
 		URI:                definition.URI,
 		URIHash:            definition.URIHash,
-		ExtensionCwAddress: definition.ExtensionCwAddress,
+		ExtensionCWAddress: definition.ExtensionCWAddress,
 	}, nil
 }
 

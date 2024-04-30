@@ -44,7 +44,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		Features:      []types.Feature{types.Feature_extension},
-		ExtensionSettings: &types.ExtensionSettings{
+		ExtensionIssueSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
 	}
@@ -68,7 +68,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.EqualValues(gotToken.Version, types.CurrentTokenVersion)
 	requireT.EqualValues(gotToken.URI, settings.URI)
 	requireT.EqualValues(gotToken.URIHash, settings.URIHash)
-	requireT.EqualValues(66, len(gotToken.ExtensionCwAddress))
+	requireT.EqualValues(66, len(gotToken.ExtensionCWAddress))
 
 	// check the account state
 	issuedAssetBalance := bankKeeper.GetBalance(ctx, issuer, denom)

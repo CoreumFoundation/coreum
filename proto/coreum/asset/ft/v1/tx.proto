@@ -80,10 +80,12 @@ message MsgIssue {
   string uri = 10 [(gogoproto.customname) = "URI"];
   string uri_hash = 11 [(gogoproto.customname) = "URIHash"];
   // extension_settings must be provided in case wasm extensions are enabled.
-  ExtensionSettings extension_settings = 12;
+  ExtensionIssueSettings extension_settings = 12;
 }
 
-message ExtensionSettings {
+// ExtensionIssueSettings are settings that will be used to Instantantiate the smart contract which contains
+// the source code for the extension.
+message ExtensionIssueSettings {
   // code_id is the reference to the stored WASM code
   uint64 code_id = 1;
   // label is optional metadata to be stored with a contract instance.
