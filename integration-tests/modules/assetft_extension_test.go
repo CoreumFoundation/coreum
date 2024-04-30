@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 	requireT := require.New(t)
 
 	issuer := chain.GenAccount()
@@ -57,6 +59,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
 			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "testing-issuance",
 		},
 	}
 
@@ -78,6 +81,11 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		Denom:   chain.ChainSettings.Denom,
 	})
 	requireT.EqualValues(contractBalance.GetBalance().String(), attachedFund.String())
+
+	// assert correct label is applied.
+	contractInfo, err := wasmClient.ContractInfo(ctx, &wasmtypes.QueryContractInfoRequest{Address: token.Token.ExtensionCWAddress})
+	requireT.NoError(err)
+	requireT.EqualValues(issueMsg.ExtensionSettings.Label, contractInfo.Label)
 
 	recipient := chain.GenAccount()
 	// sending 1 will succeed
