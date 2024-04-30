@@ -23,44 +23,29 @@ jobs:
         ]
         include:
           - ci_step: "lint"
-            command: "coreum-builder lint"
+            command: make lint
             linter-cache: true
             codecov: false
           - ci_step: "test"
-            command: "coreum-builder test"
+            command: make test
             linter-cache: false
             codecov: true
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
-            command: |
-              coreum-builder build images
-              crust znet start --profiles=3cored --timeout-commit 0.5s
-              coreum-builder integration-tests-unsafe/modules
-              crust znet stop
-              crust znet coverage-convert
+            command: make integration-tests-modules
             linter-cache: false
             codecov: true
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-ibc"
-            command: |
-              coreum-builder build images
-              crust znet start --profiles=3cored,ibc --timeout-commit 1s
-              coreum-builder integration-tests-unsafe/ibc
+            command: make integration-tests-ibc
             linter-cache: false
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
-            command: |
-              coreum-builder build images
-              crust znet start --cored-version=v3.0.3 --profiles=3cored,ibc --timeout-commit 1s
-              coreum-builder integration-tests-unsafe/upgrade integration-tests-unsafe/ibc integration-tests-unsafe/modules
+            command: make integration-tests-upgrade
             linter-cache: false
             codecov: false
           - ci_step: "integration tests faucet"
-            command: |
-              coreum-builder build images
-              faucet-builder images
-              crust znet start --profiles=faucet --timeout-commit 0.5s
-              faucet-builder integration-tests
+            command: make integration-tests-faucet
             linter-cache: false
             codecov: false
 
@@ -83,16 +68,6 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-      - name: Set up build system
-        run: |
-          echo "$(pwd)/coreum/bin" >> $GITHUB_PATH
-          echo "$(pwd)/faucet/bin" >> $GITHUB_PATH
-          echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-      - name: Retrieve go version
-        id: goversion
-        run: echo "GO_VERSION=$(coreum/bin/go version)" >> $GITHUB_OUTPUT
-      - name: Print go version
-        run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup go cache
         uses: actions/cache@v4
         with:
@@ -123,16 +98,10 @@ jobs:
         with:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Prepare dependencies
-        # FIXME (wojciech): Execute `download` commands for crust builder once available
-        run: |
-          crust build/me
-          crust build
-          crust znet remove
-          coreum-builder build/me
-          coreum-builder download
-          faucet-builder build/me
-          faucet-builder download
+        working-directory: ./coreum
+        run: make dependencies
       - name: Run ${{ matrix.ci_step }}
+        working-directory: ./coreum
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
