@@ -28,7 +28,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = "1.5.3"
+cosmwasm-std = "1.5.4"
 cosmwasm-storage = "1.2.5"
 cw2 = "1.0.1"
 thiserror = { version = "1.0.40" }
