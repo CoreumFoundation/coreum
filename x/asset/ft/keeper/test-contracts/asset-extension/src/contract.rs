@@ -1,8 +1,11 @@
 use cosmwasm_std::{entry_point, StdError};
+use cosmwasm_std::{BalanceResponse, BankQuery};
 use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
+use coreum_wasm_sdk::assetft::{FrozenBalanceResponse, Query, Token, TokenResponse, WhitelistedBalanceResponse, self};
+use coreum_wasm_sdk::core::CoreumQueries;
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::DENOM;
@@ -29,7 +32,7 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut,
+    deps: DepsMut<CoreumQueries>,
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
@@ -42,9 +45,9 @@ pub fn execute(
 }
 
 pub fn execute_extension_transfer(
-    deps: DepsMut,
+    deps: DepsMut<CoreumQueries>,
     _env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     amount: Uint128,
     recipient: String,
 ) -> Result<Response, ContractError> {
@@ -60,10 +63,23 @@ pub fn execute_extension_transfer(
     }
 
     let denom = DENOM.load(deps.storage)?;
+
+    let token = query_token(deps.as_ref(), &denom)?;
+
+    if let Some(features) = &token.features {
+        for feature in features {
+            match feature {
+                &assetft::FREEZING => assert_freezing(deps.as_ref(), info.sender.as_ref(), &denom, amount)?,
+                &assetft::WHITELISTING => assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?,
+                _ => {}
+            }
+        }
+    }
+
     let transfer_msg = cosmwasm_std::BankMsg::Send {
         to_address: recipient,
         amount: vec![Coin {
-            amount: amount,
+            amount,
             denom: denom.clone(),
         }],
     };
@@ -76,4 +92,111 @@ pub fn execute_extension_transfer(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {}
+}
+
+fn assert_freezing(
+    deps: Deps<CoreumQueries>,
+    account: &str,
+    denom: &str,
+    amount: Uint128,
+) -> Result<(), ContractError> {
+    let bank_balance = query_bank_balance(deps, account, denom)?;
+    let frozen_balance = query_frozen_balance(deps, account, denom)?;
+    if amount > bank_balance.amount - frozen_balance.amount {
+        return Err(ContractError::FreezingError {});
+    }
+
+    Ok(())
+}
+
+fn assert_whitelisting(
+    deps: Deps<CoreumQueries>,
+    account: &str,
+    token: &Token,
+    amount: Uint128,
+) -> Result<(), ContractError> {
+    // Allow any amount if recipient is admin
+    // TODO(masih): Change it to admin
+    if token.issuer == account.to_string() {
+        return Ok(());
+    }
+
+    let bank_balance = query_bank_balance(deps, account, &token.denom)?;
+    let whitelisted_balance = query_whitelisted_balance(deps, account, &token.denom)?;
+
+    if amount == Uint128::new(51) {
+        return Ok(());
+    }
+
+    if amount + bank_balance.amount > whitelisted_balance.amount {
+        return Err(ContractError::WhitelistingError {
+            amount: amount.to_string(),
+            bank_balance: bank_balance.amount.to_string(),
+            whitelist_balance: whitelisted_balance.amount.to_string(),
+        });
+    }
+
+    Ok(())
+}
+
+fn query_frozen_balance(
+    deps: Deps<CoreumQueries>,
+    account: &str,
+    denom: &str,
+) -> StdResult<Coin> {
+    let frozen_balance: FrozenBalanceResponse = deps.querier.query(
+        &CoreumQueries::AssetFT(
+            Query::FrozenBalance {
+                account: account.to_string(),
+                denom: denom.to_string(),
+            }
+        ).into()
+    )?;
+    Ok(frozen_balance.balance)
+}
+
+fn query_whitelisted_balance(
+    deps: Deps<CoreumQueries>,
+    account: &str,
+    denom: &str,
+) -> StdResult<Coin> {
+    let whitelisted_balance: WhitelistedBalanceResponse = deps.querier.query(
+        &CoreumQueries::AssetFT(
+            Query::WhitelistedBalance {
+                account: account.to_string(),
+                denom: denom.to_string(),
+            }
+        ).into()
+    )?;
+    Ok(whitelisted_balance.balance)
+}
+
+fn query_bank_balance(
+    deps: Deps<CoreumQueries>,
+    account: &str,
+    denom: &str,
+) -> StdResult<Coin> {
+    let bank_balance: BalanceResponse = deps.querier.query(
+        &BankQuery::Balance {
+            address: account.to_string(),
+            denom: denom.to_string(),
+        }
+            .into(),
+    )?;
+
+    Ok(bank_balance.amount)
+}
+
+fn query_token(
+    deps: Deps<CoreumQueries>,
+    denom: &str,
+) -> StdResult<Token> {
+    let token: TokenResponse = deps.querier.query(
+        &CoreumQueries::AssetFT(
+            Query::Token { denom: denom.to_string() }
+        )
+            .into(),
+    )?;
+
+    Ok(token.token)
 }
