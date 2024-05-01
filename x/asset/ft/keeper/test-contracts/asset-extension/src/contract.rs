@@ -129,11 +129,7 @@ fn assert_whitelisting(
     }
 
     if amount + bank_balance.amount > whitelisted_balance.amount {
-        return Err(ContractError::WhitelistingError {
-            amount: amount.to_string(),
-            bank_balance: bank_balance.amount.to_string(),
-            whitelist_balance: whitelisted_balance.amount.to_string(),
-        });
+        return Err(ContractError::WhitelistingError {});
     }
 
     Ok(())
