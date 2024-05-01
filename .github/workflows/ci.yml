@@ -19,7 +19,6 @@ jobs:
           "integration tests coreum-modules",
           "integration tests coreum-ibc",
           "integration tests coreum-upgrade-v4.0.0",
-          "integration tests faucet",
         ]
         include:
           - ci_step: "lint"
@@ -44,10 +43,6 @@ jobs:
             command: make integration-tests-upgrade
             linter-cache: false
             codecov: false
-          - ci_step: "integration tests faucet"
-            command: make integration-tests-faucet
-            linter-cache: false
-            codecov: false
 
     runs-on: ubuntu-22.04
     steps:
@@ -58,11 +53,6 @@ jobs:
         with:
           persist-credentials: false
           path: coreum
-      - name: Checkout faucet
-        uses: actions/checkout@v4
-        with:
-          repository: CoreumFoundation/faucet
-          path: faucet
       - name: Checkout crust
         uses: actions/checkout@v4
         with:

@@ -31,9 +31,8 @@ release-images:
 	./bin/coreum-builder release/images
 
 .PHONY: dependencies
-dependencies: check-crust-builder check-faucet-builder
+dependencies: check-crust-builder
 	../crust/bin/crust download
-	../faucet/bin/faucet-builder download
 	./bin/coreum-builder download
 
 .PHONY: integration-tests-modules
@@ -54,15 +53,6 @@ integration-tests-ibc: check-crust-builder
 	./bin/coreum-builder integration-tests-unsafe/ibc
 	../crust/bin/crust znet remove
 
-.PHONY: integration-tests-faucet
-integration-tests-faucet: check-crust-builder check-faucet-builder
-	../crust/bin/crust znet remove
-	./bin/coreum-builder build images
-	../faucet/bin/faucet-builder images
-	../crust/bin/crust znet start --profiles=faucet --timeout-commit 0.5s
-	../faucet/bin/faucet-builder integration-tests
-	../crust/bin/crust znet remove
-
 .PHONY: integration-tests-upgrade
 integration-tests-upgrade: check-crust-builder
 	../crust/bin/crust znet remove
@@ -76,7 +66,3 @@ integration-tests-upgrade: check-crust-builder
 .PHONY: check-crust-builder
 check-crust-builder:
 	test -f ../crust/bin/crust || (echo "You need to checkout crust repository" && exit 1)
-
-.PHONY: check-faucet-builder
-check-faucet-builder:
-	test -f ../faucet/bin/faucet-builder || (echo "You need to checkout faucet repository" && exit 1)
