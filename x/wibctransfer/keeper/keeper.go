@@ -33,8 +33,17 @@ func NewTransferKeeperWrapper(
 	scopedKeeper exported.ScopedKeeper,
 ) TransferKeeperWrapper {
 	return TransferKeeperWrapper{
-		Keeper: ibctransferkeeper.NewKeeper(cdc, key, paramSpace, ics4Wrapper, channelKeeper, portKeeper, authKeeper,
-			bankKeeper, scopedKeeper),
+		Keeper: ibctransferkeeper.NewKeeper(
+			cdc,
+			key,
+			paramSpace,
+			ics4Wrapper,
+			channelKeeper,
+			portKeeper,
+			authKeeper,
+			bankKeeper,
+			scopedKeeper,
+		),
 	}
 }
 
