@@ -30,6 +30,7 @@ require (
 	github.com/CosmWasm/wasmd v0.44.0
 	github.com/cosmos/cosmos-sdk v0.47.11
 	github.com/cosmos/gogoproto v1.4.10
+	github.com/cosmos/ibc-apps/modules/ibc-hooks/v7 v7.0.0-20240327220524-26f3ad8f58e4
 	github.com/cosmos/ibc-go/v7 v7.4.0
 	github.com/cosmos/relayer/v2 v2.4.2
 	github.com/pkg/errors v0.9.1
