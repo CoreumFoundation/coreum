@@ -23,7 +23,7 @@ dependencies:
 .PHONY: integration-tests-modules
 integration-tests-modules:
 	../crust/bin/crust znet remove
-	./bin/coreum-builder build images
+	./bin/coreum-builder wasm build images
 	../crust/bin/crust znet start --profiles=3cored --timeout-commit 0.5s
 	./bin/coreum-builder integration-tests-unsafe/modules
 	../crust/bin/crust znet stop
@@ -50,7 +50,7 @@ integration-tests-faucet:
 .PHONY: integration-tests-upgrade
 integration-tests-upgrade:
 	../crust/bin/crust znet remove
-	./bin/coreum-builder build images
+	./bin/coreum-builder wasm build images
 	../crust/bin/crust znet start --cored-version=v3.0.3 --profiles=3cored,ibc --timeout-commit 1s
 	./bin/coreum-builder integration-tests-unsafe/upgrade integration-tests-unsafe/ibc integration-tests-unsafe/modules
 	../crust/bin/crust znet remove
