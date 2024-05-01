@@ -1684,21 +1684,25 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	// FIXME: When minting an NFT with empty data it creates an []byte{} in the data
-	// Would be nice to be able to reproduce this in the integration test
-	/*jsonData := []byte(nil)
-	emptyData, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonData})
-	requireT.NoError(err)*/
+	emptyData, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: nil})
+	requireT.NoError(err)
 	expectedNFT := &nfttypes.NFT{
 		ClassId: classIDNoWhitelist,
 		Id:      mintImmutableNFTReq.ID,
-		//Data:    emptyData,
+		Data:    emptyData,
 	}
-	/*requireT.Equal(
-		expectedNFT, nftResp.Nft,
-	)*/
-	requireT.Equal(expectedNFT.Id, nftResp.Nft.Id)
-	requireT.Equal(expectedNFT.ClassId, nftResp.Nft.ClassId)
+
+	gotNFT := nftResp.Nft
+	// encode the data `from` and `to` proto.Any to load same state as `codectypes.NewAnyWithValue` does
+	var gotNFTDataBytes assetnfttypes.DataBytes
+	requireT.NoError(gotNFTDataBytes.Unmarshal(gotNFT.Data.Value))
+	gotNFTData, err := codectypes.NewAnyWithValue(&gotNFTDataBytes)
+	requireT.NoError(err)
+	gotNFT.Data = gotNFTData
+
+	requireT.Equal(
+		expectedNFT, gotNFT,
+	)
 
 	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
 		ClassId: classIDNoWhitelist,
