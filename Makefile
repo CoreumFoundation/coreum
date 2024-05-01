@@ -14,6 +14,22 @@ build:
 images:
 	./bin/coreum-builder images
 
+.PHONY: wasm
+wasm:
+	./bin/coreum-builder wasm
+
+.PHONY: generate
+generate:
+	./bin/coreum-builder generate
+
+.PHONY: release
+release:
+	./bin/coreum-builder release
+
+.PHONY: release-images
+release-images:
+	./bin/coreum-builder release/images
+
 .PHONY: dependencies
 dependencies:
 	../crust/bin/crust download
