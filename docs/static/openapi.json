@@ -9279,6 +9279,9 @@
         "uri_hash": {
           "type": "string"
         },
+        "admin": {
+          "type": "string"
+        },
         "extension_cw_address": {
           "type": "string"
         }
