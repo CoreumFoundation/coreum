@@ -5,11 +5,17 @@ import (
 	"testing"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
@@ -88,4 +94,144 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
 	balance = bankKeeper.GetBalance(ctx, receiver, denom)
 	requireT.EqualValues("2", balance.Amount.String())
+}
+
+func TestKeeper_Extension_Whitelist(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features: []types.Feature{
+			types.Feature_whitelisting,
+			types.Feature_extension,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	unwhitelistableSettings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     1,
+		Description:   "ABC Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features: []types.Feature{
+			types.Feature_extension,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	unwhitelistableDenom, err := ftKeeper.Issue(ctx, unwhitelistableSettings)
+	requireT.NoError(err)
+	_, err = ftKeeper.GetToken(ctx, unwhitelistableDenom)
+	requireT.NoError(err)
+
+	// whitelisting fails on unwhitelistable token
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(1)))
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	// try to whitelist non-existent denom
+	nonExistentDenom := types.BuildDenom("nonexist", issuer)
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(nonExistentDenom, sdkmath.NewInt(10)))
+	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
+
+	// try to whitelist from non issuer address
+	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to whitelist the issuer (issuer can't be whitelisted)
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, issuer, sdk.NewCoin(denom, sdkmath.NewInt(1)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// set whitelisted balance to 0
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(0))))
+	whitelistedBalance := ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)).String(), whitelistedBalance.String())
+
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	// send
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend)
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
+
+	// set whitelisted balance to 100
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100))))
+	whitelistedBalance = ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), whitelistedBalance.String())
+
+	// test query all whitelisted balances
+	allBalances, pageRes, err := ftKeeper.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{})
+	requireT.NoError(err)
+	assertT.Len(allBalances, 1)
+	assertT.EqualValues(1, pageRes.GetTotal())
+	assertT.EqualValues(recipient.String(), allBalances[0].Address)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))).String(), allBalances[0].Coins.String())
+
+	coinsToSend = sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(50)),
+		sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(50)),
+	)
+	// send
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend)
+	requireT.NoError(err)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
+	requireT.NoError(err)
+
+	// try to send more
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1)))
+	// send
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend)
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
+
+	// try to whitelist from non issuer address
+	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
+	assertT.True(sdkerrors.IsOf(err, cosmoserrors.ErrUnauthorized))
+
+	// reduce whitelisting limit below the current balance
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
+	requireT.NoError(err)
 }
