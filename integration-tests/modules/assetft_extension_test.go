@@ -235,7 +235,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 
 	// Issue the new fungible token
 	amount := sdkmath.NewInt(20000)
-	subunit := "uabc"
+	subunit := "uabd"
 	denom := assetfttypes.BuildDenom(subunit, issuer)
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
 	msg := &assetfttypes.MsgIssue{
