@@ -10,6 +10,7 @@
     - [MintAuthorization](#coreum.asset.ft.v1.MintAuthorization)
   
 - [coreum/asset/ft/v1/event.proto](#coreum/asset/ft/v1/event.proto)
+    - [EventAmountClawedBack](#coreum.asset.ft.v1.EventAmountClawedBack)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
     - [EventWhitelistedAmountChanged](#coreum.asset.ft.v1.EventWhitelistedAmountChanged)
@@ -55,7 +56,9 @@
   
 - [coreum/asset/ft/v1/tx.proto](#coreum/asset/ft/v1/tx.proto)
     - [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse)
+    - [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings)
     - [MsgBurn](#coreum.asset.ft.v1.MsgBurn)
+    - [MsgClawback](#coreum.asset.ft.v1.MsgClawback)
     - [MsgFreeze](#coreum.asset.ft.v1.MsgFreeze)
     - [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze)
     - [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze)
@@ -1579,6 +1582,23 @@ the granter's account.
 
 
 
+<a name="coreum.asset.ft.v1.EventAmountClawedBack"></a>
+
+### EventAmountClawedBack
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `account` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
+| `amount` | [string](#string) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.EventFrozenAmountChanged"></a>
 
 ### EventFrozenAmountChanged
@@ -2120,6 +2140,7 @@ Definition defines the fungible token settings to store.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `extension_cw_address` | [string](#string) |  |    |
 
 
 
@@ -2170,6 +2191,7 @@ Token is a full representation of the fungible token.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `extension_cw_address` | [string](#string) |  |    |
 
 
 
@@ -2236,6 +2258,8 @@ Feature defines possible features of fungible token.
 | whitelisting | 3 |  |
 | ibc | 4 |  |
 | block_smart_contracts | 5 |  |
+| clawback | 6 |  |
+| extension | 7 |  |
 
 
  <!-- end enums -->
@@ -2263,6 +2287,28 @@ Feature defines possible features of fungible token.
 
 
 
+<a name="coreum.asset.ft.v1.ExtensionIssueSettings"></a>
+
+### ExtensionIssueSettings
+
+```
+ExtensionIssueSettings are settings that will be used to Instantantiate the smart contract which contains
+the source code for the extension.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  |  `code_id is the reference to the stored WASM code`  |
+| `label` | [string](#string) |  |  `label is optional metadata to be stored with a contract instance.`  |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `funds coins that are transferred to the contract on instantiation`  |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.MsgBurn"></a>
 
 ### MsgBurn
@@ -2272,6 +2318,23 @@ Feature defines possible features of fungible token.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  |    |
+| `coin` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |    |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.MsgClawback"></a>
+
+### MsgClawback
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |    |
+| `account` | [string](#string) |  |    |
 | `coin` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |    |
 
 
@@ -2351,6 +2414,7 @@ MsgIssue defines message to issue new fungible token.
 | `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `extension_settings` | [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
 
 
 
@@ -2487,6 +2551,7 @@ Msg defines the Msg service.
 | `SetFrozen` | [MsgSetFrozen](#coreum.asset.ft.v1.MsgSetFrozen) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetFrozen sets the absolute value of frozen amount.` |  |
 | `GloballyFreeze` | [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `GloballyFreeze freezes fungible token so no operations are allowed with it before unfrozen. This operation is idempotent so global freeze of already frozen token does nothing.` |  |
 | `GloballyUnfreeze` | [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it. This operation is idempotent so global unfreezing of non-frozen token does nothing.` |  |
+| `Clawback` | [MsgClawback](#coreum.asset.ft.v1.MsgClawback) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `Clawback confiscates a part of fungible tokens from an account to the issuer, only if the clawback feature is enabled on that token.` |  |
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.` |  |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |

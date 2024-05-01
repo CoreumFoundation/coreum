@@ -9090,7 +9090,9 @@
         "freezing",
         "whitelisting",
         "ibc",
-        "block_smart_contracts"
+        "block_smart_contracts",
+        "clawback",
+        "extension"
       ],
       "default": "minting",
       "description": "Feature defines possible features of fungible token."
@@ -9275,6 +9277,9 @@
           "type": "string"
         },
         "uri_hash": {
+          "type": "string"
+        },
+        "extension_cw_address": {
           "type": "string"
         }
       },

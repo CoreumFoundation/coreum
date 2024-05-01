@@ -5,3 +5,5 @@ vendor
 /bin
 *.iml
 go.work*
+**/wasm-data/wasm/*
+.DS_Store

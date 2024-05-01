@@ -1,10 +1,13 @@
 [package]
-name = "authz-transfer"
+name = "asset-extension"
 version = "0.1.0"
 authors = ["Coreum"]
 edition = "2021"
 
-exclude = ["authz-transfer.wasm", "checksums.txt"]
+exclude = [
+  "simple_state.wasm",
+  "checksums.txt",
+]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -25,9 +28,9 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-thiserror = "1.0.56"
-cosmwasm-std = "1.5.4"
-cw2 = "1.1.2"
-cw-storage-plus = "1.2.0"
-cosmwasm-schema = "1.5.0"
-coreum-wasm-sdk = "0.2.4"
+cosmwasm-std = "1.2.5"
+cosmwasm-storage = "1.2.5"
+cw2 = "1.0.1"
+thiserror = "1.0.40"
+cosmwasm-schema = "1.2.6"
+cw-storage-plus = "1.0.1"
