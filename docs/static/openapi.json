@@ -9279,10 +9279,10 @@
         "uri_hash": {
           "type": "string"
         },
-        "admin": {
+        "extension_cw_address": {
           "type": "string"
         },
-        "extension_cw_address": {
+        "admin": {
           "type": "string"
         }
       },
