@@ -2178,8 +2178,8 @@ Definition defines the fungible token settings to store.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
-| `admin` | [string](#string) |  |    |
 | `extension_cw_address` | [string](#string) |  |    |
+| `admin` | [string](#string) |  |    |
 
 
 
@@ -2230,8 +2230,8 @@ Token is a full representation of the fungible token.
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
-| `admin` | [string](#string) |  |    |
 | `extension_cw_address` | [string](#string) |  |    |
+| `admin` | [string](#string) |  |    |
 
 
 
