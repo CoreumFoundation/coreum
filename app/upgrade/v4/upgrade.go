@@ -21,7 +21,6 @@ func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{
 				ibchookstypes.StoreKey,
-				// Integrate new dex module:
 				dextypes.StoreKey,
 			},
 		},
