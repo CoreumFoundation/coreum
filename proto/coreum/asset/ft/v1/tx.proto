@@ -39,7 +39,7 @@ service Msg {
   rpc GloballyUnfreeze(MsgGloballyUnfreeze) returns (EmptyResponse);
 
   // Clawback confiscates a part of fungible tokens from an account
-  // to the issuer, only if the clawback feature is enabled on that token.
+  // to the admin, only if the clawback feature is enabled on that token.
   rpc Clawback(MsgClawback) returns (EmptyResponse);
 
   // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
@@ -72,7 +72,7 @@ message MsgIssue {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
   // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
-  // amount sent to the token issuer account.
+  // amount sent to the token admin account.
   string send_commission_rate = 9 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"

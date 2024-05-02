@@ -2136,7 +2136,7 @@ Definition defines the fungible token settings to store.
 | `issuer` | [string](#string) |  |    |
 | `features` | [Feature](#coreum.asset.ft.v1.Feature) | repeated |    |
 | `burn_rate` | [string](#string) |  |  `burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount.`  |
-| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
+| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token admin account.`  |
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
@@ -2187,7 +2187,7 @@ Token is a full representation of the fungible token.
 | `globally_frozen` | [bool](#bool) |  |    |
 | `features` | [Feature](#coreum.asset.ft.v1.Feature) | repeated |    |
 | `burn_rate` | [string](#string) |  |  `burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount.`  |
-| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
+| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token admin account.`  |
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
@@ -2411,7 +2411,7 @@ MsgIssue defines message to issue new fungible token.
 | `description` | [string](#string) |  |    |
 | `features` | [Feature](#coreum.asset.ft.v1.Feature) | repeated |    |
 | `burn_rate` | [string](#string) |  |  `burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount.`  |
-| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
+| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token admin account.`  |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
 | `extension_settings` | [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
@@ -2551,7 +2551,7 @@ Msg defines the Msg service.
 | `SetFrozen` | [MsgSetFrozen](#coreum.asset.ft.v1.MsgSetFrozen) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetFrozen sets the absolute value of frozen amount.` |  |
 | `GloballyFreeze` | [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `GloballyFreeze freezes fungible token so no operations are allowed with it before unfrozen. This operation is idempotent so global freeze of already frozen token does nothing.` |  |
 | `GloballyUnfreeze` | [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it. This operation is idempotent so global unfreezing of non-frozen token does nothing.` |  |
-| `Clawback` | [MsgClawback](#coreum.asset.ft.v1.MsgClawback) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `Clawback confiscates a part of fungible tokens from an account to the issuer, only if the clawback feature is enabled on that token.` |  |
+| `Clawback` | [MsgClawback](#coreum.asset.ft.v1.MsgClawback) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `Clawback confiscates a part of fungible tokens from an account to the admin, only if the clawback feature is enabled on that token.` |  |
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.` |  |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |

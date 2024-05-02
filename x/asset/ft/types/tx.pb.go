@@ -46,7 +46,7 @@ type MsgIssue struct {
 	// burn_amount. This value will be burnt on top of the send amount.
 	BurnRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=burn_rate,json=burnRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"burn_rate"`
 	// send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
-	// amount sent to the token issuer account.
+	// amount sent to the token admin account.
 	SendCommissionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=send_commission_rate,json=sendCommissionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"send_commission_rate"`
 	URI                string                                 `protobuf:"bytes,10,opt,name=uri,proto3" json:"uri,omitempty"`
 	URIHash            string                                 `protobuf:"bytes,11,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
@@ -719,7 +719,7 @@ type MsgClient interface {
 	// This operation is idempotent so global unfreezing of non-frozen token does nothing.
 	GloballyUnfreeze(ctx context.Context, in *MsgGloballyUnfreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// Clawback confiscates a part of fungible tokens from an account
-	// to the issuer, only if the clawback feature is enabled on that token.
+	// to the admin, only if the clawback feature is enabled on that token.
 	Clawback(ctx context.Context, in *MsgClawback, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
 	SetWhitelistedLimit(ctx context.Context, in *MsgSetWhitelistedLimit, opts ...grpc.CallOption) (*EmptyResponse, error)
@@ -869,7 +869,7 @@ type MsgServer interface {
 	// This operation is idempotent so global unfreezing of non-frozen token does nothing.
 	GloballyUnfreeze(context.Context, *MsgGloballyUnfreeze) (*EmptyResponse, error)
 	// Clawback confiscates a part of fungible tokens from an account
-	// to the issuer, only if the clawback feature is enabled on that token.
+	// to the admin, only if the clawback feature is enabled on that token.
 	Clawback(context.Context, *MsgClawback) (*EmptyResponse, error)
 	// SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
 	SetWhitelistedLimit(context.Context, *MsgSetWhitelistedLimit) (*EmptyResponse, error)
