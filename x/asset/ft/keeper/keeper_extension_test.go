@@ -274,6 +274,12 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	denom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
+	token, err := ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+
+	extensionCWAddress, err := sdk.AccAddressFromBech32(token.ExtensionCWAddress)
+	requireT.NoError(err)
+
 	unfreezableSettings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
@@ -358,27 +364,29 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	requireT.NoError(err)
 	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(80)), frozenBalance)
-	am := bankKeeper.GetBalance(ctx, recipient, denom).Amount.String()
-	t.Logf("balance before error: %s", am)
 	// try to send more than available
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(80)))
 	// send
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, coinsToSend)
 	requireT.ErrorContains(err, "Requested transfer token is frozen.")
-	am = bankKeeper.GetBalance(ctx, recipient, denom).Amount.String()
-	t.Logf("balance after error: %s", am)
+	// return attached fund of failed transaction
+	err = bankKeeper.SendCoins(ctx, extensionCWAddress, recipient, coinsToSend)
+	requireT.NoError(err)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
 		[]banktypes.Output{{Address: issuer.String(), Coins: coinsToSend}})
-	requireT.ErrorContains(err, "insufficient funds")
+	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+	// return attached fund of failed transaction
+	err = bankKeeper.SendCoins(ctx, extensionCWAddress, recipient, coinsToSend)
+	requireT.NoError(err)
 
 	// try to send unfrozen balance
 	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
 	// send
 	err = bankKeeper.SendCoins(ctx, recipient, recipient2, coinsToSend)
-	requireT.NoError(err) // insufficient fund
+	requireT.NoError(err)
 	balance := bankKeeper.GetBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(90)), balance)
 	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
@@ -387,7 +395,7 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
 		[]banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}})
-	requireT.NoError(err)
+	requireT.NoError(err) // Requested transfer token is frozen.
 	balance = bankKeeper.GetBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(80)), balance)
 	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
