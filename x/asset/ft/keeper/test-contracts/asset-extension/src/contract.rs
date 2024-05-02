@@ -74,7 +74,7 @@ pub fn execute_extension_transfer(
         // must not go below the frozen amount. Otherwise the transaction will fail.
 
         if features.contains(&assetft::FREEZING) {
-            assert_freezing(deps.as_ref(), info.sender.as_ref(), &token, amount)?;
+            assert_freezing(deps.as_ref(), info.sender.as_ref(), &token)?;
         }
 
         if features.contains(&assetft::WHITELISTING) {
@@ -101,7 +101,6 @@ fn assert_freezing(
     deps: Deps<CoreumQueries>,
     account: &str,
     token: &Token,
-    amount: Uint128,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
     // TODO(masih): Change it to admin
@@ -117,7 +116,8 @@ fn assert_freezing(
     let bank_balance = query_bank_balance(deps, account, &token.denom)?;
     let frozen_balance = query_frozen_balance(deps, account, &token.denom)?;
 
-    if amount + frozen_balance.amount > bank_balance.amount {
+    // the amount is already deducted from the balance, so you can omit it from both sides
+    if frozen_balance.amount > bank_balance.amount {
         return Err(ContractError::FreezingError {});
     }
 
