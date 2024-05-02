@@ -74,11 +74,11 @@ pub fn execute_extension_transfer(
         // must not go below the frozen amount. Otherwise the transaction will fail.
 
         if features.contains(&assetft::FREEZING) {
-            assert_freezing(deps.as_ref(), info.sender.as_ref(), &token, amount)?
+            assert_freezing(deps.as_ref(), info.sender.as_ref(), &token, amount)?;
         }
 
         if features.contains(&assetft::WHITELISTING) {
-            assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?
+            assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?;
         }
     }
 

@@ -16,6 +16,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 	assetftkeeper "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper"
 	testcontracts "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper/test-contracts"
@@ -241,10 +242,10 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
 	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
-		Symbol:        "ABC",
-		Subunit:       "uabc",
+		Symbol:        "ABD",
+		Subunit:       "uabd",
 		Precision:     6,
-		Description:   "ABC Description",
+		Description:   "ABD Description",
 		InitialAmount: amount,
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_whitelisting,
@@ -293,7 +294,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	requireT.ErrorIs(err, assetfttypes.ErrWhitelistedLimitExceeded)
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 
 	// multi-send
 	multiSendMsg := &banktypes.MsgMultiSend{
@@ -306,7 +307,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
 		multiSendMsg,
 	)
-	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 
 	// whitelist 400 tokens
 	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
@@ -349,7 +350,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 
 	// try to send whitelisted balance (400)
 	sendMsg = &banktypes.MsgSend{
@@ -383,7 +384,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 
 	// whitelist one more
 	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
@@ -483,5 +484,398 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
+}
+
+// TestAssetFTExtensionFreeze checks extension freeze functionality of fungible tokens.
+func TestAssetFTExtensionFreeze(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	clientCtx := chain.ClientContext
+
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+	bankClient := banktypes.NewQueryClient(clientCtx)
+
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	randomAddress := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgUnfreeze{},
+			&assetfttypes.MsgUnfreeze{},
+			&assetfttypes.MsgUnfreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+	})
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+	})
+	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgFreeze{},
+		},
+	})
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+	attachedFund := chain.NewCoin(sdk.NewInt(10))
+
+	// Issue the new fungible token
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "testing-whitelisting",
+		},
+	}
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdkmath.NewInt(1000)),
+		),
+	}
+
+	msgList := []sdk.Msg{
+		msg, msgSend,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	denom := fungibleTokenIssuedEvts[0].Denom
+
+	// try to pass non-issuer signature to freeze msg
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  randomAddress.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(randomAddress),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// freeze 400 tokens
+	freezeMsg = &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(freezeMsg))
+
+	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(0),
+		CurrentAmount:  sdkmath.NewInt(400),
+	}, fungibleTokenFreezeEvts[0])
+
+	// query frozen tokens
+	frozenBalance, err := ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), frozenBalance.Balance)
+
+	frozenBalances, err := ftClient.FrozenBalances(ctx, &assetfttypes.QueryFrozenBalancesRequest{
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), frozenBalances.Balances)
+
+	// try to send more than available (650) (600 is available)
+	recipient2 := chain.GenAccount()
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(650)))
+	// send
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+	// multi-send
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+
+	// try to send available tokens (300 + 300)
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(300)))
+	// send
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	balance1, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(700)).String(), balance1.GetBalance().String())
+	// multi-send
+	multiSendMsg = &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.NoError(err) // Requested transfer token is frozen
+	balance1, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)).String(), balance1.GetBalance().String())
+
+	// unfreeze 200 tokens and try to send 250 tokens
+	unfreezeMsg := &assetfttypes.MsgUnfreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
+
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(400),
+		CurrentAmount:  sdkmath.NewInt(200),
+	}, fungibleTokenFreezeEvts[0])
+
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(250))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+
+	// send available tokens (200)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(200))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// unfreeze 400 tokens (frozen balance is 200), it should give error
+	unfreezeMsg = &assetfttypes.MsgUnfreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+
+	// set absolute frozen amount to 250
+	setFrozenMsg := &assetfttypes.MsgSetFrozen{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(250)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(setFrozenMsg)),
+		setFrozenMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(setFrozenMsg))
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(200),
+		CurrentAmount:  sdkmath.NewInt(250),
+	}, fungibleTokenFreezeEvts[0])
+
+	frozenBalance, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(250)), frozenBalance.Balance)
+
+	// unfreeze 250 tokens and observer current frozen amount is zero
+	unfreezeMsg = &assetfttypes.MsgUnfreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(250)),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
+
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+		Account:        recipient.String(),
+		Denom:          denom,
+		PreviousAmount: sdkmath.NewInt(250),
+		CurrentAmount:  sdkmath.NewInt(0),
+	}, fungibleTokenFreezeEvts[0])
+}
+
+// TestAssetFTExtensionFreezeUnfreezable checks extension freeze functionality on unfreezable fungible tokens.
+func TestAssetFTExtensionFreezeUnfreezable(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// Issue an unfreezable fungible token
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCNotFreezable",
+		Subunit:       "uabcnotfreezable",
+		Description:   "ABC Description",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(1000),
+		Features:      []assetfttypes.Feature{},
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	unfreezableDenom := fungibleTokenIssuedEvts[0].Denom
+
+	// try to freeze unfreezable token
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(unfreezableDenom, sdkmath.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
