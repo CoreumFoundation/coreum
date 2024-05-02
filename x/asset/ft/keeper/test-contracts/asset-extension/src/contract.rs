@@ -117,7 +117,7 @@ fn assert_freezing(
     let bank_balance = query_bank_balance(deps, account, &token.denom)?;
     let frozen_balance = query_frozen_balance(deps, account, &token.denom)?;
 
-    if amount > bank_balance.amount - frozen_balance.amount {
+    if amount + frozen_balance.amount > bank_balance.amount {
         return Err(ContractError::FreezingError {});
     }
 
