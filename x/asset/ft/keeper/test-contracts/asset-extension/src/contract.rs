@@ -69,7 +69,12 @@ pub fn execute_extension_transfer(
     if let Some(features) = &token.features {
         for feature in features {
             match feature {
-                &assetft::FREEZING => assert_freezing(deps.as_ref(), info.sender.as_ref(), &denom, amount)?,
+                // TODO(masih):
+                // - The user cannot burn the frozen amount if both freezing and burning is enabled.
+                // - If either or both of BurnRate and SendCommissionRate are set above zero, then
+                // after transfer has taken place and those rates are applied, the sender's balance
+                // must not go below the frozen amount. Otherwise the transaction will fail.
+                &assetft::FREEZING => assert_freezing(deps.as_ref(), info.sender.as_ref(), &token, amount)?,
                 &assetft::WHITELISTING => assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?,
                 _ => {}
             }
@@ -78,10 +83,7 @@ pub fn execute_extension_transfer(
 
     let transfer_msg = cosmwasm_std::BankMsg::Send {
         to_address: recipient,
-        amount: vec![Coin {
-            amount,
-            denom: denom.clone(),
-        }],
+        amount: vec![Coin {amount, denom}],
     };
 
     Ok(Response::new()
@@ -97,11 +99,23 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn assert_freezing(
     deps: Deps<CoreumQueries>,
     account: &str,
-    denom: &str,
+    token: &Token,
     amount: Uint128,
 ) -> Result<(), ContractError> {
-    let bank_balance = query_bank_balance(deps, account, denom)?;
-    let frozen_balance = query_frozen_balance(deps, account, denom)?;
+    // Allow any amount if recipient is admin
+    // TODO(masih): Change it to admin
+    if token.issuer == account.to_string() {
+        return Ok(());
+    }
+
+    // TODO(masih): Uncomment after updating the SDK
+    // if token.globally_frozen {
+    //     return Err(ContractError::FreezingError {});
+    // }
+
+    let bank_balance = query_bank_balance(deps, account, &token.denom)?;
+    let frozen_balance = query_frozen_balance(deps, account, &token.denom)?;
+
     if amount > bank_balance.amount - frozen_balance.amount {
         return Err(ContractError::FreezingError {});
     }
@@ -123,10 +137,6 @@ fn assert_whitelisting(
 
     let bank_balance = query_bank_balance(deps, account, &token.denom)?;
     let whitelisted_balance = query_whitelisted_balance(deps, account, &token.denom)?;
-
-    if amount == Uint128::new(51) {
-        return Ok(());
-    }
 
     if amount + bank_balance.amount > whitelisted_balance.amount {
         return Err(ContractError::WhitelistingError {});
