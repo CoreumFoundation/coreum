@@ -135,6 +135,9 @@ import (
 	delaytypes "github.com/CoreumFoundation/coreum/v4/x/delay/types"
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/v4/x/deterministicgas/types"
+	"github.com/CoreumFoundation/coreum/v4/x/dex"
+	dexkeeper "github.com/CoreumFoundation/coreum/v4/x/dex/keeper"
+	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
 	"github.com/CoreumFoundation/coreum/v4/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/v4/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
@@ -210,6 +213,7 @@ var (
 		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
 		delay.AppModuleBasic{},
+		dex.AppModuleBasic{},
 	)
 
 	// module account permissions.
@@ -289,6 +293,7 @@ type App struct {
 	NFTKeeper          wnftkeeper.Wrapper
 	CustomParamsKeeper customparamskeeper.Keeper
 	DelayKeeper        delaykeeper.Keeper
+	DEXKeeper          dexkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -346,7 +351,7 @@ func New(
 		wasmtypes.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey,
 		assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey,
 		ibctransfertypes.StoreKey, delaytypes.StoreKey, customparamstypes.StoreKey,
-		group.StoreKey,
+		group.StoreKey, dextypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -718,6 +723,11 @@ func New(
 	)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
+	app.DEXKeeper = dexkeeper.NewKeeper(
+		appCodec,
+		keys[dextypes.StoreKey],
+	)
+
 	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
@@ -804,6 +814,7 @@ func New(
 		wnftModule,
 		customParamsModule,
 		delayModule,
+		dex.NewAppModule(appCodec, app.DEXKeeper),
 		// always be last to make sure that it checks for all invariants and not only part of them
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 	)
@@ -841,6 +852,7 @@ func New(
 		assetnfttypes.ModuleName,
 		nft.ModuleName,
 		delaytypes.ModuleName,
+		dextypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -872,6 +884,7 @@ func New(
 		assetnfttypes.ModuleName,
 		nft.ModuleName,
 		delaytypes.ModuleName,
+		dextypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -909,6 +922,7 @@ func New(
 		assetfttypes.ModuleName,
 		assetnfttypes.ModuleName,
 		delaytypes.ModuleName,
+		dextypes.ModuleName,
 	}
 
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
