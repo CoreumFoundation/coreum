@@ -106,16 +106,16 @@ When token is created, admin decides if users may send and receive it over IBC t
 If IBC feature is disabled token can never leave the Coreum chain.
 
 ### Clawback
-If the clawback feature is enabled on a token, then the issuer of the token can confiscate up to the amount an account holds. The clawback amount cannot be more than what the user currently holds.
+If the clawback feature is enabled on a token, then the admin of the token can confiscate up to the amount an account holds. The clawback amount cannot be more than what the user currently holds.
 
 Here is the description of behavior of the clawback feature:
-- The issuer can clawback up to the amount an account holds if the clawback feature is enabled.
-- The issuer cannot clawback from their own account
-- The issuer cannot clawback from module accounts
+- The admin can clawback up to the amount an account holds if the clawback feature is enabled.
+- The admin cannot clawback from their own account
+- The admin cannot clawback from module accounts
 
 Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled for the token.
 
-_**Disclaimer**: if the issuer claws back from the escrow address, then it will break the IBC. issuers should not do this if they want the IBC to work for their token._
+_**Disclaimer**: if the admin claws back from the escrow address, then it will break the IBC. admins should not do this if they want the IBC to work for their token._
 
 ## Feature interoperability table
 
@@ -157,7 +157,7 @@ _**Disclaimer**: if the issuer claws back from the escrow address, then it will 
     <th>Owner</th>
     <th>Admin</th>
     <th>Owner</th>
-    <th>Issuer</th>
+    <th>Admin</th>
     <th>Owner</th>
   </tr>
 </thead>
