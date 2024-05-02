@@ -32,7 +32,7 @@ message Definition {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
   // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
-  // amount sent to the token issuer account.
+  // amount sent to the token admin account.
   string send_commission_rate = 5 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
@@ -62,7 +62,7 @@ message Token {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
   // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
-  // amount sent to the token issuer account.
+  // amount sent to the token admin account.
   string send_commission_rate = 10 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"

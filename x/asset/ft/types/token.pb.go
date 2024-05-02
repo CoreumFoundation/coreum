@@ -81,7 +81,7 @@ type Definition struct {
 	// burn_amount. This value will be burnt on top of the send amount.
 	BurnRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=burn_rate,json=burnRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"burn_rate"`
 	// send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
-	// amount sent to the token issuer account.
+	// amount sent to the token admin account.
 	SendCommissionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=send_commission_rate,json=sendCommissionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"send_commission_rate"`
 	Version            uint32                                 `protobuf:"varint,6,opt,name=version,proto3" json:"version,omitempty"`
 	URI                string                                 `protobuf:"bytes,7,opt,name=uri,proto3" json:"uri,omitempty"`
@@ -136,7 +136,7 @@ type Token struct {
 	// burn_amount. This value will be burnt on top of the send amount.
 	BurnRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=burn_rate,json=burnRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"burn_rate"`
 	// send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
-	// amount sent to the token issuer account.
+	// amount sent to the token admin account.
 	SendCommissionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=send_commission_rate,json=sendCommissionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"send_commission_rate"`
 	Version            uint32                                 `protobuf:"varint,11,opt,name=version,proto3" json:"version,omitempty"`
 	URI                string                                 `protobuf:"bytes,12,opt,name=uri,proto3" json:"uri,omitempty"`
