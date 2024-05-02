@@ -1332,8 +1332,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.Equal(amountToWhitelist.String(), whitelistedRes.Balance.Amount.String())
 }
 
-// TestWASMFungibleTokenInContractLegacy verifies that smart contract is able to execute all Coreum fungible token messages
-// and queries using the deprecated wasm bindings/handler
+// TestWASMFungibleTokenInContractLegacy verifies that smart contract is able to execute all
+// Coreum fungible token messages and queries using the deprecated wasm bindings/handler.
 func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	t.Parallel()
 
@@ -1832,7 +1832,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	}
 	requireT.NoError(err)
 
-	classID := assetnfttypes.BuildClassID(issueClassReqNoWhitelist.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist))
+	classID := assetnfttypes.BuildClassID(issueClassReqNoWhitelist.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist)) //nolint:lll
 	classRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
 	requireT.NoError(err)
 
@@ -1905,7 +1905,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	encodedMutableData := base64.StdEncoding.EncodeToString([]byte("mutable_data"))
 	mintMutableNFTReq := moduleswasm.NftMintRequest{
-		ID:        "id-2",
+		ID:        "id-mut",
 		Recipient: mintRecipient.String(),
 		Data:      encodedMutableData,
 	}
@@ -2150,7 +2150,6 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	classID = assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddrWhitelist))
-	classRes, err = assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
 	requireT.NoError(err)
 
 	mintNFTReq1 := moduleswasm.NftMintRequest{
@@ -2267,7 +2266,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, removeFromClassWhitelistPayload, sdk.Coin{})
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, removeFromClassWhitelistPayload, sdk.Coin{}) //nolint:lll
 	requireT.NoError(err)
 
 	assertNftClassWhitelistedRes, err = assetNftClient.ClassWhitelistedAccounts(
@@ -2302,7 +2301,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// mint
 	mintNFTReq2 := mintNFTReq1
-	mintNFTReq2.ID = "id-2"
+	mintNFTReq2.ID = "id-send"
 	mint2Payload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
 		moduleswasm.NftMethodMintImmutable: mintNFTReq2,
 	})
@@ -2334,8 +2333,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 }
 
-// TestWASMNonFungibleTokenInContractLegacy verifies that smart contract is able to execute all non-fungible Coreum
-// token messages and queries from the deprecated wasm bindings/handler.
+// TestWASMNonFungibleTokenInContractLegacy verifies that smart contract is able to execute all
+// non-fungible Coreum token messages and queries from the deprecated wasm bindings/handler.
 //
 //nolint:nosnakecase
 func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
@@ -2721,7 +2720,7 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 
 	// mint
 	mintNFTReq2 := mintNFTReq1
-	mintNFTReq2.ID = "id-2"
+	mintNFTReq2.ID = "id-send"
 	mint2Payload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
 		moduleswasm.NftMethodMint: mintNFTReq2,
 	})
