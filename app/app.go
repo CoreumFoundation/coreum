@@ -95,6 +95,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
@@ -145,6 +148,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v4/x/wbank/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wibctransfer"
+
 	wibctransferkeeper "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/v4/x/wnft/keeper"
@@ -195,6 +199,7 @@ var (
 		groupmodule.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
+		ibchooks.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		wibctransfer.AppModuleBasic{},
@@ -259,24 +264,27 @@ type App struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
-	AccountKeeper         authkeeper.AccountKeeper
-	AuthzKeeper           authzkeeper.Keeper
-	CapabilityKeeper      *capabilitykeeper.Keeper
-	StakingKeeper         *stakingkeeper.Keeper
-	SlashingKeeper        slashingkeeper.Keeper
-	MintKeeper            mintkeeper.Keeper
-	DistrKeeper           distrkeeper.Keeper
-	GovKeeper             govkeeper.Keeper
-	CrisisKeeper          *crisiskeeper.Keeper
-	UpgradeKeeper         *upgradekeeper.Keeper
-	ParamsKeeper          paramskeeper.Keeper
-	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	TransferKeeper        wibctransferkeeper.TransferKeeperWrapper
-	EvidenceKeeper        evidencekeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
-	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	WasmKeeper            wasmkeeper.Keeper
-	GroupKeeper           groupkeeper.Keeper
+	AccountKeeper    authkeeper.AccountKeeper
+	AuthzKeeper      authzkeeper.Keeper
+	CapabilityKeeper *capabilitykeeper.Keeper
+	StakingKeeper    *stakingkeeper.Keeper
+	SlashingKeeper   slashingkeeper.Keeper
+	MintKeeper       mintkeeper.Keeper
+	DistrKeeper      distrkeeper.Keeper
+	GovKeeper        govkeeper.Keeper
+	CrisisKeeper     *crisiskeeper.Keeper
+	UpgradeKeeper    *upgradekeeper.Keeper
+	ParamsKeeper     paramskeeper.Keeper
+	// IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCKeeper              *ibckeeper.Keeper
+	IBCHooksKeeper         ibchookskeeper.Keeper
+	TransferKeeper         wibctransferkeeper.TransferKeeperWrapper
+	EvidenceKeeper         evidencekeeper.Keeper
+	FeeGrantKeeper         feegrantkeeper.Keeper
+	ConsensusParamsKeeper  consensusparamkeeper.Keeper
+	WasmKeeper             wasmkeeper.Keeper
+	WasmPermissionedKeeper *wasmkeeper.PermissionedKeeper
+	GroupKeeper            groupkeeper.Keeper
 
 	AssetFTKeeper      assetftkeeper.Keeper
 	AssetNFTKeeper     assetnftkeeper.Keeper
@@ -299,6 +307,11 @@ type App struct {
 	sm *module.SimulationManager
 
 	configurator module.Configurator
+
+	TransferStack *ibchooks.IBCMiddleware
+	// IBC Hooks.
+	Ics20WasmHooks   *ibchooks.WasmHooks
+	HooksICS4Wrapper ibchooks.ICS4Middleware
 }
 
 // New returns a reference to an initialized blockchain app.
@@ -409,6 +422,7 @@ func New(
 		app.ModuleAccountAddrs(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.WasmPermissionedKeeper = wasmkeeper.NewGovPermissionKeeper(&app.WasmKeeper)
 	app.AssetFTKeeper = assetftkeeper.NewKeeper(
 		appCodec,
 		keys[assetfttypes.StoreKey],
@@ -418,6 +432,7 @@ func New(
 		// pointer is used here because there is cycle in keeper dependencies:
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,
+		app.WasmPermissionedKeeper,
 		&app.AccountKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -539,11 +554,29 @@ func New(
 	)
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
+	// The contract WASM keeper needs to be set later since it depends on WASM hooks.
+	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
+	app.Ics20WasmHooks = &wasmHooks
+	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
+		app.IBCKeeper.ChannelKeeper,
+		app.Ics20WasmHooks,
+	)
 	// Create Transfer Keepers
 	app.TransferKeeper = wibctransferkeeper.NewTransferKeeperWrapper(
-		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		app.AccountKeeper, app.BankKeeper, app.ScopedTransferKeeper,
+		appCodec,
+		keys[ibctransfertypes.StoreKey],
+		app.GetSubspace(ibctransfertypes.ModuleName),
+		&app.HooksICS4Wrapper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.ScopedTransferKeeper,
+	)
+
+	app.keys[ibchookstypes.StoreKey] = storetypes.NewKVStoreKey(ibchookstypes.StoreKey)
+	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
+		app.keys[ibchookstypes.StoreKey],
 	)
 
 	// Register the proposal types
@@ -627,7 +660,7 @@ func New(
 			app.ScopedWASMKeeper,
 			app.BankKeeper,
 			appCodec,
-			app.TransferKeeper,
+			&app.TransferKeeper,
 			wasmcustomhandler.NewCoreumMsgHandler(),
 		))),
 		wasmkeeper.WithQueryPlugins(wasmcustomhandler.NewCoreumQueryHandler(
@@ -657,7 +690,7 @@ func New(
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.ScopedWASMKeeper,
-		app.TransferKeeper,
+		&app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
@@ -667,17 +700,24 @@ func New(
 		wasmOpts...,
 	)
 
+	// Set WASM keeper in WASM hooks.
+	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
+
 	// FIXME(v4): drop once we drop gov v1beta1 compatibility.
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
+
+	// Hooks Middleware
+	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper.Keeper)
+	hooksTransferModule := ibchooks.NewIBCMiddleware(&transferIBCModule, &app.HooksICS4Wrapper)
+	app.TransferStack = &hooksTransferModule
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(
 		ibctransfertypes.ModuleName,
-		wibctransfer.NewPurposeMiddleware(transfer.NewIBCModule(app.TransferKeeper.Keeper)),
-	)
-	ibcRouter.AddRoute(
+		wibctransfer.NewPurposeMiddleware(app.TransferStack),
+	).AddRoute(
 		wasmtypes.ModuleName,
 		wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper),
 	)
@@ -805,6 +845,7 @@ func New(
 		group.ModuleName,
 		paramstypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		ibchookstypes.ModuleName,
 		wasmtypes.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
@@ -836,6 +877,7 @@ func New(
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		ibchookstypes.ModuleName,
 		wasmtypes.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
@@ -873,6 +915,7 @@ func New(
 		feegrant.ModuleName,
 		group.ModuleName,
 		consensusparamtypes.ModuleName,
+		ibchookstypes.ModuleName,
 		wasmtypes.ModuleName,
 		feemodeltypes.ModuleName,
 		nft.ModuleName,

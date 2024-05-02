@@ -1561,7 +1561,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Data:    encodedData,
 	}
 	mintPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
-		moduleswasm.NftMethodMint: mintNFTReq1,
+		moduleswasm.NftMethodMintLegacy: mintNFTReq1,
 	})
 	requireT.NoError(err)
 
@@ -1636,7 +1636,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// mint
 	mintPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
-		moduleswasm.NftMethodMint: mintNFTReq1NoWhitelist,
+		moduleswasm.NftMethodMintLegacy: mintNFTReq1NoWhitelist,
 	})
 	requireT.NoError(err)
 
@@ -1653,16 +1653,198 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		ClassId: classIDNoWhitelist,
 		Id:      mintNFTReq1NoWhitelist.ID,
 	}
+
 	requireT.Equal(
 		expectedNFT1, nftResp.Nft,
 	)
-
 	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
 		ClassId: classIDNoWhitelist,
 		Id:      mintNFTReq1NoWhitelist.ID,
 	})
 	requireT.NoError(err)
 	requireT.Equal(nftOwner.Owner, mintRecipient.String())
+
+	// Mint an immutable NFT using protos instead of using the deprecated handler
+
+	mintImmutableNFTReq := moduleswasm.NftMintRequest{
+		ID:        "id-2",
+		Recipient: mintRecipient.String(),
+	}
+	mintImmutablePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMintImmutable: mintImmutableNFTReq,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, mintImmutablePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintImmutableNFTReq.ID,
+	})
+	requireT.NoError(err)
+
+	emptyData, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: nil})
+	requireT.NoError(err)
+	expectedNFT := &nfttypes.NFT{
+		ClassId: classIDNoWhitelist,
+		Id:      mintImmutableNFTReq.ID,
+		Data:    emptyData,
+	}
+
+	gotNFT := nftResp.Nft
+	// encode the data `from` and `to` proto.Any to load same state as `codectypes.NewAnyWithValue` does
+	var gotNFTDataBytes assetnfttypes.DataBytes
+	requireT.NoError(gotNFTDataBytes.Unmarshal(gotNFT.Data.Value))
+	gotNFTData, err := codectypes.NewAnyWithValue(&gotNFTDataBytes)
+	requireT.NoError(err)
+	gotNFT.Data = gotNFTData
+
+	requireT.Equal(
+		expectedNFT, gotNFT,
+	)
+
+	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintImmutableNFTReq.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, mintRecipient.String())
+
+	// Mint a mutable NFT with both Owner and Issuer as editors
+	encodedMutableData := base64.StdEncoding.EncodeToString([]byte("mutable_data"))
+	mintMutableNFTReq := moduleswasm.NftMintRequest{
+		ID:        "id-3",
+		Recipient: mintRecipient.String(),
+		Data:      encodedMutableData,
+	}
+
+	mintMutablePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMintMutable: mintMutableNFTReq,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, mintMutablePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintMutableNFTReq.ID,
+	})
+	requireT.NoError(err)
+
+	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintMutableNFTReq.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, mintRecipient.String())
+
+	// Check the data of the mutable NFT
+	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataDynamic{Items: []assetnfttypes.DataDynamicItem{{
+		// both admin and owner
+		Editors: []assetnfttypes.DataEditor{
+			assetnfttypes.DataEditor_admin,
+			assetnfttypes.DataEditor_owner,
+		},
+		Data: []byte("mutable_data"),
+	}}})
+
+	dataToCompare = &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
+	}
+	requireT.NoError(err)
+
+	requireT.Equal(dataToCompare, nftResp.Nft.Data)
+
+	// Let's check that both admin (contract) and owner (mintRecipient) can edit the data
+	// First, let's try to edit the data as the admin
+	encodedEditedData := base64.StdEncoding.EncodeToString([]byte("edited_data_by_admin"))
+	modifyDataReq := moduleswasm.NftModifyDataRequest{
+		ID:   mintMutableNFTReq.ID,
+		Data: encodedEditedData,
+	}
+
+	modifyDataPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftModifyDataRequest{
+		moduleswasm.NftMethodModifyData: modifyDataReq,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, modifyDataPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataDynamic{Items: []assetnfttypes.DataDynamicItem{{
+		// both admin and owner
+		Editors: []assetnfttypes.DataEditor{
+			assetnfttypes.DataEditor_admin,
+			assetnfttypes.DataEditor_owner,
+		},
+		Data: []byte("edited_data_by_admin"),
+	}}})
+
+	dataToCompare = &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
+	}
+	requireT.NoError(err)
+
+	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintMutableNFTReq.ID,
+	})
+	requireT.NoError(err)
+
+	requireT.Equal(dataToCompare, nftResp.Nft.Data)
+
+	// Let's edit the data directly by the owner now and see that he can also update
+	msgUpdateData := &assetnfttypes.MsgUpdateData{
+		Sender:  mintRecipient.String(),
+		ClassID: classIDNoWhitelist,
+		ID:      mintMutableNFTReq.ID,
+		Items: []assetnfttypes.DataDynamicIndexedItem{
+			{
+				Index: 0,
+				Data:  []byte("edited_data_by_owner"),
+			},
+		},
+	}
+	chain.FundAccountWithOptions(ctx, t, mintRecipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			msgUpdateData,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(mintRecipient),
+		txf,
+		msgUpdateData,
+	)
+	requireT.NoError(err)
+
+	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataDynamic{Items: []assetnfttypes.DataDynamicItem{{
+		// both admin and owner
+		Editors: []assetnfttypes.DataEditor{
+			assetnfttypes.DataEditor_admin,
+			assetnfttypes.DataEditor_owner,
+		},
+		Data: []byte("edited_data_by_owner"),
+	}}})
+
+	dataToCompare = &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
+	}
+	requireT.NoError(err)
+
+	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintMutableNFTReq.ID,
+	})
+	requireT.NoError(err)
+
+	requireT.Equal(dataToCompare, nftResp.Nft.Data)
 
 	// ********** Freeze **********
 
@@ -1848,7 +2030,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	mintNFTReq2 := mintNFTReq1
 	mintNFTReq2.ID = "id-2"
 	mint2Payload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
-		moduleswasm.NftMethodMint: mintNFTReq2,
+		moduleswasm.NftMethodMintLegacy: mintNFTReq2,
 	})
 	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mint2Payload, sdk.Coin{})

@@ -6,9 +6,13 @@ use coreum_wasm_sdk::assetnft::{
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 use coreum_wasm_sdk::nft;
 use coreum_wasm_sdk::pagination::PageRequest;
+use coreum_wasm_sdk::types::coreum::asset::nft::v1::{
+    DataBytes, DataDynamic, DataDynamicIndexedItem, DataDynamicItem, DataEditor, MsgMint,
+    MsgUpdateData,
+};
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
-    StdResult,
+    entry_point, to_json_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, QueryRequest,
+    Response, StdResult,
 };
 use cw2::set_contract_version;
 use cw_ownable::{assert_owner, initialize_owner};
@@ -58,18 +62,32 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> CoreumResult<ContractError> {
     match msg {
-        ExecuteMsg::Mint {
+        ExecuteMsg::MintLegacy {
             id,
             uri,
             uri_hash,
             data,
             recipient,
-        } => mint(deps, info, id, uri, uri_hash, data, recipient),
+        } => mint_legacy(deps, info, id, uri, uri_hash, data, recipient),
+        ExecuteMsg::MintImmutable {
+            id,
+            uri,
+            uri_hash,
+            data,
+            recipient,
+        } => mint_immutable(deps, info, env, id, uri, uri_hash, data, recipient),
+        ExecuteMsg::MintMutable {
+            id,
+            uri,
+            uri_hash,
+            data,
+            recipient,
+        } => mint_mutable(deps, info, env, id, uri, uri_hash, data, recipient),
         ExecuteMsg::Burn { id } => burn(deps, info, id),
         ExecuteMsg::Freeze { id } => freeze(deps, info, id),
         ExecuteMsg::Unfreeze { id } => unfreeze(deps, info, id),
@@ -84,12 +102,13 @@ pub fn execute(
         ExecuteMsg::RemoveFromClassWhitelist { account } => {
             remove_from_class_whitelist(deps, info, account)
         }
+        ExecuteMsg::ModifyData { id, data } => modify_data(deps, info, env, id, data),
     }
 }
 
 // ********** Transactions **********
 
-fn mint(
+fn mint_legacy(
     deps: DepsMut,
     info: MessageInfo,
     id: String,
@@ -107,11 +126,144 @@ fn mint(
         uri,
         uri_hash,
         data,
-        recipient
+        recipient,
     });
 
     Ok(Response::new()
-        .add_attribute("method", "mint")
+        .add_attribute("method", "mint_legacy")
+        .add_attribute("class_id", class_id)
+        .add_attribute("id", id)
+        .add_message(msg))
+}
+
+fn mint_immutable(
+    deps: DepsMut,
+    info: MessageInfo,
+    env: Env,
+    id: String,
+    uri: Option<String>,
+    uri_hash: Option<String>,
+    data: Option<Binary>,
+    recipient: Option<String>,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let class_id = CLASS_ID.load(deps.storage)?;
+
+    let data = match data {
+        Some(data) => Some(
+            DataBytes {
+                data: data.to_vec(),
+            }
+            .to_any(),
+        ),
+        None => None,
+    };
+
+    let mint = MsgMint {
+        sender: env.contract.address.to_string(),
+        class_id: class_id.clone(),
+        id: id.clone(),
+        uri: uri.unwrap_or_default(),
+        uri_hash: uri_hash.unwrap_or_default(),
+        data,
+        recipient: recipient.unwrap_or_default(),
+    };
+
+    let mint_bytes = mint.to_proto_bytes();
+
+    let msg = CosmosMsg::Stargate {
+        type_url: mint.to_any().type_url,
+        value: Binary::from(mint_bytes),
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "mint_immutable")
+        .add_attribute("class_id", class_id)
+        .add_attribute("id", id)
+        .add_message(msg))
+}
+
+fn mint_mutable(
+    deps: DepsMut,
+    info: MessageInfo,
+    env: Env,
+    id: String,
+    uri: Option<String>,
+    uri_hash: Option<String>,
+    data: Option<Binary>,
+    recipient: Option<String>,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let class_id = CLASS_ID.load(deps.storage)?;
+
+    let data = match data {
+        Some(data) => Some(
+            DataDynamic {
+                items: [DataDynamicItem {
+                    editors: [DataEditor::Admin as i32, DataEditor::Owner as i32].to_vec(),
+                    data: data.to_vec(),
+                }]
+                .to_vec(),
+            }
+            .to_any(),
+        ),
+        None => None,
+    };
+
+    let mint = MsgMint {
+        sender: env.contract.address.to_string(),
+        class_id: class_id.clone(),
+        id: id.clone(),
+        uri: uri.unwrap_or_default(),
+        uri_hash: uri_hash.unwrap_or_default(),
+        data,
+        recipient: recipient.unwrap_or_default(),
+    };
+
+    let mint_bytes = mint.to_proto_bytes();
+
+    let msg = CosmosMsg::Stargate {
+        type_url: mint.to_any().type_url,
+        value: Binary::from(mint_bytes),
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "mint_mutable")
+        .add_attribute("class_id", class_id)
+        .add_attribute("id", id)
+        .add_message(msg))
+}
+
+fn modify_data(
+    deps: DepsMut,
+    info: MessageInfo,
+    env: Env,
+    id: String,
+    data: Binary,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let class_id = CLASS_ID.load(deps.storage)?;
+
+    let modify_data = MsgUpdateData {
+        sender: env.contract.address.to_string(),
+        class_id: class_id.clone(),
+        id: id.clone(),
+        items: [DataDynamicIndexedItem {
+            index: 0,
+            data: data.to_vec(),
+        }]
+        .to_vec(),
+    };
+
+    let modify_data_bytes = modify_data.to_proto_bytes();
+
+    let msg = CosmosMsg::Stargate {
+        type_url: modify_data.to_any().type_url,
+        value: Binary::from(modify_data_bytes),
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "modify_data")
         .add_attribute("class_id", class_id)
         .add_attribute("id", id)
         .add_message(msg))
@@ -316,7 +468,9 @@ pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<B
         QueryMsg::Class {} => to_json_binary(&query_class(deps)?),
         QueryMsg::Classes { issuer } => to_json_binary(&query_classes(deps, issuer)?),
         QueryMsg::Frozen { id } => to_json_binary(&query_frozen(deps, id)?),
-        QueryMsg::Whitelisted { id, account } => to_json_binary(&query_whitelisted(deps, id, account)?),
+        QueryMsg::Whitelisted { id, account } => {
+            to_json_binary(&query_whitelisted(deps, id, account)?)
+        }
         QueryMsg::WhitelistedAccountsForNft { id } => {
             to_json_binary(&query_whitelisted_accounts_for_nft(deps, id)?)
         }
@@ -331,7 +485,9 @@ pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<B
         QueryMsg::BurntNftsInClass {} => to_json_binary(&query_burnt_nfts_in_class(deps)?),
         QueryMsg::ClassFrozen { account } => to_json_binary(&query_class_frozen(deps, account)?),
         QueryMsg::ClassFrozenAccounts {} => to_json_binary(&query_class_frozen_accounts(deps)?),
-        QueryMsg::ClassWhitelistedAccounts {} => to_json_binary(&query_class_whitelisted_accounts(deps)?),
+        QueryMsg::ClassWhitelistedAccounts {} => {
+            to_json_binary(&query_class_whitelisted_accounts(deps)?)
+        }
     }
 }
 

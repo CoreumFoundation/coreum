@@ -1,10 +1,11 @@
 package v4
 
 import (
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
 
 	"github.com/CoreumFoundation/coreum/v4/app/upgrade"
 	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
@@ -17,8 +18,9 @@ const Name = "v4"
 func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
-		StoreUpgrades: storetypes.StoreUpgrades{
+		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{
+				ibchookstypes.StoreKey,
 				// Integrate new dex module:
 				dextypes.StoreKey,
 			},

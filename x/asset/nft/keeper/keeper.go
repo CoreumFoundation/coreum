@@ -379,6 +379,9 @@ func (k Keeper) UpdateData(
 	if !found {
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, id)
 	}
+	if storedNFT.Data == nil {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "no data to update classID:%s, ID:%s", classID, id)
+	}
 	if storedNFT.Data.TypeUrl != "/"+proto.MessageName((*types.DataDynamic)(nil)) {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "nft data type %s is not updatable", storedNFT.Data.TypeUrl)
 	}

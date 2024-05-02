@@ -31,6 +31,12 @@ type NftMintRequest struct {
 	Recipient string `json:"recipient"`
 }
 
+// NftModifyDataRequest is used to modify data of mutable NFTs.
+type NftModifyDataRequest struct {
+	ID   string `json:"id"`
+	Data string `json:"data"`
+}
+
 // NftIDRequest is used to query NFT with ID.
 type NftIDRequest struct {
 	ID string `json:"id"`
@@ -76,7 +82,10 @@ type NftMethod string
 // all the methods used for smart contract.
 const (
 	// transactions.
-	NftMethodMint                     NftMethod = "mint"
+	NftMethodMintLegacy               NftMethod = "mint_legacy"
+	NftMethodMintImmutable            NftMethod = "mint_immutable"
+	NftMethodMintMutable              NftMethod = "mint_mutable"
+	NftMethodModifyData               NftMethod = "modify_data"
 	NftMethodBurn                     NftMethod = "burn"
 	NftMethodFreeze                   NftMethod = "freeze"
 	NftMethodUnfreeze                 NftMethod = "unfreeze"

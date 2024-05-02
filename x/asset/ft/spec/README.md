@@ -13,6 +13,7 @@ Here is the list of functionalities provided by this module, we will examine eac
 - Global Freeze
 - Whitelist
 - IBC transfers
+- Clawback
 
 ## Interaction with bank module, introducing wbank module
 Since Coreum is based on Cosmos SDK, We should mention that Cosmos SDK provides the native bank module which is responsible for tracking fungible token creation and balances of each account. But this module does not allow any public to create a fungible token, mint/burn it, and also does not allow for other features such as freezing and whitelisting. To work around this issue we have wrapped the `bank` module into the `wbank` module.
@@ -42,6 +43,7 @@ When issuing a token, the issuer must decide which features are enabled on the t
 - freezing
 - whitelisting
 - ibc
+- clawback
 
 #### Burn Rate
 The issuer has the option to provide `BurnRate` when issuing a new token. This value is a number between 0 and 1, and if it is above zero, in every transfer, some additional tokens will be burnt on top of the transferred value, from the senders address. The tokens to be burnt are calculated by multiplying the TransferAmount by burn rate, and rounding it up to an integer value.
@@ -103,6 +105,18 @@ Same rules apply to receiving tokens over IBC transfer protocol if IBC is enable
 When token is created, issuer decides if users may send and receive it over IBC transfer protocol.
 If IBC feature is disabled token can never leave the Coreum chain.
 
+### Clawback
+If the clawback feature is enabled on a token, then the issuer of the token can confiscate up to the amount an account holds. The clawback amount cannot be more than what the user currently holds.
+
+Here is the description of behavior of the clawback feature:
+- The issuer can clawback up to the amount an account holds if the clawback feature is enabled.
+- The issuer cannot clawback from their own account
+- The issuer cannot clawback from module accounts
+
+Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled for the token.
+
+_**Disclaimer**: if the issuer claws back from the escrow address, then it will break the IBC. issuers should not do this if they want the IBC to work for their token._
+
 ## Feature interoperability table
 
 <!-- Original source: https://docs.google.com/spreadsheets/d/1wC51asxQF8gi7Egj0KvzsMf7zko5ojEL6l2CAdb_UNM -->
@@ -112,7 +126,7 @@ If IBC feature is disabled token can never leave the Coreum chain.
 <thead>
   <tr>
     <th rowspan="3"></th>
-    <th colspan="12">Features</th>
+    <th colspan="14">Features</th>
     <th colspan="4">Extensions</th>
   </tr>
   <tr>
@@ -122,6 +136,7 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <th colspan="2">Freezing</th>
     <th colspan="2">Whitelisting</th>
     <th colspan="2">IBC</th>
+    <th colspan="2">Clawing back</th>
     <th colspan="2">Burn rate</th>
     <th colspan="2">Send commission rate</th>
   </tr>
@@ -142,6 +157,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <th>Owner</th>
     <th>Issuer</th>
     <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
   </tr>
 </thead>
 <tbody>
@@ -150,6 +167,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -182,6 +201,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>Freeze</td>
@@ -192,6 +213,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -220,6 +243,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>GloballyFreeze</td>
@@ -230,6 +255,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -258,6 +285,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>Whitelist</td>
@@ -270,6 +299,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -296,6 +327,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>Send</td>
@@ -312,6 +345,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
     <td><a href="#burn-rate">ⓘ</a></td>
     <td></td>
     <td><a href="#send-commission-rate">ⓘ</a></td>
@@ -320,6 +355,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td>Send to issuer</td>
     <td>➕</td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -353,6 +390,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>Receive</td>
@@ -366,6 +405,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td><a href="#whitelist">ⓘ</a></td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -387,6 +428,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td>➕</td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td><a href="#burn-rate">ⓘ</a></td>
     <td></td>
@@ -410,6 +453,8 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>IBC Receive</td>
@@ -425,6 +470,29 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td><a href="#whitelist">ⓘ</a></td>
     <td>➕</td>
     <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Clawback</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
