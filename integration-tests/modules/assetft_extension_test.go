@@ -277,7 +277,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
-	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// try to send to recipient before it is whitelisted (balance 0, whitelist limit 0)
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
@@ -293,7 +293,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	assertT.ErrorIs(err, assetfttypes.ErrWhitelistedLimitExceeded)
+	requireT.ErrorIs(err, assetfttypes.ErrWhitelistedLimitExceeded)
 
 	// multi-send
 	multiSendMsg := &banktypes.MsgMultiSend{
