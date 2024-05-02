@@ -1,11 +1,12 @@
 [package]
-name = "ft"
+name = "ft-legacy"
 version = "0.1.0"
 authors = ["Coreum"]
 edition = "2021"
+description = "Contract that uses the deprecated functionality of the coreum wasm handler for the assetFT module"
 
 exclude = [
-    "ft.wasm",
+    "ft-legacy.wasm",
     "checksums.txt",
 ]
 
@@ -32,8 +33,7 @@ cosmwasm-std = "1.5.4"
 cosmwasm-storage = "1.5.0"
 cw-storage-plus = "1.1.0"
 cw2 = "1.1.1"
-thiserror = "1.0.59"
-# TODO(keyleu): Update dependency once final version of coreum-wasm-sdk crate is pushed
-coreum-wasm-sdk = { git = "https://github.com/CoreumFoundation/coreum-wasm-sdk.git", branch = "keyne/upgrade-wasm-sdk" }
-cosmwasm-schema = "1.5.4"
+thiserror = "1.0.50"
+coreum-wasm-sdk = "0.2.3"
+cosmwasm-schema = "1.4.1"
 cw-ownable = "0.5.1"

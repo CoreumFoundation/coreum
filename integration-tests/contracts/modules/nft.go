@@ -82,7 +82,7 @@ type NftMethod string
 // all the methods used for smart contract.
 const (
 	// transactions.
-	NftMethodMintLegacy               NftMethod = "mint_legacy"
+	NftMethodMint                     NftMethod = "mint"
 	NftMethodMintImmutable            NftMethod = "mint_immutable"
 	NftMethodMintMutable              NftMethod = "mint_mutable"
 	NftMethodModifyData               NftMethod = "modify_data"

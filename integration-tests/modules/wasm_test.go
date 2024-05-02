@@ -1036,9 +1036,305 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT.EqualValues(ownerResp.Owner, receiver.String())
 }
 
-// TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message
-// and core queries.
+// TestWASMFungibleTokenInContract verifies that smart contract is able to execute all Coreum fungible token messages
+// and queries.
 func TestWASMFungibleTokenInContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	admin := chain.GenAccount()
+	recipient1 := chain.GenAccount()
+	recipient2 := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+	bankClient := banktypes.NewQueryClient(clientCtx)
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+
+	// ********** Issuance **********
+
+	burnRate := "1000000000000000000"           // LegacyDec has 18 decimal positions, so here we are passing 1e19= 100%
+	sendCommissionRate := "1000000000000000000" // LegacyDec has 18 decimal positions, so here we are passing 1e19 = 100%
+
+	issuanceAmount := sdkmath.NewInt(10_000)
+	issuanceReq := issueFTRequest{
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     6,
+		InitialAmount: issuanceAmount.String(),
+		Description:   "my wasm fungible token",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+		},
+		BurnRate:           burnRate,
+		SendCommissionRate: sendCommissionRate,
+		URI:                "https://example.com",
+		URIHash:            "1234567890abcdef",
+	}
+	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.FTWASM,
+		integration.InstantiateConfig{
+			// we add the initial amount to let the contract issue the token on behalf of it
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerFTInstantiatePayload,
+			Label:      "fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issuanceReq.Subunit, sdk.MustAccAddressFromBech32(contractAddr))
+
+	tokenRes, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom})
+	requireT.NoError(err)
+
+	expectedToken := assetfttypes.Token{
+		Denom:          denom,
+		Issuer:         contractAddr,
+		Symbol:         issuanceReq.Symbol,
+		Subunit:        issuanceReq.Subunit,
+		Precision:      issuanceReq.Precision,
+		Description:    issuanceReq.Description,
+		GloballyFrozen: false,
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+		},
+		BurnRate:           sdk.MustNewDecFromStr("1"),
+		SendCommissionRate: sdk.MustNewDecFromStr("1"),
+		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
+		URI:                issuanceReq.URI,
+		URIHash:            issuanceReq.URIHash,
+	}
+
+	requireT.Equal(
+		expectedToken, tokenRes.Token,
+	)
+
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr,
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(issuanceReq.InitialAmount, balanceRes.Balance.Amount.String())
+
+	txf = txf.WithSimulateAndExecute(true)
+
+	// ********** Transactions **********
+
+	// ********** Mint **********
+
+	amountToMint := sdkmath.NewInt(500)
+	mintPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
+		ftMethodMint: {
+			Amount: amountToMint.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr,
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	newAmount := issuanceAmount.Add(amountToMint)
+	requireT.Equal(newAmount.String(), balanceRes.Balance.Amount.String())
+
+	// ********** Mint (sending to someone) **********
+
+	amountToMint = sdkmath.NewInt(100)
+	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetWhitelistedLimit: {
+			Account: recipient2.String(),
+			Amount:  amountToMint.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, whitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	mintPayload, err = json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
+		ftMethodMint: {
+			Amount:    amountToMint.String(),
+			Recipient: recipient2.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient2.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToMint.String(), balanceRes.Balance.Amount.String())
+
+	// ********** Burn **********
+
+	amountToBurn := sdkmath.NewInt(100)
+	burnPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
+		ftMethodBurn: {
+			Amount: amountToBurn.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, burnPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr,
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	newAmount = newAmount.Sub(amountToBurn)
+	requireT.Equal(newAmount.String(), balanceRes.Balance.Amount.String())
+
+	// ********** Freeze **********
+
+	amountToFreeze := sdkmath.NewInt(100)
+	freezePayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodFreeze: {
+			Account: recipient1.String(),
+			Amount:  amountToFreeze.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, freezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	frozenRes, err := ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient1.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToFreeze.String(), frozenRes.Balance.Amount.String())
+
+	// ********** Unfreeze **********
+
+	amountToUnfreeze := sdkmath.NewInt(40)
+	unfreezePayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodUnfreeze: {
+			Account: recipient1.String(),
+			Amount:  amountToUnfreeze.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, unfreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	frozenRes, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient1.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToFreeze.Sub(amountToUnfreeze).String(), frozenRes.Balance.Amount.String())
+
+	// ********** SetFrozen **********
+
+	amountToSetFrozen := sdkmath.NewInt(30)
+	setFrozenPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetFrozen: {
+			Account: recipient1.String(),
+			Amount:  amountToSetFrozen.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, setFrozenPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	frozenRes, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient1.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToSetFrozen.String(), frozenRes.Balance.Amount.String())
+
+	// ********** GloballyFreeze **********
+
+	globallyFreezePayload, err := json.Marshal(map[ftMethod]struct{}{
+		ftMethodGloballyFreeze: {},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, globallyFreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	tokenRes, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.True(tokenRes.Token.GloballyFrozen)
+
+	// ********** GloballyUnfreeze **********
+
+	globallyUnfreezePayload, err := json.Marshal(map[ftMethod]struct{}{
+		ftMethodGloballyUnfreeze: {},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, globallyUnfreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	tokenRes, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.False(tokenRes.Token.GloballyFrozen)
+
+	// ********** Whitelisting **********
+
+	amountToWhitelist := sdkmath.NewInt(100)
+	whitelistPayload, err = json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetWhitelistedLimit: {
+			Account: recipient1.String(),
+			Amount:  amountToWhitelist.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, whitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	whitelistedRes, err := ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
+		Account: recipient1.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToWhitelist.String(), whitelistedRes.Balance.Amount.String())
+}
+
+// TestWASMFungibleTokenInContractLegacy verifies that smart contract is able to execute all Coreum fungible token messages
+// and queries using the deprecated wasm bindings/handler
+func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -1089,7 +1385,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		moduleswasm.FTWASM,
+		moduleswasm.FTLegacyWASM,
 		integration.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
 			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
@@ -1459,8 +1755,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	)
 }
 
-// TestWASMNonFungibleTokenInContract verifies that smart contract is able to execute all non-fungible
-// token message and core queries.
+// TestWASMNonFungibleTokenInContract verifies that smart contract is able to execute all non-fungible Coreum
+// token messages and queries from smart contracts.
 //
 //nolint:nosnakecase
 func TestWASMNonFungibleTokenInContract(t *testing.T) {
@@ -1485,114 +1781,12 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Issuance **********
 
-	royaltyRate := sdk.MustNewDecFromStr("0.1")
+	royaltyRate := "100000000000000000" // 1e18 = 10%
 	data := make([]byte, 256)
 	for i := 0; i < 256; i++ {
 		data[i] = uint8(i)
 	}
 	encodedData := base64.StdEncoding.EncodeToString(data)
-
-	issueClassReq := moduleswasm.IssueNFTRequest{
-		Name:        "name",
-		Symbol:      "symbol",
-		Description: "description",
-		URI:         "https://my-nft-class-meta.invalid/1",
-		URIHash:     "hash",
-		Data:        encodedData,
-		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning,
-			assetnfttypes.ClassFeature_freezing,
-			assetnfttypes.ClassFeature_whitelisting,
-			assetnfttypes.ClassFeature_disable_sending,
-		},
-		RoyaltyRate: royaltyRate.String(),
-	}
-	issuerNFTInstantiatePayload, err := json.Marshal(issueClassReq)
-	requireT.NoError(err)
-
-	// instantiate new contract
-	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
-		ctx,
-		txf,
-		admin,
-		moduleswasm.NftWASM,
-		integration.InstantiateConfig{
-			AccessType: wasmtypes.AccessTypeUnspecified,
-			Payload:    issuerNFTInstantiatePayload,
-			Label:      "non_fungible_token",
-		},
-	)
-	requireT.NoError(err)
-
-	classID := assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddr))
-	classRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
-	requireT.NoError(err)
-
-	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
-	// we need to do this, otherwise assertion fails because some private fields are set differently
-	dataToCompare := &codectypes.Any{
-		TypeUrl: dataBytes.TypeUrl,
-		Value:   dataBytes.Value,
-	}
-	requireT.NoError(err)
-
-	expectedClass := assetnfttypes.Class{
-		Id:          classID,
-		Issuer:      contractAddr,
-		Name:        issueClassReq.Name,
-		Symbol:      issueClassReq.Symbol,
-		Description: issueClassReq.Description,
-		URI:         issueClassReq.URI,
-		URIHash:     issueClassReq.URIHash,
-		Data:        dataToCompare,
-		Features:    issueClassReq.Features,
-		RoyaltyRate: royaltyRate,
-	}
-	requireT.Equal(
-		expectedClass, classRes.Class,
-	)
-
-	// ********** Mint **********
-
-	mintNFTReq1 := moduleswasm.NftMintRequest{
-		ID:      "id-1",
-		URI:     "https://my-nft-meta.invalid/1",
-		URIHash: "hash",
-		Data:    encodedData,
-	}
-	mintPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
-		moduleswasm.NftMethodMintLegacy: mintNFTReq1,
-	})
-	requireT.NoError(err)
-
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
-	requireT.NoError(err)
-
-	nftResp, err := nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
-		ClassId: classID,
-		Id:      mintNFTReq1.ID,
-	})
-	requireT.NoError(err)
-
-	expectedNFT1 := &nfttypes.NFT{
-		ClassId: classID,
-		Id:      mintNFTReq1.ID,
-		Uri:     mintNFTReq1.URI,
-		UriHash: mintNFTReq1.URIHash,
-		Data:    dataToCompare,
-	}
-	requireT.Equal(
-		expectedNFT1, nftResp.Nft,
-	)
-
-	nftOwner, err := nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
-		ClassId: classID,
-		Id:      mintNFTReq1.ID,
-	})
-	requireT.NoError(err)
-	requireT.Equal(nftOwner.Owner, contractAddr)
-
-	// ********** Mint (to someone) **********
 
 	issueClassReqNoWhitelist := moduleswasm.IssueNFTRequest{
 		Name:        "name",
@@ -1606,9 +1800,10 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			assetnfttypes.ClassFeature_freezing,
 			assetnfttypes.ClassFeature_disable_sending,
 		},
-		RoyaltyRate: royaltyRate.String(),
+		RoyaltyRate: royaltyRate,
 	}
-	issuerNFTInstantiatePayload, err = json.Marshal(issueClassReqNoWhitelist)
+
+	issuerNFTInstantiatePayload, err := json.Marshal(issueClassReqNoWhitelist)
 	requireT.NoError(err)
 
 	// instantiate new contract
@@ -1626,48 +1821,43 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	classIDNoWhitelist := assetnfttypes.BuildClassID(
-		issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist),
+		issueClassReqNoWhitelist.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist),
 	)
 
-	mintNFTReq1NoWhitelist := moduleswasm.NftMintRequest{
-		ID:        "id-1",
-		Recipient: mintRecipient.String(),
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
+	// we need to do this, otherwise assertion fails because some private fields are set differently
+	dataToCompare := &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
 	}
-
-	// mint
-	mintPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
-		moduleswasm.NftMethodMintLegacy: mintNFTReq1NoWhitelist,
-	})
 	requireT.NoError(err)
 
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, mintPayload, sdk.Coin{})
+	classID := assetnfttypes.BuildClassID(issueClassReqNoWhitelist.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist))
+	classRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
 	requireT.NoError(err)
 
-	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
-		ClassId: classIDNoWhitelist,
-		Id:      mintNFTReq1NoWhitelist.ID,
-	})
-	requireT.NoError(err)
-
-	expectedNFT1 = &nfttypes.NFT{
-		ClassId: classIDNoWhitelist,
-		Id:      mintNFTReq1NoWhitelist.ID,
+	expectedClass := assetnfttypes.Class{
+		Id:          classIDNoWhitelist,
+		Issuer:      contractAddrNoWhitelist,
+		Name:        issueClassReqNoWhitelist.Name,
+		Symbol:      issueClassReqNoWhitelist.Symbol,
+		Description: issueClassReqNoWhitelist.Description,
+		URI:         issueClassReqNoWhitelist.URI,
+		URIHash:     issueClassReqNoWhitelist.URIHash,
+		Data:        dataToCompare,
+		Features:    issueClassReqNoWhitelist.Features,
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}
-
 	requireT.Equal(
-		expectedNFT1, nftResp.Nft,
+		expectedClass, classRes.Class,
 	)
-	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
-		ClassId: classIDNoWhitelist,
-		Id:      mintNFTReq1NoWhitelist.ID,
-	})
-	requireT.NoError(err)
-	requireT.Equal(nftOwner.Owner, mintRecipient.String())
+
+	// ********** Mint **********
 
 	// Mint an immutable NFT using protos instead of using the deprecated handler
 
 	mintImmutableNFTReq := moduleswasm.NftMintRequest{
-		ID:        "id-2",
+		ID:        "id-1",
 		Recipient: mintRecipient.String(),
 	}
 	mintImmutablePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
@@ -1678,7 +1868,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, mintImmutablePayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+	nftResp, err := nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
 		ClassId: classIDNoWhitelist,
 		Id:      mintImmutableNFTReq.ID,
 	})
@@ -1704,7 +1894,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		expectedNFT, gotNFT,
 	)
 
-	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+	nftOwner, err := nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
 		ClassId: classIDNoWhitelist,
 		Id:      mintImmutableNFTReq.ID,
 	})
@@ -1712,9 +1902,10 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.Equal(nftOwner.Owner, mintRecipient.String())
 
 	// Mint a mutable NFT with both Owner and Issuer as editors
+
 	encodedMutableData := base64.StdEncoding.EncodeToString([]byte("mutable_data"))
 	mintMutableNFTReq := moduleswasm.NftMintRequest{
-		ID:        "id-3",
+		ID:        "id-2",
 		Recipient: mintRecipient.String(),
 		Data:      encodedMutableData,
 	}
@@ -1845,6 +2036,508 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.Equal(dataToCompare, nftResp.Nft.Data)
+
+	// ********** Freeze **********
+
+	freezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodFreeze: {
+			ID: mintImmutableNFTReq.ID,
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, freezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftFrozenRes, err := assetNftClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
+		Id:      mintImmutableNFTReq.ID,
+		ClassId: classID,
+	})
+	requireT.NoError(err)
+	requireT.True(assertNftFrozenRes.Frozen)
+
+	// ********** Unfreeze **********
+
+	unfreezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodUnfreeze: {
+			ID: mintImmutableNFTReq.ID,
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, unfreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftFrozenRes, err = assetNftClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
+		Id:      mintImmutableNFTReq.ID,
+		ClassId: classID,
+	})
+	requireT.NoError(err)
+	requireT.False(assertNftFrozenRes.Frozen)
+
+	// ********** ClassFreeze **********
+
+	classFreezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassFreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, classFreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassFrozenRes, err := assetNftClient.ClassFrozen(ctx, &assetnfttypes.QueryClassFrozenRequest{
+		ClassId: classID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.True(assertNftClassFrozenRes.Frozen)
+
+	// ********** ClassUnFreeze **********
+
+	classUnfreezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodClassUnfreeze: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, classUnfreezePayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassFrozenRes, err = assetNftClient.ClassFrozen(ctx, &assetnfttypes.QueryClassFrozenRequest{
+		ClassId: classID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.False(assertNftClassFrozenRes.Frozen)
+
+	// ********** AddToWhitelist **********
+
+	// Let's issue a class first with feature whitelist enabled and mint and NFT
+
+	issueClassReq := moduleswasm.IssueNFTRequest{
+		Name:        "name",
+		Symbol:      "symbol",
+		Description: "description",
+		URI:         "https://my-nft-class-meta.invalid/1",
+		URIHash:     "hash",
+		Data:        encodedData,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+		RoyaltyRate: royaltyRate,
+	}
+	issuerNFTInstantiatePayload, err = json.Marshal(issueClassReq)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddrWhitelist, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.NftWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerNFTInstantiatePayload,
+			Label:      "non_fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	classID = assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddrWhitelist))
+	classRes, err = assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
+	requireT.NoError(err)
+
+	mintNFTReq1 := moduleswasm.NftMintRequest{
+		ID:      "id-1",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "hash",
+		Data:    encodedData,
+	}
+	mintPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMintImmutable: mintNFTReq1,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+	})
+	requireT.NoError(err)
+
+	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
+	dataToCompare = &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
+	}
+	requireT.NoError(err)
+
+	expectedNFT1 := &nfttypes.NFT{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+		Uri:     mintNFTReq1.URI,
+		UriHash: mintNFTReq1.URIHash,
+		Data:    dataToCompare,
+	}
+	requireT.Equal(
+		expectedNFT1, nftResp.Nft,
+	)
+
+	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, contractAddrWhitelist)
+
+	addToWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
+		moduleswasm.NftMethodAddToWhitelist: {
+			ID:      mintNFTReq1.ID,
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, addToWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftWhitelistedRes, err := assetNftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
+		Id:      mintNFTReq1.ID,
+		ClassId: classID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.True(assertNftWhitelistedRes.Whitelisted)
+
+	// ********** RemoveFromWhitelist **********
+
+	removeFromWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
+		moduleswasm.NftMethodRemoveFromWhiteList: {
+			ID:      mintNFTReq1.ID,
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, removeFromWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftWhitelistedRes, err = assetNftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
+		Id:      mintNFTReq1.ID,
+		ClassId: classID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.False(assertNftWhitelistedRes.Whitelisted)
+
+	// ********** AddToClassWhitelist **********
+
+	addToClassWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodAddToClassWhitelist: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, addToClassWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassWhitelistedRes, err := assetNftClient.ClassWhitelistedAccounts(
+		ctx,
+		&assetnfttypes.QueryClassWhitelistedAccountsRequest{
+			ClassId: classID,
+		})
+	requireT.NoError(err)
+	requireT.Contains(assertNftClassWhitelistedRes.Accounts, recipient.String())
+
+	// ********** RemoveFromClassWhitelist **********
+
+	removeFromClassWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftAccountRequest{
+		moduleswasm.NftMethodRemoveFromClassWhitelist: {
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, removeFromClassWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assertNftClassWhitelistedRes, err = assetNftClient.ClassWhitelistedAccounts(
+		ctx,
+		&assetnfttypes.QueryClassWhitelistedAccountsRequest{
+			ClassId: classID,
+		})
+	requireT.NoError(err)
+	requireT.NotContains(assertNftClassWhitelistedRes.Accounts, recipient.String())
+
+	// ********** Burn **********
+
+	burnPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodBurn: {
+			ID: mintNFTReq1.ID,
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, burnPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	_, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+	})
+	requireT.Error(err)
+	// the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
+	requireT.Contains(err.Error(), nfttypes.ErrNFTNotExists.Error())
+
+	// ********** Send **********
+
+	// mint
+	mintNFTReq2 := mintNFTReq1
+	mintNFTReq2.ID = "id-2"
+	mint2Payload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMintImmutable: mintNFTReq2,
+	})
+	requireT.NoError(err)
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, mint2Payload, sdk.Coin{})
+	requireT.NoError(err)
+
+	// addToWhitelistPayload
+	addToWhitelistPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
+		moduleswasm.NftMethodAddToWhitelist: {
+			ID:      mintNFTReq2.ID,
+			Account: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, addToWhitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	// send
+	sendPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithReceiverRequest{
+		moduleswasm.NftMethodSend: {
+			ID:       mintNFTReq2.ID,
+			Receiver: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, sendPayload, sdk.Coin{})
+	requireT.NoError(err)
+}
+
+// TestWASMNonFungibleTokenInContractLegacy verifies that smart contract is able to execute all non-fungible Coreum
+// token messages and queries from the deprecated wasm bindings/handler.
+//
+//nolint:nosnakecase
+func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	admin := chain.GenAccount()
+	recipient := chain.GenAccount()
+	mintRecipient := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+	assetNftClient := assetnfttypes.NewQueryClient(clientCtx)
+	nftClient := nfttypes.NewQueryClient(clientCtx)
+
+	// ********** Issuance **********
+
+	royaltyRate := sdk.MustNewDecFromStr("0.1")
+	data := make([]byte, 256)
+	for i := 0; i < 256; i++ {
+		data[i] = uint8(i)
+	}
+	encodedData := base64.StdEncoding.EncodeToString(data)
+
+	issueClassReq := moduleswasm.IssueNFTRequest{
+		Name:        "name",
+		Symbol:      "symbol",
+		Description: "description",
+		URI:         "https://my-nft-class-meta.invalid/1",
+		URIHash:     "hash",
+		Data:        encodedData,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+		RoyaltyRate: royaltyRate.String(),
+	}
+	issuerNFTInstantiatePayload, err := json.Marshal(issueClassReq)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.NftLegacyWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerNFTInstantiatePayload,
+			Label:      "non_fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	classID := assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddr))
+	classRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
+	requireT.NoError(err)
+
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
+	// we need to do this, otherwise assertion fails because some private fields are set differently
+	dataToCompare := &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
+	}
+	requireT.NoError(err)
+
+	expectedClass := assetnfttypes.Class{
+		Id:          classID,
+		Issuer:      contractAddr,
+		Name:        issueClassReq.Name,
+		Symbol:      issueClassReq.Symbol,
+		Description: issueClassReq.Description,
+		URI:         issueClassReq.URI,
+		URIHash:     issueClassReq.URIHash,
+		Data:        dataToCompare,
+		Features:    issueClassReq.Features,
+		RoyaltyRate: royaltyRate,
+	}
+	requireT.Equal(
+		expectedClass, classRes.Class,
+	)
+
+	// ********** Mint **********
+
+	mintNFTReq1 := moduleswasm.NftMintRequest{
+		ID:      "id-1",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "hash",
+		Data:    encodedData,
+	}
+	mintPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMint: mintNFTReq1,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	nftResp, err := nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+	})
+	requireT.NoError(err)
+
+	expectedNFT1 := &nfttypes.NFT{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+		Uri:     mintNFTReq1.URI,
+		UriHash: mintNFTReq1.URIHash,
+		Data:    dataToCompare,
+	}
+	requireT.Equal(
+		expectedNFT1, nftResp.Nft,
+	)
+
+	nftOwner, err := nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classID,
+		Id:      mintNFTReq1.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, contractAddr)
+
+	// ********** Mint (to someone) **********
+
+	issueClassReqNoWhitelist := moduleswasm.IssueNFTRequest{
+		Name:        "name",
+		Symbol:      "symbol",
+		Description: "description",
+		URI:         "https://my-nft-class-meta.invalid/1",
+		URIHash:     "hash",
+		Data:        encodedData,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+		RoyaltyRate: royaltyRate.String(),
+	}
+	issuerNFTInstantiatePayload, err = json.Marshal(issueClassReqNoWhitelist)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddrNoWhitelist, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.NftLegacyWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerNFTInstantiatePayload,
+			Label:      "non_fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	classIDNoWhitelist := assetnfttypes.BuildClassID(
+		issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist),
+	)
+
+	mintNFTReq1NoWhitelist := moduleswasm.NftMintRequest{
+		ID:        "id-1",
+		Recipient: mintRecipient.String(),
+	}
+
+	// mint
+	mintPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMint: mintNFTReq1NoWhitelist,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrNoWhitelist, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	})
+	requireT.NoError(err)
+
+	expectedNFT1 = &nfttypes.NFT{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	}
+
+	requireT.Equal(
+		expectedNFT1, nftResp.Nft,
+	)
+	nftOwner, err = nftClient.Owner(ctx, &nfttypes.QueryOwnerRequest{
+		ClassId: classIDNoWhitelist,
+		Id:      mintNFTReq1NoWhitelist.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(nftOwner.Owner, mintRecipient.String())
 
 	// ********** Freeze **********
 
@@ -2030,7 +2723,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	mintNFTReq2 := mintNFTReq1
 	mintNFTReq2.ID = "id-2"
 	mint2Payload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
-		moduleswasm.NftMethodMintLegacy: mintNFTReq2,
+		moduleswasm.NftMethodMint: mintNFTReq2,
 	})
 	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mint2Payload, sdk.Coin{})
