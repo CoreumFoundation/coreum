@@ -79,7 +79,8 @@ func TestPFMViaCoreum(t *testing.T) {
 		sendToGaiaCoin,
 		coreumChain.ChainContext,
 		// It is recommended to use an invalid bech32 string (such as "pfm") for the receiver on intermediate chains.
-		// More details here: https://github.com/cosmos/ibc-apps/tree/middleware/packet-forward-middleware/v7.1.3/middleware/packet-forward-middleware#intermediate-receivers
+		// More details here:
+		//nolint:lll // https://github.com/cosmos/ibc-apps/tree/middleware/packet-forward-middleware/v7.1.3/middleware/packet-forward-middleware#intermediate-receivers
 		"pfm",
 		string(pfmMemo),
 	)

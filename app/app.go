@@ -95,6 +95,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward"
 	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/keeper"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
@@ -107,7 +108,6 @@ import (
 	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibcporttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
@@ -116,8 +116,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
-
-	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward"
 
 	"github.com/CoreumFoundation/coreum/v4/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v4/app/upgrade"
@@ -150,8 +148,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v4/x/wbank/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wibctransfer"
-	//packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/keeper"
-	//packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	wibctransferkeeper "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/v4/x/wnft/keeper"
@@ -729,7 +725,7 @@ func New(
 	// - packetforward
 	// - ibchooks
 	// - ibctransfer
-	var ibcTransferStack porttypes.IBCModule
+	var ibcTransferStack ibcporttypes.IBCModule
 	ibcTransferStack = transfer.NewIBCModule(app.TransferKeeper.Keeper)
 	ibcTransferStack = ibchooks.NewIBCMiddleware(ibcTransferStack, &app.HooksICS4Wrapper)
 	ibcTransferStack = packetforward.NewIBCMiddleware(
@@ -741,8 +737,7 @@ func New(
 	)
 	ibcTransferStack = wibctransfer.NewPurposeMiddleware(ibcTransferStack)
 
-	var ibcWasmStack porttypes.IBCModule
-	ibcWasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper)
+	ibcWasmStack := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter().
