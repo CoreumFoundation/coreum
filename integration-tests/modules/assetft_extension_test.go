@@ -545,7 +545,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdkmath.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1010),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_freezing,
@@ -554,7 +554,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
 			Funds:  sdk.NewCoins(attachedFund),
-			Label:  "testing-whitelisting",
+			Label:  "testing-freezing",
 		},
 	}
 
@@ -767,7 +767,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
 		unfreezeMsg,
 	)
-	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// set absolute frozen amount to 250
 	setFrozenMsg := &assetfttypes.MsgSetFrozen{
@@ -839,8 +839,15 @@ func TestAssetFTExtensionFreezeUnfreezable(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
 	})
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+	attachedFund := chain.NewCoin(sdk.NewInt(10))
 
 	// Issue an unfreezable fungible token
 	msg := &assetfttypes.MsgIssue{
@@ -849,8 +856,13 @@ func TestAssetFTExtensionFreezeUnfreezable(t *testing.T) {
 		Subunit:       "uabcnotfreezable",
 		Description:   "ABC Description",
 		Precision:     1,
-		InitialAmount: sdkmath.NewInt(1000),
-		Features:      []assetfttypes.Feature{},
+		InitialAmount: sdkmath.NewInt(1010),
+		Features:      []assetfttypes.Feature{assetfttypes.Feature_extension},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "testing-freeze-unfreeze",
+		},
 	}
 
 	res, err := client.BroadcastTx(
