@@ -358,12 +358,15 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	requireT.NoError(err)
 	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(80)), frozenBalance)
-
+	am := bankKeeper.GetBalance(ctx, recipient, denom).Amount.String()
+	t.Logf("balance before error: %s", am)
 	// try to send more than available
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(80)))
 	// send
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, coinsToSend)
 	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+	am = bankKeeper.GetBalance(ctx, recipient, denom).Amount.String()
+	t.Logf("balance after error: %s", am)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
