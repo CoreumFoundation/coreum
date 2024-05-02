@@ -27,13 +27,13 @@ jobs:
             linter-cache: true
             codecov: false
           - ci_step: "test"
-            command: "coreum-builder test"
+            command: "coreum-builder wasm test"
             linter-cache: false
             codecov: true
             codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             command: |
-              coreum-builder build images
+              coreum-builder wasm build images
               crust znet start --profiles=3cored --timeout-commit 0.5s
               coreum-builder integration-tests-unsafe/modules
               crust znet stop
@@ -50,7 +50,7 @@ jobs:
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: |
-              coreum-builder build images
+              coreum-builder wasm build images
               crust znet start --cored-version=v3.0.3 --profiles=3cored,ibc --timeout-commit 1s
               coreum-builder integration-tests-unsafe/upgrade integration-tests-unsafe/ibc integration-tests-unsafe/modules
             linter-cache: false

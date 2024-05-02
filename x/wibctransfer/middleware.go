@@ -2,7 +2,6 @@ package wibctransfer
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
@@ -14,11 +13,11 @@ var _ porttypes.IBCModule = PurposeMiddleware{}
 
 // PurposeMiddleware adds information about IBC transfer purpose to the context.
 type PurposeMiddleware struct {
-	transfer.IBCModule
+	porttypes.IBCModule
 }
 
 // NewPurposeMiddleware returns middleware adding purpose to the context.
-func NewPurposeMiddleware(module transfer.IBCModule) PurposeMiddleware {
+func NewPurposeMiddleware(module porttypes.IBCModule) PurposeMiddleware {
 	return PurposeMiddleware{
 		IBCModule: module,
 	}

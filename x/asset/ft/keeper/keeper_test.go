@@ -802,17 +802,17 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 			},
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[0]: {
-					&issuers[0]:    818, // 800 + 15 + 45*5% (commission)
+					&issuers[0]:    819, // 800 + 15 + 4 (5% commission)
 					&issuers[1]:    25,
-					&recipients[0]: 32, // 100 - 60 - 45*10% (burn) - 45*5% (commission)
+					&recipients[0]: 30, // 100 - 60 - 6 (10% burn) - 4(commission)
 					&recipients[1]: 100,
 					&recipients[2]: 11,
 					&recipients[3]: 9,
 				},
 				denoms[1]: {
-					&issuers[1]:    449, // 420 + 25 + 35*10% (commission)
+					&issuers[1]:    450, // 420 + 25 + 5 (10% commission)
 					&issuers[0]:    155, // 140 + 15
-					&recipients[0]: 129, // 200 - 60 - 35*20% (burn) - 35*10% (commission)
+					&recipients[0]: 127, // 200 - 60 - 8 (20% burn) - 5 (commission)
 					&recipients[1]: 200,
 					&recipients[2]: 11,
 					&recipients[3]: 9,
