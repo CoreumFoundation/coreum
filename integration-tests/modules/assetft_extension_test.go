@@ -215,7 +215,8 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
 	})
 	chain.FundAccountWithOptions(ctx, t, nonIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -276,7 +277,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
-	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
+	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// try to send to recipient before it is whitelisted (balance 0, whitelist limit 0)
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
@@ -292,7 +293,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+	assertT.ErrorIs(err, assetfttypes.ErrWhitelistedLimitExceeded)
 
 	// multi-send
 	multiSendMsg := &banktypes.MsgMultiSend{
