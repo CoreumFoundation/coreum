@@ -67,17 +67,18 @@ pub fn execute_extension_transfer(
     let token = query_token(deps.as_ref(), &denom)?;
 
     if let Some(features) = &token.features {
-        for feature in features {
-            match feature {
-                // TODO(masih):
-                // - The user cannot burn the frozen amount if both freezing and burning is enabled.
-                // - If either or both of BurnRate and SendCommissionRate are set above zero, then
-                // after transfer has taken place and those rates are applied, the sender's balance
-                // must not go below the frozen amount. Otherwise the transaction will fail.
-                &assetft::FREEZING => assert_freezing(deps.as_ref(), info.sender.as_ref(), &token, amount)?,
-                &assetft::WHITELISTING => assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?,
-                _ => {}
-            }
+        // TODO(masih):
+        // - The user cannot burn the frozen amount if both freezing and burning is enabled.
+        // - If either or both of BurnRate and SendCommissionRate are set above zero, then
+        // after transfer has taken place and those rates are applied, the sender's balance
+        // must not go below the frozen amount. Otherwise the transaction will fail.
+
+        if features.contains(&assetft::FREEZING) {
+            assert_freezing(deps.as_ref(), info.sender.as_ref(), &token, amount)?
+        }
+
+        if features.contains(&assetft::WHITELISTING) {
+            assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?
         }
     }
 
