@@ -11,4 +11,10 @@ pub enum ContractError {
 
     #[error("Whitelisted limit exceeded.")]
     WhitelistingError {},
+
+    #[error("Feature disabled. {issuer} {sender}")]
+    FeatureDisabledError {
+        issuer: String,
+        sender: String
+    },
 }

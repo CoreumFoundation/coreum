@@ -434,3 +434,153 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), balance)
 }
+
+func TestKeeper_Extension_Burn(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	// Issue an unburnable fungible token
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "NotBurnable",
+		Subunit:       "notburnable",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(777),
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_minting,
+			types.Feature_extension,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+
+	unburnableDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unburnableDenom)
+
+	token, err := ftKeeper.GetToken(ctx, unburnableDenom)
+	requireT.NoError(err)
+
+	unburnableDenomExtensionCWAddress, err := sdk.AccAddressFromBech32(token.ExtensionCWAddress)
+	requireT.NoError(err)
+
+	// send to new recipient address
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(102))))
+	requireT.NoError(err)
+
+	coinsToBurn := sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(101)))
+
+	// try to burn unburnable token from the recipient account
+	err = bankKeeper.SendCoins(ctx, recipient, issuer, coinsToBurn)
+	requireT.ErrorContains(err, "Feature disabled.")
+	// return attached fund of failed transaction
+	err = bankKeeper.SendCoins(ctx, unburnableDenomExtensionCWAddress, recipient, coinsToBurn)
+	requireT.NoError(err)
+
+	issuerBalanceBefore := bankKeeper.GetBalance(ctx, issuer, unburnableDenom)
+	cwExtensionBalanceBefore := bankKeeper.GetBalance(ctx, unburnableDenomExtensionCWAddress, unburnableDenom)
+
+	// try to burn unburnable token from the issuer account
+	err = bankKeeper.SendCoins(ctx, issuer, issuer, coinsToBurn)
+	requireT.NoError(err)
+
+	issuerBalanceAfter := bankKeeper.GetBalance(ctx, issuer, unburnableDenom)
+	cwExtensionBalanceAfter := bankKeeper.GetBalance(ctx, unburnableDenomExtensionCWAddress, unburnableDenom)
+
+	// the amount should be burnt
+	requireT.Equal(issuerBalanceBefore.String(), issuerBalanceAfter.Add(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(101))).String())
+	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
+
+	// Issue a burnable fungible token
+	settings = types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "burnable",
+		Subunit:       "burnable",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(777),
+		Features: []types.Feature{
+			types.Feature_burning,
+			types.Feature_freezing,
+			types.Feature_extension,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+
+	burnableDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	token, err = ftKeeper.GetToken(ctx, burnableDenom)
+	requireT.NoError(err)
+
+	extensionCWAddress, err := sdk.AccAddressFromBech32(token.ExtensionCWAddress)
+	requireT.NoError(err)
+
+	// send to new recipient address
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(202))))
+	requireT.NoError(err)
+
+	recipientBalanceBefore := bankKeeper.GetBalance(ctx, recipient, burnableDenom)
+	cwExtensionBalanceBefore = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
+
+	// try to burn as non-issuer
+	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))))
+	requireT.NoError(err)
+
+	recipientBalanceAfter := bankKeeper.GetBalance(ctx, recipient, burnableDenom)
+	cwExtensionBalanceAfter = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
+
+	// the amount should be burnt
+	requireT.Equal(recipientBalanceBefore.String(), recipientBalanceAfter.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))).String())
+	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
+
+	issuerBalanceBefore = bankKeeper.GetBalance(ctx, issuer, burnableDenom)
+	cwExtensionBalanceBefore = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
+
+	// burn tokens and check balance and total supply
+	err = bankKeeper.SendCoins(ctx, issuer, issuer, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))))
+	requireT.NoError(err)
+
+	issuerBalanceAfter = bankKeeper.GetBalance(ctx, issuer, burnableDenom)
+	cwExtensionBalanceAfter = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
+
+	// the amount should be burnt
+	requireT.Equal(issuerBalanceBefore.String(), issuerBalanceAfter.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))).String())
+	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
+
+	balance := bankKeeper.GetBalance(ctx, issuer, burnableDenom)
+	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(474)), balance)
+
+	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	requireT.NoError(err)
+	requireT.EqualValues(sdkmath.NewInt(575), totalSupply.Supply.AmountOf(burnableDenom))
+
+	// try to freeze the issuer (issuer can't be frozen)
+	err = ftKeeper.Freeze(ctx, issuer, issuer, sdk.NewCoin(burnableDenom, sdkmath.NewInt(600)))
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// try to burn non-issuer frozen coins
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(101)))
+	requireT.NoError(err)
+	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))))
+	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+}

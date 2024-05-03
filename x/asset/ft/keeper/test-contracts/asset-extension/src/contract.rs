@@ -5,7 +5,7 @@ use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use coreum_wasm_sdk::assetft::{FrozenBalanceResponse, Query, Token, TokenResponse, WhitelistedBalanceResponse, self};
-use coreum_wasm_sdk::core::CoreumQueries;
+use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::DENOM;
@@ -20,7 +20,7 @@ pub fn instantiate(
     _env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+) -> CoreumResult<ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     DENOM.save(deps.storage, &msg.denom)?;
@@ -36,7 +36,7 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+) -> CoreumResult<ContractError> {
     match msg {
         ExecuteMsg::ExtensionTransfer { amount, recipient } => {
             execute_extension_transfer(deps, env, info, amount, recipient)
@@ -50,7 +50,7 @@ pub fn execute_extension_transfer(
     info: MessageInfo,
     amount: Uint128,
     recipient: String,
-) -> Result<Response, ContractError> {
+) -> CoreumResult<ContractError> {
     // TODO(milad) check that amount is present in the attached funds, and attached funds
     // is enough to cover the transfer.
     // TODO remove this if statement.
@@ -79,6 +79,27 @@ pub fn execute_extension_transfer(
 
         if features.contains(&assetft::WHITELISTING) {
             assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?;
+        }
+
+        // TODO remove this if statement.
+        // This check is intended for POC testing, it must be replaced with a more
+        // meaningful check.
+        if amount == Uint128::new(101) {
+            let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
+                coin: cosmwasm_std::coin(amount.u128(), denom)
+            });
+
+            // TODO(masih): Change token.issuer to token.admin
+            if !features.contains(&assetft::BURNING) && token.issuer != info.sender.as_ref().to_string() {
+                return Err(ContractError::FeatureDisabledError {
+                    issuer: token.issuer.to_string(),
+                    sender: info.sender.as_ref().to_string()
+                });
+            }
+
+            return Ok(Response::new()
+                .add_attribute("method", "burn")
+                .add_message(burn_message));
         }
     }
 
