@@ -222,18 +222,6 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 			},
 			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
-		{
-			name: "issuer freezing",
-			message: types.MsgFreeze{
-				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdkmath.NewInt(100),
-				},
-			},
-			expectedError: cosmoserrors.ErrUnauthorized,
-		},
 	}
 
 	for _, testCase := range testCases {
@@ -526,18 +514,6 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 			},
 			expectedErrorString: "invalid denom",
 		},
-		{
-			name: "issuer whitelisting",
-			message: types.MsgSetWhitelistedLimit{
-				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdkmath.NewInt(100),
-				},
-			},
-			expectedError: cosmoserrors.ErrUnauthorized,
-		},
 	}
 
 	for _, testCase := range testCases {
@@ -552,6 +528,116 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 				requireT.Contains(err.Error(), tc.expectedErrorString)
 			default:
 				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
+func TestMsgTransferAdmin_ValidateBasic(t *testing.T) {
+	testCases := []struct {
+		name                string
+		message             types.MsgTransferAdmin
+		expectedError       error
+		expectedErrorString string
+	}{
+		{
+			name: "valid msg",
+			message: types.MsgTransferAdmin{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Denom:   "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+		},
+		{
+			name: "invalid sender address",
+			message: types.MsgTransferAdmin{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Denom:   "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid account",
+			message: types.MsgTransferAdmin{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
+				Denom:   "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid denom",
+			message: types.MsgTransferAdmin{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Denom:   "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+			},
+			expectedErrorString: "invalid denom",
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			err := tc.message.ValidateBasic()
+			switch {
+			case tc.expectedError == nil && tc.expectedErrorString == "":
+				requireT.NoError(err)
+			case tc.expectedErrorString != "":
+				requireT.Contains(err.Error(), tc.expectedErrorString)
+			default:
+				requireT.ErrorIs(err, tc.expectedError)
+			}
+		})
+	}
+}
+
+func TestMsgClearAdmin_ValidateBasic(t *testing.T) {
+	testCases := []struct {
+		name                string
+		message             types.MsgClearAdmin
+		expectedError       error
+		expectedErrorString string
+	}{
+		{
+			name: "valid msg",
+			message: types.MsgClearAdmin{
+				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+		},
+		{
+			name: "invalid sender address",
+			message: types.MsgClearAdmin{
+				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid denom",
+			message: types.MsgClearAdmin{
+				Sender: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+			},
+			expectedErrorString: "invalid denom",
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			err := tc.message.ValidateBasic()
+			switch {
+			case tc.expectedError == nil && tc.expectedErrorString == "":
+				requireT.NoError(err)
+			case tc.expectedErrorString != "":
+				requireT.Contains(err.Error(), tc.expectedErrorString)
+			default:
+				requireT.ErrorIs(err, tc.expectedError)
 			}
 		})
 	}

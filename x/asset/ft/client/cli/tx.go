@@ -57,6 +57,8 @@ func GetTxCmd() *cobra.Command {
 		CmdTxGloballyUnfreeze(),
 		CmdTxClawback(),
 		CmdTxSetWhitelistedLimit(),
+		CmdTxTransferAdmin(),
+		CmdTxClearAdmin(),
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
 	)
@@ -568,6 +570,90 @@ $ %s tx %s globally-unfreeze ABC-%s --from [sender]
 			denom := args[0]
 
 			msg := &types.MsgGloballyUnfreeze{
+				Sender: sender.String(),
+				Denom:  denom,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxTransferAdmin returns TransferAdmin cobra command.
+func CmdTxTransferAdmin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer-admin [account_address] [denom] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Change admin of a fungible token to the specific account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Change admin of a fungible token.
+
+Example:
+$ %s tx %s transfer-admin [account_address] ABC-%s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			account := args[0]
+			denom := args[1]
+			err = sdk.ValidateDenom(denom)
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid denom")
+			}
+
+			msg := &types.MsgTransferAdmin{
+				Sender:  sender.String(),
+				Account: account,
+				Denom:   denom,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxClearAdmin returns ClearAdmin cobra command.
+func CmdTxClearAdmin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "clear-admin [denom] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Remove admin of a fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Remove admin of a fungible token.
+
+Example:
+$ %s tx %s clear-admin ABC-%s --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			denom := args[0]
+			err = sdk.ValidateDenom(denom)
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid denom")
+			}
+
+			msg := &types.MsgClearAdmin{
 				Sender: sender.String(),
 				Denom:  denom,
 			}

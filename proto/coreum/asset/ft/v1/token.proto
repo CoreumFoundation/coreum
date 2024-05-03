@@ -41,6 +41,7 @@ message Definition {
   string uri = 7 [(gogoproto.customname) = "URI"];
   string uri_hash = 8 [(gogoproto.customname) = "URIHash"];
   string extension_cw_address = 9 [(gogoproto.customname) = "ExtensionCWAddress"];
+  string admin = 10;
 }
 
 // Token is a full representation of the fungible token.
@@ -71,6 +72,7 @@ message Token {
   string uri = 12 [(gogoproto.customname) = "URI"];
   string uri_hash = 13 [(gogoproto.customname) = "URIHash"];
   string extension_cw_address = 14 [(gogoproto.customname) = "ExtensionCWAddress"];
+  string admin = 15;
 }
 
 // DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.
