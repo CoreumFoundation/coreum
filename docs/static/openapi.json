@@ -9267,7 +9267,7 @@
         },
         "send_commission_rate": {
           "type": "string",
-          "description": "send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine\namount sent to the token issuer account."
+          "description": "send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine\namount sent to the token admin account."
         },
         "version": {
           "type": "integer",
@@ -9280,6 +9280,9 @@
           "type": "string"
         },
         "extension_cw_address": {
+          "type": "string"
+        },
+        "admin": {
           "type": "string"
         }
       },

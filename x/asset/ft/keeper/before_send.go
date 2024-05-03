@@ -69,13 +69,13 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			issuer, err := sdk.AccAddressFromBech32(def.Issuer)
+			admin, err := sdk.AccAddressFromBech32(def.Admin)
 			if err != nil {
-				return sdkerrors.Wrapf(err, "invalid address %s", def.Issuer)
+				return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
 			}
 
-			burnAmount := k.CalculateRate(ctx, def.BurnRate, issuer, sender, recipient, coin)
-			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, issuer, sender, recipient, coin)
+			burnAmount := k.CalculateRate(ctx, def.BurnRate, admin, sender, recipient, coin)
+			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, admin, sender, recipient, coin)
 
 			if def.IsFeatureEnabled(types.Feature_extension) {
 				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
@@ -89,7 +89,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 
 			if commissionAmount.IsPositive() {
 				commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
-				if err := k.bankKeeper.SendCoins(ctx, sender, issuer, commissionCoin); err != nil {
+				if err := k.bankKeeper.SendCoins(ctx, sender, admin, commissionCoin); err != nil {
 					return err
 				}
 			}
@@ -136,7 +136,7 @@ func (k Keeper) invokeAssetExtension(
 	// 2. calling the smart contract directly and sending from it.
 	// 3. calling smart contract directly/indirectly, in which smart contracts sends
 	// 	  and also receives (receive can happen by invoking another contract)
-	// 4. testing sending and receiving from smart contract that is not issuer
+	// 4. testing sending and receiving from smart contract that is not admin
 	// 5. test IBC send and receives
 	extensionContract, err := sdk.AccAddressFromBech32(def.ExtensionCWAddress)
 	if err != nil {
@@ -182,7 +182,7 @@ func (k Keeper) invokeAssetExtension(
 func (k Keeper) CalculateRate(
 	ctx sdk.Context,
 	rate sdk.Dec,
-	issuer,
+	admin,
 	sender sdk.AccAddress,
 	receiver sdk.AccAddress,
 	amount sdk.Coin,
@@ -212,7 +212,7 @@ func (k Keeper) CalculateRate(
 		return sdk.ZeroInt()
 	}
 
-	if issuer.Equals(sender) || issuer.Equals(receiver) {
+	if admin.Equals(sender) || admin.Equals(receiver) {
 		return sdk.ZeroInt()
 	}
 

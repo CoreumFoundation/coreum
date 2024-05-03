@@ -24,6 +24,8 @@ const (
 	TypeMsgGloballyUnfreeze    = "globally-unfreeze"
 	TypeMsgClawback            = "clawback"
 	TypeMsgSetWhitelistedLimit = "set-whitelisted-limit"
+	TypeMsgTransferAdmin       = "transfer-admin"
+	TypeMsgClearAdmin          = "clear-admin"
 	TypeMsgUpgradeTokenV1      = "upgrade-token-v1"
 	TypeMsgUpdateParams        = "update-params"
 )
@@ -58,6 +60,8 @@ var (
 	_ legacytx.LegacyMsg = &MsgClawback{}
 	_ sdk.Msg            = &MsgSetWhitelistedLimit{}
 	_ legacytx.LegacyMsg = &MsgSetWhitelistedLimit{}
+	_ sdk.Msg            = &MsgTransferAdmin{}
+	_ legacytx.LegacyMsg = &MsgTransferAdmin{}
 	_ sdk.Msg            = &MsgUpgradeTokenV1{}
 	_ legacytx.LegacyMsg = &MsgUpgradeTokenV1{}
 	_ sdk.Msg            = &MsgUpdateParams{}
@@ -247,13 +251,9 @@ func (m MsgFreeze) ValidateBasic() error {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	_, _, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
-	}
-
-	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	return m.Coin.Validate()
@@ -330,13 +330,9 @@ func (m MsgSetFrozen) ValidateBasic() error {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	_, _, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
-	}
-
-	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	return m.Coin.Validate()
@@ -484,13 +480,9 @@ func (m MsgSetWhitelistedLimit) ValidateBasic() error {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(m.Coin.Denom)
+	_, _, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
-	}
-
-	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
 	return m.Coin.Validate()
@@ -516,6 +508,82 @@ func (m MsgSetWhitelistedLimit) Route() string {
 // Type returns message type for LegacyMsg.
 func (m MsgSetWhitelistedLimit) Type() string {
 	return TypeMsgSetWhitelistedLimit
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m MsgTransferAdmin) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	_, _, err := DeconstructDenom(m.Denom)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetSigners returns the required signers of this message type.
+func (m MsgTransferAdmin) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(m.Sender),
+	}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgTransferAdmin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgTransferAdmin) Route() string {
+	return RouterKey
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m MsgClearAdmin) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	_, _, err := DeconstructDenom(m.Denom)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgTransferAdmin) Type() string {
+	return TypeMsgTransferAdmin
+}
+
+// GetSigners returns the required signers of this message type.
+func (m MsgClearAdmin) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(m.Sender),
+	}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgClearAdmin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgClearAdmin) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgClearAdmin) Type() string {
+	return TypeMsgClearAdmin
 }
 
 // ValidateBasic checks that message fields are valid.

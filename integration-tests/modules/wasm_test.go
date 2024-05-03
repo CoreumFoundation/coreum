@@ -1420,6 +1420,7 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
 		URI:                issuanceReq.URI,
 		URIHash:            issuanceReq.URIHash,
+		Admin:              contractAddr,
 	}
 	requireT.Equal(
 		expectedToken, tokenRes.Token,
@@ -1653,6 +1654,8 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	var wasmTokenRes assetfttypes.QueryTokenResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokenRes))
 	wasmTokenRes.Token.Version = expectedToken.Version // test should work with any version
+	// TODO(masih): Remove this line, once WASM SDK is updated
+	wasmTokenRes.Token.Admin = wasmTokenRes.Token.Issuer
 	requireT.Equal(
 		expectedToken, wasmTokenRes.Token,
 	)
@@ -1670,6 +1673,8 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	var wasmTokensRes assetfttypes.QueryTokensResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokensRes))
 	wasmTokensRes.Tokens[0].Version = expectedToken.Version
+	// TODO(masih): Remove this line, once WASM SDK is updated
+	wasmTokensRes.Tokens[0].Admin = wasmTokensRes.Tokens[0].Issuer
 	requireT.Equal(
 		expectedToken, wasmTokensRes.Tokens[0],
 	)
