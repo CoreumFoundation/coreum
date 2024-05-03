@@ -20,6 +20,8 @@ import (
 // TestPFMViaCoreum tests the packet forwarding middleware integration into Coreum by sending:
 // Osmosis -> Coreum -> Gaia IBC transfer.
 func TestPFMViaCoreum(t *testing.T) {
+	t.Parallel()
+
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
