@@ -506,7 +506,10 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceAfter := bankKeeper.GetBalance(ctx, unburnableDenomExtensionCWAddress, unburnableDenom)
 
 	// the amount should be burnt
-	requireT.Equal(issuerBalanceBefore.String(), issuerBalanceAfter.Add(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(101))).String())
+	requireT.Equal(
+		issuerBalanceBefore.String(),
+		issuerBalanceAfter.Add(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(101))).String(),
+	)
 	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
 
 	// Issue a burnable fungible token
@@ -550,7 +553,10 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceAfter = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
 
 	// the amount should be burnt
-	requireT.Equal(recipientBalanceBefore.String(), recipientBalanceAfter.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))).String())
+	requireT.Equal(
+		recipientBalanceBefore.String(),
+		recipientBalanceAfter.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))).String(),
+	)
 	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
 
 	issuerBalanceBefore = bankKeeper.GetBalance(ctx, issuer, burnableDenom)
@@ -564,7 +570,10 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceAfter = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
 
 	// the amount should be burnt
-	requireT.Equal(issuerBalanceBefore.String(), issuerBalanceAfter.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))).String())
+	requireT.Equal(
+		issuerBalanceBefore.String(),
+		issuerBalanceAfter.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))).String(),
+	)
 	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
 
 	balance := bankKeeper.GetBalance(ctx, issuer, burnableDenom)

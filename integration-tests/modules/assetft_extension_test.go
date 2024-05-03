@@ -891,3 +891,211 @@ func TestAssetFTExtensionFreezeUnfreezable(t *testing.T) {
 	)
 	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
+
+// TestAssetFTExtensionBurn checks extension burn functionality of fungible tokens.
+func TestAssetFTExtensionBurn(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
+			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+	})
+
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+	})
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+	attachedFund := chain.NewCoin(sdk.NewInt(10))
+
+	// Issue an unburnable fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCNotBurnable",
+		Subunit:       "uabcnotburnable",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1012),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "testing-burning",
+		},
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	unburnable := fungibleTokenIssuedEvts[0].Denom
+
+	// try to burn unburnable token from issuer
+	burnMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   issuer.String(),
+		Amount: sdk.NewCoins(sdk.Coin{
+			Denom:  unburnable,
+			Amount: sdkmath.NewInt(900),
+		}),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	// send some coins to the recipient
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(unburnable, sdkmath.NewInt(102))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// try to burn unburnable token from recipient
+	burnMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   issuer.String(),
+		Amount: sdk.NewCoins(sdk.Coin{
+			Denom:  unburnable,
+			Amount: sdkmath.NewInt(101),
+		}),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.ErrorContains(err, "Feature disabled.")
+
+	// Issue a burnable fungible token
+	issueMsg = &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCBurnable",
+		Subunit:       "uabcburnable",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "testing-burning",
+		},
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	burnableDenom := fungibleTokenIssuedEvts[0].Denom
+
+	// send some coins to the recipient
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(102))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// try to pass non-issuer signature to msg
+	burnMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   issuer.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	// burn tokens and check balance and total supply
+	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
+	requireT.NoError(err)
+	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))
+
+	burnMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   issuer.String(),
+		Amount:      sdk.NewCoins(burnCoin),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: burnableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(797)).String(), balance.GetBalance().String())
+
+	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(burnCoin.String(), oldSupply.GetAmount().Sub(newSupply.GetAmount()).String())
+}
