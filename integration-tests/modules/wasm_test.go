@@ -1384,6 +1384,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	clearAdminPayload, err := json.Marshal(map[ftMethod]struct{}{
 		ftMethodClearAdmin: {},
 	})
+	requireT.NoError(err)
 
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, clearAdminPayload, sdk.Coin{})
 	requireT.NoError(err)
