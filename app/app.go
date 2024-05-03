@@ -725,7 +725,7 @@ func New(
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
-	// Setup IBC stack transfer stack contains (from top to bottom):
+	// IBC transfer stack contains (from top to bottom):
 	// - wibctransfer
 	// - packetforward
 	// - ibchooks
