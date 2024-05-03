@@ -51,7 +51,9 @@ func TestUpgrade(t *testing.T) {
 }
 
 func upgradeV3ToV4(t *testing.T) {
-	tests := []upgradeTest{}
+	tests := []upgradeTest{
+		&ftAdminFieldTest{},
+	}
 
 	for _, test := range tests {
 		test.Before(t)

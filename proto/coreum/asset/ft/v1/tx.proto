@@ -39,11 +39,16 @@ service Msg {
   rpc GloballyUnfreeze(MsgGloballyUnfreeze) returns (EmptyResponse);
 
   // Clawback confiscates a part of fungible tokens from an account
-  // to the issuer, only if the clawback feature is enabled on that token.
+  // to the admin, only if the clawback feature is enabled on that token.
   rpc Clawback(MsgClawback) returns (EmptyResponse);
 
   // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
   rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
+
+  // TransferAdmin changes admin of a fungible token.
+  rpc TransferAdmin(MsgTransferAdmin) returns (EmptyResponse);
+  // ClearAdmin removes admin of a fungible token.
+  rpc ClearAdmin(MsgClearAdmin) returns (EmptyResponse);
 
   // TokenUpgradeV1 upgrades token to version V1.
   rpc UpgradeTokenV1(MsgUpgradeTokenV1) returns (EmptyResponse);
@@ -72,7 +77,7 @@ message MsgIssue {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
   // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
-  // amount sent to the token issuer account.
+  // amount sent to the token admin account.
   string send_commission_rate = 9 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
@@ -147,6 +152,17 @@ message MsgSetWhitelistedLimit {
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgTransferAdmin {
+  string sender = 1;
+  string account = 2;
+  string denom = 3;
+}
+
+message MsgClearAdmin {
+  string sender = 1;
+  string denom = 2;
 }
 
 // MsgUpgradeTokenV1 is the message upgrading token to V1.
