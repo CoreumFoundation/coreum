@@ -1,6 +1,5 @@
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
-    MsgBurn, MsgFreeze, MsgGloballyFreeze, MsgGloballyUnfreeze, MsgIssue, MsgMint, MsgSetFrozen,
-    MsgSetWhitelistedLimit, MsgUnfreeze, MsgUpgradeTokenV1,
+    MsgBurn, MsgClearAdmin, MsgFreeze, MsgGloballyFreeze, MsgGloballyUnfreeze, MsgIssue, MsgMint, MsgSetFrozen, MsgSetWhitelistedLimit, MsgTransferAdmin, MsgUnfreeze, MsgUpgradeTokenV1
 };
 use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
 use cosmwasm_std::{entry_point, Binary, CosmosMsg, Deps, StdResult};
@@ -80,6 +79,8 @@ pub fn execute(
         ExecuteMsg::SetWhitelistedLimit { account, amount } => {
             set_whitelisted_limit(deps, env, info, account, amount)
         }
+        ExecuteMsg::TransferAdmin { account } => transfer_admin(deps, env, info, account),
+        ExecuteMsg::ClearAdmin {} => clear_admin(deps, env, info),
         ExecuteMsg::UpgradeTokenV1 { ibc_enabled } => {
             upgrate_token_v1(deps, env, info, ibc_enabled)
         }
@@ -330,6 +331,56 @@ fn set_whitelisted_limit(
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
         .add_message(set_whitelisted_limit_msg))
+}
+
+fn transfer_admin(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    account: String,
+) -> Result<Response, ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let denom = DENOM.load(deps.storage)?;
+
+    let transfer_admin = MsgTransferAdmin {
+        sender: env.contract.address.to_string(),
+        account,
+        denom: denom.clone(),
+    };
+
+    let transfer_admin_bytes = transfer_admin.to_proto_bytes();
+
+    let transfer_admin_msg = CosmosMsg::Stargate {
+        type_url: transfer_admin.to_any().type_url,
+        value: Binary::from(transfer_admin_bytes),
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "transfer_admin")
+        .add_attribute("denom", denom)
+        .add_message(transfer_admin_msg))
+}
+
+fn clear_admin(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let denom = DENOM.load(deps.storage)?;
+
+    let clear_admin = MsgClearAdmin {
+        sender: env.contract.address.to_string(),
+        denom: denom.clone(),
+    };
+    
+    let clear_admin_bytes = clear_admin.to_proto_bytes();
+
+    let clear_admin_msg = CosmosMsg::Stargate {
+        type_url: clear_admin.to_any().type_url,
+        value: Binary::from(clear_admin_bytes),
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "clear_admin")
+        .add_attribute("denom", denom)
+        .add_message(clear_admin_msg))
 }
 
 fn upgrate_token_v1(

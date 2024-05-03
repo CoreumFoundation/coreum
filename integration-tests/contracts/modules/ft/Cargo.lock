@@ -109,7 +109,7 @@ checksum = "28c122c3980598d243d63d9a704629a2d748d101f278052ff068be5a4423ab6f"
 [[package]]
 name = "coreum-wasm-sdk"
 version = "0.3.0"
-source = "git+https://github.com/CoreumFoundation/coreum-wasm-sdk.git?branch=keyne/upgrade-wasm-sdk#3b7b61b978a03ede12cd6120d0a9f839439920e6"
+source = "git+https://github.com/CoreumFoundation/coreum-wasm-sdk.git?branch=keyne/upgrade-wasm-sdk#f124f8f0f09323daa785f64c768a31c3c5dbb2a5"
 dependencies = [
  "chrono",
  "cosmwasm-schema",

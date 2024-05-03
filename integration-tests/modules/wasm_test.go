@@ -112,6 +112,8 @@ const (
 	ftMethodGloballyFreeze      ftMethod = "globally_freeze"
 	ftMethodGloballyUnfreeze    ftMethod = "globally_unfreeze"
 	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
+	ftMethodTransferAdmin       ftMethod = "transfer_admin"
+	ftMethodClearAdmin          ftMethod = "clear_admin"
 	// query.
 	ftMethodParams              ftMethod = "params"
 	ftMethodTokens              ftMethod = "tokens"
@@ -1124,6 +1126,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
 		URI:                issuanceReq.URI,
 		URIHash:            issuanceReq.URIHash,
+		Admin:              contractAddr,
 	}
 
 	requireT.Equal(
@@ -1330,6 +1333,66 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(amountToWhitelist.String(), whitelistedRes.Balance.Amount.String())
+
+	// ********** Transfer Admin **********
+
+	transferAdminPayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
+		ftMethodTransferAdmin: {
+			Account: recipient1.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, transferAdminPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	tokenRes, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(tokenRes.Token.Admin, recipient1.String())
+
+	// transfer it back to the contract address to test clearing the admin
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  recipient1.String(),
+		Account: contractAddr,
+		Denom:   denom,
+	}
+
+	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			transferAdminMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(transferAdminMsg)),
+		transferAdminMsg,
+	)
+	requireT.NoError(err)
+
+	tokenRes, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(tokenRes.Token.Admin, contractAddr)
+
+	// ********** Clear Admin **********
+
+	clearAdminPayload, err := json.Marshal(map[ftMethod]struct{}{
+		ftMethodClearAdmin: {},
+	})
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, clearAdminPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	tokenRes, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.Empty(tokenRes.Token.Admin)
 }
 
 // TestWASMFungibleTokenInContractLegacy verifies that smart contract is able to execute all
@@ -1654,7 +1717,7 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	var wasmTokenRes assetfttypes.QueryTokenResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokenRes))
 	wasmTokenRes.Token.Version = expectedToken.Version // test should work with any version
-	// TODO(masih): Remove this line, once WASM SDK is updated
+	// Add this here for legacy tests.
 	wasmTokenRes.Token.Admin = wasmTokenRes.Token.Issuer
 	requireT.Equal(
 		expectedToken, wasmTokenRes.Token,
@@ -1673,7 +1736,7 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	var wasmTokensRes assetfttypes.QueryTokensResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokensRes))
 	wasmTokensRes.Tokens[0].Version = expectedToken.Version
-	// TODO(masih): Remove this line, once WASM SDK is updated
+	// Add this here for legacy tests
 	wasmTokensRes.Tokens[0].Admin = wasmTokensRes.Tokens[0].Issuer
 	requireT.Equal(
 		expectedToken, wasmTokensRes.Tokens[0],
