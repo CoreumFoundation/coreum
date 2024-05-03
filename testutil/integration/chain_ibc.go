@@ -62,8 +62,6 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 	t.Helper()
 
 	sender := c.MustConvertToBech32Address(senderAddress)
-	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s, memo: %s.",
-		sender, recipientAddress, coin.String(), memo)
 
 	recipientChannelID := c.AwaitForIBCChannelID(
 		ctx,
@@ -78,6 +76,8 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 	)
 	require.NoError(t, err)
 
+	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s, memo: %s.",
+		sender, recipientAddress, coin.String(), memo)
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:    ibctransfertypes.PortID,
 		SourceChannel: recipientChannelID,

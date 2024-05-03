@@ -38,12 +38,20 @@ func TestPFMViaCoreum(t *testing.T) {
 		},
 	)
 
+	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx,
+		t,
+		ibctransfertypes.PortID,
+		gaiaChain.ChainSettings.ChainID,
+	)
+
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
 		ctx,
 		t,
 		ibctransfertypes.PortID,
 		coreumChain.ChainSettings.ChainID,
 	)
+
 	coreumToOsmosiChannelID := coreumChain.AwaitForIBCChannelID(
 		ctx,
 		t,
@@ -51,14 +59,12 @@ func TestPFMViaCoreum(t *testing.T) {
 		osmosisChain.ChainSettings.ChainID,
 	)
 
-	sendToGaiaCoin := osmosisChain.NewCoin(sdkmath.NewInt(10_000_000))
-
 	// Forward metadata example:
 	// {
 	//  "forward": {
 	//    "receiver": "chain-c-bech32-address",
 	//    "port": "transfer",
-	//    "channel": "channel-123"
+	//    "channel": "channel-123" // this is the chain C on chain B channel.
 	//  }
 	//}
 	forwardMetadata := struct {
@@ -67,13 +73,14 @@ func TestPFMViaCoreum(t *testing.T) {
 		Forward: packetforwardtypes.ForwardMetadata{
 			Receiver: gaiaChain.MustConvertToBech32Address(gaiaReceiver),
 			Port:     ibctransfertypes.PortID,
-			Channel:  gaiaToCoreumChannelID,
+			Channel:  coreumToGaiaChannelID,
 		},
 	}
 
 	pfmMemo, err := json.Marshal(forwardMetadata)
 	requireT.NoError(err)
 
+	sendToGaiaCoin := osmosisChain.NewCoin(sdkmath.NewInt(10_000_000))
 	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
