@@ -6,6 +6,8 @@ import (
 	"testing"
 	_ "unsafe"
 
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdktestdatatypes "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,6 +50,9 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 
 		// mint
 		sdk.MsgTypeURL(&minttypes.MsgUpdateParams{}): {},
+
+		// pfm
+		sdk.MsgTypeURL(&packetforwardtypes.MsgUpdateParams{}): {},
 
 		// slashing
 		sdk.MsgTypeURL(&slashingtypes.MsgUpdateParams{}): {},
