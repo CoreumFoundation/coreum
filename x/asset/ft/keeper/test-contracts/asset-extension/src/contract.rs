@@ -67,10 +67,8 @@ pub fn execute_extension_transfer(
     let token = query_token(deps.as_ref(), &denom)?;
 
     if let Some(features) = &token.features {
-        // TODO(masih):
-        // - The user cannot burn the frozen amount if both freezing and burning is enabled.
-        // - If either or both of BurnRate and SendCommissionRate are set above zero, then
-        // after transfer has taken place and those rates are applied, the sender's balance
+        // TODO(masih): If either or both of BurnRate and SendCommissionRate are set above zero,
+        // then after transfer has taken place and those rates are applied, the sender's balance
         // must not go below the frozen amount. Otherwise the transaction will fail.
 
         if features.contains(&assetft::FREEZING) {
@@ -85,21 +83,9 @@ pub fn execute_extension_transfer(
         // This check is intended for POC testing, it must be replaced with a more
         // meaningful check.
         if amount == Uint128::new(101) {
-            let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
-                coin: cosmwasm_std::coin(amount.u128(), denom)
-            });
-
-            // TODO(masih): Change token.issuer to token.admin
-            if !features.contains(&assetft::BURNING) && token.issuer != info.sender.as_ref().to_string() {
-                return Err(ContractError::FeatureDisabledError {
-                    issuer: token.issuer.to_string(),
-                    sender: info.sender.as_ref().to_string()
-                });
-            }
-
-            return Ok(Response::new()
-                .add_attribute("method", "burn")
-                .add_message(burn_message));
+            return assert_burning(
+                info.sender.as_ref(), amount, &token, features.contains(&assetft::BURNING)
+            );
         }
     }
 
@@ -165,6 +151,31 @@ fn assert_whitelisting(
     }
 
     Ok(())
+}
+
+fn assert_burning(
+    sender: &str,
+    amount: Uint128,
+    token: &Token,
+    burning_enabled: bool
+) -> CoreumResult<ContractError> {
+    let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
+        coin: cosmwasm_std::coin(amount.u128(), &token.denom)
+    });
+
+    // TODO(masih): Change token.issuer to token.admin
+    // TODO(masih): The user cannot burn the frozen amount if both
+    // freezing and burning is enabled.
+    if !burning_enabled && sender != token.issuer {
+        return Err(ContractError::FeatureDisabledError {
+            issuer: token.issuer.to_string(),
+            sender: sender.to_string()
+        });
+    }
+
+    return Ok(Response::new()
+        .add_attribute("method", "burn")
+        .add_message(burn_message));
 }
 
 fn query_frozen_balance(
