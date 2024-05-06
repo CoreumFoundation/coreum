@@ -87,6 +87,15 @@ pub fn execute_extension_transfer(
                 info.sender.as_ref(), amount, &token, features.contains(&assetft::BURNING)
             );
         }
+
+        // TODO remove this if statement.
+        // This check is intended for POC testing, it must be replaced with a more
+        // meaningful check.
+        if amount == Uint128::new(105) {
+            return assert_minting(
+                info.sender.as_ref(), &recipient, amount, &token, features.contains(&assetft::MINTING)
+            );
+        }
     }
 
     let transfer_msg = cosmwasm_std::BankMsg::Send {
@@ -167,15 +176,44 @@ fn assert_burning(
     // TODO(masih): The user cannot burn the frozen amount if both
     // freezing and burning is enabled.
     if !burning_enabled && sender != token.issuer {
-        return Err(ContractError::FeatureDisabledError {
-            issuer: token.issuer.to_string(),
-            sender: sender.to_string()
-        });
+        return Err(ContractError::FeatureDisabledError {});
     }
 
     return Ok(Response::new()
         .add_attribute("method", "burn")
         .add_message(burn_message));
+}
+
+fn assert_minting(
+    sender: &str,
+    recipient: &str,
+    amount: Uint128,
+    token: &Token,
+    minting_enabled: bool
+) -> CoreumResult<ContractError> {
+    let mint_message = CoreumMsg::AssetFT(assetft::Msg::Mint {
+        coin: cosmwasm_std::coin(amount.u128(), &token.denom),
+        recipient: Some(recipient.to_string()),
+    });
+
+    if !minting_enabled {
+        return Err(ContractError::FeatureDisabledError {});
+    }
+
+    // TODO(masih): Change token.issuer to token.admin
+    if sender != token.issuer {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let return_fund_msg = cosmwasm_std::BankMsg::Send {
+        to_address: sender.to_string(),
+        amount: vec![Coin {amount, denom: token.denom.clone()}],
+    };
+
+    return Ok(Response::new()
+        .add_attribute("method", "mint")
+        .add_message(mint_message)
+        .add_message(return_fund_msg));
 }
 
 fn query_frozen_balance(
