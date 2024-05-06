@@ -593,3 +593,110 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))))
 	requireT.ErrorContains(err, "Requested transfer token is frozen.")
 }
+
+func TestKeeper_Extension_Mint(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, addr, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	// Issue an unmintable fungible token
+	settings := types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "NotMintable",
+		Subunit:       "notmintable",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(777),
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_burning,
+			types.Feature_extension,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+
+	unmintableDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unmintableDenom)
+
+	// try to mint unmintable token
+	err = bankKeeper.SendCoins(ctx, addr, addr, sdk.NewCoins(sdk.NewCoin(unmintableDenom, sdkmath.NewInt(105))))
+	requireT.ErrorContains(err, "Feature disabled.")
+
+	// Issue a mintable fungible token
+	settings = types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "mintable",
+		Subunit:       "mintable",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(777),
+		Features: []types.Feature{
+			types.Feature_minting,
+			types.Feature_extension,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+
+	mintableDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	token, err := ftKeeper.GetToken(ctx, mintableDenom)
+	requireT.NoError(err)
+
+	extensionCWAddress, err := sdk.AccAddressFromBech32(token.ExtensionCWAddress)
+	requireT.NoError(err)
+
+	coinsToMint := sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(105)))
+
+	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	err = bankKeeper.SendCoins(ctx, addr, randomAddr, sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(125))))
+	requireT.NoError(err)
+
+	// try to mint as non-issuer
+	err = bankKeeper.SendCoins(ctx, randomAddr, randomAddr, coinsToMint)
+	requireT.ErrorContains(err, "Unauthorized.")
+
+	// return attached fund of failed transaction
+	err = bankKeeper.SendCoins(ctx, extensionCWAddress, randomAddr, coinsToMint)
+	requireT.NoError(err)
+
+	// mint tokens and check balance and total supply
+	err = bankKeeper.SendCoins(ctx, addr, addr, coinsToMint)
+	requireT.NoError(err)
+
+	balance := bankKeeper.GetBalance(ctx, addr, mintableDenom)
+	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(757)), balance)
+
+	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	requireT.NoError(err)
+	requireT.EqualValues(sdkmath.NewInt(882), totalSupply.Supply.AmountOf(mintableDenom))
+
+	// mint to another account
+	err = bankKeeper.SendCoins(ctx, addr, randomAddr, coinsToMint)
+	requireT.NoError(err)
+
+	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
+	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(230)), balance)
+
+	totalSupply, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	requireT.NoError(err)
+	requireT.EqualValues(sdkmath.NewInt(987), totalSupply.Supply.AmountOf(mintableDenom))
+}

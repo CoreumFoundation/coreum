@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v4/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
@@ -1098,4 +1099,241 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
 	assertT.EqualValues(burnCoin.String(), oldSupply.GetAmount().Sub(newSupply.GetAmount()).String())
+}
+
+// TestAssetFTExtensionMint checks extension mint functionality of fungible tokens.
+func TestAssetFTExtensionMint(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	randomAddress := chain.GenAccount()
+	recipient := chain.GenAccount()
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
+			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+	})
+
+	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
+
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+	attachedFund := chain.NewCoin(sdk.NewInt(10))
+
+	// Issue an unmintable fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCNotMintable",
+		Subunit:       "uabcnotmintable",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "testing-minting",
+		},
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	unmintableDenom := fungibleTokenIssuedEvts[0].Denom
+
+	// try to mint unmintable token
+	mintMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   issuer.String(),
+		Amount: sdk.NewCoins(sdk.Coin{
+			Denom:  unmintableDenom,
+			Amount: sdkmath.NewInt(105),
+		}),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.ErrorContains(err, "Feature disabled.")
+
+	// Issue a mintable fungible token
+	issueMsg = &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCMintable",
+		Subunit:       "uabcmintable",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "testing-minting",
+		},
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	mintableDenom := fungibleTokenIssuedEvts[0].Denom
+
+	// send some coins to the account
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   randomAddress.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(210))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// try to pass non-issuer signature to msg
+	mintMsg = &banktypes.MsgSend{
+		FromAddress: randomAddress.String(),
+		ToAddress:   randomAddress.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(105))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(randomAddress),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.ErrorContains(err, "Unauthorized.")
+
+	// mint tokens and check balance and total supply
+	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
+	requireT.NoError(err)
+	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(105))
+	mintMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   issuer.String(),
+		Amount:      sdk.NewCoins(mintCoin),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(
+		mintCoin.Add(sdk.NewCoin(mintableDenom, sdkmath.NewInt(790))).String(),
+		balance.GetBalance().String(),
+	)
+
+	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
+
+	// mint tokens to recipient
+	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(105))
+	mintMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(mintCoin),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err = bankClient.Balance(
+		ctx,
+		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom},
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin.String(), balance.GetBalance().String())
+
+	newSupply2, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
+	requireT.NoError(err)
+	assertT.EqualValues(mintCoin.String(), newSupply2.GetAmount().Sub(newSupply.GetAmount()).String())
+
+	// sending to smart contract is blocked so minting to it should fail
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		admin,
+		moduleswasm.BankSendWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    moduleswasm.EmptyPayload,
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	mintMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(mintCoin),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.ErrorContains(err, "coins are not receivable")
 }
