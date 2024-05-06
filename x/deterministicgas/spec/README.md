@@ -81,6 +81,7 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 | `/cosmos.bank.v1beta1.MsgSend`                                         | [special case](#special-cases) |
 | `/coreum.asset.ft.v1.MsgBurn`                                          | 35000                          |
 | `/coreum.asset.ft.v1.MsgClawback`                                      | 15500                          |
+| `/coreum.asset.ft.v1.MsgClearAdmin`                                    | 8500                           |
 | `/coreum.asset.ft.v1.MsgFreeze`                                        | 8500                           |
 | `/coreum.asset.ft.v1.MsgGloballyFreeze`                                | 5000                           |
 | `/coreum.asset.ft.v1.MsgGloballyUnfreeze`                              | 5000                           |
@@ -88,6 +89,7 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 | `/coreum.asset.ft.v1.MsgMint`                                          | 31000                          |
 | `/coreum.asset.ft.v1.MsgSetFrozen`                                     | 8500                           |
 | `/coreum.asset.ft.v1.MsgSetWhitelistedLimit`                           | 9000                           |
+| `/coreum.asset.ft.v1.MsgTransferAdmin`                                 | 10000                          |
 | `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 8500                           |
 | `/coreum.asset.ft.v1.MsgUpgradeTokenV1`                                | 25000                          |
 | `/coreum.asset.nft.v1.MsgAddToClassWhitelist`                          | 7000                           |

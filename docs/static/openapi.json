@@ -9281,6 +9281,9 @@
         },
         "extension_cw_address": {
           "type": "string"
+        },
+        "admin": {
+          "type": "string"
         }
       },
       "description": "Token is a full representation of the fungible token."

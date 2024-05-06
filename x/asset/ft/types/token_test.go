@@ -471,6 +471,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 	type fields struct {
 		Denom              string
 		Issuer             string
+		Admin              string
 		Features           []types.Feature
 		BurnRate           sdk.Dec
 		SendCommissionRate sdk.Dec
@@ -489,6 +490,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 			name: "minting_feature_enabled_for_issuer",
 			fields: fields{
 				Issuer: issuer.String(),
+				Admin:  issuer.String(),
 				Features: []types.Feature{
 					types.Feature_minting,
 				},
@@ -503,6 +505,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 			name: "burning_feature_always_enabled_for_issuer",
 			fields: fields{
 				Issuer: issuer.String(),
+				Admin:  issuer.String(),
 				Features: []types.Feature{
 					types.Feature_burning,
 				},
@@ -517,6 +520,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 			name: "burning_feature_enabled_for_non_issuer",
 			fields: fields{
 				Issuer: issuer.String(),
+				Admin:  issuer.String(),
 			},
 			args: args{
 				addr:    issuer,
@@ -528,6 +532,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 			name: "minting_feature_disabled_for_non_issuer",
 			fields: fields{
 				Issuer: issuer.String(),
+				Admin:  issuer.String(),
 				Features: []types.Feature{
 					types.Feature_minting,
 				},
@@ -568,6 +573,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 			def := types.Definition{
 				Denom:              tt.fields.Denom,
 				Issuer:             tt.fields.Issuer,
+				Admin:              tt.fields.Admin,
 				Features:           tt.fields.Features,
 				BurnRate:           tt.fields.BurnRate,
 				SendCommissionRate: tt.fields.SendCommissionRate,
