@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
 
 	"github.com/CoreumFoundation/coreum/v4/app/upgrade"
@@ -21,6 +22,7 @@ func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{
 				ibchookstypes.StoreKey,
+				packetforwardtypes.StoreKey,
 				dextypes.StoreKey,
 			},
 		},

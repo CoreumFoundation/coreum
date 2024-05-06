@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/nft"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	ibcinterchainaccountstypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
@@ -48,6 +49,9 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 
 		// mint
 		sdk.MsgTypeURL(&minttypes.MsgUpdateParams{}): {},
+
+		// pfm
+		sdk.MsgTypeURL(&packetforwardtypes.MsgUpdateParams{}): {},
 
 		// slashing
 		sdk.MsgTypeURL(&slashingtypes.MsgUpdateParams{}): {},

@@ -37,6 +37,7 @@ require (
 	github.com/cometbft/cometbft-db v0.8.0
 	github.com/cosmos/cosmos-sdk v0.47.11
 	github.com/cosmos/gogoproto v1.4.10
+	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7 v7.1.3
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v7 v7.0.0-20230803181732-7c8f814d3b79
 	github.com/cosmos/ibc-go/v7 v7.4.0
 	github.com/golang/protobuf v1.5.4
@@ -63,6 +64,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
+	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20210601165009-122bf33a46e0 // indirect
