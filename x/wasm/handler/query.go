@@ -316,7 +316,7 @@ func processAssetNFTQuery(
 
 				var dataString string
 				if classRes.Class.Data != nil {
-					dataString, err = unmarshalDataBytes(classRes.Class.Data)
+					dataString, err = unmarshalData(classRes.Class.Data)
 					if err != nil {
 						return nil, err
 					}
@@ -355,7 +355,7 @@ func processAssetNFTQuery(
 				for i := 0; i < len(classesRes.Classes); i++ {
 					var dataString string
 					if classesRes.Classes[i].Data != nil {
-						dataString, err = unmarshalDataBytes(classesRes.Classes[i].Data)
+						dataString, err = unmarshalData(classesRes.Classes[i].Data)
 						if err != nil {
 							return nil, err
 						}
@@ -512,7 +512,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 
 				var dataString string
 				if nftRes.Nft.Data != nil {
-					dataString, err = unmarshalDataBytes(nftRes.Nft.Data)
+					dataString, err = unmarshalData(nftRes.Nft.Data)
 					if err != nil {
 						return nil, err
 					}
@@ -550,7 +550,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 				for i := 0; i < len(nftsRes.Nfts); i++ {
 					var dataString string
 					if nftsRes.Nfts[i].Data != nil {
-						dataString, err = unmarshalDataBytes(nftsRes.Nfts[i].Data)
+						dataString, err = unmarshalData(nftsRes.Nfts[i].Data)
 						if err != nil {
 							return nil, err
 						}
@@ -583,7 +583,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 
 				var dataString string
 				if nftClassRes.Class.Data != nil {
-					dataString, err = unmarshalDataBytes(nftClassRes.Class.Data)
+					dataString, err = unmarshalData(nftClassRes.Class.Data)
 					if err != nil {
 						return nil, err
 					}
@@ -624,7 +624,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 				for i := 0; i < len(nftClassesRes.Classes); i++ {
 					var dataString string
 					if nftClassesRes.Classes[i].Data != nil {
-						dataString, err = unmarshalDataBytes(nftClassesRes.Classes[i].Data)
+						dataString, err = unmarshalData(nftClassesRes.Classes[i].Data)
 						if err != nil {
 							return nil, err
 						}
@@ -665,12 +665,26 @@ func executeQuery[T, K any](
 	return raw, nil
 }
 
-func unmarshalDataBytes(data *codectypes.Any) (string, error) {
-	var dataBytes assetnfttypes.DataBytes
-	err := proto.Unmarshal(data.Value, &dataBytes)
-	if err != nil {
-		return "", errors.WithStack(err)
+func unmarshalData(data *codectypes.Any) (string, error) {
+	if data.TypeUrl == "/coreum.asset.nft.v1.DataBytes" {
+		var datab assetnfttypes.DataBytes
+		err := proto.Unmarshal(data.Value, &datab)
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		return base64.StdEncoding.EncodeToString(datab.Data), nil
 	}
-
-	return base64.StdEncoding.EncodeToString(dataBytes.Data), nil
+	if data.TypeUrl == "/coreum.asset.nft.v1.DataDynamic" {
+		var datadynamic assetnfttypes.DataDynamic
+		err := proto.Unmarshal(data.Value, &datadynamic)
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		bytes, err := datadynamic.Marshal()
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		return base64.StdEncoding.EncodeToString(bytes), nil
+	}
+	return "", errors.New("unsupported data type")
 }

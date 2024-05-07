@@ -112,6 +112,7 @@ const (
 	ftMethodGloballyFreeze      ftMethod = "globally_freeze"
 	ftMethodGloballyUnfreeze    ftMethod = "globally_unfreeze"
 	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
+	ftMethodClawback            ftMethod = "clawback"
 	ftMethodTransferAdmin       ftMethod = "transfer_admin"
 	ftMethodClearAdmin          ftMethod = "clear_admin"
 	// query.
@@ -1077,6 +1078,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 			assetfttypes.Feature_burning,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
+			assetfttypes.Feature_clawback,
 		},
 		BurnRate:           burnRate,
 		SendCommissionRate: sendCommissionRate,
@@ -1120,6 +1122,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 			assetfttypes.Feature_burning,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
+			assetfttypes.Feature_clawback,
 		},
 		BurnRate:           sdk.MustNewDecFromStr("1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("1"),
@@ -1313,6 +1316,34 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.False(tokenRes.Token.GloballyFrozen)
 
+	// ********** Clawback **********
+
+	amountToClawback := sdkmath.NewInt(10)
+	clawbackPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodClawback: {
+			Account: recipient2.String(),
+			Amount:  amountToClawback.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	balanceBeforeClawbackRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient2.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, clawbackPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	balanceAfterClawbackRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient2.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	clawBackedAmount := balanceBeforeClawbackRes.Balance.Amount.Sub(balanceAfterClawbackRes.Balance.Amount)
+	requireT.Equal(amountToClawback.String(), clawBackedAmount.String())
+
 	// ********** Whitelisting **********
 
 	amountToWhitelist := sdkmath.NewInt(100)
@@ -1394,6 +1425,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Empty(tokenRes.Token.Admin)
+
+	//TODO: Once we upgrade to SDK v0.50 and have the new GRPCQueries, we can test the queries here as well.
 }
 
 // TestWASMFungibleTokenInContractLegacy verifies that smart contract is able to execute all
@@ -1718,8 +1751,6 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	var wasmTokenRes assetfttypes.QueryTokenResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokenRes))
 	wasmTokenRes.Token.Version = expectedToken.Version // test should work with any version
-	// Add this here for legacy tests.
-	wasmTokenRes.Token.Admin = wasmTokenRes.Token.Issuer
 	requireT.Equal(
 		expectedToken, wasmTokenRes.Token,
 	)
@@ -1737,8 +1768,6 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	var wasmTokensRes assetfttypes.QueryTokensResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokensRes))
 	wasmTokensRes.Tokens[0].Version = expectedToken.Version
-	// Add this here for legacy tests
-	wasmTokensRes.Tokens[0].Admin = wasmTokensRes.Tokens[0].Issuer
 	requireT.Equal(
 		expectedToken, wasmTokensRes.Tokens[0],
 	)
@@ -2400,6 +2429,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, sendPayload, sdk.Coin{})
 	requireT.NoError(err)
+
+	//TODO: Once we upgrade to SDK v0.50 and have the new GRPCQueries, we can test the queries here as well.
 }
 
 // TestWASMNonFungibleTokenInContractLegacy verifies that smart contract is able to execute all
@@ -3108,6 +3139,91 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 			URIHash: mintNFTReq2.URIHash,
 			Data:    encodedData,
 		}, nftQueryRes.NFT,
+	)
+
+	// Let's issue a class and mint an NFT with DataDynamic and check that it can also be queried from the contract
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: admin.String(),
+		Symbol: "symbol",
+		Name:   "name",
+		Data:   nil,
+	}
+
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			issueMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	classIDDynamic := assetnfttypes.BuildClassID(issueMsg.Symbol, admin)
+
+	jsonData := []byte(`{"name": "Name", "description": "Description"}`)
+	dataDynamic := assetnfttypes.DataDynamic{
+		Items: []assetnfttypes.DataDynamicItem{
+			{
+				Editors: []assetnfttypes.DataEditor{
+					assetnfttypes.DataEditor_owner,
+				},
+				Data: jsonData,
+			},
+		},
+	}
+	dataD, err := codectypes.NewAnyWithValue(&dataDynamic)
+	requireT.NoError(err)
+
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:    admin.String(),
+		Recipient: admin.String(),
+		ID:        "id-dynamic",
+		ClassID:   classIDDynamic,
+		Data:      dataD,
+	}
+
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			mintMsg,
+		},
+	})
+
+	txRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(txRes.GasUsed, chain.GasLimitByMsgs(mintMsg))
+
+	externalNFTPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftClassIDWithIDRequest{
+		moduleswasm.NftMethodExternalNFT: {
+			ClassID: classIDDynamic,
+			ID:      "id-dynamic",
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, externalNFTPayload)
+	requireT.NoError(err)
+	var externalNFTQueryRes moduleswasm.NftRes
+	requireT.NoError(json.Unmarshal(queryOut, &externalNFTQueryRes))
+
+	dataDynamicBytes, err := dataDynamic.Marshal()
+	requireT.NoError(err)
+	dataDynamicToCompare := base64.StdEncoding.EncodeToString(dataDynamicBytes)
+
+	requireT.Equal(
+		moduleswasm.NftItem{
+			ClassID: classIDDynamic,
+			ID:      "id-dynamic",
+			Data:    dataDynamicToCompare,
+		}, externalNFTQueryRes.NFT,
 	)
 
 	// ********** NFTs **********

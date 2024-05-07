@@ -7,8 +7,8 @@ use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 use coreum_wasm_sdk::nft;
 use coreum_wasm_sdk::pagination::PageRequest;
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest,
-    Response, StdResult,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
+    StdResult,
 };
 use cw2::set_contract_version;
 use cw_ownable::{assert_owner, initialize_owner};
@@ -335,6 +335,9 @@ pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<B
         QueryMsg::ClassFrozenAccounts {} => to_json_binary(&query_class_frozen_accounts(deps)?),
         QueryMsg::ClassWhitelistedAccounts {} => {
             to_json_binary(&query_class_whitelisted_accounts(deps)?)
+        }
+        QueryMsg::ExternalNft { class_id, id } => {
+            to_json_binary(&query_external_nft(deps, class_id, id)?)
         }
     }
 }
@@ -693,5 +696,16 @@ fn query_nft_classes(deps: Deps<CoreumQueries>) -> StdResult<nft::ClassesRespons
         classes,
         pagination: res.pagination,
     };
+    Ok(res)
+}
+
+fn query_external_nft(
+    deps: Deps<CoreumQueries>,
+    class_id: String,
+    id: String,
+) -> StdResult<nft::NFTResponse> {
+    let request: QueryRequest<CoreumQueries> =
+        CoreumQueries::NFT(nft::Query::NFT { class_id, id }).into();
+    let res = deps.querier.query(&request)?;
     Ok(res)
 }

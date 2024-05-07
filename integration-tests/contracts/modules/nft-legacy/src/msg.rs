@@ -77,4 +77,6 @@ pub enum QueryMsg {
     ClassesNft {}, // we use ClassesNft instead of Class because there is already a Classes query being used
     BurntNft { nft_id: String },
     BurntNftsInClass {},
+    // Check that we can query NFTs that were not issued with the handler and thus might have DataDynamic
+    ExternalNft { class_id: String, id: String },
 }

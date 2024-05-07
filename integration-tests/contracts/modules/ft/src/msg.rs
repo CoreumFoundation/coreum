@@ -42,6 +42,10 @@ pub enum ExecuteMsg {
         account: String,
         amount: u128,
     },
+    Clawback {
+        account: String,
+        amount: u128,
+    },
     TransferAdmin {
         account: String,
     },

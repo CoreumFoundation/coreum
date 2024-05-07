@@ -1,5 +1,5 @@
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
-    MsgBurn, MsgClearAdmin, MsgFreeze, MsgGloballyFreeze, MsgGloballyUnfreeze, MsgIssue, MsgMint, MsgSetFrozen, MsgSetWhitelistedLimit, MsgTransferAdmin, MsgUnfreeze, MsgUpgradeTokenV1
+    MsgBurn, MsgClawback, MsgClearAdmin, MsgFreeze, MsgGloballyFreeze, MsgGloballyUnfreeze, MsgIssue, MsgMint, MsgSetFrozen, MsgSetWhitelistedLimit, MsgTransferAdmin, MsgUnfreeze, MsgUpgradeTokenV1
 };
 use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
 use cosmwasm_std::{entry_point, Binary, CosmosMsg, Deps, StdResult};
@@ -76,6 +76,7 @@ pub fn execute(
         ExecuteMsg::SetFrozen { account, amount } => set_frozen(deps, env, info, account, amount),
         ExecuteMsg::GloballyFreeze {} => globally_freeze(deps, env, info),
         ExecuteMsg::GloballyUnfreeze {} => globally_unfreeze(deps, env, info),
+        ExecuteMsg::Clawback { account, amount } => clawback(deps, env, info, account, amount),
         ExecuteMsg::SetWhitelistedLimit { account, amount } => {
             set_whitelisted_limit(deps, env, info, account, amount)
         }
@@ -300,6 +301,38 @@ fn globally_unfreeze(
         .add_message(globally_unfreeze_msg))
 }
 
+fn clawback(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    account: String,
+    amount: u128,
+) -> Result<Response, ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let denom = DENOM.load(deps.storage)?;
+
+    let clawback = MsgClawback {
+        sender: env.contract.address.to_string(),
+        account,
+        coin: Some(Coin {
+            denom: denom.clone(),
+            amount: amount.to_string(),
+        }),
+    };
+
+    let clawback_bytes = clawback.to_proto_bytes();
+
+    let clawback_msg = CosmosMsg::Stargate {
+        type_url: clawback.to_any().type_url,
+        value: Binary::from(clawback_bytes),
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "globally_unfreeze")
+        .add_attribute("denom", denom)
+        .add_message(clawback_msg))
+}
+
 fn set_whitelisted_limit(
     deps: DepsMut,
     env: Env,
@@ -369,7 +402,7 @@ fn clear_admin(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, C
         sender: env.contract.address.to_string(),
         denom: denom.clone(),
     };
-    
+
     let clear_admin_bytes = clear_admin.to_proto_bytes();
 
     let clear_admin_msg = CosmosMsg::Stargate {
