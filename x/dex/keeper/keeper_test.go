@@ -245,6 +245,16 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "order_rounding_issuer_smaller_order_filled_with_lower_than_expected_amount",
+
+			// with the `filling a small order (lower volume) with a lower price` strategy sender2 receives 26 with price of 2.63157894737
+			// so the effective price is 10 / 26 = 0.38461538461
+			// sender1 price diff `0.38461538461 - 0.375 = 0.00961538461`
+			// sender2 price diff `0.38461538461 - 0.38 = 0.00461538461` (1/2.63157894737 = 0.38)
+			// with the update strategy `filling a bigger (greater volume) order with a lower price` :
+			// so the effective price is 10 / 27 = 0.37037037037
+			// sender1 price diff `0.37037037037 - 0.375 = -0.00462962963`
+			// sender2 price diff `0.37037037037 - 0.38 = -0.00962962963`
+
 			newOrders: []keeper.Order{
 				{
 					Account:   sender1,
@@ -273,14 +283,14 @@ func TestMatching(t *testing.T) {
 						BuyDenom:              denom2,
 						SellQuantity:          sdkmath.NewInt(1000000),
 						Price:                 sdkmath.LegacyMustNewDecFromStr("0.375"), // min 375000
-						RemainingSellQuantity: sdkmath.NewInt(999974),                   // 999974 * 0.375 + 10(from balance) = 375000.25
+						RemainingSellQuantity: sdkmath.NewInt(999973),                   // 999973 * 0.375 + 10(from balance) = 374999.875
 					},
 				},
 				denom2 + "/" + denom1: {},
 			},
 			expectedBalances: map[string]sdk.Coins{
 				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 26)), // the taker receives less
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 27)), // the taker receives more
 			},
 		},
 		{

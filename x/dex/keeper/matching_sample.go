@@ -146,7 +146,7 @@ LOOP:
 		switch takerBuyAmount.Cmp(makerSellAmount) {
 		case -1: // the maker order remains, the taker is reduced fully
 			// taker receives the sold by maker price tokens
-			takerReceiveAmount := RatAmountToIntRoundDown(takerBuyAmount)
+			takerReceiveAmount := RatAmountToIntRoundUp(takerBuyAmount)
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
 			// maker receives the taker quantity
 			makerReceiveAmount := takerOrder.RemainingSellQuantity
@@ -174,7 +174,7 @@ LOOP:
 			takerReceiveAmount := sdk.NewIntFromBigInt(makerOrder.RemainingSellQuantity.BigInt())
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
 			// maker receive the amount
-			makerReceiveAmount := RatAmountToIntRoundDown((&big.Rat{}).Mul(makerSellAmount, makerSellPrice))
+			makerReceiveAmount := RatAmountToIntRoundUp((&big.Rat{}).Mul(makerSellAmount, makerSellPrice))
 			app.SendCoin(makerOrder.Account, sdk.NewCoin(makerOrder.BuyDenom, makerReceiveAmount))
 			// update state
 			takerOrder.RemainingSellQuantity = takerOrder.RemainingSellQuantity.Sub(makerReceiveAmount)
@@ -253,7 +253,16 @@ func (app *App) PrintBalances() {
 	}
 }
 
-// RatAmountToIntRoundDown converts the big.Rat to sdkmath.Int with round down strategy.
-func RatAmountToIntRoundDown(amt *big.Rat) sdkmath.Int {
-	return sdk.NewIntFromBigInt((&big.Int{}).Quo(amt.Num(), amt.Denom()))
+// RatAmountToIntRoundUp converts the big.Rat to sdkmath.Int with round up strategy.
+func RatAmountToIntRoundUp(amt *big.Rat) sdkmath.Int {
+	num := amt.Num()
+	denom := amt.Denom()
+	intPart := (&big.Int{}).Quo(num, denom)
+
+	// no reminder after the quotation
+	if (&big.Int{}).Mul(intPart, denom).Cmp(num) == 0 {
+		return sdk.NewIntFromBigInt(intPart)
+	}
+
+	return sdk.NewIntFromBigInt((&big.Int{}).Add(intPart, big.NewInt(1)))
 }
