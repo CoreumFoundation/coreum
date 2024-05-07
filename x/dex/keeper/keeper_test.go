@@ -254,7 +254,7 @@ func TestMatching(t *testing.T) {
 			// so the effective price is 10 / 27 = 0.37037037037
 			// sender1 price diff `0.37037037037 - 0.375 = -0.00462962963`
 			// sender2 price diff `0.37037037037 - 0.38 = -0.00962962963`
-
+			// it will affect the price of smaller order less than price of bigger
 			newOrders: []keeper.Order{
 				{
 					Account:   sender1,

@@ -157,7 +157,6 @@ LOOP:
 				// cancel since nothing to use for the next iteration and remove
 				app.CancelOrder(makerOrder)
 				makerOBIndexesToRemove[i] = struct{}{}
-				// makerOB = append(makerOB[:i], makerOB[i+1:]...)
 			} else {
 				makerOB[i] = makerOrder
 			}
@@ -167,7 +166,6 @@ LOOP:
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, makerOrder.RemainingSellQuantity))
 			// remove reduced record
 			makerOBIndexesToRemove[i] = struct{}{}
-			// makerOB = append(makerOB[:i], makerOB[i+1:]...)
 			break LOOP
 		case 1: // the taker order remains and will go to the next loop, the maker is reduced fully
 			// taker receives the amount maker sells
@@ -180,7 +178,6 @@ LOOP:
 			takerOrder.RemainingSellQuantity = takerOrder.RemainingSellQuantity.Sub(makerReceiveAmount)
 			// remove reduced record
 			makerOBIndexesToRemove[i] = struct{}{}
-			// makerOB = append(makerOB[:i], makerOB[i+1:]...)
 
 			if takerOrder.IsRemainingBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration
