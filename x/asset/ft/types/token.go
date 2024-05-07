@@ -183,8 +183,8 @@ func (def Definition) CheckFeatureAllowed(addr sdk.AccAddress, feature Feature) 
 // IsFeatureAllowed returns true if feature is allowed for the address.
 func (def Definition) IsFeatureAllowed(addr sdk.Address, feature Feature) bool {
 	featureEnabled := def.IsFeatureEnabled(feature)
-	// token admin and asset extension contract admin can use any enabled feature and burning even if it is disabled
-	if def.IsAdmin(addr) || def.ExtensionCWAddress == addr.String() {
+	// token admin and asset extension contract can use any enabled feature and burning even if it is disabled
+	if def.HasAdminPrivileges(addr) {
 		return featureEnabled || feature == Feature_burning
 	}
 
@@ -197,9 +197,9 @@ func (def Definition) IsFeatureEnabled(feature Feature) bool {
 	return lo.Contains(def.Features, feature)
 }
 
-// IsAdmin returns true if the addr is the admin.
-func (def Definition) IsAdmin(addr sdk.Address) bool {
-	return def.Admin == addr.String()
+// HasAdminPrivileges returns true if the addr is the admin or the asset extension contract address.
+func (def Definition) HasAdminPrivileges(addr sdk.Address) bool {
+	return def.Admin == addr.String() || def.ExtensionCWAddress == addr.String()
 }
 
 // ValidateFeatures verifies that provided features belong to the defined set.

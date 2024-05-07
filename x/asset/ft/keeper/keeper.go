@@ -616,7 +616,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if def.IsAdmin(addr) {
+	if def.HasAdminPrivileges(addr) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be whitelisted")
 	}
 
@@ -687,7 +687,7 @@ func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, deno
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if !def.IsAdmin(sender) {
+	if !def.HasAdminPrivileges(sender) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can transfer administration of an account")
 	}
 
@@ -719,7 +719,7 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if !def.IsAdmin(sender) {
+	if !def.HasAdminPrivileges(sender) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can remove administration of an account")
 	}
 
@@ -822,7 +822,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_freezing) && k.isGloballyFrozen(ctx, def.Denom) && !def.IsAdmin(addr) {
+	if def.IsFeatureEnabled(types.Feature_freezing) && k.isGloballyFrozen(ctx, def.Denom) && !def.HasAdminPrivileges(addr) {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
@@ -835,7 +835,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 	}
 
 	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
-		!def.IsAdmin(addr) &&
+		!def.HasAdminPrivileges(addr) &&
 		cwasmtypes.IsTriggeredBySmartContract(ctx) {
 		return sdkerrors.Wrapf(
 			cosmoserrors.ErrUnauthorized,
@@ -844,7 +844,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		)
 	}
 
-	if def.IsFeatureEnabled(types.Feature_freezing) && !def.IsAdmin(addr) {
+	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
 		availableBalance := k.availableBalance(ctx, addr, def.Denom)
 		if !availableBalance.Amount.GTE(amount) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s",
@@ -887,7 +887,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.IsAdmin(addr) {
+	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.HasAdminPrivileges(addr) {
 		balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
 		whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
 
@@ -901,7 +901,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 	}
 
 	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
-		!def.IsAdmin(addr) &&
+		!def.HasAdminPrivileges(addr) &&
 		cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
@@ -1051,7 +1051,7 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if def.IsAdmin(addr) {
+	if def.HasAdminPrivileges(addr) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be frozen")
 	}
 
@@ -1068,7 +1068,7 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if def.IsAdmin(addr) {
+	if def.HasAdminPrivileges(addr) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be clawed back")
 	}
 
