@@ -822,7 +822,9 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_freezing) && k.isGloballyFrozen(ctx, def.Denom) && !def.HasAdminPrivileges(addr) {
+	if def.IsFeatureEnabled(types.Feature_freezing) &&
+		k.isGloballyFrozen(ctx, def.Denom) &&
+		!def.HasAdminPrivileges(addr) {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
