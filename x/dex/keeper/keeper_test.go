@@ -244,7 +244,7 @@ func TestMatching(t *testing.T) {
 			},
 		},
 		{
-			name: "order_rounding_issuer_smaller_order_filled_with_lower_than_expected_amount",
+			name: "order_rounding_issue_smaller_order_filled_with_lower_than_expected_amount",
 			newOrders: []keeper.Order{
 				{
 					Account:   sender1,
@@ -280,7 +280,46 @@ func TestMatching(t *testing.T) {
 			},
 			expectedBalances: map[string]sdk.Coins{
 				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 26)), // the taker receives less
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 26)),
+			},
+		},
+		{
+			name: "order_rounding_issue_denom_with_high_price_rounded_in_favor_or_higher_volume",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(3),
+					Price:        sdkmath.LegacyMustNewDecFromStr("10000"),
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(10_101),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.00009999"),
+				},
+			},
+			expectedOrderBooks: map[string][]keeper.Order{
+				denom1 + "/" + denom2: {
+					{
+						Account:               sender1,
+						ID:                    "order1",
+						SellDenom:             denom1,
+						BuyDenom:              denom2,
+						SellQuantity:          sdkmath.NewInt(3),
+						Price:                 sdkmath.LegacyMustNewDecFromStr("10000"),
+						RemainingSellQuantity: sdkmath.NewInt(2),
+					},
+				},
+				denom2 + "/" + denom1: {},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10101)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 1)),
 			},
 		},
 		{
