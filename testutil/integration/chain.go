@@ -301,7 +301,7 @@ func DefaultClientContextConfig() client.ContextConfig {
 	clientCtxConfig.GasConfig.GasPriceAdjustment = sdk.NewDec(1)
 	clientCtxConfig.GasConfig.GasAdjustment = 1
 
-	clientCtxConfig.TimeoutConfig.TxStatusPollInterval = 100 * time.Millisecond
+	clientCtxConfig.TimeoutConfig.TxStatusPollInterval = 100 * time.Second
 	clientCtxConfig.TimeoutConfig.TxNumberOfBlocksToWait = 3
 
 	return clientCtxConfig
