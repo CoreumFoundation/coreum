@@ -1,4 +1,4 @@
-package keeper
+package keeper_test
 
 import (
 	"fmt"
@@ -31,20 +31,21 @@ type Order struct {
 	Price sdkmath.LegacyDec
 }
 
-// TakerOrderBookKey returns SellDenom/BuyDenom order book key.
-func (o Order) TakerOrderBookKey() string {
+// OrderBookKey returns SellDenom/BuyDenom order book key.
+func (o Order) OrderBookKey() string {
 	return fmt.Sprintf("%s/%s", o.SellDenom, o.BuyDenom)
 }
 
-// MakerOrderBookKey returns BuyDenom/SellDenom order book key.
-func (o Order) MakerOrderBookKey() string {
+// ReversedOrderBookKey returns BuyDenom/SellDenom order book key.
+func (o Order) ReversedOrderBookKey() string {
 	return fmt.Sprintf("%s/%s", o.BuyDenom, o.SellDenom)
 }
 
-// IsRemainingBuyQuantityLessThanOne returns true is expected remaining buy quantity is less than zero, so order can't
+// IsRemainingBuyQuantityLessThanOne returns true is expected remaining buy quantity is less than one, so order can't
 // be filled correctly.
 func (o Order) IsRemainingBuyQuantityLessThanOne() bool {
 	ratPrice := (&big.Rat{}).SetFrac(o.Price.BigInt(), DecPrecisionReuse)
+	// price * remainingSellQuantity  < 1
 	return (&big.Rat{}).Mul((&big.Rat{}).SetInt(o.RemainingSellQuantity.BigInt()), ratPrice).Cmp(OneRat) == -1
 }
 
@@ -83,8 +84,16 @@ func NewApp() *App {
 // PlaceOrder places and matches the order into the order book.
 func (app *App) PlaceOrder(takerOrder Order) {
 	fmt.Printf("\nAdding new taker order: %s\n", takerOrder.String())
-	takerOKKey := takerOrder.TakerOrderBookKey()
-	makerOBKey := takerOrder.MakerOrderBookKey()
+
+	// init remaining takerOrder quantity
+	takerOrder.RemainingSellQuantity = takerOrder.SellQuantity
+	if takerOrder.IsRemainingBuyQuantityLessThanOne() {
+		app.CancelOrder(takerOrder)
+		return
+	}
+
+	takerOKKey := takerOrder.OrderBookKey()
+	makerOBKey := takerOrder.ReversedOrderBookKey()
 	takerOB, ok := app.OrderBooks[takerOKKey]
 	if !ok {
 		takerOB = make([]Order, 0)
@@ -93,13 +102,6 @@ func (app *App) PlaceOrder(takerOrder Order) {
 	if !ok {
 		makerOB = make([]Order, 0)
 	}
-	// init remaining takerOrder quantity
-	takerOrder.RemainingSellQuantity = takerOrder.SellQuantity
-	if takerOrder.IsRemainingBuyQuantityLessThanOne() {
-		app.CancelOrder(takerOrder)
-		return
-	}
-
 	if len(makerOB) == 0 {
 		takerOB = append(takerOB, takerOrder)
 	} else {
@@ -121,16 +123,27 @@ func (app *App) PlaceOrder(takerOrder Order) {
 }
 
 func (app *App) iterateMakerOrderBook(takerOrder Order, makerOB, takerOB []Order) ([]Order, []Order) {
-	makerOBIndexesToRemove := make(map[int]struct{})
+	makerOB, takerOB, makerOBIndexesToRemove := app.matchOrders(takerOrder, makerOB, takerOB)
+	updatedMakerOB := make([]Order, 0)
+	for i, order := range makerOB {
+		if _, ok := makerOBIndexesToRemove[i]; ok {
+			continue
+		}
+		updatedMakerOB = append(updatedMakerOB, order)
+	}
 
-LOOP:
+	return updatedMakerOB, takerOB
+}
+
+func (app *App) matchOrders(takerOrder Order, makerOB, takerOB []Order) ([]Order, []Order, map[int]struct{}) {
+	makerOBIndexesToRemove := make(map[int]struct{})
 	for i, makerOrder := range makerOB {
 		takerBuyPrice := (&big.Rat{}).SetFrac(DecPrecisionReuse, takerOrder.Price.BigInt())
 		makerSellPrice := (&big.Rat{}).SetFrac(makerOrder.Price.BigInt(), DecPrecisionReuse)
 
 		if takerBuyPrice.Cmp(makerSellPrice) == -1 {
 			takerOB = append(takerOB, takerOrder)
-			break
+			return makerOB, takerOB, makerOBIndexesToRemove
 		}
 
 		// this amount uses the maker price since it's better or equal
@@ -160,13 +173,13 @@ LOOP:
 			} else {
 				makerOB[i] = makerOrder
 			}
-			break LOOP
+			return makerOB, takerOB, makerOBIndexesToRemove
 		case 0: // both orders are reduced
 			app.SendCoin(makerOrder.Account, sdk.NewCoin(makerOrder.BuyDenom, takerOrder.RemainingSellQuantity))
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, makerOrder.RemainingSellQuantity))
 			// remove reduced record
 			makerOBIndexesToRemove[i] = struct{}{}
-			break LOOP
+			return makerOB, takerOB, makerOBIndexesToRemove
 		case 1: // the taker order remains and will go to the next loop, the maker is reduced fully
 			// taker receives the amount maker sells
 			takerReceiveAmount := sdk.NewIntFromBigInt(makerOrder.RemainingSellQuantity.BigInt())
@@ -182,7 +195,7 @@ LOOP:
 			if takerOrder.IsRemainingBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration
 				app.CancelOrder(takerOrder)
-				break LOOP
+				return makerOB, takerOB, makerOBIndexesToRemove
 			}
 			// if nothing to match with add remaining taker order
 			if len(makerOB) == len(makerOBIndexesToRemove) {
@@ -190,15 +203,8 @@ LOOP:
 			}
 		}
 	}
-	updatedMakerOB := make([]Order, 0)
-	for i, order := range makerOB {
-		if _, ok := makerOBIndexesToRemove[i]; ok {
-			continue
-		}
-		updatedMakerOB = append(updatedMakerOB, order)
-	}
 
-	return updatedMakerOB, takerOB
+	return makerOB, takerOB, makerOBIndexesToRemove
 }
 
 // CancelOrder sends order coins to the creator.

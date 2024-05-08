@@ -6,8 +6,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CoreumFoundation/coreum/v4/x/dex/keeper"
 )
 
 func TestMatching(t *testing.T) {
@@ -22,14 +20,14 @@ func TestMatching(t *testing.T) {
 	)
 	type testCase struct {
 		name               string
-		newOrders          []keeper.Order
-		expectedOrderBooks map[string][]keeper.Order
+		newOrders          []Order
+		expectedOrderBooks map[string][]Order
 		expectedBalances   map[string]sdk.Coins
 	}
 	testCases := []testCase{
 		{
 			name: "no_match",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender1,
 					ID:           "order1",
@@ -44,7 +42,7 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(10),
-					Price:        sdkmath.LegacyMustNewDecFromStr("5.2"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5.2"), // 0.1923
 				},
 				{
 					Account:      sender2,
@@ -60,10 +58,10 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(30),
-					Price:        sdkmath.LegacyMustNewDecFromStr("5.1"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5.1"), // 0.1960
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {
 					{
 						Account:               sender1,
@@ -91,7 +89,7 @@ func TestMatching(t *testing.T) {
 						SellDenom:             denom2,
 						BuyDenom:              denom1,
 						SellQuantity:          sdkmath.NewInt(30),
-						Price:                 sdkmath.LegacyMustNewDecFromStr("5.1"),
+						Price:                 sdkmath.LegacyMustNewDecFromStr("5.1"), // 0.1960
 						RemainingSellQuantity: sdkmath.NewInt(30),
 					},
 					{
@@ -100,7 +98,7 @@ func TestMatching(t *testing.T) {
 						SellDenom:             denom2,
 						BuyDenom:              denom1,
 						SellQuantity:          sdkmath.NewInt(10),
-						Price:                 sdkmath.LegacyMustNewDecFromStr("5.2"),
+						Price:                 sdkmath.LegacyMustNewDecFromStr("5.2"), // 0.1923
 						RemainingSellQuantity: sdkmath.NewInt(10),
 					},
 				},
@@ -109,7 +107,7 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "fill_maker_and_partially_fill_next_taker",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender1,
 					ID:           "order1",
@@ -125,7 +123,7 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(5),
-					Price:        sdkmath.LegacyMustNewDecFromStr("4"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("4"), // 0.25
 				},
 				// order1 will be filled, and order3 remainder will be left
 				{
@@ -134,10 +132,10 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(20),
-					Price:        sdkmath.LegacyMustNewDecFromStr("5"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {},
 				denom2 + "/" + denom1: {
 					{
@@ -146,7 +144,7 @@ func TestMatching(t *testing.T) {
 						SellDenom:             denom2,
 						BuyDenom:              denom1,
 						SellQuantity:          sdkmath.NewInt(20),
-						Price:                 sdkmath.LegacyMustNewDecFromStr("5"),
+						Price:                 sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
 						RemainingSellQuantity: sdkmath.NewInt(5),
 					},
 				},
@@ -159,7 +157,7 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "match_last_taker_with_all_makers",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender1,
 					ID:           "order1",
@@ -190,10 +188,10 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(1000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("5"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {},
 				denom2 + "/" + denom1: {
 					{
@@ -202,7 +200,7 @@ func TestMatching(t *testing.T) {
 						SellDenom:             denom2,
 						BuyDenom:              denom1,
 						SellQuantity:          sdkmath.NewInt(1000),
-						Price:                 sdkmath.LegacyMustNewDecFromStr("5"),
+						Price:                 sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
 						RemainingSellQuantity: sdkmath.NewInt(955),
 					},
 				},
@@ -216,7 +214,7 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "fill_with_equal_amount",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender1,
 					ID:           "order1",
@@ -231,10 +229,10 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(20),
-					Price:        sdkmath.LegacyMustNewDecFromStr("5"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {},
 				denom2 + "/" + denom1: {},
 			},
@@ -245,7 +243,7 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "order_rounding_issue_smaller_order_filled_with_lower_than_expected_amount",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:   sender1,
 					ID:        "order1",
@@ -253,7 +251,7 @@ func TestMatching(t *testing.T) {
 					BuyDenom:  denom2,
 					// you can update that value to 10 as a result order will become smaller and take lower price
 					SellQuantity: sdkmath.NewInt(1000000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("0.375"), // min 375000
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.375"), // expect 375000
 				},
 				{
 					Account:      sender2,
@@ -261,19 +259,20 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(10),
-					Price:        sdkmath.LegacyMustNewDecFromStr("2.63157894737"), // min 26.3
+					Price:        sdkmath.LegacyMustNewDecFromStr("2.63157894737"), //  0.38 | expect 26.3
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {
 					{
-						Account:               sender1,
-						ID:                    "order1",
-						SellDenom:             denom1,
-						BuyDenom:              denom2,
-						SellQuantity:          sdkmath.NewInt(1000000),
-						Price:                 sdkmath.LegacyMustNewDecFromStr("0.375"), // min 375000
-						RemainingSellQuantity: sdkmath.NewInt(999974),                   // 999974 * 0.375 + 10(from balance) = 375000.25
+						Account:      sender1,
+						ID:           "order1",
+						SellDenom:    denom1,
+						BuyDenom:     denom2,
+						SellQuantity: sdkmath.NewInt(1000000),
+						Price:        sdkmath.LegacyMustNewDecFromStr("0.375"), // expect 375000
+						// 999974 * 0.375 + 10(from balance) = 375000.25
+						RemainingSellQuantity: sdkmath.NewInt(999974),
 					},
 				},
 				denom2 + "/" + denom1: {},
@@ -285,7 +284,7 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "order_rounding_issue_initial_int_expected_amount_reduced_to_float",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender1,
 					ID:           "order1",
@@ -300,7 +299,7 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(1000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("2.631"), // expect 2631
+					Price:        sdkmath.LegacyMustNewDecFromStr("2.631"), // 0.38 | expect 2631
 				},
 				{
 					Account:      sender3,
@@ -308,20 +307,21 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(1000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("2.637"), //  expected 2637
+					Price:        sdkmath.LegacyMustNewDecFromStr("2.637"), // 0.3792 | expected 2637
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {},
 				denom2 + "/" + denom1: {
 					{
-						Account:               sender3,
-						ID:                    "order3",
-						SellDenom:             denom2,
-						BuyDenom:              denom1,
-						SellQuantity:          sdkmath.NewInt(1000),
-						Price:                 sdkmath.LegacyMustNewDecFromStr("2.637"),
-						RemainingSellQuantity: sdkmath.NewInt(125), // 2334 + 125 * 2.637 = 2663.625 (was expected 2637)
+						Account:      sender3,
+						ID:           "order3",
+						SellDenom:    denom2,
+						BuyDenom:     denom1,
+						SellQuantity: sdkmath.NewInt(1000),
+						Price:        sdkmath.LegacyMustNewDecFromStr("2.637"), // 0.3792
+						// 2334 + 125 * 2.637 = 2663.625 (was expected 2637)
+						RemainingSellQuantity: sdkmath.NewInt(125),
 					},
 				},
 			},
@@ -333,7 +333,7 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "order_rounding_issue_denom_with_high_price_rounded_in_favor_or_higher_volume",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender1,
 					ID:           "order1",
@@ -348,10 +348,10 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(10_101),
-					Price:        sdkmath.LegacyMustNewDecFromStr("0.00009999"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.00009999"), // 10001.0001
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {
 					{
 						Account:               sender1,
@@ -372,14 +372,14 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "invalid_amount_maker_and_taker",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender1,
 					ID:           "order1",
 					SellDenom:    denom1,
 					BuyDenom:     denom2,
 					SellQuantity: sdkmath.NewInt(2),
-					Price:        sdkmath.LegacyMustNewDecFromStr("0.4"), // min 0.8 <- unachievable
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.4"), // expected 0.8 <- unachievable
 				},
 				{
 					Account:      sender2,
@@ -387,10 +387,10 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(5),
-					Price:        sdkmath.LegacyMustNewDecFromStr("0.13"), // min 0.65 <- unachievable
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.13"), // 7.6923 | expected 0.65 <- unachievable
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{},
+			expectedOrderBooks: map[string][]Order{},
 			expectedBalances: map[string]sdk.Coins{
 				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2)),
 				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom2, 5)),
@@ -398,14 +398,14 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "cancel_remaining_maker_order",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender1,
 					ID:           "order1",
 					SellDenom:    denom1,
 					BuyDenom:     denom2,
 					SellQuantity: sdkmath.NewInt(3),
-					Price:        sdkmath.LegacyMustNewDecFromStr("0.5"), // min 1.5
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.5"), // expected 1.5
 				},
 				{
 					Account:      sender2,
@@ -413,10 +413,10 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(1),
-					Price:        sdkmath.LegacyMustNewDecFromStr("2"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2"), //  0,5 | expected 2
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {},
 				denom2 + "/" + denom1: {},
 			},
@@ -427,14 +427,14 @@ func TestMatching(t *testing.T) {
 		},
 		{
 			name: "cancel_remaining_taker_order",
-			newOrders: []keeper.Order{
+			newOrders: []Order{
 				{
 					Account:      sender2,
 					ID:           "order2",
 					SellDenom:    denom2,
 					BuyDenom:     denom1,
 					SellQuantity: sdkmath.NewInt(1),
-					Price:        sdkmath.LegacyMustNewDecFromStr("2"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2"), //  0,5 | expected 2
 				},
 				{
 					Account:      sender1,
@@ -445,7 +445,7 @@ func TestMatching(t *testing.T) {
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.5"), // min 1.5
 				},
 			},
-			expectedOrderBooks: map[string][]keeper.Order{
+			expectedOrderBooks: map[string][]Order{
 				denom1 + "/" + denom2: {},
 				denom2 + "/" + denom1: {},
 			},
@@ -459,7 +459,7 @@ func TestMatching(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app := keeper.NewApp()
+			app := NewApp()
 
 			passedOrdersSum := sdk.NewCoins()
 			for _, order := range tc.newOrders {
