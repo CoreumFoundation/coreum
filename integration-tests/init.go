@@ -100,7 +100,7 @@ func init() {
 		}
 	}
 
-	queryCtx, queryCtxCancel := context.WithTimeout(ctx, integration.DefaultClientContextConfig().TimeoutConfig.TxStatusPollInterval)
+	queryCtx, queryCtxCancel := context.WithTimeout(ctx, integration.DefaultClientContextConfig().TimeoutConfig.RequestTimeout)
 	defer queryCtxCancel()
 
 	// ********** Coreum **********
