@@ -666,15 +666,15 @@ func executeQuery[T, K any](
 }
 
 func unmarshalData(data *codectypes.Any) (string, error) {
-	if data.TypeUrl == "/coreum.asset.nft.v1.DataBytes" {
+	switch data.TypeUrl {
+	case "/" + proto.MessageName((*assetnfttypes.DataBytes)(nil)):
 		var datab assetnfttypes.DataBytes
 		err := proto.Unmarshal(data.Value, &datab)
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
 		return base64.StdEncoding.EncodeToString(datab.Data), nil
-	}
-	if data.TypeUrl == "/coreum.asset.nft.v1.DataDynamic" {
+	case "/" + proto.MessageName((*assetnfttypes.DataDynamic)(nil)):
 		var datadynamic assetnfttypes.DataDynamic
 		err := proto.Unmarshal(data.Value, &datadynamic)
 		if err != nil {
@@ -685,6 +685,7 @@ func unmarshalData(data *codectypes.Any) (string, error) {
 			return "", errors.WithStack(err)
 		}
 		return base64.StdEncoding.EncodeToString(bytes), nil
+	default:
+		return "", errors.Errorf("unsupported data type %s", data.TypeUrl)
 	}
-	return "", errors.New("unsupported data type")
 }

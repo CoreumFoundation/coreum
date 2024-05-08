@@ -328,7 +328,7 @@ fn clawback(
     };
 
     Ok(Response::new()
-        .add_attribute("method", "globally_unfreeze")
+        .add_attribute("method", "clawback")
         .add_attribute("denom", denom)
         .add_message(clawback_msg))
 }
