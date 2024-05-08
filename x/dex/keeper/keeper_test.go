@@ -284,6 +284,54 @@ func TestMatching(t *testing.T) {
 			},
 		},
 		{
+			name: "order_rounding_issue_initial_int_expected_amount_reduced_to_float",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(5000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.375"), // expect 1875
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(1000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2.631"), // expect 2631
+				},
+				{
+					Account:      sender3,
+					ID:           "order3",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(1000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2.637"), //  expected 2637
+				},
+			},
+			expectedOrderBooks: map[string][]keeper.Order{
+				denom1 + "/" + denom2: {},
+				denom2 + "/" + denom1: {
+					{
+						Account:               sender3,
+						ID:                    "order3",
+						SellDenom:             denom2,
+						BuyDenom:              denom1,
+						SellQuantity:          sdkmath.NewInt(1000),
+						Price:                 sdkmath.LegacyMustNewDecFromStr("2.637"),
+						RemainingSellQuantity: sdkmath.NewInt(125), // 2334 + 125 * 2.637 = 2663.625 (was expected 2637)
+					},
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 1875)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2666)),
+				sender3: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2334)),
+			},
+		},
+		{
 			name: "order_rounding_issue_denom_with_high_price_rounded_in_favor_or_higher_volume",
 			newOrders: []keeper.Order{
 				{
