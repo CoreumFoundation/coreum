@@ -687,7 +687,7 @@ func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, deno
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if !def.HasAdminPrivileges(sender) {
+	if !def.IsAdmin(sender) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can transfer administration of an account")
 	}
 
@@ -719,7 +719,7 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if !def.HasAdminPrivileges(sender) {
+	if !def.IsAdmin(sender) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can remove administration of an account")
 	}
 

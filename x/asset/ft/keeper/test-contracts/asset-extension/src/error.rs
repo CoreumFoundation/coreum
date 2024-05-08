@@ -21,6 +21,9 @@ pub enum ContractError {
     #[error("Transferring to or from smart contracts are prohibited.")]
     SmartContractBlocked {},
 
+    #[error("Insufficient funds attached.")]
+    InsufficientFunds {},
+
     // TODO: Delete this one
     #[error("Debugging {a} {b} {c} {d} {e} {f}")]
     Debugging {

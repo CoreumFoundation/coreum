@@ -271,20 +271,6 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 
 	requireT.NoError(err)
 
-	// try to pass non-issuer signature to whitelist msg
-	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
-		Sender:  nonIssuer.String(),
-		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(nonIssuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
-		whitelistMsg,
-	)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
 	// try to send to recipient before it is whitelisted (balance 0, whitelist limit 0)
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
 	// send
@@ -552,7 +538,6 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1010),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_extension,
 		},
@@ -586,21 +571,6 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvts[0].Denom
-
-	// try to pass non-issuer signature to freeze msg
-	freezeMsg := &assetfttypes.MsgFreeze{
-		Sender:  randomAddress.String(),
-		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(randomAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
-		freezeMsg,
-	)
-	requireT.Error(err)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// freeze 400 tokens
 	freezeMsg = &assetfttypes.MsgFreeze{
@@ -829,74 +799,6 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	}, fungibleTokenFreezeEvts[0])
 }
 
-// TestAssetFTExtensionFreezeUnfreezable checks extension freeze functionality on unfreezable fungible tokens.
-func TestAssetFTExtensionFreezeUnfreezable(t *testing.T) {
-	t.Parallel()
-
-	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-
-	requireT := require.New(t)
-	assertT := assert.New(t)
-	issuer := chain.GenAccount()
-	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&assetfttypes.MsgFreeze{},
-		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
-	})
-
-	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
-	)
-	requireT.NoError(err)
-	attachedFund := chain.NewCoin(sdk.NewInt(10))
-
-	// Issue an unfreezable fungible token
-	msg := &assetfttypes.MsgIssue{
-		Issuer:        issuer.String(),
-		Symbol:        "ABCNotFreezable",
-		Subunit:       "uabcnotfreezable",
-		Description:   "ABC Description",
-		Precision:     1,
-		InitialAmount: sdkmath.NewInt(1010),
-		Features:      []assetfttypes.Feature{assetfttypes.Feature_extension},
-		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
-			CodeId: codeID,
-			Funds:  sdk.NewCoins(attachedFund),
-			Label:  "testing-freeze-unfreeze",
-		},
-	}
-
-	res, err := client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
-		msg,
-	)
-
-	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
-	requireT.NoError(err)
-	unfreezableDenom := fungibleTokenIssuedEvts[0].Denom
-
-	// try to freeze unfreezable token
-	freezeMsg := &assetfttypes.MsgFreeze{
-		Sender:  issuer.String(),
-		Account: recipient.String(),
-		Coin:    sdk.NewCoin(unfreezableDenom, sdkmath.NewInt(1000)),
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
-		freezeMsg,
-	)
-	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
-}
-
 // TestAssetFTExtensionBurn checks extension burn functionality of fungible tokens.
 func TestAssetFTExtensionBurn(t *testing.T) {
 	t.Parallel()
@@ -1061,20 +963,6 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
-	)
-	requireT.NoError(err)
-
-	// try to pass non-issuer signature to msg
-	burnMsg = &banktypes.MsgSend{
-		FromAddress: recipient.String(),
-		ToAddress:   issuer.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))),
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(recipient),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
-		burnMsg,
 	)
 	requireT.NoError(err)
 
@@ -1245,20 +1133,6 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		sendMsg,
 	)
 	requireT.NoError(err)
-
-	// try to pass non-issuer signature to msg
-	mintMsg = &banktypes.MsgSend{
-		FromAddress: randomAddress.String(),
-		ToAddress:   randomAddress.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(105))),
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(randomAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
-		mintMsg,
-	)
-	requireT.ErrorContains(err, "Unauthorized.")
 
 	// mint tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})

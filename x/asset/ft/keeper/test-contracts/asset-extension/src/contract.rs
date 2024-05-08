@@ -46,13 +46,11 @@ pub fn execute(
 
 pub fn execute_extension_transfer(
     deps: DepsMut<CoreumQueries>,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     amount: Uint128,
     recipient: String,
 ) -> CoreumResult<ContractError> {
-    // TODO(milad) check that amount is present in the attached funds, and attached funds
-    // is enough to cover the transfer.
     // TODO remove this if statement.
     // This check is intended for POC testing, it must be replaced with a more
     // meaningful check.
@@ -65,6 +63,15 @@ pub fn execute_extension_transfer(
     let denom = DENOM.load(deps.storage)?;
 
     let token = query_token(deps.as_ref(), &denom)?;
+
+    // check that amount is present in the attached funds, and attached funds is enough
+    // to cover the transfer.
+    let attached_fund = query_bank_balance(
+        deps.as_ref(), env.contract.address.as_str(), denom.as_str()
+    )?;
+    if amount > attached_fund.amount {
+        return Err(ContractError::InsufficientFunds {})
+    }
 
     if let Some(features) = &token.features {
         // TODO(masih): If either or both of BurnRate and SendCommissionRate are set above zero,

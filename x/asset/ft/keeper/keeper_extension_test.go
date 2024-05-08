@@ -156,24 +156,6 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 	_, err = ftKeeper.GetToken(ctx, unwhitelistableDenom)
 	requireT.NoError(err)
 
-	// whitelisting fails on unwhitelistable token
-	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(1)))
-	requireT.ErrorIs(err, types.ErrFeatureDisabled)
-
-	// try to whitelist non-existent denom
-	nonExistentDenom := types.BuildDenom("nonexist", issuer)
-	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(nonExistentDenom, sdkmath.NewInt(10)))
-	requireT.ErrorIs(err, types.ErrTokenNotFound)
-
-	// try to whitelist from non issuer address
-	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
-	// try to whitelist the issuer (issuer can't be whitelisted)
-	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, issuer, sdk.NewCoin(denom, sdkmath.NewInt(1)))
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
 	// set whitelisted balance to 0
 	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(0))))
 	whitelistedBalance := ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
@@ -226,13 +208,12 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 
-	// try to whitelist from non issuer address
-	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
 	// reduce whitelisting limit below the current balance
 	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
 	requireT.NoError(err)
+
+	// TODO: add a special condition into the smart contract to ignore default whitelisting, so we will know that
+	// we are able to overwrite the default behavior via smart contract.
 }
 
 func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {

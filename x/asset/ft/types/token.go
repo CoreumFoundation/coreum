@@ -197,6 +197,11 @@ func (def Definition) IsFeatureEnabled(feature Feature) bool {
 	return lo.Contains(def.Features, feature)
 }
 
+// IsAdmin returns true if the addr is the admin.
+func (def Definition) IsAdmin(addr sdk.Address) bool {
+	return def.Admin == addr.String()
+}
+
 // HasAdminPrivileges returns true if the addr is the admin or the asset extension contract address.
 func (def Definition) HasAdminPrivileges(addr sdk.Address) bool {
 	return def.Admin == addr.String() || def.ExtensionCWAddress == addr.String()
