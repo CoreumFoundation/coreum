@@ -16,5 +16,19 @@ pub enum ContractError {
     FeatureDisabledError {},
 
     #[error("Unauthorized.")]
-    Unauthorized
+    Unauthorized {},
+
+    #[error("Transferring to or from smart contracts are prohibited.")]
+    SmartContractBlocked {},
+
+    // TODO: Delete this one
+    #[error("Debugging {a} {b} {c} {d} {e} {f}")]
+    Debugging {
+        a: String,
+        b: String,
+        c: String,
+        d: String,
+        e: String,
+        f: String
+    },
 }

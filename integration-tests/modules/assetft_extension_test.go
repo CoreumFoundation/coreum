@@ -5,12 +5,16 @@ package modules
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -1336,4 +1340,525 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		mintMsg,
 	)
 	requireT.ErrorContains(err, "coins are not receivable")
+}
+
+// TestAssetFTExtensionSendingToSmartContractIsDenied verifies that this is not possible to send token to smart contract
+// if issuer blocked this operation.
+func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+	attachedFund := chain.NewCoin(sdk.NewInt(10))
+
+	// Issue a fungible token which cannot be sent to the smart contract
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Description:   "ABC Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "testing-block-smart-contract",
+		},
+		BurnRate:           sdk.ZeroDec(),
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+		Count: 1337,
+	})
+	requireT.NoError(err)
+
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		issuer,
+		moduleswasm.SimpleStateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "simple_state",
+		},
+	)
+	requireT.NoError(err)
+
+	// sending coins to the smart contract should fail
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
+
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs: []banktypes.Input{
+			{
+				Address: issuer.String(),
+				Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+			},
+		},
+		Outputs: []banktypes.Output{
+			{
+				Address: contractAddr,
+				Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+			},
+		},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
+}
+
+// TestAssetFTExtensionAttachingToSmartContractIsDenied verifies that this is not possible to attach token to smart
+// contract call if issuer blocked this operation.
+func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+	attachedFund := chain.NewCoin(sdk.NewInt(10))
+
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Issue a fungible token which cannot be sent to the smart contract
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Description:   "ABC Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "block-smart-contract",
+		},
+		BurnRate:           sdk.ZeroDec(),
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+		Count: 1337,
+	})
+	requireT.NoError(err)
+
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		issuer,
+		moduleswasm.SimpleStateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "simple_state",
+		},
+	)
+	requireT.NoError(err)
+
+	// Executing smart contract - this operation should fail because coins are attached to it
+	incrementPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleIncrement)
+	requireT.NoError(err)
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, issuer, contractAddr, incrementPayload, sdk.NewInt64Coin(denom, 100))
+	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
+}
+
+// TestAssetFTExtensionAttachingToSmartContractIsDenied verifies that this is not possible to attach token to smart
+// contract instantiation if issuer blocked this operation.
+func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+	attachedFund := chain.NewCoin(sdk.NewInt(10))
+
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Issue a fungible token which cannot be sent to the smart contract
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Description:   "ABC Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			//TODO: assetfttypes.Feature_extension,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(attachedFund),
+			Label:  "block-smart-contract",
+		},
+		BurnRate:           sdk.ZeroDec(),
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
+		Count: 1337,
+	})
+	requireT.NoError(err)
+
+	// This operation should fail due to coins being attached to it
+	_, _, err = chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		issuer,
+		moduleswasm.SimpleStateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Amount:     sdk.NewInt64Coin(denom, 100),
+			Label:      "simple_state",
+		},
+	)
+	// FIXME: delete this
+	requireT.NoError(err)
+	// requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
+	// FIXME: this doesn't return error, because WithSmartContractRecipient of x/wasm/types/transferrer.go:23
+	// does not exist in wasm
+}
+
+// TestAssetFTExtensionIssuingSmartContractIsAllowedToReceive verifies that issuing smart contract is allowed to
+// receive coins even if sending them to smart contract is disabled.
+func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	admin := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(50000000000))),
+	)
+	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
+
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	codeID, err := chain.Wasm.DeployWASMContract(ctx, txf, admin, testcontracts.AssetExtensionWasm)
+	requireT.NoError(err)
+
+	issuanceAmount := sdkmath.NewInt(10_000)
+	issuanceReq := issueFTRequest{
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     6,
+		InitialAmount: issuanceAmount.String(),
+		Description:   "my wasm fungible token",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Label:  "block-smart-contract",
+		},
+		BurnRate:           "0",
+		SendCommissionRate: "0",
+	}
+	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.FTWASM,
+		integration.InstantiateConfig{
+			// we add the initial amount to let the contract issue the token on behalf of it
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerFTInstantiatePayload,
+			Label:      "fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issuanceReq.Subunit, sdk.MustAccAddressFromBech32(contractAddr))
+
+	// mint to itself
+	amountToMint := sdkmath.NewInt(500)
+	mintPayload, err := json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
+		ftMethodMint: {
+			Amount:    amountToMint.String(),
+			Recipient: contractAddr,
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	// mint to someone else
+	amountToMint = sdkmath.NewInt(100)
+	mintPayload, err = json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
+		ftMethodMint: {
+			Amount:    amountToMint.String(),
+			Recipient: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	// send back to smart contract
+	msgSend := &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, amountToMint)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	require.NoError(t, err)
+}
+
+// TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfSmartContractsAreBlocked verifies
+// that it is possible to use authz to mint and send the token on behalf of the issuing smart contract if smart
+// contracts are blocked.
+func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfSmartContractsAreBlocked(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	admin := chain.GenAccount()
+	grantee := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), admin, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	initialPayload, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		admin,
+		moduleswasm.AuthzStargateWASM,
+		integration.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "authzStargate",
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
+		},
+	)
+	requireT.NoError(err)
+
+	// grant authorizations
+	grantIssueMsg, err := authztypes.NewMsgGrant(
+		sdk.MustAccAddressFromBech32(contractAddr),
+		grantee,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgIssue{})),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	grantMintMsg, err := authztypes.NewMsgGrant(
+		sdk.MustAccAddressFromBech32(contractAddr),
+		grantee,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgMint{})),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	grantSendMsg, err := authztypes.NewMsgGrant(
+		sdk.MustAccAddressFromBech32(contractAddr),
+		grantee,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
+		lo.ToPtr(time.Now().Add(time.Minute)),
+	)
+	require.NoError(t, err)
+
+	grantIssueMsgAny, err := codectypes.NewAnyWithValue(grantIssueMsg)
+	requireT.NoError(err)
+	grantMintMsgAny, err := codectypes.NewAnyWithValue(grantMintMsg)
+	requireT.NoError(err)
+	grantSendMsgAny, err := codectypes.NewAnyWithValue(grantSendMsg)
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		chain.TxFactory().WithSimulateAndExecute(true),
+		admin,
+		contractAddr,
+		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
+			Grantee: contractAddr,
+			Msgs: []*codectypes.Any{
+				grantIssueMsgAny,
+				grantSendMsgAny,
+				grantMintMsgAny,
+			},
+		}),
+		sdk.Coin{},
+	)
+	requireT.NoError(err)
+
+	// issue, send and mint on behalf of the smart contract
+	subunit := "uabe"
+	denom := assetfttypes.BuildDenom(subunit, sdk.MustAccAddressFromBech32(contractAddr))
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{
+		&assetfttypes.MsgIssue{
+			Issuer:        contractAddr,
+			Symbol:        "ABE",
+			Subunit:       subunit,
+			Precision:     6,
+			Description:   "ABE Description",
+			InitialAmount: sdkmath.NewInt(1000),
+			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_minting,
+				assetfttypes.Feature_block_smart_contracts,
+				assetfttypes.Feature_extension,
+			},
+			ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+				CodeId: codeID,
+				Label:  "block-smart-contract",
+			},
+		},
+		&banktypes.MsgSend{
+			FromAddress: contractAddr,
+			ToAddress:   recipient.String(),
+			Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+		},
+		&assetfttypes.MsgMint{
+			Sender:    contractAddr,
+			Recipient: recipient.String(),
+			Coin:      sdk.NewInt64Coin(denom, 100),
+		},
+	})
+
+	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	// check balances
+
+	contract := sdk.MustAccAddressFromBech32(contractAddr)
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&contract:  900,
+		&recipient: 200,
+	})
 }

@@ -1,3 +1,4 @@
+use coreum_wasm_sdk::types::coreum::asset::ft::v1::ExtensionIssueSettings;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 
@@ -7,12 +8,13 @@ pub struct InstantiateMsg {
     pub subunit: String,
     pub precision: u32,
     pub initial_amount: Uint128,
-    pub description: Option<String>,
-    pub features: Option<Vec<u32>>,
+    pub description: String,
+    pub features: Vec<i32>,
     pub burn_rate: String,
     pub send_commission_rate: String,
-    pub uri: Option<String>,
-    pub uri_hash: Option<String>,
+    pub uri: String,
+    pub uri_hash: String,
+    pub extension_settings: Option<ExtensionIssueSettings>,
 }
 
 #[cw_serde]

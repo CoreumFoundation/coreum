@@ -66,16 +66,17 @@ const (
 //
 //nolint:tagliatelle
 type issueFTRequest struct {
-	Symbol             string                 `json:"symbol"`
-	Subunit            string                 `json:"subunit"`
-	Precision          uint32                 `json:"precision"`
-	InitialAmount      string                 `json:"initial_amount"`
-	Description        string                 `json:"description"`
-	Features           []assetfttypes.Feature `json:"features"`
-	BurnRate           string                 `json:"burn_rate"`
-	SendCommissionRate string                 `json:"send_commission_rate"`
-	URI                string                 `json:"uri"`
-	URIHash            string                 `json:"uri_hash"`
+	Symbol             string                               `json:"symbol"`
+	Subunit            string                               `json:"subunit"`
+	Precision          uint32                               `json:"precision"`
+	InitialAmount      string                               `json:"initial_amount"`
+	Description        string                               `json:"description"`
+	Features           []assetfttypes.Feature               `json:"features"`
+	BurnRate           string                               `json:"burn_rate"`
+	SendCommissionRate string                               `json:"send_commission_rate"`
+	URI                string                               `json:"uri"`
+	URIHash            string                               `json:"uri_hash"`
+	ExtensionSettings  *assetfttypes.ExtensionIssueSettings `json:"extension_settings"`
 }
 
 type amountBodyFTRequest struct {

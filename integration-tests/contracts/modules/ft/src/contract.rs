@@ -3,8 +3,9 @@ use coreum_wasm_sdk::assetft::{
     TokenResponse, TokensResponse, WhitelistedBalanceResponse, WhitelistedBalancesResponse,
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
+use coreum_wasm_sdk::types::coreum::asset::ft::v1::MsgIssue;
 use coreum_wasm_sdk::pagination::PageRequest;
-use cosmwasm_std::{coin, entry_point, to_json_binary, Binary, Deps, QueryRequest, StdResult};
+use cosmwasm_std::{coin, entry_point, to_json_binary, Binary, Deps, QueryRequest, StdResult, CosmosMsg};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use cw_ownable::{assert_owner, initialize_owner};
@@ -29,27 +30,34 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     initialize_owner(deps.storage, deps.api, Some(info.sender.as_ref()))?;
 
-    let issue_msg = CoreumMsg::AssetFT(assetft::Msg::Issue {
+    let issue_msg = MsgIssue {
+        issuer: env.contract.address.to_string(),
         symbol: msg.symbol,
         subunit: msg.subunit.clone(),
         precision: msg.precision,
-        initial_amount: msg.initial_amount,
+        initial_amount: String::from(msg.initial_amount),
         description: msg.description,
         features: msg.features,
         burn_rate: msg.burn_rate,
         send_commission_rate: msg.send_commission_rate,
         uri: msg.uri,
         uri_hash: msg.uri_hash,
-    });
+        extension_settings: msg.extension_settings,
+    };
 
     let denom = format!("{}-{}", msg.subunit, env.contract.address).to_lowercase();
 
     DENOM.save(deps.storage, &denom)?;
 
+    let issue_bytes = issue_msg.to_proto_bytes();
+
     Ok(Response::new()
         .add_attribute("owner", info.sender)
         .add_attribute("denom", denom)
-        .add_message(issue_msg))
+        .add_message(CosmosMsg::Stargate {
+            type_url: issue_msg.to_any().type_url,
+            value: Binary::from(issue_bytes),
+        }))
 }
 
 // ********** Execute **********

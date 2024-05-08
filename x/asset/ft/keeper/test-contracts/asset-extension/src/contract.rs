@@ -1,5 +1,5 @@
 use cosmwasm_std::{entry_point, StdError};
-use cosmwasm_std::{BalanceResponse, BankQuery};
+use cosmwasm_std::{BalanceResponse, BankQuery, WasmQuery, ContractInfoResponse};
 use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
 
@@ -77,6 +77,12 @@ pub fn execute_extension_transfer(
 
         if features.contains(&assetft::WHITELISTING) {
             assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?;
+        }
+
+        if features.contains(&assetft::BLOCK_SMART_CONTRACTS) {
+            assert_block_smart_contracts(
+                deps.as_ref(), info.sender.as_ref(), &recipient, &token
+            )?;
         }
 
         // TODO remove this if statement.
@@ -216,6 +222,40 @@ fn assert_minting(
         .add_message(return_fund_msg));
 }
 
+fn assert_block_smart_contracts(
+    deps: Deps<CoreumQueries>,
+    sender: &str,
+    recipient: &str,
+    token: &Token,
+) -> Result<(), ContractError> {
+    // TODO: Remove this
+    // return Err(ContractError::Debugging {
+    //     a: sender.to_string(),
+    //     b: recipient.to_string(),
+    //     c: token.issuer.to_string(),
+    //     d: is_smart_contract(deps, sender).to_string(),
+    //     e: is_smart_contract(deps, recipient).to_string(),
+    //     f: is_smart_contract(deps, &token.issuer).to_string(),
+    // });
+
+    // TODO: Do we need this?
+    let issued_from_smart_contract = is_smart_contract(deps, &token.issuer);
+    if issued_from_smart_contract &&
+        (sender.to_string() == token.issuer || recipient.to_string() == token.issuer) {
+        return Ok(())
+    }
+
+    if is_smart_contract(deps, sender) {
+        return Err(ContractError::SmartContractBlocked {});
+    }
+
+    if is_smart_contract(deps, recipient) {
+        return Err(ContractError::SmartContractBlocked {});
+    }
+
+    return Ok(());
+}
+
 fn query_frozen_balance(
     deps: Deps<CoreumQueries>,
     account: &str,
@@ -276,4 +316,25 @@ fn query_token(
     )?;
 
     Ok(token.token)
+}
+
+fn query_contract_info(
+    deps: Deps<CoreumQueries>,
+    account: &str,
+) -> StdResult<ContractInfoResponse> {
+    let contract_info: ContractInfoResponse = deps.querier.query(
+        &WasmQuery::ContractInfo {
+            contract_addr: account.to_string(),
+        }
+            .into(),
+    )?;
+
+    Ok(contract_info)
+}
+
+fn is_smart_contract(
+    deps: Deps<CoreumQueries>,
+    account: &str,
+) -> bool {
+    query_contract_info(deps, account).is_ok()
 }
