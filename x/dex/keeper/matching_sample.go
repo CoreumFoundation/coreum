@@ -192,25 +192,52 @@ type App struct {
 	// sellDenom/buyDenom[]Order
 	OrderBooks map[string]*OrderBook
 	Balances   map[string]sdk.Coins
+
+	DenomTicks map[string]uint
 }
 
 // NewApp returns new instance of an app.
-func NewApp() *App {
+func NewApp(denomTicks map[string]uint) *App {
 	return &App{
 		OrderBooks: make(map[string]*OrderBook),
 		Balances:   make(map[string]sdk.Coins),
+		DenomTicks: denomTicks,
 	}
 }
 
 // PlaceOrder places and matches the order into the order book.
-func (app *App) PlaceOrder(order Order) {
+func (app *App) PlaceOrder(order Order) error {
 	fmt.Printf("\nAdding new order: %s\n", order.String())
+
+	sellTick, ok := app.DenomTicks[order.SellDenom]
+	if !ok {
+		return fmt.Errorf("unspecified tick for sell denom: %s", order.SellDenom)
+	}
+	buyTick, ok := app.DenomTicks[order.BuyDenom]
+	if !ok {
+		return fmt.Errorf("unspecified tick for buy denom: %s", order.BuyDenom)
+	}
+
+	sellTickPow10 := sdkmath.NewInt(int64(10 ^ sellTick))
+	if !order.SellQuantity.Mod(sellTickPow10).Equal(sdkmath.ZeroInt()) {
+		return fmt.Errorf("invalid sell quantity: %s, tick not satisfied: %d", order.SellQuantity, sellTick)
+	}
+
+	buyTickPow10 := sdkmath.NewInt(int64(10 ^ buyTick))
+	buyQuantityDec := order.SellQuantity.ToLegacyDec().Mul(order.Price)
+	if !buyQuantityDec.IsInteger() {
+		return fmt.Errorf("invalid buy quantity: %s, not integer", buyQuantityDec.String())
+	}
+	buyQuantity := sdkmath.NewIntFromBigInt(buyQuantityDec.BigInt())
+	if !buyQuantity.Mod(buyTickPow10).Equal(sdkmath.ZeroInt()) {
+		return fmt.Errorf("invalid buy quantity: %s, tick not satisfied: %d", buyQuantity, buyTick)
+	}
 
 	// init remaining order quantity
 	if order.IsBuyQuantityLessThanOne() {
 		fmt.Printf("\nOrder cancelled, buy quantity < 1, %s\n", order.String())
 		app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, order.SellQuantity))
-		return
+		return nil // todo
 	}
 
 	obKey := order.OrderBookKey()

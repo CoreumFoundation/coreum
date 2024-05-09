@@ -17,9 +17,17 @@ func TestMatching(t *testing.T) {
 		sender3 = "sender3"
 		sender4 = "sender4"
 
-		denom1 = "denom1"
-		denom2 = "denom2"
+		denomCORE = "ucore"   // 1CORE = 10^6ucore
+		denomUSDC = "uusdc"   // 1USDC = 10^6uusdc
+		denomBTC  = "satoshi" // 1BTC  = 10^8satoshi
 	)
+
+	denomTicks := map[string]uint{
+		denomCORE: 4, // tradable step for CORE is 10^4ucore = 10,000ucore = 0.01CORE // Value from bitrue.
+		denomUSDC: 4, // tradable step for USDC is 10^4uusdc = 10,000uusdc = 0.01USDC
+		denomBTC:  3, // tradable step for BTC is 10^3satoshi = 1,000satoshi = 10^(-5)BTC = 0.00001BTC // Value from binance.
+	}
+
 	type testCase struct {
 		name               string
 		newOrders          []keeper.Order
@@ -33,40 +41,40 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(50),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
 				},
 				{
 					Account:      sender3,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(10),
 					Price:        sdkmath.LegacyMustNewDecFromStr("5.2"), // ~.1923
 				},
 				{
 					Account:      sender2,
 					ID:           "order3",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(20),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.21"),
 				},
 				{
 					Account:      sender3,
 					ID:           "order4",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(30),
 					Price:        sdkmath.LegacyMustNewDecFromStr("5.1"), // ~.0.196
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records: []keeper.OrderBookRecord{
 						{
 							Account:               sender1,
@@ -82,9 +90,9 @@ func TestMatching(t *testing.T) {
 						},
 					},
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records: []keeper.OrderBookRecord{
 						{
 							Account:               sender3,
@@ -109,8 +117,8 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(100),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
 				},
@@ -118,8 +126,8 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(5),
 					Price:        sdkmath.LegacyMustNewDecFromStr("4"), // 0.25
 				},
@@ -127,21 +135,21 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender3,
 					ID:           "order3",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(20),
 					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records: []keeper.OrderBookRecord{
 						{
 							Account:               sender3,
@@ -153,9 +161,9 @@ func TestMatching(t *testing.T) {
 				},
 			},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 20)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 25)),
-				sender3: sdk.NewCoins(sdk.NewInt64Coin(denom1, 75)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 20)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 25)),
+				sender3: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 75)),
 			},
 		},
 		{
@@ -164,45 +172,45 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(100),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
 				},
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(100),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.15"),
 				},
 				{
 					Account:      sender3,
 					ID:           "order3",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(100),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.1"),
 				},
 				{
 					Account:      sender4,
 					ID:           "order4",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(1000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records: []keeper.OrderBookRecord{
 						{
 							Account:               sender4,
@@ -214,10 +222,10 @@ func TestMatching(t *testing.T) {
 				},
 			},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 20)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom2, 15)),
-				sender3: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)),
-				sender4: sdk.NewCoins(sdk.NewInt64Coin(denom1, 300)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 20)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 15)),
+				sender3: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 10)),
+				sender4: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 300)),
 			},
 		},
 		{
@@ -226,35 +234,35 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(100),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
 				},
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(20),
 					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
 			},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 20)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 100)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 20)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 100)),
 			},
 		},
 		{
@@ -263,8 +271,8 @@ func TestMatching(t *testing.T) {
 				{
 					Account:   sender1,
 					ID:        "order1",
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					// you can update that value to 10 as a result order will become smaller and take lower price
 					SellQuantity: sdkmath.NewInt(1000000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.375"), // expect 375000
@@ -272,16 +280,16 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(10),
 					Price:        sdkmath.LegacyMustNewDecFromStr("2.63157894737"), //  ~0.38 | expect 26.3
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records: []keeper.OrderBookRecord{
 						{
 							Account: sender1,
@@ -292,15 +300,15 @@ func TestMatching(t *testing.T) {
 						},
 					},
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
 			},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 26)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 10)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 26)),
 			},
 		},
 		{
@@ -309,37 +317,37 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(5000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.375"), // expect 1875
 				},
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(1000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("2.631"), // ~0.38 | expect 2631
 				},
 				{
 					Account:      sender3,
 					ID:           "order3",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(1000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("2.637"), // ~0.3792 | expected 2637
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records: []keeper.OrderBookRecord{
 						{
 							Account: sender3,
@@ -352,9 +360,9 @@ func TestMatching(t *testing.T) {
 				},
 			},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 1875)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2666)),
-				sender3: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2334)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 1875)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 2666)),
+				sender3: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 2334)),
 			},
 		},
 		{
@@ -363,24 +371,24 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(3),
 					Price:        sdkmath.LegacyMustNewDecFromStr("10000"),
 				},
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(10_101),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.00009999"), // ~10001.0001
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records: []keeper.OrderBookRecord{
 						{
 							Account:               sender1,
@@ -390,15 +398,15 @@ func TestMatching(t *testing.T) {
 						},
 					},
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
 			},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10101)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 1)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 10101)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 1)),
 			},
 		},
 		{
@@ -407,24 +415,24 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(2),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.4"), // expected 0.8 <- unachievable
 				},
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(5),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.13"), // ~7.6923 | expected 0.65 <- unachievable
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom2, 5)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 2)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 5)),
 			},
 		},
 		{
@@ -433,35 +441,35 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(3),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.5"), // expected 1.5
 				},
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(1),
 					Price:        sdkmath.LegacyMustNewDecFromStr("2"), //  0,5 | expected 2
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
 			},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom1, 1), sdk.NewInt64Coin(denom2, 1)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 1), sdk.NewInt64Coin(denomUSDC, 1)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 2)),
 			},
 		},
 		{
@@ -470,35 +478,35 @@ func TestMatching(t *testing.T) {
 				{
 					Account:      sender2,
 					ID:           "order2",
-					SellDenom:    denom2,
-					BuyDenom:     denom1,
+					SellDenom:    denomUSDC,
+					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(1),
 					Price:        sdkmath.LegacyMustNewDecFromStr("2"), //  0,5 | expected 2
 				},
 				{
 					Account:      sender1,
 					ID:           "order1",
-					SellDenom:    denom1,
-					BuyDenom:     denom2,
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(3),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.5"), // min 1.5
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
-				denom1 + "/" + denom2: {
-					SellDenom: denom1,
-					BuyDenom:  denom2,
+				denomCORE + "/" + denomUSDC: {
+					SellDenom: denomCORE,
+					BuyDenom:  denomUSDC,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
-				denom2 + "/" + denom1: {
-					SellDenom: denom2,
-					BuyDenom:  denom1,
+				denomUSDC + "/" + denomCORE: {
+					SellDenom: denomUSDC,
+					BuyDenom:  denomCORE,
 					Records:   make([]keeper.OrderBookRecord, 0),
 				},
 			},
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom1, 1), sdk.NewInt64Coin(denom2, 1)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 1), sdk.NewInt64Coin(denomUSDC, 1)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 2)),
 			},
 		},
 	}
@@ -506,7 +514,7 @@ func TestMatching(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app := keeper.NewApp()
+			app := keeper.NewApp(denomTicks)
 
 			passedOrdersSum := sdk.NewCoins()
 			for _, order := range tc.newOrders {
