@@ -2733,13 +2733,14 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	settings := types.IssueSettings{
-		Issuer:        admin,
-		Symbol:        "DEF",
-		Subunit:       "def",
-		Precision:     1,
-		Description:   "DEF Desc",
-		InitialAmount: sdkmath.NewInt(666),
-		Features:      []types.Feature{},
+		Issuer:             admin,
+		Symbol:             "DEF",
+		Subunit:            "def",
+		Precision:          1,
+		Description:        "DEF Desc",
+		InitialAmount:      sdkmath.NewInt(666),
+		Features:           []types.Feature{},
+		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
