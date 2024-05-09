@@ -5491,8 +5491,8 @@ func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_block_smart_contracts,
 		},
-		BurnRate:           sdk.ZeroDec().String(),
-		SendCommissionRate: sdk.ZeroDec().String(),
+		BurnRate:           "0",
+		SendCommissionRate: "0",
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
