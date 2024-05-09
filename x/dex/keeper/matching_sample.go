@@ -156,6 +156,21 @@ func (ob *OrderBook) Iterate(iterator func(record OrderBookRecord) bool) {
 	}
 }
 
+// Print prints the order book.
+func (ob *OrderBook) Print() {
+	fmt.Printf("---------- Order book:%s/%s ----------\n", ob.SellDenom, ob.BuyDenom)
+	if ob.IsEmpty() {
+		fmt.Println("Empty...")
+		return
+	}
+	i := 0
+	ob.Iterate(func(record OrderBookRecord) bool {
+		fmt.Printf("OrderBookRecord [%d]: %s\n", i, record.String())
+		i++
+		return false
+	})
+}
+
 func (ob *OrderBook) findRecordIndex(account, orderID string) int {
 	for i, record := range ob.Records {
 		if record.Account == account && record.OrderID == orderID {
@@ -188,101 +203,101 @@ func NewApp() *App {
 }
 
 // PlaceOrder places and matches the order into the order book.
-func (app *App) PlaceOrder(takerOrder Order) {
-	fmt.Printf("\nAdding new taker order: %s\n", takerOrder.String())
+func (app *App) PlaceOrder(order Order) {
+	fmt.Printf("\nAdding new order: %s\n", order.String())
 
-	// init remaining takerOrder quantity
-	if takerOrder.IsBuyQuantityLessThanOne() {
-		fmt.Printf("\nOrder cancelled, buy quantity < 1, %s\n", takerOrder.String())
-		app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.SellDenom, takerOrder.SellQuantity))
+	// init remaining order quantity
+	if order.IsBuyQuantityLessThanOne() {
+		fmt.Printf("\nOrder cancelled, buy quantity < 1, %s\n", order.String())
+		app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, order.SellQuantity))
 		return
 	}
 
-	takerOKKey := takerOrder.OrderBookKey()
-	makerOBKey := takerOrder.ReversedOrderBookKey()
-	takerOB, ok := app.OrderBooks[takerOKKey]
+	obKey := order.OrderBookKey()
+	revOBKey := order.ReversedOrderBookKey()
+	ob, ok := app.OrderBooks[obKey]
 	if !ok {
-		takerOB = NewOrderBook(takerOrder.SellDenom, takerOrder.BuyDenom)
-		app.OrderBooks[takerOKKey] = takerOB
+		ob = NewOrderBook(order.SellDenom, order.BuyDenom)
+		app.OrderBooks[obKey] = ob
 	}
-	makerOB, ok := app.OrderBooks[makerOBKey]
+	revOB, ok := app.OrderBooks[revOBKey]
 	if !ok {
-		makerOB = NewOrderBook(takerOrder.BuyDenom, takerOrder.SellDenom)
-		app.OrderBooks[makerOBKey] = makerOB
-	}
-	if makerOB.IsEmpty() {
-		takerOB.AddOrder(takerOrder)
-	} else {
-		app.matchOrder(takerOrder, makerOB, takerOB)
+		revOB = NewOrderBook(order.BuyDenom, order.SellDenom)
+		app.OrderBooks[revOBKey] = revOB
 	}
 
-	app.PrintOrderBooks(takerOKKey, makerOBKey)
+	app.matchOrder(order, revOB, ob)
+	app.PrintOrderBooks(obKey, revOBKey)
 	app.PrintBalances()
 }
 
-func (app *App) matchOrder(takerOrder Order, makerOB, takerOB *OrderBook) {
-	makerOB.Iterate(func(makerOBRecord OrderBookRecord) bool {
-		takerBuyPrice := (&big.Rat{}).SetFrac(DecPrecisionReuse, takerOrder.Price.BigInt())
-		makerSellPrice := (&big.Rat{}).SetFrac(makerOBRecord.Price.BigInt(), DecPrecisionReuse)
+func (app *App) matchOrder(order Order, revOB, ob *OrderBook) {
+	if revOB.IsEmpty() {
+		ob.AddOrder(order)
+	}
 
-		if takerBuyPrice.Cmp(makerSellPrice) == -1 {
-			takerOB.AddOrder(takerOrder)
+	revOB.Iterate(func(revOBRecord OrderBookRecord) bool {
+		buyPrice := (&big.Rat{}).SetFrac(DecPrecisionReuse, order.Price.BigInt())
+		revSellPrice := (&big.Rat{}).SetFrac(revOBRecord.Price.BigInt(), DecPrecisionReuse)
+
+		if buyPrice.Cmp(revSellPrice) == -1 {
+			ob.AddOrder(order)
 			return true
 		}
 
-		// this amount uses the maker price since it's better or equal
-		takerBuyAmount := (&big.Rat{}).Quo((&big.Rat{}).SetInt(takerOrder.SellQuantity.BigInt()), makerSellPrice)
-		makerSellAmount := (&big.Rat{}).SetInt(makerOBRecord.RemainingSellQuantity.BigInt())
+		// this amount uses the rev price since it's better or equal
+		buyAmount := (&big.Rat{}).Quo((&big.Rat{}).SetInt(order.SellQuantity.BigInt()), revSellPrice)
+		revSellAmount := (&big.Rat{}).SetInt(revOBRecord.RemainingSellQuantity.BigInt())
 
 		fmt.Printf(
-			"Match (%s/%s): takerBuyPrice:%s >= makerSellPrice:%s | takerBuyAmount: %s | makerSellAmount:%s \n",
-			takerOrder.ID, makerOBRecord.OrderID, takerBuyPrice.FloatString(10), makerSellPrice.FloatString(10),
-			takerBuyAmount.FloatString(10), makerSellAmount.FloatString(10),
+			"Match (%s/%s): buyPrice:%s >= revSellPrice:%s | buyAmount: %s | revSellAmount:%s \n",
+			order.ID, revOBRecord.OrderID, buyPrice.FloatString(10), revSellPrice.FloatString(10),
+			buyAmount.FloatString(10), revSellAmount.FloatString(10),
 		)
 
-		switch takerBuyAmount.Cmp(makerSellAmount) {
-		case -1: // the maker order remains, the taker is reduced fully
-			// taker receives the sold by maker price tokens
-			takerReceiveAmount := RatAmountToIntRoundDown(takerBuyAmount)
-			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
+		switch buyAmount.Cmp(revSellAmount) {
+		case -1: // the rev order remains, the taker is reduced fully
+			// taker receives the sold by rev price tokens
+			takerReceiveAmount := RatAmountToIntRoundDown(buyAmount)
+			app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, takerReceiveAmount))
 			// maker receives the taker quantity
-			makerReceiveAmount := takerOrder.SellQuantity
-			app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, makerReceiveAmount))
+			makerReceiveAmount := order.SellQuantity
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(revOB.BuyDenom, makerReceiveAmount))
 			// update state
-			makerOBRecord.RemainingSellQuantity = makerOBRecord.RemainingSellQuantity.Sub(takerReceiveAmount)
-			if makerOBRecord.IsRemainingBuyQuantityLessThanOne() {
+			revOBRecord.RemainingSellQuantity = revOBRecord.RemainingSellQuantity.Sub(takerReceiveAmount)
+			if revOBRecord.IsRemainingBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration and remove
-				app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, makerOBRecord.RemainingSellQuantity))
-				makerOB.RemoveRecord(makerOBRecord)
+				app.SendCoin(revOBRecord.Account, sdk.NewCoin(revOB.SellDenom, revOBRecord.RemainingSellQuantity))
+				revOB.RemoveRecord(revOBRecord)
 			} else {
-				makerOB.UpdateRecord(makerOBRecord)
+				revOB.UpdateRecord(revOBRecord)
 			}
 			return true
 		case 0: // both orders are reduced
-			app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, takerOrder.SellQuantity))
-			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, makerOBRecord.RemainingSellQuantity))
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(revOB.BuyDenom, order.SellQuantity))
+			app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, revOBRecord.RemainingSellQuantity))
 			// remove reduced record
-			makerOB.RemoveRecord(makerOBRecord)
+			revOB.RemoveRecord(revOBRecord)
 			return true
-		case 1: // the taker order remains and will go to the next loop, the maker is reduced fully
+		case 1: // the order remains and will go to the next loop, the rev is reduced fully
 			// taker receives the amount maker sells
-			takerReceiveAmount := sdk.NewIntFromBigInt(makerOBRecord.RemainingSellQuantity.BigInt())
-			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
+			takerReceiveAmount := sdk.NewIntFromBigInt(revOBRecord.RemainingSellQuantity.BigInt())
+			app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, takerReceiveAmount))
 			// maker receive the amount
-			makerReceiveAmount := RatAmountToIntRoundDown((&big.Rat{}).Mul(makerSellAmount, makerSellPrice))
-			app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, makerReceiveAmount))
+			makerReceiveAmount := RatAmountToIntRoundDown((&big.Rat{}).Mul(revSellAmount, revSellPrice))
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(revOB.BuyDenom, makerReceiveAmount))
 			// update state
-			takerOrder.SellQuantity = takerOrder.SellQuantity.Sub(makerReceiveAmount)
+			order.SellQuantity = order.SellQuantity.Sub(makerReceiveAmount)
 			// remove reduced record
-			makerOB.RemoveRecord(makerOBRecord)
-			if takerOrder.IsBuyQuantityLessThanOne() {
+			revOB.RemoveRecord(revOBRecord)
+			if order.IsBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration
-				app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.SellDenom, takerOrder.SellQuantity))
+				app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, order.SellQuantity))
 				return true
 			}
-			// if nothing to match with add remaining taker order
-			if makerOB.IsEmpty() {
-				takerOB.AddOrder(takerOrder)
+			// if nothing to match with add remaining order
+			if revOB.IsEmpty() {
+				ob.AddOrder(order)
 				return true
 			}
 		}
@@ -302,25 +317,14 @@ func (app *App) SendCoin(recipient string, amt sdk.Coin) {
 }
 
 // PrintOrderBooks prints order books by keys.
-func (app *App) PrintOrderBooks(key, revKey string) {
+func (app *App) PrintOrderBooks(obKey, revKey string) {
 	obKeys := []string{
-		key, revKey,
+		obKey, revKey,
 	}
 	// sort to preserve the printed order for better readability
 	sort.Strings(obKeys)
 	for _, obKey := range obKeys {
-		fmt.Printf("---------- Order book:%s ----------\n", obKey)
-		ob, ok := app.OrderBooks[obKey]
-		if !ok || ob.IsEmpty() {
-			fmt.Println("Empty...")
-			continue
-		}
-		i := 0
-		ob.Iterate(func(record OrderBookRecord) bool {
-			fmt.Printf("OrderBookRecord [%d]: %s\n", i, record.String())
-			i++
-			return false
-		})
+		app.OrderBooks[obKey].Print()
 	}
 }
 
