@@ -231,73 +231,74 @@ func (app *App) PlaceOrder(order Order) {
 	app.PrintBalances()
 }
 
-func (app *App) matchOrder(order Order, revOB, ob *OrderBook) {
-	if revOB.IsEmpty() {
-		ob.AddOrder(order)
+func (app *App) matchOrder(takerOrder Order, makerOB, takerOB *OrderBook) {
+	if makerOB.IsEmpty() {
+		takerOB.AddOrder(takerOrder)
 	}
 
-	revOB.Iterate(func(revOBRecord OrderBookRecord) bool {
-		buyPrice := (&big.Rat{}).SetFrac(DecPrecisionReuse, order.Price.BigInt())
-		revSellPrice := (&big.Rat{}).SetFrac(revOBRecord.Price.BigInt(), DecPrecisionReuse)
+	makerOB.Iterate(func(revOBRecord OrderBookRecord) bool {
+		takerPriceReversed := (&big.Rat{}).SetFrac(DecPrecisionReuse, takerOrder.Price.BigInt())
+		makerPrice := (&big.Rat{}).SetFrac(revOBRecord.Price.BigInt(), DecPrecisionReuse)
 
-		if buyPrice.Cmp(revSellPrice) == -1 {
-			ob.AddOrder(order)
+		// If takerPriceReversed is less than makerPrice, then orders don't match.
+		if takerPriceReversed.Cmp(makerPrice) == -1 {
+			takerOB.AddOrder(takerOrder)
 			return true
 		}
 
-		// this amount uses the rev price since it's better or equal
-		buyAmount := (&big.Rat{}).Quo((&big.Rat{}).SetInt(order.SellQuantity.BigInt()), revSellPrice)
-		revSellAmount := (&big.Rat{}).SetInt(revOBRecord.RemainingSellQuantity.BigInt())
+		// To calculate takerBuyAmount, we use makerPrice because it is better or equal to takerPriceReversed.
+		// takerBuyAmount = takerSellQuantity / makerPrice
+		takerBuyAmount := (&big.Rat{}).Quo((&big.Rat{}).SetInt(takerOrder.SellQuantity.BigInt()), makerPrice)
+		makerSellAmount := (&big.Rat{}).SetInt(revOBRecord.RemainingSellQuantity.BigInt())
 
 		fmt.Printf(
-			"Match (%s/%s): buyPrice:%s >= revSellPrice:%s | buyAmount: %s | revSellAmount:%s\n",
-			order.ID, revOBRecord.OrderID, buyPrice.FloatString(10), revSellPrice.FloatString(10),
-			buyAmount.FloatString(10), revSellAmount.FloatString(10),
+			"Match (%s/%s): takerPriceReversed:%s >= makerPrice:%s | takerBuyAmount: %s | makerSellAmount:%s\n",
+			takerOrder.ID, revOBRecord.OrderID, takerPriceReversed.FloatString(10), makerPrice.FloatString(10),
+			takerBuyAmount.FloatString(10), makerSellAmount.FloatString(10),
 		)
 
-		switch buyAmount.Cmp(revSellAmount) {
-		case -1: // the rev order remains, the taker is reduced fully
-			// taker receives the sold by rev price tokens
-			takerReceiveAmount := RatAmountToIntRoundDown(buyAmount)
-			app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, takerReceiveAmount))
-			// maker receives the taker quantity
-			makerReceiveAmount := order.SellQuantity
-			app.SendCoin(revOBRecord.Account, sdk.NewCoin(revOB.BuyDenom, makerReceiveAmount))
+		switch takerBuyAmount.Cmp(makerSellAmount) {
+		case -1: // takerBuyAmount < makerSellAmount: taker order is matched fully, and maker order is matched partially.
+			takerReceiveAmount := RatAmountToIntRoundDown(takerBuyAmount)
+			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
+			// maker receives the taker sell quantity
+			makerReceiveAmount := takerOrder.SellQuantity
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, makerReceiveAmount))
 			// update state
 			revOBRecord.RemainingSellQuantity = revOBRecord.RemainingSellQuantity.Sub(takerReceiveAmount)
 			if revOBRecord.IsRemainingBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration and remove
-				app.SendCoin(revOBRecord.Account, sdk.NewCoin(revOB.SellDenom, revOBRecord.RemainingSellQuantity))
-				revOB.RemoveRecord(revOBRecord)
+				app.SendCoin(revOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, revOBRecord.RemainingSellQuantity))
+				makerOB.RemoveRecord(revOBRecord)
 			} else {
-				revOB.UpdateRecord(revOBRecord)
+				makerOB.UpdateRecord(revOBRecord)
 			}
 			return true
-		case 0: // both orders are reduced
-			app.SendCoin(revOBRecord.Account, sdk.NewCoin(revOB.BuyDenom, order.SellQuantity))
-			app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, revOBRecord.RemainingSellQuantity))
+		case 0: // takerBuyAmount == makerSellAmount: both taker and maker orders are matched fully.
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, takerOrder.SellQuantity))
+			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, revOBRecord.RemainingSellQuantity))
 			// remove reduced record
-			revOB.RemoveRecord(revOBRecord)
+			makerOB.RemoveRecord(revOBRecord)
 			return true
-		case 1: // the order remains and will go to the next loop, the rev is reduced fully
+		case 1: // takerBuyAmount > makerSellAmount: taker order is matched partially, and maker order is matched fully.
 			// taker receives the amount maker sells
 			takerReceiveAmount := sdk.NewIntFromBigInt(revOBRecord.RemainingSellQuantity.BigInt())
-			app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, takerReceiveAmount))
-			// maker receive the amount
-			makerReceiveAmount := RatAmountToIntRoundDown((&big.Rat{}).Mul(revSellAmount, revSellPrice))
-			app.SendCoin(revOBRecord.Account, sdk.NewCoin(revOB.BuyDenom, makerReceiveAmount))
+			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
+
+			makerReceiveAmount := RatAmountToIntRoundDown((&big.Rat{}).Mul(makerSellAmount, makerPrice))
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, makerReceiveAmount))
 			// update state
-			order.SellQuantity = order.SellQuantity.Sub(makerReceiveAmount)
+			takerOrder.SellQuantity = takerOrder.SellQuantity.Sub(makerReceiveAmount)
 			// remove reduced record
-			revOB.RemoveRecord(revOBRecord)
-			if order.IsBuyQuantityLessThanOne() {
+			makerOB.RemoveRecord(revOBRecord)
+			if takerOrder.IsBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration
-				app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, order.SellQuantity))
+				app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.SellDenom, takerOrder.SellQuantity))
 				return true
 			}
-			// if nothing to match with add remaining order
-			if revOB.IsEmpty() {
-				ob.AddOrder(order)
+			// if nothing to match with add remaining takerOrder
+			if makerOB.IsEmpty() {
+				takerOB.AddOrder(takerOrder)
 				return true
 			}
 		}
