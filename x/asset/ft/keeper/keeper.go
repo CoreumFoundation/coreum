@@ -731,6 +731,8 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 	}
 
 	def.Admin = ""
+	def.SendCommissionRate = sdk.ZeroDec()
+
 	k.SetDefinition(ctx, issuer, subunit, def)
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminCleared{
