@@ -1,262 +1,534 @@
 package keeper_test
 
 import (
-	"fmt"
-	"math/big"
-	"sort"
+	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/samber/lo"
+	"github.com/stretchr/testify/require"
+
+	"github.com/CoreumFoundation/coreum/v4/x/dex/keeper"
 )
 
-var (
-	// DecPrecisionReuse is  DecPrecisionReuse constant from sdkmath.Dec.
-	DecPrecisionReuse = new(big.Int).Exp(big.NewInt(10), big.NewInt(sdkmath.LegacyPrecision), nil)
-	// OneRat defins one in big.Rat.
-	OneRat = (&big.Rat{}).SetFrac(big.NewInt(1), big.NewInt(1))
-)
+func TestMatching(t *testing.T) {
+	const (
+		sender1 = "sender1"
+		sender2 = "sender2"
+		sender3 = "sender3"
+		sender4 = "sender4"
 
-// Order is matching sample ordrer.
-type Order struct {
-	ID        string
-	Account   string
-	SellDenom string
-	BuyDenom  string
-	// sellQuantity = buyQuantity / price | buyQuantity = sellQuantity * price
-	SellQuantity sdkmath.Int
-	// the remaining sell quantity to fill the order
-	RemainingSellQuantity sdkmath.Int
-	// price = buyQuantity / sellQuantity
-	Price sdkmath.LegacyDec
-}
-
-// OrderBookKey returns SellDenom/BuyDenom order book key.
-func (o Order) OrderBookKey() string {
-	return fmt.Sprintf("%s/%s", o.SellDenom, o.BuyDenom)
-}
-
-// ReversedOrderBookKey returns BuyDenom/SellDenom order book key.
-func (o Order) ReversedOrderBookKey() string {
-	return fmt.Sprintf("%s/%s", o.BuyDenom, o.SellDenom)
-}
-
-// IsRemainingBuyQuantityLessThanOne returns true is expected remaining buy quantity is less than one, so order can't
-// be filled correctly.
-func (o Order) IsRemainingBuyQuantityLessThanOne() bool {
-	ratPrice := (&big.Rat{}).SetFrac(o.Price.BigInt(), DecPrecisionReuse)
-	// price * remainingSellQuantity  < 1
-	return (&big.Rat{}).Mul((&big.Rat{}).SetInt(o.RemainingSellQuantity.BigInt()), ratPrice).Cmp(OneRat) == -1
-}
-
-// String returns string representation of the order.
-func (o Order) String() string {
-	remainingSellQuantity := o.RemainingSellQuantity
-	if remainingSellQuantity.IsNil() {
-		remainingSellQuantity = sdk.ZeroInt()
-	}
-
-	return fmt.Sprintf(
-		"ID:%s | account:%s | sellDenom:%s | buyDenom:%s | sellQuantity:%s | ~buyQuantity:%s | buyPrice:%s | ~sellPrice:%s | remainingSellQuantity:%s | ~remainingBuyQuantity:%s", //nolint:lll // string line.
-		o.ID, o.Account, o.SellDenom, o.BuyDenom, o.SellQuantity.String(),
-		o.SellQuantity.ToLegacyDec().Mul(o.Price).String(), o.Price.String(), sdkmath.LegacyOneDec().Quo(o.Price).String(),
-		remainingSellQuantity.String(), remainingSellQuantity.ToLegacyDec().Mul(o.Price).String(),
+		denom1 = "denom1"
+		denom2 = "denom2"
 	)
-}
-
-// ********** App **********
-
-// App is sample matching app.
-type App struct {
-	// sellDenom/buyDenom[]Order
-	OrderBooks map[string][]Order
-	Balances   map[string]sdk.Coins
-}
-
-// NewApp returns new instance of an app.
-func NewApp() *App {
-	return &App{
-		OrderBooks: make(map[string][]Order),
-		Balances:   make(map[string]sdk.Coins),
+	type testCase struct {
+		name               string
+		newOrders          []keeper.Order
+		expectedOrderBooks map[string]*keeper.OrderBook
+		expectedBalances   map[string]sdk.Coins
 	}
-}
-
-// PlaceOrder places and matches the order into the order book.
-func (app *App) PlaceOrder(takerOrder Order) {
-	fmt.Printf("\nAdding new taker order: %s\n", takerOrder.String())
-
-	// init remaining takerOrder quantity
-	takerOrder.RemainingSellQuantity = takerOrder.SellQuantity
-	if takerOrder.IsRemainingBuyQuantityLessThanOne() {
-		app.CancelOrder(takerOrder)
-		return
+	testCases := []testCase{
+		{
+			name: "no_match",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(50),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
+				},
+				{
+					Account:      sender3,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(10),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5.2"), // ~.1923
+				},
+				{
+					Account:      sender2,
+					ID:           "order3",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(20),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.21"),
+				},
+				{
+					Account:      sender3,
+					ID:           "order4",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(30),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5.1"), // ~.0.196
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records: []keeper.OrderBookRecord{
+						{
+							Account:               sender1,
+							OrderID:               "order1",
+							RemainingSellQuantity: sdkmath.NewInt(50),
+							Price:                 sdkmath.LegacyMustNewDecFromStr("0.2"),
+						},
+						{
+							Account:               sender2,
+							OrderID:               "order3",
+							Price:                 sdkmath.LegacyMustNewDecFromStr("0.21"),
+							RemainingSellQuantity: sdkmath.NewInt(20),
+						},
+					},
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records: []keeper.OrderBookRecord{
+						{
+							Account:               sender3,
+							OrderID:               "order4",
+							Price:                 sdkmath.LegacyMustNewDecFromStr("5.1"), // ~.0.196
+							RemainingSellQuantity: sdkmath.NewInt(30),
+						},
+						{
+							Account:               sender3,
+							OrderID:               "order2",
+							Price:                 sdkmath.LegacyMustNewDecFromStr("5.2"), // ~.1923
+							RemainingSellQuantity: sdkmath.NewInt(10),
+						},
+					},
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{},
+		},
+		{
+			name: "fill_maker_and_partially_fill_next_taker",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(100),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
+				},
+				// filled fully by order1
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(5),
+					Price:        sdkmath.LegacyMustNewDecFromStr("4"), // 0.25
+				},
+				// order1 will be filled, and order3 remainder will be left
+				{
+					Account:      sender3,
+					ID:           "order3",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(20),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records: []keeper.OrderBookRecord{
+						{
+							Account:               sender3,
+							OrderID:               "order3",
+							Price:                 sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
+							RemainingSellQuantity: sdkmath.NewInt(5),
+						},
+					},
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 20)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 25)),
+				sender3: sdk.NewCoins(sdk.NewInt64Coin(denom1, 75)),
+			},
+		},
+		{
+			name: "match_last_taker_with_all_makers",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(100),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(100),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.15"),
+				},
+				{
+					Account:      sender3,
+					ID:           "order3",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(100),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.1"),
+				},
+				{
+					Account:      sender4,
+					ID:           "order4",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(1000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records: []keeper.OrderBookRecord{
+						{
+							Account:               sender4,
+							OrderID:               "order4",
+							Price:                 sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
+							RemainingSellQuantity: sdkmath.NewInt(955),
+						},
+					},
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 20)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom2, 15)),
+				sender3: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)),
+				sender4: sdk.NewCoins(sdk.NewInt64Coin(denom1, 300)),
+			},
+		},
+		{
+			name: "fill_with_equal_amount",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(100),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(20),
+					Price:        sdkmath.LegacyMustNewDecFromStr("5"), // 0.2
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 20)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 100)),
+			},
+		},
+		{
+			name: "order_rounding_issue_smaller_order_filled_with_lower_than_expected_amount",
+			newOrders: []keeper.Order{
+				{
+					Account:   sender1,
+					ID:        "order1",
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					// you can update that value to 10 as a result order will become smaller and take lower price
+					SellQuantity: sdkmath.NewInt(1000000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.375"), // expect 375000
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(10),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2.63157894737"), //  ~0.38 | expect 26.3
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records: []keeper.OrderBookRecord{
+						{
+							Account: sender1,
+							OrderID: "order1",
+							Price:   sdkmath.LegacyMustNewDecFromStr("0.375"), // expect 375000
+							// 999974 * 0.375 + 10(from balance) = 375000.25
+							RemainingSellQuantity: sdkmath.NewInt(999974),
+						},
+					},
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 26)),
+			},
+		},
+		{
+			name: "order_rounding_issue_initial_int_expected_amount_reduced_to_float",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(5000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.375"), // expect 1875
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(1000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2.631"), // ~0.38 | expect 2631
+				},
+				{
+					Account:      sender3,
+					ID:           "order3",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(1000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2.637"), // ~0.3792 | expected 2637
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records: []keeper.OrderBookRecord{
+						{
+							Account: sender3,
+							OrderID: "order3",
+							Price:   sdkmath.LegacyMustNewDecFromStr("2.637"), // ~0.3792
+							// 2334 + 125 * 2.637 = 2663.625 (was expected 2637)
+							RemainingSellQuantity: sdkmath.NewInt(125),
+						},
+					},
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 1875)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2666)),
+				sender3: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2334)),
+			},
+		},
+		{
+			name: "order_rounding_issue_denom_with_high_price_rounded_in_favor_or_higher_volume",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(3),
+					Price:        sdkmath.LegacyMustNewDecFromStr("10000"),
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(10_101),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.00009999"), // ~10001.0001
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records: []keeper.OrderBookRecord{
+						{
+							Account:               sender1,
+							OrderID:               "order1",
+							Price:                 sdkmath.LegacyMustNewDecFromStr("10000"),
+							RemainingSellQuantity: sdkmath.NewInt(2),
+						},
+					},
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom2, 10101)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 1)),
+			},
+		},
+		{
+			name: "invalid_amount_maker_and_taker",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(2),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.4"), // expected 0.8 <- unachievable
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(5),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.13"), // ~7.6923 | expected 0.65 <- unachievable
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom2, 5)),
+			},
+		},
+		{
+			name: "cancel_remaining_maker_order",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(3),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.5"), // expected 1.5
+				},
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(1),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2"), //  0,5 | expected 2
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom1, 1), sdk.NewInt64Coin(denom2, 1)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2)),
+			},
+		},
+		{
+			name: "cancel_remaining_taker_order",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender2,
+					ID:           "order2",
+					SellDenom:    denom2,
+					BuyDenom:     denom1,
+					SellQuantity: sdkmath.NewInt(1),
+					Price:        sdkmath.LegacyMustNewDecFromStr("2"), //  0,5 | expected 2
+				},
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denom1,
+					BuyDenom:     denom2,
+					SellQuantity: sdkmath.NewInt(3),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.5"), // min 1.5
+				},
+			},
+			expectedOrderBooks: map[string]*keeper.OrderBook{
+				denom1 + "/" + denom2: {
+					SellDenom: denom1,
+					BuyDenom:  denom2,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+				denom2 + "/" + denom1: {
+					SellDenom: denom2,
+					BuyDenom:  denom1,
+					Records:   make([]keeper.OrderBookRecord, 0),
+				},
+			},
+			expectedBalances: map[string]sdk.Coins{
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denom1, 1), sdk.NewInt64Coin(denom2, 1)),
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denom1, 2)),
+			},
+		},
 	}
 
-	takerOKKey := takerOrder.OrderBookKey()
-	makerOBKey := takerOrder.ReversedOrderBookKey()
-	takerOB, ok := app.OrderBooks[takerOKKey]
-	if !ok {
-		takerOB = make([]Order, 0)
-	}
-	makerOB, ok := app.OrderBooks[makerOBKey]
-	if !ok {
-		makerOB = make([]Order, 0)
-	}
-	if len(makerOB) == 0 {
-		takerOB = append(takerOB, takerOrder)
-	} else {
-		makerOB, takerOB = app.iterateMakerOrderBook(takerOrder, makerOB, takerOB)
-	}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app := keeper.NewApp()
 
-	// sort orders by price
-	sort.Slice(takerOB, func(i, j int) bool {
-		return takerOB[i].Price.LTE(takerOB[j].Price)
-	})
-	sort.Slice(makerOB, func(i, j int) bool {
-		return makerOB[i].Price.LTE(makerOB[j].Price)
-	})
+			passedOrdersSum := sdk.NewCoins()
+			for _, order := range tc.newOrders {
+				app.PlaceOrder(order)
+				// after any order execution the total balance of the market must remain the same
+				passedOrdersSum = passedOrdersSum.Add(sdk.NewCoin(order.SellDenom, order.SellQuantity))
 
-	app.OrderBooks[takerOKKey] = takerOB
-	app.OrderBooks[makerOBKey] = makerOB
-	app.PrintOrderBooks(takerOKKey, makerOBKey)
-	app.PrintBalances()
-}
-
-func (app *App) iterateMakerOrderBook(takerOrder Order, makerOB, takerOB []Order) ([]Order, []Order) {
-	makerOB, takerOB, makerOBIndexesToRemove := app.matchOrders(takerOrder, makerOB, takerOB)
-	updatedMakerOB := make([]Order, 0)
-	for i, order := range makerOB {
-		if _, ok := makerOBIndexesToRemove[i]; ok {
-			continue
-		}
-		updatedMakerOB = append(updatedMakerOB, order)
-	}
-
-	return updatedMakerOB, takerOB
-}
-
-func (app *App) matchOrders(takerOrder Order, makerOB, takerOB []Order) ([]Order, []Order, map[int]struct{}) {
-	makerOBIndexesToRemove := make(map[int]struct{})
-	for i, makerOrder := range makerOB {
-		takerBuyPrice := (&big.Rat{}).SetFrac(DecPrecisionReuse, takerOrder.Price.BigInt())
-		makerSellPrice := (&big.Rat{}).SetFrac(makerOrder.Price.BigInt(), DecPrecisionReuse)
-
-		if takerBuyPrice.Cmp(makerSellPrice) == -1 {
-			takerOB = append(takerOB, takerOrder)
-			return makerOB, takerOB, makerOBIndexesToRemove
-		}
-
-		// this amount uses the maker price since it's better or equal
-		takerBuyAmount := (&big.Rat{}).Quo((&big.Rat{}).SetInt(takerOrder.RemainingSellQuantity.BigInt()), makerSellPrice)
-		makerSellAmount := (&big.Rat{}).SetInt(makerOrder.RemainingSellQuantity.BigInt())
-
-		fmt.Printf(
-			"Match (%s/%s): takerBuyPrice:%s >= makerSellPrice:%s | takerBuyAmount: %s | makerSellAmount:%s \n",
-			takerOrder.ID, makerOrder.ID, takerBuyPrice.FloatString(10), makerSellPrice.FloatString(10),
-			takerBuyAmount.FloatString(10), makerSellAmount.FloatString(10),
-		)
-
-		switch takerBuyAmount.Cmp(makerSellAmount) {
-		case -1: // the maker order remains, the taker is reduced fully
-			// taker receives the sold by maker price tokens
-			takerReceiveAmount := RatAmountToIntRoundDown(takerBuyAmount)
-			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
-			// maker receives the taker quantity
-			makerReceiveAmount := takerOrder.RemainingSellQuantity
-			app.SendCoin(makerOrder.Account, sdk.NewCoin(makerOrder.BuyDenom, makerReceiveAmount))
-			// update state
-			makerOrder.RemainingSellQuantity = makerOrder.RemainingSellQuantity.Sub(takerReceiveAmount)
-			if makerOrder.IsRemainingBuyQuantityLessThanOne() {
-				// cancel since nothing to use for the next iteration and remove
-				app.CancelOrder(makerOrder)
-				makerOBIndexesToRemove[i] = struct{}{}
-			} else {
-				makerOB[i] = makerOrder
+				marketSum := sdk.NewCoins()
+				for obKey := range app.OrderBooks {
+					ob := app.OrderBooks[obKey]
+					ob.Iterate(func(obOrder keeper.OrderBookRecord) bool {
+						marketSum = marketSum.Add(sdk.NewCoin(ob.SellDenom, obOrder.RemainingSellQuantity))
+						return false
+					})
+				}
+				for account := range app.Balances {
+					marketSum = marketSum.Add(app.Balances[account]...)
+				}
+				require.Equal(t, passedOrdersSum.String(), marketSum.String())
 			}
-			return makerOB, takerOB, makerOBIndexesToRemove
-		case 0: // both orders are reduced
-			app.SendCoin(makerOrder.Account, sdk.NewCoin(makerOrder.BuyDenom, takerOrder.RemainingSellQuantity))
-			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, makerOrder.RemainingSellQuantity))
-			// remove reduced record
-			makerOBIndexesToRemove[i] = struct{}{}
-			return makerOB, takerOB, makerOBIndexesToRemove
-		case 1: // the taker order remains and will go to the next loop, the maker is reduced fully
-			// taker receives the amount maker sells
-			takerReceiveAmount := sdk.NewIntFromBigInt(makerOrder.RemainingSellQuantity.BigInt())
-			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
-			// maker receive the amount
-			makerReceiveAmount := RatAmountToIntRoundDown((&big.Rat{}).Mul(makerSellAmount, makerSellPrice))
-			app.SendCoin(makerOrder.Account, sdk.NewCoin(makerOrder.BuyDenom, makerReceiveAmount))
-			// update state
-			takerOrder.RemainingSellQuantity = takerOrder.RemainingSellQuantity.Sub(makerReceiveAmount)
-			// remove reduced record
-			makerOBIndexesToRemove[i] = struct{}{}
-
-			if takerOrder.IsRemainingBuyQuantityLessThanOne() {
-				// cancel since nothing to use for the next iteration
-				app.CancelOrder(takerOrder)
-				return makerOB, takerOB, makerOBIndexesToRemove
-			}
-			// if nothing to match with add remaining taker order
-			if len(makerOB) == len(makerOBIndexesToRemove) {
-				takerOB = append(takerOB, takerOrder)
-			}
-		}
+			require.EqualValues(t, tc.expectedOrderBooks, app.OrderBooks)
+			require.EqualValues(t, tc.expectedBalances, app.Balances)
+		})
 	}
-
-	return makerOB, takerOB, makerOBIndexesToRemove
-}
-
-// CancelOrder sends order coins to the creator.
-func (app *App) CancelOrder(order Order) {
-	fmt.Printf("\nRemaining buy quantity is less than one, order canceled: %s\n", order.String())
-	app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, order.RemainingSellQuantity))
-}
-
-// SendCoin sends coins to sample app accounts.
-func (app *App) SendCoin(recipient string, amt sdk.Coin) {
-	accountBalances, ok := app.Balances[recipient]
-	if !ok {
-		accountBalances = make(sdk.Coins, 0)
-	}
-	app.Balances[recipient] = accountBalances.Add(amt)
-}
-
-// PrintOrderBooks prints order books by keys.
-func (app *App) PrintOrderBooks(key, revKey string) {
-	obKeys := []string{
-		key, revKey,
-	}
-	// sort to preserve the printed order for better readability
-	sort.Strings(obKeys)
-	for _, obKey := range obKeys {
-		fmt.Printf("---------- Order book:%s ----------\n", obKey)
-		ob, ok := app.OrderBooks[obKey]
-		if !ok || len(ob) == 0 {
-			fmt.Println("Empty...")
-			continue
-		}
-		for i, order := range ob {
-			fmt.Printf("Order [%d]: %s\n", i, order.String())
-		}
-	}
-}
-
-// PrintBalances prints sample app current balances.
-func (app *App) PrintBalances() {
-	fmt.Println("---------- Balances: ----------")
-	if len(app.Balances) == 0 {
-		fmt.Println("Empty...")
-		return
-	}
-	addresses := lo.Keys(app.Balances)
-	sort.Strings(addresses)
-	for _, address := range addresses {
-		fmt.Printf("Account %s: %s\n", address, app.Balances[address].String())
-	}
-}
-
-// RatAmountToIntRoundDown converts the big.Rat to sdkmath.Int with round down strategy.
-func RatAmountToIntRoundDown(amt *big.Rat) sdkmath.Int {
-	return sdk.NewIntFromBigInt((&big.Int{}).Quo(amt.Num(), amt.Denom()))
 }
