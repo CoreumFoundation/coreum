@@ -107,7 +107,7 @@ func (ob *OrderBook) AddOrder(order Order) {
 		RemainingSellQuantity: order.SellQuantity,
 		Price:                 order.Price,
 	}
-	fmt.Printf("Adding record to the order book, %s/%s, record:%s",
+	fmt.Printf("Adding record to the order book, %s/%s, record:%s\n",
 		ob.SellDenom, ob.BuyDenom, record.String(),
 	)
 	ob.Records = append(ob.Records, record)
@@ -116,7 +116,7 @@ func (ob *OrderBook) AddOrder(order Order) {
 
 // UpdateRecord updates order book record.
 func (ob *OrderBook) UpdateRecord(record OrderBookRecord) {
-	fmt.Printf("Updating record in the order book, %s/%s, record:%s",
+	fmt.Printf("Updating record in the order book, %s/%s, record:%s\n",
 		ob.SellDenom, ob.BuyDenom, record.String(),
 	)
 	i := ob.findRecordIndex(record.Account, record.OrderID)
@@ -128,7 +128,7 @@ func (ob *OrderBook) UpdateRecord(record OrderBookRecord) {
 
 // RemoveRecord updates order book records.
 func (ob *OrderBook) RemoveRecord(record OrderBookRecord) {
-	fmt.Printf("Removing record from the order book, %s/%s, record:%s",
+	fmt.Printf("Removing record from the order book, %s/%s, record:%s\n",
 		ob.SellDenom, ob.BuyDenom, record.String(),
 	)
 	i := ob.findRecordIndex(record.Account, record.OrderID)
@@ -250,7 +250,7 @@ func (app *App) matchOrder(order Order, revOB, ob *OrderBook) {
 		revSellAmount := (&big.Rat{}).SetInt(revOBRecord.RemainingSellQuantity.BigInt())
 
 		fmt.Printf(
-			"Match (%s/%s): buyPrice:%s >= revSellPrice:%s | buyAmount: %s | revSellAmount:%s \n",
+			"Match (%s/%s): buyPrice:%s >= revSellPrice:%s | buyAmount: %s | revSellAmount:%s\n",
 			order.ID, revOBRecord.OrderID, buyPrice.FloatString(10), revSellPrice.FloatString(10),
 			buyAmount.FloatString(10), revSellAmount.FloatString(10),
 		)
@@ -318,6 +318,7 @@ func (app *App) SendCoin(recipient string, amt sdk.Coin) {
 
 // PrintOrderBooks prints order books by keys.
 func (app *App) PrintOrderBooks(obKey, revKey string) {
+	fmt.Println("---------- Order books: ----------")
 	obKeys := []string{
 		obKey, revKey,
 	}
