@@ -66,10 +66,10 @@ pub fn execute_extension_transfer(
 
     // check that amount is present in the attached funds, and attached funds is enough
     // to cover the transfer.
-    let attached_fund = query_bank_balance(
-        deps.as_ref(), env.contract.address.as_str(), denom.as_str()
-    )?;
-    if amount > attached_fund.amount {
+    let has_sufficient_funds = info.funds.iter().any(
+        |coin| coin.denom == denom && coin.amount >= amount
+    );
+    if !has_sufficient_funds {
         return Err(ContractError::InsufficientFunds {})
     }
 
@@ -186,8 +186,6 @@ fn assert_burning(
     });
 
     // TODO(masih): Change token.issuer to token.admin
-    // TODO(masih): The user cannot burn the frozen amount if both
-    // freezing and burning is enabled.
     if !burning_enabled && sender != token.issuer {
         return Err(ContractError::FeatureDisabledError {});
     }
@@ -235,16 +233,6 @@ fn assert_block_smart_contracts(
     recipient: &str,
     token: &Token,
 ) -> Result<(), ContractError> {
-    // TODO: Remove this
-    // return Err(ContractError::Debugging {
-    //     a: sender.to_string(),
-    //     b: recipient.to_string(),
-    //     c: token.issuer.to_string(),
-    //     d: is_smart_contract(deps, sender).to_string(),
-    //     e: is_smart_contract(deps, recipient).to_string(),
-    //     f: is_smart_contract(deps, &token.issuer).to_string(),
-    // });
-
     // TODO: Do we need this?
     let issued_from_smart_contract = is_smart_contract(deps, &token.issuer);
     if issued_from_smart_contract &&

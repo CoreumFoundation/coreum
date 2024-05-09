@@ -23,15 +23,4 @@ pub enum ContractError {
 
     #[error("Insufficient funds attached.")]
     InsufficientFunds {},
-
-    // TODO: Delete this one
-    #[error("Debugging {a} {b} {c} {d} {e} {f}")]
-    Debugging {
-        a: String,
-        b: String,
-        c: String,
-        d: String,
-        e: String,
-        f: String
-    },
 }
