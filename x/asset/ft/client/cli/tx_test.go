@@ -57,6 +57,7 @@ func TestIssue(t *testing.T) {
 	token.Denom = denom
 	token.Issuer = resp.Token.Issuer
 	token.Version = resp.Token.Version
+	token.Admin = resp.Token.Admin
 	requireT.Equal(token, resp.Token)
 }
 
@@ -381,6 +382,102 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 		&balancesResp,
 	))
 	requireT.Len(balancesResp.Balances, 1)
+}
+
+func TestTransferAdmin(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	newAdmin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdkmath.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+
+	// transfer admin from issuer to new admin
+	args := append([]string{newAdmin.String(), denom}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxTransferAdmin(), args)
+	requireT.NoError(err)
+
+	// query token
+	var respToken types.QueryTokenResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+		ctx,
+		cli.CmdQueryToken(),
+		[]string{denom},
+		&respToken,
+	))
+	requireT.Equal(newAdmin.String(), respToken.Token.Admin)
+
+	// try to transfer admin from issuer to new admin again
+	args = append([]string{newAdmin.String(), denom}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxTransferAdmin(), args)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// try to freeze part of the token by issuer which is not admin anymore
+	coinToFreeze := sdk.NewInt64Coin(denom, 100)
+	args = append([]string{recipient.String(), coinToFreeze.String()}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+}
+
+func TestClearAdmin(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdkmath.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+
+	// clear admin
+	args := append([]string{denom}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClearAdmin(), args)
+	requireT.NoError(err)
+
+	// query token
+	var respToken types.QueryTokenResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+		ctx,
+		cli.CmdQueryToken(),
+		[]string{denom},
+		&respToken,
+	))
+	requireT.Empty(respToken.Token.Admin)
+
+	// try to clear admin again
+	args = append([]string{denom}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClearAdmin(), args)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// try to freeze part of the token by previous admin
+	coinToFreeze := sdk.NewInt64Coin(denom, 100)
+	args = append([]string{recipient.String(), coinToFreeze.String()}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 func TestUpgradeV1(t *testing.T) {

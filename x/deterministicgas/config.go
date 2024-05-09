@@ -30,6 +30,7 @@ import (
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
 	cnfttypes "github.com/CoreumFoundation/coreum/v4/x/nft"
 )
 
@@ -84,6 +85,8 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5_000),
 		MsgToMsgURL(&assetfttypes.MsgClawback{}):            constantGasFunc(15_500),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9_000),
+		MsgToMsgURL(&assetfttypes.MsgTransferAdmin{}):       constantGasFunc(10_000),
+		MsgToMsgURL(&assetfttypes.MsgClearAdmin{}):          constantGasFunc(8_500),
 		// TODO(v4): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
 		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25_000),
 
@@ -100,6 +103,10 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}):      constantGasFunc(3_500),
 		MsgToMsgURL(&assetnfttypes.MsgAddToClassWhitelist{}):      constantGasFunc(7_000),
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromClassWhitelist{}): constantGasFunc(3_500),
+
+		// dex
+		// TODO (dex): update one we define the correct value
+		MsgToMsgURL(&dextypes.MsgPlaceOrder{}): constantGasFunc(10_000),
 
 		// authz
 		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),

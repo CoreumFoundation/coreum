@@ -99,6 +99,9 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		// mint
 		"/cosmos.mint.v1beta1.MsgUpdateParams",
 
+		// pfm
+		"/packetforward.v1.MsgUpdateParams",
+
 		// staking
 		"/cosmos.staking.v1beta1.MsgUpdateParams",
 
@@ -189,11 +192,11 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		deterministicMsgs = append(deterministicMsgs, sdkMsg)
 	}
 
-	// To make sure we do not increase/decrease deterministic types accidentally
+	// To make sure we do not increase/decrease deterministic types accidentally,
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Len(t, nondeterministicMsgs, 62)
-	assert.Len(t, deterministicMsgs, 66)
+	assert.Len(t, nondeterministicMsgs, 63)
+	assert.Len(t, deterministicMsgs, 69)
 
 	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg

@@ -10,6 +10,8 @@
     - [MintAuthorization](#coreum.asset.ft.v1.MintAuthorization)
   
 - [coreum/asset/ft/v1/event.proto](#coreum/asset/ft/v1/event.proto)
+    - [EventAdminCleared](#coreum.asset.ft.v1.EventAdminCleared)
+    - [EventAdminTransferred](#coreum.asset.ft.v1.EventAdminTransferred)
     - [EventAmountClawedBack](#coreum.asset.ft.v1.EventAmountClawedBack)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
@@ -59,6 +61,7 @@
     - [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings)
     - [MsgBurn](#coreum.asset.ft.v1.MsgBurn)
     - [MsgClawback](#coreum.asset.ft.v1.MsgClawback)
+    - [MsgClearAdmin](#coreum.asset.ft.v1.MsgClearAdmin)
     - [MsgFreeze](#coreum.asset.ft.v1.MsgFreeze)
     - [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze)
     - [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze)
@@ -66,6 +69,7 @@
     - [MsgMint](#coreum.asset.ft.v1.MsgMint)
     - [MsgSetFrozen](#coreum.asset.ft.v1.MsgSetFrozen)
     - [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit)
+    - [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin)
     - [MsgUnfreeze](#coreum.asset.ft.v1.MsgUnfreeze)
     - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
     - [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1)
@@ -180,6 +184,24 @@
   
 - [coreum/deterministicgas/v1/event.proto](#coreum/deterministicgas/v1/event.proto)
     - [EventGas](#coreum.deterministicgas.v1.EventGas)
+  
+- [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
+    - [GenesisState](#coreum.dex.v1.GenesisState)
+  
+- [coreum/dex/v1/order.proto](#coreum/dex/v1/order.proto)
+    - [Order](#coreum.dex.v1.Order)
+  
+- [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
+    - [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest)
+    - [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse)
+  
+    - [Query](#coreum.dex.v1.Query)
+  
+- [coreum/dex/v1/tx.proto](#coreum/dex/v1/tx.proto)
+    - [EmptyResponse](#coreum.dex.v1.EmptyResponse)
+    - [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder)
+  
+    - [Msg](#coreum.dex.v1.Msg)
   
 - [coreum/feemodel/v1/genesis.proto](#coreum/feemodel/v1/genesis.proto)
     - [GenesisState](#coreum.feemodel.v1.GenesisState)
@@ -1582,6 +1604,39 @@ the granter's account.
 
 
 
+<a name="coreum.asset.ft.v1.EventAdminCleared"></a>
+
+### EventAdminCleared
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |    |
+| `previous_admin` | [string](#string) |  |    |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.EventAdminTransferred"></a>
+
+### EventAdminTransferred
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |    |
+| `previous_admin` | [string](#string) |  |    |
+| `current_admin` | [string](#string) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.EventAmountClawedBack"></a>
 
 ### EventAmountClawedBack
@@ -1641,6 +1696,7 @@ EventIssued is emitted on MsgIssue.
 | `send_commission_rate` | [string](#string) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
+| `admin` | [string](#string) |  |    |
 
 
 
@@ -2136,11 +2192,12 @@ Definition defines the fungible token settings to store.
 | `issuer` | [string](#string) |  |    |
 | `features` | [Feature](#coreum.asset.ft.v1.Feature) | repeated |    |
 | `burn_rate` | [string](#string) |  |  `burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount.`  |
-| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
+| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token admin account.`  |
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
 | `extension_cw_address` | [string](#string) |  |    |
+| `admin` | [string](#string) |  |    |
 
 
 
@@ -2187,11 +2244,12 @@ Token is a full representation of the fungible token.
 | `globally_frozen` | [bool](#bool) |  |    |
 | `features` | [Feature](#coreum.asset.ft.v1.Feature) | repeated |    |
 | `burn_rate` | [string](#string) |  |  `burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount.`  |
-| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
+| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token admin account.`  |
 | `version` | [uint32](#uint32) |  |    |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
 | `extension_cw_address` | [string](#string) |  |    |
+| `admin` | [string](#string) |  |    |
 
 
 
@@ -2342,6 +2400,22 @@ the source code for the extension.
 
 
 
+<a name="coreum.asset.ft.v1.MsgClearAdmin"></a>
+
+### MsgClearAdmin
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.MsgFreeze"></a>
 
 ### MsgFreeze
@@ -2411,7 +2485,7 @@ MsgIssue defines message to issue new fungible token.
 | `description` | [string](#string) |  |    |
 | `features` | [Feature](#coreum.asset.ft.v1.Feature) | repeated |    |
 | `burn_rate` | [string](#string) |  |  `burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount.`  |
-| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account.`  |
+| `send_commission_rate` | [string](#string) |  |  `send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token admin account.`  |
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
 | `extension_settings` | [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
@@ -2466,6 +2540,23 @@ MsgIssue defines message to issue new fungible token.
 | `sender` | [string](#string) |  |    |
 | `account` | [string](#string) |  |    |
 | `coin` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |    |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.MsgTransferAdmin"></a>
+
+### MsgTransferAdmin
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |    |
+| `account` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
 
 
 
@@ -2551,8 +2642,10 @@ Msg defines the Msg service.
 | `SetFrozen` | [MsgSetFrozen](#coreum.asset.ft.v1.MsgSetFrozen) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetFrozen sets the absolute value of frozen amount.` |  |
 | `GloballyFreeze` | [MsgGloballyFreeze](#coreum.asset.ft.v1.MsgGloballyFreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `GloballyFreeze freezes fungible token so no operations are allowed with it before unfrozen. This operation is idempotent so global freeze of already frozen token does nothing.` |  |
 | `GloballyUnfreeze` | [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it. This operation is idempotent so global unfreezing of non-frozen token does nothing.` |  |
-| `Clawback` | [MsgClawback](#coreum.asset.ft.v1.MsgClawback) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `Clawback confiscates a part of fungible tokens from an account to the issuer, only if the clawback feature is enabled on that token.` |  |
+| `Clawback` | [MsgClawback](#coreum.asset.ft.v1.MsgClawback) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `Clawback confiscates a part of fungible tokens from an account to the admin, only if the clawback feature is enabled on that token.` |  |
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.` |  |
+| `TransferAdmin` | [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TransferAdmin changes admin of a fungible token.` |  |
+| `ClearAdmin` | [MsgClearAdmin](#coreum.asset.ft.v1.MsgClearAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `ClearAdmin removes admin of a fungible token.` |  |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
 
@@ -4119,6 +4212,189 @@ EventGas is emitted by deterministic gas module to report gas information.
  <!-- end enums -->
 
  <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/genesis.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/genesis.proto
+
+
+
+<a name="coreum.dex.v1.GenesisState"></a>
+
+### GenesisState
+
+```
+GenesisState defines the module genesis state.
+```
+
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/order.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/order.proto
+
+
+
+<a name="coreum.dex.v1.Order"></a>
+
+### Order
+
+```
+Order is a single order of an orderbook.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/query.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/query.proto
+
+
+
+<a name="coreum.dex.v1.QueryOrdersRequest"></a>
+
+### QueryOrdersRequest
+
+```
+QueryOrdersRequest defines the request type for the `Orders` query.
+```
+
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryOrdersResponse"></a>
+
+### QueryOrdersResponse
+
+```
+QueryOrdersRequestResponse defines the response type for the `Orders` query.
+```
+
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="coreum.dex.v1.Query"></a>
+
+### Query
+
+```
+Query defines the gRPC query service.
+```
+
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Orders` | [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest) | [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse) | `Orders queries all orders.` | GET|/coreum/dex/v1/orders |
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/tx.proto
+
+
+
+<a name="coreum.dex.v1.EmptyResponse"></a>
+
+### EmptyResponse
+
+
+
+
+
+
+
+<a name="coreum.dex.v1.MsgPlaceOrder"></a>
+
+### MsgPlaceOrder
+
+```
+MsgPlaceOrder defines message to place an order on orderbook.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  `sender is message sender/signer.`  |
+| `order` | [Order](#coreum.dex.v1.Order) |  |  `order is an order to place on orderbook.`  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="coreum.dex.v1.Msg"></a>
+
+### Msg
+
+```
+Msg defines the Msg service.
+```
+
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `PlaceOrder` | [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `PlaceOrder is a method to place an order on orderbook.` |  |
 
  <!-- end services -->
 
