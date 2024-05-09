@@ -1213,7 +1213,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
-	requireT.ErrorContains(err, "coins are not receivable")
+	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
 }
 
 // TestAssetFTExtensionSendingToSmartContractIsDenied verifies that this is not possible to send token to smart contract

@@ -1077,8 +1077,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
 		},
-		BurnRate:           burnRate.String(),
-		SendCommissionRate: sendCommissionRate.String(),
+		BurnRate:           "100000000000000000", // LegacyDec has 18 decimal positions, so here we are passing 1e18= 10%
+		SendCommissionRate: "200000000000000000", // LegacyDec has 18 decimal positions, so here we are passing 2 * 1e18 = 20%
 		URI:                "https://example.com",
 		URIHash:            "1234567890abcdef",
 	}
