@@ -216,6 +216,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
@@ -228,7 +229,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdk.NewInt(2)).
 			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
 	})
 	chain.FundAccountWithOptions(ctx, t, nonIssuer, integration.BalancesOptions{
@@ -278,6 +279,27 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 
 	requireT.NoError(err)
 
+	// Issue the new fungible token without extension
+	subunit = "uabe"
+	denomWithoutExtension := assetfttypes.BuildDenom(subunit, issuer)
+	msg = &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABE",
+		Subunit:       "uabe",
+		Precision:     6,
+		Description:   "ABE Description",
+		InitialAmount: amount,
+		Features:      []assetfttypes.Feature{assetfttypes.Feature_whitelisting},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+
+	requireT.NoError(err)
+
 	// try to send to recipient before it is whitelisted (balance 0, whitelist limit 0)
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
 	// send
@@ -298,6 +320,25 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs:  []banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
 		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
+
+	// multi-send tokens with and without extension
+	multiSendMsg = &banktypes.MsgMultiSend{
+		Inputs: []banktypes.Input{{Address: issuer.String(), Coins: sdk.NewCoins(
+			sdk.NewCoin(denom, sdkmath.NewInt(10)),
+			sdk.NewCoin(denomWithoutExtension, sdkmath.NewInt(10)),
+		)}},
+		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: sdk.NewCoins(
+			sdk.NewCoin(denom, sdkmath.NewInt(10)),
+			sdk.NewCoin(denomWithoutExtension, sdkmath.NewInt(10)),
+		)}},
 	}
 	_, err = client.BroadcastTx(
 		ctx,
