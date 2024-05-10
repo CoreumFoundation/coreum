@@ -33,8 +33,37 @@ func TestMatching(t *testing.T) {
 		newOrders          []keeper.Order
 		expectedOrderBooks map[string]*keeper.OrderBook
 		expectedBalances   map[string]sdk.Coins
+		expectErr          bool
 	}
 	testCases := []testCase{
+		{
+			name: "sell_quantity_doesn't_satisfy_tick",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
+					SellQuantity: sdkmath.NewInt(5_000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name: "buy_quantity_doesn't_satisfy_tick",
+			newOrders: []keeper.Order{
+				{
+					Account:      sender1,
+					ID:           "order1",
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
+					SellQuantity: sdkmath.NewInt(50_000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.21"),
+				},
+			},
+			expectErr: true,
+		},
 		{
 			name: "no_match",
 			newOrders: []keeper.Order{
@@ -43,7 +72,7 @@ func TestMatching(t *testing.T) {
 					ID:           "order1",
 					SellDenom:    denomCORE,
 					BuyDenom:     denomUSDC,
-					SellQuantity: sdkmath.NewInt(50),
+					SellQuantity: sdkmath.NewInt(500_000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.2"),
 				},
 				{
@@ -51,7 +80,7 @@ func TestMatching(t *testing.T) {
 					ID:           "order2",
 					SellDenom:    denomUSDC,
 					BuyDenom:     denomCORE,
-					SellQuantity: sdkmath.NewInt(10),
+					SellQuantity: sdkmath.NewInt(100_000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("5.2"), // ~.1923
 				},
 				{
@@ -59,7 +88,7 @@ func TestMatching(t *testing.T) {
 					ID:           "order3",
 					SellDenom:    denomCORE,
 					BuyDenom:     denomUSDC,
-					SellQuantity: sdkmath.NewInt(20),
+					SellQuantity: sdkmath.NewInt(2_000_000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.21"),
 				},
 				{
@@ -67,7 +96,7 @@ func TestMatching(t *testing.T) {
 					ID:           "order4",
 					SellDenom:    denomUSDC,
 					BuyDenom:     denomCORE,
-					SellQuantity: sdkmath.NewInt(30),
+					SellQuantity: sdkmath.NewInt(300_000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("5.1"), // ~.0.196
 				},
 			},
@@ -79,14 +108,14 @@ func TestMatching(t *testing.T) {
 						{
 							Account:               sender1,
 							OrderID:               "order1",
-							RemainingSellQuantity: sdkmath.NewInt(50),
+							RemainingSellQuantity: sdkmath.NewInt(500_000),
 							Price:                 sdkmath.LegacyMustNewDecFromStr("0.2"),
 						},
 						{
 							Account:               sender2,
 							OrderID:               "order3",
 							Price:                 sdkmath.LegacyMustNewDecFromStr("0.21"),
-							RemainingSellQuantity: sdkmath.NewInt(20),
+							RemainingSellQuantity: sdkmath.NewInt(2_000_000),
 						},
 					},
 				},
@@ -98,13 +127,13 @@ func TestMatching(t *testing.T) {
 							Account:               sender3,
 							OrderID:               "order4",
 							Price:                 sdkmath.LegacyMustNewDecFromStr("5.1"), // ~.0.196
-							RemainingSellQuantity: sdkmath.NewInt(30),
+							RemainingSellQuantity: sdkmath.NewInt(300_000),
 						},
 						{
 							Account:               sender3,
 							OrderID:               "order2",
 							Price:                 sdkmath.LegacyMustNewDecFromStr("5.2"), // ~.1923
-							RemainingSellQuantity: sdkmath.NewInt(10),
+							RemainingSellQuantity: sdkmath.NewInt(100_000),
 						},
 					},
 				},
@@ -518,7 +547,13 @@ func TestMatching(t *testing.T) {
 
 			passedOrdersSum := sdk.NewCoins()
 			for _, order := range tc.newOrders {
-				app.PlaceOrder(order)
+				err := app.PlaceOrder(order)
+				if tc.expectErr {
+					require.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
 				// after any order execution the total balance of the market must remain the same
 				passedOrdersSum = passedOrdersSum.Add(sdk.NewCoin(order.SellDenom, order.SellQuantity))
 

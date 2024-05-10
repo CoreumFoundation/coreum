@@ -15,6 +15,9 @@ var (
 	DecPrecisionReuse = new(big.Int).Exp(big.NewInt(10), big.NewInt(sdkmath.LegacyPrecision), nil)
 	// OneRat defins one in big.Rat.
 	OneRat = (&big.Rat{}).SetFrac(big.NewInt(1), big.NewInt(1))
+
+	TenBigInt  = big.NewInt(10)
+	ZeroBigInt = big.NewInt(0)
 )
 
 // Order is matching sample ordrer.
@@ -218,19 +221,21 @@ func (app *App) PlaceOrder(order Order) error {
 		return fmt.Errorf("unspecified tick for buy denom: %s", order.BuyDenom)
 	}
 
-	sellTickPow10 := sdkmath.NewInt(int64(10 ^ sellTick))
-	if !order.SellQuantity.Mod(sellTickPow10).Equal(sdkmath.ZeroInt()) {
-		return fmt.Errorf("invalid sell quantity: %s, tick not satisfied: %d", order.SellQuantity, sellTick)
+	sellTickPow10 := big.NewInt(10).Exp(TenBigInt, big.NewInt(int64(sellTick)), nil)
+	if big.NewInt(1).Mod(order.SellQuantity.BigInt(), sellTickPow10).Cmp(ZeroBigInt) != 0 {
+		return fmt.Errorf("invalid sell quantity: %s, tick not satisfied: %d, orderID: %s", order.SellQuantity, sellTick, order.ID)
 	}
 
-	buyTickPow10 := sdkmath.NewInt(int64(10 ^ buyTick))
 	buyQuantityDec := order.SellQuantity.ToLegacyDec().Mul(order.Price)
 	if !buyQuantityDec.IsInteger() {
-		return fmt.Errorf("invalid buy quantity: %s, not integer", buyQuantityDec.String())
+		return fmt.Errorf("invalid buy quantity: %s, not integer, orderID: %s", buyQuantityDec.String(), order.ID)
 	}
-	buyQuantity := sdkmath.NewIntFromBigInt(buyQuantityDec.BigInt())
-	if !buyQuantity.Mod(buyTickPow10).Equal(sdkmath.ZeroInt()) {
-		return fmt.Errorf("invalid buy quantity: %s, tick not satisfied: %d", buyQuantity, buyTick)
+	buyQuantity := sdkmath.NewIntFromBigInt(buyQuantityDec.BigInt().Quo(buyQuantityDec.BigInt(), DecPrecisionReuse))
+	fmt.Printf("Buy quantity: %s\n", buyQuantity.String())
+	buyTickPow10 := big.NewInt(10).Exp(TenBigInt, big.NewInt(int64(buyTick)), nil)
+	fmt.Printf("buyTickPow10: %s\n", buyTickPow10.String())
+	if big.NewInt(1).Mod(buyQuantity.BigInt(), buyTickPow10).Cmp(ZeroBigInt) != 0 {
+		return fmt.Errorf("invalid buy quantity: %s, tick not satisfied: %d, orderID: %s", buyQuantity, buyTick, order.ID)
 	}
 
 	// init remaining order quantity
@@ -256,6 +261,8 @@ func (app *App) PlaceOrder(order Order) error {
 	app.matchOrder(order, revOB, ob)
 	app.PrintOrderBooks(obKey, revOBKey)
 	app.PrintBalances()
+
+	return nil
 }
 
 func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
