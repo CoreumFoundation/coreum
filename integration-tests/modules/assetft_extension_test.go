@@ -28,11 +28,11 @@ import (
 )
 
 const (
-	MagicAmountDisallowed         = 7
-	MagicAmountIgnoreWhitelisting = 49
-	MagicAmountIgnoreFreezing     = 79
-	MagicAmountBurning            = 101
-	MagicAmountMinting            = 105
+	AmountDisallowedTrigger         = 7
+	AmountIgnoreWhitelistingTrigger = 49
+	AmountIgnoreFreezingTrigger     = 79
+	AmountBurningTrigger            = 101
+	AmountMintingTrigger            = 105
 )
 
 // TestAssetFTExtensionIssue tests extension issue functionality of fungible tokens.
@@ -129,7 +129,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	requireT.EqualValues("12", balance.Balance.Amount.String())
 
 	// sending 7 will fail
-	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(MagicAmountDisallowed)))
+	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(AmountDisallowedTrigger)))
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
@@ -180,7 +180,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	requireT.NoError(err)
 	contractMsg = map[string]interface{}{
 		assetftkeeper.ExtenstionTransferMethod: assetftkeeper.ExtensionTransferMsg{
-			Amount:    sdk.NewInt(MagicAmountDisallowed),
+			Amount:    sdk.NewInt(AmountDisallowedTrigger),
 			Recipient: recipient2.String(),
 		},
 	}
@@ -192,7 +192,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		recipient,
 		token.Token.ExtensionCWAddress,
 		contractMsgBytes,
-		sdk.NewCoin(denom, sdk.NewInt(MagicAmountDisallowed)),
+		sdk.NewCoin(denom, sdk.NewInt(AmountDisallowedTrigger)),
 	)
 	requireT.Error(err)
 }
@@ -384,11 +384,11 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 	)
 	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 
-	// try to send magic amount despite the whitelisted limit
+	// try to send trigger amount despite the whitelisted limit
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(MagicAmountIgnoreWhitelisting))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreWhitelistingTrigger))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -552,11 +552,11 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 		multiSendMsg,
 	)
 	requireT.ErrorContains(err, "Requested transfer token is frozen.")
-	// send magic amount despite frozen amount
+	// send trigger amount despite frozen amount
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(MagicAmountIgnoreFreezing))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreFreezingTrigger))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -676,7 +676,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount: sdk.NewCoins(sdk.Coin{
 			Denom:  unburnable,
-			Amount: sdkmath.NewInt(MagicAmountBurning),
+			Amount: sdkmath.NewInt(AmountBurningTrigger),
 		}),
 	}
 
@@ -737,7 +737,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	// burn tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(MagicAmountBurning))
+	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))
 
 	burnMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
@@ -844,7 +844,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount: sdk.NewCoins(sdk.Coin{
 			Denom:  unmintableDenom,
-			Amount: sdkmath.NewInt(MagicAmountMinting),
+			Amount: sdkmath.NewInt(AmountMintingTrigger),
 		}),
 	}
 
@@ -905,7 +905,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	// mint tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(MagicAmountMinting))
+	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(AmountMintingTrigger))
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   issuer.String(),
@@ -931,7 +931,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 
 	// mint tokens to recipient
-	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(MagicAmountMinting))
+	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(AmountMintingTrigger))
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),

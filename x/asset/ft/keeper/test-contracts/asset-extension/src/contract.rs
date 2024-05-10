@@ -16,11 +16,11 @@ use crate::state::DENOM;
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const MAGIC_AMOUNT_DISALLOWED: Uint128 = Uint128::new(7);
-const MAGIC_AMOUNT_IGNORE_WHITELISTING: Uint128 = Uint128::new(49);
-const MAGIC_AMOUNT_IGNORE_FREEZING: Uint128 = Uint128::new(79);
-const MAGIC_AMOUNT_BURNING: Uint128 = Uint128::new(101);
-const MAGIC_AMOUNT_MINTING: Uint128 = Uint128::new(105);
+const AMOUNT_DISALLOWED_TRIGGER: Uint128 = Uint128::new(7);
+const AMOUNT_IGNORE_WHITELISTING_TRIGGER: Uint128 = Uint128::new(49);
+const AMOUNT_IGNORE_FREEZING_TRIGGER: Uint128 = Uint128::new(79);
+const AMOUNT_BURNING_TRIGGER: Uint128 = Uint128::new(101);
+const AMOUNT_MINTING_TRIGGER: Uint128 = Uint128::new(105);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -62,7 +62,7 @@ pub fn execute_extension_transfer(
     // TODO remove this if statement.
     // This check is intended for POC testing, it must be replaced with a more
     // meaningful check.
-    if amount == MAGIC_AMOUNT_DISALLOWED {
+    if amount == AMOUNT_DISALLOWED_TRIGGER {
         return Err(ContractError::Std(StdError::generic_err(
             "7 is not allowed",
         )));
@@ -102,14 +102,14 @@ pub fn execute_extension_transfer(
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
         // meaningful check.
-        if amount == MAGIC_AMOUNT_BURNING {
+        if amount == AMOUNT_BURNING_TRIGGER {
             return assert_burning(amount, &token);
         }
 
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
         // meaningful check.
-        if amount == MAGIC_AMOUNT_MINTING {
+        if amount == AMOUNT_MINTING_TRIGGER {
             return assert_minting(info.sender.as_ref(), &recipient, amount, &token);
         }
     }
@@ -143,7 +143,7 @@ fn assert_freezing(
     // TODO remove this if statement.
     // This check is intended for POC testing, it must be replaced with a more
     // meaningful check.
-    if amount == MAGIC_AMOUNT_IGNORE_FREEZING {
+    if amount == AMOUNT_IGNORE_FREEZING_TRIGGER {
         return Ok(());
     }
 
@@ -176,7 +176,7 @@ fn assert_whitelisting(
     // TODO remove this if statement.
     // This check is intended for POC testing, it must be replaced with a more
     // meaningful check.
-    if amount == MAGIC_AMOUNT_IGNORE_WHITELISTING {
+    if amount == AMOUNT_IGNORE_WHITELISTING_TRIGGER {
         return Ok(());
     }
 
@@ -210,10 +210,6 @@ fn assert_minting(
         coin: cosmwasm_std::coin(amount.u128(), &token.denom),
         recipient: Some(recipient.to_string()),
     });
-
-    if token.admin != Some(sender.to_string()) {
-        return Err(ContractError::Unauthorized {});
-    }
 
     let return_fund_msg = cosmwasm_std::BankMsg::Send {
         to_address: sender.to_string(),
