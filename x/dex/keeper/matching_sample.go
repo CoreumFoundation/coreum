@@ -99,7 +99,7 @@ func NewOrderBook(sellDenom, buyDenom string) *OrderBook {
 func (ob *OrderBook) AddOrder(order Order) {
 	i := ob.findRecordIndex(order.Account, order.ID)
 	if i >= 0 {
-		panic(fmt.Sprintf("Record with the same account and orderID is already exists in the order book, order:%s", order))
+		panic(fmt.Sprintf("Record with the same account and orderID already exists in the order book, order:%s", order))
 	}
 	record := OrderBookRecord{
 		Account:               order.Account,
@@ -234,10 +234,11 @@ func (app *App) PlaceOrder(order Order) {
 func (app *App) matchOrder(order Order, revOB, ob *OrderBook) {
 	if revOB.IsEmpty() {
 		ob.AddOrder(order)
+		return
 	}
 
+	buyPrice := (&big.Rat{}).SetFrac(DecPrecisionReuse, order.Price.BigInt())
 	revOB.Iterate(func(revOBRecord OrderBookRecord) bool {
-		buyPrice := (&big.Rat{}).SetFrac(DecPrecisionReuse, order.Price.BigInt())
 		revSellPrice := (&big.Rat{}).SetFrac(revOBRecord.Price.BigInt(), DecPrecisionReuse)
 
 		if buyPrice.Cmp(revSellPrice) == -1 {
