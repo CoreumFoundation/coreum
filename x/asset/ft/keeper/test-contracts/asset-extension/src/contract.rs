@@ -1,10 +1,12 @@
 use cosmwasm_std::{entry_point, StdError};
-use cosmwasm_std::{BalanceResponse, BankQuery, WasmQuery, ContractInfoResponse};
+use cosmwasm_std::{BalanceResponse, BankQuery, ContractInfoResponse, WasmQuery};
 use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use coreum_wasm_sdk::assetft::{FrozenBalanceResponse, Query, Token, TokenResponse, WhitelistedBalanceResponse, self};
+use coreum_wasm_sdk::assetft::{
+    self, FrozenBalanceResponse, Query, Token, TokenResponse, WhitelistedBalanceResponse,
+};
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
@@ -13,6 +15,10 @@ use crate::state::DENOM;
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+const MAGIC_AMOUNT_DISALLOWED: Uint128 = Uint128::new(7);
+const MAGIC_AMOUNT_BURNING: Uint128 = Uint128::new(101);
+const MAGIC_AMOUNT_MINTING: Uint128 = Uint128::new(105);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -46,7 +52,7 @@ pub fn execute(
 
 pub fn execute_extension_transfer(
     deps: DepsMut<CoreumQueries>,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     amount: Uint128,
     recipient: String,
@@ -54,7 +60,7 @@ pub fn execute_extension_transfer(
     // TODO remove this if statement.
     // This check is intended for POC testing, it must be replaced with a more
     // meaningful check.
-    if amount == Uint128::new(7) {
+    if amount == MAGIC_AMOUNT_DISALLOWED {
         return Err(ContractError::Std(StdError::generic_err(
             "7 is not allowed",
         )));
@@ -66,11 +72,12 @@ pub fn execute_extension_transfer(
 
     // check that amount is present in the attached funds, and attached funds is enough
     // to cover the transfer.
-    let has_sufficient_funds = info.funds.iter().any(
-        |coin| coin.denom == denom && coin.amount >= amount
-    );
+    let has_sufficient_funds = info
+        .funds
+        .iter()
+        .any(|coin| coin.denom == denom && coin.amount >= amount);
     if !has_sufficient_funds {
-        return Err(ContractError::InsufficientFunds {})
+        return Err(ContractError::InsufficientFunds {});
     }
 
     if let Some(features) = &token.features {
@@ -87,33 +94,38 @@ pub fn execute_extension_transfer(
         }
 
         if features.contains(&assetft::BLOCK_SMART_CONTRACTS) {
-            assert_block_smart_contracts(
-                deps.as_ref(), info.sender.as_ref(), &recipient, &token
-            )?;
+            assert_block_smart_contracts(deps.as_ref(), info.sender.as_ref(), &recipient, &token)?;
         }
 
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
         // meaningful check.
-        if amount == Uint128::new(101) {
+        if amount == MAGIC_AMOUNT_BURNING {
             return assert_burning(
-                info.sender.as_ref(), amount, &token, features.contains(&assetft::BURNING)
+                info.sender.as_ref(),
+                amount,
+                &token,
+                features.contains(&assetft::BURNING),
             );
         }
 
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
         // meaningful check.
-        if amount == Uint128::new(105) {
+        if amount == MAGIC_AMOUNT_MINTING {
             return assert_minting(
-                info.sender.as_ref(), &recipient, amount, &token, features.contains(&assetft::MINTING)
+                info.sender.as_ref(),
+                &recipient,
+                amount,
+                &token,
+                features.contains(&assetft::MINTING),
             );
         }
     }
 
     let transfer_msg = cosmwasm_std::BankMsg::Send {
         to_address: recipient,
-        amount: vec![Coin {amount, denom}],
+        amount: vec![Coin { amount, denom }],
     };
 
     Ok(Response::new()
@@ -132,8 +144,7 @@ fn assert_freezing(
     token: &Token,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
-    // TODO(masih): Change it to admin
-    if token.issuer == account.to_string() {
+    if token.admin == Some(account.to_string()) {
         return Ok(());
     }
 
@@ -160,8 +171,7 @@ fn assert_whitelisting(
     amount: Uint128,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
-    // TODO(masih): Change it to admin
-    if token.issuer == account.to_string() {
+    if token.admin == Some(account.to_string()) {
         return Ok(());
     }
 
@@ -179,14 +189,13 @@ fn assert_burning(
     sender: &str,
     amount: Uint128,
     token: &Token,
-    burning_enabled: bool
+    burning_enabled: bool,
 ) -> CoreumResult<ContractError> {
     let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
-        coin: cosmwasm_std::coin(amount.u128(), &token.denom)
+        coin: cosmwasm_std::coin(amount.u128(), &token.denom),
     });
 
-    // TODO(masih): Change token.issuer to token.admin
-    if !burning_enabled && sender != token.issuer {
+    if !burning_enabled && token.admin != Some(sender.to_string()) {
         return Err(ContractError::FeatureDisabledError {});
     }
 
@@ -200,7 +209,7 @@ fn assert_minting(
     recipient: &str,
     amount: Uint128,
     token: &Token,
-    minting_enabled: bool
+    minting_enabled: bool,
 ) -> CoreumResult<ContractError> {
     let mint_message = CoreumMsg::AssetFT(assetft::Msg::Mint {
         coin: cosmwasm_std::coin(amount.u128(), &token.denom),
@@ -211,14 +220,16 @@ fn assert_minting(
         return Err(ContractError::FeatureDisabledError {});
     }
 
-    // TODO(masih): Change token.issuer to token.admin
-    if sender != token.issuer {
+    if token.admin != Some(sender.to_string()) {
         return Err(ContractError::Unauthorized {});
     }
 
     let return_fund_msg = cosmwasm_std::BankMsg::Send {
         to_address: sender.to_string(),
-        amount: vec![Coin {amount, denom: token.denom.clone()}],
+        amount: vec![Coin {
+            amount,
+            denom: token.denom.clone(),
+        }],
     };
 
     return Ok(Response::new()
@@ -235,9 +246,10 @@ fn assert_block_smart_contracts(
 ) -> Result<(), ContractError> {
     // TODO: Do we need this?
     let issued_from_smart_contract = is_smart_contract(deps, &token.issuer);
-    if issued_from_smart_contract &&
-        (sender.to_string() == token.issuer || recipient.to_string() == token.issuer) {
-        return Ok(())
+    if issued_from_smart_contract
+        && (sender.to_string() == token.issuer || recipient.to_string() == token.issuer)
+    {
+        return Ok(());
     }
 
     if is_smart_contract(deps, sender) {
@@ -251,18 +263,13 @@ fn assert_block_smart_contracts(
     return Ok(());
 }
 
-fn query_frozen_balance(
-    deps: Deps<CoreumQueries>,
-    account: &str,
-    denom: &str,
-) -> StdResult<Coin> {
+fn query_frozen_balance(deps: Deps<CoreumQueries>, account: &str, denom: &str) -> StdResult<Coin> {
     let frozen_balance: FrozenBalanceResponse = deps.querier.query(
-        &CoreumQueries::AssetFT(
-            Query::FrozenBalance {
-                account: account.to_string(),
-                denom: denom.to_string(),
-            }
-        ).into()
+        &CoreumQueries::AssetFT(Query::FrozenBalance {
+            account: account.to_string(),
+            denom: denom.to_string(),
+        })
+        .into(),
     )?;
     Ok(frozen_balance.balance)
 }
@@ -273,41 +280,33 @@ fn query_whitelisted_balance(
     denom: &str,
 ) -> StdResult<Coin> {
     let whitelisted_balance: WhitelistedBalanceResponse = deps.querier.query(
-        &CoreumQueries::AssetFT(
-            Query::WhitelistedBalance {
-                account: account.to_string(),
-                denom: denom.to_string(),
-            }
-        ).into()
+        &CoreumQueries::AssetFT(Query::WhitelistedBalance {
+            account: account.to_string(),
+            denom: denom.to_string(),
+        })
+        .into(),
     )?;
     Ok(whitelisted_balance.balance)
 }
 
-fn query_bank_balance(
-    deps: Deps<CoreumQueries>,
-    account: &str,
-    denom: &str,
-) -> StdResult<Coin> {
+fn query_bank_balance(deps: Deps<CoreumQueries>, account: &str, denom: &str) -> StdResult<Coin> {
     let bank_balance: BalanceResponse = deps.querier.query(
         &BankQuery::Balance {
             address: account.to_string(),
             denom: denom.to_string(),
         }
-            .into(),
+        .into(),
     )?;
 
     Ok(bank_balance.amount)
 }
 
-fn query_token(
-    deps: Deps<CoreumQueries>,
-    denom: &str,
-) -> StdResult<Token> {
+fn query_token(deps: Deps<CoreumQueries>, denom: &str) -> StdResult<Token> {
     let token: TokenResponse = deps.querier.query(
-        &CoreumQueries::AssetFT(
-            Query::Token { denom: denom.to_string() }
-        )
-            .into(),
+        &CoreumQueries::AssetFT(Query::Token {
+            denom: denom.to_string(),
+        })
+        .into(),
     )?;
 
     Ok(token.token)
@@ -321,15 +320,12 @@ fn query_contract_info(
         &WasmQuery::ContractInfo {
             contract_addr: account.to_string(),
         }
-            .into(),
+        .into(),
     )?;
 
     Ok(contract_info)
 }
 
-fn is_smart_contract(
-    deps: Deps<CoreumQueries>,
-    account: &str,
-) -> bool {
+fn is_smart_contract(deps: Deps<CoreumQueries>, account: &str) -> bool {
     query_contract_info(deps, account).is_ok()
 }

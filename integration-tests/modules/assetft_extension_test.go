@@ -28,6 +28,12 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
+const (
+	MagicAmountDisallowed = 7
+	MagicAmountBurning    = 101
+	MagicAmountMinting    = 105
+)
+
 // TestAssetFTExtensionIssue tests extension issue functionality of fungible tokens.
 func TestAssetFTExtensionIssue(t *testing.T) {
 	t.Parallel()
@@ -122,7 +128,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	requireT.EqualValues("12", balance.Balance.Amount.String())
 
 	// sending 7 will fail
-	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(7)))
+	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(MagicAmountDisallowed)))
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
@@ -173,7 +179,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	requireT.NoError(err)
 	contractMsg = map[string]interface{}{
 		assetftkeeper.ExtenstionTransferMethod: assetftkeeper.ExtensionTransferMsg{
-			Amount:    sdk.NewInt(7),
+			Amount:    sdk.NewInt(MagicAmountDisallowed),
 			Recipient: recipient2.String(),
 		},
 	}
@@ -185,7 +191,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		recipient,
 		token.Token.ExtensionCWAddress,
 		contractMsgBytes,
-		sdk.NewCoin(denom, sdk.NewInt(7)),
+		sdk.NewCoin(denom, sdk.NewInt(MagicAmountDisallowed)),
 	)
 	requireT.Error(err)
 }
@@ -908,7 +914,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount: sdk.NewCoins(sdk.Coin{
 			Denom:  unburnable,
-			Amount: sdkmath.NewInt(101),
+			Amount: sdkmath.NewInt(MagicAmountBurning),
 		}),
 	}
 
@@ -969,7 +975,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	// burn tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(101))
+	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(MagicAmountBurning))
 
 	burnMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
@@ -1076,7 +1082,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount: sdk.NewCoins(sdk.Coin{
 			Denom:  unmintableDenom,
-			Amount: sdkmath.NewInt(105),
+			Amount: sdkmath.NewInt(MagicAmountMinting),
 		}),
 	}
 
@@ -1137,7 +1143,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	// mint tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(105))
+	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(MagicAmountMinting))
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   issuer.String(),
@@ -1163,7 +1169,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 
 	// mint tokens to recipient
-	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(105))
+	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(MagicAmountMinting))
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
