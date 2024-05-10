@@ -731,7 +731,9 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 	}
 
 	def.Admin = ""
-	def.SendCommissionRate = sdk.ZeroDec()
+	if !def.IsFeatureEnabled(types.Feature_extension) {
+		def.SendCommissionRate = sdk.ZeroDec()
+	}
 
 	k.SetDefinition(ctx, issuer, subunit, def)
 
@@ -1068,10 +1070,6 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if def.IsAdmin(addr) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be clawed back")
 	}
 
 	if _, isModuleAccount := k.accountKeeper.GetAccount(ctx, addr).(*authtypes.ModuleAccount); isModuleAccount {
