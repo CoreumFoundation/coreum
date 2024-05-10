@@ -17,6 +17,8 @@ const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const MAGIC_AMOUNT_DISALLOWED: Uint128 = Uint128::new(7);
+const MAGIC_AMOUNT_IGNORE_WHITELISTING: Uint128 = Uint128::new(49);
+const MAGIC_AMOUNT_IGNORE_FREEZING: Uint128 = Uint128::new(79);
 const MAGIC_AMOUNT_BURNING: Uint128 = Uint128::new(101);
 const MAGIC_AMOUNT_MINTING: Uint128 = Uint128::new(105);
 
@@ -86,7 +88,7 @@ pub fn execute_extension_transfer(
         // must not go below the frozen amount. Otherwise the transaction will fail.
 
         if features.contains(&assetft::FREEZING) {
-            assert_freezing(deps.as_ref(), info.sender.as_ref(), &token)?;
+            assert_freezing(deps.as_ref(), info.sender.as_ref(), &token, amount)?;
         }
 
         if features.contains(&assetft::WHITELISTING) {
@@ -101,25 +103,14 @@ pub fn execute_extension_transfer(
         // This check is intended for POC testing, it must be replaced with a more
         // meaningful check.
         if amount == MAGIC_AMOUNT_BURNING {
-            return assert_burning(
-                info.sender.as_ref(),
-                amount,
-                &token,
-                features.contains(&assetft::BURNING),
-            );
+            return assert_burning(amount, &token);
         }
 
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
         // meaningful check.
         if amount == MAGIC_AMOUNT_MINTING {
-            return assert_minting(
-                info.sender.as_ref(),
-                &recipient,
-                amount,
-                &token,
-                features.contains(&assetft::MINTING),
-            );
+            return assert_minting(info.sender.as_ref(), &recipient, amount, &token);
         }
     }
 
@@ -142,16 +133,23 @@ fn assert_freezing(
     deps: Deps<CoreumQueries>,
     account: &str,
     token: &Token,
+    amount: Uint128,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
     if token.admin == Some(account.to_string()) {
         return Ok(());
     }
 
-    // TODO(masih): Uncomment after updating the SDK
-    // if token.globally_frozen {
-    //     return Err(ContractError::FreezingError {});
-    // }
+    // TODO remove this if statement.
+    // This check is intended for POC testing, it must be replaced with a more
+    // meaningful check.
+    if amount == MAGIC_AMOUNT_IGNORE_FREEZING {
+        return Ok(());
+    }
+
+    if token.globally_frozen == Some(true) {
+        return Err(ContractError::FreezingError {});
+    }
 
     let bank_balance = query_bank_balance(deps, account, &token.denom)?;
     let frozen_balance = query_frozen_balance(deps, account, &token.denom)?;
@@ -175,6 +173,13 @@ fn assert_whitelisting(
         return Ok(());
     }
 
+    // TODO remove this if statement.
+    // This check is intended for POC testing, it must be replaced with a more
+    // meaningful check.
+    if amount == MAGIC_AMOUNT_IGNORE_WHITELISTING {
+        return Ok(());
+    }
+
     let bank_balance = query_bank_balance(deps, account, &token.denom)?;
     let whitelisted_balance = query_whitelisted_balance(deps, account, &token.denom)?;
 
@@ -185,19 +190,10 @@ fn assert_whitelisting(
     Ok(())
 }
 
-fn assert_burning(
-    sender: &str,
-    amount: Uint128,
-    token: &Token,
-    burning_enabled: bool,
-) -> CoreumResult<ContractError> {
+fn assert_burning(amount: Uint128, token: &Token) -> CoreumResult<ContractError> {
     let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
         coin: cosmwasm_std::coin(amount.u128(), &token.denom),
     });
-
-    if !burning_enabled && token.admin != Some(sender.to_string()) {
-        return Err(ContractError::FeatureDisabledError {});
-    }
 
     return Ok(Response::new()
         .add_attribute("method", "burn")
@@ -209,16 +205,11 @@ fn assert_minting(
     recipient: &str,
     amount: Uint128,
     token: &Token,
-    minting_enabled: bool,
 ) -> CoreumResult<ContractError> {
     let mint_message = CoreumMsg::AssetFT(assetft::Msg::Mint {
         coin: cosmwasm_std::coin(amount.u128(), &token.denom),
         recipient: Some(recipient.to_string()),
     });
-
-    if !minting_enabled {
-        return Err(ContractError::FeatureDisabledError {});
-    }
 
     if token.admin != Some(sender.to_string()) {
         return Err(ContractError::Unauthorized {});

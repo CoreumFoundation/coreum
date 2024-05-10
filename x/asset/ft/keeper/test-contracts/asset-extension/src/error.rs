@@ -12,9 +12,6 @@ pub enum ContractError {
     #[error("Whitelisted limit exceeded.")]
     WhitelistingError {},
 
-    #[error("Feature disabled.")]
-    FeatureDisabledError {},
-
     #[error("Unauthorized.")]
     Unauthorized {},
 

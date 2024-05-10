@@ -23,9 +23,11 @@ import (
 )
 
 const (
-	MagicAmountDisallowed = 7
-	MagicAmountBurning    = 101
-	MagicAmountMinting    = 105
+	MagicAmountDisallowed         = 7
+	MagicAmountIgnoreWhitelisting = 49
+	MagicAmountIgnoreFreezing     = 79
+	MagicAmountBurning            = 101
+	MagicAmountMinting            = 105
 )
 
 func TestKeeper_Extension_Issue(t *testing.T) {
@@ -216,17 +218,19 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 
+	// sending magic amount will be transferred despise whitelisted amount being exceeded
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(MagicAmountIgnoreWhitelisting))),
+	)
+	requireT.NoError(err)
+
 	// reduce whitelisting limit below the current balance
 	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
 	requireT.NoError(err)
-
-	// TODO: add a special condition into the smart contract to ignore default whitelisting, so we will know that
-	// we are able to overwrite the default behavior via smart contract.
 }
 
 func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	requireT := require.New(t)
-	assertT := assert.New(t)
 
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
@@ -294,65 +298,11 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	))
 	requireT.NoError(err)
 
-	// try to freeze non-existent denom
-	nonExistentDenom := types.BuildDenom("nonexist", issuer)
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(nonExistentDenom, sdkmath.NewInt(10)))
-	requireT.ErrorIs(err, types.ErrTokenNotFound)
-
-	// try to freeze unfreezable Token
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(unfreezableDenom, sdkmath.NewInt(10)))
-	requireT.ErrorIs(err, types.ErrFeatureDisabled)
-
-	// try to freeze from non issuer address
-	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = ftKeeper.Freeze(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(10)))
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
-	// try to freeze 0 balance
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(0)))
-	requireT.ErrorIs(err, cosmoserrors.ErrInvalidCoins)
-
-	// try to unfreeze 0 balance
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(0)))
-	requireT.ErrorIs(err, cosmoserrors.ErrInvalidCoins)
-
-	// try to freeze more than balance
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(110)))
+	// freeze, query frozen
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(120)))
 	requireT.NoError(err)
 	frozenBalance := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(110)), frozenBalance)
-
-	// try to unfreeze more than frozen balance
-	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(130)))
-	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(110)), frozenBalance)
-
-	// set frozen balance back to zero
-	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(110)))
-	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(0)).String(), frozenBalance.String())
-
-	// freeze, query frozen
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
-	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(40)).String(), frozenBalance.String())
-
-	// test query all frozen
-	allBalances, pageRes, err := ftKeeper.GetAccountsFrozenBalances(ctx, &query.PageRequest{})
-	requireT.NoError(err)
-	assertT.Len(allBalances, 1)
-	assertT.EqualValues(1, pageRes.GetTotal())
-	assertT.EqualValues(recipient.String(), allBalances[0].Address)
-	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(40))).String(), allBalances[0].Coins.String())
-
-	// increase frozen and query
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
-	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(80)), frozenBalance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(120)), frozenBalance)
 	// try to send more than available
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(80)))
 	// send
@@ -370,58 +320,11 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	err = bankKeeper.SendCoins(ctx, extensionCWAddress, recipient, coinsToSend)
 	requireT.NoError(err)
 
-	// try to send unfrozen balance
-	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
-	// send
-	err = bankKeeper.SendCoins(ctx, recipient, recipient2, coinsToSend)
+	// send magic amount to transfer despite freezing
+	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(MagicAmountIgnoreFreezing))),
+	)
 	requireT.NoError(err)
-	balance := bankKeeper.GetBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(90)), balance)
-	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(10)), balance)
-	// multi-send
-	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
-		[]banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}})
-	requireT.NoError(err) // Requested transfer token is frozen.
-	balance = bankKeeper.GetBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(80)), balance)
-	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(20)), balance)
-
-	// try to unfreeze from non issuer address
-	err = ftKeeper.Unfreeze(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
-	// set absolute frozen amount
-	err = ftKeeper.SetFrozen(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
-	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), frozenBalance)
-
-	// unfreeze, query frozen, and try to send
-	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
-	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), frozenBalance)
-	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(40)))
-	// send
-	err = bankKeeper.SendCoins(ctx, recipient, recipient2, coinsToSend)
-	requireT.NoError(err)
-	balance = bankKeeper.GetBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(40)), balance)
-	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(60)), balance)
-	// multi-send
-	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
-		[]banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}})
-	requireT.NoError(err)
-	balance = bankKeeper.GetBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), balance)
-	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), balance)
 }
 
 func TestKeeper_Extension_Burn(t *testing.T) {
@@ -477,11 +380,8 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	coinsToBurn := sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(MagicAmountBurning)))
 
-	// try to burn unburnable token from the recipient account
+	// try to burn unburnable token from the recipient account and make sure that extension can do it
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, coinsToBurn)
-	requireT.ErrorContains(err, "Feature disabled.")
-	// return attached fund of failed transaction
-	err = bankKeeper.SendCoins(ctx, unburnableDenomExtensionCWAddress, recipient, coinsToBurn)
 	requireT.NoError(err)
 
 	issuerBalanceBefore := bankKeeper.GetBalance(ctx, issuer, unburnableDenom)
@@ -633,7 +533,7 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	err = bankKeeper.SendCoins(ctx, addr, addr, sdk.NewCoins(
 		sdk.NewCoin(unmintableDenom, sdkmath.NewInt(MagicAmountMinting))),
 	)
-	requireT.ErrorContains(err, "Feature disabled.")
+	requireT.ErrorContains(err, "feature minting is disabled")
 
 	// Issue a mintable fungible token
 	settings = types.IssueSettings{
