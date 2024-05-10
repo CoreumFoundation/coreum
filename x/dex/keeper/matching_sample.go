@@ -258,18 +258,18 @@ func (app *App) PlaceOrder(order Order) error {
 	app.PrintBalances()
 }
 
-func (app *App) matchOrder(takerOrder Order, makerOB, takerOB *OrderBook) {
-	if makerOB.IsEmpty() {
-		takerOB.AddOrder(takerOrder)
+func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
+	if ob.IsEmpty() {
+		revOB.AddOrder(takerOrder)
 	}
 
-	makerOB.Iterate(func(revOBRecord OrderBookRecord) bool {
+	ob.Iterate(func(revOBRecord OrderBookRecord) bool {
 		takerPriceReversed := (&big.Rat{}).SetFrac(DecPrecisionReuse, takerOrder.Price.BigInt())
 		makerPrice := (&big.Rat{}).SetFrac(revOBRecord.Price.BigInt(), DecPrecisionReuse)
 
 		// If takerPriceReversed is less than makerPrice, then orders don't match.
 		if takerPriceReversed.Cmp(makerPrice) == -1 {
-			takerOB.AddOrder(takerOrder)
+			revOB.AddOrder(takerOrder)
 			return true
 		}
 
@@ -290,22 +290,22 @@ func (app *App) matchOrder(takerOrder Order, makerOB, takerOB *OrderBook) {
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
 			// maker receives the taker sell quantity
 			makerReceiveAmount := takerOrder.SellQuantity
-			app.SendCoin(revOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, makerReceiveAmount))
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.BuyDenom, makerReceiveAmount))
 			// update state
 			revOBRecord.RemainingSellQuantity = revOBRecord.RemainingSellQuantity.Sub(takerReceiveAmount)
 			if revOBRecord.IsRemainingBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration and remove
-				app.SendCoin(revOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, revOBRecord.RemainingSellQuantity))
-				makerOB.RemoveRecord(revOBRecord)
+				app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.SellDenom, revOBRecord.RemainingSellQuantity))
+				ob.RemoveRecord(revOBRecord)
 			} else {
-				makerOB.UpdateRecord(revOBRecord)
+				ob.UpdateRecord(revOBRecord)
 			}
 			return true
 		case 0: // takerBuyAmount == makerSellAmount: both taker and maker orders are matched fully.
-			app.SendCoin(revOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, takerOrder.SellQuantity))
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.BuyDenom, takerOrder.SellQuantity))
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, revOBRecord.RemainingSellQuantity))
 			// remove reduced record
-			makerOB.RemoveRecord(revOBRecord)
+			ob.RemoveRecord(revOBRecord)
 			return true
 		case 1: // takerBuyAmount > makerSellAmount: taker order is matched partially, and maker order is matched fully.
 			// taker receives the amount maker sells
@@ -313,19 +313,19 @@ func (app *App) matchOrder(takerOrder Order, makerOB, takerOB *OrderBook) {
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
 
 			makerReceiveAmount := RatAmountToIntRoundDown((&big.Rat{}).Mul(makerSellAmount, makerPrice))
-			app.SendCoin(revOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, makerReceiveAmount))
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.BuyDenom, makerReceiveAmount))
 			// update state
 			takerOrder.SellQuantity = takerOrder.SellQuantity.Sub(makerReceiveAmount)
 			// remove reduced record
-			makerOB.RemoveRecord(revOBRecord)
+			ob.RemoveRecord(revOBRecord)
 			if takerOrder.IsBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration
 				app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.SellDenom, takerOrder.SellQuantity))
 				return true
 			}
 			// if nothing to match with add remaining takerOrder
-			if makerOB.IsEmpty() {
-				takerOB.AddOrder(takerOrder)
+			if ob.IsEmpty() {
+				revOB.AddOrder(takerOrder)
 				return true
 			}
 		}
