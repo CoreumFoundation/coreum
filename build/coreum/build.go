@@ -134,6 +134,8 @@ func Lint(ctx context.Context, deps build.DepsFunc) error {
 
 // Test run unit tests in coreum repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
+	deps(CompileAllSmartContracts)
+
 	return golang.Test(ctx, repoPath, deps)
 }
 
