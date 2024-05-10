@@ -96,7 +96,7 @@ pub fn execute_extension_transfer(
         }
 
         if features.contains(&assetft::BLOCK_SMART_CONTRACTS) {
-            assert_block_smart_contracts(deps.as_ref(), info.sender.as_ref(), &recipient, &token)?;
+            assert_block_smart_contracts(deps.as_ref(), &recipient, &token)?;
         }
 
         // TODO remove this if statement.
@@ -227,20 +227,13 @@ fn assert_minting(
 
 fn assert_block_smart_contracts(
     deps: Deps<CoreumQueries>,
-    sender: &str,
     recipient: &str,
     token: &Token,
 ) -> Result<(), ContractError> {
-    // TODO: Do we need this?
-    let issued_from_smart_contract = is_smart_contract(deps, &token.issuer);
-    if issued_from_smart_contract
-        && (sender.to_string() == token.issuer || recipient.to_string() == token.issuer)
+    if recipient.to_string() == token.issuer
+        || Some(recipient.to_string()) == token.extension_cw_address
     {
         return Ok(());
-    }
-
-    if is_smart_contract(deps, sender) {
-        return Err(ContractError::SmartContractBlocked {});
     }
 
     if is_smart_contract(deps, recipient) {
