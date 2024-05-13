@@ -731,5 +731,8 @@ func TestKeeper_Extension_ClearAdmin(t *testing.T) {
 	extensionBalanceAfter, err := bankKeeper.Balance(ctx, banktypes.NewQueryBalanceRequest(extensionCWAddress, denom))
 	requireT.NoError(err)
 
-	requireT.Equal(extensionBalanceAfter.Balance.Amount.Sub(extensionBalanceBefore.Balance.Amount).String(), "10")
+	requireT.Equal(
+		extensionBalanceAfter.Balance.Amount.Sub(extensionBalanceBefore.Balance.Amount).String(),
+		"10",
+	)
 }

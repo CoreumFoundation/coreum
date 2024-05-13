@@ -69,16 +69,13 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			admin := sdk.AccAddress{}
-			if def.Admin != "" {
-				admin, err = sdk.AccAddressFromBech32(def.Admin)
-				if err != nil {
-					return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
-				}
+			_, err = sdk.AccAddressFromBech32(def.Admin)
+			if err != nil {
+				return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
 			}
 
-			burnAmount := k.CalculateRate(ctx, def.BurnRate, admin, sender, recipient, coin)
-			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, admin, sender, recipient, coin)
+			burnAmount := k.CalculateRate(ctx, def.BurnRate, def.Admin, sender, recipient, coin)
+			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, def.Admin, sender, recipient, coin)
 
 			if def.IsFeatureEnabled(types.Feature_extension) {
 				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
@@ -90,9 +87,10 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			if commissionAmount.IsPositive() {
+			if def.Admin != "" && commissionAmount.IsPositive() {
+				adminAddr := sdk.MustAccAddressFromBech32(def.Admin)
 				commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
-				if err := k.bankKeeper.SendCoins(ctx, sender, admin, commissionCoin); err != nil {
+				if err := k.bankKeeper.SendCoins(ctx, sender, adminAddr, commissionCoin); err != nil {
 					return err
 				}
 			}
@@ -185,7 +183,7 @@ func (k Keeper) invokeAssetExtension(
 func (k Keeper) CalculateRate(
 	ctx sdk.Context,
 	rate sdk.Dec,
-	admin,
+	admin string,
 	sender sdk.AccAddress,
 	receiver sdk.AccAddress,
 	amount sdk.Coin,
@@ -215,8 +213,11 @@ func (k Keeper) CalculateRate(
 		return sdk.ZeroInt()
 	}
 
-	if admin.Equals(sender) || admin.Equals(receiver) {
-		return sdk.ZeroInt()
+	if admin != "" {
+		adminAddr := sdk.MustAccAddressFromBech32(admin)
+		if adminAddr.Equals(sender) || adminAddr.Equals(receiver) {
+			return sdk.ZeroInt()
+		}
 	}
 
 	// We do not apply burn and commission rate if sender is a smart contract address.
