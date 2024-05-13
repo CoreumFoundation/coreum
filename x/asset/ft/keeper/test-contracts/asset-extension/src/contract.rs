@@ -55,8 +55,8 @@ pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResul
             sender,
             recipient,
             transfer_amount,
-            commission_amount: _,
-            burn_amount: _,
+            commission_amount,
+            burn_amount,
             context: _,
         } => sudo_extension_transfer(deps, env, transfer_amount, sender, recipient),
     }
