@@ -1931,7 +1931,10 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	}
 	requireT.NoError(err)
 
-	classID := assetnfttypes.BuildClassID(issueClassReqNoWhitelist.Symbol, sdk.MustAccAddressFromBech32(contractAddrNoWhitelist)) //nolint:lll
+	classID := assetnfttypes.BuildClassID(
+		issueClassReqNoWhitelist.Symbol,
+		sdk.MustAccAddressFromBech32(contractAddrNoWhitelist),
+	)
 	classRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
 	requireT.NoError(err)
 
@@ -1954,7 +1957,6 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	// ********** Mint **********
 
 	// Mint an immutable NFT using protos instead of using the deprecated handler
-
 	mintImmutableNFTReq := moduleswasm.NftMintRequest{
 		ID:        "id-1",
 		Recipient: mintRecipient.String(),
@@ -2001,7 +2003,6 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.Equal(nftOwner.Owner, mintRecipient.String())
 
 	// Mint a mutable NFT with both Owner and Issuer as editors
-
 	encodedMutableData := base64.StdEncoding.EncodeToString([]byte("mutable_data"))
 	mintMutableNFTReq := moduleswasm.NftMintRequest{
 		ID:        "id-mut",
@@ -2365,7 +2366,15 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, removeFromClassWhitelistPayload, sdk.Coin{}) //nolint:lll
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		txf,
+		admin,
+		contractAddrWhitelist,
+		removeFromClassWhitelistPayload,
+		sdk.Coin{},
+	)
+
 	requireT.NoError(err)
 
 	assertNftClassWhitelistedRes, err = assetNftClient.ClassWhitelistedAccounts(
