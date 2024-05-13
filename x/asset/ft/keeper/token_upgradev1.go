@@ -24,8 +24,8 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if !def.IsAdmin(sender) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only issuer may upgrade the token")
+	if !def.HasAdminPrivileges(sender) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin may upgrade the token")
 	}
 
 	if def.Version >= tokenUpgradeV1Version {
