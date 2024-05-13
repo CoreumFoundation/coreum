@@ -22,7 +22,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
-	assetftkeeper "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper"
 	testcontracts "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper/test-contracts"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
@@ -143,58 +142,6 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.EqualValues("12", balance.Balance.Amount.String())
-
-	// call directly from the user
-	// sending 1 will succeed
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Amount: sdk.NewInt(1000_000),
-	})
-
-	recipient2 := chain.GenAccount()
-	contractMsg := map[string]interface{}{
-		assetftkeeper.ExtenstionTransferMethod: assetftkeeper.ExtensionTransferMsg{
-			Amount:    sdk.NewInt(1),
-			Recipient: recipient2.String(),
-		},
-	}
-	contractMsgBytes, err := json.Marshal(contractMsg)
-	requireT.NoError(err)
-	_, err = chain.Wasm.ExecuteWASMContract(
-		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
-		recipient,
-		token.Token.ExtensionCWAddress,
-		contractMsgBytes,
-		sdk.NewCoin(denom, sdk.NewInt(1)),
-	)
-	requireT.NoError(err)
-
-	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: recipient2.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	requireT.EqualValues("1", balance.Balance.Amount.String())
-
-	// sending 7 will fail
-	requireT.NoError(err)
-	contractMsg = map[string]interface{}{
-		assetftkeeper.ExtenstionTransferMethod: assetftkeeper.ExtensionTransferMsg{
-			Amount:    sdk.NewInt(AmountDisallowedTrigger),
-			Recipient: recipient2.String(),
-		},
-	}
-	contractMsgBytes, err = json.Marshal(contractMsg)
-	requireT.NoError(err)
-	_, err = chain.Wasm.ExecuteWASMContract(
-		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
-		recipient,
-		token.Token.ExtensionCWAddress,
-		contractMsgBytes,
-		sdk.NewCoin(denom, sdk.NewInt(AmountDisallowedTrigger)),
-	)
-	requireT.Error(err)
 }
 
 // TestAssetFTExtensionWhitelist checks extension whitelist functionality of fungible tokens.

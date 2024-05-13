@@ -21,16 +21,19 @@ const (
 )
 
 // SudoExtensionTransferMsg contains the fields passed to extension method call.
+//
+//nolint:tagliatelle // these will be exposed to rust and must be snake case.
 type SudoExtensionTransferMsg struct {
-	Recipient       string                       `json:"recipient,omitempty"`
-	Sender          string                       `json:"sender,omitempty"`
-	TransferAmount  sdkmath.Int                  `json:"transfer_amount,omitempty"`
-	BurnAmount      sdkmath.Int                  `json:"burn_amount,omitempty"`
-	CommisionAmount sdkmath.Int                  `json:"commision_amount,omitempty"`
-	Context         SudoExtensionTransferContext `json:"context,omitempty"`
+	Recipient        string                       `json:"recipient,omitempty"`
+	Sender           string                       `json:"sender,omitempty"`
+	TransferAmount   sdkmath.Int                  `json:"transfer_amount,omitempty"`
+	BurnAmount       sdkmath.Int                  `json:"burn_amount,omitempty"`
+	CommissionAmount sdkmath.Int                  `json:"commission_amount,omitempty"`
+	Context          sudoExtensionTransferContext `json:"context,omitempty"`
 }
 
-type SudoExtensionTransferContext struct {
+//nolint:tagliatelle // these will be exposed to rust and must be snake case.
+type sudoExtensionTransferContext struct {
 	SenderIsSmartContract    bool   `json:"sender_is_smart_contract"`
 	RecipientIsSmartContract bool   `json:"recipient_is_smart_contract"`
 	IBCPurpose               string `json:"ibc_purpose"`
@@ -186,12 +189,12 @@ func (k Keeper) invokeAssetExtension(
 	ibcPurpose, _ := wibctransfertypes.GetPurpose(ctx)
 	contractMsg := map[string]interface{}{
 		ExtenstionTransferMethod: SudoExtensionTransferMsg{
-			Sender:          sender.String(),
-			Recipient:       recipient.String(),
-			TransferAmount:  sendAmount.Amount,
-			BurnAmount:      burnAmount,
-			CommisionAmount: commissionAmount,
-			Context: SudoExtensionTransferContext{
+			Sender:           sender.String(),
+			Recipient:        recipient.String(),
+			TransferAmount:   sendAmount.Amount,
+			BurnAmount:       burnAmount,
+			CommissionAmount: commissionAmount,
+			Context: sudoExtensionTransferContext{
 				IBCPurpose: ibcPurposeToExtensionString(ibcPurpose),
 			},
 		},
