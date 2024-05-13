@@ -39,7 +39,7 @@ pub fn instantiate(
         send_commission_rate: msg.send_commission_rate,
         uri: msg.uri.unwrap_or_default(),
         uri_hash: msg.uri_hash.unwrap_or_default(),
-        extension_settings: None,
+        extension_settings: msg.extension_settings,
     };
 
     let issue_bytes = issue.to_proto_bytes();
