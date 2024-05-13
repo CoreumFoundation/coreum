@@ -1,6 +1,6 @@
-# FT Contract
+# FT Legacy Contract
 
-This contract showcases how to interact with the AssetFT module using all messages and queries available.
+This contract showcases how to interact with the AssetFT module using all messages and queries available in the deprecated wasm bindings.
 
 # Instantiation
 
