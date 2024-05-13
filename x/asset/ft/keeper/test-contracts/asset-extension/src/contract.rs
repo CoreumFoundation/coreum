@@ -21,6 +21,7 @@ const AMOUNT_IGNORE_WHITELISTING_TRIGGER: Uint128 = Uint128::new(49);
 const AMOUNT_IGNORE_FREEZING_TRIGGER: Uint128 = Uint128::new(79);
 const AMOUNT_BURNING_TRIGGER: Uint128 = Uint128::new(101);
 const AMOUNT_MINTING_TRIGGER: Uint128 = Uint128::new(105);
+const AMOUNT_IGNORE_BURN_RATE_TRIGGER: Uint128 = Uint128::new(108);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -55,10 +56,10 @@ pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResul
             sender,
             recipient,
             transfer_amount,
-            commission_amount,
+            commission_amount: _,
             burn_amount,
             context: _,
-        } => sudo_extension_transfer(deps, env, transfer_amount, sender, recipient),
+        } => sudo_extension_transfer(deps, env, transfer_amount, sender, recipient, burn_amount),
     }
 }
 
@@ -68,6 +69,7 @@ pub fn sudo_extension_transfer(
     amount: Uint128,
     sender: String,
     recipient: String,
+    burn_amount: Uint128,
 ) -> CoreumResult<ContractError> {
     if amount == AMOUNT_DISALLOWED_TRIGGER {
         return Err(ContractError::Std(StdError::generic_err(
@@ -112,13 +114,19 @@ pub fn sudo_extension_transfer(
     }
 
     let transfer_msg = cosmwasm_std::BankMsg::Send {
-        to_address: recipient,
+        to_address: recipient.to_string(),
         amount: vec![Coin { amount, denom }],
     };
 
-    Ok(Response::new()
+    let mut response = Response::new()
         .add_attribute("method", "execute_transfer")
-        .add_message(transfer_msg))
+        .add_message(transfer_msg);
+
+    if !burn_amount.is_zero() {
+        response = assert_burn_rate(response, sender.as_ref(), amount, &token, burn_amount)?;
+    }
+
+    Ok(response)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -238,6 +246,42 @@ fn assert_block_smart_contracts(
     }
 
     return Ok(());
+}
+
+fn assert_burn_rate(
+    mut response: Response<CoreumMsg>,
+    sender: &str,
+    amount: Uint128,
+    token: &Token,
+    mut burn_amount: Uint128,
+) -> CoreumResult<ContractError> {
+    if amount == AMOUNT_IGNORE_BURN_RATE_TRIGGER {
+        let refund_burn_rate_msg = cosmwasm_std::BankMsg::Send {
+            to_address: sender.to_string(),
+            amount: vec![Coin {
+                amount: burn_amount,
+                denom: token.denom.to_string(),
+            }],
+        };
+
+        burn_amount = Uint128::zero();
+
+        response = response
+            .add_attribute("burn_rate_refund", burn_amount.to_string())
+            .add_message(refund_burn_rate_msg);
+    }
+
+    if !burn_amount.is_zero() {
+        let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
+            coin: cosmwasm_std::coin(burn_amount.u128(), &token.denom),
+        });
+
+        response = response
+            .add_attribute("burn_amount", burn_amount)
+            .add_message(burn_message);
+    }
+
+    Ok(response)
 }
 
 fn query_frozen_balance(deps: Deps<CoreumQueries>, account: &str, denom: &str) -> StdResult<Coin> {
