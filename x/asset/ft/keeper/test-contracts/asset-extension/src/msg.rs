@@ -15,7 +15,7 @@ pub enum SudoMsg {
         recipient: String,
         sender: String,
         transfer_amount: Uint128,
-        commision_amount: Uint128,
+        commission_amount: Uint128,
         burn_amount: Uint128,
         context: TransferContext,
     },
