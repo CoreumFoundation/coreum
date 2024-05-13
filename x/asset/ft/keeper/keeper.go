@@ -730,6 +730,8 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 		return err
 	}
 
+	// if extension feature is disabled, after clearing admin, there is no one to send commission to, so the commission
+	// rate sets to zero else only the admin is cleared and the extension receives the commission rate
 	def.Admin = ""
 	if !def.IsFeatureEnabled(types.Feature_extension) {
 		def.SendCommissionRate = sdk.ZeroDec()

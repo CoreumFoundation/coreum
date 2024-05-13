@@ -660,3 +660,76 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(1092), totalSupply.Supply.AmountOf(mintableDenom))
 }
+
+func TestKeeper_Extension_ClearAdmin(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	bankKeeper := testApp.BankKeeper
+	ftKeeper := testApp.AssetFTKeeper
+
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	sender := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, admin, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	settings := types.IssueSettings{
+		Issuer:        admin,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{types.Feature_extension},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	token, err := ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+
+	extensionCWAddress, err := sdk.AccAddressFromBech32(token.ExtensionCWAddress)
+	requireT.NoError(err)
+
+	// send some amount to an account
+	err = bankKeeper.SendCoins(ctx, admin, sender, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200))))
+	requireT.NoError(err)
+
+	// try to clear admin from non admin address
+	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = ftKeeper.ClearAdmin(ctx, randomAddr, denom)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// clear admin, query admin of definition
+	err = ftKeeper.ClearAdmin(ctx, admin, denom)
+	requireT.NoError(err)
+	def, err := ftKeeper.GetDefinition(ctx, denom)
+	requireT.NoError(err)
+	requireT.Empty(def.Admin)
+
+	extensionBalanceBefore, err := bankKeeper.Balance(ctx, banktypes.NewQueryBalanceRequest(extensionCWAddress, denom))
+	requireT.NoError(err)
+
+	// send some amount between two accounts
+	err = bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))))
+	requireT.NoError(err)
+
+	extensionBalanceAfter, err := bankKeeper.Balance(ctx, banktypes.NewQueryBalanceRequest(extensionCWAddress, denom))
+	requireT.NoError(err)
+
+	requireT.Equal(extensionBalanceAfter.Balance.Amount.Sub(extensionBalanceBefore.Balance.Amount).String(), "10")
+}
