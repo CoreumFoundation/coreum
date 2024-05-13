@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -28,6 +29,7 @@ const (
 	AmountIgnoreFreezingTrigger     = 79
 	AmountBurningTrigger            = 101
 	AmountMintingTrigger            = 105
+	AmountIgnoreBurnRateTrigger     = 108
 )
 
 func TestKeeper_Extension_Issue(t *testing.T) {
@@ -659,4 +661,291 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	totalSupply, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(1092), totalSupply.Supply.AmountOf(mintableDenom))
+}
+
+func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	assetKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+	ba := newBankAsserter(ctx, t, bankKeeper)
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	// issue token
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     6,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(600),
+		Features:      []types.Feature{types.Feature_extension},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+		BurnRate: sdk.MustNewDecFromStr("0.25"),
+	}
+
+	denom, err := assetKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// send from issuer to recipient (burn must not apply)
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(500)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient: 500,
+		&issuer:    100,
+	})
+
+	// send trigger amount from recipient1 to recipient2 (burn must not apply if extension decides)
+	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreBurnRateTrigger)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient:  392,
+		&recipient2: 108,
+		&issuer:     100,
+	})
+
+	// send from recipient1 to recipient2 (burn must apply)
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(100)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient:  267,
+		&recipient2: 208,
+		&issuer:     100,
+	})
+
+	// send from recipient to issuer account (burn must not apply)
+	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(267)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient2: 208,
+		&issuer:     367,
+	})
+}
+
+func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	assetKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+	ba := newBankAsserter(ctx, t, bankKeeper)
+
+	// issue 2 tokens
+	var recipients []sdk.AccAddress
+	var issuers []sdk.AccAddress
+	var denoms []string
+	issuers = append(issuers, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+	settings1 := types.IssueSettings{
+		Issuer:             issuers[0],
+		Symbol:             "DEF0",
+		Subunit:            "def0",
+		Precision:          6,
+		Description:        "DEF Desc",
+		InitialAmount:      sdkmath.NewInt(1000),
+		Features:           []types.Feature{},
+		BurnRate:           sdk.NewDec(1).QuoInt64(10), // 10%
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	denom1, err := assetKeeper.Issue(ctx, settings1)
+	requireT.NoError(err)
+	denoms = append(denoms, denom1)
+
+	// create 2 recipient for every issuer to allow for complex test cases
+	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+
+	issuers = append(issuers, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, issuers[1], testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	settings2 := types.IssueSettings{
+		Issuer:        issuers[1],
+		Symbol:        "DEF1",
+		Subunit:       "def1",
+		Precision:     6,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features:      []types.Feature{types.Feature_extension},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+		BurnRate:           sdk.NewDec(1).QuoInt64(10), // 10%
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	denom2, err := assetKeeper.Issue(ctx, settings2)
+	requireT.NoError(err)
+	denoms = append(denoms, denom2)
+
+	// create 2 recipient for every issuer to allow for complex test cases
+	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+
+	testCases := []struct {
+		name         string
+		inputs       []banktypes.Input
+		outputs      []banktypes.Output
+		distribution map[string]map[*sdk.AccAddress]int64
+	}{
+		{
+			name: "send from issuer1 to other accounts",
+			inputs: []banktypes.Input{
+				{Address: issuers[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600)))},
+			},
+			outputs: []banktypes.Output{
+				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+				{Address: recipients[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(400)),
+				)},
+			},
+			distribution: map[string]map[*sdk.AccAddress]int64{
+				denoms[1]: {
+					&issuers[1]:    400,
+					&issuers[0]:    400,
+					&recipients[0]: 100,
+					&recipients[1]: 100,
+				},
+			},
+		},
+		{
+			name: "send from issuer0 to other accounts",
+			inputs: []banktypes.Input{
+				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(200)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(200)),
+				)},
+			},
+			outputs: []banktypes.Output{
+				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(100)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+				{Address: recipients[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(100)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+			},
+			distribution: map[string]map[*sdk.AccAddress]int64{
+				denoms[0]: {
+					&issuers[0]:    800,
+					&recipients[0]: 100,
+					&recipients[1]: 100,
+				},
+				denoms[1]: {
+					&issuers[1]:    400,
+					&issuers[0]:    180, // (400 - 200 - 200*10%(burn))
+					&recipients[0]: 200,
+					&recipients[1]: 200,
+				},
+			},
+		},
+		{
+			name: "include issuer in recipients",
+			inputs: []banktypes.Input{
+				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(60)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(60)),
+				)},
+			},
+			outputs: []banktypes.Output{
+				{Address: issuers[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(25)),
+				)},
+				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(15)),
+				)},
+				{Address: recipients[2].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(11)),
+				)},
+				{Address: recipients[3].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(9)),
+				)},
+				{Address: issuers[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(25)),
+				)},
+				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(15)),
+				)},
+				{Address: recipients[2].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(11)),
+				)},
+				{Address: recipients[3].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(9)),
+				)},
+			},
+			distribution: map[string]map[*sdk.AccAddress]int64{
+				denoms[0]: {
+					&issuers[0]:    815, // 800 + 15
+					&issuers[1]:    25,
+					&recipients[0]: 34, // 100 - 60 - 6 (10% burn)
+					&recipients[1]: 100,
+					&recipients[2]: 11,
+					&recipients[3]: 9,
+				},
+				denoms[1]: {
+					&issuers[1]:    425, // 420 + 25
+					&issuers[0]:    195, // 180 + 15
+					&recipients[0]: 135, // 200 - 60 - 5 (10% burn)
+					&recipients[1]: 200,
+					&recipients[2]: 11,
+					&recipients[3]: 9,
+				},
+			},
+		},
+	}
+
+	for counter, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("%s case #%d", tc.name, counter), func(t *testing.T) {
+			err := bankKeeper.InputOutputCoins(ctx, tc.inputs, tc.outputs)
+			requireT.NoError(err)
+
+			for denom, dist := range tc.distribution {
+				ba.assertCoinDistribution(denom, dist)
+			}
+		})
+	}
 }
