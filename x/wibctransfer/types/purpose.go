@@ -30,29 +30,30 @@ func WithPurpose(ctx sdk.Context, direction Purpose) sdk.Context {
 
 // IsPurposeOut returns true if context is tagged with an outgoing transfer.
 func IsPurposeOut(ctx sdk.Context) bool {
-	d, ok := getPurpose(ctx.Context())
+	d, ok := GetPurpose(ctx.Context())
 	return ok && d == PurposeOut
 }
 
 // IsPurposeIn returns true if context is tagged with an incoming transfer.
 func IsPurposeIn(ctx sdk.Context) bool {
-	d, ok := getPurpose(ctx.Context())
+	d, ok := GetPurpose(ctx.Context())
 	return ok && d == PurposeIn
 }
 
 // IsPurposeAck returns true if context is tagged with an acknowledged transfer.
 func IsPurposeAck(ctx sdk.Context) bool {
-	d, ok := getPurpose(ctx.Context())
+	d, ok := GetPurpose(ctx.Context())
 	return ok && d == PurposeAck
 }
 
 // IsPurposeTimeout returns true if context is tagged with timed-out transfer.
 func IsPurposeTimeout(ctx sdk.Context) bool {
-	d, ok := getPurpose(ctx.Context())
+	d, ok := GetPurpose(ctx.Context())
 	return ok && d == PurposeTimeout
 }
 
-func getPurpose(ctx context.Context) (Purpose, bool) {
+// GetPurpose returns the ibc purpose from the context.
+func GetPurpose(ctx context.Context) (Purpose, bool) {
 	purpose, ok := ctx.Value(purposeKey{}).(Purpose)
 	return purpose, ok
 }

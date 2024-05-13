@@ -36,7 +36,7 @@ type DelayKeeper interface {
 
 // WasmPermissionedKeeper defines methods required from the WASM permissioned keeper.
 type WasmPermissionedKeeper interface {
-	Execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
+	Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
 	Instantiate2(
 		ctx sdk.Context,
 		codeID uint64,

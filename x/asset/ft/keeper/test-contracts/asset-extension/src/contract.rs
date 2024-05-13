@@ -9,7 +9,7 @@ use coreum_wasm_sdk::assetft::{
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
 use crate::state::DENOM;
 
 // version info for migration info
@@ -40,28 +40,35 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut<CoreumQueries>,
-    env: Env,
-    info: MessageInfo,
+    _deps: DepsMut<CoreumQueries>,
+    _env: Env,
+    _info: MessageInfo,
     msg: ExecuteMsg,
 ) -> CoreumResult<ContractError> {
+    match msg {}
+}
+
+#[entry_point]
+pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResult<ContractError> {
     match msg {
-        ExecuteMsg::ExtensionTransfer { amount, recipient } => {
-            execute_extension_transfer(deps, env, info, amount, recipient)
-        }
+        SudoMsg::ExtensionTransfer {
+            sender,
+            recipient,
+            transfer_amount,
+            commision_amount: _,
+            burn_amount: _,
+            context: _,
+        } => sudo_extension_transfer(deps, env, transfer_amount, sender, recipient),
     }
 }
 
-pub fn execute_extension_transfer(
+pub fn sudo_extension_transfer(
     deps: DepsMut<CoreumQueries>,
     _env: Env,
-    info: MessageInfo,
     amount: Uint128,
+    sender: String,
     recipient: String,
 ) -> CoreumResult<ContractError> {
-    // TODO remove this if statement.
-    // This check is intended for POC testing, it must be replaced with a more
-    // meaningful check.
     if amount == AMOUNT_DISALLOWED_TRIGGER {
         return Err(ContractError::Std(StdError::generic_err(
             "7 is not allowed",
@@ -72,23 +79,13 @@ pub fn execute_extension_transfer(
 
     let token = query_token(deps.as_ref(), &denom)?;
 
-    // check that amount is present in the attached funds, and attached funds is enough
-    // to cover the transfer.
-    let has_sufficient_funds = info
-        .funds
-        .iter()
-        .any(|coin| coin.denom == denom && coin.amount >= amount);
-    if !has_sufficient_funds {
-        return Err(ContractError::InsufficientFunds {});
-    }
-
     if let Some(features) = &token.features {
         // TODO(masih): If either or both of BurnRate and SendCommissionRate are set above zero,
         // then after transfer has taken place and those rates are applied, the sender's balance
         // must not go below the frozen amount. Otherwise the transaction will fail.
 
         if features.contains(&assetft::FREEZING) {
-            assert_freezing(deps.as_ref(), info.sender.as_ref(), &token, amount)?;
+            assert_freezing(deps.as_ref(), sender.as_ref(), &token, amount)?;
         }
 
         if features.contains(&assetft::WHITELISTING) {
@@ -110,7 +107,7 @@ pub fn execute_extension_transfer(
         // This check is intended for POC testing, it must be replaced with a more
         // meaningful check.
         if amount == AMOUNT_MINTING_TRIGGER {
-            return assert_minting(info.sender.as_ref(), &recipient, amount, &token);
+            return assert_minting(sender.as_ref(), &recipient, amount, &token);
         }
     }
 
