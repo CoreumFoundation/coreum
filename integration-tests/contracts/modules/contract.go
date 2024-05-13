@@ -12,6 +12,10 @@ var (
 	BankSendWASM []byte
 	//go:embed simple-state/artifacts/simple_state.wasm
 	SimpleStateWASM []byte
+	//go:embed ft-legacy/artifacts/ft_legacy.wasm
+	FTLegacyWASM []byte
+	//go:embed nft-legacy/artifacts/nft_legacy.wasm
+	NftLegacyWASM []byte
 	//go:embed ft/artifacts/ft.wasm
 	FTWASM []byte
 	//go:embed nft/artifacts/nft.wasm
