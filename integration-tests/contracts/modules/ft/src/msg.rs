@@ -12,8 +12,8 @@ pub struct InstantiateMsg {
     pub features: Option<Vec<i32>>,
     pub burn_rate: String,
     pub send_commission_rate: String,
-    pub uri: String,
-    pub uri_hash: String,
+    pub uri: Option<String>,
+    pub uri_hash: Option<String>,
     pub extension_settings: Option<ExtensionIssueSettings>,
 }
 

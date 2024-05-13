@@ -53,15 +53,10 @@ pub fn instantiate(
 
     DENOM.save(deps.storage, &denom)?;
 
-    let issue_bytes = issue_msg.to_proto_bytes();
-
     Ok(Response::new()
         .add_attribute("owner", info.sender)
         .add_attribute("denom", denom)
-        .add_message(CosmosMsg::Stargate {
-            type_url: issue_msg.to_any().type_url,
-            value: Binary::from(issue_bytes),
-        }))
+        .add_message(issue_msg))
 }
 
 // ********** Execute **********
