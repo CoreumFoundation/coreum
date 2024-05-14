@@ -345,7 +345,7 @@ func TestGasEstimation(t *testing.T) {
 			_, estimatedGas, err := client.CalculateGas(
 				ctx,
 				chain.ClientContext.WithFromAddress(tt.fromAddress),
-				chain.TxFactory(),
+				chain.TxFactory().WithGasAdjustment(1.0), // check default gas adjustment
 				tt.msgs...,
 			)
 			require.NoError(t, err)
@@ -416,7 +416,7 @@ func TestGasEstimation(t *testing.T) {
 			_, estimatedGas, err := client.CalculateGas(
 				ctx,
 				chain.ClientContext.WithFromAddress(tt.fromAddress),
-				chain.TxFactory(),
+				chain.TxFactory().WithGasAdjustment(1.0), // check default gas adjustment,
 				tt.msgs...,
 			)
 			require.NoError(t, err)

@@ -710,7 +710,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithSimulateAndExecute(true).WithGas(chain.GasLimitByMsgs(msgUpdateAdmin)),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateAdmin)),
 		msgUpdateAdmin,
 	)
 
@@ -1443,7 +1443,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Empty(tokenRes.Token.Admin)
 
-	//TODO: Once we upgrade to SDK v0.50 and have the new GRPCQueries, we can test the queries here as well.
+	// TODO: Once we upgrade to SDK v0.50 and have the new GRPCQueries, we can test the queries here as well.
 }
 
 // TestWASMFungibleTokenInContractLegacy verifies that smart contract is able to execute all
@@ -2456,7 +2456,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddrWhitelist, sendPayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	//TODO: Once we upgrade to SDK v0.50 and have the new GRPCQueries, we can test the queries here as well.
+	// TODO: Once we upgrade to SDK v0.50 and have the new GRPCQueries, we can test the queries here as well.
 }
 
 // TestWASMNonFungibleTokenInContractLegacy verifies that smart contract is able to execute all

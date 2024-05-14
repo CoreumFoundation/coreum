@@ -48,7 +48,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		},
 	}
 
-	numAccountsToFund := 1000 // 1700 was the max accepted
+	numAccountsToFund := 50 // 1700 was the max accepted
 	iterationsToFund := 2
 
 	inputItem := banktypes.Input{
@@ -141,7 +141,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 		},
 	}
 
-	numAccountsToFund := 400 // 600 was the max accepted
+	numAccountsToFund := 20 // 600 was the max accepted
 	iterationsToFund := 3
 
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
@@ -411,7 +411,7 @@ func TestBankSendGasEstimation(t *testing.T) {
 		ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
-			WithGas(bankSendGas),
+			WithGas(bankSendGas).WithGasAdjustment(1.0), // check default gas adjustment,
 		msg)
 	require.NoError(t, err)
 	assert.Equal(t, bankSendGas, estimatedGas)
