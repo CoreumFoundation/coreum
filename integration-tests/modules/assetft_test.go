@@ -5076,7 +5076,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(issuer),
-		txf.WithGasAdjustment(1.5),
+		txf,
 		wasmBankSend,
 	)
 	requireT.NoError(err)
@@ -5101,7 +5101,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(issuer),
-		txf.WithGasAdjustment(1.5),
+		txf,
 		wasmBankSend,
 	)
 	requireT.NoError(err)
@@ -5153,7 +5153,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(issuer),
-		txf.WithGasAdjustment(1.5),
+		txf,
 		wasmBankSend,
 	)
 	requireT.NoError(err)

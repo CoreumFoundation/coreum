@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
@@ -112,7 +113,10 @@ func init() {
 
 	coreumSettings := integration.QueryChainSettings(queryCtx, coreumGRPCClient)
 
-	coreumClientCtx := client.NewContext(integration.DefaultClientContextConfig(), app.ModuleBasics).
+	coreumClientCtxCfg := integration.DefaultClientContextConfig()
+	coreumClientCtxCfg.GasConfig.GasPriceAdjustment = sdkmath.LegacyMustNewDecFromStr("1.2")
+	coreumClientCtxCfg.GasConfig.GasAdjustment = 1.3
+	coreumClientCtx := client.NewContext(coreumClientCtxCfg, app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
 
 	coreumFeemodelParamsRes, err := feemodeltypes.
