@@ -169,7 +169,6 @@ func TestApplyRate(t *testing.T) {
 			appliedRate := assetFTKeeper.CalculateRate(
 				ctx,
 				sdk.MustNewDecFromStr(tc.rate),
-				issuer,
 				sdk.MustAccAddressFromBech32(tc.sender),
 				sdk.MustAccAddressFromBech32(tc.recipient),
 				sdk.NewCoin("test", tc.amount))
