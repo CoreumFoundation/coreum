@@ -69,9 +69,11 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			_, err = sdk.AccAddressFromBech32(def.Admin)
-			if err != nil {
-				return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
+			if def.Admin != "" {
+				_, err = sdk.AccAddressFromBech32(def.Admin)
+				if err != nil {
+					return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
+				}
 			}
 
 			burnAmount := k.CalculateRate(ctx, def.BurnRate, def.Admin, sender, recipient, coin)

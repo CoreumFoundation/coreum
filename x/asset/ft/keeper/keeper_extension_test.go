@@ -732,7 +732,7 @@ func TestKeeper_Extension_ClearAdmin(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.Equal(
-		extensionBalanceAfter.Balance.Amount.Sub(extensionBalanceBefore.Balance.Amount).String(),
 		"10",
+		extensionBalanceAfter.Balance.Amount.Sub(extensionBalanceBefore.Balance.Amount).String(),
 	)
 }
