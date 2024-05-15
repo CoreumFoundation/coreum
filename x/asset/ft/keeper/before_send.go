@@ -69,13 +69,8 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			admin, err := sdk.AccAddressFromBech32(def.Admin)
-			if err != nil {
-				return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
-			}
-
-			burnAmount := k.CalculateRate(ctx, def.BurnRate, admin, sender, recipient, coin)
-			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, admin, sender, recipient, coin)
+			burnAmount := k.CalculateRate(ctx, def.BurnRate, sender, coin)
+			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, sender, coin)
 
 			if def.IsFeatureEnabled(types.Feature_extension) {
 				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
@@ -87,13 +82,17 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			if commissionAmount.IsPositive() {
+			senderOrReceiverIsAdmin := def.Admin == sender.String() || def.Admin == recipient.String()
+
+			if !senderOrReceiverIsAdmin && commissionAmount.IsPositive() {
+				adminAddr := sdk.MustAccAddressFromBech32(def.Admin)
 				commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
-				if err := k.bankKeeper.SendCoins(ctx, sender, admin, commissionCoin); err != nil {
+				if err := k.bankKeeper.SendCoins(ctx, sender, adminAddr, commissionCoin); err != nil {
 					return err
 				}
 			}
-			if burnAmount.IsPositive() {
+
+			if !senderOrReceiverIsAdmin && burnAmount.IsPositive() {
 				if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
 					return err
 				}
@@ -182,9 +181,7 @@ func (k Keeper) invokeAssetExtension(
 func (k Keeper) CalculateRate(
 	ctx sdk.Context,
 	rate sdk.Dec,
-	admin,
 	sender sdk.AccAddress,
-	receiver sdk.AccAddress,
 	amount sdk.Coin,
 ) sdkmath.Int {
 	// We decided that rates should not be charged on incoming IBC transfers.
@@ -209,10 +206,6 @@ func (k Keeper) CalculateRate(
 	}
 
 	if rate.IsNil() || !rate.IsPositive() {
-		return sdk.ZeroInt()
-	}
-
-	if admin.Equals(sender) || admin.Equals(receiver) {
 		return sdk.ZeroInt()
 	}
 
