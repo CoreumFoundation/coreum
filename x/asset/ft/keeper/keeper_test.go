@@ -2725,21 +2725,29 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
+	bankKeeper := testApp.BankKeeper
 	ftKeeper := testApp.AssetFTKeeper
 
 	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	sender := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	settings := types.IssueSettings{
-		Issuer:        admin,
-		Symbol:        "DEF",
-		Subunit:       "def",
-		Precision:     1,
-		Description:   "DEF Desc",
-		InitialAmount: sdkmath.NewInt(666),
-		Features:      []types.Feature{},
+		Issuer:             admin,
+		Symbol:             "DEF",
+		Subunit:            "def",
+		Precision:          1,
+		Description:        "DEF Desc",
+		InitialAmount:      sdkmath.NewInt(666),
+		Features:           []types.Feature{},
+		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	// send some amount to an account
+	err = bankKeeper.SendCoins(ctx, admin, sender, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))))
 	requireT.NoError(err)
 
 	// try to clear admin of non-existent denom
@@ -2762,4 +2770,8 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 	// try to clear from the previous admin which is not admin anymore
 	err = ftKeeper.ClearAdmin(ctx, admin, denom)
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// send some amount between two accounts
+	err = bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))))
+	requireT.NoError(err)
 }
