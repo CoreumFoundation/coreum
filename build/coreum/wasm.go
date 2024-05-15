@@ -28,6 +28,11 @@ func CompileIBCSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 	return compileWasmDir(WasmIBCDir, deps)
 }
 
+// CompileAssetExtensionSmartContracts compiles asset smart contracts.
+func CompileAssetExtensionSmartContracts(ctx context.Context, deps build.DepsFunc) error {
+	return compileWasmDir(WasmAssetExtension, deps)
+}
+
 // CompileAllSmartContracts compiles all th smart contracts.
 func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 	allWasmDirectories := []string{
