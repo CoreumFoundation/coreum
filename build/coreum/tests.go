@@ -45,7 +45,9 @@ func RunAllIntegrationTests(runUnsafe bool) build.CommandFunc {
 func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		switch name {
-		case TestModules, TestUpgrade:
+		case TestModules:
+			deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts)
+		case TestUpgrade:
 			deps(CompileModulesSmartContracts)
 		case TestIBC:
 			deps(CompileIBCSmartContracts)
