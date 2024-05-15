@@ -69,8 +69,8 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			burnAmount := k.CalculateRate(ctx, def.BurnRate, sender, recipient, coin)
-			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, sender, recipient, coin)
+			burnAmount := k.CalculateRate(ctx, def.BurnRate, sender, coin)
+			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, sender, coin)
 
 			if def.IsFeatureEnabled(types.Feature_extension) {
 				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
@@ -82,17 +82,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			senderOrReceiverIsAdmin := false
-			if def.Admin != "" {
-				admin, err := sdk.AccAddressFromBech32(def.Admin)
-				if err != nil {
-					return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
-				}
-
-				if admin.Equals(sender) || admin.Equals(recipient) {
-					senderOrReceiverIsAdmin = true
-				}
-			}
+			senderOrReceiverIsAdmin := def.Admin == sender.String() || def.Admin == recipient.String()
 
 			if !senderOrReceiverIsAdmin && commissionAmount.IsPositive() {
 				adminAddr := sdk.MustAccAddressFromBech32(def.Admin)
@@ -101,6 +91,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 					return err
 				}
 			}
+
 			if !senderOrReceiverIsAdmin && burnAmount.IsPositive() {
 				if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
 					return err
@@ -191,7 +182,6 @@ func (k Keeper) CalculateRate(
 	ctx sdk.Context,
 	rate sdk.Dec,
 	sender sdk.AccAddress,
-	receiver sdk.AccAddress,
 	amount sdk.Coin,
 ) sdkmath.Int {
 	// We decided that rates should not be charged on incoming IBC transfers.

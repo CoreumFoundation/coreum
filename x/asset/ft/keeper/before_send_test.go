@@ -170,7 +170,6 @@ func TestApplyRate(t *testing.T) {
 				ctx,
 				sdk.MustNewDecFromStr(tc.rate),
 				sdk.MustAccAddressFromBech32(tc.sender),
-				sdk.MustAccAddressFromBech32(tc.recipient),
 				sdk.NewCoin("test", tc.amount))
 			assertT.EqualValues(tc.appliedRate.String(), appliedRate.String())
 		})
