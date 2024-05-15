@@ -298,7 +298,7 @@ func NewChain(
 // DefaultClientContextConfig returns a default client context config for integration tests.
 func DefaultClientContextConfig() client.ContextConfig {
 	clientCtxConfig := client.DefaultContextConfig()
-	clientCtxConfig.GasConfig.GasPriceAdjustment = sdk.NewDec(1)
+	clientCtxConfig.GasConfig.GasPriceAdjustment = sdkmath.LegacyMustNewDecFromStr("1.3")
 	clientCtxConfig.GasConfig.GasAdjustment = 1
 
 	clientCtxConfig.TimeoutConfig.TxStatusPollInterval = 100 * time.Millisecond

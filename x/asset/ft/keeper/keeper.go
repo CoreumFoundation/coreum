@@ -616,7 +616,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if def.HasAdminPrivileges(addr) {
+	if def.IsAdmin(addr) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be whitelisted")
 	}
 
@@ -730,7 +730,13 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 		return err
 	}
 
+	// if extension feature is disabled, after clearing admin, there is no one to send commission to, so the commission
+	// rate sets to zero else only the admin is cleared and the extension receives the commission rate
 	def.Admin = ""
+	if !def.IsFeatureEnabled(types.Feature_extension) {
+		def.SendCommissionRate = sdk.ZeroDec()
+	}
+
 	k.SetDefinition(ctx, issuer, subunit, def)
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminCleared{
@@ -1068,10 +1074,6 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if def.HasAdminPrivileges(addr) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be clawed back")
 	}
 
 	if _, isModuleAccount := k.accountKeeper.GetAccount(ctx, addr).(*authtypes.ModuleAccount); isModuleAccount {

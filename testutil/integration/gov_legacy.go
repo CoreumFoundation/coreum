@@ -234,7 +234,7 @@ func (g GovernanceLegacy) voteAll(ctx context.Context, msgFunc func(sdk.AccAddre
 	for _, staker := range g.stakerAccounts {
 		msg := msgFunc(staker)
 
-		txf := g.chainCtx.TxFactory().WithSimulateAndExecute(true)
+		txf := g.chainCtx.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(voteGasAdjustment)
 
 		clientCtx := g.chainCtx.ClientContext.WithAwaitTx(false)
 
