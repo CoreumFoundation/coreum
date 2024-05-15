@@ -3,10 +3,13 @@ Article about ticks -
 ### Problem
 
 Lets say we have 2 orders:
+
 order1: 50_000_000 AAA (price 0.375) -> 18_750_000 BBB.
+
 order2: 10_000_000 BBB (price 2.631) -> 26_310_000 AAA. (reversed price: ~0.38)
 
-Note that it doesn't matter either we define orders as input & output amount or input and price the main rule is to respect price.
+*Note that it doesn't matter either we define orders as input & output amount or input and price the main rule is to 
+respect price.*
 
 Since the reversed price of order2 is bigger than the price of order1 (0.38 > 0.375) these orders match.
 But if we want to calculate the exact amount of AAA order2 receives it results into: 26666666.66(6)
@@ -20,13 +23,13 @@ As you can see it results into decimal number of BBB in order1 which will cause 
 
 ### Solution
 
-Exchanges to avoid this issue define [ticks size](https://www.investopedia.com/terms/t/tick.asp) for each pair.
+To avoid this issue, exchanges define [ticks size](https://www.investopedia.com/terms/t/tick.asp) for each pair.
 But since inside our DEX implementation we want to be able to trade anything
 to anything number of pairs increase exponentially with addition of each token.
 What is more trading should be implemented in permission-less manner, so none can configure each pair specifically.
 
 Tick size mostly depends on the price of the asset traded
-(could also depend on an asset type but this will be addressed later).
+(could also depend on an asset type, but this will be addressed later).
 But since our DEX allows users to trade anything to anything (not only to fiat)
 it means that tick size should depend on price of both assets to satisfy all possible pairs.
 As result mathematical function for tick_size for pair AAA/BBB would look like this:
@@ -63,11 +66,27 @@ Where tick_size_coeficient <= 1.0
 Empirically (by experimenting with different assets) `0.01`
 has been chosen as value for `tick_size_coeficient` but it could be easily changed in the future if needed.
 
-### Examples
+### Tick Size Examples
 
-| min_amount_increment(A)         | min_amount_increment(B) | tick_size(A->B)                | tick_size(B->A)              |
-|---------------------------------|-------------------------|--------------------------------|------------------------------|
-| 10_000 (10_000ucore = 0.01CORE) | 10_000                  | 0.01 (1_000_000A*0.01=10_000B) | 0.01(1_000_000B*0.01=10_000A |
-| 1000 (1000satoshi = 0.00001BTC) | 10                      | 0.0001 (100_000A*0.0001=10B)   | 1 (1_000B*1=1000A )          |
+#### Detailed example
+| min_amount_increment(A) | min_amount_increment(B) | tick_size(A->B) | tick_size(B->A) | min_order(A->B)         | min_order(B->A)         |
+|-------------------------|-------------------------|-----------------|-----------------|-------------------------|-------------------------|
+| 10_000                  | 10_000                  | 0.01            | 0.01            | 1_000_000A*0.01=10_000B | 1_000_000B*0.01=10_000A |
+| 1000                    | 10                      | 0.0001          | 1               | 100_000A*0.0001=10B     | 1_000B*1=1000A          |
+| 1_000_000               | 1                       | 10^-8           | 10_000          | (10^8)A*10^-8=1B        | 100B*10_000=1_000_000A  |
 
-[//]: # (| 1 &#40;1DOGE=10^x&#41;) TODO: finish
+
+#### Anything to anything example.
+
+The first column is `min_amount_increment` for A and first row is `min_amount_increment` for B.
+Each cell is `tick_size` for A->B pair.
+
+| min_amount_increment | 1(B)            | 10(B)          | 100(B)        | 1_000(B) | 10_000(B) | 100_000(B) |
+|----------------------|-----------------|----------------|---------------|----------|-----------|------------|
+| 1(A)                 | 0.01            | 0.1            | 1             | 10       | 100       | 1000       |
+| 10(A)                | 0.001           | 0.01           | 0.1           | 1        | 10        | 100        |
+| 100(A)               | 0.0001          | 0.001          | 0.01          | 0.1      | 1         | 10         |
+| 1_000(A)             | 0.00001         | 0.0001         | 0.001         | 0.01     | 0.1       | 1          |
+| 10_000(A)            | 0.000001        | 0.00001        | 0.0001        | 0.001    | 0.01      | 0.1        |
+| 100_000(A)           | 0.0000001=10^-7 | 0.000001=10^-6 | 0.00001=10^-5 | 0.0001   | 0.001     | 0.01       |
+
