@@ -61,7 +61,7 @@ func TestApplyRate(t *testing.T) {
 			sender:      accounts[0],
 			recipient:   issuer,
 			amount:      sdkmath.NewInt(10),
-			appliedRate: sdkmath.ZeroInt(),
+			appliedRate: sdkmath.NewInt(5),
 		},
 		{
 			name:        "issuer_sender",
@@ -69,7 +69,7 @@ func TestApplyRate(t *testing.T) {
 			sender:      issuer,
 			recipient:   accounts[5],
 			amount:      sdkmath.NewInt(5),
-			appliedRate: sdkmath.ZeroInt(),
+			appliedRate: sdkmath.NewInt(3),
 		},
 		{
 			name:        "non_issuer",
@@ -103,7 +103,7 @@ func TestApplyRate(t *testing.T) {
 			recipient:    dummyAddress,
 			amount:       sdkmath.NewInt(10),
 			ibcDirection: wibctransfertypes.PurposeOut,
-			appliedRate:  sdkmath.NewInt(0),
+			appliedRate:  sdkmath.NewInt(5),
 		},
 		{
 			name:         "receiver_ibc",
@@ -137,7 +137,7 @@ func TestApplyRate(t *testing.T) {
 			sender:      issuer,
 			recipient:   smartContracts[0],
 			amount:      sdkmath.NewInt(10),
-			appliedRate: sdkmath.NewInt(0),
+			appliedRate: sdkmath.NewInt(5),
 		},
 		{
 			name:        "smart_contract_receiver",
