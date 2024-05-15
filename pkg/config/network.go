@@ -45,7 +45,7 @@ func init() {
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
 					"64391878009b8804d90fda13805e45041f492155@seed-sirius.testnet-1.coreum.dev:26656",  // seed-sirius
-					"53f2367d8f8291af8e3b6ca60efded0675ff6314@seed-antares.mainnet-1.coreum.dev:26656", // seed-antares
+					"53f2367d8f8291af8e3b6ca60efded0675ff6314@seed-antares.testnet-1.coreum.dev:26656", // seed-antares
 				},
 			},
 		},
