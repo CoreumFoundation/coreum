@@ -249,11 +249,11 @@ fn assert_block_smart_contracts(
 }
 
 fn assert_burn_rate(
-    mut response: Response<CoreumMsg>,
+    response: Response<CoreumMsg>,
     sender: &str,
     amount: Uint128,
     token: &Token,
-    mut burn_amount: Uint128,
+    burn_amount: Uint128,
 ) -> CoreumResult<ContractError> {
     if amount == AMOUNT_IGNORE_BURN_RATE_TRIGGER {
         let refund_burn_rate_msg = cosmwasm_std::BankMsg::Send {
@@ -264,24 +264,18 @@ fn assert_burn_rate(
             }],
         };
 
-        burn_amount = Uint128::zero();
-
-        response = response
+        return Ok(response
             .add_attribute("burn_rate_refund", burn_amount.to_string())
-            .add_message(refund_burn_rate_msg);
+            .add_message(refund_burn_rate_msg));
     }
 
-    if !burn_amount.is_zero() {
-        let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
-            coin: cosmwasm_std::coin(burn_amount.u128(), &token.denom),
-        });
+    let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
+        coin: cosmwasm_std::coin(burn_amount.u128(), &token.denom),
+    });
 
-        response = response
-            .add_attribute("burn_amount", burn_amount)
-            .add_message(burn_message);
-    }
-
-    Ok(response)
+    Ok(response
+        .add_attribute("burn_amount", burn_amount)
+        .add_message(burn_message))
 }
 
 fn query_frozen_balance(deps: Deps<CoreumQueries>, account: &str, denom: &str) -> StdResult<Coin> {
