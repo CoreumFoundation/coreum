@@ -1419,11 +1419,11 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
-	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
@@ -1444,13 +1444,13 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), admin, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 
 	// Issue a fungible token
 	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        issuer.String(),
+		Issuer:        admin.String(),
 		Symbol:        "ABC",
 		Subunit:       "abc",
 		Precision:     6,
@@ -1469,7 +1469,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 
 	res, err := client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
+		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
@@ -1479,16 +1479,16 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	requireT.NoError(err)
 	denom := tokenIssuedEvents[0].Denom
 
-	// send from issuer to recipient1 (burn must not apply)
+	// send from admin to recipient1 (burn must apply if the extension decides)
 	sendMsg := &banktypes.MsgSend{
-		FromAddress: issuer.String(),
+		FromAddress: admin.String(),
 		ToAddress:   recipient1.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
 	}
 
 	txRes, err := client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
+		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
@@ -1497,11 +1497,11 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	requireT.NotContains(txRes.RawLog, `{"key":"amount"}`)
 
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     600,
+		&admin:      560,
 		&recipient1: 400,
 	})
 
-	// send trigger amount from recipient1 to recipient2 (burn must not apply if extension decides)
+	// send trigger amount from recipient1 to recipient2 (burn must not apply if the extension decides)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
@@ -1516,7 +1516,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     600,
+		&admin:      560,
 		&recipient1: 292,
 		&recipient2: 108,
 	})
@@ -1536,15 +1536,15 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     600,
+		&admin:      560,
 		&recipient1: 182,
 		&recipient2: 208,
 	})
 
-	// send from recipient2 to issuer (burn must not apply)
+	// send from recipient2 to admin (burn must not apply)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient2.String(),
-		ToAddress:   issuer.String(),
+		ToAddress:   admin.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
 	}
 
@@ -1556,8 +1556,8 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     700,
+		&admin:      660,
 		&recipient1: 182,
-		&recipient2: 108,
+		&recipient2: 98,
 	})
 }

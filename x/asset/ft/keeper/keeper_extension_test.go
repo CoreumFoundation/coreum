@@ -676,21 +676,21 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 	bankKeeper := testApp.BankKeeper
 	ba := newBankAsserter(ctx, t, bankKeeper)
 
-	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
-		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+		ctx, admin, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
 	)
 	requireT.NoError(err)
 
 	// issue token
 	settings := types.IssueSettings{
-		Issuer:        issuer,
+		Issuer:        admin,
 		Symbol:        "DEF",
 		Subunit:       "def",
 		Precision:     6,
 		Description:   "DEF Desc",
-		InitialAmount: sdkmath.NewInt(600),
+		InitialAmount: sdkmath.NewInt(1100),
 		Features:      []types.Feature{types.Feature_extension},
 		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
@@ -703,18 +703,18 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	// send from issuer to recipient (burn must not apply)
-	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
+	// send from admin to recipient (burn must apply if the extension decides)
+	err = bankKeeper.SendCoins(ctx, admin, recipient, sdk.NewCoins(
 		sdk.NewCoin(denom, sdkmath.NewInt(500)),
 	))
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
 		&recipient: 500,
-		&issuer:    100,
+		&admin:     475,
 	})
 
-	// send trigger amount from recipient1 to recipient2 (burn must not apply if extension decides)
+	// send trigger amount from recipient1 to recipient2 (burn must not apply if the extension decides)
 	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
 		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreBurnRateTrigger)),
@@ -724,7 +724,7 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
 		&recipient:  392,
 		&recipient2: 108,
-		&issuer:     100,
+		&admin:      475,
 	})
 
 	// send from recipient1 to recipient2 (burn must apply)
@@ -736,18 +736,18 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
 		&recipient:  267,
 		&recipient2: 208,
-		&issuer:     100,
+		&admin:      475,
 	})
 
-	// send from recipient to issuer account (burn must not apply)
-	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
-		sdk.NewCoin(denom, sdkmath.NewInt(267)),
+	// send from recipient to admin account (burn must apply if the extension decides)
+	err = bankKeeper.SendCoins(ctx, recipient, admin, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(213)),
 	))
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
 		&recipient2: 208,
-		&issuer:     367,
+		&admin:      688,
 	})
 }
 
@@ -766,11 +766,11 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 
 	// issue 2 tokens
 	var recipients []sdk.AccAddress
-	var issuers []sdk.AccAddress
+	var admins []sdk.AccAddress
 	var denoms []string
-	issuers = append(issuers, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+	admins = append(admins, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 	settings1 := types.IssueSettings{
-		Issuer:             issuers[0],
+		Issuer:             admins[0],
 		Symbol:             "DEF0",
 		Subunit:            "def0",
 		Precision:          6,
@@ -785,19 +785,19 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	requireT.NoError(err)
 	denoms = append(denoms, denom1)
 
-	// create 2 recipient for every issuer to allow for complex test cases
+	// create 2 recipient for every admin to allow for complex test cases
 	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 
-	issuers = append(issuers, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+	admins = append(admins, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 
 	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
-		ctx, issuers[1], testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+		ctx, admins[1], testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
 	)
 	requireT.NoError(err)
 
 	settings2 := types.IssueSettings{
-		Issuer:        issuers[1],
+		Issuer:        admins[1],
 		Symbol:        "DEF1",
 		Subunit:       "def1",
 		Precision:     6,
@@ -815,7 +815,7 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	requireT.NoError(err)
 	denoms = append(denoms, denom2)
 
-	// create 2 recipient for every issuer to allow for complex test cases
+	// create 2 recipient for every admin to allow for complex test cases
 	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 
@@ -826,9 +826,9 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 		distribution map[string]map[*sdk.AccAddress]int64
 	}{
 		{
-			name: "send from issuer1 to other accounts",
+			name: "send from admin1 to other accounts",
 			inputs: []banktypes.Input{
-				{Address: issuers[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600)))},
+				{Address: admins[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600)))},
 			},
 			outputs: []banktypes.Output{
 				{Address: recipients[0].String(), Coins: sdk.NewCoins(
@@ -837,23 +837,23 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 				{Address: recipients[1].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
 				)},
-				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+				{Address: admins[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(400)),
 				)},
 			},
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[1]: {
-					&issuers[1]:    400,
-					&issuers[0]:    400,
+					&admins[1]:     340,
+					&admins[0]:     400,
 					&recipients[0]: 100,
 					&recipients[1]: 100,
 				},
 			},
 		},
 		{
-			name: "send from issuer0 to other accounts",
+			name: "send from admin0 to other accounts",
 			inputs: []banktypes.Input{
-				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+				{Address: admins[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(200)),
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(200)),
 				)},
@@ -870,20 +870,20 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 			},
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[0]: {
-					&issuers[0]:    800,
+					&admins[0]:     800,
 					&recipients[0]: 100,
 					&recipients[1]: 100,
 				},
 				denoms[1]: {
-					&issuers[1]:    400,
-					&issuers[0]:    180, // (400 - 200 - 200*10%(burn))
+					&admins[1]:     340,
+					&admins[0]:     180, // (400 - 200 - 200*10%(burn))
 					&recipients[0]: 200,
 					&recipients[1]: 200,
 				},
 			},
 		},
 		{
-			name: "include issuer in recipients",
+			name: "include admin in recipients",
 			inputs: []banktypes.Input{
 				{Address: recipients[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(60)),
@@ -891,10 +891,10 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 				)},
 			},
 			outputs: []banktypes.Output{
-				{Address: issuers[1].String(), Coins: sdk.NewCoins(
+				{Address: admins[1].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(25)),
 				)},
-				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+				{Address: admins[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(15)),
 				)},
 				{Address: recipients[2].String(), Coins: sdk.NewCoins(
@@ -903,10 +903,10 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 				{Address: recipients[3].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(9)),
 				)},
-				{Address: issuers[1].String(), Coins: sdk.NewCoins(
+				{Address: admins[1].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(25)),
 				)},
-				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+				{Address: admins[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(15)),
 				)},
 				{Address: recipients[2].String(), Coins: sdk.NewCoins(
@@ -918,17 +918,17 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 			},
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[0]: {
-					&issuers[0]:    815, // 800 + 15
-					&issuers[1]:    25,
+					&admins[0]:     815, // 800 + 15
+					&admins[1]:     25,
 					&recipients[0]: 34, // 100 - 60 - 6 (10% burn)
 					&recipients[1]: 100,
 					&recipients[2]: 11,
 					&recipients[3]: 9,
 				},
 				denoms[1]: {
-					&issuers[1]:    425, // 420 + 25
-					&issuers[0]:    195, // 180 + 15
-					&recipients[0]: 135, // 200 - 60 - 5 (10% burn)
+					&admins[1]:     365, // 340 + 25
+					&admins[0]:     195, // 180 + 15
+					&recipients[0]: 132, // 200 - 60 - (3+2+2+1) (10% burn of 25, 15, 11 and 9)
 					&recipients[1]: 200,
 					&recipients[2]: 11,
 					&recipients[3]: 9,
