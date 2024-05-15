@@ -17,7 +17,10 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 )
 
-const submitProposalGas = 400_000
+const (
+	submitProposalGas = 400_000
+	voteGasAdjustment = 1.5
+)
 
 // Governance keep the test chain predefined account for the governance operations via v1 API only.
 type Governance struct {
@@ -220,7 +223,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 	for _, staker := range g.stakerAccounts {
 		msg := msgFunc(staker)
 
-		txf := g.chainCtx.TxFactory().WithSimulateAndExecute(true)
+		txf := g.chainCtx.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(voteGasAdjustment)
 
 		clientCtx := g.chainCtx.ClientContext.WithAwaitTx(false)
 

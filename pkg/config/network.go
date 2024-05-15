@@ -35,8 +35,8 @@ func init() {
 			Provider: NewStaticConfigProvider(genesis.MainnetGenesis),
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@34.171.208.193:26656", // seed-iron
-					"cba16f4f32707d70a2a2d10861fac897f1e9aaa1@34.72.150.107:26656",  // seed-nickle
+					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@seed-iron.mainnet-1.coreum.dev:26656",   // seed-iron
+					"cba16f4f32707d70a2a2d10861fac897f1e9aaa1@seed-nickle.mainnet-1.coreum.dev:26656", // seed-nickle
 				},
 			},
 		},
@@ -44,8 +44,8 @@ func init() {
 			Provider: NewStaticConfigProvider(genesis.TestnetGenesis),
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					"64391878009b8804d90fda13805e45041f492155@35.232.157.206:26656", // seed-sirius
-					"53f2367d8f8291af8e3b6ca60efded0675ff6314@34.29.15.170:26656",   // seed-antares
+					"64391878009b8804d90fda13805e45041f492155@seed-sirius.testnet-1.coreum.dev:26656",  // seed-sirius
+					"53f2367d8f8291af8e3b6ca60efded0675ff6314@seed-antares.testnet-1.coreum.dev:26656", // seed-antares
 				},
 			},
 		},

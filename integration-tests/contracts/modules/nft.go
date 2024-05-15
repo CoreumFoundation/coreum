@@ -76,13 +76,21 @@ type NftOwnerRequest struct {
 	Owner string `json:"owner"`
 }
 
+// NftClassIDWithIDRequest is used to query an NFT with class_id and id.
+//
+//nolint:tagliatelle
+type NftClassIDWithIDRequest struct {
+	ClassID string `json:"class_id"`
+	ID      string `json:"id"`
+}
+
 // NftMethod is a wrapper type for all the methods used in smart contract.
 type NftMethod string
 
 // all the methods used for smart contract.
 const (
 	// transactions.
-	NftMethodMintLegacy               NftMethod = "mint_legacy"
+	NftMethodMint                     NftMethod = "mint"
 	NftMethodMintImmutable            NftMethod = "mint_immutable"
 	NftMethodMintMutable              NftMethod = "mint_mutable"
 	NftMethodModifyData               NftMethod = "modify_data"
@@ -115,6 +123,7 @@ const (
 	NftMethodNFTs                      NftMethod = "nfts"
 	NftMethodClassNFT                  NftMethod = "class_nft"
 	NftMethodClassesNFT                NftMethod = "classes_nft"
+	NftMethodExternalNFT               NftMethod = "external_nft"
 )
 
 // AssetnftClass represents the Class in asset nft module.
