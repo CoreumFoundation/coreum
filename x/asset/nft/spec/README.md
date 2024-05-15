@@ -36,7 +36,7 @@ We will discuss each feature separately.
 
 ### Minting
 The minting is enabled for all issued NFT classes. The minting allows to mint a token for an NFT class by the issuer of the class.
-There are two types that can be used for NFT minting `DataBytes` and `DataDynamic`. The `DataBytes` contains immutable data bytes
+There are two data types that can be used for NFT minting `DataBytes` and `DataDynamic`. The `DataBytes` contains immutable data bytes
 array. The `DataDynamic` contains the list of the `DataDynamicItem` which can be updated depending on item's `editors`. 
 Currently supported `DataEditors` are  `admin` and `owner`. If only one editor is set for the item, only that editor can update the 
 item's `data` using the`MsgUpdateData`. If both, both can update the `data`. If the `editors` list is empty no one can update the `data`. 
