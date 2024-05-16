@@ -11,6 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -710,4 +711,110 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 		return nil
 	})
 	requireT.NoError(err)
+}
+
+func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
+	t.Parallel()
+
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	requireT := require.New(t)
+	coreumChain := chains.Coreum
+	gaiaChain := chains.Gaia
+
+	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+	)
+
+	// Bank module rejects transfers targeting some module accounts. We use this feature to test that
+	// this type of IBC transfer is rejected by the receiving chain.
+	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
+	coreumSender := coreumChain.GenAccount()
+	gaiaRecipient := gaiaChain.GenAccount()
+
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&ibctransfertypes.MsgTransfer{},
+			&ibctransfertypes.MsgTransfer{},
+		},
+		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+	})
+	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
+		Address: gaiaRecipient,
+		Amount:  gaiaChain.NewCoin(sdk.NewIntFromUint64(100000)),
+	})
+
+	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
+		ctx, chains.Coreum.TxFactory().WithSimulateAndExecute(true), coreumSender, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        coreumSender.String(),
+		Symbol:        "mysymbol",
+		Subunit:       "mysubunit",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(1_000_000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Funds:  sdk.NewCoins(),
+			Label:  "testing-ibc",
+		},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		coreumChain.ClientContext.WithFromAddress(coreumSender),
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	require.NoError(t, err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumSender)
+	sendToGaiaCoin := sdk.NewCoin(denom, issueMsg.InitialAmount)
+
+	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, moduleAddress)
+	requireT.NoError(err)
+
+	// funds should be returned to coreum
+	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendToGaiaCoin))
+
+	// funds should not be received on gaia
+	ibcGaiaDenom := ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom)
+	bankClient := banktypes.NewQueryClient(gaiaChain.ClientContext)
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: gaiaChain.MustConvertToBech32Address(moduleAddress),
+		Denom:   ibcGaiaDenom,
+	})
+	requireT.NoError(err)
+	requireT.Equal("0", resp.Balance.Amount.String())
+
+	// test that the reverse transfer from gaia to coreum is blocked too
+
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
+		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
+	})
+
+	sendToCoreumCoin := sdk.NewCoin(ibcGaiaDenom, sendToGaiaCoin.Amount)
+	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient)
+	requireT.NoError(err)
+	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sendToCoreumCoin))
+
+	_, err = gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaRecipient, sendToCoreumCoin, coreumChain.ChainContext, moduleAddress)
+	requireT.NoError(err)
+
+	// funds should be returned to gaia
+	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sendToCoreumCoin))
+
+	// funds should not be received on coreum
+	bankClient = banktypes.NewQueryClient(coreumChain.ClientContext)
+	resp, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: coreumChain.MustConvertToBech32Address(moduleAddress),
+		Denom:   sendToGaiaCoin.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal("0", resp.Balance.Amount.String())
 }
