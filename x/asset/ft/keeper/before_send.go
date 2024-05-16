@@ -40,8 +40,8 @@ type sudoExtensionTransferContext struct {
 }
 
 func ibcPurposeToExtensionString(ctx sdk.Context) string {
-	ibcPurpose, _ := wibctransfertypes.GetPurpose(ctx)
-	if ibcPurpose == "" {
+	ibcPurpose, ok := wibctransfertypes.GetPurpose(ctx)
+	if !ok {
 		return "none"
 	}
 	return string(ibcPurpose)
