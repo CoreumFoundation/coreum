@@ -72,7 +72,7 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 
 	coreumContractAddr, _, err := coreumChain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		coreumChain.TxFactory().WithSimulateAndExecute(true),
+		coreumChain.TxFactoryAuto(),
 		coreumContractAdmin,
 		ibcwasm.IBCHooksCounter,
 		integration.InstantiateConfig{
@@ -95,7 +95,13 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 
 	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
 	_, err = coreumChain.ExecuteIBCTransfer(
-		ctx, t, coreumSender, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisHookCaller1,
+		ctx,
+		t,
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumSender,
+		sendToOsmosisCoin,
+		osmosisChain.ChainContext,
+		osmosisHookCaller1,
 	)
 	requireT.NoError(err)
 
@@ -121,13 +127,13 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 	ibcHookCallerOnCoreumAddr1, err := ibchookskeeper.DeriveIntermediateSender(
 		coreumToOsmosisChannelID,
 		osmosisChain.MustConvertToBech32Address(osmosisHookCaller1),
-		coreumChain.Chain.ChainSettings.AddressPrefix)
+		coreumChain.ChainSettings.AddressPrefix)
 	requireT.NoError(err)
 
 	ibcHookCallerOnCoreumAddr2, err := ibchookskeeper.DeriveIntermediateSender(
 		coreumToOsmosisChannelID,
 		osmosisChain.MustConvertToBech32Address(osmosisHookCaller2),
-		coreumChain.Chain.ChainSettings.AddressPrefix)
+		coreumChain.ChainSettings.AddressPrefix)
 	requireT.NoError(err)
 
 	// Verify that hook caller is separate for each sender address.
@@ -143,6 +149,7 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
+		osmosisChain.TxFactoryAuto(),
 		osmosisHookCaller1,
 		sendToCoreumCoin,
 		coreumChain.ChainContext,
@@ -164,6 +171,7 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
+		osmosisChain.TxFactoryAuto(),
 		osmosisHookCaller1,
 		sendToCoreumCoin,
 		coreumChain.ChainContext,
@@ -185,6 +193,7 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
+		osmosisChain.TxFactoryAuto(),
 		osmosisHookCaller2,
 		sendOsmosisToCoreumCoin,
 		coreumChain.ChainContext,
@@ -239,7 +248,7 @@ func TestIBCHooksCounterWASMCallback(t *testing.T) {
 
 	coreumContractAddr, _, err := coreumChain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		coreumChain.TxFactory().WithSimulateAndExecute(true),
+		coreumChain.TxFactoryAuto(),
 		coreumContractAdmin,
 		ibcwasm.IBCHooksCounter,
 		integration.InstantiateConfig{
@@ -259,9 +268,10 @@ func TestIBCHooksCounterWASMCallback(t *testing.T) {
 	// For more details check: https://github.com/cosmos/ibc-apps/blob/main/modules/ibc-hooks/wasm_hook.go#L228
 	ibcCallbackMemo := fmt.Sprintf(`{"ibc_callback": "%s"}`, coreumContractAddr)
 	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
-	_, err = coreumChain.Chain.ExecuteIBCTransferWithMemo(
+	_, err = coreumChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
 		coreumSender,
 		sendToOsmosisCoin,
 		osmosisChain.ChainContext,

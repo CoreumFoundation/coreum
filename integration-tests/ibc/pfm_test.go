@@ -84,6 +84,7 @@ func TestPFMViaCoreum(t *testing.T) {
 	_, err = osmosisChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
+		osmosisChain.TxFactoryAuto(),
 		osmosisSender,
 		sendToGaiaCoin,
 		coreumChain.ChainContext,

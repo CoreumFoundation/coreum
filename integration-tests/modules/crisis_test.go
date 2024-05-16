@@ -36,7 +36,7 @@ func TestVerifyInvariantMessageIsDenied(t *testing.T) {
 	// the gas price is too low
 	_, err := client.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		&crisistypes.MsgVerifyInvariant{
 			Sender:              sender.String(),
 			InvariantModuleName: banktypes.ModuleName,

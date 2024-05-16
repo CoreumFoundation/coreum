@@ -181,7 +181,7 @@ func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) er
 	// Transaction is broadcast and awaited
 	_, err := f.chainCtx.BroadcastTxWithSigner(
 		ctx,
-		f.chainCtx.TxFactory().WithSimulateAndExecute(true),
+		f.chainCtx.TxFactoryAuto(),
 		f.chainCtx.ClientContext.FromAddress(),
 		msg,
 	)

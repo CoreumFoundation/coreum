@@ -55,7 +55,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 
@@ -191,7 +191,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 
@@ -432,7 +432,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
@@ -588,7 +588,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
@@ -788,7 +788,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	)
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
@@ -947,7 +947,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	// sending to smart contract is blocked so minting to it should fail
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
@@ -989,7 +989,7 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 	clientCtx := chain.ClientContext
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
@@ -1032,7 +1032,7 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
@@ -1095,13 +1095,12 @@ func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
 	)
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
@@ -1179,8 +1178,7 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 		},
 	})
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	codeID, err := chain.Wasm.DeployWASMContract(ctx, txf, admin, testcontracts.AssetExtensionWasm)
 	requireT.NoError(err)
@@ -1286,7 +1284,7 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 	)
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), admin, testcontracts.AssetExtensionWasm,
+		ctx, chain.TxFactoryAuto(), admin, testcontracts.AssetExtensionWasm,
 	)
 	requireT.NoError(err)
 
@@ -1296,7 +1294,7 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
@@ -1342,7 +1340,7 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		contractAddr,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{

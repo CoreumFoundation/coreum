@@ -15,8 +15,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 )
 
-var gasMultiplier = 1.5
-
 // InstantiateConfig contains params specific to contract instantiation.
 type InstantiateConfig struct {
 	Admin      sdk.AccAddress
@@ -87,7 +85,7 @@ func (w Wasm) ExecuteWASMContract(
 		Funds:    funds,
 	}
 
-	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
+	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, txf, fromAddress, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +127,7 @@ func (w Wasm) DeployWASMContract(
 		WASMByteCode: wasmData,
 	}
 
-	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
+	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, txf, fromAddress, msg)
 	if err != nil {
 		return 0, err
 	}
@@ -198,7 +196,7 @@ func (w Wasm) InstantiateWASMContract2(
 		Salt:   salt,
 	}
 
-	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
+	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, txf, fromAddress, msg)
 	if err != nil {
 		return "", err
 	}
@@ -241,7 +239,7 @@ func (w Wasm) InstantiateWASMContract(
 		Funds:  funds,
 	}
 
-	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
+	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, txf, fromAddress, msg)
 	if err != nil {
 		return "", err
 	}
@@ -289,18 +287,10 @@ func (w Wasm) MigrateWASMContract(
 		Msg:      wasmtypes.RawContractMessage(payload),
 	}
 
-	_, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
+	_, err := w.chainCtx.BroadcastTxWithSigner(ctx, txf, fromAddress, msg)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func addGasMultiplier(txf client.Factory) client.Factory {
-	if txf.Gas() == 0 {
-		return txf.WithGasAdjustment(gasMultiplier)
-	}
-
-	return txf
 }
