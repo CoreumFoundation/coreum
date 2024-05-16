@@ -198,6 +198,8 @@ func TestMatching(t *testing.T) {
 			},
 		},
 		{
+			// To discuss: What if we enforce user to specify ~100*amount_increment for token they want to buy/sell precisely?
+			// Also allow user to specify direction either sellQuantity or buyQuantity is more important.
 			name: "order_rounding_issue_initial_int_expected_amount_reduced_to_float",
 			newOrders: []keeper.Order{
 				{
@@ -205,7 +207,7 @@ func TestMatching(t *testing.T) {
 					ID:           "order1",
 					SellDenom:    denomCORE,
 					BuyDenom:     denomUSDC,
-					SellQuantity: sdkmath.NewInt(50_000_000),
+					SellQuantity: sdkmath.NewInt(500_000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("3.75"), // expect 1875
 				},
 				{
@@ -213,7 +215,7 @@ func TestMatching(t *testing.T) {
 					ID:           "order2",
 					SellDenom:    denomUSDC,
 					BuyDenom:     denomCORE,
-					SellQuantity: sdkmath.NewInt(10_000_000),
+					SellQuantity: sdkmath.NewInt(100_000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.26"), // ~0.38 | expect 2631
 				},
 				{
@@ -221,7 +223,7 @@ func TestMatching(t *testing.T) {
 					ID:           "order3",
 					SellDenom:    denomUSDC,
 					BuyDenom:     denomCORE,
-					SellQuantity: sdkmath.NewInt(10_000_000),
+					SellQuantity: sdkmath.NewInt(100_000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.26"), // ~0.3792 | expected 2637
 				},
 			},
@@ -579,7 +581,7 @@ func TestMatching(t *testing.T) {
 }
 
 func TestCalculateSwapAmountExactV2(t *testing.T) {
-	amntA, amntB := keeper.CalculateSwapAmountExactV2(
+	amntA, amntB := keeper.CalculateSwapAmountExactV1(
 		big.NewRat(10_000_000_000, 375),
 		big.NewRat(375, 10_000),
 		big.NewInt(10_000),
@@ -587,7 +589,7 @@ func TestCalculateSwapAmountExactV2(t *testing.T) {
 	)
 	fmt.Printf("amntA: %s, amntB: %s\n", amntA.String(), amntB.String())
 
-	amntA, amntB = keeper.CalculateSwapAmountExactV2(
+	amntA, amntB = keeper.CalculateSwapAmountExactV1(
 		big.NewRat(2_6000_000, 1),
 		big.NewRat(375, 10_000),
 		big.NewInt(10_000),
