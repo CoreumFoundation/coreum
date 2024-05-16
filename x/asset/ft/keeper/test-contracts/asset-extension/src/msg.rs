@@ -23,9 +23,9 @@ pub enum SudoMsg {
 
 #[cw_serde]
 pub struct TransferContext {
-    sender_is_smart_contract: bool,
-    recipient_is_smart_contract: bool,
-    ibc_purpose: IBCPurpose,
+    pub sender_is_smart_contract: bool,
+    pub recipient_is_smart_contract: bool,
+    pub ibc_purpose: IBCPurpose,
 }
 
 #[cw_serde]

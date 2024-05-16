@@ -9,7 +9,7 @@ use coreum_wasm_sdk::assetft::{
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
+use crate::msg::{ExecuteMsg, IBCPurpose, InstantiateMsg, QueryMsg, SudoMsg, TransferContext};
 use crate::state::DENOM;
 
 // version info for migration info
@@ -57,8 +57,8 @@ pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResul
             transfer_amount,
             commission_amount: _,
             burn_amount: _,
-            context: _,
-        } => sudo_extension_transfer(deps, env, transfer_amount, sender, recipient),
+            context,
+        } => sudo_extension_transfer(deps, env, transfer_amount, sender, recipient, context),
     }
 }
 
@@ -68,6 +68,7 @@ pub fn sudo_extension_transfer(
     amount: Uint128,
     sender: String,
     recipient: String,
+    context: TransferContext,
 ) -> CoreumResult<ContractError> {
     if amount == AMOUNT_DISALLOWED_TRIGGER {
         return Err(ContractError::Std(StdError::generic_err(
@@ -85,16 +86,18 @@ pub fn sudo_extension_transfer(
         // must not go below the frozen amount. Otherwise the transaction will fail.
 
         if features.contains(&assetft::FREEZING) {
-            assert_freezing(deps.as_ref(), sender.as_ref(), &token, amount)?;
+            assert_freezing(deps.as_ref(), sender.as_ref(), &token, amount, &context)?;
         }
 
         if features.contains(&assetft::WHITELISTING) {
-            assert_whitelisting(deps.as_ref(), &recipient, &token, amount)?;
+            assert_whitelisting(deps.as_ref(), &recipient, &token, amount, &context)?;
         }
 
         if features.contains(&assetft::BLOCK_SMART_CONTRACTS) {
             assert_block_smart_contracts(deps.as_ref(), &recipient, &token)?;
         }
+
+        assert_ibc(deps.as_ref(), &recipient, &token, context, features)?;
 
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
@@ -131,9 +134,17 @@ fn assert_freezing(
     account: &str,
     token: &Token,
     amount: Uint128,
+    context: &TransferContext,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
     if token.admin == Some(account.to_string()) {
+        return Ok(());
+    }
+
+    // Ignore freezing if the transfer is an IBC transfer in. In case of IBC transfer comint into the chain
+    // source account is the escrow account and since we don't want to allow freeze of every
+    // escrow address we ignore freezing for incoming ibc transfers.
+    if context.ibc_purpose == IBCPurpose::In {
         return Ok(());
     }
 
@@ -164,12 +175,19 @@ fn assert_whitelisting(
     account: &str,
     token: &Token,
     amount: Uint128,
+    context: &TransferContext,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
     if token.admin == Some(account.to_string()) {
         return Ok(());
     }
 
+    // Ignore whitelising if the transfer is an IBC transfer. In case of IBC transfer
+    // destination account is the escrow account and since we don't want to whitelist every
+    // escrow address we ignore whitelisting for outgoing ibc transfers.
+    if context.ibc_purpose == IBCPurpose::Out {
+        return Ok(());
+    }
     // TODO remove this if statement.
     // This check is intended for POC testing, it must be replaced with a more
     // meaningful check.
@@ -235,6 +253,27 @@ fn assert_block_smart_contracts(
 
     if is_smart_contract(deps, recipient) {
         return Err(ContractError::SmartContractBlocked {});
+    }
+
+    return Ok(());
+}
+
+fn assert_ibc(
+    deps: Deps<CoreumQueries>,
+    recipient: &str,
+    token: &Token,
+    context: TransferContext,
+    features: &Vec<u32>,
+) -> Result<(), ContractError> {
+    if recipient.to_string() == token.issuer
+        || Some(recipient.to_string()) == token.extension_cw_address
+    {
+        return Ok(());
+    }
+    let ibc_enabled = features.contains(&assetft::IBC);
+
+    if context.ibc_purpose == IBCPurpose::Out && !ibc_enabled {
+        return Err(ContractError::IBCDisabled {});
     }
 
     return Ok(());
