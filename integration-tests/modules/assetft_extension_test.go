@@ -27,12 +27,13 @@ import (
 )
 
 const (
-	AmountDisallowedTrigger         = 7
-	AmountIgnoreWhitelistingTrigger = 49
-	AmountIgnoreFreezingTrigger     = 79
-	AmountBurningTrigger            = 101
-	AmountMintingTrigger            = 105
-	AmountIgnoreBurnRateTrigger     = 108
+	AmountDisallowedTrigger               = 7
+	AmountIgnoreWhitelistingTrigger       = 49
+	AmountIgnoreFreezingTrigger           = 79
+	AmountBurningTrigger                  = 101
+	AmountMintingTrigger                  = 105
+	AmountIgnoreBurnRateTrigger           = 108
+	AmountIgnoreSendCommissionRateTrigger = 109
 )
 
 // TestAssetFTExtensionIssue tests extension issue functionality of fungible tokens.
@@ -1559,5 +1560,165 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 		&admin:      660, // 560 + 100
 		&recipient1: 182,
 		&recipient2: 98, // 208 - 100 - 10 (10% burn rate)
+	})
+}
+
+// TestAssetFTExtensionSendCommissionRate checks extension send commission rate functionality of fungible tokens.
+func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	requireT := require.New(t)
+	admin := chain.GenAccount()
+	recipient1 := chain.GenAccount()
+	recipient2 := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+	})
+	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+	})
+	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), admin, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+
+	// Issue a fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        admin.String(),
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Description:   "ABC Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Label:  "testing-send-commission-rate",
+		},
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.10"),
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	tokenIssuedEvents, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	denom := tokenIssuedEvents[0].Denom
+
+	token, err := assetFTClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom})
+	requireT.NoError(err)
+	extension := sdk.MustAccAddressFromBech32(token.GetToken().ExtensionCWAddress)
+
+	// send from admin to recipient1 (send commission rate must apply if the extension decides)
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   recipient1.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
+	}
+
+	txRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	// assert that we don't receive events with empty amounts
+	requireT.NotContains(txRes.RawLog, `{"key":"amount"}`)
+
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&admin:      580,
+		&recipient1: 400,
+		&extension:  20,
+	})
+
+	// send trigger amount from recipient1 to recipient2 (send commission rate must not apply)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient1.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreSendCommissionRateTrigger))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&admin:      580,
+		&recipient1: 291,
+		&recipient2: 109,
+		&extension:  20,
+	})
+
+	// send from recipient1 to recipient2 (send commission rate must apply)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient1.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&admin:      585,
+		&recipient1: 181,
+		&recipient2: 209,
+		&extension:  25,
+	})
+
+	// send from recipient2 to admin (send commission rate must not apply)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient2.String(),
+		ToAddress:   admin.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&admin:      690,
+		&recipient1: 181,
+		&recipient2: 99,
+		&extension:  30,
 	})
 }
