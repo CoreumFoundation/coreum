@@ -18,6 +18,8 @@ var (
 
 	TenBigInt  = big.NewInt(10)
 	ZeroBigInt = big.NewInt(0)
+
+	TickSizeCoeficient = big.NewRat(1, 100)
 )
 
 // Order is matching sample ordrer.
@@ -196,11 +198,11 @@ type App struct {
 	OrderBooks map[string]*OrderBook
 	Balances   map[string]sdk.Coins
 
-	DenomTicks map[string]uint
+	DenomTicks map[string]int64
 }
 
 // NewApp returns new instance of an app.
-func NewApp(denomTicks map[string]uint) *App {
+func NewApp(denomTicks map[string]int64) *App {
 	return &App{
 		OrderBooks: make(map[string]*OrderBook),
 		Balances:   make(map[string]sdk.Coins),
@@ -208,6 +210,12 @@ func NewApp(denomTicks map[string]uint) *App {
 	}
 }
 
+func (app *App) PriceTickSize(sellDenom, buyDenom string) *big.Rat {
+	// 0.01 *sellDenomTick / buyDenomTick
+	return (&big.Rat{}).Mul(TickSizeCoeficient, big.NewRat(app.DenomTicks[sellDenom], app.DenomTicks[buyDenom]))
+}
+
+// TODO: Don't use Decimal in calculations.
 func (app *App) ValidateOrder(order Order) error {
 	sellTick, ok := app.DenomTicks[order.SellDenom]
 	if !ok {
@@ -218,20 +226,26 @@ func (app *App) ValidateOrder(order Order) error {
 		return fmt.Errorf("unspecified tick for buy denom: %s", order.BuyDenom)
 	}
 
-	sellTickPow10 := big.NewInt(10).Exp(TenBigInt, big.NewInt(int64(sellTick)), nil)
-	if big.NewInt(1).Mod(order.SellQuantity.BigInt(), sellTickPow10).Cmp(ZeroBigInt) != 0 {
+	// check that price is multiple of price tick
+	priceRat := (&big.Rat{}).SetFrac(order.Price.BigInt(), DecPrecisionReuse)
+	priceTickSize := app.PriceTickSize(order.SellDenom, order.BuyDenom)
+	if !(&big.Rat{}).Quo(priceRat, priceTickSize).IsInt() {
+		return fmt.Errorf("invalid price: %s, tick size not satisfied: %s, orderID: %s", order.Price, priceTickSize, order.ID)
+	}
+
+	// check that sell quantity is multiple of sell tick
+	if (&big.Int{}).Mod(order.SellQuantity.BigInt(), big.NewInt(sellTick)).Cmp(ZeroBigInt) != 0 {
 		return fmt.Errorf("invalid sell quantity: %s, tick not satisfied: %d, orderID: %s", order.SellQuantity, sellTick, order.ID)
 	}
 
+	// check that buy quantity is integer
 	buyQuantityDec := order.SellQuantity.ToLegacyDec().Mul(order.Price)
 	if !buyQuantityDec.IsInteger() {
 		return fmt.Errorf("invalid buy quantity: %s, not integer, orderID: %s", buyQuantityDec.String(), order.ID)
 	}
-	buyQuantity := sdkmath.NewIntFromBigInt(buyQuantityDec.BigInt().Quo(buyQuantityDec.BigInt(), DecPrecisionReuse))
-	//fmt.Printf("Buy quantity: %s\n", buyQuantity.String())
-	buyTickPow10 := big.NewInt(10).Exp(TenBigInt, big.NewInt(int64(buyTick)), nil)
-	//fmt.Printf("buyTickPow10: %s\n", buyTickPow10.String())
-	if big.NewInt(1).Mod(buyQuantity.BigInt(), buyTickPow10).Cmp(ZeroBigInt) != 0 {
+	// check that buy quantity is multiple of buy tick
+	buyQuantity := sdkmath.NewIntFromBigInt((&big.Int{}).Quo(buyQuantityDec.BigInt(), DecPrecisionReuse))
+	if (&big.Int{}).Mod(buyQuantity.BigInt(), big.NewInt(buyTick)).Cmp(ZeroBigInt) != 0 {
 		return fmt.Errorf("invalid buy quantity: %s, tick not satisfied: %d, orderID: %s", buyQuantity, buyTick, order.ID)
 	}
 
@@ -295,34 +309,13 @@ func CalculateSwapAmountExactV2(amountLimitA, price *big.Rat, amntTickSizeA, amn
 	return nil, nil
 }
 
-func calculateSwapAmountExact(receiveDenomTick uint, price, receiveAmountRat big.Rat) (*big.Int, *big.Int) {
-	receiveAmntRounded := RatAmountToIntRoundDown(&receiveAmountRat).BigInt()
-
-	tickPow10 := big.NewInt(10).Exp(TenBigInt, big.NewInt(int64(receiveDenomTick)), nil)
-
-	// receiveAmntExact = receiveAmntRounded - (receiveAmntRounded % tickPow10)
-	receiveAmntExact := (&big.Int{}).Sub(receiveAmntRounded, (&big.Int{}).Mod(receiveAmntRounded, tickPow10))
-	if receiveAmntExact.Cmp(ZeroBigInt) == 0 {
-		panic("receiveAmntExact is zero")
-	}
-
-	// spendAmntExact = receiveAmntExact * price
-	spendAmntExact := (&big.Rat{}).Mul((&big.Rat{}).SetInt(receiveAmntExact), &price)
-	// since receiveAmntExact % tickPow10 == 0 then spendAmntExact should be integer.
-	if !spendAmntExact.IsInt() {
-		panic("spendAmntExact is not integer")
-	}
-
-	return receiveAmntExact, spendAmntExact.Num()
-}
-
 func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
 	if ob.IsEmpty() {
 		revOB.AddOrder(takerOrder)
 	}
 
 	takerBuyTick := app.DenomTicks[takerOrder.BuyDenom]
-	//takerSellTick := app.DenomTicks[takerOrder.SellDenom]
+	takerSellTick := app.DenomTicks[takerOrder.SellDenom]
 
 	ob.Iterate(func(revOBRecord OrderBookRecord) bool {
 		takerPriceReversed := (&big.Rat{}).SetFrac(DecPrecisionReuse, takerOrder.Price.BigInt())
@@ -347,8 +340,8 @@ func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
 
 		switch takerBuyAmount.Cmp(makerSellAmount) {
 		case -1: // takerBuyAmount < makerSellAmount: taker order is matched fully, and maker order is matched partially.
-			takerReceiveAmount, takerSpendAmount := calculateSwapAmountExact(takerBuyTick, *makerPrice, *takerBuyAmount)
-			fmt.Printf("takerReceiveAmount:%s, takerSpendAmount:%s\n", takerReceiveAmount.String(), takerSpendAmount.String())
+			takerReceiveAmount, takerSpendAmount := CalculateSwapAmountExactV2(takerBuyAmount, makerPrice, big.NewInt(takerBuyTick), big.NewInt(takerSellTick))
+			//fmt.Printf("takerReceiveAmount:%s, takerSpendAmount:%s\n", takerReceiveAmount.String(), takerSpendAmount.String())
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdkmath.NewIntFromBigInt(takerReceiveAmount)))
 
 			// maker receives the taker sell quantity
@@ -370,14 +363,14 @@ func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
 			ob.RemoveRecord(revOBRecord)
 			return true
 		case 1: // takerBuyAmount > makerSellAmount: taker order is matched partially, and maker order is matched fully.
-			// taker receives the amount maker sells
-			takerReceiveAmount := sdk.NewIntFromBigInt(revOBRecord.RemainingSellQuantity.BigInt())
-			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, takerReceiveAmount))
+			takerReceiveAmount, takerSpendAmount := CalculateSwapAmountExactV2(makerSellAmount, makerPrice, big.NewInt(takerBuyTick), big.NewInt(takerSellTick))
 
-			makerReceiveAmount := RatAmountToIntRoundDown((&big.Rat{}).Mul(makerSellAmount, makerPrice))
-			app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.BuyDenom, makerReceiveAmount))
+			// taker receives the amount maker sells
+			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdkmath.NewIntFromBigInt(takerReceiveAmount)))
+
+			app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.BuyDenom, sdkmath.NewIntFromBigInt(takerSpendAmount)))
 			// update state
-			takerOrder.SellQuantity = takerOrder.SellQuantity.Sub(makerReceiveAmount)
+			takerOrder.SellQuantity = takerOrder.SellQuantity.Sub(sdkmath.NewIntFromBigInt(takerSpendAmount))
 			// remove reduced record
 			ob.RemoveRecord(revOBRecord)
 			if takerOrder.IsBuyQuantityLessThanOne() {
