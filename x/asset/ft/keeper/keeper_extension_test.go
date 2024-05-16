@@ -25,13 +25,13 @@ import (
 )
 
 const (
-	AmountDisallowedTrigger           = 7
-	AmountIgnoreWhitelistingTrigger   = 49
-	AmountIgnoreFreezingTrigger       = 79
-	AmountBurningTrigger              = 101
-	AmountMintingTrigger              = 105
-	AmountIgnoreBurnRateTrigger       = 108
-	AmountIgnoreCommissionRateTrigger = 109
+	AmountDisallowedTrigger               = 7
+	AmountIgnoreWhitelistingTrigger       = 49
+	AmountIgnoreFreezingTrigger           = 79
+	AmountBurningTrigger                  = 101
+	AmountMintingTrigger                  = 105
+	AmountIgnoreBurnRateTrigger           = 108
+	AmountIgnoreSendCommissionRateTrigger = 109
 )
 
 func TestKeeper_Extension_Issue(t *testing.T) {
@@ -1009,7 +1009,7 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 	// send trigger amount from recipient1 to recipient2 (send commission rate must not apply)
 	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
-		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreCommissionRateTrigger)),
+		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreSendCommissionRateTrigger)),
 	))
 	requireT.NoError(err)
 

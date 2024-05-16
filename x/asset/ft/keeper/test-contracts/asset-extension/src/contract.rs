@@ -23,7 +23,7 @@ const AMOUNT_IGNORE_FREEZING_TRIGGER: Uint128 = Uint128::new(79);
 const AMOUNT_BURNING_TRIGGER: Uint128 = Uint128::new(101);
 const AMOUNT_MINTING_TRIGGER: Uint128 = Uint128::new(105);
 const AMOUNT_IGNORE_BURN_RATE_TRIGGER: Uint128 = Uint128::new(108);
-const AMOUNT_IGNORE_COMMISSION_RATE_TRIGGER: Uint128 = Uint128::new(109);
+const AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER: Uint128 = Uint128::new(109);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -135,7 +135,7 @@ pub fn sudo_extension_transfer(
 
     if !commission_amount.is_zero() {
         response =
-            assert_commission_rate(response, sender.as_ref(), amount, &token, commission_amount)?;
+            assert_send_commission_rate(response, sender.as_ref(), amount, &token, commission_amount)?;
     }
 
     if !burn_amount.is_zero() {
@@ -264,15 +264,15 @@ fn assert_block_smart_contracts(
     return Ok(());
 }
 
-fn assert_commission_rate(
+fn assert_send_commission_rate(
     response: Response<CoreumMsg>,
     sender: &str,
     amount: Uint128,
     token: &Token,
     commission_amount: Uint128,
 ) -> CoreumResult<ContractError> {
-    if amount == AMOUNT_IGNORE_COMMISSION_RATE_TRIGGER {
-        let refund_commission_rate_msg = cosmwasm_std::BankMsg::Send {
+    if amount == AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER {
+        let refund_commission_msg = cosmwasm_std::BankMsg::Send {
             to_address: sender.to_string(),
             amount: vec![Coin {
                 amount: commission_amount,
@@ -281,8 +281,8 @@ fn assert_commission_rate(
         };
 
         return Ok(response
-            .add_attribute("commission_rate_refund", commission_amount.to_string())
-            .add_message(refund_commission_rate_msg));
+            .add_attribute("send_commission_rate_refund", commission_amount.to_string())
+            .add_message(refund_commission_msg));
     }
 
     // if token has an admin, send half of the commission to the admin and let the extension keep
@@ -298,7 +298,7 @@ fn assert_commission_rate(
         };
         return Ok(response
             .add_attribute(
-                "admin_commission_amount",
+                "admin_send_commission_amount",
                 admin_commission_amount.to_string(),
             )
             .add_message(admin_commission_msg));
