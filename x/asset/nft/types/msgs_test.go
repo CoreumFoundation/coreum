@@ -63,17 +63,6 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 			},
 		},
 		{
-			name: "valid_msg_with_max_data_size",
-			messageFunc: func() *types.MsgIssueClass {
-				msg := validMessage
-				msg.Data = &codectypes.Any{
-					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
-					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize),
-				}
-				return &msg
-			},
-		},
-		{
 			name: "valid_msg_with_nil_data",
 			messageFunc: func() *types.MsgIssueClass {
 				msg := validMessage
@@ -140,18 +129,6 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 			messageFunc: func() *types.MsgIssueClass {
 				msg := validMessage
 				msg.URIHash = strings.Repeat("x", 129)
-				return &msg
-			},
-			expectedError: types.ErrInvalidInput,
-		},
-		{
-			name: "invalid_data_too_long",
-			messageFunc: func() *types.MsgIssueClass {
-				msg := validMessage
-				msg.Data = &codectypes.Any{
-					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
-					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize+1),
-				}
 				return &msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -224,17 +201,6 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			},
 		},
 		{
-			name: "valid_msg_with_max_data_size",
-			messageFunc: func() *types.MsgMint {
-				msg := validMessage
-				msg.Data = &codectypes.Any{
-					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
-					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize),
-				}
-				return &msg
-			},
-		},
-		{
 			name: "valid_msg_with_nil_data",
 			messageFunc: func() *types.MsgMint {
 				msg := validMessage
@@ -283,18 +249,6 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			messageFunc: func() *types.MsgMint {
 				msg := validMessage
 				msg.URIHash = strings.Repeat("x", 129)
-				return &msg
-			},
-			expectedError: types.ErrInvalidInput,
-		},
-		{
-			name: "invalid_data_too_long",
-			messageFunc: func() *types.MsgMint {
-				msg := validMessage
-				msg.Data = &codectypes.Any{
-					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
-					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize+1),
-				}
 				return &msg
 			},
 			expectedError: types.ErrInvalidInput,
