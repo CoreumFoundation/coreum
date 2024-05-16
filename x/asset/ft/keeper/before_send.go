@@ -20,10 +20,10 @@ const (
 	ExtenstionTransferMethod = "extension_transfer"
 )
 
-// SudoExtensionTransferMsg contains the fields passed to extension method call.
+// sudoExtensionTransferMsg contains the fields passed to extension method call.
 //
 //nolint:tagliatelle // these will be exposed to rust and must be snake case.
-type SudoExtensionTransferMsg struct {
+type sudoExtensionTransferMsg struct {
 	Recipient        string                       `json:"recipient,omitempty"`
 	Sender           string                       `json:"sender,omitempty"`
 	TransferAmount   sdkmath.Int                  `json:"transfer_amount,omitempty"`
@@ -187,7 +187,7 @@ func (k Keeper) invokeAssetExtension(
 
 	ibcPurpose, _ := wibctransfertypes.GetPurpose(ctx)
 	contractMsg := map[string]interface{}{
-		ExtenstionTransferMethod: SudoExtensionTransferMsg{
+		ExtenstionTransferMethod: sudoExtensionTransferMsg{
 			Sender:           sender.String(),
 			Recipient:        recipient.String(),
 			TransferAmount:   sendAmount.Amount,
