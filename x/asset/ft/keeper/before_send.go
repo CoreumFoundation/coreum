@@ -39,19 +39,12 @@ type sudoExtensionTransferContext struct {
 	IBCPurpose               string `json:"ibc_purpose"`
 }
 
-func ibcPurposeToExtensionString(p wibctransfertypes.Purpose) string {
-	switch p {
-	case wibctransfertypes.PurposeIn:
-		return "in"
-	case wibctransfertypes.PurposeOut:
-		return "out"
-	case wibctransfertypes.PurposeAck:
-		return "ack"
-	case wibctransfertypes.PurposeTimeout:
-		return "timeout"
-	default:
+func ibcPurposeToExtensionString(ctx sdk.Context) string {
+	ibcPurpose, _ := wibctransfertypes.GetPurpose(ctx)
+	if ibcPurpose == "" {
 		return "none"
 	}
+	return string(ibcPurpose)
 }
 
 // BeforeSendCoins checks that a transfer request is allowed or not.
@@ -185,7 +178,6 @@ func (k Keeper) invokeAssetExtension(
 		return err
 	}
 
-	ibcPurpose, _ := wibctransfertypes.GetPurpose(ctx)
 	contractMsg := map[string]interface{}{
 		ExtenstionTransferMethod: sudoExtensionTransferMsg{
 			Sender:           sender.String(),
@@ -194,7 +186,7 @@ func (k Keeper) invokeAssetExtension(
 			BurnAmount:       burnAmount,
 			CommissionAmount: commissionAmount,
 			Context: sudoExtensionTransferContext{
-				IBCPurpose: ibcPurposeToExtensionString(ibcPurpose),
+				IBCPurpose: ibcPurposeToExtensionString(ctx),
 			},
 		},
 	}

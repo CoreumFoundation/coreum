@@ -12,13 +12,13 @@ type Purpose string
 const (
 	// PurposeOut is used when IBC transfer from Coreum to peered chain is initialized by executing
 	// ibctransfertypes.MsgTransfer message.
-	PurposeOut Purpose = "ibcTransferOut"
+	PurposeOut Purpose = "out"
 	// PurposeIn is used when incoming IBC transfer comes from peered chain to Coreum.
-	PurposeIn Purpose = "ibcTransferIn"
+	PurposeIn Purpose = "in"
 	// PurposeAck is used when outgoing IBC transfer from Coreum is acknowledged by the peered chain.
-	PurposeAck Purpose = "ibcTransferAck"
+	PurposeAck Purpose = "ack"
 	// PurposeTimeout is used when outgoing IBC transfer from Coreum times out.
-	PurposeTimeout Purpose = "ibcTransferTimeout"
+	PurposeTimeout Purpose = "timeout"
 )
 
 type purposeKey struct{}
