@@ -1656,9 +1656,9 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	requireT.NotContains(txRes.RawLog, `{"key":"amount"}`)
 
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&admin:      580,
+		&admin:      580, // 1000 - 400 - 40 (10% commission from sender) + 20 (50% of the commission to the admin)
 		&recipient1: 400,
-		&extension:  20,
+		&extension:  20, // 50% of the commission to the extension
 	})
 
 	// send trigger amount from recipient1 to recipient2 (send commission rate must not apply)
@@ -1677,8 +1677,8 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&admin:      580,
-		&recipient1: 291,
-		&recipient2: 109,
+		&recipient1: 291, // 400 - 109 (AmountIgnoreSendCommissionRateTrigger)
+		&recipient2: 109, // AmountIgnoreSendCommissionRateTrigger
 		&extension:  20,
 	})
 
@@ -1697,10 +1697,10 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&admin:      585,
-		&recipient1: 181,
-		&recipient2: 209,
-		&extension:  25,
+		&admin:      585, // 580 + 5 (50% of the commission to the admin)
+		&recipient1: 181, // 291 - 100 - 10 (10% commission from sender)
+		&recipient2: 209, // 109 + 100
+		&extension:  25,  // 20 + 5 (50% of the commission to the extension)
 	})
 
 	// send from recipient2 to admin (send commission rate must apply if the extension decides)
@@ -1718,9 +1718,9 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&admin:      690,
+		&admin:      690, // 585 + 100 + 5 (50% of the commission to the admin)
 		&recipient1: 181,
-		&recipient2: 99,
-		&extension:  30,
+		&recipient2: 99, // 209 - 100 - 10 (10% commission from sender)
+		&extension:  30, // 25 + 5 (50% of the commission to the extension)
 	})
 }
