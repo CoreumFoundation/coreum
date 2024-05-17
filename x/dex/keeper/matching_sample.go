@@ -245,10 +245,10 @@ func (app *App) ValidateOrder(order Order) error {
 		return fmt.Errorf("invalid sell quantity: %s, min_amount_increment not satisfied: %d, orderID: %s", order.SellQuantity, sellMinAmntIncrement, order.ID)
 	}
 
+	buyQuantityRat := (&big.Rat{}).Mul(priceRat, (&big.Rat{}).SetInt(order.SellQuantity.BigInt()))
 	//check that buy quantity is integer
-	buyQuantityDec := order.SellQuantity.ToLegacyDec().Mul(order.Price)
-	if !buyQuantityDec.IsInteger() {
-		return fmt.Errorf("invalid buy quantity: %s, not integer, orderID: %s", buyQuantityDec.String(), order.ID)
+	if !buyQuantityRat.IsInt() {
+		return fmt.Errorf("invalid buy quantity: %s, not integer, orderID: %s", buyQuantityRat.String(), order.ID)
 	}
 
 	//I don't think this check is needed.
@@ -259,9 +259,11 @@ func (app *App) ValidateOrder(order Order) error {
 	//	return fmt.Errorf("invalid buy quantity: %s, min_amount_increment not satisfied: %d, orderID: %s", buyQuantity, buyMinAmntIncrement, order.ID)
 	//}
 
+	fmt.Printf("buyQuantityRat: %s buyMinAmntIncrement: %d \n", buyQuantityRat.String(), buyMinAmntIncrement)
+
 	// instead of previous check, we validate that buy quantity is more than buyMinAmntIncrement, so at least smth could be matched.
-	if buyQuantityDec.BigInt().Cmp(big.NewInt(buyMinAmntIncrement)) != 1 {
-		return fmt.Errorf("invalid buy quantity: %s, less than min_amount_increment: %d, orderID: %s", buyQuantityDec.String(), buyMinAmntIncrement, order.ID)
+	if buyQuantityRat.Num().Cmp(big.NewInt(buyMinAmntIncrement)) != 1 {
+		return fmt.Errorf("invalid buy quantity: %s, less than min_amount_increment: %d, orderID: %s", buyQuantityRat.String(), buyMinAmntIncrement, order.ID)
 	}
 
 	return nil
@@ -306,6 +308,7 @@ func (app *App) PlaceOrder(order Order) error {
 func CalculateSwapAmountExactV1(amountLimitA, price *big.Rat, minAmntIncrementA, minAmntIncrementB *big.Int) (*big.Int, *big.Int) {
 	amountLimitRoundedA := RatAmountToIntRoundDown(amountLimitA).BigInt()
 
+	// TODO: The algorithm here is ineffective. Need to come up with mathematical solution to improve.
 	for swapAmntA := amountLimitRoundedA; swapAmntA.Cmp(ZeroBigInt) != 0; swapAmntA.Sub(swapAmntA, big.NewInt(1)) {
 		swapAmntRatB := (&big.Rat{}).Mul((&big.Rat{}).SetInt(swapAmntA), price)
 		if !swapAmntRatB.IsInt() {
@@ -329,6 +332,7 @@ func CalculateSwapAmountExactV1(amountLimitA, price *big.Rat, minAmntIncrementA,
 func CalculateSwapAmountExactV2(amountLimitA, price *big.Rat, minAmntIncrementA, minAmntIncrementB *big.Int) (*big.Int, *big.Int) {
 	amountLimitRoundedA := RatAmountToIntRoundDown(amountLimitA).BigInt()
 
+	// TODO: The algorithm here is ineffective. Need to come up with mathematical solution to improve.
 	for swapAmntA := amountLimitRoundedA; swapAmntA.Cmp(ZeroBigInt) != 0; swapAmntA.Sub(swapAmntA, big.NewInt(1)) {
 		swapAmntRatB := (&big.Rat{}).Mul((&big.Rat{}).SetInt(swapAmntA), price)
 		if !swapAmntRatB.IsInt() {
