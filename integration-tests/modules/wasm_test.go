@@ -155,8 +155,7 @@ func TestContractInstantiation(t *testing.T) {
 		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	codeID, err := chain.Wasm.DeployWASMContract(
 		ctx,
@@ -268,8 +267,7 @@ func TestWASMBankSendContract(t *testing.T) {
 	)
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	// deployWASMContract and init contract with the initial coins amount
@@ -315,8 +313,7 @@ func TestWASMBankSendContract(t *testing.T) {
 	// try to withdraw more than the admin has
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		txf.
-			WithSimulateAndExecute(false).
+		chain.TxFactory().
 			// the gas here is to try to execute the tx and don't fail on the gas estimation
 			WithGas(uint64(getFeemodelParams(ctx, t, chain.ClientContext).MaxBlockGas)),
 		admin,
@@ -384,8 +381,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 
 	// deployWASMContract and init contract with the initial coins amount
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
@@ -458,8 +454,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	contractAddr, codeID, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
@@ -594,8 +589,7 @@ func TestWASMContractUpgrade(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
@@ -680,7 +674,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	// deployWASMContract and init contract with the initial coins amount
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
@@ -710,7 +704,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithSimulateAndExecute(true).WithGas(chain.GasLimitByMsgs(msgUpdateAdmin)),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateAdmin)),
 		msgUpdateAdmin,
 	)
 
@@ -732,7 +726,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(newAdmin),
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		msgClearAdmin,
 	)
 
@@ -781,7 +775,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	contractAddrAuthzTransfer, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		granter,
 		moduleswasm.AuthzTransferWASM,
 		integration.InstantiateConfig{
@@ -794,7 +788,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	contractAddrAuthzStargate, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		granter,
 		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
@@ -807,7 +801,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	contractAddrAuthzNftTrade, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		granter,
 		moduleswasm.AuthzNftTradeWASM,
 		integration.InstantiateConfig{
@@ -849,7 +843,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		granter,
 		contractAddrAuthzTransfer,
 		moduleswasm.AuthZExecuteTransferRequest(receiver.String(), chain.NewCoin(totalAmountToSend)),
@@ -885,7 +879,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		granter,
 		contractAddrAuthzStargate,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
@@ -1012,7 +1006,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT.NoError(err)
 
 	_, err = chain.Wasm.ExecuteWASMContract(
-		ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddrAuthzNftTrade, nftOfferPayload, sdk.Coin{},
+		ctx, chain.TxFactoryAuto(), granter, contractAddrAuthzNftTrade, nftOfferPayload, sdk.Coin{},
 	)
 	requireT.NoError(err)
 
@@ -1033,7 +1027,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		receiver,
 		contractAddrAuthzNftTrade,
 		acceptNftOfferPayload,
@@ -1073,8 +1067,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	)
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	ftClient := assetfttypes.NewQueryClient(clientCtx)
 
@@ -1159,8 +1152,6 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(issuanceReq.InitialAmount, balanceRes.Balance.Amount.String())
-
-	txf = txf.WithSimulateAndExecute(true)
 
 	// ********** Transactions **********
 
@@ -1463,8 +1454,7 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	)
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	ftClient := assetfttypes.NewQueryClient(clientCtx)
 
@@ -1546,8 +1536,6 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(issuanceReq.InitialAmount, balanceRes.Balance.Amount.String())
-
-	txf = txf.WithSimulateAndExecute(true)
 
 	// ********** Transactions **********
 
@@ -1889,8 +1877,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	)
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 	assetNftClient := assetnfttypes.NewQueryClient(clientCtx)
 	nftClient := nfttypes.NewQueryClient(clientCtx)
 
@@ -2478,8 +2465,7 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 	)
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 	assetNftClient := assetnfttypes.NewQueryClient(clientCtx)
 	nftClient := nfttypes.NewQueryClient(clientCtx)
 
@@ -3337,7 +3323,7 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	codeID, err := chain.Wasm.DeployWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		adminAccount,
 		moduleswasm.BankSendWASM,
 	)
@@ -3452,8 +3438,7 @@ func TestVestingToWASMContract(t *testing.T) {
 		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	// Deploy smart contract.
 
@@ -3576,8 +3561,7 @@ func testSmartContractAccount(
 ) {
 	requireT := require.New(t)
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	authClient := authtypes.NewQueryClient(chain.ClientContext)
 
