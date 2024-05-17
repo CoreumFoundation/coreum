@@ -24,10 +24,10 @@ func TestMatching(t *testing.T) {
 		denomBTC  = "satoshi" // 1BTC  = 10^8satoshi
 	)
 
-	denomTicks := map[string]int64{
-		denomCORE: 10_000, // tradable step for CORE is 10,000ucore = 0.01CORE // Value from bitrue.
-		denomUSDC: 10_000, // tradable step for USDC is 10,000uusdc = 0.01USDC
-		denomBTC:  1_000,  // tradable step for BTC is 1,000satoshi = 10^(-5)BTC = 0.00001BTC // Value from binance.
+	minAmntIncrements := map[string]int64{
+		denomCORE: 1,     // tradable step for CORE is 10,000ucore = 0.01CORE // Value from bitrue.
+		denomUSDC: 1,     // tradable step for USDC is 10,000uusdc = 0.01USDC
+		denomBTC:  1_000, // tradable step for BTC is 1,000satoshi = 10^(-5)BTC = 0.00001BTC // Value from binance.
 	}
 
 	type testCase struct {
@@ -208,7 +208,7 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denomCORE,
 					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(500_000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("3.75"), // expect 1875
+					Price:        sdkmath.LegacyMustNewDecFromStr("3.75"),
 				},
 				{
 					Account:      sender2,
@@ -216,7 +216,7 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denomUSDC,
 					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(100_000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("0.26"), // ~0.38 | expect 2631
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.26"),
 				},
 				{
 					Account:      sender3,
@@ -224,7 +224,7 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denomUSDC,
 					BuyDenom:     denomCORE,
 					SellQuantity: sdkmath.NewInt(100_000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("0.26"), // ~0.3792 | expected 2637
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.26"),
 				},
 			},
 			expectedOrderBooks: map[string]*keeper.OrderBook{
@@ -547,7 +547,7 @@ func TestMatching(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app := keeper.NewApp(denomTicks)
+			app := keeper.NewApp(minAmntIncrements)
 
 			passedOrdersSum := sdk.NewCoins()
 			for _, order := range tc.newOrders {

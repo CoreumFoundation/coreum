@@ -19,7 +19,8 @@ Another option is to find the biggest amount less than 26666666 which matches ex
 and cancel a reminder.
 In this case, it could be 26666664 since 26666664*0.375=9_999_999 so both numbers are integers.
 But such amount reduces order1 to 40_000_001 AAA (price 0.375) -> 15_000_000.375 BBB.
-As you can see it results into decimal number of BBB in order1 which will cause issues during matching of the next order.
+As you can see it results into decimal number of BBB in order1
+which will cause partial cancellation during matching with the next orders.
 
 ### Solution
 
@@ -90,3 +91,4 @@ Each cell is `tick_size` for A->B pair.
 | 10_000(A)            | 0.000001        | 0.00001        | 0.0001        | 0.001    | 0.01      | 0.1        |
 | 100_000(A)           | 0.0000001=10^-7 | 0.000001=10^-6 | 0.00001=10^-5 | 0.0001   | 0.001     | 0.01       |
 
+## TODO: Finalize this doc

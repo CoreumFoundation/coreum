@@ -20,7 +20,7 @@ var (
 	TenBigInt  = big.NewInt(10)
 	ZeroBigInt = big.NewInt(0)
 
-	TickSizeCoeficient = big.NewRat(1, 100)
+	TickSizeCoefficient = big.NewRat(1, 100)
 )
 
 // Order is matching sample ordrer.
@@ -204,33 +204,33 @@ type App struct {
 	OrderBooks map[string]*OrderBook
 	Balances   map[string]sdk.Coins
 
-	DenomTicks map[string]int64
+	DenomMinAmntIncrements map[string]int64
 }
 
 // NewApp returns new instance of an app.
-func NewApp(denomTicks map[string]int64) *App {
+func NewApp(denomMinAmntIncrements map[string]int64) *App {
 	return &App{
-		OrderBooks: make(map[string]*OrderBook),
-		Balances:   make(map[string]sdk.Coins),
-		DenomTicks: denomTicks,
+		OrderBooks:             make(map[string]*OrderBook),
+		Balances:               make(map[string]sdk.Coins),
+		DenomMinAmntIncrements: denomMinAmntIncrements,
 	}
 }
 
 func (app *App) PriceTickSize(sellDenom, buyDenom string) *big.Rat {
-	// 0.01 *sellDenomTick / buyDenomTick
-	return (&big.Rat{}).Mul(TickSizeCoeficient, big.NewRat(app.DenomTicks[sellDenom], app.DenomTicks[buyDenom]))
+	// 0.01 *sellDenomMinAmntIncrement / buyDenomMinAmntIncrement
+	return (&big.Rat{}).Mul(TickSizeCoefficient, big.NewRat(app.DenomMinAmntIncrements[sellDenom], app.DenomMinAmntIncrements[buyDenom]))
 }
 
 // TODO: Don't use Decimal in calculations.
 func (app *App) ValidateOrder(order Order) error {
-	// Verify that ticks are defined for both denoms.
-	sellTick, ok := app.DenomTicks[order.SellDenom]
+	// Verify that min_amount_increment are defined for both denoms.
+	sellMinAmntIncrement, ok := app.DenomMinAmntIncrements[order.SellDenom]
 	if !ok {
-		return fmt.Errorf("unspecified tick for sell denom: %s", order.SellDenom)
+		return fmt.Errorf("unspecified min_amount_increment for sell denom: %s", order.SellDenom)
 	}
-	buyTick, ok := app.DenomTicks[order.BuyDenom]
+	buyMinAmntIncrement, ok := app.DenomMinAmntIncrements[order.BuyDenom]
 	if !ok {
-		return fmt.Errorf("unspecified tick for buy denom: %s", order.BuyDenom)
+		return fmt.Errorf("unspecified min_amount_increment for buy denom: %s", order.BuyDenom)
 	}
 
 	// check that price is multiple of price tick
@@ -240,9 +240,9 @@ func (app *App) ValidateOrder(order Order) error {
 		return fmt.Errorf("invalid price: %s, tick size not satisfied: %s, orderID: %s", order.Price, priceTickSize, order.ID)
 	}
 
-	// check that sell quantity is multiple of sell tick
-	if (&big.Int{}).Mod(order.SellQuantity.BigInt(), big.NewInt(sellTick)).Cmp(ZeroBigInt) != 0 {
-		return fmt.Errorf("invalid sell quantity: %s, tick not satisfied: %d, orderID: %s", order.SellQuantity, sellTick, order.ID)
+	// check that sell quantity is multiple of sellMinAmntIncrement
+	if (&big.Int{}).Mod(order.SellQuantity.BigInt(), big.NewInt(sellMinAmntIncrement)).Cmp(ZeroBigInt) != 0 {
+		return fmt.Errorf("invalid sell quantity: %s, min_amount_increment not satisfied: %d, orderID: %s", order.SellQuantity, sellMinAmntIncrement, order.ID)
 	}
 
 	//check that buy quantity is integer
@@ -253,15 +253,15 @@ func (app *App) ValidateOrder(order Order) error {
 
 	//I don't think this check is needed.
 	//It limits order creation too much.
-	// check that buy quantity is multiple of buy tick
+	// check that buy quantity is multiple of buy min_amount_increment
 	//buyQuantity := sdkmath.NewIntFromBigInt((&big.Int{}).Quo(buyQuantityDec.BigInt(), DecPrecisionReuse))
-	//if (&big.Int{}).Mod(buyQuantity.BigInt(), big.NewInt(buyTick)).Cmp(ZeroBigInt) != 0 {
-	//	return fmt.Errorf("invalid buy quantity: %s, tick not satisfied: %d, orderID: %s", buyQuantity, buyTick, order.ID)
+	//if (&big.Int{}).Mod(buyQuantity.BigInt(), big.NewInt(buyMinAmntIncrement)).Cmp(ZeroBigInt) != 0 {
+	//	return fmt.Errorf("invalid buy quantity: %s, min_amount_increment not satisfied: %d, orderID: %s", buyQuantity, buyMinAmntIncrement, order.ID)
 	//}
 
-	// instead of previous check, we validate that buy quantity is more than buy tick, so at least smth could be matched.
-	if buyQuantityDec.BigInt().Cmp(big.NewInt(buyTick)) != 1 {
-		return fmt.Errorf("invalid buy quantity: %s, less than tick: %d, orderID: %s", buyQuantityDec.String(), buyTick, order.ID)
+	// instead of previous check, we validate that buy quantity is more than buyMinAmntIncrement, so at least smth could be matched.
+	if buyQuantityDec.BigInt().Cmp(big.NewInt(buyMinAmntIncrement)) != 1 {
+		return fmt.Errorf("invalid buy quantity: %s, less than min_amount_increment: %d, orderID: %s", buyQuantityDec.String(), buyMinAmntIncrement, order.ID)
 	}
 
 	return nil
@@ -302,8 +302,8 @@ func (app *App) PlaceOrder(order Order) error {
 	return nil
 }
 
-// CalculateSwapAmountExactV1 makes sure both token amounts respect tick sizes.
-func CalculateSwapAmountExactV1(amountLimitA, price *big.Rat, amntTickSizeA, amntTickSizeB *big.Int) (*big.Int, *big.Int) {
+// CalculateSwapAmountExactV1 makes sure both token amounts respect min_amount_increment.
+func CalculateSwapAmountExactV1(amountLimitA, price *big.Rat, minAmntIncrementA, minAmntIncrementB *big.Int) (*big.Int, *big.Int) {
 	amountLimitRoundedA := RatAmountToIntRoundDown(amountLimitA).BigInt()
 
 	for swapAmntA := amountLimitRoundedA; swapAmntA.Cmp(ZeroBigInt) != 0; swapAmntA.Sub(swapAmntA, big.NewInt(1)) {
@@ -312,10 +312,10 @@ func CalculateSwapAmountExactV1(amountLimitA, price *big.Rat, amntTickSizeA, amn
 			continue
 		}
 
-		aReminder := (&big.Int{}).Mod(swapAmntA, amntTickSizeA)
+		aReminder := (&big.Int{}).Mod(swapAmntA, minAmntIncrementA)
 
 		swapAmntB := swapAmntRatB.Num()
-		bReminder := (&big.Int{}).Mod(swapAmntB, amntTickSizeB)
+		bReminder := (&big.Int{}).Mod(swapAmntB, minAmntIncrementB)
 
 		if aReminder.Cmp(ZeroBigInt) == 0 && bReminder.Cmp(ZeroBigInt) == 0 {
 			return swapAmntA, swapAmntB
@@ -325,8 +325,8 @@ func CalculateSwapAmountExactV1(amountLimitA, price *big.Rat, amntTickSizeA, amn
 	return nil, nil
 }
 
-// CalculateSwapAmountExactV2 makes sure A token amount respects tick sizes & B token amount is just integer.
-func CalculateSwapAmountExactV2(amountLimitA, price *big.Rat, amntTickSizeA, amntTickSizeB *big.Int) (*big.Int, *big.Int) {
+// CalculateSwapAmountExactV2 makes sure A token amount respects min_amount_increment for A & B token amount is just integer.
+func CalculateSwapAmountExactV2(amountLimitA, price *big.Rat, minAmntIncrementA, minAmntIncrementB *big.Int) (*big.Int, *big.Int) {
 	amountLimitRoundedA := RatAmountToIntRoundDown(amountLimitA).BigInt()
 
 	for swapAmntA := amountLimitRoundedA; swapAmntA.Cmp(ZeroBigInt) != 0; swapAmntA.Sub(swapAmntA, big.NewInt(1)) {
@@ -335,7 +335,7 @@ func CalculateSwapAmountExactV2(amountLimitA, price *big.Rat, amntTickSizeA, amn
 			continue
 		}
 
-		aReminder := (&big.Int{}).Mod(swapAmntA, amntTickSizeA)
+		aReminder := (&big.Int{}).Mod(swapAmntA, minAmntIncrementA)
 
 		if aReminder.Cmp(ZeroBigInt) == 0 {
 			return swapAmntA, swapAmntRatB.Num()
@@ -352,8 +352,8 @@ func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
 
 	calculateSwapAmountFunc := CalculateSwapAmountExactV2
 
-	takerBuyTick := app.DenomTicks[takerOrder.BuyDenom]
-	takerSellTick := app.DenomTicks[takerOrder.SellDenom]
+	takerBuyDenomMinAmntIncrement := app.DenomMinAmntIncrements[takerOrder.BuyDenom]
+	takerSellDenomMinAmntIncrement := app.DenomMinAmntIncrements[takerOrder.SellDenom]
 
 	ob.Iterate(func(revOBRecord OrderBookRecord) bool {
 		takerPriceReversed := (&big.Rat{}).SetFrac(DecPrecisionReuse, takerOrder.Price.BigInt())
@@ -378,7 +378,7 @@ func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
 
 		switch takerBuyAmount.Cmp(makerSellAmount) {
 		case -1: // takerBuyAmount < makerSellAmount: taker order is matched fully, and maker order is matched partially.
-			takerReceiveAmount, takerSpendAmount := calculateSwapAmountFunc(takerBuyAmount, makerPrice, big.NewInt(takerBuyTick), big.NewInt(takerSellTick))
+			takerReceiveAmount, takerSpendAmount := calculateSwapAmountFunc(takerBuyAmount, makerPrice, big.NewInt(takerBuyDenomMinAmntIncrement), big.NewInt(takerSellDenomMinAmntIncrement))
 			if takerReceiveAmount == nil || takerSpendAmount == nil {
 				panic(fmt.Sprintf("Failed to calculate swap amount: takerOrderID:%s, makerOrderID:%s", takerOrder.ID, revOBRecord.OrderID))
 			}
@@ -404,7 +404,7 @@ func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
 			ob.RemoveRecord(revOBRecord)
 			return true
 		case 1: // takerBuyAmount > makerSellAmount: taker order is matched partially, and maker order is matched fully.
-			takerReceiveAmount, takerSpendAmount := calculateSwapAmountFunc(makerSellAmount, makerPrice, big.NewInt(takerBuyTick), big.NewInt(takerSellTick))
+			takerReceiveAmount, takerSpendAmount := calculateSwapAmountFunc(makerSellAmount, makerPrice, big.NewInt(takerBuyDenomMinAmntIncrement), big.NewInt(takerSellDenomMinAmntIncrement))
 			if takerReceiveAmount == nil || takerSpendAmount == nil {
 				panic(fmt.Sprintf("Failed to calculate swap amount: takerID:%s, makerID:%s", takerOrder.ID, revOBRecord.OrderID))
 			}
