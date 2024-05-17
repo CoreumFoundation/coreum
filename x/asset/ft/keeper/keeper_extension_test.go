@@ -1002,8 +1002,8 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
 		&recipient: 500,
-		&admin:     62,
-		&extension: 63,
+		&admin:     62, // 625 - 500 - 125 (25% commission from sender) + 62 (50% of the commission to the admin)
+		&extension: 63, // 63 (50% of the commission to the extension)
 	})
 
 	// send trigger amount from recipient1 to recipient2 (send commission rate must not apply)
@@ -1014,8 +1014,8 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&recipient:  391,
-		&recipient2: 109,
+		&recipient:  391, // 500 - 109 (AmountIgnoreSendCommissionRateTrigger)
+		&recipient2: 109, // AmountIgnoreSendCommissionRateTrigger
 		&admin:      62,
 		&extension:  63,
 	})
@@ -1027,10 +1027,10 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&recipient:  266,
-		&recipient2: 209,
-		&admin:      74,
-		&extension:  76,
+		&recipient:  266, // 391 - 100 - 25 (25% commission rate from the sender)
+		&recipient2: 209, // 109 + 100
+		&admin:      74,  // 62 + 12 (50% of the commission to the admin)
+		&extension:  76,  // 63 + 13 (50% of the commission to the extension)
 	})
 
 	// send from recipient to admin account (send commission rate must apply if the extension decides)
@@ -1040,10 +1040,10 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&recipient:  141,
+		&recipient:  141, // 266 - 100 - 25 (25% commission rate from the sender)
 		&recipient2: 209,
-		&admin:      186,
-		&extension:  89,
+		&admin:      186, // 74 + 100 + 12 (50% of the commission to the admin)
+		&extension:  89,  // 76 + 13 (50% of the commission to the extension)
 	})
 
 	// clear admin, query admin of definition
@@ -1060,10 +1060,10 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&recipient:  1,
+		&recipient:  1, // 141 - 112 - 28 (25% commission rate from the sender)
 		&recipient2: 321,
-		&admin:      186,
-		&extension:  117,
+		&admin:      186, // previous admin does not receive anything
+		&extension:  117, // 89 + 28 (100% of the commission to the extension, since there is no admin)
 	})
 }
 
