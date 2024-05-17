@@ -98,7 +98,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			// So, whenever it happens here, it means that funds are going to be refunded
 			// back to the sender by the IBC transfer module.
 			// It should succeed even if the issuer decided, for whatever reason, to freeze the escrow address.
-			// It is done before cehcking for global freeze because refunding should not be blocked by this.
+			// It is done before checking for global freeze because refunding should not be blocked by this.
 			// Otherwise, funds would be lost forever, being blocked on the escrow account.
 			if wibctransfertypes.IsPurposeAck(ctx) || wibctransfertypes.IsPurposeTimeout(ctx) {
 				if err := k.bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coin)); err != nil {

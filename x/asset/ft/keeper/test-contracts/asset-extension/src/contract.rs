@@ -141,7 +141,7 @@ fn assert_freezing(
         return Ok(());
     }
 
-    // Ignore freezing if the transfer is an IBC transfer in. In case of IBC transfer comint into the chain
+    // Ignore freezing if the transfer is an IBC transfer in. In case of IBC transfer coming into the chain
     // source account is the escrow account and since we don't want to allow freeze of every
     // escrow address we ignore freezing for incoming ibc transfers.
     if context.ibc_purpose == IBCPurpose::In {
@@ -265,7 +265,7 @@ fn assert_ibc(
     context: TransferContext,
     features: &Vec<u32>,
 ) -> Result<(), ContractError> {
-    if recipient.to_string() == token.issuer
+    if recipient.to_string() == token.admin
         || Some(recipient.to_string()) == token.extension_cw_address
     {
         return Ok(());

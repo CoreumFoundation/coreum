@@ -61,7 +61,6 @@ func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
-			Funds:  sdk.NewCoins(),
 			Label:  "testing-ibc",
 		},
 	}
@@ -136,7 +135,6 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
-			Funds:  sdk.NewCoins(),
 			Label:  "testing-ibc",
 		},
 	}
@@ -253,7 +251,6 @@ func TestExtensionIBCAssetFTFreezing(t *testing.T) {
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
-			Funds:  sdk.NewCoins(),
 			Label:  "testing-ibc",
 		},
 	}
@@ -363,7 +360,6 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
-			Funds:  sdk.NewCoins(),
 			Label:  "testing-ibc",
 		},
 	}
@@ -473,7 +469,6 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 			},
 			ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 				CodeId: codeID,
-				Funds:  sdk.NewCoins(),
 				Label:  "testing-ibc",
 			},
 		}
@@ -607,7 +602,6 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
-			Funds:  sdk.NewCoins(),
 			Label:  "testing-ibc",
 		},
 	}
