@@ -1497,7 +1497,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	requireT.NotContains(txRes.RawLog, `{"key":"amount"}`)
 
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&admin:      560,
+		&admin:      560, // 1000 - 400 - 40 (10% burn rate)
 		&recipient1: 400,
 	})
 
@@ -1517,8 +1517,8 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&admin:      560,
-		&recipient1: 292,
-		&recipient2: 108,
+		&recipient1: 292, // 400 - 108 (AmountIgnoreBurnRateTrigger)
+		&recipient2: 108, // AmountIgnoreBurnRateTrigger
 	})
 
 	// send from recipient1 to recipient2 (burn must apply)
@@ -1537,8 +1537,8 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&admin:      560,
-		&recipient1: 182,
-		&recipient2: 208,
+		&recipient1: 182, // 292 - 100 - 10 (10% burn rate)
+		&recipient2: 208, // 108 + 100
 	})
 
 	// send from recipient2 to admin (burn must not apply)
@@ -1556,8 +1556,8 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&admin:      660,
+		&admin:      660, // 560 + 100
 		&recipient1: 182,
-		&recipient2: 98,
+		&recipient2: 98, // 208 - 100 - 10 (10% burn rate)
 	})
 }
