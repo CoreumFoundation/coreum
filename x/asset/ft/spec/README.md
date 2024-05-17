@@ -67,7 +67,7 @@ If IBC feature is enabled for the token then the send commission rate is applied
 
 Send commission rate is never applied if smart contract is the sender.
 
-If a token doesn't have admin (ClearAdmin called on it), the commission rate would set to zero, since there is no account to send the commissions to.
+If a token doesn't have admin (ClearAdmin called on it), the commission rate would be set to zero, since there is no account to send the commissions to.
 The only exception is tokens that have extension, since the extension can receive the commission.
 
 ### Issuance Fee
