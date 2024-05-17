@@ -16,6 +16,7 @@ func TestMatching(t *testing.T) {
 		sender2 = "sender2"
 		sender3 = "sender3"
 		sender4 = "sender4"
+		sender5 = "sender5"
 
 		denomCORE = "ucore"   // 1CORE = 10^6ucore
 		denomUSDC = "uusdc"   // 1USDC = 10^6uusdc
@@ -164,30 +165,39 @@ func TestMatching(t *testing.T) {
 					SellDenom:    denomCORE,
 					BuyDenom:     denomUSDC,
 					SellQuantity: sdkmath.NewInt(500_000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("3.75"),
+					Price:        sdkmath.LegacyMustNewDecFromStr("3.71"),
 				},
 				{
 					Account:      sender2,
 					ID:           "order2",
 					SellDenom:    denomUSDC,
 					BuyDenom:     denomCORE,
-					SellQuantity: sdkmath.NewInt(100_000),
-					Price:        sdkmath.LegacyMustNewDecFromStr("0.26"),
+					SellQuantity: sdkmath.NewInt(40_000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("0.25"),
 				},
 				{
 					Account:      sender3,
 					ID:           "order3",
 					SellDenom:    denomUSDC,
 					BuyDenom:     denomCORE,
-					SellQuantity: sdkmath.NewInt(100_000),
+					SellQuantity: sdkmath.NewInt(10_000_000),
 					Price:        sdkmath.LegacyMustNewDecFromStr("0.26"),
+				},
+				{
+					Account:      sender4,
+					ID:           "order4",
+					SellDenom:    denomCORE,
+					BuyDenom:     denomUSDC,
+					SellQuantity: sdkmath.NewInt(50_000_000),
+					Price:        sdkmath.LegacyMustNewDecFromStr("3.71"),
 				},
 			},
 			expectedOrderBooks: nil,
 			expectedBalances: map[string]sdk.Coins{
-				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 150000)),
-				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 20000)),
-				sender3: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 20000)),
+				sender1: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 1855000)),   // got exact amount
+				sender2: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 10_000)),    // got exact amount
+				sender3: sdk.NewCoins(sdk.NewInt64Coin(denomCORE, 2_616_800)), // got more than expected because of better price & also got amount partially canceled
+				sender4: sdk.NewCoins(sdk.NewInt64Coin(denomUSDC, 8_180_000)), // partiall match with better price
 			},
 		},
 	}

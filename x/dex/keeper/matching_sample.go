@@ -136,6 +136,10 @@ func (ob *OrderBook) UpdateRecord(record OrderBookRecord) {
 
 // RemoveRecord updates order book records.
 func (ob *OrderBook) RemoveRecord(record OrderBookRecord) {
+	if !record.RemainingSellQuantity.IsZero() {
+		fmt.Printf("WARN: Removing record with non zero RemainingSellQuantity: %s\n", record.RemainingSellQuantity.String())
+	}
+
 	fmt.Printf("Removing record from the order book, %s/%s, record:%s\n",
 		ob.SellDenom, ob.BuyDenom, record.String(),
 	)
@@ -261,8 +265,8 @@ func (app *App) ValidateOrder(order Order) error {
 
 	fmt.Printf("buyQuantityRat: %s buyMinAmntIncrement: %d \n", buyQuantityRat.String(), buyMinAmntIncrement)
 
-	// instead of previous check, we validate that buy quantity is more than buyMinAmntIncrement, so at least smth could be matched.
-	if buyQuantityRat.Num().Cmp(big.NewInt(buyMinAmntIncrement)) != 1 {
+	// instead of previous check, we validate that buy quantity is not less than buyMinAmntIncrement, so at least smth could be matched.
+	if buyQuantityRat.Num().Cmp(big.NewInt(buyMinAmntIncrement)) == -1 {
 		return fmt.Errorf("invalid buy quantity: %s, less than min_amount_increment: %d, orderID: %s", buyQuantityRat.String(), buyMinAmntIncrement, order.ID)
 	}
 
@@ -328,7 +332,13 @@ func CalculateSwapAmountExactV1(amountLimitA, price *big.Rat, minAmntIncrementA,
 	return nil, nil
 }
 
-// CalculateSwapAmountExactV2 makes sure A token amount respects min_amount_increment for A & B token amount is just integer.
+// CalculateSwapAmountExactV2 makes sure A (maker) token amount respects min_amount_increment for A,
+// and B token amount is just integer.
+// As far as I experimented with this logic,
+// once order becomes maker its sellQuantity will be matched fully rounding to minAmountIncrement.
+// At least I wasn't able to break this logic.
+// Actually, we know which part could not be not matched in advance,
+// so maybe we can cancel it right away when it becomes maker ? Or it could be matched if exactly the same order comes.
 func CalculateSwapAmountExactV2(amountLimitA, price *big.Rat, minAmntIncrementA, minAmntIncrementB *big.Int) (*big.Int, *big.Int) {
 	amountLimitRoundedA := RatAmountToIntRoundDown(amountLimitA).BigInt()
 
@@ -342,6 +352,24 @@ func CalculateSwapAmountExactV2(amountLimitA, price *big.Rat, minAmntIncrementA,
 		aReminder := (&big.Int{}).Mod(swapAmntA, minAmntIncrementA)
 
 		if aReminder.Cmp(ZeroBigInt) == 0 {
+			return swapAmntA, swapAmntRatB.Num()
+		}
+	}
+
+	return nil, nil
+}
+
+// CalculateSwapAmountExactV3 makes sure A & B are just integers.
+// So far this solution seems to cause the smallest partial cancellations.
+// But I think it might have more rounding issues for some specific number, min_amount_increments, etc.
+// We need to experiment, compare the results and decide which algorithm is the best.
+func CalculateSwapAmountExactV3(amountLimitA, price *big.Rat, minAmntIncrementA, minAmntIncrementB *big.Int) (*big.Int, *big.Int) {
+	amountLimitRoundedA := RatAmountToIntRoundDown(amountLimitA).BigInt()
+
+	// TODO: The algorithm here is ineffective. Need to come up with mathematical solution to improve.
+	for swapAmntA := amountLimitRoundedA; swapAmntA.Cmp(ZeroBigInt) != 0; swapAmntA.Sub(swapAmntA, big.NewInt(1)) {
+		swapAmntRatB := (&big.Rat{}).Mul((&big.Rat{}).SetInt(swapAmntA), price)
+		if !swapAmntRatB.IsInt() {
 			return swapAmntA, swapAmntRatB.Num()
 		}
 	}
@@ -386,13 +414,14 @@ func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
 			if takerReceiveAmount == nil || takerSpendAmount == nil {
 				panic(fmt.Sprintf("Failed to calculate swap amount: takerOrderID:%s, makerOrderID:%s", takerOrder.ID, revOBRecord.OrderID))
 			}
-			//fmt.Printf("takerReceiveAmount:%s, takerSpendAmount:%s\n", takerReceiveAmount.String(), takerSpendAmount.String())
+
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdkmath.NewIntFromBigInt(takerReceiveAmount)))
+			takerOrder.SellQuantity = takerOrder.SellQuantity.Sub(sdkmath.NewIntFromBigInt(takerSpendAmount))
 
 			// maker receives the taker sell quantity
 			app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.BuyDenom, sdkmath.NewIntFromBigInt(takerSpendAmount)))
-			// update state
 			revOBRecord.RemainingSellQuantity = revOBRecord.RemainingSellQuantity.Sub(sdkmath.NewIntFromBigInt(takerReceiveAmount))
+
 			if revOBRecord.IsRemainingBuyQuantityLessThanOne() {
 				// cancel since nothing to use for the next iteration and remove
 				app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.SellDenom, revOBRecord.RemainingSellQuantity))
@@ -412,13 +441,13 @@ func (app *App) matchOrder(takerOrder Order, ob, revOB *OrderBook) {
 			if takerReceiveAmount == nil || takerSpendAmount == nil {
 				panic(fmt.Sprintf("Failed to calculate swap amount: takerID:%s, makerID:%s", takerOrder.ID, revOBRecord.OrderID))
 			}
-
 			// taker receives the amount maker sells
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdkmath.NewIntFromBigInt(takerReceiveAmount)))
+			takerOrder.SellQuantity = takerOrder.SellQuantity.Sub(sdkmath.NewIntFromBigInt(takerSpendAmount))
 
 			app.SendCoin(revOBRecord.Account, sdk.NewCoin(ob.BuyDenom, sdkmath.NewIntFromBigInt(takerSpendAmount)))
-			// update state
-			takerOrder.SellQuantity = takerOrder.SellQuantity.Sub(sdkmath.NewIntFromBigInt(takerSpendAmount))
+			revOBRecord.RemainingSellQuantity = revOBRecord.RemainingSellQuantity.Sub(sdkmath.NewIntFromBigInt(takerReceiveAmount))
+
 			// remove reduced record
 			ob.RemoveRecord(revOBRecord)
 			if takerOrder.IsBuyQuantityLessThanOne() {
