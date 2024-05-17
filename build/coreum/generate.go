@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 const (
@@ -20,13 +20,13 @@ const (
 )
 
 // Generate regenerates everything in coreum.
-func Generate(ctx context.Context, deps build.DepsFunc) error {
+func Generate(ctx context.Context, deps types.DepsFunc) error {
 	deps(generateProtoDocs, generateProtoGo, generateProtoOpenAPI)
 
 	return golang.Generate(ctx, repoPath, deps)
 }
 
-func protoCDirectories(ctx context.Context, repoPath string, deps build.DepsFunc) (map[string]string, []string, error) {
+func protoCDirectories(ctx context.Context, repoPath string, deps types.DepsFunc) (map[string]string, []string, error) {
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)

@@ -39,14 +39,8 @@ dependencies: check-crust-builder
 	$(CoreumBuilder) download
 
 .PHONY: integration-tests-modules
-integration-tests-modules: check-crust-builder
-	$(CrustBuilder) znet remove
-	$(CoreumBuilder) wasm build images
-	$(CrustBuilder) znet start --profiles=3cored --timeout-commit 0.5s
+integration-tests-modules:
 	$(CoreumBuilder) integration-tests-unsafe/modules
-	$(CrustBuilder) znet stop
-	$(CrustBuilder) znet coverage-convert
-	$(CrustBuilder) znet remove
 
 .PHONY: integration-tests-ibc
 integration-tests-ibc: check-crust-builder
