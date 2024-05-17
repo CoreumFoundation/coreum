@@ -265,7 +265,7 @@ fn assert_ibc(
     context: TransferContext,
     features: &Vec<u32>,
 ) -> Result<(), ContractError> {
-    if recipient.to_string() == token.admin
+    if Some(recipient.to_string()) == token.admin
         || Some(recipient.to_string()) == token.extension_cw_address
     {
         return Ok(());

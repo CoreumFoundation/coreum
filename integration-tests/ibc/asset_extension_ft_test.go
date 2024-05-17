@@ -577,7 +577,8 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
 		},
-		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+		// added one million for contract upload
+		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Add(sdk.NewInt(1_000_000)),
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,

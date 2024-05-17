@@ -651,6 +651,7 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
+	require.NoError(t, err)
 	ibcSendCoin := sdk.NewCoin(ibcDenom, sendCoin.Amount)
 	_, err = gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaRecipient, ibcSendCoin, coreumChain.ChainContext, coreumRecipient)
 	requireT.NoError(err)
