@@ -181,7 +181,7 @@ func TestAuthMultisig(t *testing.T) {
 		chain.ClientContext.WithFromAddress(multisigAddress),
 		// We intentionally use simulation instead of using `WithGas(chain.GasLimitByMsgs(bankSendMsg))`.
 		// We do it to test simulation for multisig account.
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		bankSendMsg,
 		keyNamesSet[0])
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
@@ -191,7 +191,7 @@ func TestAuthMultisig(t *testing.T) {
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(multisigAddress),
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		bankSendMsg,
 		keyNamesSet[:multisigTreshold]...)
 	requireT.NoError(err)
@@ -364,7 +364,7 @@ func TestGasEstimation(t *testing.T) {
 	require.NoError(t, err)
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{

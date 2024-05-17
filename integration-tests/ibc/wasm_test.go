@@ -94,7 +94,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	// deploy the contract and fund it
 	contractAddr, _, err := coreumChain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		coreumChain.TxFactory().WithSimulateAndExecute(true),
+		coreumChain.TxFactoryAuto(),
 		coreumAdmin,
 		ibcwasm.IBCTransferWASM,
 		integration.InstantiateConfig{
@@ -139,7 +139,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 
 	_, err = coreumChain.Wasm.ExecuteWASMContract(
 		ctx,
-		coreumChain.TxFactory().WithSimulateAndExecute(true),
+		coreumChain.TxFactoryAuto(),
 		coreumAdmin,
 		contractAddr,
 		transferPayload,
@@ -195,7 +195,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 
 	coreumContractAddr, _, err := coreumChain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		coreumChain.TxFactory().WithSimulateAndExecute(true),
+		coreumChain.TxFactoryAuto(),
 		coreumCaller,
 		ibcwasm.IBCCallWASM,
 		integration.InstantiateConfig{
@@ -209,7 +209,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 
 	osmosisContractAddr, _, err := osmosisChain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		osmosisChain.TxFactory().WithSimulateAndExecute(true),
+		osmosisChain.TxFactoryAuto(),
 		osmosisCaller,
 		ibcwasm.IBCCallWASM,
 		integration.InstantiateConfig{
@@ -303,7 +303,7 @@ func executeWasmIncrement(
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		caller,
 		contractAddr,
 		incrementPayload,

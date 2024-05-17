@@ -35,13 +35,15 @@ import (
 	coreumkeyring "github.com/CoreumFoundation/coreum/v4/pkg/keyring"
 )
 
+// defaultGasAdjustment is gas adjustment used for the nondeterministic gas messages.
+const defaultGasAdjustment = 1.5
+
 // ChainSettings represent common settings for the chains.
 type ChainSettings struct {
 	ChainID       string
 	Denom         string
 	AddressPrefix string
 	GasPrice      sdk.Dec
-	GasAdjustment float64
 	CoinType      uint32
 	RPCAddress    string
 }
@@ -123,11 +125,13 @@ func (c ChainContext) TxFactory() client.Factory {
 		WithChainID(c.ChainSettings.ChainID).
 		WithTxConfig(c.ClientContext.TxConfig()).
 		WithGasPrices(c.NewDecCoin(c.ChainSettings.GasPrice).String())
-	if c.ChainSettings.GasAdjustment != 0 {
-		txf = txf.WithGasAdjustment(c.ChainSettings.GasAdjustment)
-	}
 
 	return txf
+}
+
+// TxFactoryAuto returns tx factory with set auto estimation and gas adjustment.
+func (c ChainContext) TxFactoryAuto() client.Factory {
+	return c.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(defaultGasAdjustment)
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.

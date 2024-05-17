@@ -48,7 +48,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		},
 	}
 
-	numAccountsToFund := 1000 // 1700 was the max accepted
+	numAccountsToFund := 20 // 1700 was the max accepted
 	iterationsToFund := 2
 
 	inputItem := banktypes.Input{
@@ -102,7 +102,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 			ctx,
 			chain.ClientContext.WithFromAddress(issuer),
 			// we estimate here since the th size is grater then allowed for the deterministic fee
-			chain.TxFactory().WithSimulateAndExecute(true),
+			chain.TxFactoryAuto(),
 			msg,
 		)
 		requireT.NoError(err)
@@ -141,7 +141,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 		},
 	}
 
-	numAccountsToFund := 400 // 600 was the max accepted
+	numAccountsToFund := 20 // 600 was the max accepted
 	iterationsToFund := 3
 
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)

@@ -165,6 +165,7 @@ func TestAuthzEstimation(t *testing.T) {
 
 	// execute regular message
 	amountToSend := sdkmath.NewInt(2_000)
+	// we don't use the gas multiplier here intentionally
 	txf := chain.TxFactory().WithSimulateAndExecute(true)
 	resRegular, err := client.BroadcastTx(
 		ctx,
