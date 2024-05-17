@@ -1703,7 +1703,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 		&extension:  25,
 	})
 
-	// send from recipient2 to admin (send commission rate must not apply)
+	// send from recipient2 to admin (send commission rate must apply if the extension decides)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient2.String(),
 		ToAddress:   admin.String(),
