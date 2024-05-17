@@ -19,7 +19,6 @@ import (
 
 const (
 	submitProposalGas = 400_000
-	voteGasAdjustment = 1.5
 )
 
 // Governance keep the test chain predefined account for the governance operations via v1 API only.
@@ -222,8 +221,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 	txHashes := make([]string, 0, len(g.stakerAccounts))
 	for _, staker := range g.stakerAccounts {
 		msg := msgFunc(staker)
-
-		txf := g.chainCtx.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(voteGasAdjustment)
+		txf := g.chainCtx.TxFactoryAuto()
 
 		clientCtx := g.chainCtx.ClientContext.WithAwaitTx(false)
 
