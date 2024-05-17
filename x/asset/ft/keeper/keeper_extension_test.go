@@ -15,6 +15,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -711,7 +712,7 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
 		&recipient: 500,
-		&admin:     475,
+		&admin:     475, // 1100 - 500 - 125 (25% burn)
 	})
 
 	// send trigger amount from recipient1 to recipient2 (burn must not apply if the extension decides)
@@ -722,8 +723,8 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&recipient:  392,
-		&recipient2: 108,
+		&recipient:  392, // 500 - 108 (AmountIgnoreBurnRateTrigger)
+		&recipient2: 108, // 108 (AmountIgnoreBurnRateTrigger)
 		&admin:      475,
 	})
 
@@ -734,8 +735,8 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&recipient:  267,
-		&recipient2: 208,
+		&recipient:  267, // 392 - 100 - 25 (25% burn)
+		&recipient2: 208, // 108 + 100
 		&admin:      475,
 	})
 
@@ -747,7 +748,7 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
 		&recipient2: 208,
-		&admin:      688,
+		&admin:      688, // 474 + 213
 	})
 }
 
@@ -765,7 +766,6 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	ba := newBankAsserter(ctx, t, bankKeeper)
 
 	// issue 2 tokens
-	var recipients []sdk.AccAddress
 	var admins []sdk.AccAddress
 	var denoms []string
 	admins = append(admins, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
@@ -785,9 +785,10 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	requireT.NoError(err)
 	denoms = append(denoms, denom1)
 
-	// create 2 recipient for every admin to allow for complex test cases
-	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
-	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+	// create 4 recipient for every admin to allow for complex test cases
+	recipients := lo.RepeatBy(4, func(index int) sdk.AccAddress {
+		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	})
 
 	admins = append(admins, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 
@@ -815,10 +816,6 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	requireT.NoError(err)
 	denoms = append(denoms, denom2)
 
-	// create 2 recipient for every admin to allow for complex test cases
-	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
-	recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
-
 	testCases := []struct {
 		name         string
 		inputs       []banktypes.Input
@@ -843,7 +840,7 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 			},
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[1]: {
-					&admins[1]:     340,
+					&admins[1]:     340, // 1000 - 600 - 60 (10% burn)
 					&admins[0]:     400,
 					&recipients[0]: 100,
 					&recipients[1]: 100,
@@ -870,15 +867,15 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 			},
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[0]: {
-					&admins[0]:     800,
+					&admins[0]:     800, // 1000 - 200
 					&recipients[0]: 100,
 					&recipients[1]: 100,
 				},
 				denoms[1]: {
 					&admins[1]:     340,
-					&admins[0]:     180, // (400 - 200 - 200*10%(burn))
-					&recipients[0]: 200,
-					&recipients[1]: 200,
+					&admins[0]:     180, // 400 - 200 - 20 (10% burn)
+					&recipients[0]: 200, // 100 + 100
+					&recipients[1]: 200, // 100 + 100
 				},
 			},
 		},
