@@ -36,11 +36,12 @@ The way that denom is created is that the user provides a name for their subunit
 For example to represent Bitcoin on Coreum, one could choose satoshi as subunit, BTC as Symbol and 8 as precision. It means that if the issuer address is core1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 then the denom will be `satoshi-core1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8` and since we have chosen BTC as symbol and 8 as precision, it will follow that (1 BTC = 10^8 `satoshi-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8`)
 
 ### Transferring admin
-Each token, has an issuer who issued the token and the address if this account is stored on token as issuer and also is there on the denom as explained before. But there is also an admin role which is an account that administrates the token, which is the same issuer account when issuing a new token.
-But this admin role can be transferred to another account by current admin, so this other account becomes the admin and will have all the privileges instead of current admin. For example this new admin will have access to mint if minting is enabled for the token. The privileges and features will be discussed in next section.
+Each token has an issuer, whose address is a part of the denom forever. The initial admin of the token is the issuer, but the admin role can be transferred to another account.
+Then, all the privileges of the previous admin will be transferred to the new admin, such as the ability to mint tokens if minting is enabled. The specific privileges and features will be discussed in the next section.
 
 ### Clearing admin
-Tokens can also lose their admin forever. For example if a token is supposed to be a community token which no one has any more privilege then others, admin can be cleared from the token.
+Tokens can also lose their admin forever by clearing admin.
+Then, no one will have any more privilege than others.
 
 ## Token Features
 When issuing a token, the admin must decide which features are enabled on the token. For example if `minting` feature is enabled then it will allow the admin to mint further tokens on top of the initial supply, otherwise no new tokens can be minted. Here is a list of all the features that can be enabled on the token. Each of these features affects how the token will behave and a detailed description will be provided in the dedicated section for each feature.
