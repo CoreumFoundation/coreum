@@ -9,6 +9,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v4/x/wasm"
 	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
@@ -178,6 +179,11 @@ func (k Keeper) invokeAssetExtension(
 		return err
 	}
 
+	senderIsSmartContract := cwasmtypes.IsSendingSmartContract(ctx, sender.String()) ||
+		wasm.IsSmartContract(ctx, sender, k.wasmKeeper)
+	recipientIsSmartContract := cwasmtypes.IsReceivingSmartContract(ctx, recipient.String()) ||
+		wasm.IsSmartContract(ctx, recipient, k.wasmKeeper)
+
 	contractMsg := map[string]interface{}{
 		ExtenstionTransferMethod: sudoExtensionTransferMsg{
 			Sender:           sender.String(),
@@ -186,7 +192,9 @@ func (k Keeper) invokeAssetExtension(
 			BurnAmount:       burnAmount,
 			CommissionAmount: commissionAmount,
 			Context: sudoExtensionTransferContext{
-				IBCPurpose: ibcPurposeToExtensionString(ctx),
+				SenderIsSmartContract:    senderIsSmartContract,
+				RecipientIsSmartContract: recipientIsSmartContract,
+				IBCPurpose:               ibcPurposeToExtensionString(ctx),
 			},
 		},
 	}
