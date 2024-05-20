@@ -117,9 +117,6 @@ func ValidateTokenID(id string) error {
 // ValidateClassData checks the provided class data field is valid for NFT class.
 func ValidateClassData(data *codectypes.Any) error {
 	if data != nil {
-		if len(data.Value) > MaxDataSize {
-			return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", MaxDataSize)
-		}
 		if data.TypeUrl != "/"+proto.MessageName((*DataBytes)(nil)) {
 			return sdkerrors.Wrapf(ErrInvalidInput, "data field must contain %s type", proto.MessageName((*DataBytes)(nil)))
 		}
@@ -131,9 +128,6 @@ func ValidateClassData(data *codectypes.Any) error {
 // ValidateNFTData checks the provided data field is valid for NFT token.
 func ValidateNFTData(data *codectypes.Any) error {
 	if data != nil {
-		if len(data.Value) > MaxDataSize {
-			return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", MaxDataSize)
-		}
 		switch data.TypeUrl {
 		case "/" + proto.MessageName((*DataBytes)(nil)):
 			// no default validation of the data
