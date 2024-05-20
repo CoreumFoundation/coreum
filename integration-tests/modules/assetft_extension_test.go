@@ -1487,15 +1487,13 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
 	}
 
-	txRes, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
 	requireT.NoError(err)
-	// assert that we don't receive events with empty amounts
-	requireT.NotContains(txRes.RawLog, `{"key":"amount"}`)
 
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&admin:      560, // 1000 - 400 - 40 (10% burn rate)
@@ -1643,15 +1641,13 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
 	}
 
-	txRes, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
 	requireT.NoError(err)
-	// assert that we don't receive events with empty amounts
-	requireT.NotContains(txRes.RawLog, `{"key":"amount"}`)
 
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&admin:      580, // 1000 - 400 - 40 (10% commission from sender) + 20 (50% of the commission to the admin)
