@@ -2,6 +2,7 @@ use cosmwasm_std::{entry_point, StdError};
 use cosmwasm_std::{BalanceResponse, BankQuery, ContractInfoResponse, WasmQuery};
 use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
+use std::ops::Div;
 
 use crate::error::ContractError;
 use coreum_wasm_sdk::assetft::{
@@ -21,6 +22,8 @@ const AMOUNT_IGNORE_WHITELISTING_TRIGGER: Uint128 = Uint128::new(49);
 const AMOUNT_IGNORE_FREEZING_TRIGGER: Uint128 = Uint128::new(79);
 const AMOUNT_BURNING_TRIGGER: Uint128 = Uint128::new(101);
 const AMOUNT_MINTING_TRIGGER: Uint128 = Uint128::new(105);
+const AMOUNT_IGNORE_BURN_RATE_TRIGGER: Uint128 = Uint128::new(108);
+const AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER: Uint128 = Uint128::new(109);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -55,10 +58,19 @@ pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResul
             sender,
             recipient,
             transfer_amount,
-            commission_amount: _,
-            burn_amount: _,
+            commission_amount,
+            burn_amount,
             context,
-        } => sudo_extension_transfer(deps, env, transfer_amount, sender, recipient, context),
+        } => sudo_extension_transfer(
+            deps,
+            env,
+            transfer_amount,
+            sender,
+            recipient,
+            commission_amount,
+            burn_amount,
+            context,
+        ),
     }
 }
 
@@ -68,6 +80,8 @@ pub fn sudo_extension_transfer(
     amount: Uint128,
     sender: String,
     recipient: String,
+    commission_amount: Uint128,
+    burn_amount: Uint128,
     context: TransferContext,
 ) -> CoreumResult<ContractError> {
     if amount == AMOUNT_DISALLOWED_TRIGGER {
@@ -97,7 +111,7 @@ pub fn sudo_extension_transfer(
             assert_block_smart_contracts(deps.as_ref(), &recipient, &token)?;
         }
 
-        assert_ibc(deps.as_ref(), &recipient, &token, context, features)?;
+        assert_ibc(&recipient, &token, context, features)?;
 
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
@@ -115,13 +129,29 @@ pub fn sudo_extension_transfer(
     }
 
     let transfer_msg = cosmwasm_std::BankMsg::Send {
-        to_address: recipient,
+        to_address: recipient.to_string(),
         amount: vec![Coin { amount, denom }],
     };
 
-    Ok(Response::new()
+    let mut response = Response::new()
         .add_attribute("method", "execute_transfer")
-        .add_message(transfer_msg))
+        .add_message(transfer_msg);
+
+    if !commission_amount.is_zero() {
+        response = assert_send_commission_rate(
+            response,
+            sender.as_ref(),
+            amount,
+            &token,
+            commission_amount,
+        )?;
+    }
+
+    if !burn_amount.is_zero() {
+        response = assert_burn_rate(response, sender.as_ref(), amount, &token, burn_amount)?;
+    }
+
+    Ok(response)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -259,7 +289,6 @@ fn assert_block_smart_contracts(
 }
 
 fn assert_ibc(
-    deps: Deps<CoreumQueries>,
     recipient: &str,
     token: &Token,
     context: TransferContext,
@@ -277,6 +306,80 @@ fn assert_ibc(
     }
 
     return Ok(());
+}
+
+fn assert_send_commission_rate(
+    response: Response<CoreumMsg>,
+    sender: &str,
+    amount: Uint128,
+    token: &Token,
+    commission_amount: Uint128,
+) -> CoreumResult<ContractError> {
+    if amount == AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER {
+        let refund_commission_msg = cosmwasm_std::BankMsg::Send {
+            to_address: sender.to_string(),
+            amount: vec![Coin {
+                amount: commission_amount,
+                denom: token.denom.to_string(),
+            }],
+        };
+
+        return Ok(response
+            .add_attribute("send_commission_rate_refund", commission_amount.to_string())
+            .add_message(refund_commission_msg));
+    }
+
+    // if token has an admin, send half of the commission to the admin and let the extension keep
+    // the rest of the commission
+    if let Some(admin) = &token.admin {
+        let admin_commission_amount = commission_amount.div(Uint128::new(2));
+        let admin_commission_msg = cosmwasm_std::BankMsg::Send {
+            to_address: admin.to_string(),
+            amount: vec![Coin {
+                amount: admin_commission_amount,
+                denom: token.denom.to_string(),
+            }],
+        };
+        return Ok(response
+            .add_attribute(
+                "admin_send_commission_amount",
+                admin_commission_amount.to_string(),
+            )
+            .add_message(admin_commission_msg));
+    }
+
+    // else, let the extension keep all the commission
+    Ok(response)
+}
+
+fn assert_burn_rate(
+    response: Response<CoreumMsg>,
+    sender: &str,
+    amount: Uint128,
+    token: &Token,
+    burn_amount: Uint128,
+) -> CoreumResult<ContractError> {
+    if amount == AMOUNT_IGNORE_BURN_RATE_TRIGGER {
+        let refund_burn_rate_msg = cosmwasm_std::BankMsg::Send {
+            to_address: sender.to_string(),
+            amount: vec![Coin {
+                amount: burn_amount,
+                denom: token.denom.to_string(),
+            }],
+        };
+
+        return Ok(response
+            .add_attribute("burn_rate_refund", burn_amount.to_string())
+            .add_message(refund_burn_rate_msg));
+    }
+
+    let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
+        coin: cosmwasm_std::coin(burn_amount.u128(), &token.denom),
+    });
+
+    Ok(response
+        .add_attribute("burn_amount", burn_amount)
+        .add_message(burn_message))
 }
 
 fn query_frozen_balance(deps: Deps<CoreumQueries>, account: &str, denom: &str) -> StdResult<Coin> {

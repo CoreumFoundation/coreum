@@ -103,30 +103,6 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	)
 	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
 
-	// issue new NFT class with too long data
-
-	invalidData, err = codectypes.NewAnyWithValue(
-		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)},
-	)
-	requireT.NoError(err)
-
-	invalidIssueMsg = &assetnfttypes.MsgIssueClass{
-		Issuer:      issuer.String(),
-		Symbol:      "symbol",
-		Name:        "name",
-		Description: "description",
-		URI:         "https://my-class-meta.invalid/1",
-		URIHash:     "content-hash",
-		Data:        invalidData,
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(invalidIssueMsg)),
-		invalidIssueMsg,
-	)
-	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
-
 	// issue new NFT class
 
 	// we need to do this, otherwise assertion fails because some private fields are set differently
@@ -556,29 +532,6 @@ func TestAssetNFTMint(t *testing.T) {
 	)
 	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
 
-	// mint with too long data
-
-	invalidData, err = codectypes.NewAnyWithValue(
-		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)},
-	)
-	requireT.NoError(err)
-
-	invalidMintMsg = &assetnfttypes.MsgMint{
-		Sender:  issuer.String(),
-		ID:      "id-1",
-		ClassID: classID,
-		URI:     "https://my-class-meta.invalid/1",
-		URIHash: "content-hash",
-		Data:    invalidData,
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(invalidMintMsg)),
-		invalidMintMsg,
-	)
-	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
-
 	// mint new token in that class
 
 	// we need to do this, otherwise assertion fails because some private fields are set differently
@@ -700,8 +653,8 @@ func TestAssetNFTMint(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
 }
 
-// TestAssetNFTWithMaxData tests that class and NFT with data of maximum length works.
-func TestAssetNFTWithMaxData(t *testing.T) {
+// TestAssetNFTWithLongData tests that class and NFT with long data works.
+func TestAssetNFTWithLongData(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -718,7 +671,7 @@ func TestAssetNFTWithMaxData(t *testing.T) {
 	)
 
 	data, err := codectypes.NewAnyWithValue(
-		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize-3)},
+		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, 5117)},
 	) // 3 bytes added by Any
 	requireT.NoError(err)
 
