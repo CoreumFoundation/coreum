@@ -150,7 +150,7 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 		result, err = client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(sdk.MustAccAddressFromBech32(member.Address)),
-			chain.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(1.5),
+			chain.TxFactoryAuto(),
 			voteMsg,
 		)
 		requireT.NoError(err)
@@ -238,7 +238,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 		_, err = client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(member),
-			chain.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(1.5),
+			chain.TxFactoryAuto(),
 			voteMsg,
 		)
 		requireT.NoError(err)
@@ -278,7 +278,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 		_, err = client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(member),
-			chain.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(1.5),
+			chain.TxFactoryAuto(),
 			voteMsg,
 		)
 		requireT.NoError(err)
@@ -299,7 +299,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(proposer),
-		chain.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(1.5),
+		chain.TxFactoryAuto(),
 		executeProposalMsg,
 	)
 	requireT.NoError(err)
@@ -321,7 +321,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(proposer),
-		chain.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(1.5),
+		chain.TxFactoryAuto(),
 		executeProposalMsg,
 	)
 	requireT.NoError(err)
@@ -587,7 +587,7 @@ func submitGroupProposal(
 	result, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(proposer),
-		chain.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(1.5),
+		chain.TxFactoryAuto(),
 		submitProposalMsg,
 	)
 	requireT.NoError(err)

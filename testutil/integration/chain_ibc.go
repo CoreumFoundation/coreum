@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 )
 
 // AwaitForBalanceTimeout is duration to await for account to have a specific balance.
@@ -30,6 +31,7 @@ var AwaitForBalanceTimeout = 30 * time.Second
 func (c ChainContext) ExecuteIBCTransfer(
 	ctx context.Context,
 	t *testing.T,
+	txf client.Factory,
 	senderAddress sdk.AccAddress,
 	coin sdk.Coin,
 	recipientChainContext ChainContext,
@@ -40,6 +42,7 @@ func (c ChainContext) ExecuteIBCTransfer(
 	return c.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
+		txf,
 		senderAddress,
 		coin,
 		recipientChainContext,
@@ -53,6 +56,7 @@ func (c ChainContext) ExecuteIBCTransfer(
 func (c ChainContext) ExecuteIBCTransferWithMemo(
 	ctx context.Context,
 	t *testing.T,
+	txf client.Factory,
 	senderAddress sdk.AccAddress,
 	coin sdk.Coin,
 	recipientChainContext ChainContext,
@@ -93,7 +97,7 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 
 	return c.BroadcastTxWithSigner(
 		ctx,
-		c.TxFactory().WithSimulateAndExecute(true),
+		txf,
 		senderAddress,
 		&ibcSend,
 	)
@@ -103,6 +107,7 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 func (c ChainContext) ExecuteTimingOutIBCTransfer(
 	ctx context.Context,
 	t *testing.T,
+	txf client.Factory,
 	senderAddress sdk.AccAddress,
 	coin sdk.Coin,
 	recipientChainContext ChainContext,
@@ -142,7 +147,7 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 
 	return c.BroadcastTxWithSigner(
 		ctx,
-		c.TxFactory().WithSimulateAndExecute(true),
+		txf,
 		senderAddress,
 		&ibcSend,
 	)
