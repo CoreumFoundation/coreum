@@ -1,5 +1,5 @@
 use cosmwasm_std::{entry_point, StdError};
-use cosmwasm_std::{BalanceResponse, BankQuery, ContractInfoResponse, WasmQuery};
+use cosmwasm_std::{BalanceResponse, BankQuery};
 use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
 use std::ops::Div;
@@ -108,7 +108,7 @@ pub fn sudo_extension_transfer(
         }
 
         if features.contains(&assetft::BLOCK_SMART_CONTRACTS) {
-            assert_block_smart_contracts(deps.as_ref(), &recipient, &token)?;
+            assert_block_smart_contracts(context, &recipient, &token)?;
         }
 
         assert_ibc(&recipient, &token, context, features)?;
@@ -271,7 +271,7 @@ fn assert_minting(
 }
 
 fn assert_block_smart_contracts(
-    deps: Deps<CoreumQueries>,
+    context: TransferContext,
     recipient: &str,
     token: &Token,
 ) -> Result<(), ContractError> {
@@ -281,7 +281,7 @@ fn assert_block_smart_contracts(
         return Ok(());
     }
 
-    if is_smart_contract(deps, recipient) {
+    if context.recipient_is_smart_contract {
         return Err(ContractError::SmartContractBlocked {});
     }
 
@@ -429,22 +429,4 @@ fn query_token(deps: Deps<CoreumQueries>, denom: &str) -> StdResult<Token> {
     )?;
 
     Ok(token.token)
-}
-
-fn query_contract_info(
-    deps: Deps<CoreumQueries>,
-    account: &str,
-) -> StdResult<ContractInfoResponse> {
-    let contract_info: ContractInfoResponse = deps.querier.query(
-        &WasmQuery::ContractInfo {
-            contract_addr: account.to_string(),
-        }
-        .into(),
-    )?;
-
-    Ok(contract_info)
-}
-
-fn is_smart_contract(deps: Deps<CoreumQueries>, account: &str) -> bool {
-    query_contract_info(deps, account).is_ok()
 }
