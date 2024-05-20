@@ -24,6 +24,19 @@ const (
 	pfmRecipient = "pfm"
 )
 
+// Forward metadata example:
+//
+//	{
+//	 "forward": {
+//	   "receiver": "chain-c-bech32-address",
+//	   "port": "transfer",
+//	   "channel": "channel-123" // this is the chain C on chain B channel.
+//	 }
+//	}
+type pfmForwardMetadata struct {
+	Forward packetforwardtypes.ForwardMetadata `json:"forward"`
+}
+
 // TestPFMViaCoreumForOsmosisToken tests the packet
 // forwarding middleware integration into Coreum by sending Osmosis native token:
 // Osmosis -> Coreum -> Gaia IBC transfer.
@@ -73,17 +86,7 @@ func TestPFMViaCoreumForOsmosisToken(t *testing.T) {
 		osmosisChain.ChainSettings.ChainID,
 	)
 
-	// Forward metadata example:
-	// {
-	//  "forward": {
-	//    "receiver": "chain-c-bech32-address",
-	//    "port": "transfer",
-	//    "channel": "channel-123" // this is the chain C on chain B channel.
-	//  }
-	//}
-	forwardMetadata := struct {
-		Forward packetforwardtypes.ForwardMetadata `json:"forward"`
-	}{
+	forwardMetadata := pfmForwardMetadata{
 		Forward: packetforwardtypes.ForwardMetadata{
 			Receiver: gaiaChain.MustConvertToBech32Address(gaiaReceiver),
 			Port:     ibctransfertypes.PortID,
@@ -191,17 +194,7 @@ func TestPFMViaCoreumForCoreumToken(t *testing.T) {
 
 	// ********** Send funds to Gaia via Coreum using PFM **********
 
-	// Forward metadata example:
-	// {
-	//  "forward": {
-	//    "receiver": "chain-c-bech32-address",
-	//    "port": "transfer",
-	//    "channel": "channel-123" // this is the chain C on chain B channel.
-	//  }
-	//}
-	forwardMetadata := struct {
-		Forward packetforwardtypes.ForwardMetadata `json:"forward"`
-	}{
+	forwardMetadata := pfmForwardMetadata{
 		Forward: packetforwardtypes.ForwardMetadata{
 			Receiver: gaiaChain.MustConvertToBech32Address(gaiaReceiver),
 			Port:     ibctransfertypes.PortID,
