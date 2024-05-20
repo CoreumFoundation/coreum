@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,11 +25,13 @@ import (
 )
 
 const (
-	AmountDisallowedTrigger         = 7
-	AmountIgnoreWhitelistingTrigger = 49
-	AmountIgnoreFreezingTrigger     = 79
-	AmountBurningTrigger            = 101
-	AmountMintingTrigger            = 105
+	AmountDisallowedTrigger               = 7
+	AmountIgnoreWhitelistingTrigger       = 49
+	AmountIgnoreFreezingTrigger           = 79
+	AmountBurningTrigger                  = 101
+	AmountMintingTrigger                  = 105
+	AmountIgnoreBurnRateTrigger           = 108
+	AmountIgnoreSendCommissionRateTrigger = 109
 )
 
 func TestKeeper_Extension_Issue(t *testing.T) {
@@ -659,6 +663,408 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	totalSupply, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(1092), totalSupply.Supply.AmountOf(mintableDenom))
+}
+
+func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	assetKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+	ba := newBankAsserter(ctx, t, bankKeeper)
+
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, admin, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	// issue token
+	settings := types.IssueSettings{
+		Issuer:        admin,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     6,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(1100),
+		Features:      []types.Feature{types.Feature_extension},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+		BurnRate: sdk.MustNewDecFromStr("0.25"),
+	}
+
+	denom, err := assetKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// send from admin to recipient (burn must apply if the extension decides)
+	err = bankKeeper.SendCoins(ctx, admin, recipient, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(500)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient: 500,
+		&admin:     475, // 1100 - 500 - 125 (25% burn)
+	})
+
+	// send trigger amount from recipient1 to recipient2 (burn must not apply if the extension decides)
+	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreBurnRateTrigger)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient:  392, // 500 - 108 (AmountIgnoreBurnRateTrigger)
+		&recipient2: 108, // 108 (AmountIgnoreBurnRateTrigger)
+		&admin:      475,
+	})
+
+	// send from recipient1 to recipient2 (burn must apply)
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(100)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient:  267, // 392 - 100 - 25 (25% burn)
+		&recipient2: 208, // 108 + 100
+		&admin:      475,
+	})
+
+	// send from recipient to admin account (burn must apply if the extension decides)
+	err = bankKeeper.SendCoins(ctx, recipient, admin, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(213)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient2: 208,
+		&admin:      688, // 474 + 213
+	})
+}
+
+func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	assetKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+	ba := newBankAsserter(ctx, t, bankKeeper)
+
+	// issue 2 tokens
+	var admins []sdk.AccAddress
+	var denoms []string
+	admins = append(admins, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+	settings1 := types.IssueSettings{
+		Issuer:             admins[0],
+		Symbol:             "DEF0",
+		Subunit:            "def0",
+		Precision:          6,
+		Description:        "DEF Desc",
+		InitialAmount:      sdkmath.NewInt(1000),
+		Features:           []types.Feature{},
+		BurnRate:           sdk.NewDec(1).QuoInt64(10), // 10%
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	denom1, err := assetKeeper.Issue(ctx, settings1)
+	requireT.NoError(err)
+	denoms = append(denoms, denom1)
+
+	// create 4 recipient for every admin to allow for complex test cases
+	recipients := lo.RepeatBy(4, func(index int) sdk.AccAddress {
+		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	})
+
+	admins = append(admins, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, admins[1], testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	settings2 := types.IssueSettings{
+		Issuer:        admins[1],
+		Symbol:        "DEF1",
+		Subunit:       "def1",
+		Precision:     6,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features:      []types.Feature{types.Feature_extension},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+		BurnRate:           sdk.NewDec(1).QuoInt64(10), // 10%
+		SendCommissionRate: sdk.ZeroDec(),
+	}
+
+	denom2, err := assetKeeper.Issue(ctx, settings2)
+	requireT.NoError(err)
+	denoms = append(denoms, denom2)
+
+	testCases := []struct {
+		name         string
+		inputs       []banktypes.Input
+		outputs      []banktypes.Output
+		distribution map[string]map[*sdk.AccAddress]int64
+	}{
+		{
+			name: "send from admin1 to other accounts",
+			inputs: []banktypes.Input{
+				{Address: admins[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600)))},
+			},
+			outputs: []banktypes.Output{
+				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+				{Address: recipients[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+				{Address: admins[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(400)),
+				)},
+			},
+			distribution: map[string]map[*sdk.AccAddress]int64{
+				denoms[1]: {
+					&admins[1]:     340, // 1000 - 600 - 60 (10% burn)
+					&admins[0]:     400,
+					&recipients[0]: 100,
+					&recipients[1]: 100,
+				},
+			},
+		},
+		{
+			name: "send from admin0 to other accounts",
+			inputs: []banktypes.Input{
+				{Address: admins[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(200)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(200)),
+				)},
+			},
+			outputs: []banktypes.Output{
+				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(100)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+				{Address: recipients[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(100)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(100)),
+				)},
+			},
+			distribution: map[string]map[*sdk.AccAddress]int64{
+				denoms[0]: {
+					&admins[0]:     800, // 1000 - 200
+					&recipients[0]: 100,
+					&recipients[1]: 100,
+				},
+				denoms[1]: {
+					&admins[1]:     340,
+					&admins[0]:     180, // 400 - 200 - 20 (10% burn)
+					&recipients[0]: 200, // 100 + 100
+					&recipients[1]: 200, // 100 + 100
+				},
+			},
+		},
+		{
+			name: "include admin in recipients",
+			inputs: []banktypes.Input{
+				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(60)),
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(60)),
+				)},
+			},
+			outputs: []banktypes.Output{
+				{Address: admins[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(25)),
+				)},
+				{Address: admins[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(15)),
+				)},
+				{Address: recipients[2].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(11)),
+				)},
+				{Address: recipients[3].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[0], sdkmath.NewInt(9)),
+				)},
+				{Address: admins[1].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(25)),
+				)},
+				{Address: admins[0].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(15)),
+				)},
+				{Address: recipients[2].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(11)),
+				)},
+				{Address: recipients[3].String(), Coins: sdk.NewCoins(
+					sdk.NewCoin(denoms[1], sdkmath.NewInt(9)),
+				)},
+			},
+			distribution: map[string]map[*sdk.AccAddress]int64{
+				denoms[0]: {
+					&admins[0]:     815, // 800 + 15
+					&admins[1]:     25,
+					&recipients[0]: 34, // 100 - 60 - 6 (10% burn)
+					&recipients[1]: 100,
+					&recipients[2]: 11,
+					&recipients[3]: 9,
+				},
+				denoms[1]: {
+					&admins[1]:     365, // 340 + 25
+					&admins[0]:     195, // 180 + 15
+					&recipients[0]: 132, // 200 - 60 - (3+2+2+1) (10% burn of 25, 15, 11 and 9)
+					&recipients[1]: 200,
+					&recipients[2]: 11,
+					&recipients[3]: 9,
+				},
+			},
+		},
+	}
+
+	for counter, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("%s case #%d", tc.name, counter), func(t *testing.T) {
+			err := bankKeeper.InputOutputCoins(ctx, tc.inputs, tc.outputs)
+			requireT.NoError(err)
+
+			for denom, dist := range tc.distribution {
+				ba.assertCoinDistribution(denom, dist)
+			}
+		})
+	}
+}
+
+func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	assetKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+	ba := newBankAsserter(ctx, t, bankKeeper)
+
+	admin := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, admin, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	// issue token
+	settings := types.IssueSettings{
+		Issuer:        admin,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     6,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(625),
+		Features:      []types.Feature{types.Feature_extension},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+		SendCommissionRate: sdk.MustNewDecFromStr("0.25"),
+	}
+
+	denom, err := assetKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	token, err := assetKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+
+	extension, err := sdk.AccAddressFromBech32(token.ExtensionCWAddress)
+	requireT.NoError(err)
+
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// send from admin to recipient (send commission rate must apply if the extension decides)
+	err = bankKeeper.SendCoins(ctx, admin, recipient, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(500)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient: 500,
+		&admin:     62, // 625 - 500 - 125 (25% commission from sender) + 62 (50% of the commission to the admin)
+		&extension: 63, // 63 (50% of the commission to the extension)
+	})
+
+	// send trigger amount from recipient1 to recipient2 (send commission rate must not apply)
+	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreSendCommissionRateTrigger)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient:  391, // 500 - 109 (AmountIgnoreSendCommissionRateTrigger)
+		&recipient2: 109, // AmountIgnoreSendCommissionRateTrigger
+		&admin:      62,
+		&extension:  63,
+	})
+
+	// send from recipient1 to recipient2 (send commission rate must apply)
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(100)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient:  266, // 391 - 100 - 25 (25% commission rate from the sender)
+		&recipient2: 209, // 109 + 100
+		&admin:      74,  // 62 + 12 (50% of the commission to the admin)
+		&extension:  76,  // 63 + 13 (50% of the commission to the extension)
+	})
+
+	// send from recipient to admin account (send commission rate must apply if the extension decides)
+	err = bankKeeper.SendCoins(ctx, recipient, admin, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(100)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient:  141, // 266 - 100 - 25 (25% commission rate from the sender)
+		&recipient2: 209,
+		&admin:      186, // 74 + 100 + 12 (50% of the commission to the admin)
+		&extension:  89,  // 76 + 13 (50% of the commission to the extension)
+	})
+
+	// clear admin, query admin of definition
+	err = assetKeeper.ClearAdmin(ctx, admin, denom)
+	requireT.NoError(err)
+	def, err := assetKeeper.GetDefinition(ctx, denom)
+	requireT.NoError(err)
+	requireT.Empty(def.Admin)
+
+	// send from recipient1 to recipient2 (send commission rate must apply, but all of it should go to the extension)
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
+		sdk.NewCoin(denom, sdkmath.NewInt(112)),
+	))
+	requireT.NoError(err)
+
+	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
+		&recipient:  1, // 141 - 112 - 28 (25% commission rate from the sender)
+		&recipient2: 321,
+		&admin:      186, // previous admin does not receive anything
+		&extension:  117, // 89 + 28 (100% of the commission to the extension, since there is no admin)
+	})
 }
 
 func TestKeeper_Extension_ClearAdmin(t *testing.T) {
