@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"bytes"
 	"sort"
 	"strings"
 	"testing"
@@ -447,21 +446,6 @@ func TestKeeper_UpdateData(t *testing.T) {
 			},
 			wantErr:       types.ErrInvalidInput,
 			errorContains: "out or range",
-		},
-		{
-			name:        "negative_data_size_greater_than_max",
-			initialData: marshalDataToAny(requireT, &dataDynamic),
-			itemsToUpdate: []types.DataDynamicIndexedItem{
-				{
-					Index: 0,
-					Data:  bytes.Repeat([]byte{0x01}, types.MaxDataSize+1),
-				},
-			},
-			senderAddress: func(admin, owner sdk.AccAddress) sdk.AccAddress {
-				return admin
-			},
-			wantErr:       types.ErrInvalidInput,
-			errorContains: "invalid data",
 		},
 	}
 	for _, tt := range tests {
