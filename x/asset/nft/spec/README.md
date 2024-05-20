@@ -34,6 +34,13 @@ Here is the list of features:
 
 We will discuss each feature separately.
 
+### Minting
+The minting is enabled for all issued NFT classes. The minting allows to mint a token for an NFT class by the issuer of the class.
+There are two data types that can be used for NFT minting `DataBytes` and `DataDynamic`. The `DataBytes` contains immutable data bytes
+array. The `DataDynamic` contains the list of the `DataDynamicItem` which can be updated depending on item's `editors`. 
+Currently supported `DataEditors` are  `admin` and `owner`. If only one editor is set for the item, only that editor can update the 
+item's `data` using the`MsgUpdateData`. If both, both can update the `data`. If the `editors` list is empty no one can update the `data`. 
+
 ### Burning
 If this feature is enabled, it allows the holders of the token to burn the tokens they hold.
 It should be noted here that the issuer can burn their token regardless of this feature.
@@ -94,6 +101,21 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
     <td>Mint</td>
     <td>➕</td>
     <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Update</td>
+    <td><a href="#minting">ⓘ</a></td>
+    <td><a href="#minting">ⓘ</a></td>
     <td></td>
     <td></td>
     <td></td>
