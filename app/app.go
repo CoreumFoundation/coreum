@@ -963,7 +963,11 @@ func New(
 
 	app.configurator = module.NewConfigurator(
 		app.appCodec,
-		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig),
+		deterministicgastypes.NewDeterministicMsgServer(
+			app.MsgServiceRouter(),
+			deterministicGasConfig,
+			app.AssetFTKeeper,
+		),
 		app.GRPCQueryRouter(),
 	)
 	app.ModuleManager.RegisterServices(app.configurator)
