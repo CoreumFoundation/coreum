@@ -14,6 +14,7 @@ Here is the list of functionalities provided by this module, we will examine eac
 - Whitelist
 - IBC transfers
 - Clawback
+- Extension
 
 ## Interaction with bank module, introducing wbank module
 Since Coreum is based on Cosmos SDK, We should mention that Cosmos SDK provides the native bank module which is responsible for tracking fungible token creation and balances of each account. But this module does not allow any public to create a fungible token, mint/burn it, and also does not allow for other features such as freezing and whitelisting. To work around this issue we have wrapped the `bank` module into the `wbank` module.
@@ -126,6 +127,43 @@ Here is the description of behavior of the clawback feature:
 Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled for the token.
 
 _**Disclaimer**: if the admin claws back from the escrow address, then it will break the IBC. admins should not do this if they want the IBC to work for their token._
+
+### Extension
+Extension is a powerful feature which let the admin override the functionalities of the token completely by attaching a smart contract to the token that can administrate it. When a bank transfer is initiated, the smart contract account receives the amount plus any commission or burn amount if they should be applied, then it is called via a sudo call with the information related to the bank transfer and the context information. The smart contract then can decide to do whatever it decides with the transfer which may include overriding of any behavior for the features explained before.
+The sudo call is received in the `pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg)` entry point of the smart contract and the message would be a `ExtensionTransfer` which is defined as follows.
+```rust
+#[cw_serde]
+pub enum SudoMsg {
+    ExtensionTransfer {
+        recipient: String,
+        sender: String,
+        transfer_amount: Uint128,
+        commission_amount: Uint128,
+        burn_amount: Uint128,
+        context: TransferContext,
+    },
+}
+
+#[cw_serde]
+pub struct TransferContext {
+    sender_is_smart_contract: bool,
+    recipient_is_smart_contract: bool,
+    ibc_purpose: IBCPurpose,
+}
+```
+
+The fields are:
+- `recipient`: the account which receives the amount
+- `sender`: the account which sends the amount
+- `transfer_amount`: the amount to be sent
+- `commission_amount`: the amount to be sent times the commission rate of the token (if it is set)
+- `burn_amount`: the amount to be sent times the burn rate of the token (if it is set)
+- `context`: contextual information regarding the transfer which includes:
+  - `sender_is_smart_contract`: indicated whether the transfer is instantiated from a smart contract
+  - `recipient_is_smart_contract`: indicated whether the transfer is going to be received by a smart contract
+  - `ibc_purpose`: if it is an ibc transfer, indicates whether it's an outgoing, incoming, acknowledged or timed-out transfer
+
+There is a template implementation of extension in `x/asset/ft/keeper/test-contracts/asset-extension` which can be used as a reference to implement other extensions.
 
 ## Feature interoperability table
 
