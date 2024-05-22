@@ -22,11 +22,11 @@ var Commands = map[string]types.Command{
 		Description: "Runs all the integration tests including unsafe",
 	},
 	"integration-tests/ibc": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestIBC, false),
+		Fn:          coreum.RunIntegrationTestsIBC(false),
 		Description: "Runs safe IBC integration tests",
 	},
 	"integration-tests-unsafe/ibc": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestIBC, true),
+		Fn:          coreum.RunIntegrationTestsIBC(true),
 		Description: "Runs all IBC integration tests including unsafe",
 	},
 	"integration-tests/modules": {
@@ -38,11 +38,11 @@ var Commands = map[string]types.Command{
 		Description: "Runs all modules integration tests including unsafe",
 	},
 	"integration-tests/upgrade": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestUpgrade, false),
+		Fn:          coreum.RunIntegrationTestsUpgrade(false),
 		Description: "Runs safe upgrade integration tests",
 	},
 	"integration-tests-unsafe/upgrade": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestUpgrade, true),
+		Fn:          coreum.RunIntegrationTestsUpgrade(true),
 		Description: "Runs all upgrade integration tests including unsafe",
 	},
 	"lint":           {Fn: coreum.Lint, Description: "Lints code"},

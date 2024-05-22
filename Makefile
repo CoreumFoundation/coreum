@@ -43,20 +43,12 @@ integration-tests-modules:
 	$(CoreumBuilder) integration-tests-unsafe/modules
 
 .PHONY: integration-tests-ibc
-integration-tests-ibc: check-crust-builder
-	$(CrustBuilder) znet remove
-	$(CoreumBuilder) build images
-	$(CrustBuilder) znet start --profiles=3cored,ibc --timeout-commit 1s
+integration-tests-ibc:
 	$(CoreumBuilder) integration-tests-unsafe/ibc
-	$(CrustBuilder) znet remove
 
 .PHONY: integration-tests-upgrade
-integration-tests-upgrade: check-crust-builder
-	$(CrustBuilder) znet remove
-	$(CoreumBuilder) wasm build images
-	$(CrustBuilder) znet start --cored-version=v3.0.3 --profiles=3cored,ibc --timeout-commit 1s
-	$(CoreumBuilder) integration-tests-unsafe/upgrade integration-tests-unsafe/ibc integration-tests-unsafe/modules
-	$(CrustBuilder) znet remove
+integration-tests-upgrade:
+	$(CoreumBuilder) integration-tests-unsafe/upgrade
 
 ### Helpers go below this line
 
