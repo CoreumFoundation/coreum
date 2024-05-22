@@ -623,6 +623,7 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
 		},
@@ -687,6 +688,19 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 	require.NoError(t, err)
 
 	// send coins back to coreum, it should succeed despite frozen escrow address
+	coreumRecipient := chains.Coreum.GenAccount()
+	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  coreumIssuer.String(),
+		Account: coreumRecipient.String(),
+		Coin:    sendCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	require.NoError(t, err)
 	ibcSendCoin := sdk.NewCoin(ibcDenom, sendCoin.Amount)
 	_, err = gaiaChain.ExecuteIBCTransfer(
 		ctx,
@@ -695,10 +709,10 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 		gaiaRecipient,
 		ibcSendCoin,
 		coreumChain.ChainContext,
-		coreumIssuer,
+		coreumRecipient,
 	)
 	requireT.NoError(err)
-	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumIssuer, sendCoin))
+	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumRecipient, sendCoin))
 }
 
 func TestIBCGlobalFreeze(t *testing.T) {

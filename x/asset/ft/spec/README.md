@@ -30,12 +30,20 @@ Coreum provides a decentralized platform which allows everyone to tokenize their
 
 All the information provided at the time of issuance is immutable and cannot be changed later.
 
-#### Denom naming, Symbol and Precision
+### Denom naming, Symbol and Precision
 The way that denom is created is that the user provides a name for their subunit, and the denom for the token, which is the main identifier of the token, will be created by joining the subunit and the issuer address separated with a dash (subunit-address). The user also provides the symbol and precision which will only be used for display purposes and will be stored in bank module's metadata field.
 
 For example to represent Bitcoin on Coreum, one could choose satoshi as subunit, BTC as Symbol and 8 as precision. It means that if the issuer address is core1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 then the denom will be `satoshi-core1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8` and since we have chosen BTC as symbol and 8 as precision, it will follow that (1 BTC = 10^8 `satoshi-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8`)
 
-#### Token Features
+### Transferring admin
+Each token has an issuer, whose address is a part of the denom forever. The initial admin of the token is the issuer, but the admin role can be transferred to another account.
+Then, all the privileges of the previous admin will be transferred to the new admin, such as the ability to mint tokens if minting is enabled. The specific privileges and features will be discussed in the next section.
+
+### Clearing admin
+Tokens can also lose their admin forever by clearing admin.
+Then, no one will have any more privilege than others.
+
+## Token Features
 When issuing a token, the admin must decide which features are enabled on the token. For example if `minting` feature is enabled then it will allow the admin to mint further tokens on top of the initial supply, otherwise no new tokens can be minted. Here is a list of all the features that can be enabled on the token. Each of these features affects how the token will behave and a detailed description will be provided in the dedicated section for each feature.
 
 - minting
@@ -45,21 +53,24 @@ When issuing a token, the admin must decide which features are enabled on the to
 - ibc
 - clawback
 
-#### Burn Rate
+### Burn Rate
 The admin has the option to provide `BurnRate` when issuing a new token. This value is a number between 0 and 1, and if it is above zero, in every transfer, some additional tokens will be burnt on top of the transferred value, from the senders address. The tokens to be burnt are calculated by multiplying the TransferAmount by burn rate, and rounding it up to an integer value.
 
 If IBC feature is enabled for the token then the burn rate is applied to outgoing IBC transfers.
 
 Burn rate is never applied if smart contract is the sender.
 
-#### Send Commission Rate
-Exactly same as the Burn Rate, but the calculated value will be transferred to the admin account addressed instead of being burnt.
+### Send Commission Rate
+Exactly same as the Burn Rate, but the calculated value will be transferred to the admin account addressed (or the extension address if there is no admin) instead of being burnt.
 
 If IBC feature is enabled for the token then the send commission rate is applied to outgoing IBC transfers.
 
 Send commission rate is never applied if smart contract is the sender.
 
-#### Issuance Fee
+If a token doesn't have admin (ClearAdmin called on it), the commission rate would be set to zero, since there is no account to send the commissions to.
+The only exception is tokens that have extension, since the extension can receive the commission.
+
+### Issuance Fee
 Whenever a user wants to issue a fungible token, they have to pay some extra money as issuance fee, which is calculated on top of tx execution fee and will be burnt. The amount of the issuance fee is controlled by governance.
 
 ### Mint
@@ -101,7 +112,7 @@ Here is the description of behavior of the whitelisting feature:
 
 Same rules apply to receiving tokens over IBC transfer protocol if IBC is enabled for the token.
 
-## IBC
+### IBC
 When token is created, admin decides if users may send and receive it over IBC transfer protocol.
 If IBC feature is disabled token can never leave the Coreum chain.
 
@@ -110,7 +121,6 @@ If the clawback feature is enabled on a token, then the admin of the token can c
 
 Here is the description of behavior of the clawback feature:
 - The admin can clawback up to the amount an account holds if the clawback feature is enabled.
-- The admin cannot clawback from their own account
 - The admin cannot clawback from module accounts
 
 Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled for the token.
