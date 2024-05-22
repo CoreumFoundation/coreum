@@ -129,7 +129,7 @@ Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled 
 _**Disclaimer**: if the admin claws back from the escrow address, then it will break the IBC. admins should not do this if they want the IBC to work for their token._
 
 ### Extension
-Extension is a powerful feature which let the admin override the functionalities of the token completely by attaching a smart contract to the token that can administrate it. When a bank transfer is initiated, the smart contract account receives the amount plus any commission or burn amount if they should be applied, then it is called via a sudo call with the information related to the bank transfer and the context information. The smart contract then can decide to do whatever it decides with the transfer which may include overriding of any behavior for the features explained before.
+Extension is a powerful feature which lets the admin override some functionalities of the token by attaching a smart contract to the token that can administrate it. When a bank transfer is initiated, the smart contract account receives the amount plus any commission or burn amount if they should be applied, then it is called via a sudo call with the information related to the bank transfer and the context information. The smart contract then can decide to do whatever it decides with the transfer which may include overriding of some behaviors for the features explained before.
 The sudo call is received in the `pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg)` entry point of the smart contract and the message would be a `ExtensionTransfer` which is defined as follows.
 ```rust
 #[cw_serde]
@@ -163,7 +163,7 @@ The fields are:
   - `recipient_is_smart_contract`: indicated whether the transfer is going to be received by a smart contract
   - `ibc_purpose`: if it is an ibc transfer, indicates whether it's an outgoing, incoming, acknowledged or timed-out transfer
 
-There is a template implementation of extension in `x/asset/ft/keeper/test-contracts/asset-extension` which can be used as a reference to implement other extensions.
+There is a sample implementation of extension in `x/asset/ft/keeper/test-contracts/asset-extension` which can be used to take inspiration from, when implementing other extensions.
 
 ## Feature interoperability table
 
