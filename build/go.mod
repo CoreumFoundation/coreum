@@ -39,6 +39,7 @@ require (
 	github.com/CoreumFoundation/crust/build v0.0.0-20240520115643-0e25b17e1d6a
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
+	github.com/samber/lo v1.39.0
 )
 
 require (
@@ -195,7 +196,6 @@ require (
 	github.com/rs/cors v1.8.3 // indirect
 	github.com/rs/zerolog v1.32.0 // indirect
 	github.com/rubblelabs/ripple v0.0.0-20240109131116-f99dee0aa0f3 // indirect
-	github.com/samber/lo v1.39.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
