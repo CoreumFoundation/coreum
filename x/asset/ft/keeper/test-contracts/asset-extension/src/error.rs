@@ -20,4 +20,7 @@ pub enum ContractError {
 
     #[error("Insufficient funds attached.")]
     InsufficientFunds {},
+
+    #[error("IBC feature is disabled.")]
+    IBCDisabled {},
 }
