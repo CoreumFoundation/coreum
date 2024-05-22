@@ -100,18 +100,18 @@ pub fn sudo_extension_transfer(
         // must not go below the frozen amount. Otherwise the transaction will fail.
 
         if features.contains(&assetft::FREEZING) {
-            assert_freezing(deps.as_ref(), sender.as_ref(), &token, amount, &context)?;
+            assert_freezing(&context, deps.as_ref(), sender.as_ref(), &token, amount)?;
         }
 
         if features.contains(&assetft::WHITELISTING) {
-            assert_whitelisting(deps.as_ref(), &recipient, &token, amount, &context)?;
+            assert_whitelisting(&context, deps.as_ref(), &recipient, &token, amount)?;
         }
 
         if features.contains(&assetft::BLOCK_SMART_CONTRACTS) {
-            assert_block_smart_contracts(context, &recipient, &token)?;
+            assert_block_smart_contracts(&context, &recipient, &token)?;
         }
 
-        assert_ibc(&recipient, &token, context, features)?;
+        assert_ibc(&context, &recipient, &token, features)?;
 
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
@@ -160,11 +160,11 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn assert_freezing(
+    context: &TransferContext,
     deps: Deps<CoreumQueries>,
     account: &str,
     token: &Token,
     amount: Uint128,
-    context: &TransferContext,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
     if token.admin == Some(account.to_string()) {
@@ -201,11 +201,11 @@ fn assert_freezing(
 }
 
 fn assert_whitelisting(
+    context: &TransferContext,
     deps: Deps<CoreumQueries>,
     account: &str,
     token: &Token,
     amount: Uint128,
-    context: &TransferContext,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
     if token.admin == Some(account.to_string()) {
@@ -271,7 +271,7 @@ fn assert_minting(
 }
 
 fn assert_block_smart_contracts(
-    context: TransferContext,
+    context: &TransferContext,
     recipient: &str,
     token: &Token,
 ) -> Result<(), ContractError> {
@@ -289,9 +289,9 @@ fn assert_block_smart_contracts(
 }
 
 fn assert_ibc(
+    context: &TransferContext,
     recipient: &str,
     token: &Token,
-    context: TransferContext,
     features: &Vec<u32>,
 ) -> Result<(), ContractError> {
     if Some(recipient.to_string()) == token.admin
