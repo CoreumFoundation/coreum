@@ -90,6 +90,23 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
+			// This check is effective when IBC transfer is acknowledged by the peer chain or timed out.
+			// It happens in the following situations:
+			// - when transfer succeeded
+			// - when transfer has been rejected by the other chain and funds should be refunded.
+			// - when transfer has timedout and funds should be refuned.
+			// So, whenever it happens here, it means that funds are going to be refunded
+			// back to the sender by the IBC transfer module.
+			// It should succeed even if the issuer decided, for whatever reason, to freeze the escrow address.
+			// It is done before checking for global freeze because refunding should not be blocked by this.
+			// Otherwise, funds would be lost forever, being blocked on the escrow account.
+			if wibctransfertypes.IsPurposeAck(ctx) || wibctransfertypes.IsPurposeTimeout(ctx) {
+				if err := k.bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coin)); err != nil {
+					return err
+				}
+				continue
+			}
+
 			burnAmount := k.CalculateRate(ctx, def.BurnRate, sender, coin)
 			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, sender, coin)
 
