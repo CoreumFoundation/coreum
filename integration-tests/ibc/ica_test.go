@@ -42,7 +42,9 @@ func TestICACoreumControllerAndHost(t *testing.T) {
 		Address: controllerCaller,
 		Amount:  chains.Coreum.NewCoin(sdkmath.NewIntWithDecimal(1, 7)),
 	})
-	_, controllerToHostConnectionID := chains.Coreum.AwaitForIBCClientAndConnectionIDs(ctx, t, chains.Gaia.ChainSettings.ChainID)
+	_, controllerToHostConnectionID := chains.Coreum.AwaitForIBCClientAndConnectionIDs(
+		ctx, t, chains.Gaia.ChainSettings.ChainID,
+	)
 	msgRegisterInterchainAccountOnHost := icacontrollertypes.MsgRegisterInterchainAccount{
 		ConnectionId: controllerToHostConnectionID,
 		Owner:        chains.Coreum.MustConvertToBech32Address(controllerCaller),
@@ -73,9 +75,16 @@ func testICAIntegration(
 		Amount:  controllerChain.NewCoin(sdkmath.NewIntWithDecimal(1, 7)),
 	})
 
-	t.Logf("Generated and funded an account on controller chain: %s", controllerChain.MustConvertToBech32Address(controllerAcc))
+	t.Logf(
+		"Generated and funded an account on controller chain: %s",
+		controllerChain.MustConvertToBech32Address(controllerAcc),
+	)
 
-	_, controllerToHostConnectionID := controllerChain.AwaitForIBCClientAndConnectionIDs(ctx, t, hostChain.ChainSettings.ChainID)
+	_, controllerToHostConnectionID := controllerChain.AwaitForIBCClientAndConnectionIDs(
+		ctx,
+		t,
+		hostChain.ChainSettings.ChainID,
+	)
 
 	msgRegisterInterchainAccount := icacontrollertypes.MsgRegisterInterchainAccount{
 		ConnectionId: controllerToHostConnectionID,
@@ -100,10 +109,11 @@ func testICAIntegration(
 
 	var hostICAAcc sdk.AccAddress
 	require.NoError(t, controllerChain.AwaitState(ctx, func(ctx context.Context) error {
-		icaAccRes, err := controllerChainICAControllerClient.InterchainAccount(ctx, &icacontrollertypes.QueryInterchainAccountRequest{
-			Owner:        controllerChain.MustConvertToBech32Address(controllerAcc),
-			ConnectionId: controllerToHostConnectionID,
-		})
+		icaAccRes, err := controllerChainICAControllerClient.InterchainAccount(ctx,
+			&icacontrollertypes.QueryInterchainAccountRequest{
+				Owner:        controllerChain.MustConvertToBech32Address(controllerAcc),
+				ConnectionId: controllerToHostConnectionID,
+			})
 		if err != nil {
 			return retry.Retryable(errors.Errorf("ICA account is not ready yet, %s", err))
 		}
