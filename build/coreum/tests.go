@@ -63,7 +63,7 @@ func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsIBC returns function running IBC integration tests.
 func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
+		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
 			BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage, hermes.BuildDockerImage)
 
 		znetConfig := znetConfig
