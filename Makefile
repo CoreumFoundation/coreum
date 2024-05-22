@@ -38,6 +38,15 @@ dependencies: check-crust-builder
 	$(CrustBuilder) download
 	$(CoreumBuilder) download
 
+.PHONY: build-znet
+build-znet: check-crust-builder
+	$(CoreumBuilder) wasm build images
+
+.PHONY: restart-znet
+restart-znet: check-crust-builder
+	$(CrustBuilder) znet remove
+	$(CrustBuilder) znet start --profiles=3cored,ibc --timeout-commit 1s
+
 .PHONY: integration-tests-modules
 integration-tests-modules: check-crust-builder
 	$(CrustBuilder) znet remove
