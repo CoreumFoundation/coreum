@@ -1,5 +1,4 @@
 CoreumBuilder = ./bin/coreum-builder
-CrustBuilder = ../crust/bin/crust
 
 .PHONY: lint
 lint:
@@ -34,8 +33,7 @@ release-images:
 	$(CoreumBuilder) release/images
 
 .PHONY: dependencies
-dependencies: check-crust-builder
-	$(CrustBuilder) download
+dependencies:
 	$(CoreumBuilder) download
 
 .PHONY: integration-tests-modules
@@ -49,9 +47,3 @@ integration-tests-ibc:
 .PHONY: integration-tests-upgrade
 integration-tests-upgrade:
 	$(CoreumBuilder) integration-tests-unsafe/upgrade
-
-### Helpers go below this line
-
-.PHONY: check-crust-builder
-check-crust-builder:
-	test -f $(CrustBuilder) || (echo "You need to checkout crust repository" && exit 1)
