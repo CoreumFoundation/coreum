@@ -50,7 +50,7 @@ func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 		case TestUpgrade:
 			deps(CompileModulesSmartContracts)
 		case TestIBC:
-			deps(CompileIBCSmartContracts)
+			deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts)
 		}
 
 		flags := []string{
