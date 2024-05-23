@@ -23,20 +23,27 @@ import (
 )
 
 // TestICAController tests the ICA controller capabilities.
-func TestICACoreumControllerAndHost(t *testing.T) {
+func TestICACoreumController(t *testing.T) {
+	t.Parallel()
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	testICAIntegration(ctx, t, chains.Coreum.Chain, chains.Gaia)
+}
+
+// TestICAController tests the ICA host capabilities.
+func TestICACoreumHoat(t *testing.T) {
+	t.Parallel()
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	testICAIntegration(ctx, t, chains.Gaia, chains.Coreum.Chain)
+}
+
+// TestICADeterministicGas tests the ICA deterministic gas messages.
+func TestICADeterministicGas(t *testing.T) {
 	t.Parallel()
 
 	requireT := require.New(t)
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 
-	// Coreum as controller chain
-	testICAIntegration(ctx, t, chains.Coreum.Chain, chains.Gaia)
-
-	// Coreum as host chain
-	testICAIntegration(ctx, t, chains.Gaia, chains.Coreum.Chain)
-
-	// deterministic gas
 	controllerCaller := chains.Coreum.GenAccount()
 	chains.Coreum.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: controllerCaller,
