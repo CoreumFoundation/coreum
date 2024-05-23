@@ -33,7 +33,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	coreumSender := coreumChain.GenAccount()
@@ -93,7 +93,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainContext,
 	)
 	sendToCoreumCoin := gaiaChain.NewCoin(sdkmath.NewInt(1000))
 
@@ -180,7 +180,7 @@ func TestTimedOutTransfer(t *testing.T) {
 	osmosisChain := chains.Osmosis
 
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 5*integration.AwaitStateTimeout)
@@ -287,7 +287,7 @@ func TestRejectedTransfer(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	// Bank module rejects transfers targeting some module accounts. We use this feature to test that
