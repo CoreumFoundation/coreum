@@ -1,7 +1,9 @@
 package integration
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmlightclienttypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
@@ -215,43 +218,60 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
 		defer requestCancel()
 
-		ibcChannelsRes, err := ibcChannelClient.Channels(requestCtx, &ibcchanneltypes.QueryChannelsRequest{})
-		if err != nil {
-			return err
-		}
-
-		for _, ch := range ibcChannelsRes.Channels {
-			if ch.PortId != port || ch.State != ibcchanneltypes.OPEN {
-				continue
-			}
-
-			channelClientStateRes, err := ibcChannelClient.ChannelClientState(
+		channelsPagination := &query.PageRequest{Limit: query.DefaultLimit, Reverse: true}
+		for {
+			ibcChannelsRes, err := ibcChannelClient.Channels(
 				requestCtx,
-				&ibcchanneltypes.QueryChannelClientStateRequest{
-					PortId:    ch.PortId,
-					ChannelId: ch.ChannelId,
-				})
+				&ibcchanneltypes.QueryChannelsRequest{Pagination: channelsPagination},
+			)
 			if err != nil {
 				return err
 			}
 
-			var clientState ibctmlightclienttypes.ClientState
-			err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
-			if err != nil {
-				return err
+			if bytes.Equal(ibcChannelsRes.Pagination.NextKey, []byte("")) {
+				return errors.New("no more channels found")
 			}
+			channelsPagination.Key = ibcChannelsRes.Pagination.NextKey
 
-			if clientState.ChainId == peerChainID {
-				channelID = ch.ChannelId
-				return nil
-			}
+			allChannelsStr := lo.Reduce(ibcChannelsRes.Channels, func(ids string, ch *ibcchanneltypes.IdentifiedChannel, _ int) string {
+				return ids + ", " + ch.ChannelId
+			}, "")
+
+			fmt.Printf("all chanels: %s\n", allChannelsStr)
+
+			//for _, ch := range ibcChannelsRes.Channels {
+			//	if ch.PortId != port || ch.State != ibcchanneltypes.OPEN {
+			//		continue
+			//	}
+			//
+			//	channelClientStateRes, err := ibcChannelClient.ChannelClientState(
+			//		requestCtx,
+			//		&ibcchanneltypes.QueryChannelClientStateRequest{
+			//			PortId:    ch.PortId,
+			//			ChannelId: ch.ChannelId,
+			//		})
+			//	if err != nil {
+			//		return err
+			//	}
+			//
+			//	var clientState ibctmlightclienttypes.ClientState
+			//	err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
+			//	if err != nil {
+			//		return err
+			//	}
+			//
+			//	if clientState.ChainId == peerChainID {
+			//		channelID = ch.ChannelId
+			//		return nil
+			//	}
+			//}
+
+			return retry.Retryable(errors.Errorf(
+				"waiting for the %s channel on the %s to open",
+				peerChainID,
+				c.ChainSettings.ChainID,
+			))
 		}
-
-		return retry.Retryable(errors.Errorf(
-			"waiting for the %s channel on the %s to open",
-			peerChainID,
-			c.ChainSettings.ChainID,
-		))
 	}))
 
 	t.Logf("Got %s chain channel on %s chain, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID)
