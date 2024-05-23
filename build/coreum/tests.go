@@ -27,13 +27,6 @@ const (
 	TestUpgrade = "upgrade"
 )
 
-var znetConfig = &infra.ConfigFactory{
-	EnvName:       "znet",
-	TimeoutCommit: 500 * time.Millisecond,
-	HomeDir:       filepath.Join(lo.Must(os.UserHomeDir()), ".crust"),
-	RootDir:       "../",
-}
-
 // RunAllIntegrationTests runs all the coreum integration tests.
 func RunAllIntegrationTests(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
@@ -52,7 +45,7 @@ func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 		deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
 			BuildCoredDockerImage)
 
-		znetConfig := znetConfig
+		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored}
 		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-modules"
 
@@ -66,7 +59,7 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
 			BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage, hermes.BuildDockerImage)
 
-		znetConfig := znetConfig
+		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
 		znetConfig.TimeoutCommit = time.Second
 
@@ -80,7 +73,7 @@ func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 		deps(CompileModulesSmartContracts, BuildCoredLocally,
 			BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage, hermes.BuildDockerImage)
 
-		znetConfig := znetConfig
+		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
 		znetConfig.TimeoutCommit = time.Second
 		znetConfig.CoredVersion = "v3.0.3"
@@ -128,4 +121,13 @@ func runIntegrationTests(
 	}
 
 	return znet.Remove(ctx, znetConfig)
+}
+
+func defaultZNetConfig() *infra.ConfigFactory {
+	return &infra.ConfigFactory{
+		EnvName:       "znet",
+		TimeoutCommit: 500 * time.Millisecond,
+		HomeDir:       filepath.Join(lo.Must(os.UserHomeDir()), ".crust"),
+		RootDir:       "../",
+	}
 }
