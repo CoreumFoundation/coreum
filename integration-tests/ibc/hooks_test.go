@@ -136,6 +136,8 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 		coreumChain.ChainSettings.AddressPrefix)
 	requireT.NoError(err)
 
+	fmt.Printf("ibcHookCaller1: %v", ibcHookCallerOnCoreumAddr1)
+	fmt.Printf("ibcHookCaller2: %v", ibcHookCallerOnCoreumAddr2)
 	// Verify that hook caller is separate for each sender address.
 	requireT.NotEqual(ibcHookCallerOnCoreumAddr1, ibcHookCallerOnCoreumAddr2)
 
