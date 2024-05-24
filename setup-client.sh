@@ -10,14 +10,14 @@ URL_LINUX_ARM64="https://github.com/CoreumFoundation/coreum/releases/download/${
 URL_DARWIN_AMD64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-client-darwin-amd64"
 URL_DARWIN_ARM64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-client-darwin-arm64"
 
-PLATFORM="$(uname -o)/$(uname -m)"
+PLATFORM="$(uname)/$(uname -m)"
 URL=""
 
 case "$PLATFORM" in
-  "GNU/Linux/x86_64") URL=$URL_LINUX_AMD64 ;;
-  "GNU/Linux/arm64") URL=$URL_LINUX_ARM64 ;;
-  "DARWIN/x86_64") URL=$URL_DARWIN_AMD64 ;;
-  "DARWIN/arm64") URL=$URL_DARWIN_ARM64 ;;
+  "Linux/x86_64") URL=$URL_LINUX_AMD64 ;;
+  "Linux/arm64") URL=$URL_LINUX_ARM64 ;;
+  "Darwin/x86_64") URL=$URL_DARWIN_AMD64 ;;
+  "Darwin/arm64") URL=$URL_DARWIN_ARM64 ;;
   *) echo "Unsupported platform $PLATFORM"; exit 1
 esac
 
