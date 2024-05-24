@@ -3,7 +3,6 @@ package integration
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -20,7 +19,6 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmlightclienttypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
@@ -214,65 +212,66 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
 
 	var channelID string
-	require.NoError(t, retry.Do(retryCtx, 500*time.Millisecond, func() error {
-		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
-		defer requestCancel()
+	require.NoError(t, retry.Do(retryCtx, 500*time.Millisecond,
+		func() error {
 
-		channelsPagination := &query.PageRequest{Limit: query.DefaultLimit, Reverse: true}
-		for {
-			ibcChannelsRes, err := ibcChannelClient.Channels(
-				requestCtx,
-				&ibcchanneltypes.QueryChannelsRequest{Pagination: channelsPagination},
-			)
-			if err != nil {
-				return err
+			// Intentionally start in reverse order because last channels are more likely to be opened
+			// since we use devnet or testnet where channels are recreated frequently.
+			channelsPagination := &query.PageRequest{Limit: query.DefaultLimit, Reverse: true}
+			for {
+				queryChannelsReqCtx, queryChannelsReqCancel := context.WithTimeout(ctx, 5*time.Second)
+				ibcChannelsRes, err := ibcChannelClient.Channels(
+					queryChannelsReqCtx,
+					&ibcchanneltypes.QueryChannelsRequest{Pagination: channelsPagination},
+				)
+				queryChannelsReqCancel()
+				if err != nil {
+					return err
+				}
+
+				for _, ch := range ibcChannelsRes.Channels {
+					if ch.PortId != port || ch.State != ibcchanneltypes.OPEN {
+						continue
+					}
+
+					queryChReqCtx, queryChReqCancel := context.WithTimeout(ctx, 5*time.Second)
+					channelClientStateRes, err := ibcChannelClient.ChannelClientState(
+						queryChReqCtx,
+						&ibcchanneltypes.QueryChannelClientStateRequest{
+							PortId:    ch.PortId,
+							ChannelId: ch.ChannelId,
+						})
+					queryChReqCancel()
+					if err != nil {
+						return err
+					}
+
+					var clientState ibctmlightclienttypes.ClientState
+					err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
+					if err != nil {
+						return err
+					}
+
+					if clientState.ChainId == peerChainID {
+						channelID = ch.ChannelId
+						return nil
+					}
+				}
+
+				if bytes.Equal(ibcChannelsRes.Pagination.NextKey, []byte("")) {
+					break
+				}
+				channelsPagination.Key = ibcChannelsRes.Pagination.NextKey
 			}
-
-			if bytes.Equal(ibcChannelsRes.Pagination.NextKey, []byte("")) {
-				return errors.New("no more channels found")
-			}
-			channelsPagination.Key = ibcChannelsRes.Pagination.NextKey
-
-			allChannelsStr := lo.Reduce(ibcChannelsRes.Channels, func(ids string, ch *ibcchanneltypes.IdentifiedChannel, _ int) string {
-				return ids + ", " + ch.ChannelId
-			}, "")
-
-			fmt.Printf("all chanels: %s\n", allChannelsStr)
-
-			//for _, ch := range ibcChannelsRes.Channels {
-			//	if ch.PortId != port || ch.State != ibcchanneltypes.OPEN {
-			//		continue
-			//	}
-			//
-			//	channelClientStateRes, err := ibcChannelClient.ChannelClientState(
-			//		requestCtx,
-			//		&ibcchanneltypes.QueryChannelClientStateRequest{
-			//			PortId:    ch.PortId,
-			//			ChannelId: ch.ChannelId,
-			//		})
-			//	if err != nil {
-			//		return err
-			//	}
-			//
-			//	var clientState ibctmlightclienttypes.ClientState
-			//	err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
-			//	if err != nil {
-			//		return err
-			//	}
-			//
-			//	if clientState.ChainId == peerChainID {
-			//		channelID = ch.ChannelId
-			//		return nil
-			//	}
-			//}
 
 			return retry.Retryable(errors.Errorf(
 				"waiting for the %s channel on the %s to open",
 				peerChainID,
 				c.ChainSettings.ChainID,
 			))
-		}
-	}))
+		},
+	),
+	)
 
 	t.Logf("Got %s chain channel on %s chain, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID)
 
