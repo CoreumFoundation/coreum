@@ -214,8 +214,7 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 	var channelID string
 	require.NoError(t, retry.Do(retryCtx, 500*time.Millisecond,
 		func() error {
-
-			// Intentionally start in reverse order because last channels are more likely to be opened
+			// Intentionally query channels in reverse order because last channels are more likely to be opened
 			// since we use devnet or testnet where channels are recreated frequently.
 			channelsPagination := &query.PageRequest{Limit: query.DefaultLimit, Reverse: true}
 			for {
