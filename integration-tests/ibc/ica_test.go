@@ -30,7 +30,7 @@ func TestICACoreumController(t *testing.T) {
 }
 
 // TestICAController tests the ICA host capabilities.
-func TestICACoreumHoat(t *testing.T) {
+func TestICACoreumHost(t *testing.T) {
 	t.Parallel()
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	testICAIntegration(ctx, t, chains.Gaia, chains.Coreum.Chain)
