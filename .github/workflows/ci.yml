@@ -58,7 +58,6 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: dzmitryhil/update-osmosis-gaia # FIXME(dzmitryhil) remove once the master is merged
       - name: Setup go cache
         uses: actions/cache@v4
         with:
