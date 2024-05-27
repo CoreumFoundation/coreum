@@ -52,7 +52,7 @@ integration-tests-modules: check-crust-builder
 integration-tests-ibc: check-crust-builder
 	$(CrustBuilder) znet remove
 	$(CoreumBuilder) build images
-	$(CrustBuilder) znet start --profiles=3cored,ibc --timeout-commit 1s
+	$(CrustBuilder) znet start --profiles=3cored,ibc --timeout-commit 0.5s
 	$(CoreumBuilder) integration-tests-unsafe/ibc
 	$(CrustBuilder) znet remove
 
