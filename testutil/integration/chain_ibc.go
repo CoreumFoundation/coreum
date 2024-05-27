@@ -246,7 +246,8 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 					}
 
 					var clientState ibctmlightclienttypes.ClientState
-					err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
+					err = c.ClientContext.Codec().
+						Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
 					if err != nil {
 						return err
 					}
