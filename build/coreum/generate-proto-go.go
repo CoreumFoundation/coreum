@@ -3,6 +3,7 @@ package coreum
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
@@ -61,8 +61,8 @@ func executeGoProtocCommand(ctx context.Context, deps build.DepsFunc, includeDir
 	args := []string{
 		"--gocosmos_out=plugins=interfacetype+grpc,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.",
 		"--grpc-gateway_out=logtostderr=true:.",
-		"--plugin", must.String(filepath.Abs("bin/protoc-gen-gocosmos")),
-		"--plugin", must.String(filepath.Abs("bin/protoc-gen-grpc-gateway")),
+		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-gocosmos", tools.TargetPlatformLocal)),
+		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-grpc-gateway", tools.TargetPlatformLocal)),
 	}
 
 	for _, path := range includeDirs {

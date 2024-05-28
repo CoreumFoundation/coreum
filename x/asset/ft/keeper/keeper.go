@@ -730,7 +730,13 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 		return err
 	}
 
+	// if extension feature is disabled, after clearing admin, there is no one to send commission to, so the commission
+	// rate sets to zero else only the admin is cleared and the extension receives the commission rate
 	def.Admin = ""
+	if !def.IsFeatureEnabled(types.Feature_extension) {
+		def.SendCommissionRate = sdk.ZeroDec()
+	}
+
 	k.SetDefinition(ctx, issuer, subunit, def)
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminCleared{
@@ -811,7 +817,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 	// So, whenever it happens here, it means transfer has been rejected. It means that funds are going to be refunded
 	// back to the sender by the IBC transfer module.
 	// It should succeed even if the issuer decided, for whatever reason, to freeze the escrow address.
-	// It is done before cehcking for global freeze because refunding should not be blocked by this.
+	// It is done before checking for global freeze because refunding should not be blocked by this.
 	// Otherwise, funds would be lost forever, being blocked on the escrow account.
 	if wibctransfertypes.IsPurposeAck(ctx) {
 		return nil
@@ -822,7 +828,9 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_freezing) && k.isGloballyFrozen(ctx, def.Denom) && !def.IsAdmin(addr) {
+	if def.IsFeatureEnabled(types.Feature_freezing) &&
+		k.isGloballyFrozen(ctx, def.Denom) &&
+		!def.HasAdminPrivileges(addr) {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
@@ -835,7 +843,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 	}
 
 	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
-		!def.IsAdmin(addr) &&
+		!def.HasAdminPrivileges(addr) &&
 		cwasmtypes.IsTriggeredBySmartContract(ctx) {
 		return sdkerrors.Wrapf(
 			cosmoserrors.ErrUnauthorized,
@@ -844,7 +852,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		)
 	}
 
-	if def.IsFeatureEnabled(types.Feature_freezing) && !def.IsAdmin(addr) {
+	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
 		availableBalance := k.availableBalance(ctx, addr, def.Denom)
 		if !availableBalance.Amount.GTE(amount) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s",
@@ -887,7 +895,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.IsAdmin(addr) {
+	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.HasAdminPrivileges(addr) {
 		balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
 		whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
 
@@ -901,7 +909,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 	}
 
 	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
-		!def.IsAdmin(addr) &&
+		!def.HasAdminPrivileges(addr) &&
 		cwasmtypes.IsReceivingSmartContract(ctx, addr.String()) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "transfers to smart contracts are disabled for %s", def.Denom)
 	}
@@ -1051,7 +1059,7 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if def.IsAdmin(addr) {
+	if def.HasAdminPrivileges(addr) {
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be frozen")
 	}
 
@@ -1066,10 +1074,6 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if def.IsAdmin(addr) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "admin's balance can't be clawed back")
 	}
 
 	if _, isModuleAccount := k.accountKeeper.GetAccount(ctx, addr).(*authtypes.ModuleAccount); isModuleAccount {

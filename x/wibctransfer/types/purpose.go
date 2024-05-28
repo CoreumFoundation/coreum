@@ -12,13 +12,13 @@ type Purpose string
 const (
 	// PurposeOut is used when IBC transfer from Coreum to peered chain is initialized by executing
 	// ibctransfertypes.MsgTransfer message.
-	PurposeOut Purpose = "ibcTransferOut"
+	PurposeOut Purpose = "out"
 	// PurposeIn is used when incoming IBC transfer comes from peered chain to Coreum.
-	PurposeIn Purpose = "ibcTransferIn"
+	PurposeIn Purpose = "in"
 	// PurposeAck is used when outgoing IBC transfer from Coreum is acknowledged by the peered chain.
-	PurposeAck Purpose = "ibcTransferAck"
+	PurposeAck Purpose = "ack"
 	// PurposeTimeout is used when outgoing IBC transfer from Coreum times out.
-	PurposeTimeout Purpose = "ibcTransferTimeout"
+	PurposeTimeout Purpose = "timeout"
 )
 
 type purposeKey struct{}
@@ -30,29 +30,30 @@ func WithPurpose(ctx sdk.Context, direction Purpose) sdk.Context {
 
 // IsPurposeOut returns true if context is tagged with an outgoing transfer.
 func IsPurposeOut(ctx sdk.Context) bool {
-	d, ok := getPurpose(ctx.Context())
+	d, ok := GetPurpose(ctx.Context())
 	return ok && d == PurposeOut
 }
 
 // IsPurposeIn returns true if context is tagged with an incoming transfer.
 func IsPurposeIn(ctx sdk.Context) bool {
-	d, ok := getPurpose(ctx.Context())
+	d, ok := GetPurpose(ctx.Context())
 	return ok && d == PurposeIn
 }
 
 // IsPurposeAck returns true if context is tagged with an acknowledged transfer.
 func IsPurposeAck(ctx sdk.Context) bool {
-	d, ok := getPurpose(ctx.Context())
+	d, ok := GetPurpose(ctx.Context())
 	return ok && d == PurposeAck
 }
 
 // IsPurposeTimeout returns true if context is tagged with timed-out transfer.
 func IsPurposeTimeout(ctx sdk.Context) bool {
-	d, ok := getPurpose(ctx.Context())
+	d, ok := GetPurpose(ctx.Context())
 	return ok && d == PurposeTimeout
 }
 
-func getPurpose(ctx context.Context) (Purpose, bool) {
+// GetPurpose returns the ibc purpose from the context.
+func GetPurpose(ctx context.Context) (Purpose, bool) {
 	purpose, ok := ctx.Value(purposeKey{}).(Purpose)
 	return purpose, ok
 }

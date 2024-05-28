@@ -56,7 +56,6 @@ const (
 	ClassMaxDescriptionLength = 256
 	MaxURILength              = 256
 	MaxURIHashLength          = 128
-	MaxDataSize               = 5 * 1024 // 5KB
 )
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.

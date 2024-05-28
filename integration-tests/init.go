@@ -100,7 +100,7 @@ func init() {
 		}
 	}
 
-	queryCtx, queryCtxCancel := context.WithTimeout(ctx, integration.DefaultClientContextConfig().TimeoutConfig.TxStatusPollInterval)
+	queryCtx, queryCtxCancel := context.WithTimeout(ctx, integration.DefaultClientContextConfig().TimeoutConfig.RequestTimeout)
 	defer queryCtxCancel()
 
 	// ********** Coreum **********
@@ -161,7 +161,6 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		require.NoError(t, err)
 		gaiaSettings := integration.QueryChainSettings(queryCtx, gaiaGRPClient)
 		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
-		gaiaSettings.GasAdjustment = 1.5
 		gaiaSettings.CoinType = sdk.CoinType // gaia coin type
 		gaiaSettings.RPCAddress = gaiaRPCAddress
 
@@ -182,7 +181,6 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		require.NoError(t, err)
 		osmosisChainSettings := integration.QueryChainSettings(queryCtx, osmosisGRPClient)
 		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
-		osmosisChainSettings.GasAdjustment = 1.5
 		osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
 		osmosisChainSettings.RPCAddress = osmosisRPCAddress
 

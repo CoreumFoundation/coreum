@@ -559,7 +559,8 @@ func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
 func (k Keeper) GetBurntNFTs(
 	ctx sdk.Context, q *query.PageRequest,
 ) ([]types.BurntNFT, *query.PageResponse, error) {
-	mp := make(map[string][]string, 0)
+	burnt := make([]types.BurntNFT, 0)
+	classIDToBurntNFTIdx := make(map[string]int)
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
@@ -575,19 +576,21 @@ func (k Keeper) GetBurntNFTs(
 				return err
 			}
 
-			mp[classID] = append(mp[classID], nftID)
+			idx, ok := classIDToBurntNFTIdx[classID]
+			if ok {
+				burnt[idx].NftIDs = append(burnt[idx].NftIDs, nftID)
+				return nil
+			}
+
+			burnt = append(burnt, types.BurntNFT{
+				ClassID: classID,
+				NftIDs:  []string{nftID},
+			})
+			classIDToBurntNFTIdx[classID] = len(burnt) - 1
 			return nil
 		})
 	if err != nil {
 		return nil, nil, err
-	}
-
-	burnt := make([]types.BurntNFT, 0, len(mp))
-	for classID, nfts := range mp {
-		burnt = append(burnt, types.BurntNFT{
-			ClassID: classID,
-			NftIDs:  nfts,
-		})
 	}
 
 	return burnt, pageRes, nil
@@ -705,7 +708,8 @@ func (k Keeper) IsClassFrozen(ctx sdk.Context, classID string, account sdk.AccAd
 //
 //nolint:dupl
 func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.FrozenNFT, *query.PageResponse, error) {
-	mp := make(map[string][]string, 0)
+	frozen := make([]types.FrozenNFT, 0)
+	classIDToFrozenNFTIdx := make(map[string]int)
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
@@ -721,19 +725,21 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.Fr
 				return err
 			}
 
-			mp[classID] = append(mp[classID], nftID)
+			idx, ok := classIDToFrozenNFTIdx[classID]
+			if ok {
+				frozen[idx].NftIDs = append(frozen[idx].NftIDs, nftID)
+				return nil
+			}
+
+			frozen = append(frozen, types.FrozenNFT{
+				ClassID: classID,
+				NftIDs:  []string{nftID},
+			})
+			classIDToFrozenNFTIdx[classID] = len(frozen) - 1
 			return nil
 		})
 	if err != nil {
 		return nil, nil, err
-	}
-
-	frozen := make([]types.FrozenNFT, 0, len(mp))
-	for classID, nfts := range mp {
-		frozen = append(frozen, types.FrozenNFT{
-			ClassID: classID,
-			NftIDs:  nfts,
-		})
 	}
 
 	return frozen, pageRes, nil
@@ -745,7 +751,8 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.Fr
 func (k Keeper) GetAllClassFrozenAccounts(
 	ctx sdk.Context, q *query.PageRequest,
 ) ([]types.ClassFrozenAccounts, *query.PageResponse, error) {
-	mp := make(map[string][]string, 0)
+	frozen := make([]types.ClassFrozenAccounts, 0)
+	classIDToFrozenIdx := make(map[string]int)
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassFreezingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
@@ -764,20 +771,21 @@ func (k Keeper) GetAllClassFrozenAccounts(
 				return nil
 			}
 
-			accountString := account.String()
-			mp[classID] = append(mp[classID], accountString)
+			idx, ok := classIDToFrozenIdx[classID]
+			if ok {
+				frozen[idx].Accounts = append(frozen[idx].Accounts, account.String())
+				return nil
+			}
+
+			frozen = append(frozen, types.ClassFrozenAccounts{
+				ClassID:  classID,
+				Accounts: []string{account.String()},
+			})
+			classIDToFrozenIdx[classID] = len(frozen) - 1
 			return nil
 		})
 	if err != nil {
 		return nil, nil, err
-	}
-
-	frozen := make([]types.ClassFrozenAccounts, 0, len(mp))
-	for classID, accounts := range mp {
-		frozen = append(frozen, types.ClassFrozenAccounts{
-			ClassID:  classID,
-			Accounts: accounts,
-		})
 	}
 
 	return frozen, pageRes, nil
@@ -940,7 +948,8 @@ func (k Keeper) GetWhitelistedAccounts(
 		classID string
 		nftID   string
 	}
-	mp := make(map[nftUniqueID][]string, 0)
+	whitelisted := make([]types.WhitelistedNFTAccounts, 0)
+	nftUniqueIDToWhitelistIdx := make(map[nftUniqueID]int)
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTWhitelistingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
@@ -964,21 +973,22 @@ func (k Keeper) GetWhitelistedAccounts(
 				nftID:   nftID,
 			}
 
-			accountString := account.String()
-			mp[uniqueID] = append(mp[uniqueID], accountString)
+			idx, ok := nftUniqueIDToWhitelistIdx[uniqueID]
+			if ok {
+				whitelisted[idx].Accounts = append(whitelisted[idx].Accounts, account.String())
+				return nil
+			}
+
+			whitelisted = append(whitelisted, types.WhitelistedNFTAccounts{
+				ClassID:  classID,
+				NftID:    nftID,
+				Accounts: []string{account.String()},
+			})
+			nftUniqueIDToWhitelistIdx[uniqueID] = len(whitelisted) - 1
 			return nil
 		})
 	if err != nil {
 		return nil, nil, err
-	}
-
-	whitelisted := make([]types.WhitelistedNFTAccounts, 0, len(mp))
-	for uniqueID, accounts := range mp {
-		whitelisted = append(whitelisted, types.WhitelistedNFTAccounts{
-			ClassID:  uniqueID.classID,
-			NftID:    uniqueID.nftID,
-			Accounts: accounts,
-		})
 	}
 
 	return whitelisted, pageRes, nil
@@ -990,7 +1000,8 @@ func (k Keeper) GetWhitelistedAccounts(
 func (k Keeper) GetAllClassWhitelistedAccounts(
 	ctx sdk.Context, q *query.PageRequest,
 ) ([]types.ClassWhitelistedAccounts, *query.PageResponse, error) {
-	mp := make(map[string][]string, 0)
+	whitelisted := make([]types.ClassWhitelistedAccounts, 0)
+	classIDToWhitelistedIdx := make(map[string]int)
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassWhitelistingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
@@ -1009,20 +1020,21 @@ func (k Keeper) GetAllClassWhitelistedAccounts(
 				return nil
 			}
 
-			accountString := account.String()
-			mp[classID] = append(mp[classID], accountString)
+			idx, ok := classIDToWhitelistedIdx[classID]
+			if ok {
+				whitelisted[idx].Accounts = append(whitelisted[idx].Accounts, account.String())
+				return nil
+			}
+
+			whitelisted = append(whitelisted, types.ClassWhitelistedAccounts{
+				ClassID:  classID,
+				Accounts: []string{account.String()},
+			})
+			classIDToWhitelistedIdx[classID] = len(whitelisted) - 1
 			return nil
 		})
 	if err != nil {
 		return nil, nil, err
-	}
-
-	whitelisted := make([]types.ClassWhitelistedAccounts, 0, len(mp))
-	for classID, accounts := range mp {
-		whitelisted = append(whitelisted, types.ClassWhitelistedAccounts{
-			ClassID:  classID,
-			Accounts: accounts,
-		})
 	}
 
 	return whitelisted, pageRes, nil

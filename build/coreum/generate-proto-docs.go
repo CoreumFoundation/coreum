@@ -49,8 +49,9 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, includeDirs,
 	deps(tools.EnsureProtoc, tools.EnsureProtocGenDoc)
 
 	args := []string{
-		fmt.Sprintf("%s=%s", "--doc_out", "docs"),
-		fmt.Sprintf("%s=%s,api.md", "--doc_opt", filepath.Join("docs", "api.tmpl.md")),
+		"--doc_out=docs",
+		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-doc", tools.TargetPlatformLocal)),
+		"--doc_opt=docs/api.tmpl.md,api.md",
 	}
 
 	for _, path := range includeDirs {

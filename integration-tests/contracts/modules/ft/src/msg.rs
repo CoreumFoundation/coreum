@@ -1,3 +1,4 @@
+use coreum_wasm_sdk::types::coreum::asset::ft::v1::ExtensionIssueSettings;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 
@@ -8,34 +9,53 @@ pub struct InstantiateMsg {
     pub precision: u32,
     pub initial_amount: Uint128,
     pub description: Option<String>,
-    pub features: Option<Vec<u32>>,
+    pub features: Option<Vec<i32>>,
     pub burn_rate: String,
     pub send_commission_rate: String,
     pub uri: Option<String>,
     pub uri_hash: Option<String>,
+    pub extension_settings: Option<ExtensionIssueSettings>,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Mint { amount: u128, recipient: Option<String> },
-    Burn { amount: u128 },
-    Freeze { account: String, amount: u128 },
-    Unfreeze { account: String, amount: u128 },
-    SetFrozen { account: String, amount: u128 },
+    Mint {
+        amount: u128,
+        recipient: Option<String>,
+    },
+    Burn {
+        amount: u128,
+    },
+    Freeze {
+        account: String,
+        amount: u128,
+    },
+    Unfreeze {
+        account: String,
+        amount: u128,
+    },
+    SetFrozen {
+        account: String,
+        amount: u128,
+    },
     GloballyFreeze {},
     GloballyUnfreeze {},
-    SetWhitelistedLimit { account: String, amount: u128 },
-    UpgradeTokenV1 { ibc_enabled: bool },
+    SetWhitelistedLimit {
+        account: String,
+        amount: u128,
+    },
+    Clawback {
+        account: String,
+        amount: u128,
+    },
+    TransferAdmin {
+        account: String,
+    },
+    ClearAdmin {},
+    UpgradeTokenV1 {
+        ibc_enabled: bool,
+    },
 }
 
 #[cw_serde]
-pub enum QueryMsg {
-    Params {},
-    Token {},
-    Tokens { issuer: String },
-    Balance { account: String },
-    FrozenBalances { account: String },
-    FrozenBalance { account: String },
-    WhitelistedBalances { account: String },
-    WhitelistedBalance { account: String },
-}
+pub enum QueryMsg {}

@@ -9,6 +9,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v4/x/wasm"
 	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
@@ -20,10 +21,31 @@ const (
 	ExtenstionTransferMethod = "extension_transfer"
 )
 
-// ExtensionTransferMsg contains the fields passed to extension method call.
-type ExtensionTransferMsg struct {
-	Amount    sdkmath.Int `json:"amount,omitempty"`
-	Recipient string      `json:"recipient,omitempty"`
+// sudoExtensionTransferMsg contains the fields passed to extension method call.
+//
+//nolint:tagliatelle // these will be exposed to rust and must be snake case.
+type sudoExtensionTransferMsg struct {
+	Recipient        string                       `json:"recipient,omitempty"`
+	Sender           string                       `json:"sender,omitempty"`
+	TransferAmount   sdkmath.Int                  `json:"transfer_amount,omitempty"`
+	BurnAmount       sdkmath.Int                  `json:"burn_amount,omitempty"`
+	CommissionAmount sdkmath.Int                  `json:"commission_amount,omitempty"`
+	Context          sudoExtensionTransferContext `json:"context,omitempty"`
+}
+
+//nolint:tagliatelle // these will be exposed to rust and must be snake case.
+type sudoExtensionTransferContext struct {
+	SenderIsSmartContract    bool   `json:"sender_is_smart_contract"`
+	RecipientIsSmartContract bool   `json:"recipient_is_smart_contract"`
+	IBCPurpose               string `json:"ibc_purpose"`
+}
+
+func ibcPurposeToExtensionString(ctx sdk.Context) string {
+	ibcPurpose, ok := wibctransfertypes.GetPurpose(ctx)
+	if !ok {
+		return "none"
+	}
+	return string(ibcPurpose)
 }
 
 // BeforeSendCoins checks that a transfer request is allowed or not.
@@ -69,13 +91,25 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			admin, err := sdk.AccAddressFromBech32(def.Admin)
-			if err != nil {
-				return sdkerrors.Wrapf(err, "invalid address %s", def.Admin)
+			// This check is effective when IBC transfer is acknowledged by the peer chain or timed out.
+			// It happens in the following situations:
+			// - when transfer succeeded
+			// - when transfer has been rejected by the other chain and funds should be refunded.
+			// - when transfer has timedout and funds should be refuned.
+			// So, whenever it happens here, it means that funds are going to be refunded
+			// back to the sender by the IBC transfer module.
+			// It should succeed even if the issuer decided, for whatever reason, to freeze the escrow address.
+			// It is done before checking for global freeze because refunding should not be blocked by this.
+			// Otherwise, funds would be lost forever, being blocked on the escrow account.
+			if wibctransfertypes.IsPurposeAck(ctx) || wibctransfertypes.IsPurposeTimeout(ctx) {
+				if err := k.bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coin)); err != nil {
+					return err
+				}
+				continue
 			}
 
-			burnAmount := k.CalculateRate(ctx, def.BurnRate, admin, sender, recipient, coin)
-			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, admin, sender, recipient, coin)
+			burnAmount := k.CalculateRate(ctx, def.BurnRate, sender, coin)
+			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, sender, coin)
 
 			if def.IsFeatureEnabled(types.Feature_extension) {
 				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
@@ -87,13 +121,17 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				continue
 			}
 
-			if commissionAmount.IsPositive() {
+			senderOrReceiverIsAdmin := def.Admin == sender.String() || def.Admin == recipient.String()
+
+			if !senderOrReceiverIsAdmin && commissionAmount.IsPositive() {
+				adminAddr := sdk.MustAccAddressFromBech32(def.Admin)
 				commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
-				if err := k.bankKeeper.SendCoins(ctx, sender, admin, commissionCoin); err != nil {
+				if err := k.bankKeeper.SendCoins(ctx, sender, adminAddr, commissionCoin); err != nil {
 					return err
 				}
 			}
-			if burnAmount.IsPositive() {
+
+			if !senderOrReceiverIsAdmin && burnAmount.IsPositive() {
 				if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
 					return err
 				}
@@ -154,10 +192,27 @@ func (k Keeper) invokeAssetExtension(
 		Add(sdk.NewCoin(def.Denom, commissionAmount)).
 		Add(sdk.NewCoin(def.Denom, burnAmount))
 
+	if err := k.bankKeeper.SendCoins(ctx, sender, extensionContract, attachedFunds); err != nil {
+		return err
+	}
+
+	senderIsSmartContract := cwasmtypes.IsSendingSmartContract(ctx, sender.String()) ||
+		wasm.IsSmartContract(ctx, sender, k.wasmKeeper)
+	recipientIsSmartContract := cwasmtypes.IsReceivingSmartContract(ctx, recipient.String()) ||
+		wasm.IsSmartContract(ctx, recipient, k.wasmKeeper)
+
 	contractMsg := map[string]interface{}{
-		ExtenstionTransferMethod: ExtensionTransferMsg{
-			Amount:    sendAmount.Amount,
-			Recipient: recipient.String(),
+		ExtenstionTransferMethod: sudoExtensionTransferMsg{
+			Sender:           sender.String(),
+			Recipient:        recipient.String(),
+			TransferAmount:   sendAmount.Amount,
+			BurnAmount:       burnAmount,
+			CommissionAmount: commissionAmount,
+			Context: sudoExtensionTransferContext{
+				SenderIsSmartContract:    senderIsSmartContract,
+				RecipientIsSmartContract: recipientIsSmartContract,
+				IBCPurpose:               ibcPurposeToExtensionString(ctx),
+			},
 		},
 	}
 	contractMsgBytes, err := json.Marshal(contractMsg)
@@ -165,12 +220,10 @@ func (k Keeper) invokeAssetExtension(
 		return err
 	}
 
-	_, err = k.wasmPermissionedKeeper.Execute(
+	_, err = k.wasmPermissionedKeeper.Sudo(
 		ctx,
 		extensionContract,
-		sender,
 		contractMsgBytes,
-		attachedFunds,
 	)
 	if err != nil {
 		return types.ErrExtensionCallFailed.Wrapf("was error: %s", err)
@@ -182,9 +235,7 @@ func (k Keeper) invokeAssetExtension(
 func (k Keeper) CalculateRate(
 	ctx sdk.Context,
 	rate sdk.Dec,
-	admin,
 	sender sdk.AccAddress,
-	receiver sdk.AccAddress,
 	amount sdk.Coin,
 ) sdkmath.Int {
 	// We decided that rates should not be charged on incoming IBC transfers.
@@ -209,10 +260,6 @@ func (k Keeper) CalculateRate(
 	}
 
 	if rate.IsNil() || !rate.IsPositive() {
-		return sdk.ZeroInt()
-	}
-
-	if admin.Equals(sender) || admin.Equals(receiver) {
 		return sdk.ZeroInt()
 	}
 

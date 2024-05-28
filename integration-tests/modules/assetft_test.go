@@ -890,7 +890,7 @@ func TestAssetFTMint(t *testing.T) {
 	// sending to smart contract is blocked so minting to it should fail
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{
@@ -1469,7 +1469,7 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 
 	contractAddrAuthzTransfer, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		moduleswasm.AuthzTransferWASM,
 		integration.InstantiateConfig{
@@ -1482,7 +1482,7 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 
 	contractAddrAuthzStargate, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
@@ -1530,7 +1530,7 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		contractAddrAuthzTransfer,
 		moduleswasm.AuthZExecuteTransferRequest(receiver.String(), sdk.NewInt64Coin(denom, 100)),
@@ -1557,7 +1557,7 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		contractAddrAuthzStargate,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
@@ -1623,7 +1623,7 @@ func TestAssetFTFeesAreNotChargedWhenTokensAreTransferredFromSmartContractUsingA
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
@@ -1662,7 +1662,7 @@ func TestAssetFTFeesAreNotChargedWhenTokensAreTransferredFromSmartContractUsingA
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		contractAddr,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
@@ -2212,7 +2212,7 @@ func TestAssetFTClawbackSmartContract(t *testing.T) {
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
@@ -3302,7 +3302,7 @@ func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
@@ -3342,8 +3342,7 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied(t *testing.T)
 		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
@@ -3409,8 +3408,7 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied(t *t
 		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
@@ -4966,8 +4964,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	)
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	// Issue a fungible token with burn rate and send commission rate
 	issueMsg := &assetfttypes.MsgIssue{
@@ -5181,8 +5178,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContractInstantiation(t *testi
 	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))))
 
 	clientCtx := chain.ClientContext
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	// Issue a fungible token with burn rate and send commission rate
 	issueMsg := &assetfttypes.MsgIssue{
@@ -5279,7 +5275,7 @@ func TestAssetFTSendingToSmartContractIsDenied(t *testing.T) {
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
@@ -5341,8 +5337,7 @@ func TestAssetFTAttachingToSmartContractCallIsDenied(t *testing.T) {
 		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
@@ -5408,8 +5403,7 @@ func TestAssetFTAttachingToSmartContractInstantiationIsDenied(t *testing.T) {
 		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
@@ -5477,8 +5471,7 @@ func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 		},
 	})
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	txf := chain.TxFactoryAuto()
 
 	issuanceAmount := sdkmath.NewInt(10_000)
 	issuanceReq := issueFTRequest{
@@ -5491,8 +5484,8 @@ func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_block_smart_contracts,
 		},
-		BurnRate:           sdk.ZeroDec().String(),
-		SendCommissionRate: sdk.ZeroDec().String(),
+		BurnRate:           "0",
+		SendCommissionRate: "0",
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
@@ -5579,7 +5572,7 @@ func TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfS
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
@@ -5625,7 +5618,7 @@ func TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfS
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		contractAddr,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
@@ -5764,7 +5757,7 @@ func TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		moduleswasm.AuthzStargateWASM,
 		integration.InstantiateConfig{
@@ -5822,7 +5815,7 @@ func TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		contractAddr,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
@@ -5847,7 +5840,7 @@ func TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied
 
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		admin,
 		contractAddr,
 		moduleswasm.AuthZExecuteStargateRequest(&authztypes.MsgExec{
@@ -6329,7 +6322,7 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 	// sending to smart contract is blocked so minting to it should fail
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithSimulateAndExecute(true),
+		chain.TxFactoryAuto(),
 		wasmAdmin,
 		moduleswasm.BankSendWASM,
 		integration.InstantiateConfig{

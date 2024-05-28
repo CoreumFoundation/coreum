@@ -11,7 +11,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -51,7 +50,7 @@ func executeLintProtocCommand(ctx context.Context, deps build.DepsFunc, includeD
 	args := []string{
 		"--buf-lint_out=.",
 		fmt.Sprintf("--buf-lint_opt=%s", configLint),
-		"--plugin", must.String(filepath.Abs("bin/protoc-gen-buf-lint")),
+		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-buf-lint", tools.TargetPlatformLocal)),
 	}
 
 	for _, path := range includeDirs {

@@ -9,20 +9,12 @@ pub struct InstantiateMsg {
     pub uri: Option<String>,
     pub uri_hash: Option<String>,
     pub data: Option<Binary>,
-    pub features: Option<Vec<u32>>,
+    pub features: Option<Vec<i32>>,
     pub royalty_rate: Option<String>,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    // Uses the deprecated wasm_handler
-    MintLegacy {
-        id: String,
-        uri: Option<String>,
-        uri_hash: Option<String>,
-        data: Option<Binary>,
-        recipient: Option<String>,
-    },
     MintMutable {
         id: String,
         uri: Option<String>,
@@ -77,23 +69,4 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
-pub enum QueryMsg {
-    Params {},
-    Class {},
-    Classes { issuer: String },
-    Frozen { id: String },
-    ClassFrozen { account: String },
-    ClassFrozenAccounts {},
-    Whitelisted { id: String, account: String },
-    WhitelistedAccountsForNft { id: String },
-    ClassWhitelistedAccounts {},
-    Balance { owner: String },
-    Owner { id: String },
-    Supply {},
-    Nft { id: String }, // we use Nft not NFT since NFT is decoded as n_f_t
-    Nfts { owner: Option<String> }, // we use Nfts not NFTs since NFTs is decoded as n_f_ts
-    ClassNft {}, // we use ClassNft instead of Class because there is already a Class query being used
-    ClassesNft {}, // we use ClassesNft instead of Class because there is already a Classes query being used
-    BurntNft { nft_id: String },
-    BurntNftsInClass {},
-}
+pub enum QueryMsg {}
