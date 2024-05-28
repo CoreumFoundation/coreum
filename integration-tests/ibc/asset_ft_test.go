@@ -115,10 +115,10 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 	osmosisChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: osmosisRecipient1,
-		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
+		Amount:  osmosisChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	}, integration.FundedAccount{
 		Address: osmosisRecipient2,
-		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
+		Amount:  osmosisChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
 	coreumIssuer := coreumChain.GenAccount()
