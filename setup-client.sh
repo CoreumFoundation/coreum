@@ -3,7 +3,7 @@
 set -e
 
 VERSION="v3.0.3"
-BIN_PATH="$HOME/bin/cored"
+BIN_PATH="./cored"
 
 URL_LINUX_AMD64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-linux-amd64"
 URL_LINUX_ARM64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-linux-arm64"
