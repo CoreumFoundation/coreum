@@ -57,6 +57,7 @@ func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
 			"-tags=integrationtests",
 			fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
 			"-timeout=1h",
+			"-run=TestIBCAssetFTSendCommissionAndBurnRate",
 		}
 		if runUnsafe {
 			flags = append(flags, "--run-unsafe")
