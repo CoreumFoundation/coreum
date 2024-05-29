@@ -65,7 +65,7 @@ func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactoryAuto(),
 		issueMsg,
 	)
 	require.NoError(t, err)
