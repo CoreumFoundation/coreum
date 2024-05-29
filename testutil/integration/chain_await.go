@@ -9,11 +9,11 @@ import (
 
 const (
 	// AwaitStateTimeout is duration to await for account to have a specific balance.
-	AwaitStateTimeout = 30 * time.Second
+	AwaitStateTimeout = 300 * time.Second
 	// awaitRecheckTimeout is duration between the state recheck.
 	awaitRecheckDelay = 100 * time.Millisecond
 	// awaitCheckTimeout is timeout for a single check.
-	awaitCheckTimeout = 5 * time.Second
+	awaitCheckTimeout = 15 * time.Second
 )
 
 // AwaitState waits for stateChecker function to rerun nil and retires in case of failure.

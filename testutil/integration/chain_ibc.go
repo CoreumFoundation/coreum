@@ -206,6 +206,9 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 	var connectedChannelIDs []string
 
 	err := c.AwaitState(ctx, func(ctx context.Context) error {
+		// Reset slice in case previous iteration failed.
+		connectedChannelIDs = []string{}
+
 		openChannelsMap, err := c.getAllOpenChannels(ctx)
 		if err != nil {
 			return retry.Retryable(
@@ -220,11 +223,11 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 			)
 		}
 
-		connectedChannelIDs = []string{}
 		for chID, ch := range openChannelsMap {
 			if ch.PortId != port {
 				continue
 			}
+
 			// Counterparty channel on a peer chain should exist and match a current chain channel.
 			peerCh, ok := peerOpenChannelsMap[ch.Counterparty.ChannelId]
 			if !ok || peerCh.Counterparty.ChannelId != chID {
