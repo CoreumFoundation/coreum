@@ -13,13 +13,13 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
-func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
+func generateProtoGo(ctx context.Context, deps types.DepsFunc) error {
 	deps(Tidy)
 
 	_, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
@@ -45,7 +45,7 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // executeGoProtocCommand generates go code from proto files.
-func executeGoProtocCommand(ctx context.Context, deps build.DepsFunc, includeDirs, generateDirs []string) error {
+func executeGoProtocCommand(ctx context.Context, deps types.DepsFunc, includeDirs, generateDirs []string) error {
 	deps(tools.EnsureProtoc, tools.EnsureProtocGenGRPCGateway, tools.EnsureProtocGenGoCosmos)
 
 	outDir, err := os.MkdirTemp("", "")
