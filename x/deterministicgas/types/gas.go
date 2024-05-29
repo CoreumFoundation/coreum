@@ -27,7 +27,7 @@ const (
 	// TODO(dzmitryhil) update to 10 once we fix simulation issue.
 	fuseGasMultiplier      = 1000
 	expectedMaxGasFactor   = 5
-	untrackedGasForQueries = uint64(1_000_000)
+	untrackedGasForQueries = uint64(50_000)
 )
 
 // NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for
@@ -140,8 +140,7 @@ func (s deterministicMsgServer) ctxForDeterministicGas(
 	gasRequired, isDeterministic := s.deterministicGasConfig.GasRequiredByMessage(msg)
 	gasBefore := ctx.GasMeter().GasConsumed()
 	if isDeterministic {
-		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(untrackedGasForQueries))
-		hasExtension, err := hasExtensionCall(ctxWithUntrackedGas, msg, s.assetFTKeeper)
+		hasExtension, err := hasExtensionCall(ctx, msg, s.assetFTKeeper)
 		if err != nil {
 			return sdk.Context{}, 0, false, err
 		}
@@ -206,8 +205,8 @@ func typeAssertMessages(msg sdk.Msg) (sdk.Coins, bool, error) {
 		if err != nil {
 			return nil, false, err
 		}
-		for _, msg := range msgs {
-			msgCoins, hasExtension, err := typeAssertMessages(msg)
+		for _, m := range msgs {
+			msgCoins, hasExtension, err := typeAssertMessages(m)
 			if err != nil || hasExtension {
 				return nil, hasExtension, err
 			}
@@ -225,7 +224,8 @@ func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper)
 	}
 
 	for _, coin := range coins {
-		def, err := assetFTKeeper.GetDefinition(ctx, coin.Denom)
+		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(untrackedGasForQueries))
+		def, err := assetFTKeeper.GetDefinition(ctxWithUntrackedGas, coin.Denom)
 		if assetfttypes.ErrInvalidDenom.Is(err) || assetfttypes.ErrTokenNotFound.Is(err) {
 			// if the token is not defined in asset ft module, we assume this is different
 			// type of token (e.g core, ibc, etc) and don't apply asset ft rules.

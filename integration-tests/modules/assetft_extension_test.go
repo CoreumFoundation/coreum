@@ -133,11 +133,10 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactory().WithGas(500_000),
 		sendMsg,
 	)
 	requireT.ErrorIs(err, assetfttypes.ErrExtensionCallFailed)
-	requireT.NotEqualValues(chain.GasLimitByMsgs(sendMsg), res.GasUsed)
 	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: recipient.String(),
 		Denom:   denom,
@@ -418,8 +417,6 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	randomAddress := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
 			&assetfttypes.MsgFreeze{},
 			&assetfttypes.MsgFreeze{},
 			&assetfttypes.MsgUnfreeze{},
@@ -427,17 +424,11 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 			&assetfttypes.MsgUnfreeze{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+			Add(sdk.NewInt(1_000_000)).   // added 1 million for smart contract upload
+			Add(sdk.NewInt(2 * 500_000)), // add 500k for each message with extenstion transfer
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&banktypes.MsgMultiSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgMultiSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-		},
+		Amount: sdk.NewInt(6 * 500_000), // add 500k for each message with extenstion transfer
 	})
 	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -485,11 +476,12 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		chain.TxFactoryAuto(),
 		msgList...,
 	)
 
 	requireT.NoError(err)
+	requireT.NotEqualValues(chain.GasLimitByMsgs(msgList...), res.GasUsed)
 	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvts[0].Denom
@@ -538,7 +530,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactory().WithGas(500_000),
 		sendMsg,
 	)
 	requireT.ErrorContains(err, "Requested transfer token is frozen.")
@@ -550,7 +542,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		chain.TxFactory().WithGas(500_000),
 		multiSendMsg,
 	)
 	requireT.ErrorContains(err, "Requested transfer token is frozen.")
@@ -560,13 +552,14 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 		ToAddress:   recipient2.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreFreezingTrigger))),
 	}
-	_, err = client.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
+	requireT.NotEqualValues(chain.GasLimitByMsgs(sendMsg), res.GasUsed)
 }
 
 // TestAssetFTExtensionBurn checks extension burn functionality of fungible tokens.
@@ -582,23 +575,14 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgIssue{},
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-		},
+		Messages: []sdk.Msg{},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
-			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+			Add(sdk.NewInt(1_000_000)).   // added 1 million for smart contract upload
+			Add(sdk.NewInt(6 * 500_000)), // add 500k for each message with extenstion transfer
 	})
 
 	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-		},
+		Amount: sdk.NewInt(2 * 500_000), // add 500k for each message with extenstion transfer
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -630,11 +614,12 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
 	requireT.NoError(err)
+	requireT.NotEqualValues(chain.GasLimitByMsgs(issueMsg), res.GasUsed)
 	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	requireT.NoError(err)
 	unburnable := fungibleTokenIssuedEvts[0].Denom
@@ -652,7 +637,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		chain.TxFactoryAuto(),
 		burnMsg,
 	)
 	requireT.NoError(err)
@@ -667,7 +652,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -685,7 +670,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		chain.TxFactoryAuto(),
 		burnMsg,
 	)
 	requireT.NoError(err)
@@ -712,7 +697,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
@@ -731,7 +716,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -749,7 +734,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		chain.TxFactoryAuto(),
 		burnMsg,
 	)
 	requireT.NoError(err)
@@ -778,23 +763,13 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
-			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+			Add(sdk.NewInt(1_000_000)).   // added 1 million for smart contract upload
+			Add(sdk.NewInt(7 * 500_000)), // add 500k for each message with extenstion transfer
 	})
 
 	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-		},
+		Amount: sdk.NewInt(1 * 500_000), // add 500k for each message with extenstion transfer
 	})
 
 	chain.Faucet.FundAccounts(ctx, t,
@@ -831,7 +806,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
@@ -853,7 +828,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		chain.TxFactoryAuto(),
 		mintMsg,
 	)
 	requireT.ErrorContains(err, "feature minting is disabled")
@@ -881,7 +856,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
@@ -899,7 +874,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -916,7 +891,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		chain.TxFactoryAuto(),
 		mintMsg,
 	)
 	requireT.NoError(err)
@@ -942,7 +917,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		chain.TxFactoryAuto(),
 		mintMsg,
 	)
 	requireT.NoError(err)
@@ -980,7 +955,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		chain.TxFactory().WithGas(500_000),
 		mintMsg,
 	)
 	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
@@ -1032,7 +1007,7 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
@@ -1066,7 +1041,7 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
@@ -1088,7 +1063,7 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		chain.TxFactoryAuto(),
 		multiSendMsg,
 	)
 	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
@@ -1140,7 +1115,7 @@ func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
@@ -1187,9 +1162,7 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(50000000000))),
 	)
 	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-		},
+		Amount: sdk.NewInt(500_000),
 	})
 
 	txf := chain.TxFactoryAuto()
@@ -1272,7 +1245,7 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		chain.TxFactoryAuto(),
 		msgSend,
 	)
 	require.NoError(t, err)
@@ -1298,8 +1271,8 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 	requireT.NoError(err)
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
+	// txf := chain.TxFactory().
+	// 	WithSimulateAndExecute(true)
 
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
@@ -1325,7 +1298,7 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
@@ -1340,7 +1313,7 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 	// This operation should fail due to coins being attached to it
 	_, _, err = chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		txf,
+		chain.TxFactory().WithGas(2_000_000),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
@@ -1478,15 +1451,13 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 	})
 
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&execMsg,
-		},
+		Amount: sdk.NewInt(3 * 500_000),
 	})
 
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactoryAuto(),
 		&execMsg,
 	)
 	requireT.NoError(err)
@@ -1512,23 +1483,15 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	recipient2 := chain.GenAccount()
 
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
-		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+			Add(sdk.NewInt(1_000_000)). // added 1 million for smart contract upload
+			Add(sdk.NewInt(2 * 500_000)),
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-		},
+		Amount: sdk.NewInt(2 * 500_000),
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-		},
+		Amount: sdk.NewInt(500_000),
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1558,7 +1521,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
@@ -1577,7 +1540,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -1597,7 +1560,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -1617,7 +1580,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -1637,7 +1600,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -1662,23 +1625,15 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	recipient2 := chain.GenAccount()
 
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
-		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdk.NewInt(1_000_000)), // added 1 million for smart contract upload
+			Add(sdk.NewInt(1_000_000)). // added 1 million for smart contract upload
+			Add(sdk.NewInt(2 * 500_000)),
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-		},
+		Amount: sdk.NewInt(2 * 500_000),
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-		},
+		Amount: sdk.NewInt(1 * 500_000),
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1708,7 +1663,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		chain.TxFactoryAuto(),
 		issueMsg,
 	)
 
@@ -1731,7 +1686,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -1752,7 +1707,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -1773,7 +1728,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)
@@ -1794,7 +1749,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.TxFactoryAuto(),
 		sendMsg,
 	)
 	requireT.NoError(err)

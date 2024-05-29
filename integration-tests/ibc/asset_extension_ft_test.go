@@ -38,11 +38,9 @@ func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&ibctransfertypes.MsgTransfer{},
-		},
-		Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload.
+		Amount: issueFee.
+			Add(sdk.NewInt(1_000_000)). // added one million for contract upload.
+			Add(sdk.NewInt(2 * 500_000)),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -76,7 +74,7 @@ func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto().WithGas(500_000),
 		coreumIssuer,
 		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(1000)),
 		gaiaChain.ChainContext,
@@ -109,12 +107,11 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
-			&ibctransfertypes.MsgTransfer{},
-			&ibctransfertypes.MsgTransfer{},
 		},
-		Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+		Amount: issueFee.
+			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdk.NewInt(3 * 500_000)),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -142,7 +139,7 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactoryAuto(),
 		issueMsg,
 	)
 	require.NoError(t, err)
@@ -164,16 +161,17 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 	require.NoError(t, err)
 
 	// send minted coins to gaia
-	_, err = coreumChain.ExecuteIBCTransfer(
+	res, err := coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumIssuer,
 		sendCoin,
 		gaiaChain.ChainContext,
 		gaiaRecipient,
 	)
 	requireT.NoError(err)
+	requireT.NotEqualValues(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}), res.GasUsed)
 
 	ibcDenom := ConvertToIBCDenom(gaiaToCoreumChannelID, denom)
 	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sdk.NewCoin(ibcDenom, sendCoin.Amount)))
@@ -241,17 +239,14 @@ func TestExtensionIBCAssetFTFreezing(t *testing.T) {
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
 			&assetfttypes.MsgFreeze{},
 		},
-		Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+		Amount: issueFee.
+			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdk.NewInt(500_000)),
 	})
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&ibctransfertypes.MsgTransfer{},
-			&ibctransfertypes.MsgTransfer{},
-		},
+		Amount: sdk.NewInt(2 * 500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -278,7 +273,7 @@ func TestExtensionIBCAssetFTFreezing(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactoryAuto(),
 		issueMsg,
 	)
 	require.NoError(t, err)
@@ -294,7 +289,7 @@ func TestExtensionIBCAssetFTFreezing(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(msgSend)),
+		coreumChain.TxFactoryAuto(),
 		msgSend,
 	)
 	requireT.NoError(err)
@@ -315,7 +310,7 @@ func TestExtensionIBCAssetFTFreezing(t *testing.T) {
 	// send more than allowed, should fail
 	_, err = coreumChain.ExecuteIBCTransfer(ctx,
 		t,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumSender,
 		sendCoin,
 		gaiaChain.ChainContext,
@@ -379,10 +374,10 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
-			&ibctransfertypes.MsgTransfer{},
-			&ibctransfertypes.MsgTransfer{},
 		},
-		Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+		Amount: issueFee.
+			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdk.NewInt(2 * 500_000)),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -398,6 +393,7 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
+			assetfttypes.Feature_extension,
 			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
@@ -410,7 +406,7 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactoryAuto(),
 		issueMsg,
 	)
 	require.NoError(t, err)
@@ -422,16 +418,17 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 	)
 
 	// send minted coins to gaia
-	_, err = coreumChain.ExecuteIBCTransfer(
+	res, err := coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumIssuer,
 		sendCoin,
 		gaiaChain.ChainContext,
 		gaiaRecipient,
 	)
 	requireT.NoError(err)
+	requireT.NotEqualValues(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}), res.GasUsed)
 
 	ibcDenom := ConvertToIBCDenom(gaiaToCoreumChannelID, denom)
 	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sdk.NewCoin(ibcDenom, sendCoin.Amount)))
@@ -504,11 +501,9 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 		gaiaRecipient := gaiaChain.GenAccount()
 
 		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&ibctransfertypes.MsgTransfer{},
-			},
-			Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+			Amount: issueFee.
+				Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+				Add(sdk.NewInt(2 * 500_000)),
 		})
 
 		codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -525,6 +520,7 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 			Features: []assetfttypes.Feature{
 				assetfttypes.Feature_block_smart_contracts,
 				assetfttypes.Feature_ibc,
+				assetfttypes.Feature_extension,
 			},
 			ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 				CodeId: codeID,
@@ -534,17 +530,17 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 		_, err = client.BroadcastTx(
 			ctx,
 			coreumChain.ClientContext.WithFromAddress(coreumSender),
-			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+			coreumChain.TxFactoryAuto(),
 			issueMsg,
 		)
 		require.NoError(t, err)
 		denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumSender)
 		sendToGaiaCoin := sdk.NewCoin(denom, issueMsg.InitialAmount)
 
-		_, err = coreumChain.ExecuteTimingOutIBCTransfer(
+		res, err := coreumChain.ExecuteTimingOutIBCTransfer(
 			ctx,
 			t,
-			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+			coreumChain.TxFactory().WithGas(500_000),
 			coreumSender,
 			sendToGaiaCoin,
 			gaiaChain.ChainContext,
@@ -557,6 +553,7 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 		default:
 			requireT.NoError(err)
 		}
+		requireT.NotEqualValues(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}), res.GasUsed)
 
 		parallelCtx, parallelCancel := context.WithCancel(ctx)
 		defer parallelCancel()
@@ -637,13 +634,9 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	gaiaRecipient := gaiaChain.GenAccount()
 
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&ibctransfertypes.MsgTransfer{},
-			&ibctransfertypes.MsgTransfer{},
-		},
-		// added one million for contract upload
-		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Add(sdk.NewInt(1_000_000)),
+		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdk.NewInt(3 * 500_000)),
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
@@ -665,6 +658,7 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
@@ -674,7 +668,7 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumSender),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactoryAuto(),
 		issueMsg,
 	)
 	require.NoError(t, err)
@@ -684,7 +678,7 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumSender, sendToGaiaCoin,
 		gaiaChain.ChainContext,
 		moduleAddress,
@@ -707,20 +701,21 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	// test that the reverse transfer from gaia to coreum is blocked too
 
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
+		Amount: sdk.NewInt(500_000),
 	})
 
 	sendToCoreumCoin := sdk.NewCoin(ibcGaiaDenom, sendToGaiaCoin.Amount)
-	_, err = coreumChain.ExecuteIBCTransfer(
+	res, err := coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumSender,
 		sendToGaiaCoin,
 		gaiaChain.ChainContext,
 		gaiaRecipient,
 	)
 	requireT.NoError(err)
+	requireT.NotEqualValues(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}), res.GasUsed)
 	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sendToCoreumCoin))
 
 	_, err = gaiaChain.ExecuteIBCTransfer(
