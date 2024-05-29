@@ -7,6 +7,7 @@ import (
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -23,7 +24,7 @@ import (
 )
 
 const (
-	// TODO(dzmitryhil) update to 10 once if fix simulation issue.
+	// TODO(dzmitryhil) update to 10 once we fix simulation issue.
 	fuseGasMultiplier      = 1000
 	expectedMaxGasFactor   = 5
 	untrackedGasForQueries = uint64(1_000_000)
@@ -89,11 +90,9 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 				return interceptor(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
 					sdkCtx := sdk.UnwrapSDKContext(ctx)
 					msg := req.(sdk.Msg)
-					newSDKCtx, gasBefore, isDeterministic, err := ctxForDeterministicGas(
+					newSDKCtx, gasBefore, isDeterministic, err := s.ctxForDeterministicGas(
 						sdkCtx,
 						msg,
-						s.deterministicGasConfig,
-						s.assetFTKeeper,
 					)
 					if err != nil {
 						return nil, err
@@ -134,17 +133,15 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 	s.baseServer.RegisterService(sd, handler)
 }
 
-func ctxForDeterministicGas(
+func (s deterministicMsgServer) ctxForDeterministicGas(
 	ctx sdk.Context,
 	msg sdk.Msg,
-	deterministicGasConfig deterministicgas.Config,
-	assetFTKeeper AssetFTKeeper,
 ) (sdk.Context, sdk.Gas, bool, error) {
-	gasRequired, isDeterministic := deterministicGasConfig.GasRequiredByMessage(msg)
+	gasRequired, isDeterministic := s.deterministicGasConfig.GasRequiredByMessage(msg)
 	gasBefore := ctx.GasMeter().GasConsumed()
 	if isDeterministic {
 		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(untrackedGasForQueries))
-		hasExtension, err := hasExtensionCall(ctxWithUntrackedGas, msg, assetFTKeeper)
+		hasExtension, err := hasExtensionCall(ctxWithUntrackedGas, msg, s.assetFTKeeper)
 		if err != nil {
 			return sdk.Context{}, 0, false, err
 		}
@@ -169,7 +166,7 @@ func ctxForDeterministicGas(
 	return ctx, gasBefore, isDeterministic, nil
 }
 
-func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper) (bool, error) {
+func typeAssertMessages(msg sdk.Msg) (sdk.Coins, bool, error) {
 	coins := sdk.NewCoins()
 	switch typedMsg := msg.(type) {
 	case *banktypes.MsgSend:
@@ -186,7 +183,7 @@ func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper)
 		coins = sdk.NewCoins(typedMsg.Token)
 	case *assetfttypes.MsgIssue:
 		if lo.Contains(typedMsg.Features, assetfttypes.Feature_extension) {
-			return true, nil
+			return nil, true, nil
 		}
 	case *vestingtypes.MsgCreateVestingAccount:
 		coins = typedMsg.Amount
@@ -204,6 +201,27 @@ func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper)
 		coins = typedMsg.Amount
 	case *govv1beta1.MsgDeposit:
 		coins = typedMsg.Amount
+	case *authz.MsgExec:
+		msgs, err := typedMsg.GetMessages()
+		if err != nil {
+			return nil, false, err
+		}
+		for _, msg := range msgs {
+			msgCoins, hasExtension, err := typeAssertMessages(msg)
+			if err != nil || hasExtension {
+				return nil, hasExtension, err
+			}
+			coins = coins.Add(msgCoins...)
+		}
+	}
+
+	return coins, false, nil
+}
+
+func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper) (bool, error) {
+	coins, hasExtension, err := typeAssertMessages(msg)
+	if err != nil || hasExtension {
+		return hasExtension, err
 	}
 
 	for _, coin := range coins {
