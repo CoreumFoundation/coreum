@@ -211,16 +211,12 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 
 		openChannelsMap, err := c.getAllOpenChannels(ctx)
 		if err != nil {
-			return retry.Retryable(
-				errors.Errorf("failed to query open channels on: %s: %s", c.ChainSettings.ChainID, err),
-			)
+			return errors.Errorf("failed to query open channels on: %s: %s", c.ChainSettings.ChainID, err),
 		}
 
 		peerOpenChannelsMap, err := peerChain.getAllOpenChannels(ctx)
 		if err != nil {
-			return retry.Retryable(
-				errors.Errorf("failed to query open channels on: %s: %s", peerChain.ChainSettings.ChainID, err),
-			)
+			return errors.Errorf("failed to query open channels on: %s: %s", peerChain.ChainSettings.ChainID, err),
 		}
 
 		for chID, ch := range openChannelsMap {
@@ -236,15 +232,11 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 
 			expectedPeerChainName, err := c.getCounterpartyChainName(ctx, chID, port)
 			if err != nil {
-				return retry.Retryable(
-					errors.Wrapf(err, "counterparty chain name query failed for: %s", c.ChainSettings.ChainID),
-				)
+				return errors.Wrapf(err, "counterparty chain name query failed for: %s", c.ChainSettings.ChainID),
 			}
 			expectedChainName, err := peerChain.getCounterpartyChainName(ctx, peerCh.ChannelId, port)
 			if err != nil {
-				return retry.Retryable(
-					errors.Wrapf(err, "counterparty chain name query failed for: %s", peerChain.ChainSettings.ChainID),
-				)
+				return errors.Wrapf(err, "counterparty chain name query failed for: %s", peerChain.ChainSettings.ChainID),
 			}
 
 			// Chains names should match.
@@ -255,7 +247,7 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 		}
 
 		if len(connectedChannelIDs) == 0 {
-			return retry.Retryable(errors.New("no open channels found"))
+			return errors.New("no open channels found")
 		}
 		return nil
 	})
