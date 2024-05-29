@@ -24,9 +24,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 )
 
-// AwaitForBalanceTimeout is duration to await for account to have a specific balance.
-var AwaitForBalanceTimeout = 30 * time.Second
-
 // ExecuteIBCTransfer executes IBC transfer transaction.
 func (c ChainContext) ExecuteIBCTransfer(
 	ctx context.Context,
@@ -168,14 +165,10 @@ func (c ChainContext) AwaitForBalance(
 		expectedBalance.String(),
 	)
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
-	retryCtx, retryCancel := context.WithTimeout(ctx, AwaitForBalanceTimeout)
-	defer retryCancel()
-	err := retry.Do(retryCtx, 100*time.Millisecond, func() error {
-		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
-		defer requestCancel()
 
+	err := c.AwaitState(ctx, func(ctx context.Context) error {
 		// We intentionally query all balances instead of single denom here to include this info inside error message.
-		balancesRes, err := bankClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{
+		balancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 			Address: c.MustConvertToBech32Address(address),
 		})
 		if err != nil {
@@ -205,17 +198,11 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 
 	t.Logf("Getting %s chain channel with port %s on %s chain.", peerChainID, port, c.ChainSettings.ChainID)
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 3*time.Minute)
-	defer retryCancel()
-
 	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
 
 	var channelID string
-	require.NoError(t, retry.Do(retryCtx, 500*time.Millisecond, func() error {
-		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
-		defer requestCancel()
-
-		ibcChannelsRes, err := ibcChannelClient.Channels(requestCtx, &ibcchanneltypes.QueryChannelsRequest{})
+	require.NoError(t, c.AwaitState(ctx, func(ctx context.Context) error {
+		ibcChannelsRes, err := ibcChannelClient.Channels(ctx, &ibcchanneltypes.QueryChannelsRequest{})
 		if err != nil {
 			return err
 		}
@@ -226,7 +213,7 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 			}
 
 			channelClientStateRes, err := ibcChannelClient.ChannelClientState(
-				requestCtx,
+				ctx,
 				&ibcchanneltypes.QueryChannelClientStateRequest{
 					PortId:    ch.PortId,
 					ChannelId: ch.ChannelId,
@@ -311,15 +298,13 @@ func (c ChainContext) AwaitForIBCClientAndConnectionIDs(
 		c.ChainSettings.ChainID,
 	)
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
-	defer retryCancel()
 	var (
 		clientID, connectionID string
 		err                    error
 	)
 
-	require.NoError(t, retry.Do(retryCtx, 500*time.Millisecond, func() error {
-		clientID, connectionID, err = c.getIBCClientAndConnectionIDs(retryCtx, peerChainID)
+	require.NoError(t, c.AwaitState(ctx, func(ctx context.Context) error {
+		clientID, connectionID, err = c.getIBCClientAndConnectionIDs(ctx, peerChainID)
 		if err != nil {
 			return retry.Retryable(errors.Errorf("client and connection are not ready yet, %s", err))
 		}
