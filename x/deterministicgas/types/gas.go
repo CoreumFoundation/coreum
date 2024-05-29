@@ -6,9 +6,14 @@ import (
 
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	googlegrpc "google.golang.org/grpc"
@@ -134,48 +139,82 @@ func ctxForDeterministicGas(
 	deterministicGasConfig deterministicgas.Config,
 	assetFTKeeper AssetFTKeeper,
 ) (sdk.Context, sdk.Gas, bool, error) {
-	gasRequired, exists := deterministicGasConfig.GasRequiredByMessage(msg)
+	gasRequired, isDeterministic := deterministicGasConfig.GasRequiredByMessage(msg)
 	gasBefore := ctx.GasMeter().GasConsumed()
-	if exists {
-		hasExtension, err := hasExtensionCall(ctx, msg, assetFTKeeper)
+	if isDeterministic {
+		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(1_000_000))
+		hasExtension, err := hasExtensionCall(ctxWithUntrackedGas, msg, assetFTKeeper)
 		if err != nil {
 			return sdk.Context{}, 0, false, err
 		}
 
-		// we consider extensions to be nondeterministic.
-		if !hasExtension {
-			// Fixed gas is consumed on original gas meter to require and report deterministic gas amount
-			ctx.GasMeter().ConsumeGas(
-				gasRequired,
-				fmt.Sprintf("DeterministicGas (gas required: %d, message type: %T)", gasRequired, msg),
-			)
-
-			// We pass much higher amount of gas to handler to be sure that it succeeds.
-			// We want to avoid passing infinite gas meter to always have a limit in case of mistake.
-			ctx = ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * gasRequired))
+		// // we consider extensions to be nondeterministic.
+		if hasExtension {
+			isDeterministic = false
 		}
 	}
-	return ctx, gasBefore, exists, nil
+
+	if isDeterministic {
+		// Fixed gas is consumed on original gas meter to require and report deterministic gas amount
+		ctx.GasMeter().ConsumeGas(
+			gasRequired,
+			fmt.Sprintf("DeterministicGas (gas required: %d, message type: %T)", gasRequired, msg),
+		)
+
+		// We pass much higher amount of gas to handler to be sure that it succeeds.
+		// We want to avoid passing infinite gas meter to always have a limit in case of mistake.
+		ctx = ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * gasRequired))
+	}
+	return ctx, gasBefore, isDeterministic, nil
 }
 
 func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper) (bool, error) {
+	coins := sdk.NewCoins()
 	switch typedMsg := msg.(type) {
 	case *banktypes.MsgSend:
-		for _, coin := range typedMsg.Amount {
-			def, err := assetFTKeeper.GetDefinition(ctx, coin.Denom)
-			if assetfttypes.ErrInvalidDenom.Is(err) || assetfttypes.ErrTokenNotFound.Is(err) {
-				// if the token is not defined in asset ft module, we assume this is different
-				// type of token (e.g core, ibc, etc) and don't apply asset ft rules.
-				continue
-			} else if err != nil {
-				return false, err
-			}
-			if def.IsFeatureEnabled(assetfttypes.Feature_extension) {
-				return true, nil
-			}
+		coins = typedMsg.Amount
+	case *banktypes.MsgMultiSend:
+		for _, input := range typedMsg.Inputs {
+			coins = coins.Add(input.Coins...)
 		}
+	case *distributiontypes.MsgCommunityPoolSpend:
+		coins = typedMsg.Amount
+	case *distributiontypes.MsgFundCommunityPool:
+		coins = typedMsg.Amount
+	case *ibctransfertypes.MsgTransfer:
+		coins = sdk.NewCoins(typedMsg.Token)
 	case *assetfttypes.MsgIssue:
 		if lo.Contains(typedMsg.Features, assetfttypes.Feature_extension) {
+			return true, nil
+		}
+	case *vestingtypes.MsgCreateVestingAccount:
+		coins = typedMsg.Amount
+	case *vestingtypes.MsgCreatePermanentLockedAccount:
+		coins = typedMsg.Amount
+	case *vestingtypes.MsgCreatePeriodicVestingAccount:
+		for _, period := range typedMsg.VestingPeriods {
+			coins = coins.Add(period.Amount...)
+		}
+	case *govv1.MsgSubmitProposal:
+		coins = typedMsg.InitialDeposit
+	case *govv1beta1.MsgSubmitProposal:
+		coins = typedMsg.InitialDeposit
+	case *govv1.MsgDeposit:
+		coins = typedMsg.Amount
+	case *govv1beta1.MsgDeposit:
+		coins = typedMsg.Amount
+	}
+
+	for _, coin := range coins {
+		def, err := assetFTKeeper.GetDefinition(ctx, coin.Denom)
+		if assetfttypes.ErrInvalidDenom.Is(err) || assetfttypes.ErrTokenNotFound.Is(err) {
+			// if the token is not defined in asset ft module, we assume this is different
+			// type of token (e.g core, ibc, etc) and don't apply asset ft rules.
+			continue
+		} else if err != nil {
+			return false, err
+		}
+		if def.IsFeatureEnabled(assetfttypes.Feature_extension) {
 			return true, nil
 		}
 	}
