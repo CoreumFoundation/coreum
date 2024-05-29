@@ -313,7 +313,7 @@ func awaitHooksCounterContractState(
 	t.Logf("Awaiting for contract state contract:%s address:%s count:%d total_funds:%s",
 		contractAddr, callerAddr, expectedCount, expectedFunds.String())
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 5*time.Minute)
+	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()
 	require.NoError(t, retry.Do(retryCtx, time.Second, func() error {
 		getCountPayload, err := json.Marshal(map[ibcwasm.HooksMethod]ibcwasm.HooksBodyRequest{

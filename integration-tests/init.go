@@ -81,15 +81,6 @@ func init() {
 	flag.StringVar(&osmosisRPCAddress, "osmosis-rpc-address", "http://localhost:26457", "RPC address of osmosis node started by znet")
 	flag.StringVar(&osmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 
-	runUnsafe = true
-	coreumFundingMnemonic = "neglect spatial salt age wool early minimum economy announce consider strong skirt mass ocean cactus can sense member wise crawl spread peasant section give"
-	coreumGRPCAddress = "https://full-node-pluto.devnet-1.coreum.dev:9090"
-	coreumRPCAddress = "https://full-node-pluto.devnet-1.coreum.dev:26657"
-	osmosisGRPCAddress = "grpc.osmotest5.osmosis.zone:9090"
-	osmosisRPCAddress = "https://rpc.osmotest5.osmosis.zone:443"
-	gaiaGRPCAddress = "grpc-t.cosmos.nodestake.org:9090"
-	gaiaRPCAddress = "https://rpc-t.cosmos.nodestake.org:443"
-
 	// accept testing flags
 	testing.Init()
 	// parse additional flags
