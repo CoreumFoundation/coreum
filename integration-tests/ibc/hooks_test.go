@@ -34,6 +34,13 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 	coreumChain := chains.Coreum
 	osmosisChain := chains.Osmosis
 
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
+	)
+	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainContext,
+	)
+
 	coreumContractAdmin := coreumChain.GenAccount()
 	coreumSender := coreumChain.GenAccount()
 
@@ -83,13 +90,6 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
-
-	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
-	)
-	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainContext,
-	)
 
 	// ********** Send funds to Osmosis **********
 
