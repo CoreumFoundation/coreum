@@ -7,6 +7,8 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 
 	"github.com/CoreumFoundation/coreum/v4/app/upgrade"
 	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
@@ -23,6 +25,8 @@ func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 			Added: []string{
 				ibchookstypes.StoreKey,
 				packetforwardtypes.StoreKey,
+				icacontrollertypes.StoreKey,
+				icahosttypes.StoreKey,
 				dextypes.StoreKey,
 			},
 		},

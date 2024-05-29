@@ -141,6 +141,7 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 | `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`                      | 30000                          |
 | `/cosmwasm.wasm.v1.MsgClearAdmin`                                      | 6500                           |
 | `/cosmwasm.wasm.v1.MsgUpdateAdmin`                                     | 8000                           |
+| `/ibc.applications.interchain_accounts.controller.v1.MsgRegisterInterchainAccount` | 160000                         |
 | `/ibc.applications.transfer.v1.MsgTransfer`                            | 54000                          |
 
 #### Special Cases
@@ -182,6 +183,10 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 | Message Type |
 |--------------|
+| `/coreum.asset.ft.v1.MsgUpdateParams`                                  |
+| `/coreum.asset.nft.v1.MsgUpdateParams`                                 |
+| `/coreum.customparams.v1.MsgUpdateStakingParams`                       |
+| `/coreum.feemodel.v1.MsgUpdateParams`                                  |
 | `/cosmos.auth.v1beta1.MsgUpdateParams`                                 |
 | `/cosmos.bank.v1beta1.MsgSetSendEnabled`                               |
 | `/cosmos.bank.v1beta1.MsgUpdateParams`                                 |
@@ -203,6 +208,7 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/cosmos.staking.v1beta1.MsgUpdateParams`                              |
 | `/cosmos.upgrade.v1beta1.MsgCancelUpgrade`                             |
 | `/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade`                           |
+| `/cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses`                    |
 | `/cosmwasm.wasm.v1.MsgExecuteContract`                                 |
 | `/cosmwasm.wasm.v1.MsgIBCCloseChannel`                                 |
 | `/cosmwasm.wasm.v1.MsgIBCSend`                                         |
@@ -210,6 +216,7 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/cosmwasm.wasm.v1.MsgInstantiateContract2`                            |
 | `/cosmwasm.wasm.v1.MsgMigrateContract`                                 |
 | `/cosmwasm.wasm.v1.MsgPinCodes`                                        |
+| `/cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses`                 |
 | `/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract`                     |
 | `/cosmwasm.wasm.v1.MsgStoreAndMigrateContract`                         |
 | `/cosmwasm.wasm.v1.MsgStoreCode`                                       |
@@ -218,6 +225,7 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/cosmwasm.wasm.v1.MsgUpdateContractLabel`                             |
 | `/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig`                         |
 | `/cosmwasm.wasm.v1.MsgUpdateParams`                                    |
+| `/ibc.applications.interchain_accounts.controller.v1.MsgSendTx`        |
 | `/ibc.core.channel.v1.MsgAcknowledgement`                              |
 | `/ibc.core.channel.v1.MsgChannelCloseConfirm`                          |
 | `/ibc.core.channel.v1.MsgChannelCloseInit`                             |
@@ -236,6 +244,7 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/ibc.core.connection.v1.MsgConnectionOpenConfirm`                     |
 | `/ibc.core.connection.v1.MsgConnectionOpenInit`                        |
 | `/ibc.core.connection.v1.MsgConnectionOpenTry`                         |
+| `/packetforward.v1.MsgUpdateParams`                                    |
 
 [//]: # (GENERATED DOC.)
 [//]: # (DO NOT EDIT MANUALLY!!!)

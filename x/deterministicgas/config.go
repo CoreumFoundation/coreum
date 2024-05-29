@@ -22,6 +22,8 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
@@ -30,7 +32,9 @@ import (
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
 	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
 	cnfttypes "github.com/CoreumFoundation/coreum/v4/x/nft"
 )
 
@@ -188,14 +192,26 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8_000),
 		MsgToMsgURL(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6_500),
 
-		// ibc transfer
+		// ibc/transfer
 		MsgToMsgURL(&ibctransfertypes.MsgTransfer{}): constantGasFunc(54_000),
+
+		// ibc/ica
+		MsgToMsgURL(&icacontrollertypes.MsgRegisterInterchainAccount{}): constantGasFunc(160_000),
 	}
 
 	//nolint:lll // we would like to keep the comments here inline
 	registerNondeterministicGasFuncs(
 		&cfg,
 		[]sdk.Msg{
+			// asset/ft
+			&assetfttypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+
+			// asset/nft
+			&assetnfttypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+
+			// feemodel
+			&feemodeltypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+
 			// auth
 			&authtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
@@ -249,6 +265,7 @@ func DefaultConfig() Config {
 
 			// staking
 			&stakingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+			&customparamstypes.MsgUpdateStakingParams{},
 
 			// slashing
 			&slashingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
@@ -276,6 +293,8 @@ func DefaultConfig() Config {
 			&wasmtypes.MsgStoreAndInstantiateContract{},
 			&wasmtypes.MsgStoreAndMigrateContract{},
 			&wasmtypes.MsgUpdateContractLabel{},
+			&wasmtypes.MsgRemoveCodeUploadParamsAddresses{},
+			&wasmtypes.MsgAddCodeUploadParamsAddresses{},
 
 			// ibc/core/client
 			&ibcclienttypes.MsgCreateClient{},
@@ -301,6 +320,12 @@ func DefaultConfig() Config {
 			&ibcchanneltypes.MsgTimeout{},
 			&ibcchanneltypes.MsgTimeoutOnClose{},
 			&ibcchanneltypes.MsgAcknowledgement{},
+
+			// ibc/packetforward
+			&packetforwardtypes.MsgUpdateParams{},
+
+			// ibc/ica
+			&icacontrollertypes.MsgSendTx{},
 		},
 	)
 
