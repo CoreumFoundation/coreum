@@ -24,8 +24,9 @@ import (
 
 const (
 	// TODO(dzmitryhil) update to 10 once if fix simulation issue.
-	fuseGasMultiplier    = 1000
-	expectedMaxGasFactor = 5
+	fuseGasMultiplier      = 1000
+	expectedMaxGasFactor   = 5
+	untrackedGasForQueries = uint64(1_000_000)
 )
 
 // NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for
@@ -142,7 +143,7 @@ func ctxForDeterministicGas(
 	gasRequired, isDeterministic := deterministicGasConfig.GasRequiredByMessage(msg)
 	gasBefore := ctx.GasMeter().GasConsumed()
 	if isDeterministic {
-		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(1_000_000))
+		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(untrackedGasForQueries))
 		hasExtension, err := hasExtensionCall(ctxWithUntrackedGas, msg, assetFTKeeper)
 		if err != nil {
 			return sdk.Context{}, 0, false, err
