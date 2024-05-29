@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 const (
@@ -34,13 +34,13 @@ var (
 )
 
 // BuildCored builds all the versions of cored binary.
-func BuildCored(ctx context.Context, deps build.DepsFunc) error {
+func BuildCored(ctx context.Context, deps types.DepsFunc) error {
 	deps(BuildCoredLocally, BuildCoredInDocker)
 	return nil
 }
 
 // BuildCoredLocally builds cored locally.
-func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
+func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 	versionFlags, err := coredVersionLDFlags(ctx, tagsLocal)
 	if err != nil {
 		return err
@@ -60,13 +60,13 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // BuildCoredInDocker builds cored in docker.
-func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
+func BuildCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
 	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag})
 }
 
 func buildCoredInDocker(
 	ctx context.Context,
-	deps build.DepsFunc,
+	deps types.DepsFunc,
 	targetPlatform tools.TargetPlatform,
 	extraFlags []string,
 ) error {
@@ -95,7 +95,7 @@ func buildCoredInDocker(
 
 // buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
 // used for the CLI on target platform, but can't be used to run the node.
-func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
+func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPlatform tools.TargetPlatform) error {
 	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker)
 	if err != nil {
 		return err
@@ -122,25 +122,25 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 }
 
 // Tidy runs `go mod tidy` for coreum repo.
-func Tidy(ctx context.Context, deps build.DepsFunc) error {
+func Tidy(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Tidy(ctx, repoPath, deps)
 }
 
 // Lint lints coreum repo.
-func Lint(ctx context.Context, deps build.DepsFunc) error {
+func Lint(ctx context.Context, deps types.DepsFunc) error {
 	deps(Generate, CompileAllSmartContracts, formatProto, lintProto, breakingProto)
 	return golang.Lint(ctx, repoPath, deps)
 }
 
 // Test run unit tests in coreum repo.
-func Test(ctx context.Context, deps build.DepsFunc) error {
+func Test(ctx context.Context, deps types.DepsFunc) error {
 	deps(CompileAllSmartContracts)
 
 	return golang.Test(ctx, repoPath, deps)
 }
 
 // DownloadDependencies downloads go dependencies.
-func DownloadDependencies(ctx context.Context, deps build.DepsFunc) error {
+func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
 	return golang.DownloadDependencies(ctx, repoPath, deps)
 }
 
@@ -176,7 +176,7 @@ func coredVersionLDFlags(ctx context.Context, buildTags []string) ([]string, err
 	return values, nil
 }
 
-func formatProto(ctx context.Context, deps build.DepsFunc) error {
+func formatProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(tools.EnsureBuf)
 
 	cmd := exec.Command(tools.Path("bin/buf", tools.TargetPlatformLocal), "format", "-w")

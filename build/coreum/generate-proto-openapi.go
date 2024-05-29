@@ -12,9 +12,9 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 type swaggerDoc struct {
@@ -31,7 +31,7 @@ type swaggerInfo struct {
 	Version string `json:"version"`
 }
 
-func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
+func generateProtoOpenAPI(ctx context.Context, deps types.DepsFunc) error {
 	deps(Tidy)
 
 	moduleDirs, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
@@ -82,7 +82,7 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // executeGoProtocCommand generates go code from proto files.
-func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, includeDirs, generateDirs []string) error {
+func executeOpenAPIProtocCommand(ctx context.Context, deps types.DepsFunc, includeDirs, generateDirs []string) error {
 	deps(tools.EnsureProtoc, tools.EnsureProtocGenOpenAPIV2)
 
 	outDir, err := os.MkdirTemp("", "")

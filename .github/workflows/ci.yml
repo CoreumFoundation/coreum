@@ -52,12 +52,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          path: coreum
-      - name: Checkout crust
-        uses: actions/checkout@v4
-        with:
-          repository: CoreumFoundation/crust
-          path: crust
       - name: Setup go cache
         uses: actions/cache@v4
         with:
@@ -87,16 +81,14 @@ jobs:
         with:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Prepare dependencies
-        working-directory: ./coreum
         run: make dependencies
       - name: Run ${{ matrix.ci_step }}
-        working-directory: ./coreum
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ${{ github.workspace }}/coreum/coverage/${{ matrix.codecov-name }}
+          files: ${{ github.workspace }}/coverage/${{ matrix.codecov-name }}
           flags: ${{ matrix.codecov-name }}
           fail_ci_if_error: true
           verbose: true

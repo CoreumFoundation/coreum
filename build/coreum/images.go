@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum/build/coreum/image"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 type imageConfig struct {
@@ -21,7 +21,7 @@ type imageConfig struct {
 }
 
 // BuildCoredDockerImage builds cored docker image.
-func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
+func BuildCoredDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	deps(BuildCoredInDocker, ensureReleasedBinaries)
 
 	return buildCoredDockerImage(ctx, imageConfig{
@@ -63,7 +63,7 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 }
 
 // ensureReleasedBinaries ensures that all previous cored versions are installed.
-func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
+func ensureReleasedBinaries(ctx context.Context, deps types.DepsFunc) error {
 	for _, binaryTool := range []tools.Name{
 		tools.CoredV303,
 	} {

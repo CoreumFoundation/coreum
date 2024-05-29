@@ -1,13 +1,13 @@
 package build
 
 import (
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum/build/coreum"
 	"github.com/CoreumFoundation/crust/build/crust"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 // Commands is a definition of commands available in build system.
-var Commands = map[string]build.Command{
+var Commands = map[string]types.Command{
 	"build/me": {Fn: crust.BuildBuilder, Description: "Builds the builder"},
 	"build":    {Fn: coreum.BuildCored, Description: "Builds cored binary"},
 	"download": {Fn: coreum.DownloadDependencies, Description: "Downloads go dependencies"},
@@ -22,27 +22,27 @@ var Commands = map[string]build.Command{
 		Description: "Runs all the integration tests including unsafe",
 	},
 	"integration-tests/ibc": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestIBC, false),
+		Fn:          coreum.RunIntegrationTestsIBC(false),
 		Description: "Runs safe IBC integration tests",
 	},
 	"integration-tests-unsafe/ibc": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestIBC, true),
+		Fn:          coreum.RunIntegrationTestsIBC(true),
 		Description: "Runs all IBC integration tests including unsafe",
 	},
 	"integration-tests/modules": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestModules, false),
+		Fn:          coreum.RunIntegrationTestsModules(false),
 		Description: "Runs safe modules integration tests",
 	},
 	"integration-tests-unsafe/modules": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestModules, true),
+		Fn:          coreum.RunIntegrationTestsModules(true),
 		Description: "Runs all modules integration tests including unsafe",
 	},
 	"integration-tests/upgrade": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestUpgrade, false),
+		Fn:          coreum.RunIntegrationTestsUpgrade(false),
 		Description: "Runs safe upgrade integration tests",
 	},
 	"integration-tests-unsafe/upgrade": {
-		Fn:          coreum.RunIntegrationTests(coreum.TestUpgrade, true),
+		Fn:          coreum.RunIntegrationTestsUpgrade(true),
 		Description: "Runs all upgrade integration tests including unsafe",
 	},
 	"lint":           {Fn: coreum.Lint, Description: "Lints code"},
