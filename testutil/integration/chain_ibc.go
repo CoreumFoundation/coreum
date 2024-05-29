@@ -198,10 +198,16 @@ func (c ChainContext) AwaitForBalance(
 }
 
 // AwaitForIBCChannelID returns the last opened channel of the IBC connected chain peer with specified port.
-func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, port string, peerChain ChainContext) string {
+func (c ChainContext) AwaitForIBCChannelID(
+	ctx context.Context,
+	t *testing.T,
+	port string,
+	peerChain ChainContext,
+) string {
 	t.Helper()
 
-	t.Logf("Getting %s chain channel with port %s on %s chain.", peerChain.ChainSettings.ChainID, port, c.ChainSettings.ChainID)
+	t.Logf("Getting %s chain channel with port %s on %s chain.",
+		peerChain.ChainSettings.ChainID, port, c.ChainSettings.ChainID)
 
 	var connectedChannelIDs []string
 
@@ -211,12 +217,12 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 
 		openChannelsMap, err := c.getAllOpenChannels(ctx)
 		if err != nil {
-			return errors.Errorf("failed to query open channels on: %s: %s", c.ChainSettings.ChainID, err),
+			return errors.Errorf("failed to query open channels on: %s: %s", c.ChainSettings.ChainID, err)
 		}
 
 		peerOpenChannelsMap, err := peerChain.getAllOpenChannels(ctx)
 		if err != nil {
-			return errors.Errorf("failed to query open channels on: %s: %s", peerChain.ChainSettings.ChainID, err),
+			return errors.Errorf("failed to query open channels on: %s: %s", peerChain.ChainSettings.ChainID, err)
 		}
 
 		for chID, ch := range openChannelsMap {
@@ -232,11 +238,11 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 
 			expectedPeerChainName, err := c.getCounterpartyChainName(ctx, chID, port)
 			if err != nil {
-				return errors.Wrapf(err, "counterparty chain name query failed for: %s", c.ChainSettings.ChainID),
+				return errors.Wrapf(err, "counterparty chain name query failed for: %s", c.ChainSettings.ChainID)
 			}
 			expectedChainName, err := peerChain.getCounterpartyChainName(ctx, peerCh.ChannelId, port)
 			if err != nil {
-				return errors.Wrapf(err, "counterparty chain name query failed for: %s", peerChain.ChainSettings.ChainID),
+				return errors.Wrapf(err, "counterparty chain name query failed for: %s", peerChain.ChainSettings.ChainID)
 			}
 
 			// Chains names should match.
@@ -406,9 +412,10 @@ func (c ChainContext) getAllOpenChannels(ctx context.Context) (map[string]*ibcch
 		channelsPagination.Key = ibcChannelsRes.Pagination.NextKey
 	}
 
-	openChannelsMap := lo.SliceToMap(openChannels, func(ch *ibcchanneltypes.IdentifiedChannel) (string, *ibcchanneltypes.IdentifiedChannel) {
-		return ch.ChannelId, ch
-	})
+	openChannelsMap := lo.SliceToMap(openChannels,
+		func(ch *ibcchanneltypes.IdentifiedChannel) (string, *ibcchanneltypes.IdentifiedChannel) {
+			return ch.ChannelId, ch
+		})
 
 	return openChannelsMap, nil
 }
@@ -436,16 +443,16 @@ func (c ChainContext) getCounterpartyChainName(ctx context.Context, channelID, p
 }
 
 func parseNumericChannelID(channelID string) (uint64, error) {
-	chIdParts := strings.Split(channelID, "-")
+	chIDParts := strings.Split(channelID, "-")
 
-	if len(chIdParts) != 2 || chIdParts[0] != "channel" {
+	if len(chIDParts) != 2 || chIDParts[0] != "channel" {
 		return 0, errors.Errorf("invalid channel ID: %s", channelID)
 	}
 
-	chIdNum, err := strconv.ParseUint(chIdParts[1], 10, 64)
+	chIDNum, err := strconv.ParseUint(chIDParts[1], 10, 64)
 	if err != nil {
 		return 0, errors.Wrapf(err, "invalid channel ID: %s", channelID)
 	}
 
-	return chIdNum, nil
+	return chIDNum, nil
 }
