@@ -1,6 +1,7 @@
 package deterministicgas_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	_ "unsafe"
@@ -43,178 +44,45 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/cosmos.tx.v1beta1.Tx",
 	}
 
-	// WASM messages will be added here
-	nondeterministicMsgURLs := []deterministicgas.MsgURL{
-		// asset ft
-		"/coreum.asset.ft.v1.MsgUpdateParams",
-
-		// asset nft
-		"/coreum.asset.nft.v1.MsgUpdateParams",
-
-		// feemodel
-		"/coreum.feemodel.v1.MsgUpdateParams",
-
-		// customparams
-		"/coreum.customparams.v1.MsgUpdateStakingParams",
-
-		// auth
-		"/cosmos.auth.v1beta1.MsgUpdateParams",
-
-		// bank
-		"/cosmos.bank.v1beta1.MsgSetSendEnabled",
-		"/cosmos.bank.v1beta1.MsgUpdateParams",
-
-		// distribution
-		"/cosmos.distribution.v1beta1.MsgUpdateParams",
-		"/cosmos.distribution.v1beta1.MsgCommunityPoolSpend",
-
-		// consensus
-		"/cosmos.consensus.v1.MsgUpdateParams",
-
-		// crisis
-		"/cosmos.crisis.v1beta1.MsgUpdateParams",
-
-		// crisis
-		"/cosmos.crisis.v1beta1.MsgVerifyInvariant",
-
-		// evidence
-		"/cosmos.evidence.v1beta1.MsgSubmitEvidence",
-
-		// gov
-		"/cosmos.gov.v1beta1.MsgSubmitProposal",
-
-		"/cosmos.gov.v1.MsgSubmitProposal",
-		"/cosmos.gov.v1.MsgExecLegacyContent",
-		"/cosmos.gov.v1.MsgUpdateParams",
-
-		"/cosmos.gov.v1.MsgSubmitProposal",
-		"/cosmos.gov.v1.MsgExecLegacyContent",
-		"/cosmos.gov.v1.MsgUpdateParams",
-
-		// group
-		"/cosmos.group.v1.MsgSubmitProposal",
-		"/cosmos.group.v1.MsgVote",
-		"/cosmos.group.v1.MsgExec",
-
-		// mint
-		"/cosmos.mint.v1beta1.MsgUpdateParams",
-
-		// pfm
-		"/packetforward.v1.MsgUpdateParams",
-
-		// staking
-		"/cosmos.staking.v1beta1.MsgUpdateParams",
-
-		// slashing
-		"/cosmos.slashing.v1beta1.MsgUpdateParams",
-
-		// upgrade
-		"/cosmos.upgrade.v1beta1.MsgCancelUpgrade",
-		"/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
-
-		// wasm
-		"/cosmwasm.wasm.v1.MsgStoreCode",
-		"/cosmwasm.wasm.v1.MsgInstantiateContract",
-		"/cosmwasm.wasm.v1.MsgInstantiateContract2",
-		"/cosmwasm.wasm.v1.MsgExecuteContract",
-		"/cosmwasm.wasm.v1.MsgMigrateContract",
-		"/cosmwasm.wasm.v1.MsgIBCCloseChannel",
-		"/cosmwasm.wasm.v1.MsgIBCSend",
-		"/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig",
-		"/cosmwasm.wasm.v1.MsgUpdateParams",
-		"/cosmwasm.wasm.v1.MsgUnpinCodes",
-		"/cosmwasm.wasm.v1.MsgPinCodes",
-		"/cosmwasm.wasm.v1.MsgSudoContract",
-		"/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract",
-		"/cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses",
-		"/cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses",
-		"/cosmwasm.wasm.v1.MsgStoreAndMigrateContract",
-		"/cosmwasm.wasm.v1.MsgUpdateContractLabel",
-
-		// ibc/applications/interchain_accounts
-		"/ibc.applications.interchain_accounts.controller.v1.MsgRegisterInterchainAccount",
-		"/ibc.applications.interchain_accounts.controller.v1.MsgSendTx",
-
-		// ibc/core/client
-		"/ibc.core.client.v1.MsgCreateClient",
-		"/ibc.core.client.v1.MsgUpdateClient",
-		"/ibc.core.client.v1.MsgUpgradeClient",
-		"/ibc.core.client.v1.MsgSubmitMisbehaviour",
-
-		// ibc/core/connection
-		"/ibc.core.connection.v1.MsgConnectionOpenInit",
-		"/ibc.core.connection.v1.MsgConnectionOpenTry",
-		"/ibc.core.connection.v1.MsgConnectionOpenAck",
-		"/ibc.core.connection.v1.MsgConnectionOpenConfirm",
-
-		// ibc/core/channel
-		"/ibc.core.channel.v1.MsgChannelOpenInit",
-		"/ibc.core.channel.v1.MsgChannelOpenTry",
-		"/ibc.core.channel.v1.MsgChannelOpenAck",
-		"/ibc.core.channel.v1.MsgChannelOpenConfirm",
-		"/ibc.core.channel.v1.MsgChannelCloseInit",
-		"/ibc.core.channel.v1.MsgChannelCloseConfirm",
-		"/ibc.core.channel.v1.MsgRecvPacket",
-		"/ibc.core.channel.v1.MsgTimeout",
-		"/ibc.core.channel.v1.MsgTimeoutOnClose",
-		"/ibc.core.channel.v1.MsgAcknowledgement",
-	}
-
 	// This is required to compile all the messages used by the app, not only those included in deterministic gas config
 	simapp.New()
 
 	cfg := deterministicgas.DefaultConfig()
 
-	var deterministicMsgs []sdk.Msg
-	var nondeterministicMsgs []sdk.Msg
+	deterministicMsgCount := 0
+	nondeterministicMsgCount := 0
 	for protoType := range revProtoTypes {
 		sdkMsg, ok := reflect.New(protoType.Elem()).Interface().(sdk.Msg)
 		if !ok {
 			continue
 		}
 
-		// Skip unknown messages.
+		// skip some messages which don't have the message handlers
 		if lo.ContainsBy(ignoredMsgURLs, func(msgURL deterministicgas.MsgURL) bool {
 			return deterministicgas.MsgToMsgURL(sdkMsg) == msgURL
 		}) {
 			continue
 		}
 
-		// Add message to nondeterministic.
-		if lo.ContainsBy(nondeterministicMsgURLs, func(msgURL deterministicgas.MsgURL) bool {
-			return deterministicgas.MsgToMsgURL(sdkMsg) == msgURL
-		}) {
-			nondeterministicMsgs = append(nondeterministicMsgs, sdkMsg)
+		msgURL := deterministicgas.MsgToMsgURL(sdkMsg)
+		gasFunc, ok := cfg.GasByMessageMap()[msgURL]
+		assert.True(t, ok, fmt.Sprintf("sdk.Msg %s, not found in the gasByMsg map", msgURL))
+
+		gas, ok := gasFunc(sdkMsg)
+		if ok {
+			assert.NotZero(t, gas)
+			deterministicMsgCount++
 			continue
 		}
-
-		// Add message to deterministic.
-		deterministicMsgs = append(deterministicMsgs, sdkMsg)
+		assert.Zero(t, gas)
+		nondeterministicMsgCount++
 	}
 
 	// To make sure we do not increase/decrease deterministic types accidentally,
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Len(t, nondeterministicMsgs, 63)
-	assert.Len(t, deterministicMsgs, 69)
-
-	for _, sdkMsg := range deterministicMsgs {
-		sdkMsg := sdkMsg
-		t.Run("deterministic: "+string(deterministicgas.MsgToMsgURL(sdkMsg)), func(t *testing.T) {
-			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
-			assert.True(t, ok)
-			assert.Positive(t, gas)
-		})
-	}
-
-	for _, sdkMsg := range nondeterministicMsgs {
-		sdkMsg := sdkMsg
-		t.Run("nondeterministic: "+string(deterministicgas.MsgToMsgURL(sdkMsg)), func(t *testing.T) {
-			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
-			assert.False(t, ok)
-			assert.Zero(t, gas)
-		})
-	}
+	assert.Equal(t, 62, nondeterministicMsgCount)
+	assert.Equal(t, 70, deterministicMsgCount)
 }
 
 func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
