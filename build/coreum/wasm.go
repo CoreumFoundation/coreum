@@ -7,8 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/rust"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 // Smart contract names.
@@ -19,22 +19,22 @@ const (
 )
 
 // CompileModulesSmartContracts compiles modules smart contracts.
-func CompileModulesSmartContracts(ctx context.Context, deps build.DepsFunc) error {
+func CompileModulesSmartContracts(ctx context.Context, deps types.DepsFunc) error {
 	return compileWasmDir(WasmModulesDir, deps)
 }
 
 // CompileIBCSmartContracts compiles ibc smart contracts.
-func CompileIBCSmartContracts(ctx context.Context, deps build.DepsFunc) error {
+func CompileIBCSmartContracts(ctx context.Context, deps types.DepsFunc) error {
 	return compileWasmDir(WasmIBCDir, deps)
 }
 
 // CompileAssetExtensionSmartContracts compiles asset smart contracts.
-func CompileAssetExtensionSmartContracts(ctx context.Context, deps build.DepsFunc) error {
+func CompileAssetExtensionSmartContracts(ctx context.Context, deps types.DepsFunc) error {
 	return compileWasmDir(WasmAssetExtension, deps)
 }
 
 // CompileAllSmartContracts compiles all th smart contracts.
-func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
+func CompileAllSmartContracts(ctx context.Context, deps types.DepsFunc) error {
 	allWasmDirectories := []string{
 		WasmModulesDir,
 		WasmIBCDir,
@@ -48,13 +48,13 @@ func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-func compileWasmDir(dirPath string, deps build.DepsFunc) error {
+func compileWasmDir(dirPath string, deps types.DepsFunc) error {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	actions := make([]build.CommandFunc, 0, len(entries))
+	actions := make([]types.CommandFunc, 0, len(entries))
 	for _, e := range entries {
 		if !e.IsDir() {
 			continue

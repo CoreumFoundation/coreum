@@ -6,11 +6,18 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
-	"github.com/pkg/errors"
+	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/hermes"
+	"github.com/CoreumFoundation/crust/build/osmosis"
+	"github.com/CoreumFoundation/crust/build/types"
+	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps"
+	"github.com/CoreumFoundation/crust/pkg/znet"
 )
 
 // Test names.
@@ -21,49 +28,106 @@ const (
 )
 
 // RunAllIntegrationTests runs all the coreum integration tests.
-func RunAllIntegrationTests(runUnsafe bool) build.CommandFunc {
-	return func(ctx context.Context, deps build.DepsFunc) error {
-		entries, err := os.ReadDir(testsDir)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		actions := make([]build.CommandFunc, 0, len(entries))
-		for _, e := range entries {
-			if !e.IsDir() || e.Name() == "contracts" {
-				continue
-			}
-
-			actions = append(actions, RunIntegrationTests(e.Name(), runUnsafe))
-		}
-		deps(actions...)
+func RunAllIntegrationTests(runUnsafe bool) types.CommandFunc {
+	return func(ctx context.Context, deps types.DepsFunc) error {
+		deps(
+			RunIntegrationTestsModules(runUnsafe),
+			RunIntegrationTestsIBC(runUnsafe),
+			RunIntegrationTestsUpgrade(runUnsafe),
+		)
 		return nil
 	}
 }
 
-// RunIntegrationTests returns function running integration tests.
-func RunIntegrationTests(name string, runUnsafe bool) build.CommandFunc {
-	return func(ctx context.Context, deps build.DepsFunc) error {
-		switch name {
-		case TestModules:
-			deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts)
-		case TestUpgrade:
-			deps(CompileModulesSmartContracts)
-		case TestIBC:
-			deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts)
-		}
+// RunIntegrationTestsModules returns function running modules integration tests.
+func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
+	return func(ctx context.Context, deps types.DepsFunc) error {
+		deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
+			BuildCoredDockerImage)
 
-		flags := []string{
-			"-tags=integrationtests",
-			fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
-			"-timeout=1h",
+		znetConfig := defaultZNetConfig()
+		znetConfig.Profiles = []string{apps.Profile3Cored}
+		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-modules"
+
+		return runIntegrationTests(ctx, deps, TestModules, runUnsafe, znetConfig)
+	}
+}
+
+// RunIntegrationTestsIBC returns function running IBC integration tests.
+func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
+	return func(ctx context.Context, deps types.DepsFunc) error {
+		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
+			BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage, hermes.BuildDockerImage)
+
+		znetConfig := defaultZNetConfig()
+		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
+		znetConfig.TimeoutCommit = time.Second
+
+		return runIntegrationTests(ctx, deps, TestIBC, runUnsafe, znetConfig)
+	}
+}
+
+// RunIntegrationTestsUpgrade returns function running upgrade integration tests.
+func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
+	return func(ctx context.Context, deps types.DepsFunc) error {
+		deps(CompileModulesSmartContracts, BuildCoredLocally,
+			BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage, hermes.BuildDockerImage)
+
+		znetConfig := defaultZNetConfig()
+		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
+		znetConfig.TimeoutCommit = time.Second
+		znetConfig.CoredVersion = "v3.0.3"
+
+		return runIntegrationTests(ctx, deps, TestUpgrade, runUnsafe, znetConfig)
+	}
+}
+
+func runIntegrationTests(
+	ctx context.Context,
+	deps types.DepsFunc,
+	testDir string,
+	runUnsafe bool,
+	znetConfig *infra.ConfigFactory,
+) error {
+	flags := []string{
+		"-tags=integrationtests",
+		fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
+		"-timeout=1h",
+	}
+	if runUnsafe {
+		flags = append(flags, "--run-unsafe")
+	}
+
+	if err := znet.Remove(ctx, znetConfig); err != nil {
+		return err
+	}
+	if err := znet.Start(ctx, znetConfig); err != nil {
+		return err
+	}
+	if err := golang.RunTests(ctx, deps, golang.TestConfig{
+		PackagePath: filepath.Join(testsDir, testDir),
+		Flags:       flags,
+	}); err != nil {
+		return err
+	}
+
+	if znetConfig.CoverageOutputFile != "" {
+		if err := znet.Stop(ctx, znetConfig); err != nil {
+			return err
 		}
-		if runUnsafe {
-			flags = append(flags, "--run-unsafe")
+		if err := znet.CoverageConvert(ctx, znetConfig); err != nil {
+			return err
 		}
-		return golang.RunTests(ctx, deps, golang.TestConfig{
-			PackagePath: filepath.Join(testsDir, name),
-			Flags:       flags,
-		})
+	}
+
+	return znet.Remove(ctx, znetConfig)
+}
+
+func defaultZNetConfig() *infra.ConfigFactory {
+	return &infra.ConfigFactory{
+		EnvName:       "znet",
+		TimeoutCommit: 500 * time.Millisecond,
+		HomeDir:       filepath.Join(lo.Must(os.UserHomeDir()), ".crust", "znet"),
+		RootDir:       "../",
 	}
 }

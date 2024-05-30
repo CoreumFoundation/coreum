@@ -5,15 +5,15 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 // ReleaseCored releases cored binary for amd64 and arm64 to be published inside the release.
-func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
+func ReleaseCored(ctx context.Context, deps types.DepsFunc) error {
 	clean, _, err := git.StatusClean(ctx, repoPath)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // ReleaseCoredImage releases cored docker images for amd64 and arm64.
-func ReleaseCoredImage(ctx context.Context, deps build.DepsFunc) error {
+func ReleaseCoredImage(ctx context.Context, deps types.DepsFunc) error {
 	deps(ReleaseCored)
 
 	return buildCoredDockerImage(ctx, imageConfig{

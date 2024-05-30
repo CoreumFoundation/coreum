@@ -9,15 +9,15 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 //go:embed proto-lint.json
 var configLint []byte
 
-func lintProto(ctx context.Context, deps build.DepsFunc) error {
+func lintProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(Tidy)
 
 	_, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
@@ -42,7 +42,7 @@ func lintProto(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-func executeLintProtocCommand(ctx context.Context, deps build.DepsFunc, includeDirs, generateDirs []string) error {
+func executeLintProtocCommand(ctx context.Context, deps types.DepsFunc, includeDirs, generateDirs []string) error {
 	deps(tools.EnsureProtoc, tools.EnsureProtocGenBufLint)
 
 	// Linting rule descriptions might be found here: https://buf.build/docs/lint/rules
