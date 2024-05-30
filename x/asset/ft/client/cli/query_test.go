@@ -37,7 +37,7 @@ func TestQueryTokens(t *testing.T) {
 	ctx := testNetwork.Validators[0].ClientCtx
 
 	initialAmount := sdkmath.NewInt(100)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	var resp types.QueryTokensResponse
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(
@@ -73,7 +73,7 @@ func TestQueryToken(t *testing.T) {
 	}
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(100)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	var resp types.QueryTokenResponse
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
@@ -111,7 +111,7 @@ func TestCmdTokenUpgradeStatuses(t *testing.T) {
 	ctx := testNetwork.Validators[0].ClientCtx
 
 	initialAmount := sdkmath.NewInt(100)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	var statusesRes types.QueryTokenUpgradeStatusesResponse
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdTokenUpgradeStatuses(), []string{denom}, &statusesRes))
