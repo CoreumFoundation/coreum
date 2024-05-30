@@ -80,7 +80,7 @@ func CmdTxIssue() *cobra.Command {
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
 		//nolint:lll // breaking this down will make it look worse when printed to user screen.
-		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624 --extension_code_id=1 --extension_label=my-extension --extension_funds=1000000core",
+		Use:   fmt.Sprintf("issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features="+strings.Join(allowedFeatures, ",")+" --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624 --extension_code_id=1 --extension_label=my-extension --extension_funds=100000ABC-%s", constant.AddressSampleTest),
 		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -218,7 +218,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 	cmd.Flags().String(URIFlag, "", "Token URI.")
 	cmd.Flags().String(URIHashFlag, "", "Token URI hash.")
 	cmd.Flags().Uint64(ExtensionCodeID, 0, "CodeID of the stored WASM smart contract to be used as the asset extension.")
-	cmd.Flags().String(ExtensionLabel, "", "Optional metadata to be stored with a contract instance.")
+	cmd.Flags().String(ExtensionLabel, "", "Optional label to be given to the extension contract.")
 	cmd.Flags().String(ExtensionFunds, "", "Coins that are transferred to the contract on instantiation.")
 
 	flags.AddTxFlagsToCmd(cmd)
