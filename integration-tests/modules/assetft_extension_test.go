@@ -130,7 +130,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 
 	// sending 7 will fail
 	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(AmountDisallowedTrigger)))
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(500_000),
