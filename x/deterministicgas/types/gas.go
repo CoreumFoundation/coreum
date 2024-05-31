@@ -79,9 +79,14 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 	//
 	// Then we extract cosmos context from `ctx` replace gas meter, pack it into `ctx` again and hall final handler.
 
-	for i, method := range sd.Methods {
+	methods := make([]googlegrpc.MethodDesc, len(sd.Methods))
+	copy(methods, sd.Methods)
+	newSD := *sd
+	newSD.Methods = methods
+
+	for i, method := range newSD.Methods {
 		method := method
-		sd.Methods[i].Handler = func(
+		newSD.Methods[i].Handler = func(
 			srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor googlegrpc.UnaryServerInterceptor,
 		) (interface{}, error) {
 			return method.Handler(srv, ctx, dec, func(
@@ -130,7 +135,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 			})
 		}
 	}
-	s.baseServer.RegisterService(sd, handler)
+	s.baseServer.RegisterService(&newSD, handler)
 }
 
 func (s deterministicMsgServer) ctxForDeterministicGas(
