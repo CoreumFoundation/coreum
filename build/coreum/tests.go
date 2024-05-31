@@ -61,7 +61,6 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
-		znetConfig.TimeoutCommit = time.Second
 
 		return runIntegrationTests(ctx, deps, TestIBC, runUnsafe, znetConfig)
 	}
@@ -75,7 +74,6 @@ func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
-		znetConfig.TimeoutCommit = time.Second
 		znetConfig.CoredVersion = "v3.0.3"
 
 		return runIntegrationTests(ctx, deps, TestUpgrade, runUnsafe, znetConfig)
