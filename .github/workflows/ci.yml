@@ -4,8 +4,6 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-  schedule:
-    - cron: '0 1 * * 1' # At 01:00 on Monday
   workflow_dispatch:
 
 jobs:
@@ -58,28 +56,23 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-v2-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup crust cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/crust
-          key: ${{ runner.os }}-crust-cache
+          key: ${{ runner.os }}-crust-${{ hashFiles('build/go.sum') }}
       - name: Setup linter cache
         uses: actions/cache@v4
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-linter-cache-2-${{ steps.goversion.outputs.GO_VERSION }}
-      - name: Get Date
-        id: get-year-week
-        run: |
-          echo "date=$(/bin/date -u "+%Y-%U")" >> $GITHUB_OUTPUT
-        shell: bash
+          key: ${{ runner.os }}-go-linter-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Set docker cache
         uses: ScribeMD/docker-cache@0.5.0
         with:
-          key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
+          key: ${{ runner.os }}-docker-${{ hashFiles('build/go.sum') }}
       - name: Prepare dependencies
         run: make dependencies
       - name: Run ${{ matrix.ci_step }}
