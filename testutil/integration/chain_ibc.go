@@ -236,8 +236,8 @@ func (c ChainContext) AwaitForIBCChannelID(
 				continue
 			}
 			// Peer chain might have different port ID. E.g., in case of IBC transfer from WASM smart contract
-			// source chain is wasm.<src-chain-smart-contract> but destination is wasm.<dst-chain-smart-contract>.
-			peerPort := peerCh.Counterparty.PortId
+			// source port is wasm.<src-chain-smart-contract>, but destination is wasm.<dst-chain-smart-contract>.
+			peerPort := peerCh.PortId
 
 			expectedPeerChainName, err := c.getIBCCounterpartyChainName(ctx, chID, port)
 			if err != nil {
