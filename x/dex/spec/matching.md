@@ -9,7 +9,7 @@ Let's say we have 2 orders:
 | order_id | sell_denom | buy_denom | quantity       | price |
 |----------|------------|-----------|----------------|-------|
 | order1   | AAA        | BBB       | 50_000_000 AAA | 0.375 | 
-| order2   | BBB        | AAA       | 10_000_000 AAA | 2.6   | 
+| order2   | BBB        | AAA       | 10_000_000 BBB | 2.6   | 
 
 *Note that it doesn't matter whether we define orders as input & output amount or input and price the main rule is to
 respect price.*
