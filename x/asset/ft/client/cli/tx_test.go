@@ -71,7 +71,7 @@ func TestIssueWithExtension(t *testing.T) {
 
 	args := []string{
 		"../../keeper/test-contracts/asset-extension/artifacts/asset_extension.wasm",
-		fmt.Sprintf("--%s=%s", flags.FlagGas, "2000000"),
+		fmt.Sprintf("--%s=%s", flags.FlagGas, "auto"),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, wasmcli.StoreCodeCmd(), args)

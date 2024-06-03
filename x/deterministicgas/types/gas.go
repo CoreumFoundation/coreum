@@ -25,10 +25,10 @@ import (
 )
 
 const (
-	fuseGasMultiplier      = 10
-	simFuseGasMultiplier   = 1000
-	expectedMaxGasFactor   = 5
-	untrackedGasForQueries = uint64(50_000)
+	fuseGasMultiplier         = 10
+	simFuseGasMultiplier      = 1000
+	expectedMaxGasFactor      = 5
+	untrackedMaxGasForQueries = uint64(5_000)
 )
 
 // NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for
@@ -236,7 +236,9 @@ func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper)
 	}
 
 	for _, coin := range coins {
-		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(untrackedGasForQueries))
+		// we should not count the used for this query, otherwise it will mess up the gas
+		// requirements of the message with deterministic gas.
+		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * untrackedMaxGasForQueries))
 		def, err := assetFTKeeper.GetDefinition(ctxWithUntrackedGas, coin.Denom)
 		if assetfttypes.ErrInvalidDenom.Is(err) || assetfttypes.ErrTokenNotFound.Is(err) {
 			// if the token is not defined in asset ft module, we assume this is different

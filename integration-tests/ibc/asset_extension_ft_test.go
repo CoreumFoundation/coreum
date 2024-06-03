@@ -74,7 +74,7 @@ func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
-		coreumChain.TxFactoryAuto().WithGas(500_000),
+		coreumChain.TxFactory().WithGas(500_000),
 		coreumIssuer,
 		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(1000)),
 		gaiaChain.ChainContext,
@@ -540,7 +540,7 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 		res, err := coreumChain.ExecuteTimingOutIBCTransfer(
 			ctx,
 			t,
-			coreumChain.TxFactory().WithGas(500_000),
+			coreumChain.TxFactoryAuto(),
 			coreumSender,
 			sendToGaiaCoin,
 			gaiaChain.ChainContext,
