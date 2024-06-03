@@ -92,7 +92,7 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 		Receiver:      recipientAddress,
 		TimeoutHeight: ibcclienttypes.Height{
 			RevisionNumber: height.RevisionNumber,
-			RevisionHeight: height.RevisionHeight + 1000,
+			RevisionHeight: height.RevisionHeight + 400000,
 		},
 		Memo: memo,
 	}
