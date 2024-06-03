@@ -27,15 +27,15 @@ func (o Order) OrderBookKey() string {
 	return fmt.Sprintf("%s/%s", o.SellDenom, o.BuyDenom)
 }
 
-// ReversedOrderBookKey returns BuyDenom/SellDenom order book key.
-func (o Order) ReversedOrderBookKey() string {
+// InverseOrderBookKey returns BuyDenom/SellDenom order book key.
+func (o Order) InverseOrderBookKey() string {
 	return fmt.Sprintf("%s/%s", o.BuyDenom, o.SellDenom)
 }
 
 // String returns string representation of the order.
 func (o Order) String() string {
 	return fmt.Sprintf(
-		"ID:%s | account:%s | sellDenom:%s | buyDenom:%s | quantity:%s | ~revQuantity:%s | price:%s | ~revPrice:%s", //nolint:lll // string line.
+		"ID:%s | account:%s | sellDenom:%s | buyDenom:%s | quantity:%s | ~invQuantity:%s | price:%s | ~invPrice:%s", //nolint:lll // string line.
 		o.ID, o.Account, o.SellDenom, o.BuyDenom, o.Quantity.String(),
 		o.Quantity.ToLegacyDec().Mul(o.Price).String(), o.Price.String(), sdkmath.LegacyOneDec().Quo(o.Price).String(),
 	)
@@ -52,15 +52,15 @@ type OrderBookRecord struct {
 // String returns string representation of the order.
 func (r *OrderBookRecord) String() string {
 	return fmt.Sprintf(
-		"OrderID:%s | account:%s | remainingQuantity:%s | ~remainingRevQuantity:%s | price:%s | ~revPrice:%s", //nolint:lll // string line.
+		"OrderID:%s | account:%s | remainingQuantity:%s | ~remainingInvQuantity:%s | price:%s | ~invPrice:%s", //nolint:lll // string line.
 		r.OrderID, r.Account, r.RemainingQuantity.String(),
 		r.RemainingQuantity.ToLegacyDec().Mul(r.Price).String(), r.Price.String(),
 		sdkmath.LegacyOneDec().Quo(r.Price).String(),
 	)
 }
 
-// IsRevQuantityIsLessThanOne returns true is remaining rev quantity is less than one.
-func (r *OrderBookRecord) IsRevQuantityIsLessThanOne() bool {
+// IsInvQuantityIsLessThanOne returns true is remaining inv quantity is less than one.
+func (r *OrderBookRecord) IsInvQuantityIsLessThanOne() bool {
 	// quantity * price < 1
 	return BigRatLTOne(BigRatMul(NewBigRatFromSDKInt(r.RemainingQuantity), NewBigRatFromSDKDec(r.Price)))
 }
@@ -95,7 +95,7 @@ func (ob *OrderBook) AddRecordFromOrder(order Order) bool {
 		Price:             order.Price,
 	}
 	// we don't allow to store record with the quantity * price < 1
-	if record.IsRevQuantityIsLessThanOne() {
+	if record.IsInvQuantityIsLessThanOne() {
 		fmt.Printf("The record won't be added to the order book, since remaining buy quantity is less than one, %s/%s, record:%s\n", //nolint:lll // breaking down this string will make it less readable
 			ob.SellDenom, ob.BuyDenom, record.String(),
 		)
@@ -114,7 +114,7 @@ func (ob *OrderBook) AddRecordFromOrder(order Order) bool {
 // UpdateRecord updates order book record, if the record is not added the method returns false.
 func (ob *OrderBook) UpdateRecord(record OrderBookRecord) bool {
 	// we don't allow to store record with the quantity * price < 1
-	if record.IsRevQuantityIsLessThanOne() {
+	if record.IsInvQuantityIsLessThanOne() {
 		fmt.Printf("The record won't be updated, since remaining buy quantity is less than one, %s/%s, record:%s\n",
 			ob.SellDenom, ob.BuyDenom, record.String(),
 		)
@@ -233,63 +233,63 @@ func (app *App) PlaceOrder(order Order) {
 	app.ValidatePriceAgainstTickSize(order.SellDenom, order.BuyDenom, order.Price)
 
 	obKey := order.OrderBookKey()
-	revOBKey := order.ReversedOrderBookKey()
+	invOBKey := order.InverseOrderBookKey()
 	ob, ok := app.OrderBooks[obKey]
 	if !ok {
 		ob = NewOrderBook(order.SellDenom, order.BuyDenom)
 		app.OrderBooks[obKey] = ob
 	}
-	revOB, ok := app.OrderBooks[revOBKey]
+	invOB, ok := app.OrderBooks[invOBKey]
 	if !ok {
-		revOB = NewOrderBook(order.BuyDenom, order.SellDenom)
-		app.OrderBooks[revOBKey] = revOB
+		invOB = NewOrderBook(order.BuyDenom, order.SellDenom)
+		app.OrderBooks[invOBKey] = invOB
 	}
 
-	app.matchOrder(order, revOB, ob)
-	app.PrintOrderBooks(obKey, revOBKey)
+	app.matchOrder(order, invOB, ob)
+	app.PrintOrderBooks(obKey, invOBKey)
 	app.PrintBalances()
 }
 
-func (app *App) matchOrder(order Order, makerOB, ob *OrderBook) {
+func (app *App) matchOrder(takerOrder Order, makerOB, ob *OrderBook) {
 	if makerOB.IsEmpty() {
-		app.addRecordToOBOrCancelOrder(ob, order)
+		app.addRecordToOBOrCancelOrder(ob, takerOrder)
 		return
 	}
 
-	newOrderRevPriceRat := BigRatInv(NewBigRatFromSDKDec(order.Price))
+	takerInvPriceRat := BigRatInv(NewBigRatFromSDKDec(takerOrder.Price))
 	makerOB.Iterate(func(makerOBRecord OrderBookRecord) bool {
-		makerOBRecordPriceRat := NewBigRatFromSDKDec(makerOBRecord.Price)
-		if BigRatLT(newOrderRevPriceRat, makerOBRecordPriceRat) {
-			app.addRecordToOBOrCancelOrder(ob, order)
+		makerPriceRat := NewBigRatFromSDKDec(makerOBRecord.Price)
+		if BigRatLT(takerInvPriceRat, makerPriceRat) {
+			app.addRecordToOBOrCancelOrder(ob, takerOrder)
 			return true
 		}
 
-		makerOBRecordExpectedReceiveQuantityRat := BigRatMul(
-			NewBigRatFromSDKInt(makerOBRecord.RemainingQuantity), makerOBRecordPriceRat,
+		makerExpectedReceiveQuantityRat := BigRatMul(
+			NewBigRatFromSDKInt(makerOBRecord.RemainingQuantity), makerPriceRat,
 		)
-		takerQuantityRat := NewBigRatFromSDKInt(order.Quantity)
+		takerQuantityRat := NewBigRatFromSDKInt(takerOrder.Quantity)
 
 		fmt.Printf(
-			"\nMatch (%s/%s): newOrderRevPriceRat:%s >= makerOBRecordPriceRat:%s | makerOBRecordExpectedQuantity: %s | newOrderQuanriry:%s\n", //nolint:lll // breaking down this string will make it less readable
-			order.ID, makerOBRecord.OrderID, newOrderRevPriceRat.FloatString(sdkmath.LegacyPrecision),
-			makerOBRecordPriceRat.FloatString(sdkmath.LegacyPrecision),
-			makerOBRecordExpectedReceiveQuantityRat.FloatString(sdkmath.LegacyPrecision),
+			"\nMatch (%s/%s): takerInvPriceRat:%s >= makerPriceRat:%s | makerExpectedQuantity: %s | takerQuantity:%s\n", //nolint:lll // breaking down this string will make it less readable
+			takerOrder.ID, makerOBRecord.OrderID, takerInvPriceRat.FloatString(sdkmath.LegacyPrecision),
+			makerPriceRat.FloatString(sdkmath.LegacyPrecision),
+			makerExpectedReceiveQuantityRat.FloatString(sdkmath.LegacyPrecision),
 			takerQuantityRat.FloatString(sdkmath.LegacyPrecision),
 		)
 
-		if BigRatGT(makerOBRecordExpectedReceiveQuantityRat, takerQuantityRat) {
-			// the rev order remains, the taker is reduced fully
-			makerOBRecordRevPriceRat := BigRatInv(NewBigRatFromSDKDec(makerOBRecord.Price))
-			maxExecutionQuantity, revMaxExecutionQuantity, quantityRemainder := FindMaxExecutionQuantity(
-				order.Quantity.BigInt(), makerOBRecordRevPriceRat,
+		if BigRatGT(makerExpectedReceiveQuantityRat, takerQuantityRat) {
+			// the inv takerOrder remains, the taker is reduced fully
+			makerInvPriceRat := BigRatInv(NewBigRatFromSDKDec(makerOBRecord.Price))
+			maxExecutionQuantity, invMaxExecutionQuantity, quantityRemainder := FindMaxExecutionQuantity(
+				takerOrder.Quantity.BigInt(), makerInvPriceRat,
 			)
 			// taker receives
-			app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, sdk.NewIntFromBigInt(quantityRemainder)))
-			app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, sdkmath.NewIntFromBigInt(revMaxExecutionQuantity)))
+			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.SellDenom, sdk.NewIntFromBigInt(quantityRemainder)))
+			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdkmath.NewIntFromBigInt(invMaxExecutionQuantity)))
 			// maker receives
 			app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
 			// update state
-			makerOBRecord.RemainingQuantity = makerOBRecord.RemainingQuantity.Sub(sdk.NewIntFromBigInt(revMaxExecutionQuantity))
+			makerOBRecord.RemainingQuantity = makerOBRecord.RemainingQuantity.Sub(sdk.NewIntFromBigInt(invMaxExecutionQuantity))
 			if !makerOB.UpdateRecord(makerOBRecord) {
 				// is the `true` is returned the record wasn't update, and we cancel the remaining part
 				app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, makerOBRecord.RemainingQuantity))
@@ -300,24 +300,24 @@ func (app *App) matchOrder(order Order, makerOB, ob *OrderBook) {
 			return true
 		}
 
-		maxExecutionQuantity, revMaxExecutionQuantity, quantityRemainder := FindMaxExecutionQuantity(
-			makerOBRecord.RemainingQuantity.BigInt(), makerOBRecordPriceRat,
+		maxExecutionQuantity, invMaxExecutionQuantity, quantityRemainder := FindMaxExecutionQuantity(
+			makerOBRecord.RemainingQuantity.BigInt(), makerPriceRat,
 		)
 		// maker receives
-		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdk.NewIntFromBigInt(revMaxExecutionQuantity)))
+		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdk.NewIntFromBigInt(invMaxExecutionQuantity)))
 		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, sdk.NewIntFromBigInt(quantityRemainder)))
 		// taker receives
-		app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
+		app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
 		// remove reduced record
 		makerOB.RemoveRecord(makerOBRecord)
 		// update state
-		order.Quantity = order.Quantity.Sub(sdk.NewIntFromBigInt(revMaxExecutionQuantity))
-		if BigIntEqZero(order.Quantity.BigInt()) {
+		takerOrder.Quantity = takerOrder.Quantity.Sub(sdk.NewIntFromBigInt(invMaxExecutionQuantity))
+		if BigIntEqZero(takerOrder.Quantity.BigInt()) {
 			return true
 		}
-		// if nothing to match with add remaining order
+		// if nothing to match with add remaining takerOrder
 		if makerOB.IsEmpty() {
-			app.addRecordToOBOrCancelOrder(ob, order)
+			app.addRecordToOBOrCancelOrder(ob, takerOrder)
 			return true
 		}
 
@@ -345,10 +345,10 @@ func (app *App) SendCoin(recipient string, amt sdk.Coin) {
 }
 
 // PrintOrderBooks prints order books by keys.
-func (app *App) PrintOrderBooks(obKey, revKey string) {
+func (app *App) PrintOrderBooks(obKey, invKey string) {
 	fmt.Println("---------- Order books: ----------")
 	obKeys := []string{
-		obKey, revKey,
+		obKey, invKey,
 	}
 	// sort to preserve the printed order for better readability
 	sort.Strings(obKeys)
@@ -406,16 +406,16 @@ func (app *App) GetTickSize(denom1, denom2 string) *big.Rat {
 }
 
 // FindMaxExecutionQuantity returns max execution quantity that gives int when we multiply quantity by price,
-// max reversed execution quantity which is max execution quantity multiplied by price and quantity remainder.
+// max inverse execution quantity which is max execution quantity multiplied by price and quantity remainder.
 func FindMaxExecutionQuantity(quantity *big.Int, price *big.Rat) (*big.Int, *big.Int, *big.Int) {
 	priceDenom := price.Denom()
 	// truncate(quantity / priceDenom) * priceDenom
 	maxExecutionQuantity := BigIntMul(BigIntQuo(quantity, priceDenom), priceDenom)
 	// maxExecutionQuantity * price is always integer here
-	revMaxExecutionQuantity := BigRatToInt(BigRatMul(NewBigRatFromBigInt(maxExecutionQuantity), price))
+	invMaxExecutionQuantity := BigRatToInt(BigRatMul(NewBigRatFromBigInt(maxExecutionQuantity), price))
 	quantityRemainder := BigIntSub(quantity, maxExecutionQuantity)
 
-	return maxExecutionQuantity, revMaxExecutionQuantity, quantityRemainder
+	return maxExecutionQuantity, invMaxExecutionQuantity, quantityRemainder
 }
 
 // ********** Math **********

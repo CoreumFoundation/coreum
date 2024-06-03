@@ -17,7 +17,7 @@ respect price.*
 The `price` here is the amount you want to get for each token you sell.
 The `quantity` here is the amount you want to sell.
 
-The rev_price (1/price) of order2 is greater than the price of order1 (~0.3846 > 0.375)
+The inv_price (1/price) of order2 is greater than the price of order1 (~0.3846 > 0.375)
 hence orders match. The order2 should be executed with the price of the order1 (taker gets the better price).
 The exact amount of AAA order2 receives is 10_000_000 * 1/0.375 = 26_666_666.(6) AAA. The amount we can use
 must be an integer, so we can't send full amount without the price violation.
@@ -108,27 +108,27 @@ the maker price denominator.
 The following algorithm is used to match the orders:
 
 ```
-if 1/(taker_price) > rev_order_price:
+if 1/(taker_price) > maker_price:
     if maker_remaining_quantity * maker_price > taker_quantity
       fill taker max_execution_quantity of quantity with the 1/(maker_price)
-      rev_execution_quantity = max_execution_quantity * 1/(maker_price)
+      inv_execution_quantity = max_execution_quantity * 1/(maker_price)
       taker receives:
         taker_quantity - max_execution_quantity (remainder)
-        rev_execution_quantity
+        inv_execution_quantity
       maker receives: 
         max_execution_quantity
       taker order is closed  
-      maker order is reduced by rev_execution_quantity
+      maker order is reduced by inv_execution_quantity
     else
       fill maker max_execution_quantity of remaining_quantity with the maker_price
-      rev_execution_quantity = max_execution_quantity * maker_price
+      inv_execution_quantity = max_execution_quantity * maker_price
       maker receives:
-        rev_execution_quantity
+        inv_execution_quantity
         maker_remaining_quantity - max_execution_quantity (remainder)
       taker receives: 
         max_execution_quantity
       maker order is closed  
-      taker order is reduced by rev_execution_quantity
+      taker order is reduced by inv_execution_quantity
 ```
 
 #### Matching example
@@ -155,7 +155,7 @@ Let's say we have 2 orders:
 | order1   | account1 | AAA        | BBB       | 50_000_000 AAA | 0.371 | 50_000_000 AAA     |  
 | order2   | account2 | BBB        | AAA       | 10_000_000 BBB | 2.6   | 10_000_000 BBB     | 
 
-The rev_price (1/price) of order2 is greater than the price of order1 (~0.3846 > 0.371)
+The inv_price (1/price) of order2 is greater than the price of order1 (~0.3846 > 0.371)
 hence orders match. The order2 should be executed with the price of the order1 (taker gets the better price).
 Maker expected amount is 50_000_000 * 0.371 = 18_550_000 BBB. The 18_550_000 > 10_000_000, that's why we fill the
 10_000_000 BBB. The `max_execution_quantity` of 10_000_000 with the 1/0.371 price is 9_999_934 (the remainder is 66
@@ -186,7 +186,7 @@ Let's say we have the previous partially filled order and new order:
 | order1   | account1 | AAA        | BBB       | 50_000_000 AAA | 0.371 | 23_046_000 AAA     |
 | order3   | account3 | BBB        | AAA       | 70_000_000 BBB | 2.3   | 70_000_000 BBB     |
 
-The rev_price (1/price) of order3 is greater than the price of order1 (~0.4347 > 0.371)
+The inv_price (1/price) of order3 is greater than the price of order1 (~0.4347 > 0.371)
 hence orders match. The order2 should be executed with the price of the order1 (taker gets the better price).
 Maker expected amount is 23_046_000 * 0.371 = 8_550_066 BBB. The 8_550_066 < 70_000_000, that's why we fill the
 23_046_000 AAA. The `max_execution_quantity` of 23_046_000 with the 0.371 price is 23_046_000 AAA.
@@ -215,7 +215,7 @@ Let's say we have the previous partially filled order and new order:
 | order3   | account3 | BBB        | AAA       | 70_000_000 BBB  | 2.3   | 61_449_934 BBB     |
 | order4   | account4 | AAA        | BBB       | 220_000_000 AAA | 0.36  | 220_000_000 AAA    |
 
-The rev_price (1/price) of order4 is greater than the price of order3 (~2.7(7) > 2.3)
+The inv_price (1/price) of order4 is greater than the price of order3 (~2.7(7) > 2.3)
 hence orders match. The order2 should be executed with the price of the order3 (taker gets the better price).
 Maker expected amount is 61_449_934 * 2.3 = 141_334_848.2 AAA. The 141_334_848.892 < 220_000_000,
 that's why we fill the 61_449_934 BBB. The `max_execution_quantity` of 61_449_934 with the 2.3 price is 61_449_930
