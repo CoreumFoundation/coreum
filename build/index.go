@@ -1,6 +1,8 @@
 package build
 
 import (
+	"context"
+
 	"github.com/CoreumFoundation/coreum/build/coreum"
 	"github.com/CoreumFoundation/crust/build/crust"
 	"github.com/CoreumFoundation/crust/build/types"
@@ -8,12 +10,28 @@ import (
 
 // Commands is a definition of commands available in build system.
 var Commands = map[string]types.Command{
-	"build/me":   {Fn: crust.BuildBuilder, Description: "Builds the builder"},
+	"build/me": {Fn: crust.BuildBuilder, Description: "Builds the builder"},
 	"build/znet": {Fn: crust.BuildZNet, Description: "Builds znet binary"},
-	"build":      {Fn: coreum.BuildCored, Description: "Builds cored binary"},
-	"download":   {Fn: coreum.DownloadDependencies, Description: "Downloads go dependencies"},
-	"generate":   {Fn: coreum.Generate, Description: "Generates artifacts"},
-	"images":     {Fn: coreum.BuildCoredDockerImage, Description: "Builds cored docker image"},
+	"build": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
+		deps(
+			coreum.BuildCored,
+			coreum.BuildExtendedCoredInDocker,
+		)
+		return nil
+	}, Description: "Builds cored binaries"},
+	"build/cored":     {Fn: coreum.BuildCored, Description: "Builds cored binary"},
+	"build/cored-ext": {Fn: coreum.BuildExtendedCoredInDocker, Description: "Builds extended cored binary"},
+	"download":        {Fn: coreum.DownloadDependencies, Description: "Downloads go dependencies"},
+	"generate":        {Fn: coreum.Generate, Description: "Generates artifacts"},
+	"images": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
+		deps(
+			coreum.BuildCoredDockerImage,
+			coreum.BuildExtendedCoredDockerImage,
+		)
+		return nil
+	}, Description: "Builds cored docker images"},
+	"images/cored":     {Fn: coreum.BuildCoredDockerImage, Description: "Builds cored docker image"},
+	"images/cored-ext": {Fn: coreum.BuildExtendedCoredDockerImage, Description: "Builds extended cored docker image"},
 	"integration-tests": {
 		Fn:          coreum.RunAllIntegrationTests(false),
 		Description: "Runs all safe integration tests",
