@@ -150,7 +150,7 @@ func (s deterministicMsgServer) ctxForDeterministicGas(
 			return sdk.Context{}, 0, false, err
 		}
 
-		// // we consider extensions to be nondeterministic.
+		// we consider extensions to be nondeterministic.
 		if hasExtension {
 			isDeterministic = false
 		}
