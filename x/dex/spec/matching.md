@@ -57,10 +57,10 @@ With this strategy, when orders match, we target to fill order `remaining_quanti
 due to the rounding, we find `max_execution_quantity` that we can use to prevent the price violation, and return
 the remainder.
 
-The `max_execution_quantity` is the maximum integer value of the `remaining_quantity` (integer) which gives integer when
-we multiply it by the execution price. The execution price might be the maker order price, if we try to fill the maker
-order `remaining_quantity`. Or one divided by the maker order price, if we try to fill the taker
-order `remaining_quantity`.
+The `max_execution_quantity` is the maximum integer value that is less or equal to the `remaining_quantity` (integer)
+which gives integer when we multiply it by the execution price. The execution price might be the maker order price,
+if we try to fill the maker order `remaining_quantity`. Or one divided by the maker order price, if we try to fill the
+taker order `remaining_quantity`.
 
 Let's find the formula for the `max_execution_quantity` :
 
