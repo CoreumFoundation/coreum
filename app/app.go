@@ -101,6 +101,14 @@ import (
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
 	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
@@ -203,6 +211,7 @@ var (
 		ibctm.AppModuleBasic{},
 		ibchooks.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
+		ica.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		wibctransfer.AppModuleBasic{},
@@ -228,6 +237,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:            nil,
 		wasmtypes.ModuleName:           {authtypes.Burner},
 		assetfttypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
 		assetnfttypes.ModuleName:       {authtypes.Burner},
@@ -282,6 +292,8 @@ type App struct {
 	IBCKeeper              *ibckeeper.Keeper
 	IBCHooksKeeper         ibchookskeeper.Keeper
 	PacketForwardKeeper    *packetforwardkeeper.Keeper
+	ICAHostKeeper          icahostkeeper.Keeper
+	ICAControllerKeeper    icacontrollerkeeper.Keeper
 	TransferKeeper         wibctransferkeeper.TransferKeeperWrapper
 	EvidenceKeeper         evidencekeeper.Keeper
 	FeeGrantKeeper         feegrantkeeper.Keeper
@@ -300,9 +312,11 @@ type App struct {
 	DEXKeeper          dexkeeper.Keeper
 
 	// make scoped keepers public for test purposes
-	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
-	ScopedWASMKeeper     capabilitykeeper.ScopedKeeper
+	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
+	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
+	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
+	ScopedWASMKeeper          capabilitykeeper.ScopedKeeper
 
 	// ModuleManager is the module manager
 	ModuleManager *module.Manager
@@ -354,7 +368,8 @@ func New(
 		wasmtypes.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey,
 		assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey,
 		ibctransfertypes.StoreKey, ibchookstypes.StoreKey, packetforwardtypes.StoreKey,
-		delaytypes.StoreKey, customparamstypes.StoreKey, group.StoreKey, dextypes.StoreKey,
+		icahosttypes.StoreKey, icacontrollertypes.StoreKey, delaytypes.StoreKey,
+		customparamstypes.StoreKey, group.StoreKey, dextypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -394,6 +409,8 @@ func New(
 
 	// grant capabilities for the ibc and ibc-transfer modules
 	app.ScopedIBCKeeper = app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
+	app.ScopedICAHostKeeper = app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	app.ScopedICAControllerKeeper = app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	app.ScopedTransferKeeper = app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	app.ScopedWASMKeeper = app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	app.CapabilityKeeper.Seal()
@@ -597,6 +614,29 @@ func New(
 		app.keys[ibchookstypes.StoreKey],
 	)
 
+	app.ICAHostKeeper = icahostkeeper.NewKeeper(
+		appCodec,
+		app.keys[icahosttypes.StoreKey],
+		app.GetSubspace(icahosttypes.SubModuleName),
+		app.HooksICS4Wrapper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.ScopedICAHostKeeper,
+		bApp.MsgServiceRouter(),
+	)
+
+	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
+		appCodec,
+		app.keys[icacontrollertypes.StoreKey],
+		app.GetSubspace(icacontrollertypes.SubModuleName),
+		app.HooksICS4Wrapper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		app.ScopedICAControllerKeeper,
+		bApp.MsgServiceRouter(),
+	)
+
 	// Register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
 	// by granting the governance module the right to execute the message.
@@ -742,11 +782,19 @@ func New(
 	)
 	ibcTransferStack = wibctransfer.NewPurposeMiddleware(ibcTransferStack)
 
+	// Create ICAHost Stack
+	icaHostStack := icahost.NewIBCModule(app.ICAHostKeeper)
+
+	// Create Interchain Accounts Controller Stack
+	icaControllerStack := icacontroller.NewIBCMiddleware(nil, app.ICAControllerKeeper)
+
 	ibcWasmStack := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, ibcTransferStack).
+		AddRoute(icahosttypes.SubModuleName, icaHostStack).
+		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(wasmtypes.ModuleName, ibcWasmStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -826,6 +874,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		wibctransfer.NewAppModule(app.TransferKeeper),
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
+		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
 		wasm.NewAppModule(
 			appCodec,
 			&app.WasmKeeper,
@@ -875,6 +924,7 @@ func New(
 		consensusparamtypes.ModuleName,
 		ibchookstypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		icatypes.ModuleName,
 		wasmtypes.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
@@ -908,6 +958,7 @@ func New(
 		consensusparamtypes.ModuleName,
 		ibchookstypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		icatypes.ModuleName,
 		wasmtypes.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
@@ -943,6 +994,7 @@ func New(
 		upgradetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		icatypes.ModuleName,
 		feegrant.ModuleName,
 		group.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -1315,6 +1367,8 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
+	paramsKeeper.Subspace(icahosttypes.SubModuleName)
+	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 	paramsKeeper.Subspace(feemodeltypes.ModuleName)
 	paramsKeeper.Subspace(customparamstypes.CustomParamsStaking)

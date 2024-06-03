@@ -19,13 +19,14 @@ import (
 	"github.com/samber/lo"
 	googlegrpc "google.golang.org/grpc"
 
+	testutilconstant "github.com/CoreumFoundation/coreum/v4/testutil/constant"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
 )
 
 const (
-	// TODO(dzmitryhil) update to 10 once we fix simulation issue.
-	fuseGasMultiplier      = 1000
+	fuseGasMultiplier      = 10
+	simFuseGasMultiplier   = 1000
 	expectedMaxGasFactor   = 5
 	untrackedGasForQueries = uint64(50_000)
 )
@@ -165,7 +166,13 @@ func (s deterministicMsgServer) ctxForDeterministicGas(
 
 		// We pass much higher amount of gas to handler to be sure that it succeeds.
 		// We want to avoid passing infinite gas meter to always have a limit in case of mistake.
-		ctx = ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * gasRequired))
+		gasMultiplier := uint64(fuseGasMultiplier)
+		if ctx.ChainID() == testutilconstant.SimAppChainID {
+			// simulation fuse gas multiplier is different since during the simulation the modules uses the assetft denom
+			// for the cases which are possible for the simulation only and require more gas
+			gasMultiplier = simFuseGasMultiplier
+		}
+		ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMultiplier * gasRequired))
 	}
 	return ctx, gasBefore, isDeterministic, nil
 }

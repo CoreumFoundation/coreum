@@ -487,7 +487,7 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
 	)
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 5*integration.AwaitForBalanceTimeout)
+	retryCtx, retryCancel := context.WithTimeout(ctx, 5*integration.AwaitStateTimeout)
 	defer retryCancel()
 
 	// This is the retry loop where we try to trigger a timeout condition for IBC transfer.
