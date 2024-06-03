@@ -10,7 +10,7 @@ import (
 
 // Commands is a definition of commands available in build system.
 var Commands = map[string]types.Command{
-	"build/me": {Fn: crust.BuildBuilder, Description: "Builds the builder"},
+	"build/me":   {Fn: crust.BuildBuilder, Description: "Builds the builder"},
 	"build/znet": {Fn: crust.BuildZNet, Description: "Builds znet binary"},
 	"build": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
