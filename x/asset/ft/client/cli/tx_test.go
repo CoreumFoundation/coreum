@@ -71,7 +71,7 @@ func TestIssueWithExtension(t *testing.T) {
 
 	args := []string{
 		"../../keeper/test-contracts/asset-extension/artifacts/asset_extension.wasm",
-		fmt.Sprintf("--%s=%s", flags.FlagGas, "auto"),
+		fmt.Sprintf("--%s=%s", flags.FlagGas, "2000000"),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, wasmcli.StoreCodeCmd(), args)
@@ -622,7 +622,10 @@ func issue(
 		args = append(args, fmt.Sprintf("--%s=%s", cli.URIHashFlag, token.URIHash))
 	}
 	if extensionSettings != nil && extensionSettings.CodeId > 0 {
-		args = append(args, fmt.Sprintf("--%s=%d", cli.ExtensionCodeID, extensionSettings.CodeId))
+		args = append(args,
+			fmt.Sprintf("--%s=%d", cli.ExtensionCodeID, extensionSettings.CodeId),
+			fmt.Sprintf("--%s=%d", flags.FlagGas, 2000000),
+		)
 		if len(extensionSettings.Label) > 0 {
 			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionLabel, extensionSettings.Label))
 		}
