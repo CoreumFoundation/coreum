@@ -15,7 +15,7 @@ RUN chmod -R 777 /app
 FROM --platform=$TARGETPLATFORM {{ .From }}
 
 COPY --from=builder /app /app
-COPY --from=builder /{{ .CoredBinary }} /{{ .CoredBinary }}
-COPY --from=builder /{{ .CosmovisorBinary }} /{{ .CosmovisorBinary }}
+COPY --from=builder /{{ .CoredBinary }} /bin/cored
+COPY --from=builder /{{ .CosmovisorBinary }} /bin/cosmovisor
 
-ENTRYPOINT ["/{{ .CosmovisorBinary }}", "run"]
+ENTRYPOINT ["/bin/cosmovisor", "run"]
