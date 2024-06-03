@@ -146,13 +146,13 @@ func (ob *OrderBook) RemoveRecord(record OrderBookRecord) {
 }
 
 // GetRecordByAccountAndOrderID returns order book record by account and orderID.
-func (ob *OrderBook) GetRecordByAccountAndOrderID(account, orderBookID string) (bool, OrderBookRecord) {
+func (ob *OrderBook) GetRecordByAccountAndOrderID(account, orderBookID string) (OrderBookRecord, bool) {
 	i := ob.findRecordIndex(account, orderBookID)
 	if i < 0 {
-		return false, OrderBookRecord{}
+		return OrderBookRecord{}, false
 	}
 
-	return true, ob.Records[i]
+	return ob.Records[i], true
 }
 
 // IsEmpty returns true if empty.
@@ -256,7 +256,7 @@ func (app *App) matchOrder(order Order, makerOB, ob *OrderBook) {
 		return
 	}
 
-	newOrderRevPriceRat := BigRatQuo(NewBigRatFromInt64(1), NewBigRatFromSDKDec(order.Price))
+	newOrderRevPriceRat := BigRatInv(NewBigRatFromSDKDec(order.Price))
 	makerOB.Iterate(func(makerOBRecord OrderBookRecord) bool {
 		makerOBRecordPriceRat := NewBigRatFromSDKDec(makerOBRecord.Price)
 		if BigRatLT(newOrderRevPriceRat, makerOBRecordPriceRat) {
@@ -279,12 +279,12 @@ func (app *App) matchOrder(order Order, makerOB, ob *OrderBook) {
 
 		if BigRatGT(makerOBRecordExpectedReceiveQuantityRat, takerQuantityRat) {
 			// the rev order remains, the taker is reduced fully
-			makerOBRecordRevPriceRat := BigRatQuo(NewBigRatFromInt64(1), NewBigRatFromSDKDec(makerOBRecord.Price))
-			maxExecutionQuantity, revMaxExecutionQuantity, remainder := FindMaxExecutionQuantity(
+			makerOBRecordRevPriceRat := BigRatInv(NewBigRatFromSDKDec(makerOBRecord.Price))
+			maxExecutionQuantity, revMaxExecutionQuantity, quantityRemainder := FindMaxExecutionQuantity(
 				order.Quantity.BigInt(), makerOBRecordRevPriceRat,
 			)
 			// taker receives
-			app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, sdk.NewIntFromBigInt(remainder)))
+			app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, sdk.NewIntFromBigInt(quantityRemainder)))
 			app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, sdkmath.NewIntFromBigInt(revMaxExecutionQuantity)))
 			// maker receives
 			app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
@@ -300,12 +300,12 @@ func (app *App) matchOrder(order Order, makerOB, ob *OrderBook) {
 			return true
 		}
 
-		maxExecutionQuantity, revMaxExecutionQuantity, remainder := FindMaxExecutionQuantity(
+		maxExecutionQuantity, revMaxExecutionQuantity, quantityRemainder := FindMaxExecutionQuantity(
 			makerOBRecord.RemainingQuantity.BigInt(), makerOBRecordPriceRat,
 		)
 		// maker receives
 		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdk.NewIntFromBigInt(revMaxExecutionQuantity)))
-		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, sdk.NewIntFromBigInt(remainder)))
+		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, sdk.NewIntFromBigInt(quantityRemainder)))
 		// taker receives
 		app.SendCoin(order.Account, sdk.NewCoin(order.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
 		// remove reduced record
@@ -406,16 +406,16 @@ func (app *App) GetTickSize(denom1, denom2 string) *big.Rat {
 }
 
 // FindMaxExecutionQuantity returns max execution quantity that gives int when we multiply quantity by price,
-// max reversed execution quantity which is max execution quantity multiplied by price and remainder.
+// max reversed execution quantity which is max execution quantity multiplied by price and quantity remainder.
 func FindMaxExecutionQuantity(quantity *big.Int, price *big.Rat) (*big.Int, *big.Int, *big.Int) {
 	priceDenom := price.Denom()
 	// truncate(quantity / priceDenom) * priceDenom
 	maxExecutionQuantity := BigIntMul(BigIntQuo(quantity, priceDenom), priceDenom)
 	// maxExecutionQuantity * price is always integer here
 	revMaxExecutionQuantity := BigRatToInt(BigRatMul(NewBigRatFromBigInt(maxExecutionQuantity), price))
-	remainder := BigIntSub(quantity, maxExecutionQuantity)
+	quantityRemainder := BigIntSub(quantity, maxExecutionQuantity)
 
-	return maxExecutionQuantity, revMaxExecutionQuantity, remainder
+	return maxExecutionQuantity, revMaxExecutionQuantity, quantityRemainder
 }
 
 // ********** Math **********
@@ -476,6 +476,11 @@ func BigRatQuo(x, y *big.Rat) *big.Rat {
 // BigRatMul multiplies Rat with Rat.
 func BigRatMul(x, y *big.Rat) *big.Rat {
 	return (&big.Rat{}).Mul(x, y)
+}
+
+// BigRatInv returns 1/x.
+func BigRatInv(x *big.Rat) *big.Rat {
+	return (&big.Rat{}).Inv(x)
 }
 
 // BigRatLTOne returns true if value lower than one.

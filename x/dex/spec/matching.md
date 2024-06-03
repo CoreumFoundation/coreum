@@ -62,17 +62,46 @@ we multiply it by the execution price. The execution price might be the maker or
 order `remaining_quantity`. Or one divided by the maker order price, if we try to fill the taker
 order `remaining_quantity`.
 
-We know that float price can be written as `price_numerator/price_denominator`. Hence, to get integer when we multiply
-`remaining_quantity` by `price_numerator/price_denominator`, the `remaining_quantity` must be multiple of
-`price_denominator` which can be converted to formula:
+Let's find the formula for the `max_execution_quantity` :
 
 ```
-max_execution_quantity = truncate(remaining_quantity / price_denominator) * price_denominator
+Qa - quantity of token AAA to trade (integer)
+P - execution price (decimal)
+Qa' - final quantity of token A to be traded (integer)
+Qb' - final quantity of token B to be traded (integer)
+P = pn / pd, where pn is price numerator (integer) and pd - price denominator (integer)
 ```
 
-Based on the formula we can define the max not filled quantity. The max not filled quantity depends on the order we
-fill fully. If the order is taker order, the max remainder is equal to the maker price numerator, if maker, the maker
-price denominator.
+We can define the `Qb'` as:
+
+```
+Qb' = Qa' * P = Qa' * pn / pd
+```
+
+To make `Qb'` an integer `pd` must be reduced to 1 by being reduced with `pn` or `Qa'`.
+Because `pn / pd`, by definition, is an irreducible fraction it means `pn` and `pd` already have no common divider other
+than 1.
+
+It means that `pd` must be reduced fully by `Qa'` exclusively.
+It means that `Qa'` must be a multiple of pd.
+
+That's why
+
+```
+Qa' = floor(Qa / pd) * pd
+```
+
+generates the biggest `Qa'` divisible by `pd`.
+
+Which we can re-write as
+
+```
+max_execution_quantity = floor(remaining_quantity / price_denominator) * price_denominator
+```
+
+Based on the formula we can define the max not filled quantity (the remained). The max not filled quantity depends on
+the order we fill fully. If the order is taker order, the max remainder is equal to the maker price numerator, if maker,
+the maker price denominator.
 
 #### Matching algorithm
 
@@ -95,7 +124,7 @@ if 1/(taker_price) > rev_order_price:
       rev_execution_quantity = max_execution_quantity * maker_price
       maker receives:
         rev_execution_quantity
-        maker_remaing_quantity - max_execution_quantity (remainder)
+        maker_remaining_quantity - max_execution_quantity (remainder)
       taker receives: 
         max_execution_quantity
       maker order is closed  

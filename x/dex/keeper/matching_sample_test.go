@@ -576,7 +576,7 @@ func validatePriceViolation(t *testing.T, app *keeper.App, balancesBefore map[st
 
 	// sub remainder
 	soldQuantity := keeper.BigIntSub(order.Quantity.BigInt(), accountBalancesDiff.AmountOf(order.SellDenom).BigInt())
-	found, record := ob.GetRecordByAccountAndOrderID(order.Account, order.ID)
+	record, found := ob.GetRecordByAccountAndOrderID(order.Account, order.ID)
 	if found {
 		// sub not executed quantity
 		soldQuantity = keeper.BigIntSub(soldQuantity, record.RemainingQuantity.BigInt())
