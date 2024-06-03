@@ -235,12 +235,15 @@ func (c ChainContext) AwaitForIBCChannelID(
 			if !ok || peerCh.Counterparty.ChannelId != chID {
 				continue
 			}
+			// Peer chain might have different port ID. E.g., in case of IBC transfer from WASM smart contract
+			// source chain is wasm.<src-chain-smart-contract> but destination is wasm.<dst-chain-smart-contract>.
+			peerPort := peerCh.Counterparty.PortId
 
-			expectedPeerChainName, err := c.getCounterpartyChainName(ctx, chID, port)
+			expectedPeerChainName, err := c.getIBCCounterpartyChainName(ctx, chID, port)
 			if err != nil {
 				return errors.Wrapf(err, "counterparty chain name query failed for: %s", c.ChainSettings.ChainID)
 			}
-			expectedChainName, err := peerChain.getCounterpartyChainName(ctx, peerCh.ChannelId, port)
+			expectedChainName, err := peerChain.getIBCCounterpartyChainName(ctx, peerCh.ChannelId, peerPort)
 			if err != nil {
 				return errors.Wrapf(err, "counterparty chain name query failed for: %s", peerChain.ChainSettings.ChainID)
 			}
@@ -420,7 +423,7 @@ func (c ChainContext) getAllOpenChannels(ctx context.Context) (map[string]*ibcch
 	return openChannelsMap, nil
 }
 
-func (c ChainContext) getCounterpartyChainName(ctx context.Context, channelID, portID string) (string, error) {
+func (c ChainContext) getIBCCounterpartyChainName(ctx context.Context, channelID, portID string) (string, error) {
 	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
 
 	channelClientStateRes, err := ibcChannelClient.ChannelClientState(
