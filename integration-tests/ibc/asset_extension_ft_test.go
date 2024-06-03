@@ -780,19 +780,12 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	coreumIssuer := coreumChain.GenAccount()
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgIssue{},
-		},
-		Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+		Amount: issueFee.Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+								Add(sdk.NewInt(2 * 500_000)),
 	})
 
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&ibctransfertypes.MsgTransfer{},
-			&ibctransfertypes.MsgTransfer{},
-			&ibctransfertypes.MsgTransfer{},
-		},
+		Amount: sdk.NewInt(3 * 500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -821,7 +814,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactoryAuto(),
 		issueMsg,
 	)
 	require.NoError(t, err)
@@ -846,7 +839,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(msgSend)),
+		coreumChain.TxFactoryAuto(),
 		msgSend,
 	)
 	requireT.NoError(err)
@@ -861,7 +854,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		ctx,
 		t,
 		coreumChain.ChainContext,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumSender,
 		sendCoin,
 		gaiaChain.ChainContext,
@@ -885,7 +878,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		ctx,
 		t,
 		coreumChain.ChainContext,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumSender,
 		sendCoin,
 		gaiaChain.ChainContext,
@@ -913,7 +906,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		ctx,
 		t,
 		coreumChain.ChainContext,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumSender,
 		sendCoin,
 		gaiaChain.ChainContext,
@@ -997,18 +990,16 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
-			&banktypes.MsgSend{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
 		},
-		Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+		Amount: issueFee.
+			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdk.NewInt(2 * 500_000)),
 	})
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&ibctransfertypes.MsgTransfer{},
-		},
+		Amount: sdk.NewInt(500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1037,7 +1028,7 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactoryAuto(),
 		issueMsg,
 	)
 	require.NoError(t, err)
@@ -1086,7 +1077,7 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(sendMsg)),
+		coreumChain.TxFactoryAuto(),
 		sendMsg,
 	)
 	require.NoError(t, err)
@@ -1109,7 +1100,7 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumSender,
 		sendCoin,
 		gaiaChain.ChainContext,
@@ -1151,18 +1142,16 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 
 		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgFreeze{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
-				&banktypes.MsgSend{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
 			},
-			Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+			Amount: issueFee.
+				Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+				Add(sdk.NewInt(2 * 500_000)),
 		})
 		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-			Messages: []sdk.Msg{
-				&ibctransfertypes.MsgTransfer{},
-			},
+			Amount: sdk.NewInt(500_000),
 		})
 
 		codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1191,7 +1180,7 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		_, err = client.BroadcastTx(
 			ctx,
 			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+			coreumChain.TxFactoryAuto(),
 			issueMsg,
 		)
 		require.NoError(t, err)
@@ -1240,7 +1229,7 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		_, err = client.BroadcastTx(
 			ctx,
 			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(sendMsg)),
+			coreumChain.TxFactoryAuto(),
 			sendMsg,
 		)
 		require.NoError(t, err)
@@ -1262,7 +1251,7 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		_, err = coreumChain.ExecuteTimingOutIBCTransfer(
 			ctx,
 			t,
-			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+			coreumChain.TxFactoryAuto(),
 			coreumSender,
 			sendToGaiaCoin,
 			gaiaChain.ChainContext,
@@ -1345,16 +1334,12 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
-		},
-		Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+		Amount: issueFee.
+			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdk.NewInt(2 * 500_000)),
 	})
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&ibctransfertypes.MsgTransfer{},
-		},
+		Amount: sdk.NewInt(500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1383,7 +1368,7 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactoryAuto(),
 		issueMsg,
 	)
 	require.NoError(t, err)
@@ -1405,7 +1390,7 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(sendMsg)),
+		coreumChain.TxFactoryAuto(),
 		sendMsg,
 	)
 	require.NoError(t, err)
@@ -1430,7 +1415,7 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+		coreumChain.TxFactoryAuto(),
 		coreumSender,
 		sendCoin,
 		gaiaChain.ChainContext,
@@ -1486,16 +1471,12 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 		gaiaRecipient := gaiaChain.GenAccount()
 
 		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&banktypes.MsgSend{},
-			},
-			Amount: issueFee.Add(sdk.NewInt(1_000_000)), // added one million for contract upload
+			Amount: issueFee.
+				Add(sdk.NewInt(1_000_000)). // added one million for contract upload
+				Add(sdk.NewInt(2 * 500_000)),
 		})
 		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-			Messages: []sdk.Msg{
-				&ibctransfertypes.MsgTransfer{},
-			},
+			Amount: sdk.NewInt(500_000),
 		})
 
 		codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1524,7 +1505,7 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 		_, err = client.BroadcastTx(
 			ctx,
 			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+			coreumChain.TxFactoryAuto(),
 			issueMsg,
 		)
 		require.NoError(t, err)
@@ -1546,7 +1527,7 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 		_, err = client.BroadcastTx(
 			ctx,
 			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(sendMsg)),
+			coreumChain.TxFactoryAuto(),
 			sendMsg,
 		)
 		require.NoError(t, err)
@@ -1572,7 +1553,7 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 		_, err = coreumChain.ExecuteTimingOutIBCTransfer(
 			ctx,
 			t,
-			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
+			coreumChain.TxFactoryAuto(),
 			coreumSender,
 			sendCoin,
 			gaiaChain.ChainContext,
