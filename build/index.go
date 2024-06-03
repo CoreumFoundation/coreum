@@ -8,11 +8,12 @@ import (
 
 // Commands is a definition of commands available in build system.
 var Commands = map[string]types.Command{
-	"build/me": {Fn: crust.BuildBuilder, Description: "Builds the builder"},
-	"build":    {Fn: coreum.BuildCored, Description: "Builds cored binary"},
-	"download": {Fn: coreum.DownloadDependencies, Description: "Downloads go dependencies"},
-	"generate": {Fn: coreum.Generate, Description: "Generates artifacts"},
-	"images":   {Fn: coreum.BuildCoredDockerImage, Description: "Builds cored docker image"},
+	"build/me":   {Fn: crust.BuildBuilder, Description: "Builds the builder"},
+	"build/znet": {Fn: crust.BuildZNet, Description: "Builds znet binary"},
+	"build":      {Fn: coreum.BuildCored, Description: "Builds cored binary"},
+	"download":   {Fn: coreum.DownloadDependencies, Description: "Downloads go dependencies"},
+	"generate":   {Fn: coreum.Generate, Description: "Generates artifacts"},
+	"images":     {Fn: coreum.BuildCoredDockerImage, Description: "Builds cored docker image"},
 	"integration-tests": {
 		Fn:          coreum.RunAllIntegrationTests(false),
 		Description: "Runs all safe integration tests",
