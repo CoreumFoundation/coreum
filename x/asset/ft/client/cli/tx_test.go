@@ -622,7 +622,10 @@ func issue(
 		args = append(args, fmt.Sprintf("--%s=%s", cli.URIHashFlag, token.URIHash))
 	}
 	if extensionSettings != nil && extensionSettings.CodeId > 0 {
-		args = append(args, fmt.Sprintf("--%s=%d", cli.ExtensionCodeID, extensionSettings.CodeId))
+		args = append(args,
+			fmt.Sprintf("--%s=%d", cli.ExtensionCodeID, extensionSettings.CodeId),
+			fmt.Sprintf("--%s=%d", flags.FlagGas, 2000000),
+		)
 		if len(extensionSettings.Label) > 0 {
 			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionLabel, extensionSettings.Label))
 		}
