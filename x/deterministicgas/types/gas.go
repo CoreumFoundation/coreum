@@ -6,34 +6,49 @@ import (
 
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	googlegrpc "google.golang.org/grpc"
 
+	testutilconstant "github.com/CoreumFoundation/coreum/v4/testutil/constant"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
 )
 
 const (
-	// TODO(dzmitryhil) update to 10 once if fix simulation issue.
-	fuseGasMultiplier    = 1000
-	expectedMaxGasFactor = 5
+	fuseGasMultiplier         = 10
+	simFuseGasMultiplier      = 1000
+	expectedMaxGasFactor      = 5
+	untrackedMaxGasForQueries = uint64(5_000)
 )
 
 // NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for
 // defined message types.
 func NewDeterministicMsgServer(
-	baseServer grpc.Server, deterministicGasConfig deterministicgas.Config,
+	baseServer grpc.Server,
+	deterministicGasConfig deterministicgas.Config,
+	assetFTKeeper AssetFTKeeper,
 ) grpc.Server {
 	return &deterministicMsgServer{
 		baseServer:             baseServer,
 		deterministicGasConfig: deterministicGasConfig,
+		assetFTKeeper:          assetFTKeeper,
 	}
 }
 
 type deterministicMsgServer struct {
 	baseServer             grpc.Server
 	deterministicGasConfig deterministicgas.Config
+	assetFTKeeper          AssetFTKeeper
 }
 
 func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, handler interface{}) {
@@ -65,9 +80,14 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 	//
 	// Then we extract cosmos context from `ctx` replace gas meter, pack it into `ctx` again and hall final handler.
 
-	for i, method := range sd.Methods {
+	methods := make([]googlegrpc.MethodDesc, len(sd.Methods))
+	copy(methods, sd.Methods)
+	newSD := *sd
+	newSD.Methods = methods
+
+	for i, method := range newSD.Methods {
 		method := method
-		sd.Methods[i].Handler = func(
+		newSD.Methods[i].Handler = func(
 			srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor googlegrpc.UnaryServerInterceptor,
 		) (interface{}, error) {
 			return method.Handler(srv, ctx, dec, func(
@@ -76,7 +96,13 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 				return interceptor(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
 					sdkCtx := sdk.UnwrapSDKContext(ctx)
 					msg := req.(sdk.Msg)
-					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, msg, s.deterministicGasConfig)
+					newSDKCtx, gasBefore, isDeterministic, err := s.ctxForDeterministicGas(
+						sdkCtx,
+						msg,
+					)
+					if err != nil {
+						return nil, err
+					}
 
 					// gas metrics are reported only if message type is deterministic, and was successful
 					// CheckTx and ReCheckTx phases are ignored, since are only interested in the real execution
@@ -110,15 +136,28 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 			})
 		}
 	}
-	s.baseServer.RegisterService(sd, handler)
+	s.baseServer.RegisterService(&newSD, handler)
 }
 
-func ctxForDeterministicGas(
-	ctx sdk.Context, msg sdk.Msg, deterministicGasConfig deterministicgas.Config,
-) (sdk.Context, sdk.Gas, bool) {
-	gasRequired, exists := deterministicGasConfig.GasRequiredByMessage(msg)
+func (s deterministicMsgServer) ctxForDeterministicGas(
+	ctx sdk.Context,
+	msg sdk.Msg,
+) (sdk.Context, sdk.Gas, bool, error) {
+	gasRequired, isDeterministic := s.deterministicGasConfig.GasRequiredByMessage(msg)
 	gasBefore := ctx.GasMeter().GasConsumed()
-	if exists {
+	if isDeterministic {
+		hasExtension, err := hasExtensionCall(ctx, msg, s.assetFTKeeper)
+		if err != nil {
+			return sdk.Context{}, 0, false, err
+		}
+
+		// we consider extensions to be nondeterministic.
+		if hasExtension {
+			isDeterministic = false
+		}
+	}
+
+	if isDeterministic {
 		// Fixed gas is consumed on original gas meter to require and report deterministic gas amount
 		ctx.GasMeter().ConsumeGas(
 			gasRequired,
@@ -127,9 +166,92 @@ func ctxForDeterministicGas(
 
 		// We pass much higher amount of gas to handler to be sure that it succeeds.
 		// We want to avoid passing infinite gas meter to always have a limit in case of mistake.
-		ctx = ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * gasRequired))
+		gasMultiplier := uint64(fuseGasMultiplier)
+		if ctx.ChainID() == testutilconstant.SimAppChainID {
+			// simulation fuse gas multiplier is different since during the simulation the modules uses the assetft denom
+			// for the cases which are possible for the simulation only and require more gas
+			gasMultiplier = simFuseGasMultiplier
+		}
+		ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMultiplier * gasRequired))
 	}
-	return ctx, gasBefore, exists
+	return ctx, gasBefore, isDeterministic, nil
+}
+
+func typeAssertMessages(msg sdk.Msg) (sdk.Coins, bool, error) {
+	coins := sdk.NewCoins()
+	switch typedMsg := msg.(type) {
+	case *banktypes.MsgSend:
+		coins = typedMsg.Amount
+	case *banktypes.MsgMultiSend:
+		for _, input := range typedMsg.Inputs {
+			coins = coins.Add(input.Coins...)
+		}
+	case *distributiontypes.MsgCommunityPoolSpend:
+		coins = typedMsg.Amount
+	case *distributiontypes.MsgFundCommunityPool:
+		coins = typedMsg.Amount
+	case *ibctransfertypes.MsgTransfer:
+		coins = sdk.NewCoins(typedMsg.Token)
+	case *assetfttypes.MsgIssue:
+		if lo.Contains(typedMsg.Features, assetfttypes.Feature_extension) {
+			return nil, true, nil
+		}
+	case *vestingtypes.MsgCreateVestingAccount:
+		coins = typedMsg.Amount
+	case *vestingtypes.MsgCreatePermanentLockedAccount:
+		coins = typedMsg.Amount
+	case *vestingtypes.MsgCreatePeriodicVestingAccount:
+		for _, period := range typedMsg.VestingPeriods {
+			coins = coins.Add(period.Amount...)
+		}
+	case *govv1.MsgSubmitProposal:
+		coins = typedMsg.InitialDeposit
+	case *govv1beta1.MsgSubmitProposal:
+		coins = typedMsg.InitialDeposit
+	case *govv1.MsgDeposit:
+		coins = typedMsg.Amount
+	case *govv1beta1.MsgDeposit:
+		coins = typedMsg.Amount
+	case *authz.MsgExec:
+		msgs, err := typedMsg.GetMessages()
+		if err != nil {
+			return nil, false, err
+		}
+		for _, m := range msgs {
+			msgCoins, hasExtension, err := typeAssertMessages(m)
+			if err != nil || hasExtension {
+				return nil, hasExtension, err
+			}
+			coins = coins.Add(msgCoins...)
+		}
+	}
+
+	return coins, false, nil
+}
+
+func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper) (bool, error) {
+	coins, hasExtension, err := typeAssertMessages(msg)
+	if err != nil || hasExtension {
+		return hasExtension, err
+	}
+
+	for _, coin := range coins {
+		// we should not count the used for this query, otherwise it will mess up the gas
+		// requirements of the message with deterministic gas.
+		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * untrackedMaxGasForQueries))
+		def, err := assetFTKeeper.GetDefinition(ctxWithUntrackedGas, coin.Denom)
+		if assetfttypes.ErrInvalidDenom.Is(err) || assetfttypes.ErrTokenNotFound.Is(err) {
+			// if the token is not defined in asset ft module, we assume this is different
+			// type of token (e.g core, ibc, etc) and don't apply asset ft rules.
+			continue
+		} else if err != nil {
+			return false, err
+		}
+		if def.IsFeatureEnabled(assetfttypes.Feature_extension) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func reportDeterministicGas(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgURL string) error {

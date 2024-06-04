@@ -13,7 +13,7 @@ if [ ! -f "$BUILD_BIN" ]; then
   rm -f ./bin/.cache/build-*
 
   pushd build > /dev/null
-  go build -trimpath -o "$BUILD_BIN" ./cmd
+  go build -trimpath -o "$BUILD_BIN" ./cmd/builder
   popd > /dev/null
 
   "$BUILD_BIN" build/me
@@ -21,4 +21,18 @@ fi
 
 popd > /dev/null
 
-exec "$BUILD_BIN" "$@"
+case "$1" in
+
+   "znet")
+      if [ ! -f "$REPO/bin/.cache/znet" ]; then
+        "$BUILD_BIN" build/znet
+      fi
+
+      shift 1
+      exec "$REPO/bin/.cache/znet" "$@"
+      ;;
+
+   *)
+     exec "$BUILD_BIN" "$@"
+     ;;
+esac

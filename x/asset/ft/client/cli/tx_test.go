@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -16,6 +17,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/app"
@@ -49,7 +51,7 @@ func TestIssue(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(100)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	var resp types.QueryTokenResponse
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
@@ -59,6 +61,63 @@ func TestIssue(t *testing.T) {
 	token.Version = resp.Token.Version
 	token.Admin = resp.Token.Admin
 	requireT.Equal(token, resp.Token)
+}
+
+func TestIssueWithExtension(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+
+	args := []string{
+		"../../keeper/test-contracts/asset-extension/artifacts/asset_extension.wasm",
+		fmt.Sprintf("--%s=%s", flags.FlagGas, "auto"),
+	}
+	args = append(args, txValidator1Args(testNetwork)...)
+	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, wasmcli.StoreCodeCmd(), args)
+	requireT.NoError(err)
+
+	lastEvent, err := lo.Last(res.Logs[0].Events)
+	requireT.NoError(err)
+	lastAttribute, err := lo.Last(lastEvent.Attributes)
+	requireT.NoError(err)
+	codeID, err := strconv.ParseUint(lastAttribute.Value, 10, 64)
+	requireT.NoError(err)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_burning,
+			types.Feature_extension,
+		},
+		BurnRate:           sdk.MustNewDecFromStr("0.1"),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		Version:            0,
+		URI:                "https://my-token-meta.invalid/1 ",
+		URIHash:            "e000624",
+	}
+
+	initialAmount := sdkmath.NewInt(100)
+	extension := &types.ExtensionIssueSettings{
+		CodeId: codeID,
+		Label:  "testing-extension",
+		Funds:  sdk.NewCoins(sdk.NewCoin(testNetwork.Config.BondDenom, sdk.NewInt(10))),
+	}
+	denom := issue(requireT, ctx, token, initialAmount, extension, testNetwork)
+
+	var resp types.QueryTokenResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
+	// set generated values
+	token.Denom = denom
+	token.Issuer = resp.Token.Issuer
+	token.Version = resp.Token.Version
+	token.Admin = resp.Token.Admin
+	token.ExtensionCWAddress = resp.Token.ExtensionCWAddress
+	requireT.Equal(token, resp.Token)
+	requireT.NotEmpty(resp.Token.ExtensionCWAddress)
 }
 
 func TestMintBurn(t *testing.T) {
@@ -78,7 +137,7 @@ func TestMintBurn(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(777)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 	issuer := testNetwork.Validators[0].Address
 
 	// mint new tokens
@@ -149,7 +208,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(777)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	// freeze part of the token
@@ -182,7 +241,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		token.Symbol = fmt.Sprintf("btc%d%s", i, uuid.NewString()[:4])
 		token.Subunit = fmt.Sprintf("satoshi%d%s", i, uuid.NewString()[:4])
-		newDenom := issue(requireT, ctx, token, initialAmount, testNetwork)
+		newDenom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 		coinToFreeze = sdk.NewInt64Coin(newDenom, 100)
 		args = append([]string{recipient.String(), coinToFreeze.String()}, txValidator1Args(testNetwork)...)
 		_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
@@ -254,7 +313,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(777)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	// globally freeze the token
 	args := append([]string{denom}, txValidator1Args(testNetwork)...)
@@ -290,7 +349,7 @@ func TestClawback(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(777)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 	account := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	coin := sdk.NewInt64Coin(denom, 100)
@@ -330,7 +389,7 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(777)
-	_ = issue(requireT, ctx, token, initialAmount, testNetwork)
+	_ = issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -338,7 +397,7 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		token.Symbol = fmt.Sprintf("btc%d%s", i, uuid.NewString()[:4])
 		token.Subunit = fmt.Sprintf("satoshi%d%s", i, uuid.NewString()[:4])
-		denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+		denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 		coinToWhitelist := sdk.NewInt64Coin(denom, 100)
 		args := append([]string{recipient.String(), coinToWhitelist.String()}, txValidator1Args(testNetwork)...)
@@ -402,7 +461,7 @@ func TestTransferAdmin(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(777)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	// transfer admin from issuer to new admin
 	args := append([]string{newAdmin.String(), denom}, txValidator1Args(testNetwork)...)
@@ -449,7 +508,7 @@ func TestClearAdmin(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(777)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	// clear admin
 	args := append([]string{denom}, txValidator1Args(testNetwork)...)
@@ -500,7 +559,7 @@ func TestUpgradeV1(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(777)
-	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	// --ibc-enabled is missing
 	args := append([]string{
@@ -531,6 +590,7 @@ func issue(
 	ctx client.Context,
 	token types.Token,
 	initialAmount sdkmath.Int,
+	extensionSettings *types.ExtensionIssueSettings,
 	testNetwork *network.Network,
 ) string {
 	features := make([]string, 0, len(token.Features))
@@ -560,6 +620,18 @@ func issue(
 	}
 	if token.URIHash != "" {
 		args = append(args, fmt.Sprintf("--%s=%s", cli.URIHashFlag, token.URIHash))
+	}
+	if extensionSettings != nil && extensionSettings.CodeId > 0 {
+		args = append(args,
+			fmt.Sprintf("--%s=%d", cli.ExtensionCodeID, extensionSettings.CodeId),
+			fmt.Sprintf("--%s=%d", flags.FlagGas, 2000000),
+		)
+		if len(extensionSettings.Label) > 0 {
+			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionLabel, extensionSettings.Label))
+		}
+		if extensionSettings.Funds != nil && extensionSettings.Funds.IsAllPositive() {
+			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionFunds, extensionSettings.Funds.String()))
+		}
 	}
 
 	args = append(args, txValidator1Args(testNetwork)...)

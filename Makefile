@@ -1,49 +1,57 @@
-CoreumBuilder = ./bin/coreum-builder
+BUILDER = ./bin/coreum-builder
+
+.PHONY: znet-start
+znet-start:
+	$(BUILDER) znet start --profiles=3cored
+
+.PHONY: znet-remove
+znet-remove:
+	$(BUILDER) znet remove
 
 .PHONY: lint
 lint:
-	$(CoreumBuilder) lint
+	$(BUILDER) lint
 
 .PHONY: test
 test:
-	$(CoreumBuilder) test
+	$(BUILDER) test
 
 .PHONY: build
 build:
-	$(CoreumBuilder) build
+	$(BUILDER) build
 
 .PHONY: images
 images:
-	$(CoreumBuilder) images
+	$(BUILDER) images
 
 .PHONY: wasm
 wasm:
-	$(CoreumBuilder) wasm
+	$(BUILDER) wasm
 
 .PHONY: generate
 generate:
-	$(CoreumBuilder) generate
+	$(BUILDER) generate
 
 .PHONY: release
 release:
-	$(CoreumBuilder) release
+	$(BUILDER) release
 
 .PHONY: release-images
 release-images:
-	$(CoreumBuilder) release/images
+	$(BUILDER) release/images
 
 .PHONY: dependencies
 dependencies:
-	$(CoreumBuilder) download
+	$(BUILDER) download
 
 .PHONY: integration-tests-modules
 integration-tests-modules:
-	$(CoreumBuilder) integration-tests-unsafe/modules
+	$(BUILDER) integration-tests-unsafe/modules
 
 .PHONY: integration-tests-ibc
 integration-tests-ibc:
-	$(CoreumBuilder) integration-tests-unsafe/ibc
+	$(BUILDER) integration-tests-unsafe/ibc
 
 .PHONY: integration-tests-upgrade
 integration-tests-upgrade:
-	$(CoreumBuilder) integration-tests-unsafe/upgrade
+	$(BUILDER) integration-tests-unsafe/upgrade
