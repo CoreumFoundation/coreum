@@ -210,6 +210,7 @@ func (def Definition) HasAdminPrivileges(addr sdk.Address) bool {
 // ValidateFeatures verifies that provided features belong to the defined set.
 func ValidateFeatures(features []Feature) error {
 	present := map[Feature]struct{}{}
+	hasExtension := false
 	for _, f := range features {
 		name, exists := Feature_name[int32(f)]
 		if !exists {
@@ -218,7 +219,20 @@ func ValidateFeatures(features []Feature) error {
 		if _, exists := present[f]; exists {
 			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated feature: %s", name)
 		}
+		if f == Feature_extension {
+			hasExtension = true
+		}
 		present[f] = struct{}{}
+	}
+	if hasExtension {
+		for _, item := range features {
+			switch item {
+			case Feature_ibc:
+				return sdkerrors.Wrapf(ErrInvalidInput, "ibc feature is not allowed in combination with extension")
+			case Feature_block_smart_contracts:
+				return sdkerrors.Wrapf(ErrInvalidInput, "block_smart_contract feature is not allowed in combination with extension")
+			}
+		}
 	}
 	return nil
 }
