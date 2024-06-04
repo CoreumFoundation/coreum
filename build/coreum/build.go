@@ -3,9 +3,12 @@ package coreum
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/crust/build/git"
@@ -15,11 +18,14 @@ import (
 )
 
 const (
-	blockchainName = "coreum"
-	binaryName     = "cored"
-	repoPath       = "."
-	binaryPath     = "bin/" + binaryName
-	testsDir       = repoPath + "/integration-tests"
+	blockchainName     = "coreum"
+	binaryName         = "cored"
+	extendedBinaryName = "cored-ext"
+	repoPath           = "."
+	binaryPath         = "bin/" + binaryName
+	extendedBinaryPath = "bin/" + extendedBinaryName
+	testsDir           = repoPath + "/integration-tests"
+	cometBFTCommit     = "2644973fb58663f435aac0c6bdf9502fe78798a0"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
@@ -41,7 +47,7 @@ func BuildCored(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildCoredLocally builds cored locally.
 func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsLocal)
+	versionFlags, err := coredVersionLDFlags(ctx, tagsLocal, "")
 	if err != nil {
 		return err
 	}
@@ -61,7 +67,35 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
-	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag})
+	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
+		binaryName, "")
+}
+
+// BuildExtendedCoredInDocker builds extended cored in docker.
+func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
+	f, err := os.OpenFile("go.mod", os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer f.Close()
+
+	_, err = f.WriteString("replace github.com/cometbft/cometbft => github.com/CoreumFoundation/cometbft " +
+		cometBFTCommit)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := Tidy(ctx, deps); err != nil {
+		return err
+	}
+
+	err = buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
+		extendedBinaryName, "ext")
+	if err != nil {
+		return err
+	}
+
+	return git.RollbackChanges(ctx, repoPath, "go.mod", "go.sum", "go.work.sum")
 }
 
 func buildCoredInDocker(
@@ -69,8 +103,10 @@ func buildCoredInDocker(
 	deps types.DepsFunc,
 	targetPlatform tools.TargetPlatform,
 	extraFlags []string,
+	binaryName string,
+	mod string,
 ) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker)
+	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker, mod)
 	if err != nil {
 		return err
 	}
@@ -96,7 +132,7 @@ func buildCoredInDocker(
 // buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
 // used for the CLI on target platform, but can't be used to run the node.
 func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPlatform tools.TargetPlatform) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker)
+	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker, "")
 	if err != nil {
 		return err
 	}
@@ -144,7 +180,7 @@ func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
 	return golang.DownloadDependencies(ctx, repoPath, deps)
 }
 
-func coredVersionLDFlags(ctx context.Context, buildTags []string) ([]string, error) {
+func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([]string, error) {
 	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
 		return nil, err
@@ -156,6 +192,9 @@ func coredVersionLDFlags(ctx context.Context, buildTags []string) ([]string, err
 	}
 	if version == "" {
 		version = hash
+	}
+	if mod != "" {
+		version += "+" + mod
 	}
 	ps := map[string]string{
 		"github.com/cosmos/cosmos-sdk/version.Name":    blockchainName,

@@ -629,10 +629,8 @@ github.com/ChainSafe/go-schnorrkel v1.0.0 h1:3aDA67lAykLaG1y3AOjs88dMxC88PgUuHRr
 github.com/ChainSafe/go-schnorrkel v1.0.0/go.mod h1:dpzHYVxLZcp8pjlV+O+UR8K0Hp/z7vcchBSbMBEhCw4=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68 h1:Tb9avuSQW3smVGrUnDh/Y+ML4eK802UsvJNZHsBgOGg=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/crust v0.0.0-20240528120033-adba8e3513ba h1:gQK4XKMRcZpMPzfpBxsOkpKqbr8gGnB+wFzdxK9W99I=
-github.com/CoreumFoundation/crust v0.0.0-20240528120033-adba8e3513ba/go.mod h1:YilUiq6WrcUP6HMoGxwJAD0Zp7kL2QryTeycSiXoobA=
-github.com/CoreumFoundation/crust/build v0.0.0-20240528120033-adba8e3513ba h1:5BlXdzKzGatbqkC2PZqbMCjl8zf9JbJ9ijzfpN7LvYo=
-github.com/CoreumFoundation/crust/build v0.0.0-20240528120033-adba8e3513ba/go.mod h1:2jqmpvPVpODkfLXUWc2Fj9voIMloobAHFcbhNxbwGSc=
+github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd h1:4nns+B+HSRdWLHSn8KHv1q4Y4/eNMvp8lyg4uA0/2Xg=
+github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd/go.mod h1:+tc+D5f9K7oNNtv8UazzNy8LheAhBG7UDc25JwY803Y=
 github.com/CosmWasm/wasmd v0.44.0 h1:2sbcoCAvfjCs1O0SWt53xULKjkV06dbSFthEViIC6Zg=
 github.com/CosmWasm/wasmd v0.44.0/go.mod h1:tDyYN050qUcdd7LOxGeo2e185sEShyO3nJGl2Cf59+k=
 github.com/CosmWasm/wasmvm v1.5.1 h1:2MHN9uFyHP6pxfvpBJ0JW6ujvAIBk9kQk283zyri0Ro=

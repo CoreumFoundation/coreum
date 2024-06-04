@@ -14,6 +14,7 @@ import (
 )
 
 type imageConfig struct {
+	BinaryPath      string
 	TargetPlatforms []tools.TargetPlatform
 	Action          docker.Action
 	Username        string
@@ -25,6 +26,19 @@ func BuildCoredDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	deps(BuildCoredInDocker, ensureReleasedBinaries)
 
 	return buildCoredDockerImage(ctx, imageConfig{
+		BinaryPath:      binaryPath,
+		TargetPlatforms: []tools.TargetPlatform{tools.TargetPlatformLinuxLocalArchInDocker},
+		Action:          docker.ActionLoad,
+		Versions:        []string{config.ZNetVersion},
+	})
+}
+
+// BuildExtendedCoredDockerImage builds extended cored docker image.
+func BuildExtendedCoredDockerImage(ctx context.Context, deps types.DepsFunc) error {
+	deps(BuildExtendedCoredInDocker)
+
+	return buildCoredDockerImage(ctx, imageConfig{
+		BinaryPath:      extendedBinaryPath,
 		TargetPlatforms: []tools.TargetPlatform{tools.TargetPlatformLinuxLocalArchInDocker},
 		Action:          docker.ActionLoad,
 		Versions:        []string{config.ZNetVersion},
@@ -39,7 +53,7 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 	}
 	dockerfile, err := image.Execute(image.Data{
 		From:             docker.AlpineImage,
-		CoredBinary:      binaryPath,
+		CoredBinary:      cfg.BinaryPath,
 		CosmovisorBinary: cosmovisorBinaryPath,
 		Networks: []string{
 			string(constant.ChainIDDev),
@@ -50,6 +64,7 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 		return err
 	}
 
+	binaryName := filepath.Base(cfg.BinaryPath)
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
 		RepoPath:        repoPath,
 		ContextDir:      filepath.Join("bin", ".cache", binaryName),
