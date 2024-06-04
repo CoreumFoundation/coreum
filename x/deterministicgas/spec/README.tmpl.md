@@ -59,7 +59,7 @@ TotalGas = {{ .FixedGas }} +  max(0, ({{ .TxBaseGas }} - 1 * {{ .SigVerifyCost }
 
 #### Example 2
 Let's say we have a transaction with 2 messages of type
-`/coreum.asset.ft.v1.MsgIssueGasPrice` inside, also there are 2
+`/coreum.asset.ft.v1.MsgIssue` inside, also there are 2
 signatures and the tx size is 2050 bytes, total will be:
 
 `
@@ -67,6 +67,7 @@ TotalGas = {{ .FixedGas }} +  max(0, ({{ .TxBaseGas }} - 2 * {{ .SigVerifyCost }
 `
 
 ## Gas Tables
+NOTE: if a message contians transfer of coins with the extension feature, it will count as nondeterministic.
 
 ### Deterministic messages
 
@@ -83,6 +84,8 @@ TotalGas = {{ .FixedGas }} +  max(0, ({{ .TxBaseGas }} - 2 * {{ .SigVerifyCost }
 
 There are some special cases when custom logic is applied for deterministic gas calculation.
 Real examples of special case tests could be found [here](https://github.com/CoreumFoundation/coreum/blob/master/x/deterministicgas/config_test.go#L168)
+
+As mentioned above if a transaction contains a token with extension feature, it will count as nondeterministic.
 
 ##### `/cosmos.bank.v1beta1.MsgSend`
 

@@ -82,13 +82,15 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 		}
 		for _, coin := range output.Coins {
 			def, err := k.GetDefinition(ctx, coin.Denom)
-			if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
+			if sdkerrors.IsOf(err, types.ErrInvalidDenom, types.ErrTokenNotFound) {
 				// if the token is not defined in asset ft module, we assume this is different
 				// type of token (e.g core, ibc, etc) and don't apply asset ft rules.
 				if err := k.bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coin)); err != nil {
 					return err
 				}
 				continue
+			} else if err != nil {
+				return err
 			}
 
 			// This check is effective when IBC transfer is acknowledged by the peer chain or timed out.
