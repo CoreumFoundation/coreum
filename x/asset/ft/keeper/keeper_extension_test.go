@@ -91,7 +91,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	issuedAssetBalance := bankKeeper.GetBalance(ctx, issuer, denom)
 	requireT.Equal(sdk.NewCoin(denom, settings.InitialAmount).String(), issuedAssetBalance.String())
 
-	// send 1 coin will succeed
+	// send 2 coin will succeed
 	receiver := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(2))))
 	requireT.NoError(err)
