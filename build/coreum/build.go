@@ -47,6 +47,11 @@ func BuildCored(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildCoredLocally builds cored locally.
 func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
+	modulepath, err := golang.RootModulePath(ctx, deps, repoPath)
+	if err != nil {
+		return err
+	}
+
 	versionFlags, err := coredVersionLDFlags(ctx, tagsLocal, "")
 	if err != nil {
 		return err
@@ -54,7 +59,8 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		ModulePath:     modulepath,
+		PackagePath:    "cmd/cored",
 		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
 		Flags: []string{
@@ -106,6 +112,11 @@ func buildCoredInDocker(
 	binaryName string,
 	mod string,
 ) error {
+	modulepath, err := golang.RootModulePath(ctx, deps, repoPath)
+	if err != nil {
+		return err
+	}
+
 	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker, mod)
 	if err != nil {
 		return err
@@ -118,7 +129,8 @@ func buildCoredInDocker(
 	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		ModulePath:     modulepath,
+		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     true,
 		Flags: append(
@@ -132,6 +144,11 @@ func buildCoredInDocker(
 // buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
 // used for the CLI on target platform, but can't be used to run the node.
 func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPlatform tools.TargetPlatform) error {
+	modulepath, err := golang.RootModulePath(ctx, deps, repoPath)
+	if err != nil {
+		return err
+	}
+
 	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker, "")
 	if err != nil {
 		return err
@@ -147,7 +164,8 @@ func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPl
 	)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		ModulePath:     modulepath,
+		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     false,
 		Flags: []string{
