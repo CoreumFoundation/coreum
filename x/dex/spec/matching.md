@@ -69,7 +69,7 @@ Qa - quantity of token AAA to trade (integer)
 P - execution price (decimal)
 Qa' - final quantity of token A to be traded (integer)
 Qb' - final quantity of token B to be traded (integer)
-P = pn / pd, where pn is price numerator (integer) and pd - price denominator (integer)
+P = pn / pd, where pn is price numerator (integer), pd - price denominator (integer), pd/pn is an irreducible fraction
 ```
 
 We can define the `Qb'` as:
@@ -99,7 +99,19 @@ Which we can re-write as
 max_execution_quantity = floor(remaining_quantity / price_denominator) * price_denominator
 ```
 
-Based on the formula we can define the max not filled quantity (the remained). The max not filled quantity depends on
+And the `Qb'` can be written as:
+
+```
+Qb' = floor(Qa / pd) * pn
+```
+
+The `Qb'` is the inverse `max_execution_quantity` (the amount by which the opposite order is reduced)
+
+```
+inv_max_execution_quantity = floor(remaining_quantity / price_denominator) * price_numerator
+```
+
+Based on the formulas we can define the max not filled quantity (the remained). The max not filled quantity depends on
 the order we fill fully. If the order is taker order, the max remainder is equal to the maker price numerator, if maker,
 the maker price denominator.
 

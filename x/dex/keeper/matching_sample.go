@@ -7,6 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 )
 
@@ -82,10 +83,10 @@ func NewOrderBook(sellDenom, buyDenom string) *OrderBook {
 }
 
 // AddRecordFromOrder add order book record from the order.
-func (ob *OrderBook) AddRecordFromOrder(order Order) bool {
+func (ob *OrderBook) AddRecordFromOrder(order Order) (bool, error) {
 	i := ob.findRecordIndex(order.Account, order.ID)
 	if i >= 0 {
-		panic(fmt.Sprintf("Record with the same account and orderID already exists in the order book, order:%s", order))
+		return false, errors.Errorf("record with the same account and orderID already exists in the OB, order:%s", order)
 	}
 
 	record := OrderBookRecord{
@@ -99,7 +100,7 @@ func (ob *OrderBook) AddRecordFromOrder(order Order) bool {
 		fmt.Printf("The record won't be added to the order book, since remaining buy quantity is less than one, %s/%s, record:%s\n", //nolint:lll // breaking down this string will make it less readable
 			ob.SellDenom, ob.BuyDenom, record.String(),
 		)
-		return false
+		return false, nil
 	}
 
 	fmt.Printf("Adding record to the order book, %s/%s, record:%s\n",
@@ -108,17 +109,17 @@ func (ob *OrderBook) AddRecordFromOrder(order Order) bool {
 	ob.Records = append(ob.Records, record)
 	ob.Sort()
 
-	return true
+	return true, nil
 }
 
 // UpdateRecord updates order book record, if the record is not added the method returns false.
-func (ob *OrderBook) UpdateRecord(record OrderBookRecord) bool {
+func (ob *OrderBook) UpdateRecord(record OrderBookRecord) (bool, error) {
 	// we don't allow to store record with the quantity * price < 1
 	if record.IsInvQuantityIsLessThanOne() {
 		fmt.Printf("The record won't be updated, since remaining buy quantity is less than one, %s/%s, record:%s\n",
 			ob.SellDenom, ob.BuyDenom, record.String(),
 		)
-		return false
+		return false, nil
 	}
 
 	fmt.Printf("Updating record in the order book, %s/%s, record:%s\n",
@@ -126,23 +127,25 @@ func (ob *OrderBook) UpdateRecord(record OrderBookRecord) bool {
 	)
 	i := ob.findRecordIndex(record.Account, record.OrderID)
 	if i < 0 {
-		panic(fmt.Sprintf("Failed to find record to update in order book: %s", record))
+		return false, errors.Errorf("failed to find record to update in order book: %s", record)
 	}
 	ob.Records[i] = record
 
-	return true
+	return true, nil
 }
 
 // RemoveRecord updates order book records.
-func (ob *OrderBook) RemoveRecord(record OrderBookRecord) {
+func (ob *OrderBook) RemoveRecord(record OrderBookRecord) error {
 	fmt.Printf("Removing record from the order book, %s/%s, record:%s\n",
 		ob.SellDenom, ob.BuyDenom, record.String(),
 	)
 	i := ob.findRecordIndex(record.Account, record.OrderID)
 	if i < 0 {
-		panic(fmt.Sprintf("Failed to find record to remove in order book: %s", record))
+		return errors.Errorf(fmt.Sprintf("Failed to find record to remove in order book: %s", record))
 	}
 	ob.Records = append(ob.Records[:i], ob.Records[i+1:]...)
+
+	return nil
 }
 
 // GetRecordByAccountAndOrderID returns order book record by account and orderID.
@@ -161,30 +164,35 @@ func (ob *OrderBook) IsEmpty() bool {
 }
 
 // Iterate iterates over order book records.
-func (ob *OrderBook) Iterate(iterator func(record OrderBookRecord) bool) {
+func (ob *OrderBook) Iterate(iterator func(record OrderBookRecord) (bool, error)) error {
 	// use copy to allow removal at the time of the iterating
 	recordCopy := lo.Map(ob.Records, func(record OrderBookRecord, _ int) OrderBookRecord {
 		return record
 	})
 	for _, record := range recordCopy {
-		if iterator(record) {
+		stop, err := iterator(record)
+		if err != nil {
+			return err
+		}
+		if stop {
 			break
 		}
 	}
+	return nil
 }
 
 // Print prints the order book.
-func (ob *OrderBook) Print() {
+func (ob *OrderBook) Print() error {
 	fmt.Printf("---------- Order book:%s/%s ----------\n", ob.SellDenom, ob.BuyDenom)
 	if ob.IsEmpty() {
 		fmt.Println("Empty...")
-		return
+		return nil
 	}
 	i := 0
-	ob.Iterate(func(record OrderBookRecord) bool {
+	return ob.Iterate(func(record OrderBookRecord) (bool, error) {
 		fmt.Printf("OrderBookRecord [%d]: %s\n", i, record.String())
 		i++
-		return false
+		return false, nil
 	})
 }
 
@@ -224,13 +232,18 @@ func NewApp(tickMultiplier *big.Rat, denomAmountIncrement map[string]int64) *App
 }
 
 // PlaceOrder places and matches the order into the order book.
-func (app *App) PlaceOrder(order Order) {
+func (app *App) PlaceOrder(order Order) error {
 	fmt.Printf("\n---------- New Order ----------\n")
 	fmt.Printf("Order: %s\n", order.String())
 
-	tickSize := app.GetTickSize(order.SellDenom, order.BuyDenom)
+	tickSize, err := app.GetTickSize(order.SellDenom, order.BuyDenom)
+	if err != nil {
+		return err
+	}
 	fmt.Printf("Tick size %s/%s: %s\n", order.SellDenom, order.BuyDenom, tickSize.FloatString(sdkmath.LegacyPrecision))
-	app.ValidatePriceAgainstTickSize(order.SellDenom, order.BuyDenom, order.Price)
+	if err := app.ValidatePriceAgainstTickSize(order.SellDenom, order.BuyDenom, order.Price); err != nil {
+		return err
+	}
 
 	obKey := order.OrderBookKey()
 	invOBKey := order.InverseOrderBookKey()
@@ -245,23 +258,27 @@ func (app *App) PlaceOrder(order Order) {
 		app.OrderBooks[invOBKey] = invOB
 	}
 
-	app.matchOrder(order, invOB, ob)
-	app.PrintOrderBooks(obKey, invOBKey)
+	if err := app.matchOrder(order, invOB, ob); err != nil {
+		return err
+	}
+	if err := app.PrintOrderBooks(obKey, invOBKey); err != nil {
+		return err
+	}
 	app.PrintBalances()
+
+	return nil
 }
 
-func (app *App) matchOrder(takerOrder Order, makerOB, ob *OrderBook) {
+func (app *App) matchOrder(takerOrder Order, makerOB, ob *OrderBook) error {
 	if makerOB.IsEmpty() {
-		app.addRecordToOBOrCancelOrder(ob, takerOrder)
-		return
+		return app.addRecordToOBOrCancelOrder(ob, takerOrder)
 	}
 
 	takerInvPriceRat := BigRatInv(NewBigRatFromSDKDec(takerOrder.Price))
-	makerOB.Iterate(func(makerOBRecord OrderBookRecord) bool {
+	return makerOB.Iterate(func(makerOBRecord OrderBookRecord) (bool, error) {
 		makerPriceRat := NewBigRatFromSDKDec(makerOBRecord.Price)
 		if BigRatLT(takerInvPriceRat, makerPriceRat) {
-			app.addRecordToOBOrCancelOrder(ob, takerOrder)
-			return true
+			return true, app.addRecordToOBOrCancelOrder(ob, takerOrder)
 		}
 
 		makerExpectedReceiveQuantityRat := BigRatMul(
@@ -290,14 +307,17 @@ func (app *App) matchOrder(takerOrder Order, makerOB, ob *OrderBook) {
 			app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
 			// update state
 			makerOBRecord.RemainingQuantity = makerOBRecord.RemainingQuantity.Sub(sdk.NewIntFromBigInt(invMaxExecutionQuantity))
-			if !makerOB.UpdateRecord(makerOBRecord) {
+			recordUpdated, err := makerOB.UpdateRecord(makerOBRecord)
+			if err != nil {
+				return true, err
+			}
+			if !recordUpdated {
 				// is the `true` is returned the record wasn't update, and we cancel the remaining part
 				app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, makerOBRecord.RemainingQuantity))
-				makerOB.RemoveRecord(makerOBRecord)
-				return true
+				return true, makerOB.RemoveRecord(makerOBRecord)
 			}
 
-			return true
+			return true, nil
 		}
 
 		maxExecutionQuantity, invMaxExecutionQuantity, quantityRemainder := FindMaxExecutionQuantity(
@@ -309,26 +329,33 @@ func (app *App) matchOrder(takerOrder Order, makerOB, ob *OrderBook) {
 		// taker receives
 		app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
 		// remove reduced record
-		makerOB.RemoveRecord(makerOBRecord)
+		if err := makerOB.RemoveRecord(makerOBRecord); err != nil {
+			return true, err
+		}
 		// update state
 		takerOrder.Quantity = takerOrder.Quantity.Sub(sdk.NewIntFromBigInt(invMaxExecutionQuantity))
 		if BigIntEqZero(takerOrder.Quantity.BigInt()) {
-			return true
+			return true, nil
 		}
 		// if nothing to match with add remaining takerOrder
 		if makerOB.IsEmpty() {
-			app.addRecordToOBOrCancelOrder(ob, takerOrder)
-			return true
+			return true, app.addRecordToOBOrCancelOrder(ob, takerOrder)
 		}
 
-		return false
+		return false, nil
 	})
 }
 
-func (app *App) addRecordToOBOrCancelOrder(ob *OrderBook, order Order) {
-	if !ob.AddRecordFromOrder(order) {
+func (app *App) addRecordToOBOrCancelOrder(ob *OrderBook, order Order) error {
+	added, err := ob.AddRecordFromOrder(order)
+	if err != nil {
+		return err
+	}
+	if !added {
 		app.SendCoin(order.Account, sdk.NewCoin(order.SellDenom, order.Quantity))
 	}
+
+	return nil
 }
 
 // SendCoin sends coins to sample app accounts.
@@ -345,7 +372,7 @@ func (app *App) SendCoin(recipient string, amt sdk.Coin) {
 }
 
 // PrintOrderBooks prints order books by keys.
-func (app *App) PrintOrderBooks(obKey, invKey string) {
+func (app *App) PrintOrderBooks(obKey, invKey string) error {
 	fmt.Println("---------- Order books: ----------")
 	obKeys := []string{
 		obKey, invKey,
@@ -353,8 +380,11 @@ func (app *App) PrintOrderBooks(obKey, invKey string) {
 	// sort to preserve the printed order for better readability
 	sort.Strings(obKeys)
 	for _, obKey := range obKeys {
-		app.OrderBooks[obKey].Print()
+		if err := app.OrderBooks[obKey].Print(); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // PrintBalances prints sample app current balances.
@@ -372,47 +402,53 @@ func (app *App) PrintBalances() {
 }
 
 // ValidatePriceAgainstTickSize validates the price against the tick size.
-func (app *App) ValidatePriceAgainstTickSize(denom1, denom2 string, price sdkmath.LegacyDec) {
-	tickSize := app.GetTickSize(denom1, denom2)
+func (app *App) ValidatePriceAgainstTickSize(denom1, denom2 string, price sdkmath.LegacyDec) error {
+	tickSize, err := app.GetTickSize(denom1, denom2)
+	if err != nil {
+		return err
+	}
 	priceRat := NewBigRatFromSDKDec(price)
 	_, remainder := BigRatToIntWithRemainder(BigRatQuo(priceRat, tickSize))
 	if !BigIntEqZero(remainder) {
-		panic(
-			fmt.Sprintf(
-				"Invalid price: %s, doesn't match price tick: %s",
-				price.String(), tickSize.FloatString(sdkmath.LegacyPrecision),
-			),
+		return errors.Errorf(
+			"invalid price: %s, doesn't match price tick: %s",
+			price.String(), tickSize.FloatString(sdkmath.LegacyPrecision),
 		)
 	}
+
+	return nil
 }
 
 // GetTickSize returns the tick size for the provided denoms.
-func (app *App) GetTickSize(denom1, denom2 string) *big.Rat {
+func (app *App) GetTickSize(denom1, denom2 string) (*big.Rat, error) {
 	amountIncrement1, ok := app.DenomSignificantAmount[denom1]
 	if !ok {
-		panic(fmt.Sprintf("denom %s not found in the registry", denom1))
+		return nil, errors.Errorf("denom %s not found in the registry", denom1)
 	}
 
 	amountIncrement2, ok := app.DenomSignificantAmount[denom2]
 	if !ok {
-		panic(fmt.Sprintf("denom %s not found in the registry", denom2))
+		return nil, errors.Errorf("denom %s not found in the registry", denom2)
 	}
 
 	// tick_size(denom1/denom2) = tick_multiplier * significant_amount(denom2) / significant_amount(denom1)
 	return BigRatMul(
 		app.TickMultiplier,
 		BigRatQuo(NewBigRatFromInt64(amountIncrement2), NewBigRatFromInt64(amountIncrement1)),
-	)
+	), nil
 }
 
 // FindMaxExecutionQuantity returns max execution quantity that gives int when we multiply quantity by price,
 // max inverse execution quantity which is max execution quantity multiplied by price and quantity remainder.
 func FindMaxExecutionQuantity(quantity *big.Int, price *big.Rat) (*big.Int, *big.Int, *big.Int) {
+	priceNum := price.Num()
 	priceDenom := price.Denom()
-	// truncate(quantity / priceDenom) * priceDenom
-	maxExecutionQuantity := BigIntMul(BigIntQuo(quantity, priceDenom), priceDenom)
-	// maxExecutionQuantity * price is always integer here
-	invMaxExecutionQuantity := BigRatToInt(BigRatMul(NewBigRatFromBigInt(maxExecutionQuantity), price))
+	// n = floor(quantity / price.Denom())
+	// maxExecutionQuantity = n * price.Denom()
+	// invMaxExecutionQuantity = n * price.Num()
+	n := BigIntQuo(quantity, priceDenom)
+	maxExecutionQuantity := BigIntMul(n, priceDenom)
+	invMaxExecutionQuantity := BigIntMul(n, priceNum)
 	quantityRemainder := BigIntSub(quantity, maxExecutionQuantity)
 
 	return maxExecutionQuantity, invMaxExecutionQuantity, quantityRemainder
@@ -457,15 +493,6 @@ func BigRatToIntWithRemainder(rat *big.Rat) (*big.Int, *big.Int) {
 	denom := rat.Denom()
 	intPart := BigIntQuo(num, denom)
 	return intPart, BigIntSub(num, BigIntMul(intPart, denom))
-}
-
-// BigRatToInt converts *big.Rat to *big.Int integer or panics if remainder is not zero.
-func BigRatToInt(rat *big.Rat) *big.Int {
-	intPart, remainder := BigRatToIntWithRemainder(rat)
-	if !BigIntEqZero(remainder) {
-		panic(fmt.Sprintf("faild to conver rat:%s to int without remainder", rat.FloatString(sdkmath.LegacyPrecision)))
-	}
-	return intPart
 }
 
 // BigRatQuo divides Rat with Rat.

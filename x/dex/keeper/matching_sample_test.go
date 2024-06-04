@@ -519,7 +519,7 @@ func TestMatching(t *testing.T) {
 			passedOrdersSum := sdk.NewCoins()
 			for i, order := range tc.newOrders {
 				// execute order
-				app.PlaceOrder(order)
+				require.NoError(t, app.PlaceOrder(order))
 				// validate state
 				passedOrdersSum = validateCoinsSum(t, app, passedOrdersSum, order)
 				// validate for all passed orders
@@ -544,10 +544,10 @@ func validateCoinsSum(t *testing.T, app *keeper.App, passedOrdersSum sdk.Coins, 
 	marketSum := sdk.NewCoins()
 	for obKey := range app.OrderBooks {
 		ob := app.OrderBooks[obKey]
-		ob.Iterate(func(obOrder keeper.OrderBookRecord) bool {
+		require.NoError(t, ob.Iterate(func(obOrder keeper.OrderBookRecord) (bool, error) {
 			marketSum = marketSum.Add(sdk.NewCoin(ob.SellDenom, obOrder.RemainingQuantity))
-			return false
-		})
+			return false, nil
+		}))
 	}
 	for account := range app.Balances {
 		marketSum = marketSum.Add(app.Balances[account]...)
