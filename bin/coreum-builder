@@ -24,12 +24,17 @@ popd > /dev/null
 case "$1" in
 
    "znet")
-      if [ ! -f "$REPO/bin/.cache/znet" ]; then
+      MODULE="github.com/CoreumFoundation/crust"
+      VERSION_TMPL='{{ if or (.Replace) (eq .Version "") }}devel{{ else }}{{ .Version }}{{ end }}'
+      ZNET_VERSION=`go list -m -f "$VERSION_TMPL" "$MODULE"`
+      ZNET_BIN="$REPO/bin/.cache/znet-${ZNET_VERSION}"
+
+      if [ ! -f "$ZNET_BIN" ]; then
         "$BUILD_BIN" build/znet
       fi
 
       shift 1
-      exec "$REPO/bin/.cache/znet" "$@"
+      exec "$ZNET_BIN" "$@"
       ;;
 
    *)
