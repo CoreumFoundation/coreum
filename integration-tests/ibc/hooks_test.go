@@ -34,6 +34,13 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 	coreumChain := chains.Coreum
 	osmosisChain := chains.Osmosis
 
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
+	)
+	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainContext,
+	)
+
 	coreumContractAdmin := coreumChain.GenAccount()
 	coreumSender := coreumChain.GenAccount()
 
@@ -54,11 +61,11 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 	osmosisChain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
 			Address: osmosisHookCaller1,
-			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000_000)),
+			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000)),
 		},
 		integration.FundedAccount{
 			Address: osmosisHookCaller2,
-			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000_000)),
+			Amount:  osmosisChain.NewCoin(sdkmath.NewInt(20_000)),
 		},
 	)
 
@@ -84,16 +91,9 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
-	)
-	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
-	)
-
 	// ********** Send funds to Osmosis **********
 
-	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
+	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000))
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
@@ -222,6 +222,10 @@ func TestIBCHooksCounterWASMCallback(t *testing.T) {
 	coreumChain := chains.Coreum
 	osmosisChain := chains.Osmosis
 
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
+	)
+
 	coreumContractAdmin := coreumChain.GenAccount()
 	coreumSender := coreumChain.GenAccount()
 
@@ -260,14 +264,10 @@ func TestIBCHooksCounterWASMCallback(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
-	)
-
 	// Sudo IBCAck or IBCTimeout message will be sent to the contract specified in memo.
 	// For more details check: https://github.com/cosmos/ibc-apps/blob/main/modules/ibc-hooks/wasm_hook.go#L228
 	ibcCallbackMemo := fmt.Sprintf(`{"ibc_callback": "%s"}`, coreumContractAddr)
-	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000_000))
+	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(10_000))
 	_, err = coreumChain.ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
@@ -310,8 +310,8 @@ func awaitHooksCounterContractState(
 ) {
 	t.Helper()
 
-	t.Logf("Awaiting for contract state contract:%s count:%d total_funds:%s",
-		contractAddr, expectedCount, expectedFunds.String())
+	t.Logf("Awaiting for contract state contract:%s address:%s count:%d total_funds:%s",
+		contractAddr, callerAddr, expectedCount, expectedFunds.String())
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()

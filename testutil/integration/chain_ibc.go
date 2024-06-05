@@ -1,7 +1,11 @@
 package integration
 
 import (
+	"bytes"
 	"context"
+	"sort"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +22,7 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmlightclienttypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
@@ -68,7 +73,7 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 		ctx,
 		t,
 		ibctransfertypes.PortID,
-		recipientChainContext.ChainSettings.ChainID,
+		recipientChainContext,
 	)
 	height, err := c.GetLatestConsensusHeight(
 		ctx,
@@ -77,8 +82,8 @@ func (c ChainContext) ExecuteIBCTransferWithMemo(
 	)
 	require.NoError(t, err)
 
-	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s, memo: %s.",
-		sender, recipientAddress, coin.String(), memo)
+	t.Logf("Sending IBC transfer sender: %s, receiver: %s, channel: %s amount: %s, memo: %s.",
+		sender, recipientAddress, recipientChannelID, coin.String(), memo)
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:    ibctransfertypes.PortID,
 		SourceChannel: recipientChannelID,
@@ -120,7 +125,7 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 		ctx,
 		t,
 		ibctransfertypes.PortID,
-		recipientChainContext.ChainSettings.ChainID,
+		recipientChainContext,
 	)
 
 	tmQueryClient := tmservice.NewServiceClient(recipientChainContext.ClientContext)
@@ -192,58 +197,88 @@ func (c ChainContext) AwaitForBalance(
 	return err
 }
 
-// AwaitForIBCChannelID returns the first opened channel of the IBC connected chain peer.
-func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, port, peerChainID string) string {
+// AwaitForIBCChannelID returns the last opened channel of the IBC connected chain peer with specified port.
+func (c ChainContext) AwaitForIBCChannelID(
+	ctx context.Context,
+	t *testing.T,
+	port string,
+	peerChain ChainContext,
+) string {
 	t.Helper()
 
-	t.Logf("Getting %s chain channel with port %s on %s chain.", peerChainID, port, c.ChainSettings.ChainID)
+	t.Logf("Getting %s chain channel with port %s on %s chain.",
+		peerChain.ChainSettings.ChainID, port, c.ChainSettings.ChainID)
 
-	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
+	var connectedChannelIDs []string
 
-	var channelID string
-	require.NoError(t, c.AwaitState(ctx, func(ctx context.Context) error {
-		ibcChannelsRes, err := ibcChannelClient.Channels(ctx, &ibcchanneltypes.QueryChannelsRequest{})
+	err := c.AwaitState(ctx, func(ctx context.Context) error {
+		// Reset slice in case previous iteration failed.
+		connectedChannelIDs = []string{}
+
+		openChannelsMap, err := c.getAllOpenChannels(ctx)
 		if err != nil {
-			return err
+			return errors.Errorf("failed to query open channels on: %s: %s", c.ChainSettings.ChainID, err)
 		}
 
-		for _, ch := range ibcChannelsRes.Channels {
-			if ch.PortId != port || ch.State != ibcchanneltypes.OPEN {
+		peerOpenChannelsMap, err := peerChain.getAllOpenChannels(ctx)
+		if err != nil {
+			return errors.Errorf("failed to query open channels on: %s: %s", peerChain.ChainSettings.ChainID, err)
+		}
+
+		for chID, ch := range openChannelsMap {
+			if ch.PortId != port {
 				continue
 			}
 
-			channelClientStateRes, err := ibcChannelClient.ChannelClientState(
-				ctx,
-				&ibcchanneltypes.QueryChannelClientStateRequest{
-					PortId:    ch.PortId,
-					ChannelId: ch.ChannelId,
-				})
+			// Counterparty channel on a peer chain should exist and match a current chain channel.
+			peerCh, ok := peerOpenChannelsMap[ch.Counterparty.ChannelId]
+			if !ok || peerCh.Counterparty.ChannelId != chID {
+				continue
+			}
+			// Peer chain might have different port ID. E.g., in case of IBC transfer from WASM smart contract
+			// source port is wasm.<src-chain-smart-contract>, but destination is wasm.<dst-chain-smart-contract>.
+			peerPort := peerCh.PortId
+
+			expectedPeerChainName, err := c.getIBCCounterpartyChainName(ctx, chID, port)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "counterparty chain name query failed for: %s", c.ChainSettings.ChainID)
+			}
+			expectedChainName, err := peerChain.getIBCCounterpartyChainName(ctx, peerCh.ChannelId, peerPort)
+			if err != nil {
+				return errors.Wrapf(err, "counterparty chain name query failed for: %s", peerChain.ChainSettings.ChainID)
 			}
 
-			var clientState ibctmlightclienttypes.ClientState
-			err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
-			if err != nil {
-				return err
+			// Chains names should match.
+			if expectedChainName != c.ChainSettings.ChainID || expectedPeerChainName != peerChain.ChainSettings.ChainID {
+				continue
 			}
-
-			if clientState.ChainId == peerChainID {
-				channelID = ch.ChannelId
-				return nil
-			}
+			connectedChannelIDs = append(connectedChannelIDs, ch.ChannelId)
 		}
 
-		return retry.Retryable(errors.Errorf(
-			"waiting for the %s channel on the %s to open",
-			peerChainID,
-			c.ChainSettings.ChainID,
-		))
-	}))
+		if len(connectedChannelIDs) == 0 {
+			return errors.New("no open channels found")
+		}
+		return nil
+	})
+	require.NoError(t, err)
 
-	t.Logf("Got %s chain channel on %s chain, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID)
+	// Intentionally return channel with the last id because the last channel is more likely to be appropriate one
+	// especially on devnet or testnet where channels are recreated frequently.
+	sort.Slice(connectedChannelIDs, func(i, j int) bool {
+		iChID, err := parseNumericChannelID(connectedChannelIDs[i])
+		require.NoError(t, err)
 
-	return channelID
+		jChID, err := parseNumericChannelID(connectedChannelIDs[j])
+		require.NoError(t, err)
+
+		return iChID > jChID
+	})
+
+	t.Logf("Got %s chain channels on %s chain, channelIDs:%s. Using channelID: %s ",
+		peerChain.ChainSettings.ChainID, c.ChainSettings.ChainID,
+		strings.Join(connectedChannelIDs, ","), connectedChannelIDs[0])
+
+	return connectedChannelIDs[0]
 }
 
 // GetLatestConsensusHeight returns the latest consensus height  for provided IBC port and channelID.
@@ -351,4 +386,76 @@ func (c ChainContext) getIBCClientAndConnectionIDs(ctx context.Context, peerChai
 	}
 
 	return "", "", errors.Errorf("failed to find client and connection on the %s", peerChainID)
+}
+
+func (c ChainContext) getAllOpenChannels(ctx context.Context) (map[string]*ibcchanneltypes.IdentifiedChannel, error) {
+	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
+
+	var openChannels []*ibcchanneltypes.IdentifiedChannel
+
+	channelsPagination := &query.PageRequest{Limit: query.DefaultLimit}
+
+	for {
+		ibcChannelsRes, err := ibcChannelClient.Channels(
+			ctx,
+			&ibcchanneltypes.QueryChannelsRequest{Pagination: channelsPagination},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		openChannelsBatch := lo.Filter(ibcChannelsRes.Channels, func(ch *ibcchanneltypes.IdentifiedChannel, _ int) bool {
+			return ch.State == ibcchanneltypes.OPEN
+		})
+		openChannels = append(openChannels, openChannelsBatch...)
+
+		if bytes.Equal(ibcChannelsRes.Pagination.NextKey, []byte("")) {
+			break
+		}
+		channelsPagination.Key = ibcChannelsRes.Pagination.NextKey
+	}
+
+	openChannelsMap := lo.SliceToMap(openChannels,
+		func(ch *ibcchanneltypes.IdentifiedChannel) (string, *ibcchanneltypes.IdentifiedChannel) {
+			return ch.ChannelId, ch
+		})
+
+	return openChannelsMap, nil
+}
+
+func (c ChainContext) getIBCCounterpartyChainName(ctx context.Context, channelID, portID string) (string, error) {
+	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
+
+	channelClientStateRes, err := ibcChannelClient.ChannelClientState(
+		ctx,
+		&ibcchanneltypes.QueryChannelClientStateRequest{
+			PortId:    portID,
+			ChannelId: channelID,
+		})
+	if err != nil {
+		return "", err
+	}
+
+	var clientState ibctmlightclienttypes.ClientState
+	err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
+	if err != nil {
+		return "", err
+	}
+
+	return clientState.ChainId, nil
+}
+
+func parseNumericChannelID(channelID string) (uint64, error) {
+	chIDParts := strings.Split(channelID, "-")
+
+	if len(chIDParts) != 2 || chIDParts[0] != "channel" {
+		return 0, errors.Errorf("invalid channel ID: %s", channelID)
+	}
+
+	chIDNum, err := strconv.ParseUint(chIDParts[1], 10, 64)
+	if err != nil {
+		return 0, errors.Wrapf(err, "invalid channel ID: %s", channelID)
+	}
+
+	return chIDNum, nil
 }
