@@ -231,14 +231,30 @@ func TestValidateFeatures(t *testing.T) {
 			Ok: true,
 		},
 		{
+			Name: "extension and block_smart_contract",
+			Features: []types.Feature{
+				types.Feature_block_smart_contracts,
+				types.Feature_extension,
+			},
+			Ok: false,
+		},
+		{
+			Name: "extension and ibc",
+			Features: []types.Feature{
+				types.Feature_ibc,
+				types.Feature_extension,
+			},
+			Ok: false,
+		},
+		{
 			Name:     "all",
 			Features: allFeatures,
-			Ok:       true,
+			Ok:       false,
 		},
 		{
 			Name:     "all except one",
 			Features: allFeatures[1:],
-			Ok:       true,
+			Ok:       false,
 		},
 
 		// invalid cases
