@@ -71,19 +71,19 @@ func TestPFMViaCoreumForOsmosisToken(t *testing.T) {
 		ctx,
 		t,
 		ibctransfertypes.PortID,
-		gaiaChain.ChainSettings.ChainID,
+		gaiaChain.ChainContext,
 	)
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
 		ctx,
 		t,
 		ibctransfertypes.PortID,
-		coreumChain.ChainSettings.ChainID,
+		coreumChain.ChainContext,
 	)
 	coreumToOsmosiChannelID := coreumChain.AwaitForIBCChannelID(
 		ctx,
 		t,
 		ibctransfertypes.PortID,
-		osmosisChain.ChainSettings.ChainID,
+		osmosisChain.ChainContext,
 	)
 
 	forwardMetadata := pfmForwardMetadata{
@@ -157,19 +157,19 @@ func TestPFMViaCoreumForCoreumToken(t *testing.T) {
 		ctx,
 		t,
 		ibctransfertypes.PortID,
-		gaiaChain.ChainSettings.ChainID,
+		gaiaChain.ChainContext,
 	)
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
 		ctx,
 		t,
 		ibctransfertypes.PortID,
-		coreumChain.ChainSettings.ChainID,
+		coreumChain.ChainContext,
 	)
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
 		ctx,
 		t,
 		ibctransfertypes.PortID,
-		coreumChain.ChainSettings.ChainID,
+		coreumChain.ChainContext,
 	)
 
 	// ********** Send funds to Osmosis **********

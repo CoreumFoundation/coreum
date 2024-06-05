@@ -96,7 +96,7 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	coreumIssuer := coreumChain.GenAccount()
@@ -229,7 +229,7 @@ func TestExtensionIBCAssetFTFreezing(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	coreumIssuer := coreumChain.GenAccount()
@@ -362,7 +362,7 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	coreumIssuer := coreumChain.GenAccount()
@@ -419,7 +419,7 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 	sendCoin := sdk.NewCoin(denom, issueMsg.InitialAmount)
 
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainContext,
 	)
 
 	// send minted coins to gaia
@@ -489,7 +489,7 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 	gaiaChain := chains.Osmosis
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 5*integration.AwaitStateTimeout)
@@ -629,7 +629,7 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	// Bank module rejects transfers targeting some module accounts. We use this feature to test that
@@ -757,10 +757,10 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainContext,
 	)
 
 	coreumToGaiaEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToGaiaChannelID)
@@ -1036,7 +1036,7 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	sendCoin := sdk.NewCoin(denom, issueMsg.InitialAmount)
 
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainContext,
 	)
 
 	// freeze escrow account
@@ -1123,7 +1123,7 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 5*integration.AwaitStateTimeout)
@@ -1188,7 +1188,7 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		sendToGaiaCoin := sdk.NewCoin(denom, issueMsg.InitialAmount)
 
 		coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
-			ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID,
+			ctx, t, ibctransfertypes.PortID, gaiaChain.ChainContext,
 		)
 
 		// freeze escrow account
@@ -1431,7 +1431,7 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 
 	// Balance on escrow address should be 0.
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainContext,
 	)
 	coreumToGaiaEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToGaiaChannelID)
 	balanceResp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
@@ -1453,7 +1453,7 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 	bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 5*integration.AwaitStateTimeout)
@@ -1615,7 +1615,7 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 
 		// Balance on escrow address should be 0.
 		coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
-			ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID,
+			ctx, t, ibctransfertypes.PortID, gaiaChain.ChainContext,
 		)
 		coreumToGaiaEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToGaiaChannelID)
 		bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
