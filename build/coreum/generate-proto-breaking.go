@@ -24,7 +24,7 @@ import (
 var configBreakingTmpl string
 
 func breakingProto(ctx context.Context, deps types.DepsFunc) error {
-	deps(Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
+	deps(golang.Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
 
 	masterDir, err := os.MkdirTemp("", "coreum-master-*")
 	if err != nil {
@@ -35,7 +35,7 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	if err := git.Clone(ctx, masterDir, repoPath, "crust/proto-breaking", "master"); err != nil {
 		return err
 	}
-	if err := golang.DownloadDependencies(ctx, masterDir, deps); err != nil {
+	if err := golang.DownloadDependencies(ctx, deps, masterDir); err != nil {
 		return err
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum/v4"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
@@ -47,11 +48,6 @@ func BuildCored(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildCoredLocally builds cored locally.
 func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
-	modulepath, err := golang.RootModulePath(ctx, deps, repoPath)
-	if err != nil {
-		return err
-	}
-
 	versionFlags, err := coredVersionLDFlags(ctx, tagsLocal, "")
 	if err != nil {
 		return err
@@ -59,7 +55,7 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
-		ModulePath:     modulepath,
+		ModuleRef:      coreum.BuildRef{},
 		PackagePath:    "cmd/cored",
 		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
@@ -91,7 +87,7 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 		return errors.WithStack(err)
 	}
 
-	if err := Tidy(ctx, deps); err != nil {
+	if err := golang.Tidy(ctx, deps); err != nil {
 		return err
 	}
 
@@ -112,11 +108,6 @@ func buildCoredInDocker(
 	binaryName string,
 	mod string,
 ) error {
-	modulepath, err := golang.RootModulePath(ctx, deps, repoPath)
-	if err != nil {
-		return err
-	}
-
 	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker, mod)
 	if err != nil {
 		return err
@@ -129,7 +120,7 @@ func buildCoredInDocker(
 	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		ModulePath:     modulepath,
+		ModuleRef:      coreum.BuildRef{},
 		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     true,
@@ -144,11 +135,6 @@ func buildCoredInDocker(
 // buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
 // used for the CLI on target platform, but can't be used to run the node.
 func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPlatform tools.TargetPlatform) error {
-	modulepath, err := golang.RootModulePath(ctx, deps, repoPath)
-	if err != nil {
-		return err
-	}
-
 	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker, "")
 	if err != nil {
 		return err
@@ -164,7 +150,7 @@ func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPl
 	)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		ModulePath:     modulepath,
+		ModuleRef:      coreum.BuildRef{},
 		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     false,
@@ -175,36 +161,31 @@ func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPl
 	})
 }
 
-// Tidy runs `go mod tidy` for coreum repo.
-func Tidy(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Tidy(ctx, repoPath, deps)
-}
-
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps types.DepsFunc) error {
 	deps(Generate, CompileAllSmartContracts, formatProto, lintProto, breakingProto)
-	return golang.Lint(ctx, repoPath, deps)
+	return golang.Lint(ctx, deps)
 }
 
 // Test run unit tests in coreum repo.
 func Test(ctx context.Context, deps types.DepsFunc) error {
 	deps(CompileAllSmartContracts)
 
-	return golang.Test(ctx, repoPath, deps)
+	return golang.Test(ctx, deps)
 }
 
 // DownloadDependencies downloads go dependencies.
 func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
-	return golang.DownloadDependencies(ctx, repoPath, deps)
+	return golang.DownloadDependencies(ctx, deps, repoPath)
 }
 
 func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([]string, error) {
-	hash, err := git.DirtyHeadHash(ctx, repoPath)
+	hash, err := git.DirtyHeadHash(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	version, err := git.VersionFromTag(ctx, repoPath)
+	version, err := git.VersionFromTag(ctx)
 	if err != nil {
 		return nil, err
 	}
