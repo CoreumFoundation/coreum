@@ -34,6 +34,7 @@ const (
 	AmountMintingTrigger                  = 105
 	AmountIgnoreBurnRateTrigger           = 108
 	AmountIgnoreSendCommissionRateTrigger = 109
+	AmountBlockSmartContractTrigger       = 111
 )
 
 // TestAssetFTExtensionIssue tests extension issue functionality of fungible tokens.
@@ -810,7 +811,6 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_burning,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_extension,
@@ -861,7 +861,6 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_extension,
 		},
@@ -969,7 +968,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   contractAddr,
-		Amount:      sdk.NewCoins(mintCoin),
+		Amount:      sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(AmountBlockSmartContractTrigger))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1011,7 +1010,6 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(1000),
 		Description:   "ABC Description",
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1055,7 +1053,7 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   contractAddr,
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1069,13 +1067,13 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 		Inputs: []banktypes.Input{
 			{
 				Address: issuer.String(),
-				Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+				Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger)),
 			},
 		},
 		Outputs: []banktypes.Output{
 			{
 				Address: contractAddr,
-				Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+				Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger)),
 			},
 		},
 	}
@@ -1119,7 +1117,6 @@ func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(1000),
 		Description:   "ABC Description",
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1162,7 +1159,9 @@ func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
 	// Executing smart contract - this operation should fail because coins are attached to it
 	incrementPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleIncrement)
 	requireT.NoError(err)
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, issuer, contractAddr, incrementPayload, sdk.NewInt64Coin(denom, 100))
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx, txf, issuer, contractAddr, incrementPayload, sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger),
+	)
 	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
 }
 
@@ -1198,7 +1197,6 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 		Description:   "my wasm fungible token",
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
-			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1243,7 +1241,7 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 	requireT.NoError(err)
 
 	// mint to someone else
-	amountToMint = sdkmath.NewInt(100)
+	amountToMint = sdkmath.NewInt(AmountBlockSmartContractTrigger)
 	mintPayload, err = json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
 		ftMethodMint: {
 			Amount:    amountToMint.String(),
@@ -1302,7 +1300,6 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 		InitialAmount: sdkmath.NewInt(1000),
 		Description:   "ABC Description",
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1338,7 +1335,7 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
-			Amount:     sdk.NewInt64Coin(denom, 100),
+			Amount:     sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger),
 			Label:      "simple_state",
 		},
 	)
@@ -1449,7 +1446,6 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 			InitialAmount: sdkmath.NewInt(1000),
 			Features: []assetfttypes.Feature{
 				assetfttypes.Feature_minting,
-				assetfttypes.Feature_block_smart_contracts,
 				assetfttypes.Feature_extension,
 			},
 			ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1460,12 +1456,12 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 		&banktypes.MsgSend{
 			FromAddress: contractAddr,
 			ToAddress:   recipient.String(),
-			Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+			Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger)),
 		},
 		&assetfttypes.MsgMint{
 			Sender:    contractAddr,
 			Recipient: recipient.String(),
-			Coin:      sdk.NewInt64Coin(denom, 100),
+			Coin:      sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger),
 		},
 	})
 
@@ -1486,8 +1482,8 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 
 	contract := sdk.MustAccAddressFromBech32(contractAddr)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&contract:  900,
-		&recipient: 200,
+		&contract:  889,
+		&recipient: 222,
 	})
 }
 

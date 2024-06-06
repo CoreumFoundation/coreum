@@ -30,6 +30,7 @@ import (
 const (
 	AmountIgnoreBurnRateTrigger           = 108
 	AmountIgnoreSendCommissionRateTrigger = 109
+	AmountBlockIBCTrigger                 = 110
 )
 
 func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
@@ -81,7 +82,7 @@ func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 		t,
 		coreumChain.TxFactory().WithGas(500_000),
 		coreumIssuer,
-		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(1000)),
+		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(AmountBlockIBCTrigger)),
 		gaiaChain.ChainContext,
 		gaiaChain.GenAccount(),
 	)
@@ -131,8 +132,6 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
-			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_whitelisting,
 			assetfttypes.Feature_extension,
 		},
@@ -397,9 +396,7 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_extension,
-			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
 		},
@@ -523,8 +520,6 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(1_000_000),
 			Features: []assetfttypes.Feature{
-				assetfttypes.Feature_block_smart_contracts,
-				assetfttypes.Feature_ibc,
 				assetfttypes.Feature_extension,
 			},
 			ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -660,8 +655,6 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
-			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_extension,
 		},
@@ -802,8 +795,6 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
-			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1014,8 +1005,6 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
-			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
 			assetfttypes.Feature_extension,
@@ -1166,8 +1155,6 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(1_000_000),
 			Features: []assetfttypes.Feature{
-				assetfttypes.Feature_block_smart_contracts,
-				assetfttypes.Feature_ibc,
 				assetfttypes.Feature_whitelisting,
 				assetfttypes.Feature_freezing,
 				assetfttypes.Feature_extension,
@@ -1354,8 +1341,6 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(910_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_smart_contracts,
-			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1491,8 +1476,6 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(910_000),
 			Features: []assetfttypes.Feature{
-				assetfttypes.Feature_block_smart_contracts,
-				assetfttypes.Feature_ibc,
 				assetfttypes.Feature_extension,
 			},
 			ExtensionSettings: &assetfttypes.ExtensionIssueSettings{

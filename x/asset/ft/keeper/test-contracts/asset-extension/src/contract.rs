@@ -24,6 +24,8 @@ const AMOUNT_BURNING_TRIGGER: Uint128 = Uint128::new(101);
 const AMOUNT_MINTING_TRIGGER: Uint128 = Uint128::new(105);
 const AMOUNT_IGNORE_BURN_RATE_TRIGGER: Uint128 = Uint128::new(108);
 const AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER: Uint128 = Uint128::new(109);
+const AMOUNT_BLOCK_IBC_TRIGGER: Uint128 = Uint128::new(110);
+const AMOUNT_BLOCK_SMART_CONTRACT_TRIGGER: Uint128 = Uint128::new(111);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -111,11 +113,9 @@ pub fn sudo_extension_transfer(
             assert_whitelisting(&context, deps.as_ref(), &recipient, &token, amount)?;
         }
 
-        if features.contains(&assetft::BLOCK_SMART_CONTRACTS) {
-            assert_block_smart_contracts(&context, &recipient, &token)?;
-        }
+        assert_block_smart_contracts(&context, &recipient, &token, amount)?;
 
-        assert_ibc(&context, &recipient, &token, features)?;
+        assert_ibc(&context, &recipient, &token, amount)?;
 
         // TODO remove this if statement.
         // This check is intended for POC testing, it must be replaced with a more
@@ -276,6 +276,7 @@ fn assert_block_smart_contracts(
     context: &TransferContext,
     recipient: &str,
     token: &Token,
+    amount: Uint128,
 ) -> Result<(), ContractError> {
     if recipient.to_string() == token.issuer
         || Some(recipient.to_string()) == token.extension_cw_address
@@ -283,7 +284,7 @@ fn assert_block_smart_contracts(
         return Ok(());
     }
 
-    if context.recipient_is_smart_contract {
+    if context.recipient_is_smart_contract && amount == AMOUNT_BLOCK_SMART_CONTRACT_TRIGGER {
         return Err(ContractError::SmartContractBlocked {});
     }
 
@@ -294,16 +295,15 @@ fn assert_ibc(
     context: &TransferContext,
     recipient: &str,
     token: &Token,
-    features: &Vec<u32>,
+    amount: Uint128,
 ) -> Result<(), ContractError> {
     if Some(recipient.to_string()) == token.admin
         || Some(recipient.to_string()) == token.extension_cw_address
     {
         return Ok(());
     }
-    let ibc_enabled = features.contains(&assetft::IBC);
 
-    if context.ibc_purpose == IBCPurpose::Out && !ibc_enabled {
+    if context.ibc_purpose == IBCPurpose::Out && amount == AMOUNT_BLOCK_IBC_TRIGGER {
         return Err(ContractError::IBCDisabled {});
     }
 

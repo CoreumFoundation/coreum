@@ -205,7 +205,7 @@ func TestAssetFTIssueInvalidFeatures(t *testing.T) {
 		issueMsg,
 	)
 
-	requireT.ErrorContains(err, "duplicated features in the features list")
+	requireT.ErrorContains(err, "duplicated feature")
 }
 
 // TestAssetFTIssueFeeProposal tests proposal upgrading issue fee.
