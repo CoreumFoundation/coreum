@@ -109,6 +109,10 @@ func (m MsgIssue) ValidateBasic() error {
 		return err
 	}
 
+	if err := ValidateFeatures(m.Features); err != nil {
+		return err
+	}
+
 	// we allow zero initial amount, in that case we won't mint it initially
 	if m.InitialAmount.IsNil() || m.InitialAmount.IsNegative() {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid initial amount %s, can't be negative", m.InitialAmount.String())

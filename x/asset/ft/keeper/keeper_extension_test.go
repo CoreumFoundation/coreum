@@ -119,6 +119,59 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.EqualValues("2", balance.Amount.String())
 }
 
+func TestKeeper_Extension_Issue_WithIBCAndBlockSmartContract(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	testCases := []struct {
+		features []types.Feature
+	}{
+		{
+			features: []types.Feature{
+				types.Feature_extension,
+				types.Feature_ibc,
+			},
+		},
+		{
+			features: []types.Feature{
+				types.Feature_extension,
+				types.Feature_block_smart_contracts,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+			ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+		)
+		requireT.NoError(err)
+
+		settings := types.IssueSettings{
+			Issuer:        issuer,
+			Symbol:        "ABC",
+			Description:   "ABC Desc",
+			Subunit:       "extensionabc",
+			Precision:     8,
+			InitialAmount: sdkmath.NewInt(777),
+			Features:      tc.features,
+			ExtensionSettings: &types.ExtensionIssueSettings{
+				CodeId: codeID,
+			},
+		}
+		_, err = ftKeeper.Issue(ctx, settings)
+		requireT.ErrorIs(err, types.ErrInvalidInput)
+	}
+}
+
 func TestKeeper_Extension_Whitelist(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
