@@ -74,10 +74,10 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	osmosisChain := chains.Osmosis
 
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
 	)
 	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID,
+		ctx, t, ibctransfertypes.PortID, osmosisChain.ChainContext,
 	)
 
 	coreumAdmin := coreumChain.GenAccount()
@@ -250,10 +250,10 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	defer closerFunc()
 
 	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, coreumIBCPort, osmosisChain.ChainSettings.ChainID,
+		ctx, t, coreumIBCPort, osmosisChain.ChainContext,
 	)
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
-		ctx, t, osmosisIBCPort, coreumChain.ChainSettings.ChainID,
+		ctx, t, osmosisIBCPort, coreumChain.ChainContext,
 	)
 	t.Logf(
 		"Channels are ready coreum channel ID:%s, osmosis channel ID:%s",

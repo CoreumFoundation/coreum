@@ -116,6 +116,8 @@ Same rules apply to receiving tokens over IBC transfer protocol if IBC is enable
 ### IBC
 When token is created, admin decides if users may send and receive it over IBC transfer protocol.
 If IBC feature is disabled token can never leave the Coreum chain.
+The IBC feature is incompatible with the extension feature. The reason for it is that extension can override
+the full functionality of ibc, so allowing the two features together can lead to confusion.
 
 ### Clawback
 If the clawback feature is enabled on a token, then the admin of the token can confiscate up to the amount an account holds. The clawback amount cannot be more than what the user currently holds.
@@ -126,9 +128,18 @@ Here is the description of behavior of the clawback feature:
 
 Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled for the token.
 
+### BlockSmartContract
+If the BlockSmartContract is enabled, then the token cannot be transferred to any smart contract. The execption is the case where
+the smart contract is the issuer of the token, in which case the transfer to the issuer contract can take place.
+
+The BlockSmartContract feature is incompatible with the extension feature. The reason for it is that extension can override
+the full functionality of BlockSmartContract, so allowing the two features together can lead to confusion.
+
 _**Disclaimer**: if the admin claws back from the escrow address, then it will break the IBC. admins should not do this if they want the IBC to work for their token._
 
 ### Extension
+_**Note**: The extenstion feature is not compatible with ibc and block smart contract feature. It will error out if you try
+to enable those features at the same time._
 Extension is a powerful feature which lets the admin override some functionalities of the token by attaching a smart contract to the token that can administrate it. When a bank transfer is initiated, the smart contract account receives the amount plus any commission or burn amount if they should be applied, then it is called via a sudo call with the information related to the bank transfer and the context information. The smart contract then can decide to do whatever it decides with the transfer which may include overriding of some behaviors for the features explained before.
 The sudo call is received in the `pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg)` entry point of the smart contract and the message would be a `ExtensionTransfer` which is defined as follows.
 ```rust
