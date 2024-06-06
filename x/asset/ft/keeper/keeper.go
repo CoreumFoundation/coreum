@@ -242,6 +242,10 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		Admin:              settings.Issuer.String(),
 	}
 
+	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
+		return "", err
+	}
+
 	if definition.IsFeatureEnabled(types.Feature_extension) {
 		if settings.ExtensionSettings == nil {
 			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
@@ -285,10 +289,6 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 	}
 
 	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
-
-	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
-		return "", err
-	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventIssued{
 		Denom:              denom,

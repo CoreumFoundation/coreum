@@ -53,20 +53,25 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	)
 	requireT.NoError(err)
 
+	subunit := "extensionabc"
+	attachedAmount := sdkmath.NewInt(500)
+	issuerAmount := sdk.NewInt(277)
+	denom := types.BuildDenom(subunit, issuer)
 	settings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
 		Description:   "ABC Desc",
-		Subunit:       "extensionabc",
+		Subunit:       subunit,
 		Precision:     8,
-		InitialAmount: sdkmath.NewInt(777),
+		InitialAmount: attachedAmount.Add(issuerAmount),
 		Features:      []types.Feature{types.Feature_extension},
 		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
+			Funds:  sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(500))),
 		},
 	}
 
-	denom, err := ftKeeper.Issue(ctx, settings)
+	_, err = ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
 	requireT.Equal(types.BuildDenom(settings.Subunit, settings.Issuer), denom)
@@ -87,9 +92,14 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.EqualValues(gotToken.URIHash, settings.URIHash)
 	requireT.EqualValues(66, len(gotToken.ExtensionCWAddress))
 
+	contractAddress, err := sdk.AccAddressFromBech32(gotToken.ExtensionCWAddress)
+	requireT.NoError(err)
 	// check the account state
+	contractBalance := bankKeeper.GetBalance(ctx, contractAddress, denom)
+	requireT.Equal(sdk.NewCoin(denom, attachedAmount).String(), contractBalance.String())
+
 	issuedAssetBalance := bankKeeper.GetBalance(ctx, issuer, denom)
-	requireT.Equal(sdk.NewCoin(denom, settings.InitialAmount).String(), issuedAssetBalance.String())
+	requireT.Equal(sdk.NewCoin(denom, issuerAmount).String(), issuedAssetBalance.String())
 
 	// send 2 coin will succeed
 	receiver := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
