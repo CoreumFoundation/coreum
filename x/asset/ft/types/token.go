@@ -226,11 +226,8 @@ func ValidateFeatures(features []Feature) error {
 	}
 	if hasExtension {
 		for _, item := range features {
-			switch item {
-			case Feature_ibc:
-				return sdkerrors.Wrapf(ErrInvalidInput, "ibc feature is not allowed in combination with extension")
-			case Feature_block_smart_contracts:
-				return sdkerrors.Wrapf(ErrInvalidInput, "block_smart_contract feature is not allowed in combination with extension")
+			if item == Feature_ibc || item == Feature_block_smart_contracts {
+				return sdkerrors.Wrapf(ErrInvalidInput, "extension is allowed in combination with %s", item.String())
 			}
 		}
 	}
