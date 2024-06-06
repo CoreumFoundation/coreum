@@ -129,7 +129,7 @@ Here is the description of behavior of the clawback feature:
 Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled for the token.
 
 ### BlockSmartContract
-If the BlockSmartContract is enabled, then the token cannot be trafered to any smart contract. The execption is the case where
+If the BlockSmartContract is enabled, then the token cannot be transferred to any smart contract. The execption is the case where
 the smart contract is the issuer of the token, in which case the transfer to the issuer contract can take place.
 
 The BlockSmartContract feature is incompatible with the extension feature. The reason for it is that extension can override
