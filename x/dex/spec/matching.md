@@ -1,28 +1,38 @@
-# Matching
+# DEX
 
-The spec describes the orders matching.
+The spec describes the coreum DEX specification.
 
-## Rounding issue
+## Order book
+
+The Coreum DEX orders can be created for any-to-any token by any Coreum user. Which meas that the order book
+is bidirectional and permissionless. The user place an order and provides the order attributes:
+
+* `order_id` - unique order identifier per account and order book
+* `price` - amount the user wants to get for each token the user sells
+* `quantity` - amount the user want to sell
+* `fill_side`
+    * `sell` - means that the `remaining_quantity` you expect to fill is equal to `quantity` of the `sell_denom`.
+    * `buy`  - means that the `remaining_quantity` you expect to fill is equal to `quantity` * `price` of
+      the `buy_denom`.
+
+Once an order is placed the DEX will try to match the order with the orders from the opposite order book and depending
+on order type and settings execute it.
+
+## Matching
+
+### Rounding issue
 
 Let's say we have 2 orders:
 
-| order_id | sell_denom | buy_denom | quantity       | price |
-|----------|------------|-----------|----------------|-------|
-| order1   | AAA        | BBB       | 50_000_000 AAA | 0.375 | 
-| order2   | BBB        | AAA       | 10_000_000 BBB | 2.6   | 
+| order_id | sell_denom | buy_denom | remaining_quantity | price | fill_side | remaining_quantity |
+|----------|------------|-----------|--------------------|-------|-----------|--------------------|
+| order1   | AAA        | BBB       | 50_000_000         | 0.375 | sell      | 50_000_000 AAA     |
+| order2   | BBB        | AAA       | 10_000_000         | 2.6   | sell      | 10_000_000 BBB     |
 
-*Note that it doesn't matter whether we define orders as input & output amount or input and price the main rule is to
-respect price.*
-
-The `price` here is the amount you want to get for each token you sell.
-The `quantity` here is the amount you want to sell.
-
-The inv_price (1/price) of order2 is greater than the price of order1 (~0.3846 > 0.375)
+The inverse taker price (1/price) of order2 is greater than the price of order1 (~0.3846 > 0.375)
 hence orders match. The order2 should be executed with the price of the order1 (taker gets the better price).
 The exact amount of AAA order2 receives is 10_000_000 * 1/0.375 = 26_666_666.(6) AAA. The amount we can use
-must be an integer, so we can't send full amount without the price violation.
-
-## Solution
+must be an integer, so we can't send full amount without the price violation. The following solution fixes that issue.
 
 ### Tick size
 
@@ -48,7 +58,7 @@ Example:
 | significant_amount(AAA) | significant_amount(BBB) | tick_size(AAA/BBB) | tick_size(BBB/AAA) |    
 |-------------------------|-------------------------|--------------------|--------------------|
 | 10_000                  | 10_000                  | 0.01               | 0.01               | 
-| 1000                    | 10                      | 0.0001             | 1                  | 
+| 1_000                   | 10                      | 0.0001             | 1                  | 
 | 1_000_000               | 1                       | 0.00000001         | 10_000             | 
 
 ### Matching with max execution quantity
@@ -105,42 +115,85 @@ And the `Qb'` can be written as:
 Qb' = floor(Qa / pd) * pn
 ```
 
-The `Qb'` is the inverse `max_execution_quantity` (the amount by which the opposite order is reduced)
+The `Qb'` is the opposite order's `max_execution_quantity` (the amount by which the opposite order is reduced)
 
 ```
-inv_max_execution_quantity = floor(remaining_quantity / price_denominator) * price_numerator
+opposite_execution_quantity = floor(remaining_quantity / price_denominator) * price_numerator
 ```
-
-Based on the formulas we can define the max not filled quantity (the remained). The max not filled quantity depends on
-the order we fill fully. If the order is taker order, the max remainder is equal to the maker price numerator, if maker,
-the maker price denominator.
 
 #### Matching algorithm
 
 The following algorithm is used to match the orders:
 
 ```
-if 1/(taker_price) > maker_price:
-    if maker_remaining_quantity * maker_price > taker_quantity
-      fill taker max_execution_quantity of quantity with the 1/(maker_price)
-      inv_execution_quantity = max_execution_quantity * 1/(maker_price)
-      taker receives:
-        taker_quantity - max_execution_quantity (remainder)
-        inv_execution_quantity
-      maker receives: 
-        max_execution_quantity
-      taker order is closed  
-      maker order is reduced by inv_execution_quantity
+if 1/taker_order.price > maker_order.price:
+    var maker_expected_not_filled_quantity
+    if maker_order.fill_side != taker_order.fill_side // orders not_filled_quantit use same denom already
+        maker_expected_not_filled_quantity = maker_order.not_filled_quantity
     else
-      fill maker max_execution_quantity of remaining_quantity with the maker_price
-      inv_execution_quantity = max_execution_quantity * maker_price
-      maker receives:
-        inv_execution_quantity
-        maker_remaining_quantity - max_execution_quantity (remainder)
-      taker receives: 
-        max_execution_quantity
-      maker order is closed  
-      taker order is reduced by inv_execution_quantity
+        if maker_order.fill_side == sell
+            maker_expected_not_filled_quantity = maker_order.not_filled_quantity * maker_order.price
+        if maker_order.fill_side == buy
+            maker_expected_not_filled_quantity = maker_order.not_filled_quantity / maker_order.price
+    var (
+        order_to_close
+        order_to_reduce
+        
+        order_to_close_used_quantity
+        order_to_reduce_used_quantity
+    ) 
+    if maker_expected_not_filled_quantity > taker_order.not_filled_quantity
+        order_to_close = taker_order
+        order_to_reduce = maker_order
+        
+        if order_to_close.fill_side == sell
+            execution_price = 1/maker_order.price
+            n = floor(order_to_close.not_filled_quantity / execution_price.denominator)
+            order_to_close_used_quantity = n * execution_price.denominator      
+            order_to_reduce_used_quantity = n * execution_price.nominator            
+        
+        else (order_to_close.fill_side == buy)
+           execution_price = maker_order.price
+           // here the order_to_reduce_used_quantity is based on the order_to_close.not_filled_quantity
+           n = floor(order_to_close.not_filled_quantity / execution_price.denominator)
+           order_to_reduce_used_quantity = n * execution_price.denominator      
+           order_to_close_used_quantity = n * execution_price.nominator
+                     
+    else (maker_expected_not_filled_quantity <= taker_order.not_filled_quantity)  
+        order_to_close = maker_order
+        order_to_reduce = taker_order
+        
+        if order_to_close.fill_side == sell
+            execution_price = maker_order.price
+            n = floor(order_to_close.not_filled_quantity / execution_price.denominator)
+            order_to_close_used_quantity = n * execution_price.denominator      
+            order_to_reduce_used_quantity = n * execution_price.nominator
+                                           
+        else (order_to_close.fill_side == buy)
+           execution_price = 1/maker_order.price
+           // here the order_to_reduce_used_quantity is based on the order_to_close.not_filled_quantity
+           n = floor(order_to_close.not_filled_quantity / execution_price.denominator)
+           order_to_reduce_used_quantity = n * execution_price.denominator      
+           order_to_close_used_quantity = n * execution_price.nominator
+   
+    var order_to_reduce_filled_quantity // quantity to sub from the not_filled_quantity  
+    if order_to_reduce.fill_side == sell
+        order_to_reduce_filled_quantity = order_to_reduce_used_quantity    
+    else (order_to_reduce.fill_side == buy)
+        order_to_reduce_filled_quantity = order_to_close_used_quantity  
+   
+    order_to_close.account receives:
+        order_to_reduce_used_quantity|order_to_close.buy_denom
+        order_to_close.remaining_quantity - order_to_close_used_quantity|order_to_close.sell_denom
+    
+    order_to_reduce.account receives:    
+        order_to_close_used_quantity|order_to_reduce.buy_denom
+
+    order_to_reduce.remaining_quantity -= order_to_reduce_used_quantity 
+    order_to_reduce.not_filled_quantity -= order_to_reduce_filled_quantity
+      
+    close order_to_close
+    update order_to_reduce
 ```
 
 #### Matching example
@@ -162,89 +215,288 @@ versa.
 
 Let's say we have 2 orders:
 
-| order_id | account  | sell_denom | buy_denom | quantity       | price | remaining_quantity | 
-|----------|----------|------------|-----------|----------------|-------|--------------------|
-| order1   | account1 | AAA        | BBB       | 50_000_000 AAA | 0.371 | 50_000_000 AAA     |  
-| order2   | account2 | BBB        | AAA       | 10_000_000 BBB | 2.6   | 10_000_000 BBB     | 
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity | 
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order1   | account1 | AAA        | BBB       | 50_000_000 AAA     | 0.371 | sell      | 50_000_000 AAA      |  
+| order2   | account2 | BBB        | AAA       | 10_000_000 BBB     | 2.6   | sell      | 10_000_000 BBB      | 
 
-The inv_price (1/price) of order2 is greater than the price of order1 (~0.3846 > 0.371)
-hence orders match. The order2 should be executed with the price of the order1 (taker gets the better price).
-Maker expected amount is 50_000_000 * 0.371 = 18_550_000 BBB. The 18_550_000 > 10_000_000, that's why we fill the
-10_000_000 BBB. The `max_execution_quantity` of 10_000_000 with the 1/0.371 price is 9_999_934 (the remainder is 66
-BBB).
+Matching
+
+```
+1/2.6 > 0.371 (~0.3846 > 0.371)
+
+sell == sell
+    maker_order.fill_side == sell  
+        maker_expected_not_filled_quantity = 50_000_000 * 0.371 = 18_550_000
+ 
+18_550_000 > 10_000_000
+    order_to_close = order2
+    order_to_reduce = order1
+    
+    order_to_close.fill_side == sell
+        execution_price = 1 / 0.371 = 1_000 / 371
+        n = floor(10_000_000 / 371) = 26_954
+        order_to_close_used_quantity = 26_954 * 371 = 9_999_934     
+        order_to_reduce_used_quantity = 26_954 * 1_000 = 26_954_000
+        
+    order_to_reduce.fill_side == sell
+        order_to_reduce_filled_quantity = 26_954_000
+
+    account2 receives:
+        26_954_000|AAA
+        10_000_000 - 9_999_934 = 66|BBB
+    
+    account1 receives:    
+        9_999_934|BBB
+
+    order1.remaining_quantity = 50_000_000 - 26_954_000 = 23_046_000
+    order1.not_filled_quantity = 50_000_000 - 26_954_000 = 23_046_000
+```
 
 The result order book and account balances look like:
 
-| order_id | account  | sell_denom | buy_denom | quantity       | price | remaining_quantity                                 |
-|----------|----------|------------|-----------|----------------|-------|----------------------------------------------------|
-| order1   | account1 | AAA        | BBB       | 50_000_000 AAA | 0.371 | 50_000_000 - (9_999_934 / 0.371) = 23_046_000  AAA |
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order1   | account1 | AAA        | BBB       | 23_046_000  AAA    | 0.371 | sell      | 23_046_000  AAA     |
 
 | account  | balance                |
 |----------|------------------------|
-| account1 | 9_999_934 BBB,         | 
+| account1 | 9_999_934 BBB          | 
 | account2 | 26_954_000 AAA, 66 BBB |
 
-The account1's order1 was filled partially with the exact price 9_999_934 BBB / 26_954_000 AAA = 0.371
-
-The account2 expected to sell 10_000_000 BBB, receive 26_000_000 AAA, but received more 26_954_000 AAA and
-additionally not filled 66 BBB.
+* order1 was filled partially with the exact price 9_999_934 BBB / 26_954_000 AAA = 0.371
+* order2 expected to sell 10_000_000 BBB, receive 26_000_000 AAA, but received more, 26_954_000 AAA and
+  additionally not filled 66 BBB.
 
 * Round 2
 
 Let's say we have the previous partially filled order and new order:
 
-| order_id | account  | sell_denom | buy_denom | quantity       | price | remaining_quantity |
-|----------|----------|------------|-----------|----------------|-------|--------------------|
-| order1   | account1 | AAA        | BBB       | 50_000_000 AAA | 0.371 | 23_046_000 AAA     |
-| order3   | account3 | BBB        | AAA       | 70_000_000 BBB | 2.3   | 70_000_000 BBB     |
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order1   | account1 | AAA        | BBB       | 23_046_000  AAA    | 0.371 | sell      | 23_046_000  AAA     |
+| order3   | account3 | BBB        | AAA       | 70_000_000 BBB     | 2.3   | sell      | 70_000_000 BBB      |
 
-The inv_price (1/price) of order3 is greater than the price of order1 (~0.4347 > 0.371)
-hence orders match. The order2 should be executed with the price of the order1 (taker gets the better price).
-Maker expected amount is 23_046_000 * 0.371 = 8_550_066 BBB. The 8_550_066 < 70_000_000, that's why we fill the
-23_046_000 AAA. The `max_execution_quantity` of 23_046_000 with the 0.371 price is 23_046_000 AAA.
+Matching
+
+```
+1/2.3 > 0.371 (~0.4347 > 0.371)
+
+sell == sell
+  maker_order.fill_side == sell    
+    maker_expected_not_filled_quantity = 23_046_000 * 0.371 = 8_550_066
+
+8_550_066 < 70_000_000
+    order_to_close = order1
+    order_to_reduce = order3
+    order_to_close.fill_side == sell
+        execution_price = 0.371 = 371 / 1_000
+        n = floor(23_046_000 / 1_000) = 23046
+        order_to_close_used_quantity = 23046 * 1_000 = 23_046_000     
+        order_to_reduce_used_quantity = 23046 * 371 = 8_550_066
+        
+    order_to_reduce.fill_side == sell
+        order_to_reduce_filled_quantity = 8_550_066
+                
+    account1 receives:
+        8_550_066|BBB
+        23_046_000 - 23_046_000 = 0|AAA
+    
+    account3 receives:    
+        23_046_000|AAA
+
+    order3.remaining_quantity = 70_000_000 - 8_550_066 
+    order3.not_filled_quantity = 70_000_000 - 8_550_066
+```
 
 The result order book and account balances look like:
 
-| order_id | account  | sell_denom | buy_denom | quantity       | price | remaining_quantity                                 |
-|----------|----------|------------|-----------|----------------|-------|----------------------------------------------------|
-| order3   | account3 | BBB        | AAA       | 70_000_000 BBB | 2.3   | 70_000_000 - (23_046_000 * 0.371) = 61_449_934 BBB |
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order3   | account3 | BBB        | AAA       | 61_449_934 BBB     | 2.3   | sell      | 61_449_934 BBB      |
 
-| account  | balance                                 |
-|----------|-----------------------------------------|
-| account1 | 9_999_934 + 8_550_066 = 18_550_000 BBB, | 
-| account2 | 26_954_000 AAA, 66 BBB                  |
-| account3 | 23_046_000 AAA                          |
+| account  | balance                                |
+|----------|----------------------------------------|
+| account1 | 9_999_934 + 8_550_066 = 18_550_000 BBB | 
+| account2 | 26_954_000 AAA, 66 BBB                 |
+| account3 | 23_046_000 AAA                         |
 
-As a result the account1's order1 is executed with full match of both quantity and amount
-As a result the account3's order3 is executed partially with the better price
+* order1 is executed with full match of both quantity and amount
+* order3 is executed partially with the better price
 
 * Round 3
 
 Let's say we have the previous partially filled order and new order:
 
-| order_id | account  | sell_denom | buy_denom | quantity        | price | remaining_quantity |
-|----------|----------|------------|-----------|-----------------|-------|--------------------|
-| order3   | account3 | BBB        | AAA       | 70_000_000 BBB  | 2.3   | 61_449_934 BBB     |
-| order4   | account4 | AAA        | BBB       | 220_000_000 AAA | 0.36  | 220_000_000 AAA    |
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order3   | account3 | BBB        | AAA       | 61_449_934 BBB     | 2.3   | sell      | 61_449_934 BBB      |                     
+| order4   | account4 | AAA        | BBB       | 220_000_000 AAA    | 0.36  | buy       | 79_200_000 BBB      | 
 
-The inv_price (1/price) of order4 is greater than the price of order3 (~2.7(7) > 2.3)
-hence orders match. The order2 should be executed with the price of the order3 (taker gets the better price).
-Maker expected amount is 61_449_934 * 2.3 = 141_334_848.2 AAA. The 141_334_848.892 < 220_000_000,
-that's why we fill the 61_449_934 BBB. The `max_execution_quantity` of 61_449_934 with the 2.3 price is 61_449_930
-BBB
-(4 BBB is the remainder).
+Matching
+
+```
+1/0.36 > 2.3 (~2.7777 > 2.3)
+    
+sell != buy
+  maker_expected_not_filled_quantity = 61_449_934
+
+61_449_934 < 79_200_000
+    order_to_close = order3
+    order_to_reduce = order4
+
+    order_to_close.fill_side == sell
+        execution_price = 2.3 = 230 / 100
+        n = floor(61_449_934 / 100) = 614_499
+        order_to_close_used_quantity = 614_499 * 100 = 61_449_900    
+        order_to_reduce_used_quantity = 614_499 * 230 = 141_334_770
+        
+    order_to_reduce.fill_side == buy
+        order_to_reduce_filled_quantity = 61_449_900
+                      
+    account3 receives:
+        141_334_770|AAA
+        61_449_934 - 61_449_900 = 34|BBB
+    
+    account4 receives:    
+        61_449_900|BBB
+
+    order_to_reduce.remaining_quantity = 220_000_000 - 141_334_770 = 78_665_230
+    order_to_reduce.not_filled_quantity = 79_200_000 - 61_449_900 = 17_750_100
+```
 
 The result order book and account balances look like:
 
-| order_id | account  | sell_denom | buy_denom | quantity        | price | remaining_quantity                              |
-|----------|----------|------------|-----------|-----------------|-------|-------------------------------------------------|
-| order4   | account4 | AAA        | BBB       | 220_000_000 AAA | 0.36  | 220_000_000 - (61449930 * 2.3) = 78_665_161 AAA |
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order4   | account4 | AAA        | BBB       | 78_665_230 AAA     | 0.36  | buy       | 17_750_100 BBB      | 
+
+| account  | balance                                            |
+|----------|----------------------------------------------------|
+| account1 | 18_550_000 BBB                                     | 
+| account2 | 26_954_000 AAA, 66 BBB                             |
+| account3 | 23_046_000 + 141_334_770 = 164_380_770 AAA, 34 BBB |
+| account4 | 61_449_900 BBB                                     |
+
+* order3 is executed with full match of both quantity and amount, it expected to receive 161_000_000 AAA and
+  sell 70_000_000 BBB, but received more 164_380_770 AAA and sold 70_000_000 - 34 = 69_999_966 BBB.
+* order4 is executed partially with the better price.
+
+* Round 4
+
+Let's say we have the previous partially filled order and new order:
+
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order4   | account4 | AAA        | BBB       | 78_665_230 AAA     | 0.36  | buy       | 17_750_100 BBB      | 
+| order5   | account5 | BBB        | AAA       | 6_000_000 BBB      | 2.7   | buy       | 16_200_000 AAA      | 
+
+Matching
+
+```
+1/2.7 > 0.36 (~0.3703 > 0.36)
+    
+buy == buy
+  maker_expected_not_filled_quantity = 17_750_100 / 0.36 ~= 49305833.3333
+
+49305833.3333 > 16_200_000
+    order_to_close = order5
+    order_to_reduce = order4
+    
+    order_to_close.fill_side == buy
+        execution_price = 0.36 = 36 / 100
+        n = floor(16_200_000 / 100) = 162_000
+        order_to_reduce_used_quantity = 162_000 * 100 = 16_200_000 
+        order_to_close_used_quantity = 162_000 * 36 = 5_832_000
+
+    order_to_reduce.fill_side == buy
+        order_to_reduce_filled_quantity = 5_832_000
+        
+    account5 receives:
+        16_200_000|AAA
+        6_000_000 - 5_832_000 = 168_000|BBB
+    
+    account4 receives:    
+        5_832_000|BBB
+
+    order_to_reduce.remaining_quantity = 78_665_230 - 16_200_000 = 62_465_230
+    order_to_reduce.not_filled_quantity = 17_750_100 - 5_832_000 = 11_918_100         
+```
+
+The result order book and account balances look like:
+
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order4   | account4 | AAA        | BBB       | 62_465_230 AAA     | 0.36  | buy       | 11_918_100 BBB      | 
+
+| account  | balance                                 |
+|----------|-----------------------------------------|
+| account1 | 18_550_000 BBB                          | 
+| account2 | 26_954_000 AAA, 66 BBB                  |
+| account3 | 164_380_770 AAA, 34 BBB                 |
+| account4 | 61_449_900 + 5_832_000 = 67_281_900 BBB |
+| account5 | 16_200_000 AAA, 168_000 BBB             |
+
+* order5 is executed with full match of both quantity and amount, expected to receive 6_000_000 * 2.7 = 16_200_000 AAA
+  and sell 6_000_000 BBB, but received exact 16_200_000 AAA and sold less 5_832_000 BBB.
+* order4 is executed partially with exact price.
+
+* Round 5
+
+Let's say we have the previous partially filled order and new order:
+
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order4   | account4 | AAA        | BBB       | 62_465_230 AAA     | 0.36  | buy       | 11_918_100 BBB      | 
+| order6   | account6 | BBB        | AAA       | 39_127_000 BBB     | 2.2   | buy       | 86_079_400 AAA      | 
+
+Matching
+
+```
+1/2.2 > 0.36 (~0.4545 > 0.36)
+
+buy == buy
+    maker_expected_not_filled_quantity = 11_918_100 / 0.36 ~= 33105833.3333
+
+33_106_138 < 86_079_400
+    order_to_close = maker_order
+    order_to_reduce = taker_order
+    
+    order_to_close.fill_side == buy
+        execution_price = 1/0.36 = 100 / 36
+        n = floor(11_918_100 / 36) = 331_058
+        order_to_reduce_used_quantity = 331_058 * 36 = 11_918_088     
+        order_to_close_used_quantity = 331_058 * 100 = 33_105_800
+    
+    order_to_reduce.fill_side == buy
+        order_to_reduce_filled_quantity = 33_105_800
+
+    account4 receives:
+        11_918_088|BBB
+        62_465_230 - 33_105_800 = 29_359_430|AAA
+    
+    account6 receives:    
+        33_105_800|AAA
+
+    order6.remaining_quantity = 39_127_000 - 11_918_088 = 27_208_912
+    order6.not_filled_quantity = 86_079_400 - 33_105_800 = 52_973_600
+```
+
+The result order book and account balances look like:
+
+| order_id | account  | sell_denom | buy_denom | remaining_quantity | price | fill_side | not_filled_quantity |
+|----------|----------|------------|-----------|--------------------|-------|-----------|---------------------|
+| order6   | account6 | BBB        | AAA       | 27_208_804 BBB     | 2.2   | buy       | 52_973_300 AAA      | 
 
 | account  | balance                                                  |
 |----------|----------------------------------------------------------|
-| account1 | 18_550_000 BBB,                                          | 
+| account1 | 18_550_000 BBB                                           | 
 | account2 | 26_954_000 AAA, 66 BBB                                   |
-| account3 | 23_046_000 + (61_449_930 * 2.3) = 164_380_839 AAA, 4 BBB |
-| account4 | 61_449_930 BBB                                           |
+| account3 | 164_380_770 AAA, 34 BBB                                  |
+| account4 | 29_359_430 AAA, 67_281_900 + 11_918_088 = 79_199_988 BBB |
+| account5 | 16_200_000 AAA, 168_000 BBB                              |
+| account6 | 33_105_800 AAA                                           | 
 
-The order3 is executed fully now with the better price (expected 161_000_000AAA), but received 164_380_839 AAA, 4 BBB
+* order5 is executed with close match to the expected buy quantity, expected to receive 79_200_000 BBB, but received
+  79_199_988 BBB, also received the remainder of 29_359_430 AAA.
+* order6 is executed partially with better price.
