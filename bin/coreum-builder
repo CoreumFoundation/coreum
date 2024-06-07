@@ -19,8 +19,6 @@ if [ ! -f "$BUILD_BIN" ]; then
   "$BUILD_BIN" build/me
 fi
 
-popd > /dev/null
-
 case "$1" in
 
    "znet")
