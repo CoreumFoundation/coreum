@@ -95,7 +95,7 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 		return err
 	}
 
-	return git.RollbackChanges(ctx, repoPath, "go.mod", "go.sum", "go.work.sum")
+	return git.RollbackChanges(ctx, "go.mod", "go.sum", "go.work.sum")
 }
 
 func buildCoredInDocker(
