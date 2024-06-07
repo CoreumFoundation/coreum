@@ -7,7 +7,7 @@ COPY docker.linux.$TARGETARCH/{{ .CosmovisorBinary }} /{{ .CosmovisorBinary }}
 {{ $cored := .CoredBinary }}
 {{ range .Networks }}
 RUN mkdir -p /app/{{ . }}/cosmovisor/genesis/bin && \
-  ln -s /{{ $cored }} /app/{{ . }}/cosmovisor/genesis/{{ $cored }}
+  ln -s /{{ $cored }} /app/{{ . }}/cosmovisor/genesis/bin/cored
 {{ end }}
 
 RUN chmod -R 777 /app
@@ -15,7 +15,7 @@ RUN chmod -R 777 /app
 FROM --platform=$TARGETPLATFORM {{ .From }}
 
 COPY --from=builder /app /app
-COPY --from=builder /{{ .CoredBinary }} /bin/cored
-COPY --from=builder /{{ .CosmovisorBinary }} /bin/cosmovisor
+COPY --from=builder /{{ .CoredBinary }} /{{ .CoredBinary }}
+COPY --from=builder /{{ .CosmovisorBinary }} /{{ .CosmovisorBinary }}
 
 ENTRYPOINT ["/bin/cosmovisor", "run"]
