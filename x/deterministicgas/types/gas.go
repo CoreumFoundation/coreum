@@ -177,7 +177,7 @@ func (s deterministicMsgServer) ctxForDeterministicGas(
 	return ctx, gasBefore, isDeterministic, nil
 }
 
-func typeAssertMessages(msg sdk.Msg) (sdk.Coins, bool, error) {
+func TypeAssertMessages(msg sdk.Msg) (sdk.Coins, bool, bool, error) {
 	coins := sdk.NewCoins()
 	switch typedMsg := msg.(type) {
 	case *banktypes.MsgSend:
@@ -191,10 +191,12 @@ func typeAssertMessages(msg sdk.Msg) (sdk.Coins, bool, error) {
 	case *distributiontypes.MsgFundCommunityPool:
 		coins = typedMsg.Amount
 	case *ibctransfertypes.MsgTransfer:
-		coins = sdk.NewCoins(typedMsg.Token)
+		if typedMsg.Token.IsValid() {
+			coins = sdk.NewCoins(typedMsg.Token)
+		}
 	case *assetfttypes.MsgIssue:
 		if lo.Contains(typedMsg.Features, assetfttypes.Feature_extension) {
-			return nil, true, nil
+			return nil, true, false, nil
 		}
 	case *vestingtypes.MsgCreateVestingAccount:
 		coins = typedMsg.Amount
@@ -215,22 +217,24 @@ func typeAssertMessages(msg sdk.Msg) (sdk.Coins, bool, error) {
 	case *authz.MsgExec:
 		msgs, err := typedMsg.GetMessages()
 		if err != nil {
-			return nil, false, err
+			return nil, false, true, err
 		}
 		for _, m := range msgs {
-			msgCoins, hasExtension, err := typeAssertMessages(m)
+			msgCoins, hasExtension, _, err := TypeAssertMessages(m)
 			if err != nil || hasExtension {
-				return nil, hasExtension, err
+				return nil, hasExtension, false, err
 			}
 			coins = coins.Add(msgCoins...)
 		}
+	default:
+		return nil, false, true, nil
 	}
 
-	return coins, false, nil
+	return coins, false, false, nil
 }
 
 func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper) (bool, error) {
-	coins, hasExtension, err := typeAssertMessages(msg)
+	coins, hasExtension, _, err := TypeAssertMessages(msg)
 	if err != nil || hasExtension {
 		return hasExtension, err
 	}
