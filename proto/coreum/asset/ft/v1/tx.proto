@@ -88,7 +88,7 @@ message MsgIssue {
   ExtensionIssueSettings extension_settings = 12;
 }
 
-// ExtensionIssueSettings are settings that will be used to Instantantiate the smart contract which contains
+// ExtensionIssueSettings are settings that will be used to Instantiate the smart contract which contains
 // the source code for the extension.
 message ExtensionIssueSettings {
   // code_id is the reference to the stored WASM code
@@ -100,6 +100,11 @@ message ExtensionIssueSettings {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // optional json encoded data to pass to WASM on instantiation
+  bytes instantiationInfo = 4 [
+    (gogoproto.casttype) = "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage",
+    (amino.encoding) = "inline_json"
   ];
 }
 

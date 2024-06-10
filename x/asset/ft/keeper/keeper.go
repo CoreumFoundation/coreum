@@ -26,8 +26,11 @@ import (
 
 // ExtensionInstantiateMsg is the message passed to the extension cosmwasm contract.
 // The contract must be able to properly process this message.
+//
+//nolint:tagliatelle // these will be exposed to rust and must be snake case.
 type ExtensionInstantiateMsg struct {
-	Denom string `json:"denom"`
+	Denom             string `json:"denom"`
+	InstantiationInfo any    `json:"instantiation_info"`
 }
 
 // Keeper is the asset module keeper.
@@ -248,7 +251,8 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		}
 
 		instantiateMsgBytes, err := json.Marshal(ExtensionInstantiateMsg{
-			Denom: denom,
+			Denom:             denom,
+			InstantiationInfo: settings.ExtensionSettings.InstantiationInfo,
 		})
 		if err != nil {
 			return "", types.ErrInvalidInput.Wrapf("error marshalling ExtensionInstantiateMsg (%s)", err)

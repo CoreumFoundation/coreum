@@ -1,4 +1,4 @@
-use cosmwasm_std::{entry_point, StdError};
+use cosmwasm_std::{entry_point, to_json_binary, StdError};
 use cosmwasm_std::{BalanceResponse, BankQuery};
 use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
@@ -10,8 +10,11 @@ use coreum_wasm_sdk::assetft::{
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 
-use crate::msg::{ExecuteMsg, IBCPurpose, InstantiateMsg, QueryMsg, SudoMsg, TransferContext};
-use crate::state::DENOM;
+use crate::msg::{
+    ExecuteMsg, IBCPurpose, InstantiateMsg, QueryInstantiationInfoResponse, QueryMsg, SudoMsg,
+    TransferContext,
+};
+use crate::state::{DENOM, EXTRA_DATA};
 
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -37,6 +40,10 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     DENOM.save(deps.storage, &msg.denom)?;
+    EXTRA_DATA.save(
+        deps.storage,
+        &msg.instantiation_info.extra_data.unwrap_or_default(),
+    )?;
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -155,8 +162,16 @@ pub fn sudo_extension_transfer(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {}
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::QueryInstantiationInfo {} => query_instantiation_info(deps),
+    }
+}
+
+fn query_instantiation_info(deps: Deps) -> StdResult<Binary> {
+    let test = EXTRA_DATA.load(deps.storage).ok();
+    let resp = QueryInstantiationInfoResponse { test };
+    to_json_binary(&resp)
 }
 
 fn assert_freezing(

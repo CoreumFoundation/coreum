@@ -2350,7 +2350,7 @@ Feature defines possible features of fungible token.
 ### ExtensionIssueSettings
 
 ```
-ExtensionIssueSettings are settings that will be used to Instantantiate the smart contract which contains
+ExtensionIssueSettings are settings that will be used to Instantiate the smart contract which contains
 the source code for the extension.
 ```
 
@@ -2361,6 +2361,7 @@ the source code for the extension.
 | `code_id` | [uint64](#uint64) |  |  `code_id is the reference to the stored WASM code`  |
 | `label` | [string](#string) |  |  `label is optional metadata to be stored with a contract instance.`  |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `funds coins that are transferred to the contract on instantiation`  |
+| `instantiationInfo` | [bytes](#bytes) |  |  `optional json encoded data to pass to WASM on instantiation`  |
 
 
 
