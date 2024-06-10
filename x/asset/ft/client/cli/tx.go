@@ -24,20 +24,20 @@ import (
 
 // Flags defined on transactions.
 const (
-	FeaturesFlag               = "features"
-	BurnRateFlag               = "burn-rate"
-	SendCommissionRateFlag     = "send-commission-rate"
-	IBCEnabledFlag             = "ibc-enabled"
-	MintLimitFlag              = "mint-limit"
-	BurnLimitFlag              = "burn-limit"
-	ExpirationFlag             = "expiration"
-	RecipientFlag              = "recipient"
-	URIFlag                    = "uri"
-	URIHashFlag                = "uri_hash"
-	ExtensionCodeID            = "extension_code_id"
-	ExtensionLabel             = "extension_label"
-	ExtensionFunds             = "extension_funds"
-	ExtensionInstantiationInfo = "extension_instantiation_info"
+	FeaturesFlag              = "features"
+	BurnRateFlag              = "burn-rate"
+	SendCommissionRateFlag    = "send-commission-rate"
+	IBCEnabledFlag            = "ibc-enabled"
+	MintLimitFlag             = "mint-limit"
+	BurnLimitFlag             = "burn-limit"
+	ExpirationFlag            = "expiration"
+	RecipientFlag             = "recipient"
+	URIFlag                   = "uri"
+	URIHashFlag               = "uri_hash"
+	ExtensionCodeID           = "extension_code_id"
+	ExtensionLabel            = "extension_label"
+	ExtensionFunds            = "extension_funds"
+	ExtensionInstantiationMsg = "extension_instantiation_msg"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -81,7 +81,7 @@ func CmdTxIssue() *cobra.Command {
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
 		//nolint:lll // breaking this down will make it look worse when printed to user screen.
-		Use:   fmt.Sprintf("issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features="+strings.Join(allowedFeatures, ",")+" --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624 --extension_code_id=1 --extension_label=my-extension --extension_funds=100000ABC-%s --extension_instantiation_info={}", constant.AddressSampleTest),
+		Use:   fmt.Sprintf("issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features="+strings.Join(allowedFeatures, ",")+" --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624 --extension_code_id=1 --extension_label=my-extension --extension_funds=100000ABC-%s --extension_instantiation_msg={}", constant.AddressSampleTest),
 		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -191,12 +191,12 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 					}
 				}
 
-				extensionInstantiationInfo, err := cmd.Flags().GetString(ExtensionInstantiationInfo)
+				extensionInstantiationMsg, err := cmd.Flags().GetString(ExtensionInstantiationMsg)
 				if err != nil {
 					return errors.WithStack(err)
 				}
 
-				extensionSettings.InstantiationInfo = []byte(extensionInstantiationInfo)
+				extensionSettings.InstantiationMsg = []byte(extensionInstantiationMsg)
 			}
 
 			msg := &types.MsgIssue{
@@ -228,7 +228,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 	cmd.Flags().Uint64(ExtensionCodeID, 0, "CodeID of the stored WASM smart contract to be used as the asset extension.")
 	cmd.Flags().String(ExtensionLabel, "", "Optional label to be given to the extension contract.")
 	cmd.Flags().String(ExtensionFunds, "", "Coins that are transferred to the contract on instantiation.")
-	cmd.Flags().String(ExtensionInstantiationInfo, "{}", "Optional json encoded data to pass to WASM on instantiation.")
+	cmd.Flags().String(ExtensionInstantiationMsg, "{}", "Optional json encoded data to pass to WASM on instantiation.")
 
 	flags.AddTxFlagsToCmd(cmd)
 

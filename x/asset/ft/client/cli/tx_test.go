@@ -103,20 +103,20 @@ func TestIssueWithExtension(t *testing.T) {
 	}
 
 	//nolint:tagliatelle // these will be exposed to rust and must be snake case.
-	instantiationInfo := struct {
+	instantiationMsg := struct {
 		ExtraData string `json:"extra_data"`
 	}{
 		ExtraData: "test",
 	}
 
-	instantiationInfoBytes, _ := json.Marshal(instantiationInfo)
+	instantiationMsgBytes, _ := json.Marshal(instantiationMsg)
 
 	initialAmount := sdkmath.NewInt(100)
 	extension := &types.ExtensionIssueSettings{
-		CodeId:            codeID,
-		Label:             "testing-extension",
-		Funds:             sdk.NewCoins(sdk.NewCoin(testNetwork.Config.BondDenom, sdk.NewInt(10))),
-		InstantiationInfo: instantiationInfoBytes,
+		CodeId:           codeID,
+		Label:            "testing-extension",
+		Funds:            sdk.NewCoins(sdk.NewCoin(testNetwork.Config.BondDenom, sdk.NewInt(10))),
+		InstantiationMsg: instantiationMsgBytes,
 	}
 	denom := issue(requireT, ctx, token, initialAmount, extension, testNetwork)
 
@@ -134,8 +134,8 @@ func TestIssueWithExtension(t *testing.T) {
 	args = []string{resp.Token.ExtensionCWAddress, `{"query_user_provided_instantiation_msg":{}}`}
 	var queryResp wasmtypes.QuerySmartContractStateResponse
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, wasmcli.GetCmdGetContractStateSmart(), args, &queryResp))
-	requireT.NoError(json.Unmarshal(queryResp.Data, &instantiationInfo))
-	requireT.Equal("test", instantiationInfo.ExtraData)
+	requireT.NoError(json.Unmarshal(queryResp.Data, &instantiationMsg))
+	requireT.Equal("test", instantiationMsg.ExtraData)
 }
 
 func TestMintBurn(t *testing.T) {
@@ -675,9 +675,9 @@ func parseExtensionArgs(args []string, extensionSettings *types.ExtensionIssueSe
 	if extensionSettings.Funds != nil && extensionSettings.Funds.IsAllPositive() {
 		args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionFunds, extensionSettings.Funds.String()))
 	}
-	if len(extensionSettings.InstantiationInfo) > 0 {
-		if jsonEncodedMessage, err := extensionSettings.InstantiationInfo.MarshalJSON(); err == nil {
-			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionInstantiationInfo, string(jsonEncodedMessage)))
+	if len(extensionSettings.InstantiationMsg) > 0 {
+		if jsonEncodedMessage, err := extensionSettings.InstantiationMsg.MarshalJSON(); err == nil {
+			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionInstantiationMsg, string(jsonEncodedMessage)))
 		}
 	}
 	return args

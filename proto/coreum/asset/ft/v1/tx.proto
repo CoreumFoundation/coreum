@@ -102,7 +102,7 @@ message ExtensionIssueSettings {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
   // optional json encoded data to pass to WASM on instantiation
-  bytes instantiationInfo = 4 [
+  bytes instantiationMsg = 4 [
     (gogoproto.casttype) = "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage",
     (amino.encoding) = "inline_json"
   ];
