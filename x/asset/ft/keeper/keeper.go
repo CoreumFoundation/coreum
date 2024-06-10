@@ -250,6 +250,10 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
 		}
 
+		if len(settings.ExtensionSettings.InstantiationInfo) == 0 {
+			settings.ExtensionSettings.InstantiationInfo = []byte("{}")
+		}
+
 		instantiateMsgBytes, err := json.Marshal(ExtensionInstantiateMsg{
 			Denom:             denom,
 			InstantiationInfo: settings.ExtensionSettings.InstantiationInfo,
