@@ -1078,6 +1078,7 @@ func New(
 			},
 			DeterministicGasConfig: deterministicGasConfig,
 			IBCKeeper:              app.IBCKeeper,
+			GovKeeper:              &app.GovKeeper,
 			FeeModelKeeper:         app.FeeModelKeeper,
 			WasmTXCounterStoreKey:  keys[wasmtypes.StoreKey],
 			WasmConfig:             wasmConfig,
