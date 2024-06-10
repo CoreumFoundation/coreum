@@ -131,7 +131,7 @@ func TestIssueWithExtension(t *testing.T) {
 	requireT.Equal(token, resp.Token)
 	requireT.NotEmpty(resp.Token.ExtensionCWAddress)
 
-	args = []string{resp.Token.ExtensionCWAddress, `{"query_instantiation_info":{}}`}
+	args = []string{resp.Token.ExtensionCWAddress, `{"query_user_provided_instantiation_msg":{}}`}
 	var queryResp wasmtypes.QuerySmartContractStateResponse
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, wasmcli.GetCmdGetContractStateSmart(), args, &queryResp))
 	requireT.NoError(json.Unmarshal(queryResp.Data, &instantiationInfo))

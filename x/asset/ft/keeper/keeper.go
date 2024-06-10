@@ -29,8 +29,8 @@ import (
 //
 //nolint:tagliatelle // these will be exposed to rust and must be snake case.
 type ExtensionInstantiateMsg struct {
-	Denom             string `json:"denom"`
-	InstantiationInfo any    `json:"instantiation_info"`
+	Denom                        string `json:"denom"`
+	UserProvidedInstantiationMsg any    `json:"user_provided_instantiation_msg"`
 }
 
 // Keeper is the asset module keeper.
@@ -255,8 +255,8 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		}
 
 		instantiateMsgBytes, err := json.Marshal(ExtensionInstantiateMsg{
-			Denom:             denom,
-			InstantiationInfo: settings.ExtensionSettings.InstantiationInfo,
+			Denom:                        denom,
+			UserProvidedInstantiationMsg: settings.ExtensionSettings.InstantiationInfo,
 		})
 		if err != nil {
 			return "", types.ErrInvalidInput.Wrapf("error marshalling ExtensionInstantiateMsg (%s)", err)
