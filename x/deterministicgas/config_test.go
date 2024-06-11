@@ -13,6 +13,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
@@ -72,7 +73,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		assert.True(t, ok, fmt.Sprintf("sdk.Msg %s, not found in the gasByMsg map", msgURL))
 
 		_, _, nonExtensionMsg, err := types.TypeAssertMessages(sdkMsg)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if nonExtensionMsg {
 			nonextensionMsgCount++
 		} else {
