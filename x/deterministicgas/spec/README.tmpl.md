@@ -66,8 +66,23 @@ signatures and the tx size is 2050 bytes, total will be:
 TotalGas = {{ .FixedGas }} +  max(0, ({{ .TxBaseGas }} - 2 * {{ .SigVerifyCost }} + 2050 * {{ .TxSizeCostPerByte }})) + 2 * {{ .MsgIssueGasPrice }}
 `
 
+## Extensions
+If one of the follwoing messages have the extension feature enabled, it will not be considered deterministic. The reason is 
+that extensions invlove smart contract calls which are nondeterministic in nature. 
+
+ - `/ibc.applications.transfer.v1.MsgTransfer`
+ - `/coreum.asset.ft.v1.MsgIssue`
+ - `/cosmos.bank.v1beta1.MsgSend`
+ - `/cosmos.bank.v1beta1.MsgMultiSend`
+ - `/cosmos.distribution.v1beta1.MsgCommunityPoolSpend`
+ - `/cosmos.distribution.v1beta1.MsgFundCommunityPool`
+ - `/cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount`
+ - `/cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount`	
+ - `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`        		
+
+It should also be mentioned that this rule apply for all the messages inside `/cosmos.authz.v1beta1.MsgExec`
+
 ## Gas Tables
-NOTE: if a message contians transfer of coins with the extension feature, it will count as nondeterministic.
 
 ### Deterministic messages
 
@@ -84,8 +99,6 @@ NOTE: if a message contians transfer of coins with the extension feature, it wil
 
 There are some special cases when custom logic is applied for deterministic gas calculation.
 Real examples of special case tests could be found [here](https://github.com/CoreumFoundation/coreum/blob/master/x/deterministicgas/config_test.go#L168)
-
-As mentioned above if a transaction contains a token with extension feature, it will count as nondeterministic.
 
 ##### `/cosmos.bank.v1beta1.MsgSend`
 
