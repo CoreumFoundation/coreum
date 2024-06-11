@@ -2,28 +2,35 @@ package ante
 
 import (
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/CoreumFoundation/coreum/v4/x/wgov/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	"github.com/CoreumFoundation/coreum/v4/x/wgov/types"
 )
 
+// GovDepositDecorator is the ante handler which blocks tokens that are part of the
+// min deposit, from being depositted into the proposal. Despositing such tokens into
+// proposals can lead to problems when they are being refunded.
 type GovDepositDecorator struct {
 	keeer types.GovKeeper
 }
 
+// NewGovDepositDecorator returns a new instance of GovDepositDecorator.
 func NewGovDepositDecorator(keeer types.GovKeeper) GovDepositDecorator {
 	return GovDepositDecorator{
 		keeer: keeer,
 	}
 }
 
+// AnteHandle rejects gov deposits that contains tokens which are not part of
+// the min deposit variable.
 func (d GovDepositDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	for _, msg := range tx.GetMsgs() {
-		deposit := sdk.NewCoins()
+		var deposit sdk.Coins
 		switch typedMsg := msg.(type) {
 		case *govv1.MsgDeposit:
 			deposit = typedMsg.Amount
