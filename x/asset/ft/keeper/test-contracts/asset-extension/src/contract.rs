@@ -11,7 +11,7 @@ use coreum_wasm_sdk::assetft::{
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 
 use crate::msg::{
-    ExecuteMsg, IBCPurpose, InstantiateMsg, QueryUserProvidedInstantiationMsgResponse, QueryMsg, SudoMsg,
+    ExecuteMsg, IBCPurpose, InstantiateMsg, QueryIssuanceMsgResponse, QueryMsg, SudoMsg,
     TransferContext,
 };
 use crate::state::{DENOM, EXTRA_DATA};
@@ -42,9 +42,7 @@ pub fn instantiate(
     DENOM.save(deps.storage, &msg.denom)?;
     EXTRA_DATA.save(
         deps.storage,
-        &msg.user_provided_instantiation_msg
-            .extra_data
-            .unwrap_or_default(),
+        &msg.issuance_msg.extra_data.unwrap_or_default(),
     )?;
 
     Ok(Response::new()
@@ -166,13 +164,13 @@ pub fn sudo_extension_transfer(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::QueryUserProvidedInstantiationMsg {} => query_user_provided_instantiation_msg(deps),
+        QueryMsg::QueryIssuanceMsg {} => query_issuance_msg(deps),
     }
 }
 
-fn query_user_provided_instantiation_msg(deps: Deps) -> StdResult<Binary> {
+fn query_issuance_msg(deps: Deps) -> StdResult<Binary> {
     let test = EXTRA_DATA.load(deps.storage).ok();
-    let resp = QueryUserProvidedInstantiationMsgResponse { test };
+    let resp = QueryIssuanceMsgResponse { test };
     to_json_binary(&resp)
 }
 

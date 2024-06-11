@@ -4,11 +4,11 @@ use cosmwasm_std::Uint128;
 #[cw_serde]
 pub struct InstantiateMsg {
     pub denom: String,
-    pub user_provided_instantiation_msg: UserProvidedInstantiationMsg,
+    pub issuance_msg: IssuanceMsg,
 }
 
 #[cw_serde]
-pub struct UserProvidedInstantiationMsg {
+pub struct IssuanceMsg {
     pub extra_data: Option<String>,
 }
 
@@ -46,11 +46,11 @@ pub enum IBCPurpose {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(QueryUserProvidedInstantiationMsgResponse)]
-    QueryUserProvidedInstantiationMsg {},
+    #[returns(QueryIssuanceMsgResponse)]
+    QueryIssuanceMsg {},
 }
 
 #[cw_serde]
-pub struct QueryUserProvidedInstantiationMsgResponse {
+pub struct QueryIssuanceMsgResponse {
     pub test: Option<String>,
 }

@@ -24,20 +24,20 @@ import (
 
 // Flags defined on transactions.
 const (
-	FeaturesFlag              = "features"
-	BurnRateFlag              = "burn-rate"
-	SendCommissionRateFlag    = "send-commission-rate"
-	IBCEnabledFlag            = "ibc-enabled"
-	MintLimitFlag             = "mint-limit"
-	BurnLimitFlag             = "burn-limit"
-	ExpirationFlag            = "expiration"
-	RecipientFlag             = "recipient"
-	URIFlag                   = "uri"
-	URIHashFlag               = "uri_hash"
-	ExtensionCodeID           = "extension_code_id"
-	ExtensionLabel            = "extension_label"
-	ExtensionFunds            = "extension_funds"
-	ExtensionInstantiationMsg = "extension_instantiation_msg"
+	FeaturesFlag           = "features"
+	BurnRateFlag           = "burn-rate"
+	SendCommissionRateFlag = "send-commission-rate"
+	IBCEnabledFlag         = "ibc-enabled"
+	MintLimitFlag          = "mint-limit"
+	BurnLimitFlag          = "burn-limit"
+	ExpirationFlag         = "expiration"
+	RecipientFlag          = "recipient"
+	URIFlag                = "uri"
+	URIHashFlag            = "uri_hash"
+	ExtensionCodeID        = "extension_code_id"
+	ExtensionLabel         = "extension_label"
+	ExtensionFunds         = "extension_funds"
+	ExtensionIssuanceMsg   = "extension_issuance_msg"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -191,12 +191,12 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 					}
 				}
 
-				extensionInstantiationMsg, err := cmd.Flags().GetString(ExtensionInstantiationMsg)
+				extensionIssuanceMsg, err := cmd.Flags().GetString(ExtensionIssuanceMsg)
 				if err != nil {
 					return errors.WithStack(err)
 				}
 
-				extensionSettings.InstantiationMsg = []byte(extensionInstantiationMsg)
+				extensionSettings.IssuanceMsg = []byte(extensionIssuanceMsg)
 			}
 
 			msg := &types.MsgIssue{
@@ -228,7 +228,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 	cmd.Flags().Uint64(ExtensionCodeID, 0, "CodeID of the stored WASM smart contract to be used as the asset extension.")
 	cmd.Flags().String(ExtensionLabel, "", "Optional label to be given to the extension contract.")
 	cmd.Flags().String(ExtensionFunds, "", "Coins that are transferred to the contract on instantiation.")
-	cmd.Flags().String(ExtensionInstantiationMsg, "{}", "Optional json encoded data to pass to WASM on instantiation.")
+	cmd.Flags().String(ExtensionIssuanceMsg, "{}", "Optional json encoded data to pass to WASM on instantiation by the ft issuer.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
