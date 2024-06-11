@@ -7,6 +7,7 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -29,8 +30,8 @@ import (
 //
 //nolint:tagliatelle // these will be exposed to rust and must be snake case.
 type ExtensionInstantiateMsg struct {
-	Denom       string `json:"denom"`
-	IssuanceMsg any    `json:"issuance_msg"`
+	Denom       string                       `json:"denom"`
+	IssuanceMsg wasmtypes.RawContractMessage `json:"issuance_msg"`
 }
 
 // Keeper is the asset module keeper.

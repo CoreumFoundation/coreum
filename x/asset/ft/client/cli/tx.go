@@ -228,6 +228,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 	cmd.Flags().Uint64(ExtensionCodeID, 0, "CodeID of the stored WASM smart contract to be used as the asset extension.")
 	cmd.Flags().String(ExtensionLabel, "", "Optional label to be given to the extension contract.")
 	cmd.Flags().String(ExtensionFunds, "", "Coins that are transferred to the contract on instantiation.")
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
 	cmd.Flags().String(ExtensionIssuanceMsg, "{}", "Optional json encoded data to pass to WASM on instantiation by the ft issuer.")
 
 	flags.AddTxFlagsToCmd(cmd)
