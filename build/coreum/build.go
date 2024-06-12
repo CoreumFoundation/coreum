@@ -54,7 +54,7 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		PackagePath:    "cmd/cored",
 		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
 		Flags: []string{
@@ -85,7 +85,7 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 		return errors.WithStack(err)
 	}
 
-	if err := Tidy(ctx, deps); err != nil {
+	if err := golang.Tidy(ctx, deps); err != nil {
 		return err
 	}
 
@@ -95,7 +95,7 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 		return err
 	}
 
-	return git.RollbackChanges(ctx, repoPath, "go.mod", "go.sum", "go.work.sum")
+	return git.RollbackChanges(ctx, "go.mod", "go.sum", "go.work.sum")
 }
 
 func buildCoredInDocker(
@@ -118,7 +118,7 @@ func buildCoredInDocker(
 	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     true,
 		Flags: append(
@@ -147,7 +147,7 @@ func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPl
 	)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     false,
 		Flags: []string{
@@ -157,36 +157,31 @@ func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPl
 	})
 }
 
-// Tidy runs `go mod tidy` for coreum repo.
-func Tidy(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Tidy(ctx, repoPath, deps)
-}
-
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps types.DepsFunc) error {
 	deps(Generate, CompileAllSmartContracts, formatProto, lintProto, breakingProto)
-	return golang.Lint(ctx, repoPath, deps)
+	return golang.Lint(ctx, deps)
 }
 
 // Test run unit tests in coreum repo.
 func Test(ctx context.Context, deps types.DepsFunc) error {
 	deps(CompileAllSmartContracts)
 
-	return golang.Test(ctx, repoPath, deps)
+	return golang.Test(ctx, deps)
 }
 
 // DownloadDependencies downloads go dependencies.
 func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
-	return golang.DownloadDependencies(ctx, repoPath, deps)
+	return golang.DownloadDependencies(ctx, deps, repoPath)
 }
 
 func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([]string, error) {
-	hash, err := git.DirtyHeadHash(ctx, repoPath)
+	hash, err := git.DirtyHeadHash(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	version, err := git.VersionFromTag(ctx, repoPath)
+	version, err := git.VersionFromTag(ctx)
 	if err != nil {
 		return nil, err
 	}
