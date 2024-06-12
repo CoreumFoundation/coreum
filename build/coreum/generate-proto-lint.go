@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
@@ -18,7 +19,7 @@ import (
 var configLint []byte
 
 func lintProto(ctx context.Context, deps types.DepsFunc) error {
-	deps(Tidy)
+	deps(golang.Tidy)
 
 	_, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
@@ -18,7 +19,7 @@ import (
 // generateProtoDocs collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
 // generates documentation using above proto files + coreum/proto, and places the result to docs/api.md.
 func generateProtoDocs(ctx context.Context, deps types.DepsFunc) error {
-	deps(Tidy)
+	deps(golang.Tidy)
 
 	moduleDirs, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {
