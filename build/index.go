@@ -5,6 +5,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/build/coreum"
 	"github.com/CoreumFoundation/crust/build/crust"
+	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -68,7 +69,7 @@ var Commands = map[string]types.Command{
 	"release":        {Fn: coreum.ReleaseCored, Description: "Releases cored binary"},
 	"release/images": {Fn: coreum.ReleaseCoredImage, Description: "Releases cored docker images"},
 	"test":           {Fn: coreum.Test, Description: "Runs unit tests"},
-	"tidy":           {Fn: coreum.Tidy, Description: "Runs go mod tidy"},
+	"tidy":           {Fn: golang.Tidy, Description: "Runs go mod tidy"},
 	"wasm": {
 		Fn:          coreum.CompileAllSmartContracts,
 		Description: "Builds smart contracts required by integration tests",
