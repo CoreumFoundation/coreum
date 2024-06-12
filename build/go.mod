@@ -35,7 +35,7 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f
-	github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd
+	github.com/CoreumFoundation/crust v0.0.0-20240612111521-7c79ea5c546a // FIXME(dzmitryhil) update to master once merged
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.39.0
@@ -64,8 +64,8 @@ require (
 	github.com/99designs/keyring v1.2.2 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
-	github.com/CosmWasm/wasmd v0.44.0 // indirect
-	github.com/CosmWasm/wasmvm v1.5.1 // indirect
+	github.com/CosmWasm/wasmd v0.45.0 // indirect
+	github.com/CosmWasm/wasmvm v1.5.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/aws/aws-sdk-go v1.44.203 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect

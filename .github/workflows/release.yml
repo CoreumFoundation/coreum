@@ -37,8 +37,8 @@ jobs:
         run: |
           ln coreum/bin/.cache/cored/docker.linux.amd64/bin/cored cored-linux-amd64
           ln coreum/bin/.cache/cored/docker.linux.arm64/bin/cored cored-linux-arm64
-          ln coreum/bin/.cache/cored/docker.darwin.amd64/bin/cored-client cored-client-darwin-amd64
-          ln coreum/bin/.cache/cored/docker.darwin.arm64/bin/cored-client cored-client-darwin-arm64
+          ln coreum/bin/.cache/cored/docker.darwin.amd64/bin/cored cored-darwin-amd64
+          ln coreum/bin/.cache/cored/docker.darwin.arm64/bin/cored cored-darwin-arm64
           sha256sum cored-* > checksums.txt
       - name: Create release
         if: steps.check-tag.outputs.release == 'true'
@@ -49,8 +49,8 @@ jobs:
           files: |
             cored-linux-amd64
             cored-linux-arm64
-            cored-client-darwin-amd64
-            cored-client-darwin-arm64
+            cored-darwin-amd64
+            cored-darwin-arm64
             checksums.txt
       - name: Create release candidate
         if: steps.check-tag.outputs.release_candidate == 'true'
@@ -62,6 +62,6 @@ jobs:
           files: |
             cored-linux-amd64
             cored-linux-arm64
-            cored-client-darwin-amd64
-            cored-client-darwin-arm64
+            cored-darwin-amd64
+            cored-darwin-arm64
             checksums.txt

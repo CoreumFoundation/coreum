@@ -296,6 +296,8 @@ github.com/CloudyKit/jet/v3 v3.0.0 h1:1PwO5w5VCtlUUl+KTOBsTGZlhjWkcybsGaAau52tOy
 github.com/CloudyKit/jet/v3 v3.0.0/go.mod h1:HKQPgSJmdK8hdoAbKUUWajkHyHo4RaU5rMdUywE7VMo=
 github.com/CloudyKit/jet/v6 v6.2.0 h1:EpcZ6SR9n28BUGtNJSvlBqf90IpjeFr36Tizxhn/oME=
 github.com/CloudyKit/jet/v6 v6.2.0/go.mod h1:d3ypHeIRNo2+XyqnGA8s+aphtcVpjP5hPwP/Lzo7Ro4=
+github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd h1:4nns+B+HSRdWLHSn8KHv1q4Y4/eNMvp8lyg4uA0/2Xg=
+github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd/go.mod h1:+tc+D5f9K7oNNtv8UazzNy8LheAhBG7UDc25JwY803Y=
 github.com/CosmWasm/wasmd v0.40.0-rc.1/go.mod h1:uacdue6EGn9JA1TqBNHB3iCe4PCIChuFT23AzIl2VME=
 github.com/CosmWasm/wasmvm v1.2.3/go.mod h1:vW/E3h8j9xBQs9bCoijDuawKo9kCtxOaS8N8J7KFtkc=
 github.com/CosmWasm/wasmvm v1.5.0/go.mod h1:fXB+m2gyh4v9839zlIXdMZGeLAxqUdYdFQqYsTha2hc=
