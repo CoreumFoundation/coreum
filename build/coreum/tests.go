@@ -126,6 +126,6 @@ func defaultZNetConfig() *infra.ConfigFactory {
 		EnvName:       "znet",
 		TimeoutCommit: 500 * time.Millisecond,
 		HomeDir:       filepath.Join(lo.Must(os.UserHomeDir()), ".crust", "znet"),
-		RootDir:       "../",
+		RootDir:       ".",
 	}
 }
