@@ -93,6 +93,10 @@ pub fn sudo_extension_transfer(
     burn_amount: Uint128,
     context: TransferContext,
 ) -> CoreumResult<ContractError> {
+    if amount.is_zero() {
+        return Err(ContractError::InvalidAmountError {});
+    }
+
     if amount == AMOUNT_DISALLOWED_TRIGGER {
         return Err(ContractError::Std(StdError::generic_err(
             "7 is not allowed",
@@ -348,6 +352,10 @@ fn assert_send_commission_rate(
     // the rest of the commission
     if let Some(admin) = &token.admin {
         let admin_commission_amount = commission_amount.div(Uint128::new(2));
+        if admin_commission_amount.is_zero() {
+            return Ok(response);
+        }
+
         let admin_commission_msg = cosmwasm_std::BankMsg::Send {
             to_address: admin.to_string(),
             amount: vec![Coin {
