@@ -23,7 +23,7 @@ const (
 func Generate(ctx context.Context, deps types.DepsFunc) error {
 	deps(generateProtoDocs, generateProtoGo, generateProtoOpenAPI)
 
-	return golang.Generate(ctx, repoPath, deps)
+	return golang.Generate(ctx, deps)
 }
 
 func protoCDirectories(ctx context.Context, repoPath string, deps types.DepsFunc) (map[string]string, []string, error) {

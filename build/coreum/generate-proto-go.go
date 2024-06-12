@@ -20,7 +20,7 @@ import (
 )
 
 func generateProtoGo(ctx context.Context, deps types.DepsFunc) error {
-	deps(Tidy)
+	deps(golang.Tidy)
 
 	_, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {
