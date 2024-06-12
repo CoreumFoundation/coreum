@@ -109,7 +109,8 @@ func TestIssueWithExtension(t *testing.T) {
 		ExtraData: "test",
 	}
 
-	issuanceMsgBytes, _ := json.Marshal(issuanceMsg)
+	issuanceMsgBytes, err := json.Marshal(issuanceMsg)
+	requireT.NoError(err)
 
 	initialAmount := sdkmath.NewInt(100)
 	extension := &types.ExtensionIssueSettings{

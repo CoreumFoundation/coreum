@@ -65,7 +65,8 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		ExtraData: "test",
 	}
 
-	issuanceMsgBytes, _ := json.Marshal(issuanceMsg)
+	issuanceMsgBytes, err := json.Marshal(issuanceMsg)
+	requireT.NoError(err)
 
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
 	issueMsg := &assetfttypes.MsgIssue{
