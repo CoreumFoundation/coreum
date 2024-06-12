@@ -14,6 +14,7 @@ import (
 type AccountKeeper interface {
 	//nolint:inamedparam // the sdk interface
 	GetAccount(sdk.Context, sdk.AccAddress) authtypes.AccountI
+	GetModuleAccount(ctx sdk.Context, name string) authtypes.ModuleAccountI
 }
 
 // BankKeeper defines the expected bank interface.

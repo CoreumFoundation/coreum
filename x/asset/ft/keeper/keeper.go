@@ -586,6 +586,10 @@ func (k Keeper) Clawback(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "clawback amount should be positive")
 	}
 
+	if k.isGovAccount(ctx, sender) {
+		return nil
+	}
+
 	if err := k.validateClawbackAllowed(ctx, sender, addr, coin); err != nil {
 		return err
 	}
@@ -759,6 +763,10 @@ func (k Keeper) mintIfReceivable(
 		return nil
 	}
 
+	if k.isGovAccount(ctx, recipient) {
+		return nil
+	}
+
 	if wasm.IsSmartContract(ctx, recipient, k.wasmKeeper) {
 		ctx = cwasmtypes.WithSmartContractRecipient(ctx, recipient.String())
 	}
@@ -790,6 +798,10 @@ func (k Keeper) burnIfSpendable(
 	def types.Definition,
 	amount sdkmath.Int,
 ) error {
+	if k.isGovAccount(ctx, account) {
+		return nil
+	}
+
 	if err := k.isCoinSpendable(ctx, account, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}
@@ -797,7 +809,15 @@ func (k Keeper) burnIfSpendable(
 	return k.burn(ctx, account, sdk.NewCoins(sdk.NewCoin(def.Denom, amount)))
 }
 
+func (k Keeper) isGovAccount(ctx sdk.Context, account sdk.AccAddress) bool {
+	return k.accountKeeper.GetModuleAccount(ctx, govtypes.ModuleName).GetAddress().Equals(account)
+}
+
 func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, coinsToBurn sdk.Coins) error {
+	if k.isGovAccount(ctx, account) {
+		return nil
+	}
+
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coinsToBurn); err != nil {
 		return sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", account.String(), types.ModuleName)
 	}
