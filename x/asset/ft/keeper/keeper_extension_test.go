@@ -99,8 +99,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.EqualValues("2", balance.Amount.String())
 
 	// send 7 coin will fail.
-	// the POC contract is written as such that sending 7 will fail.
-	// TODO replace with more meningful checks.
+	// the test contract is written as such that sending 7 will fail.
 	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(AmountDisallowedTrigger))),
 	)

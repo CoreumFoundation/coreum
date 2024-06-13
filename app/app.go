@@ -195,7 +195,7 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
 			[]govclient.ProposalHandler{
-				// TODO(v4): Remove once IBC upgrades to the new param management mechanism.
+				// TODO(v5): Remove once IBC upgrades to the new param management mechanism.
 				// Check ibc-go/modules/core/02-client/types/params.go
 				paramsclient.ProposalHandler,
 				ibcclientclient.UpdateClientProposalHandler,
@@ -643,7 +643,7 @@ func New(
 	// See: https://docs.cosmos.network/main/modules/gov#proposal-messages
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-		// TODO(v4): Remove once IBC upgrades to the new param management mechanism.
+		// TODO(v5): Remove once IBC upgrades to the new param management mechanism.
 		// Check ibc-go/modules/core/02-client/types/params.go
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
@@ -761,7 +761,7 @@ func New(
 	// Set WASM keeper in WASM hooks.
 	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
 
-	// FIXME(v4): drop once we drop gov v1beta1 compatibility.
+	// TODO(v5): drop once we drop gov v1beta1 compatibility.
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
@@ -1354,7 +1354,7 @@ func initParamsKeeper(
 ) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
-	// TODO(v4): Remove once all of modules migrate to the new param management mechanism.
+	// TODO(v5): Remove once all of modules migrate to the new param management mechanism.
 	// For now we keep for legacy proposals to work properly.
 	paramsKeeper.Subspace(authtypes.ModuleName)
 	paramsKeeper.Subspace(banktypes.ModuleName)
