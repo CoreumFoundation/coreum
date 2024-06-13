@@ -46,8 +46,9 @@ func BuildExtendedCoredDockerImage(ctx context.Context, deps types.DepsFunc) err
 }
 
 func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
+	binaryName := filepath.Base(cfg.BinaryPath)
 	for _, platform := range cfg.TargetPlatforms {
-		if err := ensureCosmovisor(ctx, platform); err != nil {
+		if err := ensureCosmovisorWithInstalledBinary(ctx, platform, binaryName); err != nil {
 			return err
 		}
 	}
@@ -64,7 +65,6 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 		return err
 	}
 
-	binaryName := filepath.Base(cfg.BinaryPath)
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
 		RepoPath:        repoPath,
 		ContextDir:      filepath.Join("bin", ".cache", binaryName),

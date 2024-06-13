@@ -56,6 +56,7 @@ func ReleaseCoredImage(ctx context.Context, deps types.DepsFunc) error {
 	deps(ReleaseCored)
 
 	return buildCoredDockerImage(ctx, imageConfig{
+		BinaryPath: binaryPath,
 		TargetPlatforms: []tools.TargetPlatform{
 			tools.TargetPlatformLinuxAMD64InDocker,
 			tools.TargetPlatformLinuxARM64InDocker,
