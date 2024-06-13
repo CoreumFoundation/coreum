@@ -42,7 +42,7 @@ jobs:
             linter-cache: false
             codecov: false
 
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     steps:
       - name: Go version used to build builder
         run: go version
