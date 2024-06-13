@@ -104,7 +104,6 @@ func buildCoredInDocker(
 	if err != nil {
 		return err
 	}
-	ldFlags = append(ldFlags, "-linkmode external")
 
 	if err := tools.Ensure(ctx, tools.LibWASM, targetPlatform); err != nil {
 		return err
@@ -116,27 +115,47 @@ func buildCoredInDocker(
 	dockerVolumes := make([]string, 0)
 	switch targetPlatform.OS {
 	case tools.OSLinux:
-		// osusergo tag is required for the cross compilation to avoid warnings, https://pkg.go.dev/os/user
-		buildTags = append(buildTags, "muslc", "osusergo")
-		ldFlags = append(ldFlags, "-extldflags '-Wl,-z,muldefs -static -lm'")
+		// use cc not installed on the image we use for the build
+		if err := tools.Ensure(ctx, tools.MuslCC, targetPlatform); err != nil {
+			return err
+		}
+		buildTags = append(buildTags, "muslc")
+		ldFlags = append(ldFlags, "-extldflags '-static'")
+		var (
+			hostCCDirPath string
+			// path inside hostCCDirPath to the CC
+			ccRelativePath string
+
+			wasmHostDirPath string
+			// path to the wasm lib in the CC
+			wasmCCLibRelativeLibPath string
+		)
 		switch targetPlatform {
 		case tools.TargetPlatformLinuxAMD64InDocker:
-			cc = "x86_64-linux-gnu-gcc"
-			wasmHostDirPath := tools.Path("lib/libwasmvm_muslc.x86_64.a", targetPlatform)
-			dockerVolumes = append(
-				dockerVolumes,
-				fmt.Sprintf("%s:%s", wasmHostDirPath, "/usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a"),
+			hostCCDirPath = filepath.Dir(
+				filepath.Dir(tools.Path("bin/x86_64-linux-musl-gcc", targetPlatform)),
 			)
+			ccRelativePath = "/bin/x86_64-linux-musl-gcc"
+			wasmHostDirPath = tools.Path("lib/libwasmvm_muslc.x86_64.a", targetPlatform)
+			wasmCCLibRelativeLibPath = "/x86_64-linux-musl/lib/libwasmvm_muslc.a"
 		case tools.TargetPlatformLinuxARM64InDocker:
-			cc = "aarch64-linux-gnu-gcc"
-			wasmHostDirPath := tools.Path("lib/libwasmvm_muslc.aarch64.a", targetPlatform)
-			dockerVolumes = append(
-				dockerVolumes,
-				fmt.Sprintf("%s:%s", wasmHostDirPath, "/usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a"),
+			hostCCDirPath = filepath.Dir(
+				filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", targetPlatform)),
 			)
+			ccRelativePath = "/bin/aarch64-linux-musl-gcc"
+			wasmHostDirPath = tools.Path("lib/libwasmvm_muslc.aarch64.a", targetPlatform)
+			wasmCCLibRelativeLibPath = "/aarch64-linux-musl/lib/libwasmvm_muslc.a"
 		default:
 			return errors.Errorf("building is not possible for platform %s", targetPlatform)
 		}
+		const ccDockerDir = "/musl-gcc"
+		dockerVolumes = append(
+			dockerVolumes,
+			fmt.Sprintf("%s:%s", hostCCDirPath, ccDockerDir),
+			// put the libwasmvm to the lib folder of the compiler
+			fmt.Sprintf("%s:%s", wasmHostDirPath, fmt.Sprintf("%s%s", ccDockerDir, wasmCCLibRelativeLibPath)),
+		)
+		cc = fmt.Sprintf("%s%s", ccDockerDir, ccRelativePath)
 	case tools.OSDarwin:
 		buildTags = append(buildTags, "static_wasm")
 		switch targetPlatform {
