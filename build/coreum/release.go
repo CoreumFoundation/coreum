@@ -61,8 +61,7 @@ func ReleaseCoredImage(ctx context.Context, deps types.DepsFunc) error {
 			tools.TargetPlatformLinuxAMD64InDocker,
 			tools.TargetPlatformLinuxARM64InDocker,
 		},
-		// FIXME(dzmitryhil) replace to ActionPush
-		Action:   docker.ActionLoad,
+		Action:   docker.ActionPush,
 		Username: config.DockerHubUsername,
 	})
 }
