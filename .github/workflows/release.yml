@@ -33,10 +33,10 @@ jobs:
           fi
       - name: Link released binaries under right names
         run: |
-          ln coreum/bin/.cache/cored/docker.linux.amd64/bin/cored cored-linux-amd64
-          ln coreum/bin/.cache/cored/docker.linux.arm64/bin/cored cored-linux-arm64
-          ln coreum/bin/.cache/cored/docker.darwin.amd64/bin/cored cored-darwin-amd64
-          ln coreum/bin/.cache/cored/docker.darwin.arm64/bin/cored cored-darwin-arm64
+          ln bin/.cache/cored/docker.linux.amd64/bin/cored cored-linux-amd64
+          ln bin/.cache/cored/docker.linux.arm64/bin/cored cored-linux-arm64
+          ln bin/.cache/cored/docker.darwin.amd64/bin/cored cored-darwin-amd64
+          ln bin/.cache/cored/docker.darwin.arm64/bin/cored cored-darwin-arm64
           sha256sum cored-* > checksums.txt
       - name: Create release
         if: steps.check-tag.outputs.release == 'true'

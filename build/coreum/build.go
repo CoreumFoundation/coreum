@@ -116,7 +116,7 @@ func buildCoredInDocker(
 	dockerVolumes := make([]string, 0)
 	switch targetPlatform.OS {
 	case tools.OSLinux:
-		// osusergo tag is required for the cross compilation to awit warnings, https://pkg.go.dev/os/user
+		// osusergo tag is required for the cross compilation to avoid warnings, https://pkg.go.dev/os/user
 		buildTags = append(buildTags, "muslc", "osusergo")
 		ldFlags = append(ldFlags, "-extldflags '-Wl,-z,muldefs -static -lm'")
 		switch targetPlatform {
