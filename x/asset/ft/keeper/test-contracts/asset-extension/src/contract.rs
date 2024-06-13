@@ -1,4 +1,4 @@
-use cosmwasm_std::{entry_point, StdError};
+use cosmwasm_std::{entry_point, to_json_binary, StdError};
 use cosmwasm_std::{BalanceResponse, BankQuery};
 use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
@@ -10,8 +10,11 @@ use coreum_wasm_sdk::assetft::{
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 
-use crate::msg::{ExecuteMsg, IBCPurpose, InstantiateMsg, QueryMsg, SudoMsg, TransferContext};
-use crate::state::DENOM;
+use crate::msg::{
+    ExecuteMsg, IBCPurpose, InstantiateMsg, QueryIssuanceMsgResponse, QueryMsg, SudoMsg,
+    TransferContext,
+};
+use crate::state::{DENOM, EXTRA_DATA};
 
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -37,6 +40,10 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     DENOM.save(deps.storage, &msg.denom)?;
+    EXTRA_DATA.save(
+        deps.storage,
+        &msg.issuance_msg.extra_data.unwrap_or_default(),
+    )?;
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -86,6 +93,10 @@ pub fn sudo_extension_transfer(
     burn_amount: Uint128,
     context: TransferContext,
 ) -> CoreumResult<ContractError> {
+    if amount.is_zero() {
+        return Err(ContractError::InvalidAmountError {});
+    }
+
     if amount == AMOUNT_DISALLOWED_TRIGGER {
         return Err(ContractError::Std(StdError::generic_err(
             "7 is not allowed",
@@ -155,8 +166,16 @@ pub fn sudo_extension_transfer(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {}
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::QueryIssuanceMsg {} => query_issuance_msg(deps),
+    }
+}
+
+fn query_issuance_msg(deps: Deps) -> StdResult<Binary> {
+    let test = EXTRA_DATA.load(deps.storage).ok();
+    let resp = QueryIssuanceMsgResponse { test };
+    to_json_binary(&resp)
 }
 
 fn assert_freezing(
@@ -333,6 +352,10 @@ fn assert_send_commission_rate(
     // the rest of the commission
     if let Some(admin) = &token.admin {
         let admin_commission_amount = commission_amount.div(Uint128::new(2));
+        if admin_commission_amount.is_zero() {
+            return Ok(response);
+        }
+
         let admin_commission_msg = cosmwasm_std::BankMsg::Send {
             to_address: admin.to_string(),
             amount: vec![Coin {

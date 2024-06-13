@@ -23,4 +23,7 @@ pub enum ContractError {
 
     #[error("IBC feature is disabled.")]
     IBCDisabled {},
+
+    #[error("Invalid amount.")]
+    InvalidAmountError {},
 }
