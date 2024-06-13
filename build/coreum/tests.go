@@ -49,7 +49,7 @@ func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 		znetConfig.Profiles = []string{apps.Profile3Cored}
 		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-modules"
 
-		return runIntegrationTests(ctx, deps, TestModules, runUnsafe, znetConfig)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestModules)
 	}
 }
 
@@ -62,7 +62,7 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
 
-		return runIntegrationTests(ctx, deps, TestIBC, runUnsafe, znetConfig)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestIBC)
 	}
 }
 
@@ -76,16 +76,16 @@ func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
 		znetConfig.CoredVersion = "v3.0.3"
 
-		return runIntegrationTests(ctx, deps, TestUpgrade, runUnsafe, znetConfig)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestUpgrade, TestIBC, TestModules)
 	}
 }
 
 func runIntegrationTests(
 	ctx context.Context,
 	deps types.DepsFunc,
-	testDir string,
 	runUnsafe bool,
 	znetConfig *infra.ConfigFactory,
+	testDirs ...string,
 ) error {
 	flags := []string{
 		"-tags=integrationtests",
@@ -102,11 +102,14 @@ func runIntegrationTests(
 	if err := znet.Start(ctx, znetConfig); err != nil {
 		return err
 	}
-	if err := golang.RunTests(ctx, deps, golang.TestConfig{
-		PackagePath: filepath.Join(testsDir, testDir),
-		Flags:       flags,
-	}); err != nil {
-		return err
+
+	for _, testDir := range testDirs {
+		if err := golang.RunTests(ctx, deps, golang.TestConfig{
+			PackagePath: filepath.Join(testsDir, testDir),
+			Flags:       flags,
+		}); err != nil {
+			return err
+		}
 	}
 
 	if znetConfig.CoverageOutputFile != "" {
