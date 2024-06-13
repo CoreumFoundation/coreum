@@ -100,15 +100,11 @@ func buildCoredInDocker(
 	binaryName string,
 	mod string,
 ) error {
-	ldFlags, err := coredVersionLDFlags(ctx, defaultBuildTags, mod)
-	if err != nil {
-		return err
-	}
-
 	if err := tools.Ensure(ctx, tools.LibWASM, targetPlatform); err != nil {
 		return err
 	}
 
+	ldFlags := make([]string, 0)
 	var cc string
 	buildTags := defaultBuildTags
 	envs := make([]string, 0)
@@ -173,6 +169,12 @@ func buildCoredInDocker(
 		return errors.Errorf("building is not possible for platform %s", targetPlatform)
 	}
 	envs = append(envs, fmt.Sprintf("CC=%s", cc))
+
+	versionLDFlags, err := coredVersionLDFlags(ctx, buildTags, mod)
+	if err != nil {
+		return err
+	}
+	ldFlags = append(ldFlags, versionLDFlags...)
 
 	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{

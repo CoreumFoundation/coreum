@@ -21,18 +21,25 @@ var revProtoTypes map[reflect.Type]string
 // TODO(v4): drop together with x/gov/types/v1beta1 support.
 func TestExpectedRegisteredLegacyProposals(t *testing.T) {
 	knownProposals := map[string]struct{}{
-		// proposals we have integration tests for
-
 		"/cosmos.gov.v1beta1.TextProposal":                        {},
 		"/cosmos.params.v1beta1.ParameterChangeProposal":          {},
 		"/cosmos.distribution.v1beta1.CommunityPoolSpendProposal": {},
 		"/cosmos.upgrade.v1beta1.SoftwareUpgradeProposal":         {},
-
-		// proposals without tests
-
-		"/cosmos.upgrade.v1beta1.CancelSoftwareUpgradeProposal": {},
-		"/ibc.core.client.v1.UpgradeProposal":                   {},
-		"/ibc.core.client.v1.ClientUpdateProposal":              {},
+		"/cosmos.upgrade.v1beta1.CancelSoftwareUpgradeProposal":   {},
+		"/ibc.core.client.v1.UpgradeProposal":                     {},
+		"/ibc.core.client.v1.ClientUpdateProposal":                {},
+		"/cosmwasm.wasm.v1.PinCodesProposal":                      {},
+		"/cosmwasm.wasm.v1.UpdateAdminProposal":                   {},
+		"/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal":   {},
+		"/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal":       {},
+		"/cosmwasm.wasm.v1.ExecuteContractProposal":               {},
+		"/cosmwasm.wasm.v1.StoreCodeProposal":                     {},
+		"/cosmwasm.wasm.v1.UnpinCodesProposal":                    {},
+		"/cosmwasm.wasm.v1.InstantiateContractProposal":           {},
+		"/cosmwasm.wasm.v1.InstantiateContract2Proposal":          {},
+		"/cosmwasm.wasm.v1.MigrateContractProposal":               {},
+		"/cosmwasm.wasm.v1.SudoContractProposal":                  {},
+		"/cosmwasm.wasm.v1.ClearAdminProposal":                    {},
 	}
 
 	// This is required to compile all the proposals used by the app
