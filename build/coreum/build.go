@@ -111,7 +111,7 @@ func buildCoredInDocker(
 		return err
 	}
 
-	if err := tools.Ensure(ctx, tools.LibWASMMuslC, targetPlatform); err != nil {
+	if err := tools.Ensure(ctx, tools.LibWASM, targetPlatform); err != nil {
 		return err
 	}
 
