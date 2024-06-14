@@ -179,7 +179,7 @@ func (k Keeper) invokeAssetExtension(
 	// We need this if statement so we will not have an infinite loop. Otherwise
 	// when we call Execute method in wasm keeper, in which we have funds transfer,
 	// then we will end up in an infinite recursoin.
-	if extensionContract.Equals(recipient) || extensionContract.Equals(sender) {
+	if extensionContract.Equals(sender) {
 		return k.bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(sendAmount))
 	}
 

@@ -1,4 +1,4 @@
-use cosmwasm_std::{entry_point, StdError};
+use cosmwasm_std::{entry_point, to_json_binary, StdError};
 use cosmwasm_std::{BalanceResponse, BankQuery};
 use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
@@ -10,8 +10,11 @@ use coreum_wasm_sdk::assetft::{
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 
-use crate::msg::{ExecuteMsg, IBCPurpose, InstantiateMsg, QueryMsg, SudoMsg, TransferContext};
-use crate::state::DENOM;
+use crate::msg::{
+    ExecuteMsg, IBCPurpose, InstantiateMsg, QueryIssuanceMsgResponse, QueryMsg, SudoMsg,
+    TransferContext,
+};
+use crate::state::{DENOM, EXTRA_DATA};
 
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -37,6 +40,10 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     DENOM.save(deps.storage, &msg.denom)?;
+    EXTRA_DATA.save(
+        deps.storage,
+        &msg.issuance_msg.extra_data.unwrap_or_default(),
+    )?;
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -78,7 +85,7 @@ pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResul
 
 pub fn sudo_extension_transfer(
     deps: DepsMut<CoreumQueries>,
-    _env: Env,
+    env: Env,
     amount: Uint128,
     sender: String,
     recipient: String,
@@ -88,6 +95,11 @@ pub fn sudo_extension_transfer(
 ) -> CoreumResult<ContractError> {
     if amount.is_zero() {
         return Err(ContractError::InvalidAmountError {});
+    }
+
+    let rsp = Response::new().add_attribute("method", "execute_transfer");
+    if recipient == env.contract.address {
+        return Ok(rsp.add_attribute("skip_checks", "self_recipient"));
     }
 
     if amount == AMOUNT_DISALLOWED_TRIGGER {
@@ -127,9 +139,7 @@ pub fn sudo_extension_transfer(
         amount: vec![Coin { amount, denom }],
     };
 
-    let mut response = Response::new()
-        .add_attribute("method", "execute_transfer")
-        .add_message(transfer_msg);
+    let mut response = rsp.add_message(transfer_msg);
 
     if !commission_amount.is_zero() {
         response = assert_send_commission_rate(
@@ -149,8 +159,16 @@ pub fn sudo_extension_transfer(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {}
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::QueryIssuanceMsg {} => query_issuance_msg(deps),
+    }
+}
+
+fn query_issuance_msg(deps: Deps) -> StdResult<Binary> {
+    let test = EXTRA_DATA.load(deps.storage).ok();
+    let resp = QueryIssuanceMsgResponse { test };
+    to_json_binary(&resp)
 }
 
 fn assert_freezing(
