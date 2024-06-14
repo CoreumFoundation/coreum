@@ -7,10 +7,10 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/CoreumFoundation/coreum/v4 => ../
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
-	// TODO(v4): remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
+	// TODO(v5): remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
-	// TODO(v4): Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
+	// TODO(v5): Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.0
 	// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
 	github.com/spf13/viper => github.com/spf13/viper v1.16.0
