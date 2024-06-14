@@ -67,8 +67,7 @@ TotalGas = {{ .FixedGas }} +  max(0, ({{ .TxBaseGas }} - 2 * {{ .SigVerifyCost }
 `
 
 ## Extensions
-If one of the follwoing messages have the extension feature enabled, it will not be considered deterministic. The reason is 
-that extensions invlove smart contract calls which are nondeterministic in nature. 
+If one of the follwoing messages contains a token which have the extension feature enabled, it will not be considered deterministic any more . The reason is that extensions invlove smart contract calls which are nondeterministic in nature. 
 
  - `/ibc.applications.transfer.v1.MsgTransfer`
  - `/coreum.asset.ft.v1.MsgIssue`
@@ -80,7 +79,7 @@ that extensions invlove smart contract calls which are nondeterministic in natur
  - `/cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount`	
  - `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`        		
 
-It should also be mentioned that this rule apply for all the messages inside `/cosmos.authz.v1beta1.MsgExec`
+It should also be mentioned that this rule applies for all the messages inside `/cosmos.authz.v1beta1.MsgExec`
 
 ## Gas Tables
 
