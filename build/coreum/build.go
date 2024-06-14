@@ -29,8 +29,6 @@ const (
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
-	tagsFlag             = "-tags"
-	ldFlagsFlag          = "-ldflags"
 	linkStaticallyValue  = "-extldflags=-static"
 )
 
@@ -57,11 +55,9 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 		PackagePath:    "cmd/cored",
 		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
-		Flags: []string{
-			goCoverFlag,
-			convertToLdFlags(versionFlags),
-			tagsFlag + "=" + strings.Join(tagsLocal, ","),
-		},
+		Tags:           tagsLocal,
+		LDFlags:        versionFlags,
+		Flags:          []string{goCoverFlag},
 	})
 }
 
@@ -121,10 +117,10 @@ func buildCoredInDocker(
 		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     true,
+		Tags:           tagsDocker,
+		LDFlags:        append(versionFlags, linkStaticallyValue),
 		Flags: append(
 			extraFlags,
-			convertToLdFlags(append(versionFlags, linkStaticallyValue)),
-			tagsFlag+"="+strings.Join(tagsDocker, ","),
 		),
 	})
 }
@@ -150,10 +146,8 @@ func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPl
 		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     false,
-		Flags: []string{
-			convertToLdFlags(append(versionFlags, linkStaticallyValue)),
-			tagsFlag + "=" + strings.Join(tagsDocker, ","),
-		},
+		Tags:           tagsDocker,
+		LDFlags:        append(versionFlags, linkStaticallyValue),
 	})
 }
 
@@ -216,8 +210,4 @@ func formatProto(ctx context.Context, deps types.DepsFunc) error {
 	cmd := exec.Command(tools.Path("bin/buf", tools.TargetPlatformLocal), "format", "-w")
 	cmd.Dir = filepath.Join(repoPath, "proto", "coreum")
 	return libexec.Exec(ctx, cmd)
-}
-
-func convertToLdFlags(values []string) string {
-	return "-" + ldFlagsFlag + "=" + strings.Join(values, " ")
 }
