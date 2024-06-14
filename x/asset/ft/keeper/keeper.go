@@ -7,6 +7,7 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -26,8 +27,11 @@ import (
 
 // ExtensionInstantiateMsg is the message passed to the extension cosmwasm contract.
 // The contract must be able to properly process this message.
+//
+//nolint:tagliatelle // these will be exposed to rust and must be snake case.
 type ExtensionInstantiateMsg struct {
-	Denom string `json:"denom"`
+	Denom       string                       `json:"denom"`
+	IssuanceMsg wasmtypes.RawContractMessage `json:"issuance_msg"`
 }
 
 // Keeper is the asset module keeper.
@@ -247,8 +251,13 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 			return "", types.ErrInvalidInput.Wrap("extension settings must be provided")
 		}
 
+		if len(settings.ExtensionSettings.IssuanceMsg) == 0 {
+			settings.ExtensionSettings.IssuanceMsg = []byte("{}")
+		}
+
 		instantiateMsgBytes, err := json.Marshal(ExtensionInstantiateMsg{
-			Denom: denom,
+			Denom:       denom,
+			IssuanceMsg: settings.ExtensionSettings.IssuanceMsg,
 		})
 		if err != nil {
 			return "", types.ErrInvalidInput.Wrapf("error marshalling ExtensionInstantiateMsg (%s)", err)
