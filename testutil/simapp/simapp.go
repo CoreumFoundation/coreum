@@ -149,10 +149,29 @@ func (s *App) SendTx(
 	priv cryptotypes.PrivKey,
 	messages ...sdk.Msg,
 ) (sdk.GasInfo, *sdk.Result, error) {
+	tx, err := s.GenTx(
+		ctx, feeAmt, gas, priv, messages...,
+	)
+	if err != nil {
+		return sdk.GasInfo{}, nil, err
+	}
+
+	txCfg := config.NewEncodingConfig(app.ModuleBasics).TxConfig
+	return s.App.SimDeliver(txCfg.TxEncoder(), tx)
+}
+
+// GenTx generates a tx from messages.
+func (s *App) GenTx(
+	ctx sdk.Context,
+	feeAmt sdk.Coin,
+	gas uint64,
+	priv cryptotypes.PrivKey,
+	messages ...sdk.Msg,
+) (sdk.Tx, error) {
 	signerAddress := sdk.AccAddress(priv.PubKey().Address())
 	account := s.App.AccountKeeper.GetAccount(ctx, signerAddress)
 	if account == nil {
-		return sdk.GasInfo{}, nil, errors.Errorf(
+		return nil, errors.Errorf(
 			"the account %s doesn't exist, check that it's created or state committed",
 			signerAddress,
 		)
@@ -174,8 +193,53 @@ func (s *App) SendTx(
 		priv,
 	)
 	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
+// SimulateFundAndSendTx simulates the tx, funds account and sends the tx to the simApp.
+func (s *App) SimulateFundAndSendTx(
+	ctx sdk.Context,
+	priv cryptotypes.PrivKey,
+	messages ...sdk.Msg,
+) (sdk.GasInfo, *sdk.Result, error) {
+	simTx, err := s.GenTx(
+		ctx,
+		sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
+		0,
+		priv,
+		messages...,
+	)
+	if err != nil {
+		return sdk.GasInfo{}, nil, err
+	}
+	txCfg := config.NewEncodingConfig(app.ModuleBasics).TxConfig
+	txBytes, err := txCfg.TxEncoder()(simTx)
+	if err != nil {
 		return sdk.GasInfo{}, nil, err
 	}
 
-	return s.App.SimDeliver(txCfg.TxEncoder(), tx)
+	simGas, _, err := s.Simulate(txBytes)
+	if err != nil {
+		return sdk.GasInfo{}, nil, err
+	}
+	targetGas := sdk.NewInt(int64(simGas.GasUsed * 2))
+	minGasPrice := s.App.FeeModelKeeper.GetMinGasPrice(ctx)
+	fee := sdk.NewCoin(minGasPrice.Denom, minGasPrice.Amount.MulInt(targetGas).MulInt64(2).RoundInt())
+
+	accountAddress := sdk.AccAddress(priv.PubKey().Address())
+	err = s.FundAccount(ctx, accountAddress, sdk.NewCoins(fee))
+	if err != nil {
+		return sdk.GasInfo{}, nil, err
+	}
+
+	return s.SendTx(
+		ctx,
+		fee,
+		targetGas.Uint64(),
+		priv,
+		messages...,
+	)
 }
