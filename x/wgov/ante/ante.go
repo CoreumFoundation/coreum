@@ -10,6 +10,10 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/wgov/types"
 )
 
+const (
+	untrackedMaxGasForQueries = uint64(50_000)
+)
+
 // GovDepositDecorator is the ante handler which blocks tokens that are part of the
 // min deposit, from being depositted into the proposal. Despositing such tokens into
 // proposals can lead to problems when they are being refunded.
@@ -44,7 +48,8 @@ func (d GovDepositDecorator) AnteHandle(
 			continue
 		}
 
-		govParams := d.keeper.GetParams(ctx)
+		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(untrackedMaxGasForQueries))
+		govParams := d.keeper.GetParams(ctxWithUntrackedGas)
 		minDeposit := sdk.NewCoins(govParams.MinDeposit...)
 		for _, coin := range deposit {
 			if !minDeposit.AmountOf(coin.Denom).IsPositive() {
