@@ -85,7 +85,7 @@ pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResul
 
 pub fn sudo_extension_transfer(
     deps: DepsMut<CoreumQueries>,
-    _env: Env,
+    env: Env,
     amount: Uint128,
     sender: String,
     recipient: String,
@@ -95,6 +95,11 @@ pub fn sudo_extension_transfer(
 ) -> CoreumResult<ContractError> {
     if amount.is_zero() {
         return Err(ContractError::InvalidAmountError {});
+    }
+
+    let rsp = Response::new().add_attribute("method", "execute_transfer");
+    if recipient == env.contract.address {
+        return Ok(rsp.add_attribute("skip_checks", "self_recipient"));
     }
 
     if amount == AMOUNT_DISALLOWED_TRIGGER {
@@ -144,9 +149,7 @@ pub fn sudo_extension_transfer(
         amount: vec![Coin { amount, denom }],
     };
 
-    let mut response = Response::new()
-        .add_attribute("method", "execute_transfer")
-        .add_message(transfer_msg);
+    let mut response = rsp.add_message(transfer_msg);
 
     if !commission_amount.is_zero() {
         response = assert_send_commission_rate(
