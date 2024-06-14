@@ -16,6 +16,8 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
 
+replace github.com/cometbft/cometbft => github.com/CoreumFoundation/cometbft v0.37.3-0.20240614083344-c67c93fb76c2
+
 require (
 	cosmossdk.io/api v0.3.1
 	cosmossdk.io/errors v1.0.0
