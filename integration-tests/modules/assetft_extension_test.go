@@ -163,6 +163,25 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(json.Unmarshal(queryRes.Data, &issuanceMsg))
 	requireT.Equal("test", issuanceMsg.ExtraData)
+
+	// sending 7 will to contract address will succeed
+	sendMsg.ToAddress = token.Token.ExtensionCWAddress
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(500_000),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: token.Token.ExtensionCWAddress,
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues("7", balance.Balance.Amount.String())
+	skipChecksStr, err := event.FindStringEventAttribute(res.Events, "wasm", "skip_checks")
+	requireT.NoError(err)
+	requireT.EqualValues("self_recipient", skipChecksStr)
 }
 
 // TestAssetFTExtensionWhitelist checks extension whitelist functionality of fungible tokens.
