@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -100,11 +102,22 @@ func TestIssueWithExtension(t *testing.T) {
 		URIHash:            "e000624",
 	}
 
+	//nolint:tagliatelle // these will be exposed to rust and must be snake case.
+	issuanceMsg := struct {
+		ExtraData string `json:"extra_data"`
+	}{
+		ExtraData: "test",
+	}
+
+	issuanceMsgBytes, err := json.Marshal(issuanceMsg)
+	requireT.NoError(err)
+
 	initialAmount := sdkmath.NewInt(100)
 	extension := &types.ExtensionIssueSettings{
-		CodeId: codeID,
-		Label:  "testing-extension",
-		Funds:  sdk.NewCoins(sdk.NewCoin(testNetwork.Config.BondDenom, sdk.NewInt(10))),
+		CodeId:      codeID,
+		Label:       "testing-extension",
+		Funds:       sdk.NewCoins(sdk.NewCoin(testNetwork.Config.BondDenom, sdk.NewInt(10))),
+		IssuanceMsg: issuanceMsgBytes,
 	}
 	denom := issue(requireT, ctx, token, initialAmount, extension, testNetwork)
 
@@ -118,6 +131,12 @@ func TestIssueWithExtension(t *testing.T) {
 	token.ExtensionCWAddress = resp.Token.ExtensionCWAddress
 	requireT.Equal(token, resp.Token)
 	requireT.NotEmpty(resp.Token.ExtensionCWAddress)
+
+	args = []string{resp.Token.ExtensionCWAddress, `{"query_issuance_msg":{}}`}
+	var queryResp wasmtypes.QuerySmartContractStateResponse
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, wasmcli.GetCmdGetContractStateSmart(), args, &queryResp))
+	requireT.NoError(json.Unmarshal(queryResp.Data, &issuanceMsg))
+	requireT.Equal("test", issuanceMsg.ExtraData)
 }
 
 func TestMintBurn(t *testing.T) {
@@ -622,16 +641,7 @@ func issue(
 		args = append(args, fmt.Sprintf("--%s=%s", cli.URIHashFlag, token.URIHash))
 	}
 	if extensionSettings != nil && extensionSettings.CodeId > 0 {
-		args = append(args,
-			fmt.Sprintf("--%s=%d", cli.ExtensionCodeID, extensionSettings.CodeId),
-			fmt.Sprintf("--%s=%d", flags.FlagGas, 2000000),
-		)
-		if len(extensionSettings.Label) > 0 {
-			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionLabel, extensionSettings.Label))
-		}
-		if extensionSettings.Funds != nil && extensionSettings.Funds.IsAllPositive() {
-			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionFunds, extensionSettings.Funds.String()))
-		}
+		args = parseExtensionArgs(args, extensionSettings)
 	}
 
 	args = append(args, txValidator1Args(testNetwork)...)
@@ -653,6 +663,25 @@ func issue(
 	requireT.Failf("event: %s not found in the issue response", eventIssuedName)
 
 	return ""
+}
+
+func parseExtensionArgs(args []string, extensionSettings *types.ExtensionIssueSettings) []string {
+	args = append(args,
+		fmt.Sprintf("--%s=%d", cli.ExtensionCodeID, extensionSettings.CodeId),
+		fmt.Sprintf("--%s=%d", flags.FlagGas, 2000000),
+	)
+	if len(extensionSettings.Label) > 0 {
+		args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionLabel, extensionSettings.Label))
+	}
+	if extensionSettings.Funds != nil && extensionSettings.Funds.IsAllPositive() {
+		args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionFunds, extensionSettings.Funds.String()))
+	}
+	if len(extensionSettings.IssuanceMsg) > 0 {
+		if jsonEncodedMessage, err := extensionSettings.IssuanceMsg.MarshalJSON(); err == nil {
+			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionIssuanceMsg, string(jsonEncodedMessage)))
+		}
+	}
+	return args
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {

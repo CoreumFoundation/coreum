@@ -58,6 +58,16 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	)
 	requireT.NoError(err)
 
+	//nolint:tagliatelle // these will be exposed to rust and must be snake case.
+	issuanceMsg := struct {
+		ExtraData string `json:"extra_data"`
+	}{
+		ExtraData: "test",
+	}
+
+	issuanceMsgBytes, err := json.Marshal(issuanceMsg)
+	requireT.NoError(err)
+
 	attachedFund := chain.NewCoin(sdk.NewInt(10))
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
@@ -72,9 +82,10 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
-			CodeId: codeID,
-			Funds:  sdk.NewCoins(attachedFund),
-			Label:  "testing-issuance",
+			CodeId:      codeID,
+			Funds:       sdk.NewCoins(attachedFund),
+			Label:       "testing-issuance",
+			IssuanceMsg: issuanceMsgBytes,
 		},
 	}
 
@@ -144,6 +155,33 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.EqualValues("12", balance.Balance.Amount.String())
+
+	queryRes, err := wasmClient.SmartContractState(ctx, &wasmtypes.QuerySmartContractStateRequest{
+		Address:   token.Token.ExtensionCWAddress,
+		QueryData: []byte(`{"query_issuance_msg":{}}`),
+	})
+	requireT.NoError(err)
+	requireT.NoError(json.Unmarshal(queryRes.Data, &issuanceMsg))
+	requireT.Equal("test", issuanceMsg.ExtraData)
+
+	// sending 7 will to contract address will succeed
+	sendMsg.ToAddress = token.Token.ExtensionCWAddress
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(500_000),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: token.Token.ExtensionCWAddress,
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues("7", balance.Balance.Amount.String())
+	skipChecksStr, err := event.FindStringEventAttribute(res.Events, "wasm", "skip_checks")
+	requireT.NoError(err)
+	requireT.EqualValues("self_recipient", skipChecksStr)
 }
 
 // TestAssetFTExtensionWhitelist checks extension whitelist functionality of fungible tokens.

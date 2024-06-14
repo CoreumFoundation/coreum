@@ -25,7 +25,7 @@ const (
 	binaryPath         = "bin/" + binaryName
 	extendedBinaryPath = "bin/" + extendedBinaryName
 	testsDir           = repoPath + "/integration-tests"
-	cometBFTCommit     = "2644973fb58663f435aac0c6bdf9502fe78798a0"
+	cometBFTCommit     = "6067c7586edd935f284a17a8c19de4b14c1e91dc"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
