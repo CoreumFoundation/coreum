@@ -14,13 +14,13 @@ import (
 // min deposit, from being depositted into the proposal. Despositing such tokens into
 // proposals can lead to problems when they are being refunded.
 type GovDepositDecorator struct {
-	keeer types.GovKeeper
+	keeper types.GovKeeper
 }
 
 // NewGovDepositDecorator returns a new instance of GovDepositDecorator.
-func NewGovDepositDecorator(keeer types.GovKeeper) GovDepositDecorator {
+func NewGovDepositDecorator(keeper types.GovKeeper) GovDepositDecorator {
 	return GovDepositDecorator{
-		keeer: keeer,
+		keeper: keeper,
 	}
 }
 
@@ -44,7 +44,7 @@ func (d GovDepositDecorator) AnteHandle(
 			continue
 		}
 
-		govParams := d.keeer.GetParams(ctx)
+		govParams := d.keeper.GetParams(ctx)
 		minDeposit := sdk.NewCoins(govParams.MinDeposit...)
 		for _, coin := range deposit {
 			if !minDeposit.AmountOf(coin.Denom).IsPositive() {

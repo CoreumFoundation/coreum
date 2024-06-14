@@ -53,7 +53,7 @@ func TestAnteHandler(t *testing.T) {
 		messages func() []sdk.Msg
 	}{
 		{
-			name: "proposal v1",
+			name: "proposal_v1",
 			messages: func() []sdk.Msg {
 				msgExecLegacy, err := govv1.NewLegacyContent(textProposal,
 					authtypes.NewModuleAddress(govtypes.ModuleName).String())
@@ -71,7 +71,7 @@ func TestAnteHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "deposit v1",
+			name: "deposit_v1",
 			messages: func() []sdk.Msg {
 				msgExecLegacy, err := govv1.NewLegacyContent(textProposal,
 					authtypes.NewModuleAddress(govtypes.ModuleName).String())
@@ -98,7 +98,7 @@ func TestAnteHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "proposal v1bata1",
+			name: "proposal_v1bata1",
 			messages: func() []sdk.Msg {
 				msgProposalV1Beta1, err := govtypesv1beta1.NewMsgSubmitProposal(
 					textProposal,
@@ -109,7 +109,7 @@ func TestAnteHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "deposit v1beta1",
+			name: "deposit_v1beta1",
 			messages: func() []sdk.Msg {
 				msgExecLegacy, err := govv1.NewLegacyContent(textProposal,
 					authtypes.NewModuleAddress(govtypes.ModuleName).String())
