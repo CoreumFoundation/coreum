@@ -69,8 +69,9 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsUpgrade returns function running upgrade integration tests.
 func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileModulesSmartContracts, BuildCoredLocally,
-			BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage, hermes.BuildDockerImage)
+		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileModulesSmartContracts,
+			BuildCoredLocally, BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage,
+			hermes.BuildDockerImage)
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
