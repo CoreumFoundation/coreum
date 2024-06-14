@@ -3,7 +3,7 @@ use std::collections::HashMap;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
+    to_json_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
 
@@ -217,8 +217,8 @@ fn coin_addition() {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetCount { addr } => to_binary(&query::count(deps, addr)?),
-        QueryMsg::GetTotalFunds { addr } => to_binary(&query::total_funds(deps, addr)?),
+        QueryMsg::GetCount { addr } => to_json_binary(&query::count(deps, addr)?),
+        QueryMsg::GetTotalFunds { addr } => to_json_binary(&query::total_funds(deps, addr)?),
     }
 }
 

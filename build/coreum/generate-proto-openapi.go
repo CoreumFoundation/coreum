@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
@@ -32,7 +33,7 @@ type swaggerInfo struct {
 }
 
 func generateProtoOpenAPI(ctx context.Context, deps types.DepsFunc) error {
-	deps(Tidy)
+	deps(golang.Tidy)
 
 	moduleDirs, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {
