@@ -17,6 +17,7 @@ const (
 // GovDepositDecorator is the ante handler which blocks tokens that are part of the
 // min deposit, from being depositted into the proposal. Despositing such tokens into
 // proposals can lead to problems when they are being refunded.
+// TODO(v5): remove once we upgrade to v0.50 since it is already handled there.
 type GovDepositDecorator struct {
 	keeper types.GovKeeper
 }
