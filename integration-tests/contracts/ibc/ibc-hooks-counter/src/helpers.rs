@@ -2,8 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, CosmosMsg, CustomQuery, Querier, QuerierWrapper, StdResult, WasmMsg,
-    WasmQuery,
+    to_json_binary, Addr, Coin, CosmosMsg, CustomQuery, Querier, QuerierWrapper, StdResult,
+    WasmMsg, WasmQuery,
 };
 
 use crate::msg::{ExecuteMsg, GetCountResponse, QueryMsg};
@@ -19,7 +19,7 @@ impl CwTemplateContract {
     }
 
     pub fn call<T: Into<ExecuteMsg>>(&self, msg: T) -> StdResult<CosmosMsg> {
-        let msg = to_binary(&msg.into())?;
+        let msg = to_json_binary(&msg.into())?;
         Ok(WasmMsg::Execute {
             contract_addr: self.addr().into(),
             msg,
@@ -38,11 +38,10 @@ impl CwTemplateContract {
         let msg = QueryMsg::GetCount { addr };
         let query = WasmQuery::Smart {
             contract_addr: self.addr().into(),
-            msg: to_binary(&msg)?,
+            msg: to_json_binary(&msg)?,
         }
         .into();
         let res: GetCountResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
         Ok(res)
     }
 }
-
