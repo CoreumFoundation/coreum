@@ -85,7 +85,7 @@ pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResul
 
 pub fn sudo_extension_transfer(
     deps: DepsMut<CoreumQueries>,
-    _env: Env,
+    env: Env,
     amount: Uint128,
     sender: String,
     recipient: String,
@@ -95,6 +95,11 @@ pub fn sudo_extension_transfer(
 ) -> CoreumResult<ContractError> {
     if amount.is_zero() {
         return Err(ContractError::InvalidAmountError {});
+    }
+
+    let rsp = Response::new().add_attribute("method", "execute_transfer");
+    if recipient == env.contract.address {
+        return Ok(rsp.add_attribute("skip_checks", "self_recipient"));
     }
 
     if amount == AMOUNT_DISALLOWED_TRIGGER {
@@ -108,10 +113,6 @@ pub fn sudo_extension_transfer(
     let token = query_token(deps.as_ref(), &denom)?;
 
     if let Some(features) = &token.features {
-        // TODO(masih): If either or both of BurnRate and SendCommissionRate are set above zero,
-        // then after transfer has taken place and those rates are applied, the sender's balance
-        // must not go below the frozen amount. Otherwise the transaction will fail.
-
         if features.contains(&assetft::FREEZING) {
             assert_freezing(&context, deps.as_ref(), sender.as_ref(), &token, amount)?;
         }
@@ -124,16 +125,10 @@ pub fn sudo_extension_transfer(
 
         assert_ibc(&context, &recipient, &token, amount)?;
 
-        // TODO remove this if statement.
-        // This check is intended for POC testing, it must be replaced with a more
-        // meaningful check.
         if amount == AMOUNT_BURNING_TRIGGER {
             return assert_burning(amount, &token);
         }
 
-        // TODO remove this if statement.
-        // This check is intended for POC testing, it must be replaced with a more
-        // meaningful check.
         if amount == AMOUNT_MINTING_TRIGGER {
             return assert_minting(sender.as_ref(), &recipient, amount, &token);
         }
@@ -144,9 +139,7 @@ pub fn sudo_extension_transfer(
         amount: vec![Coin { amount, denom }],
     };
 
-    let mut response = Response::new()
-        .add_attribute("method", "execute_transfer")
-        .add_message(transfer_msg);
+    let mut response = rsp.add_message(transfer_msg);
 
     if !commission_amount.is_zero() {
         response = assert_send_commission_rate(
@@ -197,9 +190,6 @@ fn assert_freezing(
         return Ok(());
     }
 
-    // TODO remove this if statement.
-    // This check is intended for POC testing, it must be replaced with a more
-    // meaningful check.
     if amount == AMOUNT_IGNORE_FREEZING_TRIGGER {
         return Ok(());
     }
@@ -237,9 +227,7 @@ fn assert_whitelisting(
     if context.ibc_purpose == IBCPurpose::Out {
         return Ok(());
     }
-    // TODO remove this if statement.
-    // This check is intended for POC testing, it must be replaced with a more
-    // meaningful check.
+
     if amount == AMOUNT_IGNORE_WHITELISTING_TRIGGER {
         return Ok(());
     }
