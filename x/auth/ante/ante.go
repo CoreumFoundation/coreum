@@ -13,6 +13,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
 	deterministicgasante "github.com/CoreumFoundation/coreum/v4/x/deterministicgas/ante"
 	feemodelante "github.com/CoreumFoundation/coreum/v4/x/feemodel/ante"
+	wgovante "github.com/CoreumFoundation/coreum/v4/x/wgov/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
@@ -29,6 +31,7 @@ type HandlerOptions struct {
 	FeeModelKeeper         feemodelante.Keeper
 	WasmConfig             wasmtypes.WasmConfig
 	IBCKeeper              *ibckeeper.Keeper
+	GovKeeper              *govkeeper.Keeper
 	WasmTXCounterStoreKey  storetypes.StoreKey
 }
 
@@ -50,6 +53,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 	if options.IBCKeeper == nil {
 		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "IBC keeper is required for ante builder")
+	}
+
+	if options.GovKeeper == nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "Gov keeper is required for ante builder")
 	}
 
 	if options.SignModeHandler == nil {
@@ -123,6 +130,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewSigGasConsumeDecorator(infiniteAccountKeeper, options.SigGasConsumer),
 		deterministicgasante.NewChargeFixedGasDecorator(infiniteAccountKeeper, options.DeterministicGasConfig),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
+		wgovante.NewGovDepositDecorator(options.GovKeeper),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil
