@@ -16,10 +16,10 @@ replace (
 	// And this causes "ambiguous import" error. Note: it gets broken only when using go work.
 	github.com/coinbase/rosetta-sdk-go v0.7.9 => github.com/coinbase/rosetta-sdk-go v0.8.4
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
-	// TODO(v4): remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
+	// TODO(v5): remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
-	// TODO(v4) Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
+	// TODO(v5) Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.0
 	// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
 	github.com/spf13/viper => github.com/spf13/viper v1.16.0
@@ -35,7 +35,7 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f
-	github.com/CoreumFoundation/crust v0.0.0-20240612073237-afb494aa7ae2
+	github.com/CoreumFoundation/crust v0.0.0-20240614103121-cf038db2a87f
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.39.0
@@ -64,8 +64,8 @@ require (
 	github.com/99designs/keyring v1.2.2 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
-	github.com/CosmWasm/wasmd v0.44.0 // indirect
-	github.com/CosmWasm/wasmvm v1.5.1 // indirect
+	github.com/CosmWasm/wasmd v0.45.0 // indirect
+	github.com/CosmWasm/wasmvm v1.5.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/aws/aws-sdk-go v1.44.203 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
