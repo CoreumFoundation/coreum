@@ -5,7 +5,7 @@ The spec describes the coreum DEX specification.
 ## Order book
 
 The Coreum DEX orders can be created for any-to-any token by any Coreum user. Which meas that the order book
-is bidirectional and permissionless. The user place an order and provides the order attributes:
+is bidirectional and permissionless. The user places an order and provides the order attributes:
 
 * `order_id` - unique order identifier per account and order book
 * `base_denom` - when you buy, you are buying the `base_denom`, when you sell, you are selling the `base_denom`.
