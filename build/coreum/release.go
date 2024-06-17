@@ -30,19 +30,25 @@ func ReleaseCored(ctx context.Context, deps types.DepsFunc) error {
 		return errors.New("no version present on released commit")
 	}
 
-	if err := buildCoredClientInDocker(ctx, deps, tools.TargetPlatformDarwinAMD64InDocker); err != nil {
+	if err := buildCoredInDocker(
+		ctx, deps, tools.TargetPlatformLinuxAMD64InDocker, []string{}, binaryName, "",
+	); err != nil {
 		return err
 	}
 
-	if err := buildCoredClientInDocker(ctx, deps, tools.TargetPlatformDarwinARM64InDocker); err != nil {
+	if err := buildCoredInDocker(
+		ctx, deps, tools.TargetPlatformLinuxARM64InDocker, []string{}, binaryName, "",
+	); err != nil {
 		return err
 	}
 
-	if err := buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxAMD64InDocker, []string{}, binaryName,
-		""); err != nil {
+	if err := buildCoredInDocker(
+		ctx, deps, tools.TargetPlatformDarwinAMD64InDocker, []string{}, binaryName, "",
+	); err != nil {
 		return err
 	}
-	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxARM64InDocker, []string{}, binaryName, "")
+
+	return buildCoredInDocker(ctx, deps, tools.TargetPlatformDarwinARM64InDocker, []string{}, binaryName, "")
 }
 
 // ReleaseCoredImage releases cored docker images for amd64 and arm64.
@@ -50,6 +56,7 @@ func ReleaseCoredImage(ctx context.Context, deps types.DepsFunc) error {
 	deps(ReleaseCored)
 
 	return buildCoredDockerImage(ctx, imageConfig{
+		BinaryPath: binaryPath,
 		TargetPlatforms: []tools.TargetPlatform{
 			tools.TargetPlatformLinuxAMD64InDocker,
 			tools.TargetPlatformLinuxARM64InDocker,
