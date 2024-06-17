@@ -27,7 +27,7 @@ require (
 	cosmossdk.io/math v1.3.0
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-00010101000000-000000000000
-	github.com/CosmWasm/wasmd v0.44.0
+	github.com/CosmWasm/wasmd v0.45.0
 	github.com/cosmos/cosmos-sdk v0.47.11
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7 v7.1.3
@@ -56,7 +56,7 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
-	github.com/CosmWasm/wasmvm v1.5.1 // indirect
+	github.com/CosmWasm/wasmvm v1.5.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/avast/retry-go/v4 v4.3.2 // indirect
 	github.com/aws/aws-sdk-go v1.44.203 // indirect
