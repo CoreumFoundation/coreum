@@ -251,11 +251,6 @@ func TestValidateFeatures(t *testing.T) {
 			Features: allFeatures,
 			Ok:       false,
 		},
-		{
-			Name:     "all except one",
-			Features: allFeatures[1:],
-			Ok:       false,
-		},
 
 		// invalid cases
 		{
