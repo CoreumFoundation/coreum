@@ -25,19 +25,13 @@ const (
 	binaryPath         = "bin/" + binaryName
 	extendedBinaryPath = "bin/" + extendedBinaryName
 	testsDir           = repoPath + "/integration-tests"
-	cometBFTCommit     = "2644973fb58663f435aac0c6bdf9502fe78798a0"
+	cometBFTCommit     = "6067c7586edd935f284a17a8c19de4b14c1e91dc"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
-	tagsFlag             = "-tags"
-	ldFlagsFlag          = "-ldflags"
-	linkStaticallyValue  = "-extldflags=-static"
 )
 
-var (
-	tagsLocal  = []string{"netgo", "ledger"}
-	tagsDocker = append([]string{"muslc"}, tagsLocal...)
-)
+var defaultBuildTags = []string{"netgo", "ledger"}
 
 // BuildCored builds all the versions of cored binary.
 func BuildCored(ctx context.Context, deps types.DepsFunc) error {
@@ -47,21 +41,21 @@ func BuildCored(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildCoredLocally builds cored locally.
 func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsLocal, "")
+	ldFlags, err := coredVersionLDFlags(ctx, defaultBuildTags, "")
 	if err != nil {
 		return err
 	}
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		PackagePath:    "cmd/cored",
 		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
+		Tags:           defaultBuildTags,
 		Flags: []string{
 			goCoverFlag,
-			convertToLdFlags(versionFlags),
-			tagsFlag + "=" + strings.Join(tagsLocal, ","),
 		},
+		LDFlags: ldFlags,
 	})
 }
 
@@ -85,7 +79,7 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 		return errors.WithStack(err)
 	}
 
-	if err := Tidy(ctx, deps); err != nil {
+	if err := golang.Tidy(ctx, deps); err != nil {
 		return err
 	}
 
@@ -95,7 +89,7 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 		return err
 	}
 
-	return git.RollbackChanges(ctx, repoPath, "go.mod", "go.sum", "go.work.sum")
+	return git.RollbackChanges(ctx, "go.mod", "go.sum", "go.work.sum")
 }
 
 func buildCoredInDocker(
@@ -106,87 +100,121 @@ func buildCoredInDocker(
 	binaryName string,
 	mod string,
 ) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker, mod)
-	if err != nil {
+	if err := tools.Ensure(ctx, tools.LibWASM, targetPlatform); err != nil {
 		return err
 	}
 
-	if err := tools.Ensure(ctx, tools.LibWASMMuslC, targetPlatform); err != nil {
+	ldFlags := make([]string, 0)
+	var cc string
+	buildTags := defaultBuildTags
+	envs := make([]string, 0)
+	dockerVolumes := make([]string, 0)
+	switch targetPlatform.OS {
+	case tools.OSLinux:
+		// use cc not installed on the image we use for the build
+		if err := tools.Ensure(ctx, tools.MuslCC, targetPlatform); err != nil {
+			return err
+		}
+		buildTags = append(buildTags, "muslc")
+		ldFlags = append(ldFlags, "-extldflags '-static'")
+		var (
+			hostCCDirPath string
+			// path inside hostCCDirPath to the CC
+			ccRelativePath string
+
+			wasmHostDirPath string
+			// path to the wasm lib in the CC
+			wasmCCLibRelativeLibPath string
+		)
+		switch targetPlatform {
+		case tools.TargetPlatformLinuxAMD64InDocker:
+			hostCCDirPath = filepath.Dir(
+				filepath.Dir(tools.Path("bin/x86_64-linux-musl-gcc", targetPlatform)),
+			)
+			ccRelativePath = "/bin/x86_64-linux-musl-gcc"
+			wasmHostDirPath = tools.Path("lib/libwasmvm_muslc.x86_64.a", targetPlatform)
+			wasmCCLibRelativeLibPath = "/x86_64-linux-musl/lib/libwasmvm_muslc.a"
+		case tools.TargetPlatformLinuxARM64InDocker:
+			hostCCDirPath = filepath.Dir(
+				filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", targetPlatform)),
+			)
+			ccRelativePath = "/bin/aarch64-linux-musl-gcc"
+			wasmHostDirPath = tools.Path("lib/libwasmvm_muslc.aarch64.a", targetPlatform)
+			wasmCCLibRelativeLibPath = "/aarch64-linux-musl/lib/libwasmvm_muslc.a"
+		default:
+			return errors.Errorf("building is not possible for platform %s", targetPlatform)
+		}
+		const ccDockerDir = "/musl-gcc"
+		dockerVolumes = append(
+			dockerVolumes,
+			fmt.Sprintf("%s:%s", hostCCDirPath, ccDockerDir),
+			// put the libwasmvm to the lib folder of the compiler
+			fmt.Sprintf("%s:%s", wasmHostDirPath, fmt.Sprintf("%s%s", ccDockerDir, wasmCCLibRelativeLibPath)),
+		)
+		cc = fmt.Sprintf("%s%s", ccDockerDir, ccRelativePath)
+	case tools.OSDarwin:
+		buildTags = append(buildTags, "static_wasm")
+		switch targetPlatform {
+		case tools.TargetPlatformDarwinAMD64InDocker:
+			cc = "o64-clang"
+		case tools.TargetPlatformDarwinARM64InDocker:
+			cc = "oa64-clang"
+		default:
+			return errors.Errorf("building is not possible for platform %s", targetPlatform)
+		}
+		wasmHostDirPath := tools.Path("lib/libwasmvmstatic_darwin.a", targetPlatform)
+		dockerVolumes = append(dockerVolumes, fmt.Sprintf("%s:%s", wasmHostDirPath, "/lib/libwasmvmstatic_darwin.a"))
+		envs = append(envs, "CGO_LDFLAGS=-L/lib")
+	default:
+		return errors.Errorf("building is not possible for platform %s", targetPlatform)
+	}
+	envs = append(envs, fmt.Sprintf("CC=%s", cc))
+
+	versionLDFlags, err := coredVersionLDFlags(ctx, buildTags, mod)
+	if err != nil {
 		return err
 	}
+	ldFlags = append(ldFlags, versionLDFlags...)
 
 	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
+		PackagePath:    "cmd/cored",
 		BinOutputPath:  binOutputPath,
 		CGOEnabled:     true,
-		Flags: append(
-			extraFlags,
-			convertToLdFlags(append(versionFlags, linkStaticallyValue)),
-			tagsFlag+"="+strings.Join(tagsDocker, ","),
-		),
+		Tags:           buildTags,
+		LDFlags:        ldFlags,
+		Flags:          extraFlags,
+		Envs:           envs,
+		DockerVolumes:  dockerVolumes,
 	})
-}
-
-// buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
-// used for the CLI on target platform, but can't be used to run the node.
-func buildCoredClientInDocker(ctx context.Context, deps types.DepsFunc, targetPlatform tools.TargetPlatform) error {
-	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker, "")
-	if err != nil {
-		return err
-	}
-
-	binOutputPath := filepath.Join(
-		"bin",
-		".cache",
-		binaryName,
-		targetPlatform.String(),
-		"bin",
-		fmt.Sprintf("%s-client", binaryName),
-	)
-	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
-		TargetPlatform: targetPlatform,
-		PackagePath:    filepath.Join(repoPath, "cmd/cored"),
-		BinOutputPath:  binOutputPath,
-		CGOEnabled:     false,
-		Flags: []string{
-			convertToLdFlags(append(versionFlags, linkStaticallyValue)),
-			tagsFlag + "=" + strings.Join(tagsDocker, ","),
-		},
-	})
-}
-
-// Tidy runs `go mod tidy` for coreum repo.
-func Tidy(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Tidy(ctx, repoPath, deps)
 }
 
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps types.DepsFunc) error {
 	deps(Generate, CompileAllSmartContracts, formatProto, lintProto, breakingProto)
-	return golang.Lint(ctx, repoPath, deps)
+	return golang.Lint(ctx, deps)
 }
 
 // Test run unit tests in coreum repo.
 func Test(ctx context.Context, deps types.DepsFunc) error {
 	deps(CompileAllSmartContracts)
 
-	return golang.Test(ctx, repoPath, deps)
+	return golang.Test(ctx, deps)
 }
 
 // DownloadDependencies downloads go dependencies.
 func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
-	return golang.DownloadDependencies(ctx, repoPath, deps)
+	return golang.DownloadDependencies(ctx, deps, repoPath)
 }
 
 func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([]string, error) {
-	hash, err := git.DirtyHeadHash(ctx, repoPath)
+	hash, err := git.DirtyHeadHash(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	version, err := git.VersionFromTag(ctx, repoPath)
+	version, err := git.VersionFromTag(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -221,8 +249,4 @@ func formatProto(ctx context.Context, deps types.DepsFunc) error {
 	cmd := exec.Command(tools.Path("bin/buf", tools.TargetPlatformLocal), "format", "-w")
 	cmd.Dir = filepath.Join(repoPath, "proto", "coreum")
 	return libexec.Exec(ctx, cmd)
-}
-
-func convertToLdFlags(values []string) string {
-	return "-" + ldFlagsFlag + "=" + strings.Join(values, " ")
 }

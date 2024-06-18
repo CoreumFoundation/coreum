@@ -1,9 +1,15 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Uint128;
 
 #[cw_serde]
 pub struct InstantiateMsg {
     pub denom: String,
+    pub issuance_msg: IssuanceMsg,
+}
+
+#[cw_serde]
+pub struct IssuanceMsg {
+    pub extra_data: Option<String>,
 }
 
 #[cw_serde]
@@ -38,4 +44,13 @@ pub enum IBCPurpose {
 }
 
 #[cw_serde]
-pub enum QueryMsg {}
+#[derive(QueryResponses)]
+pub enum QueryMsg {
+    #[returns(QueryIssuanceMsgResponse)]
+    QueryIssuanceMsg {},
+}
+
+#[cw_serde]
+pub struct QueryIssuanceMsgResponse {
+    pub test: Option<String>,
+}
