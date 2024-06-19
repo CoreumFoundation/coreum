@@ -215,6 +215,7 @@ func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context
 	}
 
 	consensusParams := types.DefaultConsensusParams()
+	consensusParams.Block.MaxBytes = 6_291_456
 	consensusParams.Block.MaxGas = 50_000_000
 
 	return types.GenesisDoc{

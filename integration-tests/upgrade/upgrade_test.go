@@ -53,6 +53,7 @@ func TestUpgrade(t *testing.T) {
 func upgradeV3ToV4(t *testing.T) {
 	tests := []upgradeTest{
 		&ftAdminFieldTest{},
+		&maxBlockSizeTest{},
 	}
 
 	for _, test := range tests {
