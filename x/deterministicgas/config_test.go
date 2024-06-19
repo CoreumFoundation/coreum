@@ -13,10 +13,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
+	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas/types"
 )
 
 // To access private variable from github.com/cosmos/gogoproto we link it to local variable.
@@ -51,6 +53,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	deterministicMsgCount := 0
 	nondeterministicMsgCount := 0
+	extensionMsgCount := 0
+	nonextensionMsgCount := 0
 	for protoType := range revProtoTypes {
 		sdkMsg, ok := reflect.New(protoType.Elem()).Interface().(sdk.Msg)
 		if !ok {
@@ -68,6 +72,14 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		gasFunc, ok := cfg.GasByMessageMap()[msgURL]
 		assert.True(t, ok, fmt.Sprintf("sdk.Msg %s, not found in the gasByMsg map", msgURL))
 
+		_, _, nonExtensionMsg, err := types.TypeAssertMessages(sdkMsg)
+		require.NoError(t, err)
+		if nonExtensionMsg {
+			nonextensionMsgCount++
+		} else {
+			extensionMsgCount++
+		}
+
 		gas, ok := gasFunc(sdkMsg)
 		if ok {
 			assert.NotZero(t, gas)
@@ -78,11 +90,13 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		nondeterministicMsgCount++
 	}
 
-	// To make sure we do not increase/decrease deterministic types accidentally,
+	// To make sure we do not increase/decrease deterministic and extension types accidentally,
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
 	assert.Equal(t, 62, nondeterministicMsgCount)
 	assert.Equal(t, 70, deterministicMsgCount)
+	assert.Equal(t, 14, extensionMsgCount)
+	assert.Equal(t, 118, nonextensionMsgCount)
 }
 
 func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
