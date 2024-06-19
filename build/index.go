@@ -22,7 +22,6 @@ var Commands = map[string]types.Command{
 	}, Description: "Builds cored binaries"},
 	"build/cored":     {Fn: coreum.BuildCored, Description: "Builds cored binary"},
 	"build/cored-ext": {Fn: coreum.BuildExtendedCoredInDocker, Description: "Builds extended cored binary"},
-	"download":        {Fn: coreum.DownloadDependencies, Description: "Downloads go dependencies"},
 	"generate":        {Fn: coreum.Generate, Description: "Generates artifacts"},
 	"images": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
