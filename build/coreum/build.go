@@ -52,10 +52,7 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
 		Tags:           defaultBuildTags,
-		Flags: []string{
-			goCoverFlag,
-		},
-		LDFlags: ldFlags,
+		LDFlags:        ldFlags,
 	})
 }
 
@@ -201,11 +198,6 @@ func Test(ctx context.Context, deps types.DepsFunc) error {
 	deps(CompileAllSmartContracts)
 
 	return golang.Test(ctx, deps)
-}
-
-// DownloadDependencies downloads go dependencies.
-func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
-	return golang.DownloadDependencies(ctx, deps, repoPath)
 }
 
 func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([]string, error) {
