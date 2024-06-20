@@ -52,10 +52,7 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
 		Tags:           defaultBuildTags,
-		Flags: []string{
-			goCoverFlag,
-		},
-		LDFlags: ldFlags,
+		LDFlags:        ldFlags,
 	})
 }
 
