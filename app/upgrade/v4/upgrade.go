@@ -4,6 +4,7 @@ import (
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
@@ -18,7 +19,8 @@ import (
 const Name = "v4"
 
 // New makes an upgrade handler for v4 upgrade.
-func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
+func New(mm *module.Manager, configurator module.Configurator,
+	consensusParamKeeper consensusparamkeeper.Keeper) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
 		StoreUpgrades: store.StoreUpgrades{
@@ -31,7 +33,19 @@ func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 			},
 		},
 		Upgrade: func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-			return mm.RunMigrations(ctx, configurator, vm)
+			vmap, err := mm.RunMigrations(ctx, configurator, vm)
+			if err != nil {
+				return nil, err
+			}
+
+			consensusParams, err := consensusParamKeeper.Get(ctx)
+			if err != nil {
+				return nil, err
+			}
+			consensusParams.Block.MaxBytes = 6_291_456
+			consensusParamKeeper.Set(ctx, consensusParams)
+
+			return vmap, nil
 		},
 	}
 }
