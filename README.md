@@ -100,7 +100,7 @@ Run the query again, and you will see that there are now funds in the newly gene
 
 ## Connect to Running Chains
 Coreum has `mainnet`, `testnet` and `devnet` chains running. In order to connect to any of those networks, get the
-network variables from the docs [here](https://docs.coreum.dev/tutorials/network-variables.html), and
+network variables from the docs [here](https://docs.coreum.dev/docs/become-validator/essentials/network-variables), and
 provide the correct `node` and `chain-id` flags to the cli command. 
 As an example here is a command to connect to the testnet to get the status:
 
@@ -110,4 +110,4 @@ $ cored status --chain-id=coreum-testnet-1 --node=https://full-node.testnet-1.co
 It should also be mentioned that for development purposes testnet is more stable than devnet.
 
 You can also find block explorers for each chain by this
-[link](https://docs.coreum.dev/tools-ecosystem/block-explorer.html).
+[link](https://docs.coreum.dev/docs/tools/blockchain-explorers).
