@@ -46,16 +46,15 @@ After the command completes you may find executable `./bin/cored`, being both bl
 To start local Coreum blockchain execute:
 
 ```
-$ ./bin/coreum-builder znet
-(znet) [znet] $ start
+$ make znet-start
 ```
 
-After a while single `cored` validator will be deployed to your docker. 
+After a while 3 `cored` validators will be deployed to your docker. 
 
 To stop and purge the testing environment run:
 
 ```
-(znet) [znet] $ remove
+$ make znet-remove
 ```
 
 To get all the details on how `znet` tool might be used, go to the [crust repository](https://github.com/CoreumFoundation/crust).
@@ -65,11 +64,11 @@ To get all the details on how `znet` tool might be used, go to the [crust reposi
 After entering `znet` console by executing:
 
 ```
-$ ./bin/coreum-builder znet
-(znet) [znet] $ start
+$ make znet
 ```
 you may use client to interact with the chain:
-1. List pregenerated wallets:
+1. 
+2. List pregenerated wallets:
 ```
 (znet) [znet] $ cored-00-val keys list
 ```
