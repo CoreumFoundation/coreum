@@ -286,7 +286,7 @@ const broadcastModeBlock = "block"
 type txWriter struct {
 	cdc          codec.Codec
 	parentWriter io.Writer
-	txHash       string
+	txRes        *sdk.TxResponse
 }
 
 func (txw *txWriter) Write(p []byte) (int, error) {
@@ -302,7 +302,7 @@ func (txw *txWriter) Write(p []byte) (int, error) {
 	}
 
 	// Store the tx hash for further processing.
-	txw.txHash = res.TxHash
+	txw.txRes = res
 	return len(p), nil
 }
 
@@ -372,13 +372,19 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 				return err
 			}
 
+			if writer.txRes.Code != 0 {
+				clientCtx.Output = originalOutput
+				clientCtx.OutputFormat = *originalOutputFormat
+				return errors.WithStack(clientCtx.PrintProto(writer.txRes))
+			}
+
 			// Once we read tx hash from the output produced by cosmos sdk we may await the transaction.
 			awaitClientCtx := coreumclient.NewContext(coreumclient.DefaultContextConfig(), app.ModuleBasics).
 				WithGRPCClient(clientCtx.GRPCClient).WithClient(clientCtx.Client)
 			ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
 			defer cancel()
 
-			res, err := coreumclient.AwaitTx(ctx, awaitClientCtx, writer.txHash)
+			res, err := coreumclient.AwaitTx(ctx, awaitClientCtx, writer.txRes.TxHash)
 			if err != nil {
 				return err
 			}

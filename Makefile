@@ -1,5 +1,9 @@
 BUILDER = ./bin/coreum-builder
 
+.PHONY: znet
+znet:
+	$(BUILDER) znet
+
 .PHONY: znet-start
 znet-start:
 	$(BUILDER) znet start --profiles=3cored
