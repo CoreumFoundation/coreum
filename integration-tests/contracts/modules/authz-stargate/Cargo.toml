@@ -29,4 +29,4 @@ thiserror = "1.0.56"
 cosmwasm-std = { version = "1.5.4", features = ["stargate"] }
 cw2 = "1.1.2"
 cosmwasm-schema = "1.5.0"
-coreum-wasm-sdk = "0.2.4"
+coreum-wasm-sdk = "1.0.0"
