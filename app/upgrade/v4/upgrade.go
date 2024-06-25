@@ -12,7 +12,6 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 
 	"github.com/CoreumFoundation/coreum/v4/app/upgrade"
-	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
 // Name defines the upgrade name.
@@ -20,7 +19,8 @@ const Name = "v4"
 
 // New makes an upgrade handler for v4 upgrade.
 func New(mm *module.Manager, configurator module.Configurator,
-	consensusParamKeeper consensusparamkeeper.Keeper) upgrade.Upgrade {
+	consensusParamKeeper consensusparamkeeper.Keeper,
+) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
 		StoreUpgrades: store.StoreUpgrades{
@@ -29,7 +29,6 @@ func New(mm *module.Manager, configurator module.Configurator,
 				packetforwardtypes.StoreKey,
 				icacontrollertypes.StoreKey,
 				icahosttypes.StoreKey,
-				dextypes.StoreKey,
 			},
 		},
 		Upgrade: func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
