@@ -4,6 +4,7 @@
 package types
 
 import (
+	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -23,7 +24,33 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Order is a single order of an orderbook.
+// Side is order side.
+type Side int32
+
+const (
+	Side_sell Side = 0
+	Side_buy  Side = 1
+)
+
+var Side_name = map[int32]string{
+	0: "sell",
+	1: "buy",
+}
+
+var Side_value = map[string]int32{
+	"sell": 0,
+	"buy":  1,
+}
+
+func (x Side) String() string {
+	return proto.EnumName(Side_name, int32(x))
+}
+
+func (Side) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_302bb6c9a553771c, []int{0}
+}
+
+// Order is a DEX order.
 type Order struct {
 	// id is unique order ID.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -62,25 +89,143 @@ func (m *Order) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Order proto.InternalMessageInfo
 
+// OrderBookRecord is a single order book record.
+type OrderBookRecord struct {
+	// pairID is tokens pair ID.
+	PairID uint64 `protobuf:"varint,1,opt,name=pairID,proto3" json:"pairID,omitempty"`
+	// side is order side.
+	Side Side `protobuf:"varint,2,opt,name=side,proto3,enum=coreum.dex.v1.Side" json:"side,omitempty"`
+	// price is order book record price.
+	Price Price `protobuf:"bytes,3,opt,name=price,proto3,customtype=Price" json:"price"`
+	// order_seq is order sequence.
+	OrderSeq uint64 `protobuf:"varint,4,opt,name=order_seq,json=orderSeq,proto3" json:"order_seq,omitempty"`
+	// order ID provided by the account.
+	OrderID string `protobuf:"bytes,5,opt,name=orderID,proto3" json:"orderID,omitempty"`
+	// accountID is account ID which corresponds the order creator.
+	AccountID string `protobuf:"bytes,6,opt,name=accountID,proto3" json:"accountID,omitempty"`
+	// remaining_quantity is remaining filling quantity sell/buy.
+	RemainingQuantity cosmossdk_io_math.Int `protobuf:"bytes,7,opt,name=remaining_quantity,json=remainingQuantity,proto3,customtype=cosmossdk.io/math.Int" json:"remaining_quantity"`
+	// remaining_balance is remaining order balance.
+	RemainingBalance cosmossdk_io_math.Int `protobuf:"bytes,8,opt,name=remaining_balance,json=remainingBalance,proto3,customtype=cosmossdk.io/math.Int" json:"remaining_balance"`
+}
+
+func (m *OrderBookRecord) Reset()         { *m = OrderBookRecord{} }
+func (m *OrderBookRecord) String() string { return proto.CompactTextString(m) }
+func (*OrderBookRecord) ProtoMessage()    {}
+func (*OrderBookRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_302bb6c9a553771c, []int{1}
+}
+func (m *OrderBookRecord) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OrderBookRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OrderBookRecord.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OrderBookRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OrderBookRecord.Merge(m, src)
+}
+func (m *OrderBookRecord) XXX_Size() int {
+	return m.Size()
+}
+func (m *OrderBookRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_OrderBookRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OrderBookRecord proto.InternalMessageInfo
+
+// OrderBookStoreRecord is a single order book record used for the store.
+type OrderBookStoreRecord struct {
+	// order ID provided by the account.
+	OrderID string `protobuf:"bytes,4,opt,name=orderID,proto3" json:"orderID,omitempty"`
+	// accountID is account ID which corresponds the order creator.
+	AccountID string `protobuf:"bytes,5,opt,name=accountID,proto3" json:"accountID,omitempty"`
+	// remaining_quantity is remaining filling quantity sell/buy.
+	RemainingQuantity cosmossdk_io_math.Int `protobuf:"bytes,6,opt,name=remaining_quantity,json=remainingQuantity,proto3,customtype=cosmossdk.io/math.Int" json:"remaining_quantity"`
+	// remaining_balance is remaining order balance.
+	RemainingBalance cosmossdk_io_math.Int `protobuf:"bytes,7,opt,name=remaining_balance,json=remainingBalance,proto3,customtype=cosmossdk.io/math.Int" json:"remaining_balance"`
+}
+
+func (m *OrderBookStoreRecord) Reset()         { *m = OrderBookStoreRecord{} }
+func (m *OrderBookStoreRecord) String() string { return proto.CompactTextString(m) }
+func (*OrderBookStoreRecord) ProtoMessage()    {}
+func (*OrderBookStoreRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_302bb6c9a553771c, []int{2}
+}
+func (m *OrderBookStoreRecord) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OrderBookStoreRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OrderBookStoreRecord.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OrderBookStoreRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OrderBookStoreRecord.Merge(m, src)
+}
+func (m *OrderBookStoreRecord) XXX_Size() int {
+	return m.Size()
+}
+func (m *OrderBookStoreRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_OrderBookStoreRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OrderBookStoreRecord proto.InternalMessageInfo
+
 func init() {
+	proto.RegisterEnum("coreum.dex.v1.Side", Side_name, Side_value)
 	proto.RegisterType((*Order)(nil), "coreum.dex.v1.Order")
+	proto.RegisterType((*OrderBookRecord)(nil), "coreum.dex.v1.OrderBookRecord")
+	proto.RegisterType((*OrderBookStoreRecord)(nil), "coreum.dex.v1.OrderBookStoreRecord")
 }
 
 func init() { proto.RegisterFile("coreum/dex/v1/order.proto", fileDescriptor_302bb6c9a553771c) }
 
 var fileDescriptor_302bb6c9a553771c = []byte{
-	// 175 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4c, 0xce, 0x2f, 0x4a,
-	0x2d, 0xcd, 0xd5, 0x4f, 0x49, 0xad, 0xd0, 0x2f, 0x33, 0xd4, 0xcf, 0x2f, 0x4a, 0x49, 0x2d, 0xd2,
-	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x85, 0x48, 0xe9, 0xa5, 0xa4, 0x56, 0xe8, 0x95, 0x19,
-	0x4a, 0x89, 0xa4, 0xe7, 0xa7, 0xe7, 0x83, 0x65, 0xf4, 0x41, 0x2c, 0x88, 0x22, 0x25, 0x71, 0x2e,
-	0x56, 0x7f, 0x90, 0x1e, 0x21, 0x3e, 0x2e, 0xa6, 0xcc, 0x14, 0x09, 0x46, 0x05, 0x46, 0x0d, 0xce,
-	0x20, 0xa6, 0xcc, 0x14, 0x27, 0xff, 0x13, 0x0f, 0xe5, 0x18, 0x4e, 0x3c, 0x92, 0x63, 0xbc, 0xf0,
-	0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x09, 0x8f, 0xe5, 0x18, 0x2e, 0x3c, 0x96, 0x63, 0xb8,
-	0xf1, 0x58, 0x8e, 0x21, 0xca, 0x30, 0x3d, 0xb3, 0x24, 0xa3, 0x34, 0x49, 0x2f, 0x39, 0x3f, 0x57,
-	0xdf, 0x19, 0x6c, 0x8d, 0x5b, 0x7e, 0x69, 0x5e, 0x4a, 0x62, 0x49, 0x66, 0x7e, 0x9e, 0x3e, 0xd4,
-	0x49, 0x65, 0x26, 0xfa, 0x15, 0x60, 0x77, 0x95, 0x54, 0x16, 0xa4, 0x16, 0x27, 0xb1, 0x81, 0x2d,
-	0x34, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x99, 0xd5, 0x0c, 0x90, 0xb2, 0x00, 0x00, 0x00,
+	// 441 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x53, 0xcd, 0x6e, 0xd3, 0x40,
+	0x10, 0xb6, 0x53, 0x3b, 0x3f, 0x23, 0xb5, 0x84, 0xa5, 0xc0, 0x96, 0x1f, 0xb7, 0x0a, 0x07, 0x2a,
+	0x0e, 0xb6, 0x02, 0x3c, 0x41, 0x88, 0x90, 0x82, 0x90, 0x0a, 0xce, 0x8d, 0x4b, 0xe4, 0xec, 0xae,
+	0xd2, 0x55, 0xe3, 0x9d, 0x64, 0xbd, 0x8e, 0x92, 0xb7, 0xe0, 0xb1, 0x72, 0xec, 0x11, 0x71, 0xa8,
+	0x20, 0x91, 0x10, 0x8f, 0x81, 0xbc, 0x36, 0x29, 0x5c, 0x50, 0x85, 0x7a, 0xdb, 0xf9, 0xbe, 0xf9,
+	0x76, 0xe6, 0x1b, 0xcd, 0xc0, 0x11, 0x43, 0x2d, 0xf2, 0x34, 0xe2, 0x62, 0x19, 0x2d, 0xba, 0x11,
+	0x6a, 0x2e, 0x74, 0x38, 0xd3, 0x68, 0x90, 0xec, 0x97, 0x54, 0xc8, 0xc5, 0x32, 0x5c, 0x74, 0x1f,
+	0x1d, 0x4e, 0x70, 0x82, 0x96, 0x89, 0x8a, 0x57, 0x99, 0xd4, 0x79, 0x08, 0xfe, 0x59, 0xa1, 0x21,
+	0x07, 0x50, 0x93, 0x9c, 0xba, 0x27, 0xee, 0x69, 0x2b, 0xae, 0x49, 0xde, 0xf9, 0x51, 0x83, 0x3b,
+	0x96, 0xe9, 0x21, 0x5e, 0xc4, 0x82, 0xa1, 0xe6, 0xe4, 0x01, 0xd4, 0x67, 0x89, 0xd4, 0x83, 0xbe,
+	0xcd, 0xf3, 0xe2, 0x2a, 0x22, 0xcf, 0xc1, 0xcb, 0x24, 0x17, 0xb4, 0x76, 0xe2, 0x9e, 0x1e, 0xbc,
+	0xbc, 0x17, 0xfe, 0x55, 0x38, 0x1c, 0x4a, 0x2e, 0x62, 0x9b, 0x40, 0x9e, 0x81, 0x3f, 0xd3, 0x92,
+	0x09, 0xba, 0x57, 0xd4, 0xe9, 0xed, 0xaf, 0xaf, 0x8e, 0x9d, 0xaf, 0x57, 0xc7, 0xfe, 0x87, 0x02,
+	0x8c, 0x4b, 0x8e, 0x3c, 0x86, 0x96, 0xb5, 0x31, 0xca, 0xc4, 0x9c, 0x7a, 0xb6, 0x50, 0xd3, 0x02,
+	0x43, 0x31, 0x27, 0x14, 0x1a, 0xf6, 0x3d, 0xe8, 0x53, 0xdf, 0xf6, 0xfa, 0x3b, 0x24, 0x4f, 0xa0,
+	0x95, 0x30, 0x86, 0xb9, 0x32, 0x83, 0x3e, 0xad, 0x5b, 0xee, 0x1a, 0x20, 0xef, 0x81, 0x68, 0x91,
+	0x26, 0x52, 0x49, 0x35, 0x19, 0xcd, 0xf3, 0x44, 0x19, 0x69, 0x56, 0xb4, 0x61, 0xdb, 0x78, 0x5a,
+	0xb5, 0x71, 0x9f, 0x61, 0x96, 0x62, 0x96, 0xf1, 0x8b, 0x50, 0x62, 0x94, 0x26, 0xe6, 0x3c, 0x1c,
+	0x28, 0x13, 0xdf, 0xdd, 0x09, 0x3f, 0x56, 0x3a, 0xf2, 0x0e, 0xae, 0xc1, 0xd1, 0x38, 0x99, 0x26,
+	0x8a, 0x09, 0xda, 0xbc, 0xc9, 0x67, 0xed, 0x9d, 0xae, 0x57, 0xca, 0x3a, 0x3f, 0x5d, 0x38, 0xdc,
+	0x0d, 0x7a, 0x68, 0x50, 0x8b, 0x6a, 0xda, 0x7f, 0x58, 0xf5, 0xfe, 0x61, 0xd5, 0xbf, 0x99, 0xd5,
+	0xfa, 0x6d, 0x5a, 0x6d, 0xfc, 0x97, 0xd5, 0x17, 0x47, 0xe0, 0x15, 0xcb, 0x40, 0x9a, 0xe0, 0x65,
+	0x62, 0x3a, 0x6d, 0x3b, 0xa4, 0x01, 0x7b, 0xe3, 0x7c, 0xd5, 0x76, 0x7b, 0x67, 0xeb, 0xef, 0x81,
+	0xb3, 0xde, 0x04, 0xee, 0xe5, 0x26, 0x70, 0xbf, 0x6d, 0x02, 0xf7, 0xf3, 0x36, 0x70, 0x2e, 0xb7,
+	0x81, 0xf3, 0x65, 0x1b, 0x38, 0x9f, 0xba, 0x13, 0x69, 0xce, 0xf3, 0x71, 0xc8, 0x30, 0x8d, 0xde,
+	0xd8, 0xe5, 0x7a, 0x8b, 0xb9, 0xe2, 0x89, 0x91, 0xa8, 0xa2, 0xea, 0x02, 0x16, 0xaf, 0xa3, 0xa5,
+	0x3d, 0x03, 0xb3, 0x9a, 0x89, 0x6c, 0x5c, 0xb7, 0xfb, 0xfd, 0xea, 0x57, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0x8e, 0xbf, 0x97, 0xfe, 0x21, 0x03, 0x00, 0x00,
 }
 
 func (m *Order) Marshal() (dAtA []byte, err error) {
@@ -113,6 +258,145 @@ func (m *Order) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *OrderBookRecord) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OrderBookRecord) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OrderBookRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.RemainingBalance.Size()
+		i -= size
+		if _, err := m.RemainingBalance.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintOrder(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x42
+	{
+		size := m.RemainingQuantity.Size()
+		i -= size
+		if _, err := m.RemainingQuantity.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintOrder(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x3a
+	if len(m.AccountID) > 0 {
+		i -= len(m.AccountID)
+		copy(dAtA[i:], m.AccountID)
+		i = encodeVarintOrder(dAtA, i, uint64(len(m.AccountID)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.OrderID) > 0 {
+		i -= len(m.OrderID)
+		copy(dAtA[i:], m.OrderID)
+		i = encodeVarintOrder(dAtA, i, uint64(len(m.OrderID)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.OrderSeq != 0 {
+		i = encodeVarintOrder(dAtA, i, uint64(m.OrderSeq))
+		i--
+		dAtA[i] = 0x20
+	}
+	{
+		size := m.Price.Size()
+		i -= size
+		if _, err := m.Price.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintOrder(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if m.Side != 0 {
+		i = encodeVarintOrder(dAtA, i, uint64(m.Side))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.PairID != 0 {
+		i = encodeVarintOrder(dAtA, i, uint64(m.PairID))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OrderBookStoreRecord) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OrderBookStoreRecord) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OrderBookStoreRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.RemainingBalance.Size()
+		i -= size
+		if _, err := m.RemainingBalance.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintOrder(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x3a
+	{
+		size := m.RemainingQuantity.Size()
+		i -= size
+		if _, err := m.RemainingQuantity.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintOrder(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x32
+	if len(m.AccountID) > 0 {
+		i -= len(m.AccountID)
+		copy(dAtA[i:], m.AccountID)
+		i = encodeVarintOrder(dAtA, i, uint64(len(m.AccountID)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.OrderID) > 0 {
+		i -= len(m.OrderID)
+		copy(dAtA[i:], m.OrderID)
+		i = encodeVarintOrder(dAtA, i, uint64(len(m.OrderID)))
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintOrder(dAtA []byte, offset int, v uint64) int {
 	offset -= sovOrder(v)
 	base := offset
@@ -134,6 +418,59 @@ func (m *Order) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovOrder(uint64(l))
 	}
+	return n
+}
+
+func (m *OrderBookRecord) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.PairID != 0 {
+		n += 1 + sovOrder(uint64(m.PairID))
+	}
+	if m.Side != 0 {
+		n += 1 + sovOrder(uint64(m.Side))
+	}
+	l = m.Price.Size()
+	n += 1 + l + sovOrder(uint64(l))
+	if m.OrderSeq != 0 {
+		n += 1 + sovOrder(uint64(m.OrderSeq))
+	}
+	l = len(m.OrderID)
+	if l > 0 {
+		n += 1 + l + sovOrder(uint64(l))
+	}
+	l = len(m.AccountID)
+	if l > 0 {
+		n += 1 + l + sovOrder(uint64(l))
+	}
+	l = m.RemainingQuantity.Size()
+	n += 1 + l + sovOrder(uint64(l))
+	l = m.RemainingBalance.Size()
+	n += 1 + l + sovOrder(uint64(l))
+	return n
+}
+
+func (m *OrderBookStoreRecord) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.OrderID)
+	if l > 0 {
+		n += 1 + l + sovOrder(uint64(l))
+	}
+	l = len(m.AccountID)
+	if l > 0 {
+		n += 1 + l + sovOrder(uint64(l))
+	}
+	l = m.RemainingQuantity.Size()
+	n += 1 + l + sovOrder(uint64(l))
+	l = m.RemainingBalance.Size()
+	n += 1 + l + sovOrder(uint64(l))
 	return n
 }
 
@@ -203,6 +540,461 @@ func (m *Order) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipOrder(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OrderBookRecord) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowOrder
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OrderBookRecord: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OrderBookRecord: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PairID", wireType)
+			}
+			m.PairID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PairID |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Side", wireType)
+			}
+			m.Side = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Side |= Side(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Price", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Price.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OrderSeq", wireType)
+			}
+			m.OrderSeq = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.OrderSeq |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OrderID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OrderID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AccountID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AccountID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RemainingQuantity", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RemainingQuantity.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RemainingBalance", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RemainingBalance.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipOrder(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OrderBookStoreRecord) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowOrder
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OrderBookStoreRecord: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OrderBookStoreRecord: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OrderID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OrderID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AccountID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AccountID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RemainingQuantity", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RemainingQuantity.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RemainingBalance", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOrder
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOrder
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOrder
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RemainingBalance.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -178,7 +178,7 @@ func (s deterministicMsgServer) ctxForDeterministicGas(
 }
 
 // TypeAssertMessages type checks the message to find out that it might invoke asset extensions.
-func TypeAssertMessages(msg sdk.Msg) (msgCoins sdk.Coins, hasExtension bool, notExtensionMsg bool, err error) {
+func TypeAssertMessages(msg sdk.Msg) (msgCoins sdk.Coins, hasExtension, notExtensionMsg bool, err error) {
 	coins := sdk.NewCoins()
 	switch typedMsg := msg.(type) {
 	case *banktypes.MsgSend:
