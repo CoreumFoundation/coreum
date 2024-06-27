@@ -33,7 +33,6 @@ cosmwasm-storage = "1.5.0"
 cw-storage-plus = "1.1.0"
 cw2 = "1.1.1"
 thiserror = "1.0.59"
-# TODO(keyleu): Update dependency once final version of coreum-wasm-sdk crate is pushed
-coreum-wasm-sdk = { git = "https://github.com/CoreumFoundation/coreum-wasm-sdk.git", branch = "keyne/upgrade-wasm-sdk" }
+coreum-wasm-sdk = "1.0.0"
 cosmwasm-schema = "1.5.4"
 cw-ownable = "0.5.1"
