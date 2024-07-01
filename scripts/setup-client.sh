@@ -2,13 +2,13 @@
 
 set -e
 
-VERSION="v3.0.3"
+VERSION="v4.0.0"
 BIN_PATH="./cored"
 
 URL_LINUX_AMD64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-linux-amd64"
 URL_LINUX_ARM64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-linux-arm64"
-URL_DARWIN_AMD64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-client-darwin-amd64"
-URL_DARWIN_ARM64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-client-darwin-arm64"
+URL_DARWIN_AMD64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-darwin-amd64"
+URL_DARWIN_ARM64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-darwin-arm64"
 
 PLATFORM="$(uname)/$(uname -m)"
 URL=""
