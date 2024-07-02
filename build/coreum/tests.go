@@ -87,7 +87,7 @@ func runIntegrationTests(
 	runUnsafe bool,
 	znetConfig *infra.ConfigFactory,
 	testDirs ...string,
-) error {
+) (retErr error) {
 	flags := []string{
 		"-tags=integrationtests",
 		fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
@@ -100,6 +100,12 @@ func runIntegrationTests(
 	if err := znet.Remove(ctx, znetConfig); err != nil {
 		return err
 	}
+	defer func() {
+		if err := znet.Remove(ctx, znetConfig); retErr == nil {
+			retErr = err
+		}
+	}()
+
 	if err := znet.Start(ctx, znetConfig); err != nil {
 		return err
 	}
@@ -122,7 +128,7 @@ func runIntegrationTests(
 		}
 	}
 
-	return znet.Remove(ctx, znetConfig)
+	return nil
 }
 
 func defaultZNetConfig() *infra.ConfigFactory {
