@@ -14,8 +14,9 @@ message Order {
 
 // Side is order side.
 enum Side {
-  sell = 0;
-  buy = 1;
+  unspecified = 0;
+  sell = 1;
+  buy = 2;
 }
 
 // OrderBookRecord is a single order book record.

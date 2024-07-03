@@ -1,232 +1,196 @@
 package types
 
 import (
-	"encoding/binary"
 	"math/big"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
+
+	cbig "github.com/CoreumFoundation/coreum/v4/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v4/pkg/store"
 )
 
 const (
-	maxPricePartUint64     = 2 // how many uin64 we allow for the whole and decimal part
-	uin64MaxTenRangeNumber = 19
-	// max uint64 is 2^64, so we can save any number from 0 to the 10^19.
-	maxPricePartLen = uin64MaxTenRangeNumber * maxPricePartUint64
+	maxNumLen = 19
+	// maxExp is the max allowed exponent. Technically it's limited by MinInt8 (-128) + `maxNumLen` (required for
+	//	normalization). But to make the range value easier for understanding and still keeping enough precision we set
+	//	it to -100.
+	minExt = -100
+	// maxExp is the max allowed exponent. Technically it's limited by MaxInt8 (127) but to make it similar to
+	// mixExp we set it to 100.
+	maxExp                = 100
+	exponentStr           = "e"
+	orderedBytesPriceSize = store.Int8OrderedBytesSize + store.Uint64OrderedBytesSize
 )
-
-var tenPowerMaxDecLength = (&big.Int{}).Exp(big.NewInt(10), big.NewInt(maxPricePartLen), nil)
 
 // Price is the price type.
 type Price struct {
-	i *big.Int
+	exp int8
+	num uint64
 }
 
 // NewPriceFromString returns new instance of the Price from string.
 func NewPriceFromString(str string) (Price, error) {
-	i, err := priceStringToInternalBigInt(str)
+	if len(str) == 0 {
+		return Price{}, errors.New("price can't be empty")
+	}
+	parts := strings.Split(str, exponentStr)
+	numPart := parts[0]
+	// the price must be represented with exponent if it's possible to use the exponent.
+	if numPart != "0" && (strings.HasPrefix(numPart, "0") || strings.HasSuffix(numPart, "0")) {
+		return Price{}, errors.Errorf("invalid price num part %s, can't start or end with 0", numPart)
+	}
+	if len(numPart) > maxNumLen {
+		return Price{}, errors.Errorf("invalid price num part length, max %d", maxNumLen)
+	}
+
+	var (
+		exp int8
+		num uint64
+		err error
+	)
+	num, err = strconv.ParseUint(numPart, 10, 64)
 	if err != nil {
-		return Price{}, err
+		return Price{}, errors.Errorf("invalid price num part %s", numPart)
+	}
+
+	switch len(parts) {
+	case 1:
+		exp = 0
+	case 2:
+		if numPart == "0" {
+			return Price{}, errors.New("the exponent can't be provided for the zero num")
+		}
+		var intExp int64
+		intExp, err = strconv.ParseInt(parts[1], 10, 8)
+		if err != nil {
+			return Price{}, errors.Errorf("invalid price exp part %s", parts[1])
+		}
+		// the range check is required for the normalization
+		if intExp < minExt || intExp > maxExp {
+			return Price{}, errors.Errorf("invalid exp %d, must be in the rage %d:%d", intExp, minExt, maxExp)
+		}
+		exp = int8(intExp)
+	default:
+		return Price{}, errors.Errorf("invalid price string %s", str)
 	}
 
 	return Price{
-		i: i,
+		exp: exp,
+		num: num,
 	}, nil
 }
 
-// Rat returns the stored base Rat type.
+// Rat creates Rat type from Price.
 func (p Price) Rat() *big.Rat {
-	return (&big.Rat{}).SetFrac(p.i, tenPowerMaxDecLength)
-}
-
-// MarshallToEndianBytes returns the bytes representation of the Price.
-func (p Price) MarshallToEndianBytes() ([]byte, error) {
-	var wholePartStr, decPartStr string
-	if intStr := p.i.String(); len(intStr) > maxPricePartLen {
-		// whole use used
-		partIndex := len(intStr) - maxPricePartLen
-		wholePartStr = intStr[:partIndex]
-		decPartStr = intStr[partIndex:]
-	} else {
-		// dec only is used
-		wholePartStr = "0"
-		decPartStr = intStr
-	}
-	bytes := make([]byte, 0, 2*maxPricePartUint64*bigEndianUint64ByteSize)
-	// encode whole part
-	var err error
-	if bytes, err = bigIntToUint64BigEndianSlice(wholePartStr, bytes); err != nil {
-		return nil, err
-	}
-	// encode dec part
-	if bytes, err = bigIntToUint64BigEndianSlice(decPartStr, bytes); err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
-}
-
-// UnmarshallFromEndianBytes unmarshalls endian bytes to Price type and returns remaining bytes.
-func (p *Price) UnmarshallFromEndianBytes(bytes []byte) ([]byte, error) {
-	const priceBytesLen = 2 * maxPricePartUint64 * bigEndianUint64ByteSize
-	if len(bytes) < priceBytesLen {
-		return nil, errors.Errorf("failed to convert bytes to Price, invalid length")
-	}
-
-	var combinedStr string
-	for i := 0; i < 2*maxPricePartUint64; i++ {
-		partSrt := strconv.FormatUint(
-			binary.BigEndian.Uint64(bytes[i*bigEndianUint64ByteSize:(i+1)*bigEndianUint64ByteSize]), 10,
+	if p.exp > 0 {
+		// num * 10^exp
+		return cbig.NewRatFromBigInt(
+			cbig.IntMul(cbig.NewBigIntFromUint64(p.num), cbig.IntTenToThePower(big.NewInt(int64(p.exp)))),
 		)
-		combinedStr += strings.Repeat("0", uin64MaxTenRangeNumber-len(partSrt)) + partSrt
+	}
+	// num / 10^exp
+	return cbig.NewRatFromBigInts(
+		cbig.NewBigIntFromUint64(p.num), cbig.IntTenToThePower(big.NewInt(int64(-p.exp))),
+	)
+}
+
+// MarshallToOrderedBytes returns the ordered bytes representation of the Price.
+func (p Price) MarshallToOrderedBytes() ([]byte, error) {
+	exp, num, err := normalizeForOrderedBytes(p.exp, p.num)
+	if err != nil {
+		return nil, err
 	}
 
-	var ok bool
-	p.i, ok = (&big.Int{}).SetString(combinedStr, 10)
-	if !ok {
-		return nil, errors.Errorf("failed to convert %s to big.Int to unmarshall Price", combinedStr)
+	b := make([]byte, 0, orderedBytesPriceSize)
+	b = store.AppendInt8ToOrderedBytes(b, exp)
+	b = store.AppendUint64ToOrderedBytes(b, num)
+
+	return b, nil
+}
+
+// UnmarshallFromOrderedBytes unmarshalls ordered bytes to Price type and returns remaining bytes.
+func (p *Price) UnmarshallFromOrderedBytes(bytes []byte) ([]byte, error) {
+	exp, bRem, err := store.ReadOrderedBytesToInt8(bytes)
+	if err != nil {
+		return nil, err
+	}
+	num, bRem, err := store.ReadOrderedBytesToUint64(bRem)
+	if err != nil {
+		return nil, err
 	}
 
-	return bytes[priceBytesLen:], nil
+	exp, num, err = denormalizeForOrderedBytes(exp, num)
+	if err != nil {
+		return nil, err
+	}
+
+	p.exp = exp
+	p.num = num
+
+	return bRem, nil
 }
 
 // String returns string representation of the Price.
 func (p Price) String() string {
-	if p.i == nil {
-		return "<nil>"
+	var expPart string
+	if p.exp != 0 {
+		expPart = exponentStr + strconv.Itoa(int(p.exp))
 	}
-	return strings.TrimRight(strings.TrimRight(p.Rat().FloatString(maxPricePartLen), "0"), ".")
+	return strconv.FormatUint(p.num, 10) + expPart
 }
 
 // MarshalTo implements the gogo proto custom type interface.
 func (p *Price) MarshalTo(data []byte) (n int, err error) {
-	bz, err := p.Marshal()
-	if err != nil {
-		return 0, err
-	}
-
-	copy(data, bz)
-	return len(bz), nil
+	// TODO(dzmitryhil) implement
+	return 0, nil
 }
 
 // Unmarshal implements the gogo proto custom type interface.
 func (p *Price) Unmarshal(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	i, err := priceStringToInternalBigInt(string(data))
-	if err != nil {
-		return err
-	}
-	p.i = i
+	// TODO(dzmitryhil) implement
 	return nil
 }
 
 // Size implements the gogo proto custom type interface.
 func (p *Price) Size() int {
-	bz, _ := p.Marshal()
-	return len(bz)
+	// TODO(dzmitryhil) implement
+	return 0
 }
 
 // Marshal implements the gogo proto custom type interface.
 func (p *Price) Marshal() ([]byte, error) {
-	return []byte(p.String()), nil
+	// TODO(dzmitryhil) implement
+	return nil, nil
 }
 
-func priceStringToInternalBigInt(str string) (*big.Int, error) {
-	if len(str) == 0 {
-		return nil, errors.Errorf("failed to create Price from empty string")
-	}
-
-	strParts := strings.Split(str, ".")
-	var wholePartStr, decPartStr string
-	strLen := len(strParts)
-	if strLen > 2 {
-		return nil, errors.Errorf("failed to create Price from string: %s, invalid format", str)
-	}
-
-	wholePartStr = strParts[0]
-	if len(wholePartStr) > maxPricePartLen {
-		return nil, errors.Errorf(
-			"failed to create whole Price part from, string: %s, too long, max: %d",
-			wholePartStr, maxPricePartLen,
-		)
-	}
-	if strLen == 2 {
-		decPartStr = strParts[1]
-		if len(decPartStr) > maxPricePartLen {
-			return nil, errors.Errorf(
-				"failed to create decimal Price part from, string: %s, too long, max: %d",
-				decPartStr, maxPricePartLen,
-			)
-		}
-	}
-
-	// append zero to always determine the easies way of how to convert to Rat or float
-	combinedStr := wholePartStr + decPartStr + strings.Repeat("0", maxPricePartLen-len(decPartStr))
-
-	i, ok := (&big.Int{}).SetString(combinedStr, 10)
-	if !ok {
-		return nil, errors.Errorf(
-			"failed to create Price from, string: %s, invalid format", str,
-		)
-	}
-	return i, nil
-}
-
-// bigIntToUint64BigEndianSlice converts the str into BigEndian bytes and appends it to bytes slice.
-func bigIntToUint64BigEndianSlice(str string, bytes []byte) ([]byte, error) {
-	// append zero to the head as placeholder for the empty uint64 to keep same size of the final byte slice
-	uint64SliceLen := ((len(str) - 1) / uin64MaxTenRangeNumber) + 1
-	for i := 0; i < maxPricePartUint64-uint64SliceLen; i++ {
-		bytes = binary.BigEndian.AppendUint64(bytes, 0)
-	}
-
-	for _, chunk := range chunkStringFromTail(str, uin64MaxTenRangeNumber) {
-		var err error
-		bytes, err = appendUint64BigEndian(bytes, chunk)
-		if err != nil {
-			return bytes, err
-		}
-	}
-
-	return bytes, nil
-}
-
-func chunkStringFromTail(str string, size int) []string {
-	currentLen := 0
-	currentStart := len(str)
-	chunks := make([]string, 0)
-	for i := len(str); i > 0; i-- {
-		if currentLen == size {
-			chunks = append(chunks, str[i:currentStart])
-			currentLen = 0
-			currentStart = i
-		}
-		currentLen++
-	}
-	chunks = append(chunks, str[:currentStart])
-
-	// reverse
-	length := len(chunks)
-	half := length / 2
-	for i := 0; i < half; i++ {
-		j := length - 1 - i
-		chunks[i], chunks[j] = chunks[j], chunks[i]
-	}
-
-	return chunks
-}
-
-func appendUint64BigEndian(bytes []byte, str string) ([]byte, error) {
-	uint64Value, err := strconv.ParseUint(str, 10, 64)
+// normalizeForOrderedBytes normalizes the num part to have the same uint64 length for all prices stored and updates the
+// exp correspondingly.
+func normalizeForOrderedBytes(exp int8, num uint64) (int8, uint64, error) {
+	srtNum := strconv.FormatUint(num, 10)
+	offset := maxNumLen - len(srtNum)
+	srtNum += strings.Repeat("0", offset)
+	num, err := strconv.ParseUint(srtNum, 10, 64)
 	if err != nil {
-		return nil, errors.Wrapf(
-			err, "failed to convert %s into uint64", str,
-		)
+		return 0, 0, errors.Wrapf(err, "failed to parse uint64 from %s", srtNum)
 	}
+	exp -= int8(offset)
 
-	return binary.BigEndian.AppendUint64(bytes, uint64Value), nil
+	return exp, num, nil
+}
+
+// denormalizeForOrderedBytes denormalizes the num part to initial (before normalization) and updates
+// the exponent correspondingly.
+func denormalizeForOrderedBytes(exp int8, num uint64) (int8, uint64, error) {
+	srtNum := strconv.FormatUint(num, 10)
+	srtNum = strings.TrimRight(srtNum, "0")
+	offset := maxNumLen - len(srtNum)
+	num, err := strconv.ParseUint(srtNum, 10, 64)
+	if err != nil {
+		return 0, 0, errors.Wrapf(err, "failed to parse uint64 from %s", srtNum)
+	}
+	exp += int8(offset)
+
+	return exp, num, nil
 }

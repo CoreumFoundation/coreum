@@ -28,6 +28,7 @@ func NewKeeper(
 
 // SaveOrderBookRecord saves order book record to the store.
 func (k Keeper) SaveOrderBookRecord(ctx sdk.Context, record types.OrderBookRecord) error {
+	// TODO(dzmitryhil) don't forget to add unspecified side validation
 	key, err := types.CreateOrderBookRecordKey(record.PairID, record.Side, record.Price, record.OrderSeq)
 	if err != nil {
 		return err

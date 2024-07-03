@@ -1,15 +1,7 @@
 package types
 
 import (
-	"encoding/binary"
-
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum/v4/pkg/store"
-)
-
-const (
-	bigEndianUint64ByteSize = 8
 )
 
 const (
@@ -44,12 +36,12 @@ func CreateOrderBookRecordKey(pairID uint64, side Side, price Price, orderSeq ui
 
 // CreateOrderBookSideRecordKey creates order book side record key.
 func CreateOrderBookSideRecordKey(key []byte, price Price, orderSeq uint64) ([]byte, error) {
-	priceKey, err := price.MarshallToEndianBytes()
+	priceKey, err := price.MarshallToOrderedBytes()
 	if err != nil {
 		return nil, err
 	}
 	key = store.JoinKeys(key, priceKey)
-	key = binary.BigEndian.AppendUint64(key, orderSeq)
+	key = store.AppendUint64ToOrderedBytes(key, orderSeq)
 
 	return key, nil
 }
@@ -57,16 +49,14 @@ func CreateOrderBookSideRecordKey(key []byte, price Price, orderSeq uint64) ([]b
 // DecodeOrderBookSideRecordKey decodes order book side record key into values.
 func DecodeOrderBookSideRecordKey(key []byte) (Price, uint64, error) {
 	var p Price
-	nextKeyPart, err := p.UnmarshallFromEndianBytes(key)
+	nextKeyPart, err := p.UnmarshallFromOrderedBytes(key)
 	if err != nil {
 		return Price{}, 0, err
 	}
-	if len(nextKeyPart) < bigEndianUint64ByteSize {
-		return Price{}, 0, errors.Errorf(
-			"failed to decode orderSeq from order book side key, key length is too short",
-		)
+	orderSeq, _, err := store.ReadOrderedBytesToUint64(nextKeyPart)
+	if err != nil {
+		return Price{}, 0, err
 	}
-	orderSeq := binary.BigEndian.Uint64(nextKeyPart[:bigEndianUint64ByteSize])
 
 	return p, orderSeq, nil
 }
@@ -74,9 +64,8 @@ func DecodeOrderBookSideRecordKey(key []byte) (Price, uint64, error) {
 // CreateOrderBookSideKey creates order book side key.
 func CreateOrderBookSideKey(pairID uint64, side Side) []byte {
 	key := make([]byte, 0)
-	key = binary.BigEndian.AppendUint64(key, pairID)
-	// TODO(dzmitryhil) potentially we can use one byte instead
-	key = binary.BigEndian.AppendUint16(key, uint16(side))
+	key = store.AppendUint64ToOrderedBytes(key, pairID)
+	key = store.AppendUint8ToOrderedBytes(key, uint8(side))
 
 	return store.JoinKeys(OrderBookKeyPrefix, key)
 }

@@ -4354,8 +4354,9 @@ Side is order side.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| sell | 0 |  |
-| buy | 1 |  |
+| unspecified | 0 |  |
+| sell | 1 |  |
+| buy | 2 |  |
 
 
  <!-- end enums -->
