@@ -255,3 +255,66 @@ func TestPrice_Rat(t *testing.T) {
 		})
 	}
 }
+
+func TestPrice_Marshalling(t *testing.T) {
+	t.Parallel()
+
+	priceStrings := []string{
+		"0",
+		"1",
+		"23",
+		"111e100",
+		"31241241231241233e-23",
+		"1e-100",
+		"9999999999999999999e100",
+	}
+
+	for _, priceStr := range priceStrings {
+		priceStr := priceStr
+		t.Run(priceStr, func(t *testing.T) {
+			t.Parallel()
+
+			p, err := types.NewPriceFromString(priceStr)
+			require.NoError(t, err)
+
+			// decode and restore from buffer
+			var buffer [100]byte
+			n, err := p.MarshalTo(buffer[:])
+			if err != nil {
+				t.Fatal(err)
+			}
+			mp := types.Price{}
+			if err := mp.Unmarshal(buffer[:n]); err != nil {
+				t.Fatal(err)
+			}
+			require.Equal(t, mp.String(), p.String())
+
+			// decode and restore from bytes
+			b, err := p.Marshal()
+			require.NoError(t, err)
+			mp = types.Price{}
+			if err := mp.Unmarshal(b); err != nil {
+				t.Fatal(err)
+			}
+			require.Equal(t, mp.String(), p.String())
+
+			// decode and restore json
+			jb, err := p.MarshalJSON()
+			require.NoError(t, err)
+			mp = types.Price{}
+			if err := mp.UnmarshalJSON(jb); err != nil {
+				t.Fatal(err)
+			}
+			require.Equal(t, mp.String(), p.String())
+
+			// decode and restore amino
+			ab, err := p.MarshalAmino()
+			require.NoError(t, err)
+			mp = types.Price{}
+			if err := mp.UnmarshalAmino(ab); err != nil {
+				t.Fatal(err)
+			}
+			require.Equal(t, mp.String(), p.String())
+		})
+	}
+}
