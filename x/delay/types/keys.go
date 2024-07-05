@@ -38,6 +38,7 @@ func CreateDelayedItemKey(id string, t time.Time) ([]byte, error) {
 
 	key := make([]byte, timestampLength)
 	// big endian is used to be sure that results are sortable lexicographically when stored messages are iterated
+	// TODO(dzmitryhil) move to pkg/store/ordered_keys
 	binary.BigEndian.PutUint64(key, uint64(execTime))
 
 	return store.JoinKeys(DelayedItemKeyPrefix, key, []byte(id)), nil
@@ -48,6 +49,6 @@ func ExtractTimeAndIDFromDelayedItemKey(key []byte) (time.Time, string, error) {
 	if len(key) < timestampLength+1 {
 		return time.Time{}, "", sdkerrors.Wrap(ErrInvalidInput, "key is too short")
 	}
-
+	// TODO(dzmitryhil) move to pkg/store/ordered_keys
 	return time.Unix(int64(binary.BigEndian.Uint64(key[:timestampLength])), 0).UTC(), string(key[timestampLength:]), nil
 }

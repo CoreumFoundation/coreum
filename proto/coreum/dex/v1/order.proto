@@ -6,8 +6,62 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/CoreumFoundation/coreum/v4/x/dex/types";
 option (gogoproto.goproto_getters_all) = false;
 
-// Order is a single order of an orderbook.
+// Order is a DEX order.
 message Order {
   // id is unique order ID.
   string id = 1;
+}
+
+// Side is order side.
+enum Side {
+  unspecified = 0;
+  sell = 1;
+  buy = 2;
+}
+
+// OrderBookRecord is a single order book record.
+message OrderBookRecord {
+  // pairID is tokens pair ID.
+  uint64 pairID = 1;
+  // side is order side.
+  Side side = 2;
+  // price is order book record price.
+  string price = 3 [
+    (gogoproto.customtype) = "Price",
+    (gogoproto.nullable) = false
+  ];
+  // order_seq is order sequence.
+  uint64 order_seq = 4;
+  // order ID provided by the account.
+  string orderID = 5;
+  // accountID is account ID which corresponds the order creator.
+  string accountID = 6;
+  // remaining_quantity is remaining filling quantity sell/buy.
+  string remaining_quantity = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // remaining_balance is remaining order balance.
+  string remaining_balance = 8 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// OrderBookStoreRecord is a single order book record used for the store.
+message OrderBookStoreRecord {
+  // order ID provided by the account.
+  string orderID = 4;
+  // accountID is account ID which corresponds the order creator.
+  string accountID = 5;
+  // remaining_quantity is remaining filling quantity sell/buy.
+  string remaining_quantity = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // remaining_balance is remaining order balance.
+  string remaining_balance = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
 }

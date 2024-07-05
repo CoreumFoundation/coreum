@@ -190,6 +190,10 @@
   
 - [coreum/dex/v1/order.proto](#coreum/dex/v1/order.proto)
     - [Order](#coreum.dex.v1.Order)
+    - [OrderBookRecord](#coreum.dex.v1.OrderBookRecord)
+    - [OrderBookStoreRecord](#coreum.dex.v1.OrderBookStoreRecord)
+  
+    - [Side](#coreum.dex.v1.Side)
   
 - [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
     - [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest)
@@ -4274,7 +4278,7 @@ GenesisState defines the module genesis state.
 ### Order
 
 ```
-Order is a single order of an orderbook.
+Order is a DEX order.
 ```
 
 
@@ -4287,7 +4291,73 @@ Order is a single order of an orderbook.
 
 
 
+
+<a name="coreum.dex.v1.OrderBookRecord"></a>
+
+### OrderBookRecord
+
+```
+OrderBookRecord is a single order book record.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pairID` | [uint64](#uint64) |  |  `pairID is tokens pair ID.`  |
+| `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
+| `price` | [string](#string) |  |  `price is order book record price.`  |
+| `order_seq` | [uint64](#uint64) |  |  `order_seq is order sequence.`  |
+| `orderID` | [string](#string) |  |  `order ID provided by the account.`  |
+| `accountID` | [string](#string) |  |  `accountID is account ID which corresponds the order creator.`  |
+| `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
+| `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.OrderBookStoreRecord"></a>
+
+### OrderBookStoreRecord
+
+```
+OrderBookStoreRecord is a single order book record used for the store.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `orderID` | [string](#string) |  |  `order ID provided by the account.`  |
+| `accountID` | [string](#string) |  |  `accountID is account ID which corresponds the order creator.`  |
+| `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
+| `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
+
+
+
+
+
  <!-- end messages -->
+
+
+<a name="coreum.dex.v1.Side"></a>
+
+### Side
+
+```
+Side is order side.
+```
+
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| unspecified | 0 |  |
+| sell | 1 |  |
+| buy | 2 |  |
+
 
  <!-- end enums -->
 

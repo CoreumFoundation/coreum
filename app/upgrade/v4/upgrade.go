@@ -20,7 +20,8 @@ const Name = "v4"
 
 // New makes an upgrade handler for v4 upgrade.
 func New(mm *module.Manager, configurator module.Configurator,
-	consensusParamKeeper consensusparamkeeper.Keeper) upgrade.Upgrade {
+	consensusParamKeeper consensusparamkeeper.Keeper,
+) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
 		StoreUpgrades: store.StoreUpgrades{
