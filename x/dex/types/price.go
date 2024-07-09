@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"math/big"
 	"strconv"
 	"strings"
@@ -142,28 +143,59 @@ func (p Price) String() string {
 }
 
 // MarshalTo implements the gogo proto custom type interface.
-func (p *Price) MarshalTo(data []byte) (n int, err error) {
-	// TODO(dzmitryhil) implement
-	return 0, nil
-}
+func (p Price) MarshalTo(data []byte) (n int, err error) {
+	bz, err := p.Marshal()
+	if err != nil {
+		return 0, err
+	}
 
-// Unmarshal implements the gogo proto custom type interface.
-func (p *Price) Unmarshal(data []byte) error {
-	// TODO(dzmitryhil) implement
-	return nil
+	n = copy(data, bz)
+	return n, nil
 }
 
 // Size implements the gogo proto custom type interface.
 func (p *Price) Size() int {
-	// TODO(dzmitryhil) implement
-	return 0
+	bz, _ := p.Marshal()
+	return len(bz)
 }
 
 // Marshal implements the gogo proto custom type interface.
 func (p *Price) Marshal() ([]byte, error) {
-	// TODO(dzmitryhil) implement
-	return nil, nil
+	return []byte(p.String()), nil
 }
+
+// Unmarshal implements the gogo proto custom type interface.
+func (p *Price) Unmarshal(data []byte) error {
+	price, err := NewPriceFromString(string(data))
+	if err != nil {
+		return err
+	}
+	p.num = price.num
+	p.exp = price.exp
+
+	return nil
+}
+
+// MarshalJSON defines custom encoding scheme.
+func (p Price) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.String())
+}
+
+// UnmarshalJSON defines custom decoding scheme.
+func (p *Price) UnmarshalJSON(bz []byte) error {
+	var text string
+	if err := json.Unmarshal(bz, &text); err != nil {
+		return err
+	}
+
+	return p.Unmarshal([]byte(text))
+}
+
+// MarshalAmino overrides Amino binary marshalling.
+func (p Price) MarshalAmino() ([]byte, error) { return p.Marshal() }
+
+// UnmarshalAmino overrides Amino binary unmarshalling.
+func (p *Price) UnmarshalAmino(bz []byte) error { return p.Unmarshal(bz) }
 
 // normalizeForOrderedBytes normalizes the num part to have the same uint64 length for all prices stored and updates the
 // exp correspondingly.
