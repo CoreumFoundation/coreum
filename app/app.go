@@ -1117,7 +1117,8 @@ func New(
 
 	/**** Upgrades ****/
 	upgrades := []appupgrade.Upgrade{
-		appupgradev4.New(app.ModuleManager, app.configurator, app.ConsensusParamsKeeper),
+		appupgradev4.New(appupgradev4.Name, app.ModuleManager, app.configurator, app.ConsensusParamsKeeper),
+		appupgradev4.New(appupgradev4.NameAlias, app.ModuleManager, app.configurator, app.ConsensusParamsKeeper),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
