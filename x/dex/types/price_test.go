@@ -280,40 +280,30 @@ func TestPrice_Marshalling(t *testing.T) {
 			// decode and restore from buffer
 			var buffer [100]byte
 			n, err := p.MarshalTo(buffer[:])
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 			mp := types.Price{}
-			if err := mp.Unmarshal(buffer[:n]); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, mp.Unmarshal(buffer[:n]))
 			require.Equal(t, mp.String(), p.String())
 
 			// decode and restore from bytes
 			b, err := p.Marshal()
 			require.NoError(t, err)
 			mp = types.Price{}
-			if err := mp.Unmarshal(b); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, mp.Unmarshal(b))
 			require.Equal(t, mp.String(), p.String())
 
 			// decode and restore json
 			jb, err := p.MarshalJSON()
 			require.NoError(t, err)
 			mp = types.Price{}
-			if err := mp.UnmarshalJSON(jb); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, mp.UnmarshalJSON(jb))
 			require.Equal(t, mp.String(), p.String())
 
 			// decode and restore amino
 			ab, err := p.MarshalAmino()
 			require.NoError(t, err)
 			mp = types.Price{}
-			if err := mp.UnmarshalAmino(ab); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, mp.UnmarshalAmino(ab))
 			require.Equal(t, mp.String(), p.String())
 		})
 	}
