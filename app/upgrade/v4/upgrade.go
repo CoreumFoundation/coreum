@@ -15,14 +15,17 @@ import (
 )
 
 // Name defines the upgrade name.
-const Name = "v4"
+const (
+	Name      = "v4"
+	NameAlias = "Coreum V4"
+)
 
 // New makes an upgrade handler for v4 upgrade.
-func New(mm *module.Manager, configurator module.Configurator,
+func New(name string, mm *module.Manager, configurator module.Configurator,
 	consensusParamKeeper consensusparamkeeper.Keeper,
 ) upgrade.Upgrade {
 	return upgrade.Upgrade{
-		Name: Name,
+		Name: name,
 		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{
 				ibchookstypes.StoreKey,
