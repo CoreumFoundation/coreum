@@ -27,6 +27,13 @@ const (
 	TestUpgrade = "upgrade"
 )
 
+// Test run unit tests in coreum repo.
+func Test(ctx context.Context, deps types.DepsFunc) error {
+	deps(CompileAllSmartContracts)
+
+	return golang.Test(ctx, deps)
+}
+
 // RunAllIntegrationTests runs all the coreum integration tests.
 func RunAllIntegrationTests(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
@@ -81,6 +88,13 @@ func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 	}
 }
 
+// TestFuzz run fuzz tests in coreum repo.
+func TestFuzz(ctx context.Context, deps types.DepsFunc) error {
+	deps(CompileAllSmartContracts)
+
+	return golang.TestFuzz(ctx, deps, time.Minute)
+}
+
 func runIntegrationTests(
 	ctx context.Context,
 	deps types.DepsFunc,
@@ -106,7 +120,7 @@ func runIntegrationTests(
 
 	for _, testDir := range testDirs {
 		if err := golang.RunTests(ctx, deps, golang.TestConfig{
-			PackagePath: filepath.Join(testsDir, testDir),
+			PackagePath: filepath.Join(integrationTestsDir, testDir),
 			Flags:       flags,
 		}); err != nil {
 			return err

@@ -34,7 +34,7 @@ func TestNewPriceFromString(t *testing.T) {
 		{
 			// zero price
 			strPrice: "0",
-			wantErr:  false,
+			wantErr:  true,
 		},
 		{
 			// invalid zero price with exponent
@@ -104,6 +104,16 @@ func TestNewPriceFromString(t *testing.T) {
 		{
 			// invalid negative num part
 			strPrice: "-1",
+			wantErr:  true,
+		},
+		{
+			// invalid zero exp
+			strPrice: "1e0",
+			wantErr:  true,
+		},
+		{
+			// invalid +e exp
+			strPrice: "e+0",
 			wantErr:  true,
 		},
 	}
@@ -213,12 +223,6 @@ func TestPrice_Rat(t *testing.T) {
 		want     *big.Rat
 	}{
 		{
-			priceStr: "0",
-			want: cbig.NewRatFromBigInts(
-				big.NewInt(0), big.NewInt(1),
-			),
-		},
-		{
 			priceStr: "13e-18",
 			want: cbig.NewRatFromBigInts(
 				big.NewInt(13), cbig.IntTenToThePower(big.NewInt(int64(18))),
@@ -260,7 +264,6 @@ func TestPrice_Marshalling(t *testing.T) {
 	t.Parallel()
 
 	priceStrings := []string{
-		"0",
 		"1",
 		"23",
 		"111e100",

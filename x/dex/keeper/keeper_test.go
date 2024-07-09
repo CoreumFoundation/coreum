@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"sort"
+	"fmt"
 	"testing"
 	"time"
 
@@ -67,23 +67,16 @@ func TestKeeper_SaveOrderBookRecordAndCheckReadingOrdering(t *testing.T) {
 	testApp.EndBlockAndCommit(sdkCtx)
 	dexKeeper := testApp.DEXKeeper
 	// TODO(dzmitryhil) replace with SDK generator once we implement it
-	orderSeq := uint64(0)
+	orderSeq := uint64(1)
 	pairID := uint64(1)
 	side := types.Side_buy
 
-	expectedPriceOrder := make([]types.Price, 0)
 	for _, priceGroup := range priceGroups {
 		sdkCtx = testApp.BeginNextBlock(time.Now())
 		// check after beginning of a new block
-		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side, expectedPriceOrder)
+		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
 		for _, priceStr := range priceGroup {
 			price, err := types.NewPriceFromString(priceStr)
-			// append the price and sort as expected to be sorted by the store
-			expectedPriceOrder = append(expectedPriceOrder, price)
-			sort.Slice(expectedPriceOrder, func(i, j int) bool {
-				// TODO(dzmitryhil) extend with the orderSeq once we implement the seq on the SDK level
-				return expectedPriceOrder[i].Rat().Cmp(expectedPriceOrder[j].Rat()) == -1
-			})
 			require.NoError(t, err)
 			r := types.OrderBookRecord{
 				PairID:            pairID,
@@ -98,29 +91,27 @@ func TestKeeper_SaveOrderBookRecordAndCheckReadingOrdering(t *testing.T) {
 			require.NoError(t, dexKeeper.SaveOrderBookRecord(sdkCtx, r))
 			orderSeq++
 			// check just after saving
-			assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side, expectedPriceOrder)
+			assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
 		}
 		// check before commit
-		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side, expectedPriceOrder)
+		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
 		testApp.EndBlockAndCommit(sdkCtx)
 		// check after commit
-		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side, expectedPriceOrder)
+		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
 	}
 	// check final state
-	assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side, expectedPriceOrder)
+	assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
 }
 
-//nolint:unparam // same params since we have single tests now
 func assertPriceOrdersOrdering(
 	t *testing.T,
 	dexKeeper keeper.Keeper,
 	sdkCtx sdk.Context,
 	pairID uint64,
 	side types.Side,
-	expectedPriceOrder []types.Price,
 ) {
 	t.Helper()
-	records := make([]types.OrderBookRecord, 0)
+	storedRecords := make([]types.OrderBookRecord, 0)
 	require.NoError(t,
 		dexKeeper.IterateOrderBook(
 			sdkCtx,
@@ -128,11 +119,24 @@ func assertPriceOrdersOrdering(
 			side,
 			false,
 			func(record types.OrderBookRecord) (bool, error) {
-				records = append(records, record)
+				storedRecords = append(storedRecords, record)
 				return false, nil
 			}))
-	require.Len(t, records, len(expectedPriceOrder))
-	for i := range expectedPriceOrder {
-		require.Equal(t, expectedPriceOrder[i].String(), records[i].Price.String())
+
+	// assert ordering
+	for i := 0; i < len(storedRecords)-1; i++ {
+		left := storedRecords[i]
+		right := storedRecords[i+1]
+		require.True(t, //nolint:testifylint // require.NotEqual shouldn't be used here
+			// left.Price <= right.Price
+			left.Price.Rat().Cmp(right.Price.Rat()) != 1,
+			fmt.Sprintf("left price: %s > right price: %s", left.Price.String(), right.Price.String()),
+		)
+		if left.Price.Rat().Cmp(right.Price.Rat()) == 0 {
+			require.Less(t,
+				left.OrderSeq, right.OrderSeq,
+				fmt.Sprintf("left order seq: %d >= right order seq: %d", left.OrderSeq, right.OrderSeq),
+			)
+		}
 	}
 }
