@@ -29,9 +29,11 @@ func FuzzOrderedPriceStore(f *testing.F) {
 	dexKeeper := testApp.DEXKeeper
 
 	lock := sync.Mutex{}
-	pairID := uint64(1)
+
+	baseDenom := denom1
+	quoteDenom := denom2
 	side := types.Side_buy
-	orderSeq := uint64(1)
+	quantity := sdkmath.NewInt(1)
 
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
 		lock.Lock()
@@ -53,21 +55,24 @@ func FuzzOrderedPriceStore(f *testing.F) {
 		price, err := types.NewPriceFromString(priceStr)
 		require.NoError(t, err)
 
-		// save price to the store
 		sdkCtx = testApp.BeginNextBlock(time.Now())
-		orderSeq++
-		r := types.OrderBookRecord{
-			PairID:            pairID,
-			Side:              side,
-			Price:             price,
-			OrderSeq:          orderSeq,
-			OrderID:           uuid.Generate().String(),
-			AccountID:         "acc",
-			RemainingQuantity: sdkmath.NewInt(1),
-			RemainingBalance:  sdkmath.NewInt(2),
+		acc, _ := testApp.GenAccount(sdkCtx)
+		r := types.Order{
+			Account:    acc.String(),
+			ID:         uuid.Generate().String(),
+			BaseDenom:  baseDenom,
+			QuoteDenom: quoteDenom,
+			Price:      price,
+			Quantity:   quantity,
+			Side:       side,
 		}
-		require.NoError(t, dexKeeper.SaveOrderBookRecord(sdkCtx, r))
-		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
+		require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, r))
+
+		orderBookID, found, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, baseDenom, quoteDenom)
+		require.NoError(t, err)
+		require.True(t, found)
+
+		assertOrdersOrdering(t, dexKeeper, sdkCtx, orderBookID, side)
 
 		testApp.EndBlockAndCommit(sdkCtx)
 	})

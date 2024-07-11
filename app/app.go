@@ -801,6 +801,7 @@ func New(
 	app.DEXKeeper = dexkeeper.NewKeeper(
 		appCodec,
 		keys[dextypes.StoreKey],
+		app.AccountKeeper,
 	)
 
 	/****  Module Options ****/

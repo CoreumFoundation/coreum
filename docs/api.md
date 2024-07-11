@@ -190,14 +190,16 @@
   
 - [coreum/dex/v1/order.proto](#coreum/dex/v1/order.proto)
     - [Order](#coreum.dex.v1.Order)
+    - [OrderBookData](#coreum.dex.v1.OrderBookData)
     - [OrderBookRecord](#coreum.dex.v1.OrderBookRecord)
-    - [OrderBookStoreRecord](#coreum.dex.v1.OrderBookStoreRecord)
+    - [OrderBookRecordData](#coreum.dex.v1.OrderBookRecordData)
+    - [OrderData](#coreum.dex.v1.OrderData)
   
     - [Side](#coreum.dex.v1.Side)
   
 - [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
-    - [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest)
-    - [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse)
+    - [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest)
+    - [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse)
   
     - [Query](#coreum.dex.v1.Query)
   
@@ -4285,7 +4287,33 @@ Order is a DEX order.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| `account` | [string](#string) |  |  `account is order creator address.`  |
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `base_denom` | [string](#string) |  |  `base_denom is base order denom.`  |
+| `quote_denom` | [string](#string) |  |  `quote_denom is quote order denom`  |
+| `price` | [string](#string) |  |  `price is value of one unit of the base_denom expressed in terms of the quote_denom.`  |
+| `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
+| `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.OrderBookData"></a>
+
+### OrderBookData
+
+```
+OrderBookData is a order book data used by order for the store.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `base_denom` | [string](#string) |  |  `base_denom is base order book denom.`  |
+| `quote_denom` | [string](#string) |  |  `quote_denom is quote order book denom`  |
 
 
 
@@ -4304,12 +4332,12 @@ OrderBookRecord is a single order book record.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `pairID` | [uint64](#uint64) |  |  `pairID is tokens pair ID.`  |
+| `order_book_id` | [uint32](#uint32) |  |  `order_book_id is order book ID.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `price` | [string](#string) |  |  `price is order book record price.`  |
 | `order_seq` | [uint64](#uint64) |  |  `order_seq is order sequence.`  |
-| `orderID` | [string](#string) |  |  `order ID provided by the account.`  |
-| `accountID` | [string](#string) |  |  `accountID is account ID which corresponds the order creator.`  |
+| `order_id` | [string](#string) |  |  `order ID provided by the account.`  |
+| `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
 | `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
 | `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
 
@@ -4318,22 +4346,44 @@ OrderBookRecord is a single order book record.
 
 
 
-<a name="coreum.dex.v1.OrderBookStoreRecord"></a>
+<a name="coreum.dex.v1.OrderBookRecordData"></a>
 
-### OrderBookStoreRecord
+### OrderBookRecordData
 
 ```
-OrderBookStoreRecord is a single order book record used for the store.
+OrderBookRecordData is a single order book record used for the store.
 ```
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `orderID` | [string](#string) |  |  `order ID provided by the account.`  |
-| `accountID` | [string](#string) |  |  `accountID is account ID which corresponds the order creator.`  |
+| `order_id` | [string](#string) |  |  `order ID provided by the account.`  |
+| `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
 | `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
 | `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.OrderData"></a>
+
+### OrderData
+
+```
+OrderData is a order data used for the store.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `order_book_id` | [uint32](#uint32) |  |  `order_book_id is order book ID.`  |
+| `price` | [string](#string) |  |  `price is value of one unit of the base_denom expressed in terms of the quote_denom.`  |
+| `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
+| `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 
 
 
@@ -4354,9 +4404,9 @@ Side is order side.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| unspecified | 0 |  |
-| sell | 1 |  |
-| buy | 2 |  |
+| unspecified | 0 | `unspecified reserves the default value, to protect against unexpected settings.` |
+| sell | 1 | `sell means that the order is to sell base_denom quantity with the price.` |
+| buy | 2 | `buy means that the order is to buy base_denom quantity with the price.` |
 
 
  <!-- end enums -->
@@ -4374,28 +4424,39 @@ Side is order side.
 
 
 
-<a name="coreum.dex.v1.QueryOrdersRequest"></a>
+<a name="coreum.dex.v1.QueryOrderRequest"></a>
 
-### QueryOrdersRequest
-
-```
-QueryOrdersRequest defines the request type for the `Orders` query.
-```
-
-
-
-
-
-
-
-<a name="coreum.dex.v1.QueryOrdersResponse"></a>
-
-### QueryOrdersResponse
+### QueryOrderRequest
 
 ```
-QueryOrdersRequestResponse defines the response type for the `Orders` query.
+QueryOrderRequest defines the request type for the `Order` query.
 ```
 
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `account` | [string](#string) |  |  `account is order creator's account.`  |
+| `id` | [string](#string) |  |  `id is order ID.  we don't use the gogoproto.customname here since the google.api.http ignores it and generates invalid code.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryOrderResponse"></a>
+
+### QueryOrderResponse
+
+```
+QueryOrderRequestResponse defines the response type for the `Order` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `order` | [Order](#coreum.dex.v1.Order) |  |    |
 
 
 
@@ -4419,7 +4480,7 @@ Query defines the gRPC query service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Orders` | [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest) | [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse) | `Orders queries all orders.` | GET|/coreum/dex/v1/orders |
+| `Order` | [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest) | [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse) | `Order queries order by account and ID.` | GET|/coreum/dex/v1/orders/{account}/{id} |
 
  <!-- end services -->
 
@@ -4454,8 +4515,13 @@ MsgPlaceOrder defines message to place an order on orderbook.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  |  `sender is message sender/signer.`  |
-| `order` | [Order](#coreum.dex.v1.Order) |  |  `order is an order to place on orderbook.`  |
+| `sender` | [string](#string) |  |  `sender is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `base_denom` | [string](#string) |  |  `base_denom is base order denom.`  |
+| `quote_denom` | [string](#string) |  |  `quote_denom is quote order denom`  |
+| `price` | [string](#string) |  |  `price is value of one unit of the base_denom expressed in terms of the quote_denom.`  |
+| `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
+| `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 
 
 

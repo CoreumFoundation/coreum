@@ -16,7 +16,121 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
-func TestKeeper_SaveOrderBookRecordAndCheckReadingOrdering(t *testing.T) {
+const (
+	denom1 = "denom1"
+	denom2 = "denom2"
+	denom3 = "denom3"
+)
+
+func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	dexKeeper := testApp.DEXKeeper
+
+	type denomsToOrderBookIDs struct {
+		baseDenom                   string
+		quoteDenom                  string
+		expectedSelfOrderBookID     uint32
+		expectedOppositeOrderBookID uint32
+	}
+
+	for _, item := range []denomsToOrderBookIDs{
+		// save with asc denoms ordering
+		{
+			baseDenom:                   denom1,
+			quoteDenom:                  denom2,
+			expectedSelfOrderBookID:     uint32(0),
+			expectedOppositeOrderBookID: uint32(1),
+		},
+		// save one more time to check that returns the same
+		{
+			baseDenom:                   denom1,
+			quoteDenom:                  denom2,
+			expectedSelfOrderBookID:     uint32(0),
+			expectedOppositeOrderBookID: uint32(1),
+		},
+		// inverse denom
+		{
+			baseDenom:                   denom2,
+			quoteDenom:                  denom1,
+			expectedSelfOrderBookID:     uint32(1),
+			expectedOppositeOrderBookID: uint32(0),
+		},
+		// save with desc denoms ordering
+		{
+			baseDenom:                   denom3,
+			quoteDenom:                  denom2,
+			expectedSelfOrderBookID:     uint32(3),
+			expectedOppositeOrderBookID: uint32(2),
+		},
+		// inverse denom
+		{
+			baseDenom:                   denom2,
+			quoteDenom:                  denom3,
+			expectedSelfOrderBookID:     uint32(2),
+			expectedOppositeOrderBookID: uint32(3),
+		},
+	} {
+		price, err := types.NewPriceFromString("1")
+		require.NoError(t, err)
+		acc, _ := testApp.GenAccount(sdkCtx)
+		order := types.Order{
+			Account:    acc.String(),
+			ID:         uuid.Generate().String(),
+			BaseDenom:  item.baseDenom,
+			QuoteDenom: item.quoteDenom,
+			Price:      price,
+			Quantity:   sdkmath.NewInt(1),
+			Side:       types.Side_sell,
+		}
+
+		require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))
+		selfOrderBookID, found, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, item.baseDenom, item.quoteDenom)
+		require.NoError(t, err)
+		require.True(t, found)
+		oppositeOrderBookID, found, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, item.quoteDenom, item.baseDenom)
+		require.NoError(t, err)
+		require.True(t, found)
+
+		require.Equal(t, item.expectedSelfOrderBookID, selfOrderBookID)
+		require.Equal(t, item.expectedOppositeOrderBookID, oppositeOrderBookID)
+	}
+}
+
+func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	dexKeeper := testApp.DEXKeeper
+
+	denom1 := denom1
+	price1, err := types.NewPriceFromString("1")
+	require.NoError(t, err)
+
+	acc1, _ := testApp.GenAccount(sdkCtx)
+
+	order1 := types.Order{
+		Account:    acc1.String(),
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Price:      price1,
+		Quantity:   sdkmath.NewInt(1),
+		Side:       types.Side_sell,
+	}
+
+	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order1))
+	gotOrder, found, err := dexKeeper.GetOrderByAddressAndID(
+		sdkCtx, sdk.MustAccAddressFromBech32(order1.Account), order1.ID,
+	)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, order1, gotOrder)
+
+	// try to place the order one more time
+	require.ErrorContains(t, dexKeeper.PlaceOrder(sdkCtx, order1), "is already created")
+}
+
+func TestKeeper_PlaceOrder_Ordering(t *testing.T) {
 	priceGroups := [][]string{
 		{
 			"2e-1",
@@ -66,48 +180,62 @@ func TestKeeper_SaveOrderBookRecordAndCheckReadingOrdering(t *testing.T) {
 	sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 	testApp.EndBlockAndCommit(sdkCtx)
 	dexKeeper := testApp.DEXKeeper
-	// TODO(dzmitryhil) replace with SDK generator once we implement it
-	orderSeq := uint64(1)
-	pairID := uint64(1)
-	side := types.Side_buy
 
+	baseDenom := denom1
+	quoteDenom := denom2
+
+	side := types.Side_buy
+	quantity := sdkmath.NewInt(1)
+
+	var (
+		orderBookID        uint32
+		orderBookIsCreated bool
+	)
 	for _, priceGroup := range priceGroups {
 		sdkCtx = testApp.BeginNextBlock(time.Now())
-		// check after beginning of a new block
-		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
+		if orderBookIsCreated {
+			// check after beginning of a new block
+			assertOrdersOrdering(t, dexKeeper, sdkCtx, orderBookID, side)
+		}
 		for _, priceStr := range priceGroup {
 			price, err := types.NewPriceFromString(priceStr)
 			require.NoError(t, err)
-			r := types.OrderBookRecord{
-				PairID:            pairID,
-				Side:              side,
-				Price:             price,
-				OrderSeq:          orderSeq,
-				OrderID:           uuid.Generate().String(),
-				AccountID:         "acc",
-				RemainingQuantity: sdkmath.NewInt(1),
-				RemainingBalance:  sdkmath.NewInt(2),
+			acc, _ := testApp.GenAccount(sdkCtx)
+			r := types.Order{
+				Account:    acc.String(),
+				ID:         uuid.Generate().String(),
+				BaseDenom:  baseDenom,
+				QuoteDenom: quoteDenom,
+				Price:      price,
+				Quantity:   quantity,
+				Side:       side,
 			}
-			require.NoError(t, dexKeeper.SaveOrderBookRecord(sdkCtx, r))
-			orderSeq++
+			require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, r))
+
+			var found bool
+			orderBookID, found, err = dexKeeper.GetOrderBookIDByDenoms(sdkCtx, baseDenom, quoteDenom)
+			require.NoError(t, err)
+			require.True(t, found)
+			orderBookIsCreated = true
+
 			// check just after saving
-			assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
+			assertOrdersOrdering(t, dexKeeper, sdkCtx, orderBookID, side)
 		}
 		// check before commit
-		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
+		assertOrdersOrdering(t, dexKeeper, sdkCtx, orderBookID, side)
 		testApp.EndBlockAndCommit(sdkCtx)
 		// check after commit
-		assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
+		assertOrdersOrdering(t, dexKeeper, sdkCtx, orderBookID, side)
 	}
 	// check final state
-	assertPriceOrdersOrdering(t, dexKeeper, sdkCtx, pairID, side)
+	assertOrdersOrdering(t, dexKeeper, sdkCtx, orderBookID, side)
 }
 
-func assertPriceOrdersOrdering(
+func assertOrdersOrdering(
 	t *testing.T,
 	dexKeeper keeper.Keeper,
 	sdkCtx sdk.Context,
-	pairID uint64,
+	orderBookID uint32,
 	side types.Side,
 ) {
 	t.Helper()
@@ -115,7 +243,7 @@ func assertPriceOrdersOrdering(
 	require.NoError(t,
 		dexKeeper.IterateOrderBook(
 			sdkCtx,
-			pairID,
+			orderBookID,
 			side,
 			false,
 			func(record types.OrderBookRecord) (bool, error) {

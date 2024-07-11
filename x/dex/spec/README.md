@@ -779,12 +779,12 @@ The result order book and account balances look like:
 ### Price tick and precision
 
 To provide a better trading experience we define the [price_tick](https://www.investopedia.com/terms/t/tick.asp) for
-each pair. The `price_tick` mostly depends on the price of the assets traded, that's why we can define the variable for
-a token used to define the pair `price_tick`. This variable is named `unified_ref_amount`. `unified_ref_amount` for
-token represents the amount of the token subunit you need to pay to buy 1 USD dollar. If the token is issued on the
-Coreum chain, that variable can be set/updated by the token admin. If the token is IBC token, or the token doesn't have
-and admin this variable can be set/updated by the chain governance. If the `unified_ref_amount` is not set for a token,
-the `unified_ref_amount` is equal to 10^6.
+each order book. The `price_tick` mostly depends on the price of the assets traded, that's why we can define the
+variable for a token used to define the order book `price_tick`. This variable is named `unified_ref_amount`.
+`unified_ref_amount`for token represents the amount of the token subunit you need to pay to buy 1 USD dollar. If the
+token is issued on the Coreum chain, that variable can be set/updated by the token admin. If the token is IBC token,
+or the token doesn't have and admin this variable can be set/updated by the chain governance. If the
+`unified_ref_amount` is not set for a token, the `unified_ref_amount` is equal to 10^6.
 
 The formula taken for the price tick is:
 
@@ -792,7 +792,7 @@ The formula taken for the price tick is:
 price_tick(base_denom/quote_denom) = round_to_power_of_ten(price_tick_multiplier * unified_ref_amount(quote_denom) / unified_ref_amount(base_denom))
 ```
 
-The `price_tick_multiplier` is the coefficient used to give better price precision for the token pairs. The default
+The `price_tick_multiplier` is the coefficient used to give better price precision for the token orders. The default
 `price_tick_multiplier` is `10^-5`, and can be updated by the governance.
 
 The `round_to_power_of_ten` is the function that finds nearest power of ten value to define the tick. For the rounding
@@ -809,15 +809,15 @@ Tick size example:
 
 The update of the `unified_ref_amount` doesn't affect the created orders.
 
-The Coreum DEX price supports up to 38 decimals for the price precision. Which means that max price tick is equal to
-the max supported price precision. If the price tick of two traded coins exceeds 36 decimals we use `10^-36` as the
-price tick for such pair.
+The Coreum DEX price supports up to 100 decimals for the price precision. Which means that max price tick is equal to
+the max supported price precision. If the price tick of two traded coins exceeds 100 decimals we use `10^-100` as the
+price tick for such a token.
 
 ### Balance locking
 
 When a user places an order we lock the coins in the assetft (similar to freezing), both assetft and native coins.
-At the time of the placement we enforce all assetft rules. For extensions, we expect a specific interface to be 
-implemented in the extensions smart contract, which let the DEX understand whether an order placement is allowed or not. 
+At the time of the placement we enforce all assetft rules. For extensions, we expect a specific interface to be
+implemented in the extensions smart contract, which let the DEX understand whether an order placement is allowed or not.
 If such an interface is not implemented we don't allow the order placement.
 If, at the time of matching, the assetft rules for the maker orders are changed, the orders will be still executed with
 the amounts in the order book.
