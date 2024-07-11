@@ -26,10 +26,10 @@ jobs:
           - ci_step: "test"
             command: make test
             codecov: true
+            codecov-name: coreum
           - ci_step: "test-fuzz"
             command: make test-fuzz
             codecov: false
-            codecov-name: coreum
           - ci_step: "integration tests coreum-modules"
             command: make integration-tests-modules
             codecov: true
