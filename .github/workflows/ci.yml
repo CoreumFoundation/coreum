@@ -25,7 +25,7 @@ jobs:
           - ci_step: "test"
             command: make test
             codecov: true
-            codecov-name: coreum
+            codecov-name: coreum-tests
           - ci_step: "integration tests coreum-modules"
             command: make integration-tests-modules
             codecov: true
