@@ -243,6 +243,9 @@ var (
 		assetnfttypes.ModuleName:       {authtypes.Burner},
 		// the line is required by the nft module to have the module account stored in the account keeper
 		nft.ModuleName: {},
+		// TODO(dzmitryhil) currently we set it to be able to send coins to/from the module,
+		// but once we add locking we can remove the following line
+		dextypes.ModuleName: {},
 	}
 )
 
@@ -801,6 +804,8 @@ func New(
 	app.DEXKeeper = dexkeeper.NewKeeper(
 		appCodec,
 		keys[dextypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
 	)
 
 	/****  Module Options ****/

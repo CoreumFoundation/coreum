@@ -11,6 +11,8 @@ const (
 	Uint8OrderedBytesSize = 1
 	// Int8OrderedBytesSize is byte size required to store ordered int8.
 	Int8OrderedBytesSize = Uint8OrderedBytesSize
+	// Uint32OrderedBytesSize is byte size required to store ordered uint32.
+	Uint32OrderedBytesSize = 4
 	// Uint64OrderedBytesSize is byte size required to store ordered uint64.
 	Uint64OrderedBytesSize = 8
 )
@@ -44,6 +46,19 @@ func ReadOrderedBytesToUint8(b []byte) (uint8, []byte, error) {
 		return 0, nil, errors.Errorf("invalid bytes length, min %d", Uint8OrderedBytesSize)
 	}
 	return b[0], b[Uint8OrderedBytesSize:], nil
+}
+
+// AppendUint32ToOrderedBytes converts uint32 into ordered bytes and appends it to bytes array.
+func AppendUint32ToOrderedBytes(b []byte, v uint32) []byte {
+	return binary.BigEndian.AppendUint32(b, v)
+}
+
+// ReadOrderedBytesToUint32 returns ordered bytes array converted into uint32 and remaining bytes.
+func ReadOrderedBytesToUint32(b []byte) (uint32, []byte, error) {
+	if len(b) < Uint32OrderedBytesSize {
+		return 0, nil, errors.Errorf("invalid bytes length, min %d", Uint32OrderedBytesSize)
+	}
+	return binary.BigEndian.Uint32(b[:Uint32OrderedBytesSize]), b[Uint32OrderedBytesSize:], nil
 }
 
 // AppendUint64ToOrderedBytes converts uint64 into ordered bytes and appends it to bytes array.

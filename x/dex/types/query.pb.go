@@ -6,6 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -28,22 +29,26 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// QueryOrdersRequest defines the request type for the `Orders` query.
-type QueryOrdersRequest struct {
+// QueryOrderRequest defines the request type for the `Order` query.
+type QueryOrderRequest struct {
+	// account is order creator's account.
+	Account string `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	// id is order ID.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 }
 
-func (m *QueryOrdersRequest) Reset()         { *m = QueryOrdersRequest{} }
-func (m *QueryOrdersRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryOrdersRequest) ProtoMessage()    {}
-func (*QueryOrdersRequest) Descriptor() ([]byte, []int) {
+func (m *QueryOrderRequest) Reset()         { *m = QueryOrderRequest{} }
+func (m *QueryOrderRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryOrderRequest) ProtoMessage()    {}
+func (*QueryOrderRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_23a17d94653a2124, []int{0}
 }
-func (m *QueryOrdersRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryOrderRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryOrdersRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryOrderRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryOrdersRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryOrderRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -53,34 +58,49 @@ func (m *QueryOrdersRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-func (m *QueryOrdersRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOrdersRequest.Merge(m, src)
+func (m *QueryOrderRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOrderRequest.Merge(m, src)
 }
-func (m *QueryOrdersRequest) XXX_Size() int {
+func (m *QueryOrderRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryOrdersRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOrdersRequest.DiscardUnknown(m)
+func (m *QueryOrderRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOrderRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOrdersRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryOrderRequest proto.InternalMessageInfo
 
-// QueryOrdersRequestResponse defines the response type for the `Orders` query.
-type QueryOrdersResponse struct {
+func (m *QueryOrderRequest) GetAccount() string {
+	if m != nil {
+		return m.Account
+	}
+	return ""
 }
 
-func (m *QueryOrdersResponse) Reset()         { *m = QueryOrdersResponse{} }
-func (m *QueryOrdersResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryOrdersResponse) ProtoMessage()    {}
-func (*QueryOrdersResponse) Descriptor() ([]byte, []int) {
+func (m *QueryOrderRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+// QueryOrderRequestResponse defines the response type for the `Order` query.
+type QueryOrderResponse struct {
+	Order *Order `protobuf:"bytes,1,opt,name=order,proto3" json:"order,omitempty"`
+}
+
+func (m *QueryOrderResponse) Reset()         { *m = QueryOrderResponse{} }
+func (m *QueryOrderResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryOrderResponse) ProtoMessage()    {}
+func (*QueryOrderResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_23a17d94653a2124, []int{1}
 }
-func (m *QueryOrdersResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryOrderResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryOrdersResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryOrderResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryOrdersResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryOrderResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -90,42 +110,54 @@ func (m *QueryOrdersResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *QueryOrdersResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOrdersResponse.Merge(m, src)
+func (m *QueryOrderResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOrderResponse.Merge(m, src)
 }
-func (m *QueryOrdersResponse) XXX_Size() int {
+func (m *QueryOrderResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryOrdersResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOrdersResponse.DiscardUnknown(m)
+func (m *QueryOrderResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOrderResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOrdersResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryOrderResponse proto.InternalMessageInfo
+
+func (m *QueryOrderResponse) GetOrder() *Order {
+	if m != nil {
+		return m.Order
+	}
+	return nil
+}
 
 func init() {
-	proto.RegisterType((*QueryOrdersRequest)(nil), "coreum.dex.v1.QueryOrdersRequest")
-	proto.RegisterType((*QueryOrdersResponse)(nil), "coreum.dex.v1.QueryOrdersResponse")
+	proto.RegisterType((*QueryOrderRequest)(nil), "coreum.dex.v1.QueryOrderRequest")
+	proto.RegisterType((*QueryOrderResponse)(nil), "coreum.dex.v1.QueryOrderResponse")
 }
 
 func init() { proto.RegisterFile("coreum/dex/v1/query.proto", fileDescriptor_23a17d94653a2124) }
 
 var fileDescriptor_23a17d94653a2124 = []byte{
-	// 233 bytes of a gzipped FileDescriptorProto
+	// 319 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4c, 0xce, 0x2f, 0x4a,
 	0x2d, 0xcd, 0xd5, 0x4f, 0x49, 0xad, 0xd0, 0x2f, 0x33, 0xd4, 0x2f, 0x2c, 0x4d, 0x2d, 0xaa, 0xd4,
 	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x85, 0x48, 0xe9, 0xa5, 0xa4, 0x56, 0xe8, 0x95, 0x19,
-	0x4a, 0xc9, 0xa4, 0xe7, 0xe7, 0xa7, 0xe7, 0xa4, 0xea, 0x27, 0x16, 0x64, 0xea, 0x27, 0xe6, 0xe5,
-	0xe5, 0x97, 0x24, 0x96, 0x64, 0xe6, 0xe7, 0x15, 0x43, 0x14, 0x2b, 0x89, 0x70, 0x09, 0x05, 0x82,
-	0xf4, 0xfa, 0x17, 0xa5, 0xa4, 0x16, 0x15, 0x07, 0xa5, 0x16, 0x96, 0xa6, 0x16, 0x97, 0x28, 0x89,
-	0x72, 0x09, 0xa3, 0x88, 0x16, 0x17, 0xe4, 0xe7, 0x15, 0xa7, 0x1a, 0x95, 0x73, 0xb1, 0x82, 0x85,
-	0x85, 0xf2, 0xb8, 0xd8, 0x20, 0x52, 0x42, 0x8a, 0x7a, 0x28, 0xb6, 0xe9, 0x61, 0x1a, 0x26, 0xa5,
-	0x84, 0x4f, 0x09, 0xc4, 0x64, 0x25, 0xd9, 0xa6, 0xcb, 0x4f, 0x26, 0x33, 0x89, 0x0b, 0x89, 0xea,
-	0xa3, 0xfa, 0x2b, 0x1f, 0xac, 0xcc, 0xc9, 0xfb, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18,
-	0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39, 0x86, 0x1b, 0x8f, 0xe5,
-	0x18, 0xa2, 0x0c, 0xd3, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73, 0xf5, 0x9d, 0xc1,
-	0x5a, 0xdd, 0xf2, 0x4b, 0xf3, 0x52, 0xc0, 0x7e, 0x84, 0x99, 0x55, 0x66, 0xa2, 0x5f, 0x01, 0x36,
-	0xb0, 0xa4, 0xb2, 0x20, 0xb5, 0x38, 0x89, 0x0d, 0xec, 0x73, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0xfe, 0x5c, 0xef, 0xa9, 0x43, 0x01, 0x00, 0x00,
+	0x4a, 0xa1, 0xa9, 0xcc, 0x2f, 0x4a, 0x49, 0x2d, 0x82, 0xa8, 0x94, 0x12, 0x49, 0xcf, 0x4f, 0xcf,
+	0x07, 0x33, 0xf5, 0x41, 0x2c, 0xa8, 0xa8, 0x4c, 0x7a, 0x7e, 0x7e, 0x7a, 0x4e, 0xaa, 0x7e, 0x62,
+	0x41, 0xa6, 0x7e, 0x62, 0x5e, 0x5e, 0x7e, 0x49, 0x62, 0x49, 0x66, 0x7e, 0x5e, 0x31, 0x44, 0x56,
+	0xc9, 0x96, 0x4b, 0x30, 0x10, 0x64, 0x99, 0x3f, 0xc8, 0x9c, 0xa0, 0xd4, 0xc2, 0xd2, 0xd4, 0xe2,
+	0x12, 0x21, 0x09, 0x2e, 0xf6, 0xc4, 0xe4, 0xe4, 0xfc, 0xd2, 0xbc, 0x12, 0x09, 0x46, 0x05, 0x46,
+	0x0d, 0xce, 0x20, 0x18, 0x57, 0x88, 0x8f, 0x8b, 0x29, 0x33, 0x45, 0x82, 0x09, 0x2c, 0xc8, 0x94,
+	0x99, 0xa2, 0xe4, 0xc6, 0x25, 0x84, 0xac, 0xbd, 0xb8, 0x20, 0x3f, 0xaf, 0x38, 0x55, 0xc8, 0x80,
+	0x8b, 0x15, 0xec, 0x2e, 0xb0, 0x6e, 0x6e, 0x23, 0x11, 0x3d, 0x14, 0x2f, 0xe8, 0x81, 0x15, 0x3b,
+	0xb1, 0x9c, 0xb8, 0x27, 0xcf, 0x18, 0x04, 0x51, 0x68, 0xd4, 0xcc, 0xc8, 0xc5, 0x0a, 0x36, 0x48,
+	0xa8, 0x8a, 0x8b, 0x15, 0x2c, 0x2f, 0xa4, 0x80, 0xa6, 0x0b, 0xc3, 0x99, 0x52, 0x8a, 0x78, 0x54,
+	0x40, 0x5c, 0xa2, 0xa4, 0xd3, 0x74, 0xf9, 0xc9, 0x64, 0x26, 0x35, 0x21, 0x15, 0x7d, 0x2c, 0xc1,
+	0x56, 0xac, 0x5f, 0x0d, 0xf5, 0x57, 0xad, 0x7e, 0x75, 0x66, 0x4a, 0xad, 0x93, 0xf7, 0x89, 0x47,
+	0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85,
+	0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x19, 0xa6, 0x67, 0x96, 0x64, 0x94, 0x26, 0xe9,
+	0x25, 0xe7, 0xe7, 0xea, 0x3b, 0x83, 0x4d, 0x72, 0xcb, 0x2f, 0xcd, 0x4b, 0x01, 0x07, 0x25, 0xcc,
+	0xe8, 0x32, 0x13, 0xfd, 0x0a, 0xb0, 0xf9, 0x25, 0x95, 0x05, 0xa9, 0xc5, 0x49, 0x6c, 0xe0, 0x00,
+	0x36, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0xb3, 0x95, 0x88, 0x90, 0xdb, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -140,8 +172,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Orders queries all orders.
-	Orders(ctx context.Context, in *QueryOrdersRequest, opts ...grpc.CallOption) (*QueryOrdersResponse, error)
+	// Order queries order by account and ID.
+	Order(ctx context.Context, in *QueryOrderRequest, opts ...grpc.CallOption) (*QueryOrderResponse, error)
 }
 
 type queryClient struct {
@@ -152,9 +184,9 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) Orders(ctx context.Context, in *QueryOrdersRequest, opts ...grpc.CallOption) (*QueryOrdersResponse, error) {
-	out := new(QueryOrdersResponse)
-	err := c.cc.Invoke(ctx, "/coreum.dex.v1.Query/Orders", in, out, opts...)
+func (c *queryClient) Order(ctx context.Context, in *QueryOrderRequest, opts ...grpc.CallOption) (*QueryOrderResponse, error) {
+	out := new(QueryOrderResponse)
+	err := c.cc.Invoke(ctx, "/coreum.dex.v1.Query/Order", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -163,36 +195,36 @@ func (c *queryClient) Orders(ctx context.Context, in *QueryOrdersRequest, opts .
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Orders queries all orders.
-	Orders(context.Context, *QueryOrdersRequest) (*QueryOrdersResponse, error)
+	// Order queries order by account and ID.
+	Order(context.Context, *QueryOrderRequest) (*QueryOrderResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) Orders(ctx context.Context, req *QueryOrdersRequest) (*QueryOrdersResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Orders not implemented")
+func (*UnimplementedQueryServer) Order(ctx context.Context, req *QueryOrderRequest) (*QueryOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Order not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
 }
 
-func _Query_Orders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryOrdersRequest)
+func _Query_Order_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Orders(ctx, in)
+		return srv.(QueryServer).Order(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/coreum.dex.v1.Query/Orders",
+		FullMethod: "/coreum.dex.v1.Query/Order",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Orders(ctx, req.(*QueryOrdersRequest))
+		return srv.(QueryServer).Order(ctx, req.(*QueryOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -202,15 +234,15 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Orders",
-			Handler:    _Query_Orders_Handler,
+			MethodName: "Order",
+			Handler:    _Query_Order_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "coreum/dex/v1/query.proto",
 }
 
-func (m *QueryOrdersRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryOrderRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -220,20 +252,34 @@ func (m *QueryOrdersRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryOrdersRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryOrderRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryOrdersRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryOrderRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Id)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Account) > 0 {
+		i -= len(m.Account)
+		copy(dAtA[i:], m.Account)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Account)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryOrdersResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryOrderResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -243,16 +289,28 @@ func (m *QueryOrdersResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryOrdersResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryOrderResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryOrdersResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryOrderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.Order != nil {
+		{
+			size, err := m.Order.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -267,21 +325,33 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryOrdersRequest) Size() (n int) {
+func (m *QueryOrderRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	l = len(m.Account)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	return n
 }
 
-func (m *QueryOrdersResponse) Size() (n int) {
+func (m *QueryOrderResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	if m.Order != nil {
+		l = m.Order.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	return n
 }
 
@@ -291,7 +361,7 @@ func sovQuery(x uint64) (n int) {
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryOrdersRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryOrderRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -314,12 +384,76 @@ func (m *QueryOrdersRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryOrdersRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryOrderRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryOrdersRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryOrderRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Account", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Account = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
@@ -341,7 +475,7 @@ func (m *QueryOrdersRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryOrdersResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryOrderResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -364,12 +498,48 @@ func (m *QueryOrdersResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryOrdersResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryOrderResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryOrdersResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryOrderResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Order", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Order == nil {
+				m.Order = &Order{}
+			}
+			if err := m.Order.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])

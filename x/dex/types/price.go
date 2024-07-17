@@ -6,10 +6,17 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
 	cbig "github.com/CoreumFoundation/coreum/v4/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v4/pkg/store"
+)
+
+var (
+	_ proto.Marshaler   = Price{}
+	_ proto.Unmarshaler = &Price{}
+	_ proto.Sizer       = &Price{}
 )
 
 const (
@@ -94,6 +101,16 @@ func NewPriceFromString(str string) (Price, error) {
 	}, nil
 }
 
+// MustNewPriceFromString creates new instance of price from string or panics.
+func MustNewPriceFromString(str string) Price {
+	price, err := NewPriceFromString(str)
+	if err != nil {
+		panic(err)
+	}
+
+	return price
+}
+
 // Rat creates Rat type from Price.
 func (p Price) Rat() *big.Rat {
 	if p.exp > 0 {
@@ -171,7 +188,7 @@ func (p *Price) Size() int {
 }
 
 // Marshal implements the gogo proto custom type interface.
-func (p *Price) Marshal() ([]byte, error) {
+func (p Price) Marshal() ([]byte, error) {
 	return []byte(p.String()), nil
 }
 

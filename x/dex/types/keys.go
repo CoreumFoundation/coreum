@@ -1,6 +1,10 @@
 package types
 
 import (
+	"crypto/sha256"
+
+	sdkerrors "cosmossdk.io/errors"
+
 	"github.com/CoreumFoundation/coreum/v4/pkg/store"
 )
 
@@ -19,12 +23,71 @@ const (
 var (
 	// OrderBookKeyPrefix defines the key prefix for the order book.
 	OrderBookKeyPrefix = []byte{0x01}
+	// OrderBookSeqKey defines the key for the order book sequence.
+	OrderBookSeqKey = []byte{0x02}
+	// OrderBookDataKeyPrefix defines the key prefix for the order book data.
+	OrderBookDataKeyPrefix = []byte{0x03}
+	// OrderSequenceKey defines the key for the order sequence.
+	OrderSequenceKey = []byte{0x04}
+	// OrderKeyPrefix defines the key prefix for the order.
+	OrderKeyPrefix = []byte{0x05}
+	// OrderIDToSeqKeyPrefix defines the key prefix for the order ID to sequence.
+	OrderIDToSeqKeyPrefix = []byte{0x06}
+	// OrderBookRecordKeyPrefix defines the key prefix for the order book record.
+	OrderBookRecordKeyPrefix = []byte{0x07}
 )
+
+// CreateOrderBookKey creates order book key.
+func CreateOrderBookKey(baseDenom, quoteDenom string) ([]byte, error) {
+	// join with length here to prevent the issue described in the `JoinKeysWithLength` comment.
+	denomsKey, err := store.JoinKeysWithLength([]byte(baseDenom), []byte(quoteDenom))
+	if err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to join keys, err: %s", err)
+	}
+	hash := sha256.New()
+	_, err = hash.Write(denomsKey)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "failed write denoms hash, err: %s", err)
+	}
+
+	return store.JoinKeys(OrderBookKeyPrefix, hash.Sum(nil)), nil
+}
+
+// CreateOrderBookDataKey creates order book data key.
+func CreateOrderBookDataKey(orderBookID uint32) []byte {
+	key := make([]byte, 0)
+	key = store.AppendUint32ToOrderedBytes(key, orderBookID)
+	return store.JoinKeys(OrderBookDataKeyPrefix, key)
+}
+
+// CreateOrderKey creates order key.
+func CreateOrderKey(orderSeq uint64) []byte {
+	key := make([]byte, 0)
+	key = store.AppendUint64ToOrderedBytes(key, orderSeq)
+	return store.JoinKeys(OrderKeyPrefix, key)
+}
+
+// CreateOrderIDToSeqKey creates order ID to sequence key.
+func CreateOrderIDToSeqKey(accountNumber uint64, orderID string) ([]byte, error) {
+	key := make([]byte, 0)
+	key = store.AppendUint64ToOrderedBytes(key, accountNumber)
+	var err error
+	key, err = store.JoinKeysWithLength(key, []byte(orderID))
+	if err != nil {
+		return nil, sdkerrors.Wrapf(
+			ErrInvalidKey,
+			"failed to join order ID to seq key, accountNumber: %d, orderID:%s, err: %s",
+			accountNumber, orderID, err,
+		)
+	}
+
+	return store.JoinKeys(OrderIDToSeqKeyPrefix, key), nil
+}
 
 // CreateOrderBookRecordKey creates order book key record with fixed key length to support the correct ordering
 // and be able to decode the key into the values.
-func CreateOrderBookRecordKey(pairID uint64, side Side, price Price, orderSeq uint64) ([]byte, error) {
-	key := CreateOrderBookSideKey(pairID, side)
+func CreateOrderBookRecordKey(orderBookID uint32, side Side, price Price, orderSeq uint64) ([]byte, error) {
+	key := CreateOrderBookSideKey(orderBookID, side)
 	var err error
 	key, err = CreateOrderBookSideRecordKey(key, price, orderSeq)
 	if err != nil {
@@ -62,10 +125,10 @@ func DecodeOrderBookSideRecordKey(key []byte) (Price, uint64, error) {
 }
 
 // CreateOrderBookSideKey creates order book side key.
-func CreateOrderBookSideKey(pairID uint64, side Side) []byte {
+func CreateOrderBookSideKey(orderBookID uint32, side Side) []byte {
 	key := make([]byte, 0)
-	key = store.AppendUint64ToOrderedBytes(key, pairID)
+	key = store.AppendUint32ToOrderedBytes(key, orderBookID)
 	key = store.AppendUint8ToOrderedBytes(key, uint8(side))
 
-	return store.JoinKeys(OrderBookKeyPrefix, key)
+	return store.JoinKeys(OrderBookRecordKeyPrefix, key)
 }
