@@ -22,10 +22,11 @@ const (
 	binaryName         = "cored"
 	extendedBinaryName = "cored-ext"
 	repoPath           = "."
-	binaryPath         = "bin/" + binaryName
-	extendedBinaryPath = "bin/" + extendedBinaryName
-	testsDir           = repoPath + "/integration-tests"
-	cometBFTCommit     = "6067c7586edd935f284a17a8c19de4b14c1e91dc"
+
+	binaryPath          = "bin/" + binaryName
+	extendedBinaryPath  = "bin/" + extendedBinaryName
+	integrationTestsDir = repoPath + "/integration-tests"
+	cometBFTCommit      = "6067c7586edd935f284a17a8c19de4b14c1e91dc"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
@@ -191,13 +192,6 @@ func buildCoredInDocker(
 func Lint(ctx context.Context, deps types.DepsFunc) error {
 	deps(Generate, CompileAllSmartContracts, formatProto, lintProto, breakingProto)
 	return golang.Lint(ctx, deps)
-}
-
-// Test run unit tests in coreum repo.
-func Test(ctx context.Context, deps types.DepsFunc) error {
-	deps(CompileAllSmartContracts)
-
-	return golang.Test(ctx, deps)
 }
 
 func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([]string, error) {
