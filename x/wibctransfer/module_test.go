@@ -5,10 +5,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/gogoproto/grpc"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	"github.com/stretchr/testify/require"
 	googlegrpc "google.golang.org/grpc"
+)
+
+var (
+	_ module.Configurator = &configuratorMock{}
 )
 
 type grpcServerMock struct{}
@@ -43,6 +47,14 @@ func (c *configuratorMock) RegisterMigration(
 	moduleName string, forVersion uint64, handler module.MigrationHandler,
 ) error {
 	c.capturedMigrationVersions = append(c.capturedMigrationVersions, forVersion)
+	return nil
+}
+
+func (c *configuratorMock) RegisterService(sd *googlegrpc.ServiceDesc, ss interface{}) {
+
+}
+
+func (c *configuratorMock) Error() error {
 	return nil
 }
 

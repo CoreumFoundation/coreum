@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -20,10 +21,10 @@ func TestMigrateParams(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	testParams := types.Params{
-		IssueFee:                    sdk.NewCoin("test-coin", sdk.NewInt(10)),
+		IssueFee:                    sdk.NewCoin("test-coin", sdkmath.NewInt(10)),
 		TokenUpgradeDecisionTimeout: time.Now().UTC(),
 		TokenUpgradeGracePeriod:     time.Second,
 	}

@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	cosmosnft "github.com/cosmos/cosmos-sdk/x/nft"
+	cosmosnft "cosmossdk.io/x/nft"
 
 	"github.com/CoreumFoundation/coreum/v4/x/nft"
 )

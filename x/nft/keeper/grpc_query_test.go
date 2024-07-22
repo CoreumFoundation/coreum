@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	cosmosnft "github.com/cosmos/cosmos-sdk/x/nft"
+	cosmosnft "cosmossdk.io/x/nft"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 

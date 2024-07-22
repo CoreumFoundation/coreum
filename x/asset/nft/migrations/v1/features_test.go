@@ -21,7 +21,7 @@ func TestMigrateFeatures(t *testing.T) {
 
 	testApp := simapp.New()
 	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
-	ctx := testApp.NewContext(false, tmproto.Header{}).WithBlockTime(blockTime)
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{}).WithBlockTime(blockTime)
 
 	keeper := testApp.AssetNFTKeeper
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())

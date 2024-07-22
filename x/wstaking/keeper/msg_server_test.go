@@ -32,7 +32,8 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 
 	// fund account
 	ctx = simApp.BeginNextBlock(time.Time{})
-	bondDenom := simApp.StakingKeeper.BondDenom(ctx)
+	bondDenom, err := simApp.StakingKeeper.BondDenom(ctx)
+	require.NoError(t, err)
 	balance := sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(100_000_000_000)))
 	require.NoError(t, simApp.FundAccount(ctx, accountAddress, balance))
 	simApp.EndBlockAndCommit(ctx)
@@ -42,9 +43,9 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 	description := stakingtypes.Description{Moniker: "moniker"}
 	selfDelegation := sdk.NewCoin(bondDenom, sdkmath.NewInt(10_000_000))
 	commission := stakingtypes.CommissionRates{
-		Rate:          sdk.ZeroDec(),
-		MaxRate:       sdk.ZeroDec(),
-		MaxChangeRate: sdk.ZeroDec(),
+		Rate:          sdkmath.LegacyZeroDec(),
+		MaxRate:       sdkmath.LegacyZeroDec(),
+		MaxChangeRate: sdkmath.LegacyZeroDec(),
 	}
 
 	feeAmt := sdk.NewCoin(bondDenom, sdkmath.NewInt(1_000_000))
@@ -52,7 +53,7 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 
 	// try to create with insufficient min self delegation
 	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(accountAddress), ed25519.GenPrivKey().PubKey(), selfDelegation, description, commission, sdk.OneInt(),
+		sdk.ValAddress(accountAddress).String(), ed25519.GenPrivKey().PubKey(), selfDelegation, description, commission, sdkmath.OneInt(),
 	)
 	require.NoError(t, err)
 	_, _, err = simApp.SendTx(ctx, feeAmt, gas, privateKey, createValidatorMsg)
@@ -60,7 +61,7 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 
 	// try to create with min self delegation
 	createValidatorMsg, err = stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(accountAddress),
+		sdk.ValAddress(accountAddress).String(),
 		ed25519.GenPrivKey().PubKey(),
 		selfDelegation,
 		description,

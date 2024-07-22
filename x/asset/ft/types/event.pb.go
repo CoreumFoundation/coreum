@@ -4,8 +4,8 @@
 package types
 
 import (
+	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -26,19 +26,19 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // EventIssued is emitted on MsgIssue.
 type EventIssued struct {
-	Denom              string                                 `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
-	Issuer             string                                 `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	Symbol             string                                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Subunit            string                                 `protobuf:"bytes,4,opt,name=subunit,proto3" json:"subunit,omitempty"`
-	Precision          uint32                                 `protobuf:"varint,5,opt,name=precision,proto3" json:"precision,omitempty"`
-	InitialAmount      github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=initial_amount,json=initialAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"initial_amount"`
-	Description        string                                 `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
-	Features           []Feature                              `protobuf:"varint,8,rep,packed,name=features,proto3,enum=coreum.asset.ft.v1.Feature" json:"features,omitempty"`
-	BurnRate           github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=burn_rate,json=burnRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"burn_rate"`
-	SendCommissionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=send_commission_rate,json=sendCommissionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"send_commission_rate"`
-	URI                string                                 `protobuf:"bytes,11,opt,name=uri,proto3" json:"uri,omitempty"`
-	URIHash            string                                 `protobuf:"bytes,12,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
-	Admin              string                                 `protobuf:"bytes,13,opt,name=admin,proto3" json:"admin,omitempty"`
+	Denom              string                      `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Issuer             string                      `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Symbol             string                      `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Subunit            string                      `protobuf:"bytes,4,opt,name=subunit,proto3" json:"subunit,omitempty"`
+	Precision          uint32                      `protobuf:"varint,5,opt,name=precision,proto3" json:"precision,omitempty"`
+	InitialAmount      cosmossdk_io_math.Int       `protobuf:"bytes,6,opt,name=initial_amount,json=initialAmount,proto3,customtype=cosmossdk.io/math.Int" json:"initial_amount"`
+	Description        string                      `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
+	Features           []Feature                   `protobuf:"varint,8,rep,packed,name=features,proto3,enum=coreum.asset.ft.v1.Feature" json:"features,omitempty"`
+	BurnRate           cosmossdk_io_math.LegacyDec `protobuf:"bytes,9,opt,name=burn_rate,json=burnRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"burn_rate"`
+	SendCommissionRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,10,opt,name=send_commission_rate,json=sendCommissionRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"send_commission_rate"`
+	URI                string                      `protobuf:"bytes,11,opt,name=uri,proto3" json:"uri,omitempty"`
+	URIHash            string                      `protobuf:"bytes,12,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
+	Admin              string                      `protobuf:"bytes,13,opt,name=admin,proto3" json:"admin,omitempty"`
 }
 
 func (m *EventIssued) Reset()         { *m = EventIssued{} }
@@ -145,10 +145,10 @@ func (m *EventIssued) GetAdmin() string {
 }
 
 type EventFrozenAmountChanged struct {
-	Account        string                                 `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
-	Denom          string                                 `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
-	PreviousAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=previous_amount,json=previousAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"previous_amount"`
-	CurrentAmount  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=current_amount,json=currentAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"current_amount"`
+	Account        string                `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	Denom          string                `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	PreviousAmount cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=previous_amount,json=previousAmount,proto3,customtype=cosmossdk.io/math.Int" json:"previous_amount"`
+	CurrentAmount  cosmossdk_io_math.Int `protobuf:"bytes,4,opt,name=current_amount,json=currentAmount,proto3,customtype=cosmossdk.io/math.Int" json:"current_amount"`
 }
 
 func (m *EventFrozenAmountChanged) Reset()         { *m = EventFrozenAmountChanged{} }
@@ -199,9 +199,9 @@ func (m *EventFrozenAmountChanged) GetDenom() string {
 }
 
 type EventAmountClawedBack struct {
-	Account string                                 `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
-	Denom   string                                 `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
-	Amount  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
+	Account string                `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	Denom   string                `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	Amount  cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=amount,proto3,customtype=cosmossdk.io/math.Int" json:"amount"`
 }
 
 func (m *EventAmountClawedBack) Reset()         { *m = EventAmountClawedBack{} }
@@ -252,10 +252,10 @@ func (m *EventAmountClawedBack) GetDenom() string {
 }
 
 type EventWhitelistedAmountChanged struct {
-	Account        string                                 `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
-	Denom          string                                 `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
-	PreviousAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=previous_amount,json=previousAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"previous_amount"`
-	CurrentAmount  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=current_amount,json=currentAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"current_amount"`
+	Account        string                `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	Denom          string                `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	PreviousAmount cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=previous_amount,json=previousAmount,proto3,customtype=cosmossdk.io/math.Int" json:"previous_amount"`
+	CurrentAmount  cosmossdk_io_math.Int `protobuf:"bytes,4,opt,name=current_amount,json=currentAmount,proto3,customtype=cosmossdk.io/math.Int" json:"current_amount"`
 }
 
 func (m *EventWhitelistedAmountChanged) Reset()         { *m = EventWhitelistedAmountChanged{} }

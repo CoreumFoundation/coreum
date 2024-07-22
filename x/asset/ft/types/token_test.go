@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -369,7 +370,7 @@ func TestValidateBurnRate(t *testing.T) {
 	}
 
 	parseAndValidate := func(in string) error {
-		rate, err := sdk.NewDecFromStr(in)
+		rate, err := sdkmath.LegacyNewDecFromStr(in)
 		if err != nil {
 			return err
 		}
@@ -451,7 +452,7 @@ func TestValidateSendCommissionRate(t *testing.T) {
 	}
 
 	parseAndValidate := func(in string) error {
-		rate, err := sdk.NewDecFromStr(in)
+		rate, err := sdkmath.LegacyNewDecFromStr(in)
 		if err != nil {
 			return err
 		}
@@ -484,8 +485,8 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 		Issuer             string
 		Admin              string
 		Features           []types.Feature
-		BurnRate           sdk.Dec
-		SendCommissionRate sdk.Dec
+		BurnRate           sdkmath.LegacyDec
+		SendCommissionRate sdkmath.LegacyDec
 	}
 	type args struct {
 		addr    sdk.AccAddress

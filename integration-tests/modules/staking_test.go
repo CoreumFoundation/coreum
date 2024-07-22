@@ -51,7 +51,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 	targetParams.MaxEntries = 2 * paramsBeforeUpgrade.Params.MaxEntries
 	targetParams.MaxValidators = 2 * paramsBeforeUpgrade.Params.MaxValidators
 	targetParams.MinCommissionRate = paramsBeforeUpgrade.Params.MinCommissionRate.Add(
-		sdk.NewDecWithPrec(int64(1), int64(2)),
+		sdkmath.LegacyNewDecWithPrec(int64(1), int64(2)),
 	)
 	targetParams.UnbondingTime = 2 * paramsBeforeUpgrade.Params.UnbondingTime
 

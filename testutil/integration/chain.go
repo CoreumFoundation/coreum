@@ -10,7 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -43,7 +43,7 @@ type ChainSettings struct {
 	ChainID       string
 	Denom         string
 	AddressPrefix string
-	GasPrice      sdk.Dec
+	GasPrice      sdkmath.LegacyDec
 	CoinType      uint32
 	RPCAddress    string
 }
@@ -140,7 +140,7 @@ func (c ChainContext) NewCoin(amount sdkmath.Int) sdk.Coin {
 }
 
 // NewDecCoin helper function to initialize sdk.DecCoin by passing just amount.
-func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
+func (c ChainContext) NewDecCoin(amount sdkmath.LegacyDec) sdk.DecCoin {
 	return sdk.NewDecCoinFromDec(c.ChainSettings.Denom, amount)
 }
 
@@ -225,7 +225,7 @@ func (c ChainContext) SignAndBroadcastMultisigTx(
 	}
 
 	for _, signersKeyName := range signersKeyNames {
-		if err := client.Sign(txf, signersKeyName, txBuilder, false); err != nil {
+		if err := client.Sign(ctx, txf, signersKeyName, txBuilder, false); err != nil {
 			return nil, err
 		}
 	}
@@ -316,7 +316,7 @@ func QueryChainSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainS
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithGRPCClient(grpcClient)
 
-	infoBeforeRes, err := tmservice.NewServiceClient(clientCtx).GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	infoBeforeRes, err := cmtservice.NewServiceClient(clientCtx).GetNodeInfo(ctx, &cmtservice.GetNodeInfoRequest{})
 	if err != nil {
 		panic(fmt.Sprintf("failed to get node info, err: %s", err))
 	}

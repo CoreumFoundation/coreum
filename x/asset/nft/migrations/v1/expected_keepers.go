@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"context"
+
+	"cosmossdk.io/x/nft"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
 )
@@ -15,13 +17,13 @@ type AssetNFTKeeper interface {
 
 // NFTKeeper represents the expected methods from the nft keeper.
 type NFTKeeper interface {
-	GetClass(ctx sdk.Context, classID string) (nft.Class, bool)
-	UpdateClass(ctx sdk.Context, class nft.Class) error
-	GetNFTsOfClass(ctx sdk.Context, classID string) []nft.NFT
-	Update(ctx sdk.Context, n nft.NFT) error
+	GetClass(ctx context.Context, classID string) (nft.Class, bool)
+	UpdateClass(ctx context.Context, class nft.Class) error
+	GetNFTsOfClass(ctx context.Context, classID string) []nft.NFT
+	Update(ctx context.Context, n nft.NFT) error
 }
 
 // WasmKeeper represents the expected method from the wasm keeper.
 type WasmKeeper interface {
-	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
+	HasContractInfo(ctx context.Context, contractAddress sdk.AccAddress) bool
 }

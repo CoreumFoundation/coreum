@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -121,7 +120,7 @@ func TestWithRandomModels(t *testing.T) {
 			logParameters(t, modelParams, shortEMA, longEMA)
 			nextGasPrice := model.CalculateNextGasPrice(shortEMA, longEMA)
 
-			assert.True(t, nextGasPrice.GT(sdk.ZeroDec()))
+			assert.True(t, nextGasPrice.GT(sdkmath.LegacyZeroDec()))
 			assert.True(t, nextGasPrice.LTE(model.CalculateMaxGasPrice()))
 
 			switch {
@@ -159,10 +158,10 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 
 	return Params{
 		Model: ModelParams{
-			InitialGasPrice:         sdk.NewDecFromInt(sdkmath.NewIntFromUint64(initialGasPrice)),
-			MaxGasPriceMultiplier:   sdk.NewDecFromInt(sdkmath.NewIntFromUint64(maxGasPriceMultiplier)),
-			MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
-			EscalationStartFraction: sdk.MustNewDecFromStr(strconv.FormatFloat(escalationStartFraction, 'f', 4, 64)),
+			InitialGasPrice:         sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(initialGasPrice)),
+			MaxGasPriceMultiplier:   sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(maxGasPriceMultiplier)),
+			MaxDiscount:             sdkmath.LegacyMustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
+			EscalationStartFraction: sdkmath.LegacyMustNewDecFromStr(strconv.FormatFloat(escalationStartFraction, 'f', 4, 64)),
 			MaxBlockGas:             maxBlockGas,
 			ShortEmaBlockLength:     shortEMABlockLength,
 			LongEmaBlockLength:      longEMABlockLength,

@@ -25,7 +25,7 @@ message ClassDefinition {
   // that will be transferred to the issuer of the NFT.
   string royalty_rate = 4 [
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
 }
 
@@ -45,6 +45,6 @@ message Class {
   // that will be transferred to the issuer of the NFT.
   string royalty_rate = 10 [
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
 }

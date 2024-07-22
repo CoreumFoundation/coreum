@@ -3,6 +3,7 @@ package v1_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +19,7 @@ func TestMigrateStore(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	symbol := "mysymbol"
 
@@ -35,7 +36,7 @@ func TestMigrateStore(t *testing.T) {
 		Features: []types.ClassFeature{
 			types.ClassFeature_burning,
 		},
-		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
+		RoyaltyRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 
 	definition1 := definition

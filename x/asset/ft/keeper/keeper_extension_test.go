@@ -38,7 +38,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -55,7 +55,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 
 	subunit := "extensionabc"
 	attachedAmount := sdkmath.NewInt(500)
-	issuerAmount := sdk.NewInt(277)
+	issuerAmount := sdkmath.NewInt(277)
 	denom := types.BuildDenom(subunit, issuer)
 	settings := types.IssueSettings{
 		Issuer:        issuer,
@@ -67,7 +67,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 		Features:      []types.Feature{types.Feature_extension},
 		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
-			Funds:  sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(500))),
+			Funds:  sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(500))),
 		},
 	}
 
@@ -85,8 +85,8 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.EqualValues(gotToken.Subunit, strings.ToLower(settings.Subunit))
 	requireT.EqualValues(gotToken.Precision, settings.Precision)
 	requireT.EqualValues(gotToken.Features, []types.Feature{types.Feature_extension})
-	requireT.EqualValues(gotToken.BurnRate, sdk.NewDec(0))
-	requireT.EqualValues(gotToken.SendCommissionRate, sdk.NewDec(0))
+	requireT.EqualValues(gotToken.BurnRate, sdkmath.LegacyNewDec(0))
+	requireT.EqualValues(gotToken.SendCommissionRate, sdkmath.LegacyNewDec(0))
 	requireT.EqualValues(gotToken.Version, types.CurrentTokenVersion)
 	requireT.EqualValues(gotToken.URI, settings.URI)
 	requireT.EqualValues(gotToken.URIHash, settings.URIHash)
@@ -103,7 +103,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 
 	// send 2 coin will succeed
 	receiver := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(2))))
+	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(2))))
 	requireT.NoError(err)
 	balance := bankKeeper.GetBalance(ctx, receiver, denom)
 	requireT.EqualValues("2", balance.Amount.String())
@@ -111,7 +111,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	// send 7 coin will fail.
 	// the test contract is written as such that sending 7 will fail.
 	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(
-		sdk.NewCoin(denom, sdk.NewInt(AmountDisallowedTrigger))),
+		sdk.NewCoin(denom, sdkmath.NewInt(AmountDisallowedTrigger))),
 	)
 	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
 	balance = bankKeeper.GetBalance(ctx, receiver, denom)
@@ -122,7 +122,7 @@ func TestKeeper_Extension_Issue_WithIBCAndBlockSmartContract(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -176,7 +176,7 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -252,7 +252,7 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 	requireT.NoError(err)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 	// return attached fund of failed transaction
@@ -281,7 +281,7 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 	requireT.NoError(err)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.NoError(err)
 
@@ -301,7 +301,7 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 	requireT.NoError(err)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
 	// return attached fund of failed transaction
@@ -332,7 +332,7 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -412,7 +412,7 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	requireT.NoError(err)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: issuer.String(), Coins: coinsToSend}})
 	requireT.ErrorContains(err, "Requested transfer token is frozen.")
 	// return attached fund of failed transaction
@@ -440,7 +440,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -632,7 +632,7 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -731,7 +731,7 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -759,7 +759,7 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
-		BurnRate: sdk.MustNewDecFromStr("0.25"),
+		BurnRate: sdkmath.LegacyMustNewDecFromStr("0.25"),
 	}
 
 	denom, err := assetKeeper.Issue(ctx, settings)
@@ -819,7 +819,7 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -840,8 +840,8 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 		Description:        "DEF Desc",
 		InitialAmount:      sdkmath.NewInt(1000),
 		Features:           []types.Feature{},
-		BurnRate:           sdk.NewDec(1).QuoInt64(10), // 10%
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyNewDec(1).QuoInt64(10), // 10%
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	denom1, err := assetKeeper.Issue(ctx, settings1)
@@ -871,8 +871,8 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
-		BurnRate:           sdk.NewDec(1).QuoInt64(10), // 10%
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyNewDec(1).QuoInt64(10), // 10%
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	denom2, err := assetKeeper.Issue(ctx, settings2)
@@ -881,14 +881,15 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		inputs       []banktypes.Input
+		input        banktypes.Input
 		outputs      []banktypes.Output
 		distribution map[string]map[*sdk.AccAddress]int64
 	}{
 		{
 			name: "send from admin1 to other accounts",
-			inputs: []banktypes.Input{
-				{Address: admins[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600)))},
+			input: banktypes.Input{
+				Address: admins[1].String(),
+				Coins:   sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600))),
 			},
 			outputs: []banktypes.Output{
 				{Address: recipients[0].String(), Coins: sdk.NewCoins(
@@ -912,11 +913,11 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 		},
 		{
 			name: "send from admin0 to other accounts",
-			inputs: []banktypes.Input{
-				{Address: admins[0].String(), Coins: sdk.NewCoins(
+			input: banktypes.Input{
+				Address: admins[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(200)),
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(200)),
-				)},
+				),
 			},
 			outputs: []banktypes.Output{
 				{Address: recipients[0].String(), Coins: sdk.NewCoins(
@@ -944,11 +945,12 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 		},
 		{
 			name: "include admin in recipients",
-			inputs: []banktypes.Input{
-				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+			input: banktypes.Input{
+				Address: recipients[0].String(),
+				Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(60)),
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(60)),
-				)},
+				),
 			},
 			outputs: []banktypes.Output{
 				{Address: admins[1].String(), Coins: sdk.NewCoins(
@@ -1000,7 +1002,7 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	for counter, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("%s case #%d", tc.name, counter), func(t *testing.T) {
-			err := bankKeeper.InputOutputCoins(ctx, tc.inputs, tc.outputs)
+			err := bankKeeper.InputOutputCoins(ctx, tc.input, tc.outputs)
 			requireT.NoError(err)
 
 			for denom, dist := range tc.distribution {
@@ -1014,7 +1016,7 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -1042,7 +1044,7 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
-		SendCommissionRate: sdk.MustNewDecFromStr("0.25"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.25"),
 	}
 
 	denom, err := assetKeeper.Issue(ctx, settings)
@@ -1133,7 +1135,7 @@ func TestKeeper_Extension_ClearAdmin(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -1161,7 +1163,7 @@ func TestKeeper_Extension_ClearAdmin(t *testing.T) {
 		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
-		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
@@ -1174,7 +1176,7 @@ func TestKeeper_Extension_ClearAdmin(t *testing.T) {
 	requireT.NoError(err)
 
 	// send some amount to an account
-	err = bankKeeper.SendCoins(ctx, admin, sender, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200))))
+	err = bankKeeper.SendCoins(ctx, admin, sender, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(200))))
 	requireT.NoError(err)
 
 	// try to clear admin from non admin address
@@ -1193,7 +1195,7 @@ func TestKeeper_Extension_ClearAdmin(t *testing.T) {
 	requireT.NoError(err)
 
 	// send some amount between two accounts
-	err = bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))))
+	err = bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))))
 	requireT.NoError(err)
 
 	extensionBalanceAfter, err := bankKeeper.Balance(ctx, banktypes.NewQueryBalanceRequest(extensionCWAddress, denom))

@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -53,7 +54,7 @@ func (g GovernanceLegacy) ComputeProposerBalance(ctx context.Context) (sdk.Coin,
 	minDeposit := govParams.DepositParams.MinDeposit[0]
 	return g.chainCtx.NewCoin(
 		minDeposit.Amount.Add(g.chainCtx.ChainSettings.GasPrice.
-			Mul(sdk.NewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
+			Mul(sdkmath.LegacyNewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
 }
 
 // UpdateParams goes through proposal process to update parameters.
@@ -123,10 +124,14 @@ func (g GovernanceLegacy) Propose(
 ) (uint64, error) {
 	SkipUnsafe(ctx, t)
 
+	proposer, err := sdk.AccAddressFromBech32(msg.Proposer)
+	if err != nil {
+		return 0, err
+	}
 	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
 	result, err := client.BroadcastTx(
 		ctx,
-		g.chainCtx.ClientContext.WithFromAddress(msg.GetProposer()),
+		g.chainCtx.ClientContext.WithFromAddress(proposer),
 		txf,
 		msg,
 	)
@@ -266,8 +271,8 @@ func (g GovernanceLegacy) WaitForVotingToFinalize(
 		return proposal.Status, err
 	}
 
-	tmQueryClient := tmservice.NewServiceClient(g.chainCtx.ClientContext)
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	tmQueryClient := cmtservice.NewServiceClient(g.chainCtx.ClientContext)
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
 	if err != nil {
 		return proposal.Status, errors.WithStack(err)
 	}

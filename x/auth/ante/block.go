@@ -2,6 +2,7 @@ package ante
 
 import (
 	sdkerrors "cosmossdk.io/errors"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
@@ -33,5 +34,5 @@ func (dmd DenyMessagesDecorator) AnteHandle(
 			return ctx, sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "message %q is disabled", msgName)
 		}
 	}
-	return next(ctx.WithGasMeter(sdk.NewInfiniteGasMeter()), tx, simulate)
+	return next(ctx.WithGasMeter(storetypes.NewInfiniteGasMeter()), tx, simulate)
 }

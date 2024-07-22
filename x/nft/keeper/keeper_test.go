@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	cosmosnft "cosmossdk.io/x/nft"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmosnft "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
@@ -40,7 +40,7 @@ type TestSuite struct {
 
 func (s *TestSuite) SetupTest() {
 	app := simapp.New()
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := app.BaseApp.NewContextLegacy(false, tmproto.Header{})
 	ctx = ctx.WithBlockHeader(tmproto.Header{Time: tmtime.Now()})
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	keeper := nftkeeper.NewKeeper(app.NFTKeeper)

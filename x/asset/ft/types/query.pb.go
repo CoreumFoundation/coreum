@@ -5,6 +5,7 @@ package types
 
 import (
 	context "context"
+	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
@@ -452,9 +453,9 @@ func (m *QueryBalanceRequest) GetDenom() string {
 
 type QueryBalanceResponse struct {
 	// balance contains the balance with the queried account and denom
-	Balance github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=balance,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"balance"`
+	Balance cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=balance,proto3,customtype=cosmossdk.io/math.Int" json:"balance"`
 	// whitelisted is the whitelisted amount of the denom on the account.
-	Whitelisted github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=whitelisted,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"whitelisted"`
+	Whitelisted cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=whitelisted,proto3,customtype=cosmossdk.io/math.Int" json:"whitelisted"`
 	// frozen is the frozen amount of the denom on the account.
 	Frozen github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=frozen,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"frozen"`
 	// locked is the balance locked in vesting and DEX.

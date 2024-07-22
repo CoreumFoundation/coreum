@@ -3,10 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	"cosmossdk.io/x/nft"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
@@ -17,7 +17,7 @@ import (
 func TestOriginalClassExistsInvariant(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -52,7 +52,7 @@ func TestOriginalClassExistsInvariant(t *testing.T) {
 func TestFrozenNFTExistsInvariant(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -93,7 +93,7 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 func TestBurntNFTNotExistsInvariant(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 

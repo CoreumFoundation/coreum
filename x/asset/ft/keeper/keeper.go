@@ -6,12 +6,12 @@ import (
 	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -835,7 +835,7 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 	// rate sets to zero else only the admin is cleared and the extension receives the commission rate
 	def.Admin = ""
 	if !def.IsFeatureEnabled(types.Feature_extension) {
-		def.SendCommissionRate = sdk.ZeroDec()
+		def.SendCommissionRate = sdkmath.LegacyZeroDec()
 	}
 
 	k.SetDefinition(ctx, issuer, subunit, def)

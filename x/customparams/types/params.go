@@ -2,7 +2,6 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/pkg/errors"
 )
@@ -18,7 +17,7 @@ func StakingParamKeyTable() paramtypes.KeyTable {
 // DefaultStakingParams returns default staking parameters.
 func DefaultStakingParams() StakingParams {
 	return StakingParams{
-		MinSelfDelegation: sdk.OneInt(),
+		MinSelfDelegation: sdkmath.OneInt(),
 	}
 }
 

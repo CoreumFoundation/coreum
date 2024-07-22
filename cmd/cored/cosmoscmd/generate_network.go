@@ -1,6 +1,7 @@
 package cosmoscmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -69,6 +70,7 @@ func GenerateGenesisCmd() *cobra.Command {
 		Long:  `Generate gensis file, which can be modified via input config file`,
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
 			cosmosClientCtx := cosmosclient.GetClientContextFromCmd(cmd)
 
 			inputPath, err := cmd.Flags().GetString(FlagInputPath)
@@ -90,7 +92,7 @@ func GenerateGenesisCmd() *cobra.Command {
 				sdk.DefaultBondDenom = genCfg.Denom
 			}
 
-			genDoc, err := genDocFromInput(genCfg, cosmosClientCtx)
+			genDoc, err := genDocFromInput(ctx, genCfg, cosmosClientCtx)
 			if err != nil {
 				return err
 			}
@@ -112,7 +114,11 @@ func GenerateGenesisCmd() *cobra.Command {
 }
 
 //nolint:funlen
-func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context) (types.GenesisDoc, error) {
+func genDocFromInput(
+	ctx context.Context,
+	cfg GenesisInitConfig,
+	cosmosClientCtx cosmosclient.Context,
+) (types.GenesisDoc, error) {
 	cdc := cosmosClientCtx.Codec
 	appGenState := app.ModuleBasics.DefaultGenesis(cdc)
 
@@ -140,7 +146,7 @@ func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context
 
 	// assetft params
 	assetftGenesis := assetfttypes.DefaultGenesis()
-	assetftGenesis.Params.IssueFee.Amount = sdk.NewInt(10_000_000)
+	assetftGenesis.Params.IssueFee.Amount = sdkmath.NewInt(10_000_000)
 	appGenState[assetfttypes.ModuleName] = cdc.MustMarshalJSON(assetftGenesis)
 
 	// bank and auth params
@@ -153,21 +159,21 @@ func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context
 
 	// crisis params
 	crisisGenesis := crisistypes.DefaultGenesisState()
-	crisisGenesis.ConstantFee.Amount = sdk.NewInt(500_000_000_000)
+	crisisGenesis.ConstantFee.Amount = sdkmath.NewInt(500_000_000_000)
 	appGenState[crisistypes.ModuleName] = cdc.MustMarshalJSON(crisisGenesis)
 
 	// distribution params
 	distributionGenesis := distributiontypes.DefaultGenesisState()
-	distributionGenesis.Params.CommunityTax = sdk.MustNewDecFromStr("0.050000000000000000")
+	distributionGenesis.Params.CommunityTax = sdkmath.LegacyMustNewDecFromStr("0.050000000000000000")
 	appGenState[distributiontypes.ModuleName] = cdc.MustMarshalJSON(distributionGenesis)
 
 	// mint params
 	mintGenesis := minttypes.DefaultGenesisState()
 	mintGenesis.Params.BlocksPerYear = 17900000
-	mintGenesis.Params.InflationMin = sdk.MustNewDecFromStr("0")
-	mintGenesis.Params.InflationMax = sdk.MustNewDecFromStr("0.20")
-	mintGenesis.Params.InflationRateChange = sdk.MustNewDecFromStr("0.13")
-	mintGenesis.Minter.Inflation = sdk.MustNewDecFromStr("0.1")
+	mintGenesis.Params.InflationMin = sdkmath.LegacyMustNewDecFromStr("0")
+	mintGenesis.Params.InflationMax = sdkmath.LegacyMustNewDecFromStr("0.20")
+	mintGenesis.Params.InflationRateChange = sdkmath.LegacyMustNewDecFromStr("0.13")
+	mintGenesis.Minter.Inflation = sdkmath.LegacyMustNewDecFromStr("0.1")
 
 	appGenState[minttypes.ModuleName] = cdc.MustMarshalJSON(mintGenesis)
 
@@ -175,7 +181,7 @@ func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context
 	slashingGenesis := slashingtypes.DefaultGenesisState()
 	slashingGenesis.Params.DowntimeJailDuration = 60 * time.Second
 	slashingGenesis.Params.SignedBlocksWindow = 34000
-	slashingGenesis.Params.SlashFractionDowntime = sdk.MustNewDecFromStr("0.005")
+	slashingGenesis.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr("0.005")
 
 	appGenState[slashingtypes.ModuleName] = cdc.MustMarshalJSON(slashingGenesis)
 
@@ -195,6 +201,7 @@ func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context
 		}
 
 		genTx, err := signedCreateValidatorTxBytes(
+			ctx,
 			cosmosClientCtx,
 			string(cfg.ChainID),
 			validatorInfo.ValidatorName,
@@ -228,6 +235,7 @@ func genDocFromInput(cfg GenesisInitConfig, cosmosClientCtx cosmosclient.Context
 }
 
 func signedCreateValidatorTxBytes(
+	ctx context.Context,
 	clientCtx cosmosclient.Context,
 	chainID string,
 	validatorName string,
@@ -255,13 +263,13 @@ func signedCreateValidatorTxBytes(
 
 	stakerSelfDelegationAmount := sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(10_000_000_000_000))
 	commission := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+		Rate:          sdkmath.LegacyMustNewDecFromStr("0.1"),
+		MaxRate:       sdkmath.LegacyMustNewDecFromStr("0.2"),
+		MaxChangeRate: sdkmath.LegacyMustNewDecFromStr("0.01"),
 	}
 
 	msg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(stakerAddress),
+		sdk.ValAddress(stakerAddress).String(),
 		validatorPubKey,
 		stakerSelfDelegationAmount,
 		stakingtypes.Description{
@@ -282,7 +290,7 @@ func signedCreateValidatorTxBytes(
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build MsgCreateValidator transaction")
 	}
-	if err := tx.Sign(txf, signerKeyName, txBuilder, true); err != nil {
+	if err := tx.Sign(ctx, txf, signerKeyName, txBuilder, true); err != nil {
 		return nil, errors.Wrap(err, "failed to sign MsgCreateValidator transaction")
 	}
 	return clientCtx.TxConfig.TxJSONEncoder()(txBuilder.GetTx())

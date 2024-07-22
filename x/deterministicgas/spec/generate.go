@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "cosmossdk.io/store/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"

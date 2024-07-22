@@ -85,7 +85,7 @@ func TestBankSendEstimation(t *testing.T) {
 	})
 
 	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Amount: sdk.NewIntFromUint64(1_000_000_000),
+		Amount: sdkmath.NewIntFromUint64(1_000_000_000),
 	})
 
 	_, err := client.BroadcastTx(
@@ -138,11 +138,11 @@ func TestAuthzEstimation(t *testing.T) {
 	chain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
 			Address: granter,
-			Amount:  chain.NewCoin(sdk.NewInt(50000000)),
+			Amount:  chain.NewCoin(sdkmath.NewInt(50000000)),
 		},
 		integration.FundedAccount{
 			Address: grantee,
-			Amount:  chain.NewCoin(sdk.NewInt(50000000)),
+			Amount:  chain.NewCoin(sdkmath.NewInt(50000000)),
 		},
 	)
 

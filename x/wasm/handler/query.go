@@ -5,10 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	sdkmath "cosmossdk.io/math"
+	nfttypes "cosmossdk.io/x/nft"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
@@ -43,7 +44,7 @@ type assetNFTClass struct {
 	URIHash     string                       `json:"uri_hash"`
 	Data        string                       `json:"data"`
 	Features    []assetnfttypes.ClassFeature `json:"features"`
-	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
+	RoyaltyRate sdkmath.LegacyDec            `json:"royalty_rate"`
 }
 
 // assetNFTClassResponse is the asset nft Class response with string data.

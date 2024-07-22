@@ -5,9 +5,9 @@ package modules
 import (
 	"testing"
 
+	cosmosnft "cosmossdk.io/x/nft"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmosnft "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 

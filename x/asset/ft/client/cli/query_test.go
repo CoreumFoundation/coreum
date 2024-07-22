@@ -30,8 +30,8 @@ func TestQueryTokens(t *testing.T) {
 		Features: []types.Feature{
 			types.Feature_whitelisting,
 		},
-		BurnRate:           sdk.MustNewDecFromStr("0.1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}
 
 	ctx := testNetwork.Validators[0].ClientCtx
@@ -68,8 +68,8 @@ func TestQueryToken(t *testing.T) {
 		Features: []types.Feature{
 			types.Feature_whitelisting,
 		},
-		BurnRate:           sdk.MustNewDecFromStr("0.1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdkmath.NewInt(100)

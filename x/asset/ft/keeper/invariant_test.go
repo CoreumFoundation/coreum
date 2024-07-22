@@ -17,7 +17,7 @@ import (
 func TestFrozenBalancesInvariant(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
@@ -93,7 +93,7 @@ func TestFrozenBalancesInvariant(t *testing.T) {
 func TestWhitelistedBalancesInvariant(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
@@ -167,7 +167,7 @@ func TestWhitelistedBalancesInvariant(t *testing.T) {
 func TestBankMetadataExistInvariant(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())

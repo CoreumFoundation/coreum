@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -147,7 +147,11 @@ func testICAIntegration(
 		Amount:      sdk.NewCoins(amtToSendOnHost),
 	}
 
-	icaMsgData, err := icatypes.SerializeCosmosTx(hostChain.ClientContext.Codec(), []proto.Message{&msgBankSendOnHost})
+	icaMsgData, err := icatypes.SerializeCosmosTx(
+		hostChain.ClientContext.Codec(),
+		[]proto.Message{&msgBankSendOnHost},
+		icatypes.EncodingProtobuf,
+	)
 	require.NoError(t, err)
 
 	msgICAMsgBankSendOnHost := icacontrollertypes.MsgSendTx{

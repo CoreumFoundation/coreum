@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -36,7 +37,7 @@ type IssueClassSettings struct {
 	URIHash     string
 	Data        *codectypes.Any
 	Features    []ClassFeature
-	RoyaltyRate sdk.Dec
+	RoyaltyRate sdkmath.LegacyDec
 }
 
 // MintSettings is the model which represents the params for the non-fungible token minting.
@@ -145,12 +146,12 @@ func ValidateNFTData(data *codectypes.Any) error {
 }
 
 // ValidateRoyaltyRate checks the provided non-fungible token royalty rate is valid.
-func ValidateRoyaltyRate(rate sdk.Dec) error {
+func ValidateRoyaltyRate(rate sdkmath.LegacyDec) error {
 	if rate.IsNil() {
 		return nil
 	}
 
-	if rate.GT(sdk.NewDec(1)) || rate.LT(sdk.NewDec(0)) {
+	if rate.GT(sdkmath.LegacyNewDec(1)) || rate.LT(sdkmath.LegacyNewDec(0)) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "royalty rate should be between 0 and 1")
 	}
 

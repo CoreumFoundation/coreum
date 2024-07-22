@@ -65,7 +65,7 @@ message MsgIssue {
   string subunit = 3;
   uint32 precision = 4;
   string initial_amount = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string description = 6;
@@ -74,13 +74,13 @@ message MsgIssue {
   // burn_amount. This value will be burnt on top of the send amount.
   string burn_rate = 8 [
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
   // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
   // amount sent to the token admin account.
   string send_commission_rate = 9 [
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
   string uri = 10 [(gogoproto.customname) = "URI"];
   string uri_hash = 11 [(gogoproto.customname) = "URIHash"];
