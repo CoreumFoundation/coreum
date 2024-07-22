@@ -22,7 +22,6 @@ import (
 
 var (
 	_ module.AppModule           = AppModule{}
-	_ module.HasGenesis          = AppModule{}
 	_ module.AppModuleBasic      = AppModuleBasic{}
 	_ module.AppModuleSimulation = AppModule{}
 )
@@ -108,13 +107,14 @@ func (AppModule) Name() string {
 	return nft.ModuleName
 }
 
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
 // RegisterInvariants does nothing, there are no invariants to enforce.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
-
-// NewHandler returns the new module handler.
-func (am AppModule) NewHandler() sdk.Handler {
-	return nil
-}
 
 // QuerierRoute returns the route we respond to for abci queries.
 func (AppModule) QuerierRoute() string { return "" }
@@ -146,7 +146,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // RegisterStoreDecoder registers a decoder for nft module's types.
-func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {
 }
 
 // WeightedOperations returns the all the nft module operations with their respective weights.

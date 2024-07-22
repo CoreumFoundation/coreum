@@ -31,7 +31,7 @@ func TestKeeper_Issue(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -89,8 +89,8 @@ func TestKeeper_Issue(t *testing.T) {
 		Subunit:            strings.ToLower(settings.Subunit),
 		Precision:          settings.Precision,
 		Features:           []types.Feature{types.Feature_freezing},
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 		Version:            types.CurrentTokenVersion,
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
@@ -158,7 +158,7 @@ func TestKeeper_Issue_ZeroPrecision(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -189,8 +189,8 @@ func TestKeeper_Issue_ZeroPrecision(t *testing.T) {
 		Subunit:            strings.ToLower(settings.Subunit),
 		Precision:          settings.Precision,
 		Features:           []types.Feature{types.Feature_freezing},
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 		Version:            types.CurrentTokenVersion,
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
@@ -221,7 +221,7 @@ func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -252,7 +252,7 @@ func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
 func TestKeeper_IssueValidateSymbol(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 
 	unacceptableSymbols := []string{
@@ -315,7 +315,7 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 func TestKeeper_IssueValidateSubunit(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 
 	unacceptableSubunits := []string{
@@ -377,7 +377,7 @@ func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -405,7 +405,7 @@ func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -432,7 +432,7 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -507,7 +507,7 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -594,7 +594,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -610,7 +610,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 		Description:   "DEF Desc",
 		InitialAmount: sdkmath.NewInt(600),
 		Features:      []types.Feature{},
-		BurnRate:      sdk.MustNewDecFromStr("1.01"),
+		BurnRate:      sdkmath.LegacyMustNewDecFromStr("1.01"),
 	}
 
 	_, err := assetKeeper.Issue(ctx, settings)
@@ -625,7 +625,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 		Description:   "DEF Desc",
 		InitialAmount: sdkmath.NewInt(600),
 		Features:      []types.Feature{},
-		BurnRate:      sdk.MustNewDecFromStr("0.25"),
+		BurnRate:      sdkmath.LegacyMustNewDecFromStr("0.25"),
 	}
 
 	denom, err := assetKeeper.Issue(ctx, settings)
@@ -673,7 +673,7 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -693,8 +693,8 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 			Description:        "DEF Desc",
 			InitialAmount:      sdkmath.NewInt(1000),
 			Features:           []types.Feature{},
-			BurnRate:           sdk.NewDec(int64(i + 1)).QuoInt64(10), // 10% and 20% respectively
-			SendCommissionRate: sdk.NewDec(int64(i + 1)).QuoInt64(20), // 5% and 10% respectively
+			BurnRate:           sdkmath.LegacyNewDec(int64(i + 1)).QuoInt64(10), // 10% and 20% respectively
+			SendCommissionRate: sdkmath.LegacyNewDec(int64(i + 1)).QuoInt64(20), // 5% and 10% respectively
 		}
 
 		denom, err := assetKeeper.Issue(ctx, settings)
@@ -708,14 +708,14 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		inputs       []banktypes.Input
+		inputs       banktypes.Input
 		outputs      []banktypes.Output
 		distribution map[string]map[*sdk.AccAddress]int64
 	}{
 		{
 			name: "send from issuer1 to other accounts",
-			inputs: []banktypes.Input{
-				{Address: issuers[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600)))},
+			inputs: banktypes.Input{
+				Address: issuers[1].String(), Coins: sdk.NewCoins(sdk.NewCoin(denoms[1], sdkmath.NewInt(600))),
 			},
 			outputs: []banktypes.Output{
 				{Address: recipients[0].String(), Coins: sdk.NewCoins(
@@ -739,11 +739,11 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 		},
 		{
 			name: "send from issuer0 to other accounts",
-			inputs: []banktypes.Input{
-				{Address: issuers[0].String(), Coins: sdk.NewCoins(
+			inputs: banktypes.Input{
+				Address: issuers[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(200)),
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(200)),
-				)},
+				),
 			},
 			outputs: []banktypes.Output{
 				{Address: recipients[0].String(), Coins: sdk.NewCoins(
@@ -771,11 +771,11 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 		},
 		{
 			name: "include issuer in recipients",
-			inputs: []banktypes.Input{
-				{Address: recipients[0].String(), Coins: sdk.NewCoins(
+			inputs: banktypes.Input{
+				Address: recipients[0].String(), Coins: sdk.NewCoins(
 					sdk.NewCoin(denoms[0], sdkmath.NewInt(60)),
 					sdk.NewCoin(denoms[1], sdkmath.NewInt(60)),
-				)},
+				),
 			},
 			outputs: []banktypes.Output{
 				{Address: issuers[1].String(), Coins: sdk.NewCoins(
@@ -841,7 +841,7 @@ func TestKeeper_SendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -857,7 +857,7 @@ func TestKeeper_SendCommissionRate_BankSend(t *testing.T) {
 		Description:        "DEF Desc",
 		InitialAmount:      sdkmath.NewInt(600),
 		Features:           []types.Feature{},
-		SendCommissionRate: sdk.MustNewDecFromStr("1.01"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("1.01"),
 	}
 
 	_, err := assetKeeper.Issue(ctx, settings)
@@ -872,7 +872,7 @@ func TestKeeper_SendCommissionRate_BankSend(t *testing.T) {
 		Description:        "DEF Desc",
 		InitialAmount:      sdkmath.NewInt(600),
 		Features:           []types.Feature{},
-		SendCommissionRate: sdk.MustNewDecFromStr("0.25"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.25"),
 	}
 
 	denom, err := assetKeeper.Issue(ctx, settings)
@@ -920,7 +920,7 @@ func TestKeeper_BurnRateAndSendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -936,8 +936,8 @@ func TestKeeper_BurnRateAndSendCommissionRate_BankSend(t *testing.T) {
 		Description:        "DEF Desc",
 		InitialAmount:      sdkmath.NewInt(600),
 		Features:           []types.Feature{},
-		BurnRate:           sdk.MustNewDecFromStr("0.5"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.25"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.5"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.25"),
 	}
 
 	denom, err := assetKeeper.Issue(ctx, settings)
@@ -986,7 +986,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1095,7 +1095,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	assertT.True(sdkerrors.IsOf(err, cosmoserrors.ErrInsufficientFunds))
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: issuer.String(), Coins: coinsToSend}})
 	assertT.True(sdkerrors.IsOf(err, cosmoserrors.ErrInsufficientFunds))
 
@@ -1111,7 +1111,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(10)), balance)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}})
 	requireT.NoError(err)
 	balance = bankKeeper.GetBalance(ctx, recipient, denom)
@@ -1144,7 +1144,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(60)), balance)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}})
 	requireT.NoError(err)
 	balance = bankKeeper.GetBalance(ctx, recipient, denom)
@@ -1158,7 +1158,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1245,7 +1245,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrGloballyFrozen)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
 	requireT.ErrorIs(err, types.ErrGloballyFrozen)
 
@@ -1260,7 +1260,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(freezableDenom, sdkmath.NewInt(6)), balance)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
 	requireT.NoError(err)
 	balance = bankKeeper.GetBalance(ctx, randomAddr, freezableDenom)
@@ -1272,7 +1272,7 @@ func TestKeeper_Clawback(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1374,7 +1374,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1440,7 +1440,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.True(types.ErrWhitelistedLimitExceeded.Is(err))
 
@@ -1466,7 +1466,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.NoError(err)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.NoError(err)
 
@@ -1477,7 +1477,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 
@@ -1494,7 +1494,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1521,9 +1521,10 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 		Features:      []types.Feature{types.Feature_whitelisting},
 	}
 
-	bondDenom := testApp.StakingKeeper.BondDenom(ctx)
+	bondDenom, err := testApp.StakingKeeper.BondDenom(ctx)
+	requireT.NoError(err)
 	// fund with the native coin
-	err := testApp.FundAccount(ctx, issuer1, sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(1000))))
+	err = testApp.FundAccount(ctx, issuer1, sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(1000))))
 	requireT.NoError(err)
 
 	denom1, err := ftKeeper.Issue(ctx, settings1)
@@ -1545,12 +1546,12 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 
 	// multi-send valid amount
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{
-			{Address: issuer1.String(), Coins: sdk.NewCoins(
+		banktypes.Input{
+			Address: issuer1.String(), Coins: sdk.NewCoins(
 				sdk.NewCoin(denom1, sdkmath.NewInt(15)),
 				sdk.NewCoin(denom2, sdkmath.NewInt(10)),
 				sdk.NewCoin(bondDenom, sdkmath.NewInt(20)),
-			)},
+			),
 		},
 		[]banktypes.Output{
 			// the recipient1 has frozen balance so that amount can be received
@@ -1572,12 +1573,12 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 
 	// multi-send invalid frozen amount
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{
+		banktypes.Input{
 			// we can't return 15 coins since 10 are frozen
-			{Address: recipient1.String(), Coins: sdk.NewCoins(
+			Address: recipient1.String(), Coins: sdk.NewCoins(
 				sdk.NewCoin(denom1, sdkmath.NewInt(15)),
 				sdk.NewCoin(denom2, sdkmath.NewInt(10)),
-			)},
+			),
 		},
 		[]banktypes.Output{
 			{Address: issuer1.String(), Coins: sdk.NewCoins(
@@ -1589,11 +1590,11 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 
 	// multi-send invalid whitelisted amount
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{
-			{Address: issuer1.String(), Coins: sdk.NewCoins(
+		banktypes.Input{
+			Address: issuer1.String(), Coins: sdk.NewCoins(
 				sdk.NewCoin(denom1, sdkmath.NewInt(15)),
 				sdk.NewCoin(denom2, sdkmath.NewInt(15)),
-			)},
+			),
 		},
 		[]banktypes.Output{
 			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom1, sdkmath.NewInt(15)))},
@@ -1607,7 +1608,7 @@ func TestKeeper_IBC(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1669,7 +1670,7 @@ func TestKeeper_AllInOne(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1689,13 +1690,14 @@ func TestKeeper_AllInOne(t *testing.T) {
 			types.Feature_minting,
 			types.Feature_whitelisting,
 		},
-		BurnRate:           sdk.MustNewDecFromStr("0.1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.05"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.05"),
 	}
 
-	bondDenom := testApp.StakingKeeper.BondDenom(ctx)
+	bondDenom, err := testApp.StakingKeeper.BondDenom(ctx)
+	requireT.NoError(err)
 	// fund with the native coin
-	err := testApp.FundAccount(ctx, issuer, sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(1000))))
+	err = testApp.FundAccount(ctx, issuer, sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(1000))))
 	requireT.NoError(err)
 
 	denom1, err := ftKeeper.Issue(ctx, settings)
@@ -1714,11 +1716,11 @@ func TestKeeper_AllInOne(t *testing.T) {
 
 	// multi-send valid amount
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{
-			{Address: issuer.String(), Coins: sdk.NewCoins(
+		banktypes.Input{
+			Address: issuer.String(), Coins: sdk.NewCoins(
 				sdk.NewCoin(denom1, sdkmath.NewInt(20)),
 				sdk.NewCoin(bondDenom, sdkmath.NewInt(40)),
-			)},
+			),
 		},
 		[]banktypes.Output{
 			// the recipient1 has frozen balance so that amount can be received
@@ -1739,7 +1741,7 @@ func TestKeeper_GetIssuerTokens(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -1807,7 +1809,7 @@ func TestKeeper_TransferAdmin(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -1858,7 +1860,7 @@ func TestKeeper_TransferAdmin_Mint(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1950,7 +1952,7 @@ func TestKeeper_TransferAdmin_Burn(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2067,7 +2069,7 @@ func TestKeeper_TransferAdmin_FreezeUnfreeze(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2135,7 +2137,7 @@ func TestKeeper_TransferAdmin_GlobalFreezeUnfreeze(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2254,7 +2256,7 @@ func TestKeeper_TransferAdmin_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrGloballyFrozen)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
 	requireT.ErrorIs(err, types.ErrGloballyFrozen)
 
@@ -2269,7 +2271,7 @@ func TestKeeper_TransferAdmin_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(freezableDenom, sdkmath.NewInt(6)), balance)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
 	requireT.NoError(err)
 	balance = bankKeeper.GetBalance(ctx, randomAddr, freezableDenom)
@@ -2281,7 +2283,7 @@ func TestKeeper_TransferAdmin_Clawback(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2402,7 +2404,7 @@ func TestKeeper_TransferAdmin_Whitelist(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2489,7 +2491,7 @@ func TestKeeper_TransferAdmin_Whitelist(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: admin.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: admin.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.True(types.ErrWhitelistedLimitExceeded.Is(err))
 
@@ -2521,7 +2523,7 @@ func TestKeeper_TransferAdmin_Whitelist(t *testing.T) {
 	requireT.NoError(err)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: admin.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: admin.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.NoError(err)
 
@@ -2532,7 +2534,7 @@ func TestKeeper_TransferAdmin_Whitelist(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{{Address: admin.String(), Coins: coinsToSend}},
+		banktypes.Input{Address: admin.String(), Coins: coinsToSend},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 
@@ -2549,7 +2551,7 @@ func TestKeeper_TransferAdmin_IBC(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2633,7 +2635,7 @@ func TestKeeper_TransferAdmin_AllInOne(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2654,13 +2656,14 @@ func TestKeeper_TransferAdmin_AllInOne(t *testing.T) {
 			types.Feature_minting,
 			types.Feature_whitelisting,
 		},
-		BurnRate:           sdk.MustNewDecFromStr("0.1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.05"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.05"),
 	}
 
-	bondDenom := testApp.StakingKeeper.BondDenom(ctx)
+	bondDenom, err := testApp.StakingKeeper.BondDenom(ctx)
+	requireT.NoError(err)
 	// fund with the native coin
-	err := testApp.FundAccount(ctx, issuer, sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(1000))))
+	err = testApp.FundAccount(ctx, issuer, sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(1000))))
 	requireT.NoError(err)
 
 	denom1, err := ftKeeper.Issue(ctx, settings)
@@ -2698,11 +2701,11 @@ func TestKeeper_TransferAdmin_AllInOne(t *testing.T) {
 
 	// multi-send valid amount
 	err = bankKeeper.InputOutputCoins(ctx,
-		[]banktypes.Input{
-			{Address: admin.String(), Coins: sdk.NewCoins(
+		banktypes.Input{
+			Address: admin.String(), Coins: sdk.NewCoins(
 				sdk.NewCoin(denom1, sdkmath.NewInt(20)),
 				sdk.NewCoin(bondDenom, sdkmath.NewInt(40)),
-			)},
+			),
 		},
 		[]banktypes.Output{
 			// the recipient1 has frozen balance so that amount can be received
@@ -2723,7 +2726,7 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	bankKeeper := testApp.BankKeeper
 	ftKeeper := testApp.AssetFTKeeper
@@ -2740,14 +2743,14 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 		Description:        "DEF Desc",
 		InitialAmount:      sdkmath.NewInt(666),
 		Features:           []types.Feature{},
-		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
 	// send some amount to an account
-	err = bankKeeper.SendCoins(ctx, admin, sender, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))))
+	err = bankKeeper.SendCoins(ctx, admin, sender, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))))
 	requireT.NoError(err)
 
 	// try to clear admin of non-existent denom
@@ -2772,6 +2775,6 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// send some amount between two accounts
-	err = bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))))
+	err = bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))))
 	requireT.NoError(err)
 }

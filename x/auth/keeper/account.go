@@ -1,6 +1,10 @@
 package keeper
 
 import (
+	"context"
+
+	"cosmossdk.io/core/address"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -22,24 +26,26 @@ type InfiniteAccountKeeper struct {
 }
 
 // GetParams returns params.
-func (iak InfiniteAccountKeeper) GetParams(ctx sdk.Context) (params types.Params) {
-	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	return iak.ak.GetParams(ctx)
+func (iak InfiniteAccountKeeper) GetParams(ctx context.Context) (params types.Params) {
+	return iak.ak.GetParams(sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter()))
 }
 
 // GetAccount returns account info by address.
-func (iak InfiniteAccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI {
-	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	return iak.ak.GetAccount(ctx, addr)
+func (iak InfiniteAccountKeeper) GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI {
+	return iak.ak.GetAccount(sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter()), addr)
 }
 
 // SetAccount sets account info.
-func (iak InfiniteAccountKeeper) SetAccount(ctx sdk.Context, acc types.AccountI) {
-	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	iak.ak.SetAccount(ctx, acc)
+func (iak InfiniteAccountKeeper) SetAccount(ctx context.Context, acc sdk.AccountI) {
+	iak.ak.SetAccount(sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter()), acc)
 }
 
 // GetModuleAddress returns address of a module.
 func (iak InfiniteAccountKeeper) GetModuleAddress(moduleName string) sdk.AccAddress {
 	return iak.ak.GetModuleAddress(moduleName)
+}
+
+// AddressCodec returns the AddressCodec.
+func (iak InfiniteAccountKeeper) AddressCodec() address.Codec {
+	return iak.AddressCodec()
 }

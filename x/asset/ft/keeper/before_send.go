@@ -58,14 +58,8 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 }
 
 // BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper.
-func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	if len(inputs) > 1 {
-		return banktypes.ErrMultipleSenders
-	}
-	if len(inputs) == 0 {
-		return banktypes.ErrNoInputs
-	}
-	return k.applyFeatures(ctx, inputs[0], outputs)
+func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, input banktypes.Input, outputs []banktypes.Output) error {
+	return k.applyFeatures(ctx, input, outputs)
 }
 
 func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []banktypes.Output) error {
@@ -153,7 +147,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 		}
 	}
 
-	if !outputCoinsSum.IsEqual(input.Coins) {
+	if !outputCoinsSum.Equal(input.Coins) {
 		return banktypes.ErrInputOutputMismatch
 	}
 	return nil
@@ -229,7 +223,7 @@ func (k Keeper) invokeAssetExtension(
 // CalculateRate calculates how the burn or commission amount should be calculated.
 func (k Keeper) CalculateRate(
 	ctx sdk.Context,
-	rate sdk.Dec,
+	rate sdkmath.LegacyDec,
 	sender sdk.AccAddress,
 	amount sdk.Coin,
 ) sdkmath.Int {
@@ -237,7 +231,7 @@ func (k Keeper) CalculateRate(
 	// According to our current protocol, it cannot be done because sender pays the rates, meaning that escrow address
 	// would be charged leading to breaking the IBC mechanics.
 	if wibctransfertypes.IsPurposeIn(ctx) {
-		return sdk.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 
 	// Context is marked with ACK purpose in two cases:
@@ -246,21 +240,21 @@ func (k Keeper) CalculateRate(
 	// This function is called only in the negative case, when the IBC transfer must be rolled back and funds
 	// must be sent back to the sender. In this case we should not charge the rates.
 	if wibctransfertypes.IsPurposeAck(ctx) {
-		return sdk.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 
 	// Same thing as above just in case of IBC timeout.
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
-		return sdk.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 
 	if rate.IsNil() || !rate.IsPositive() {
-		return sdk.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 
 	// We do not apply burn and commission rate if sender is a smart contract address.
 	if cwasmtypes.IsSendingSmartContract(ctx, sender.String()) {
-		return sdk.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 
 	return rate.MulInt(amount.Amount).Ceil().RoundInt()

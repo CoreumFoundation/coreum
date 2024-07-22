@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -26,7 +26,7 @@ func (k Keeper) ImportPendingTokenUpgrades(ctx sdk.Context, versions []types.Pen
 func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingTokenUpgrade, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingTokenUpgradeKeyPrefix)
 	versions := []types.PendingTokenUpgrade{}
-	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key, value []byte) error {
+	_, err := query.Paginate(store, &query.PageRequest{Limit: query.PaginationMaxLimit}, func(key, value []byte) error {
 		version, n := binary.Uvarint(value)
 		if n <= 0 {
 			return sdkerrors.Wrap(types.ErrInvalidState, "unmarshaling varint failed")

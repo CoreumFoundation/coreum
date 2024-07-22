@@ -16,7 +16,7 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
@@ -75,7 +75,7 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 		fromName = key.Name
 	}
 
-	err = tx.Sign(txf, fromName, unsignedTx, true)
+	err = tx.Sign(ctx, txf, fromName, unsignedTx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +325,7 @@ func AwaitTx(
 
 // AwaitTargetHeight waits for target block.
 func AwaitTargetHeight(ctx context.Context, clientCtx Context, targetHeight int64) error {
-	tmQueryClient := tmservice.NewServiceClient(clientCtx)
+	tmQueryClient := cmtservice.NewServiceClient(clientCtx)
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxNextBlocksTimeout)
 	defer cancel()
 
@@ -333,7 +333,7 @@ func AwaitTargetHeight(ctx context.Context, clientCtx Context, targetHeight int6
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
-		res, err := tmQueryClient.GetLatestBlock(requestCtx, &tmservice.GetLatestBlockRequest{})
+		res, err := tmQueryClient.GetLatestBlock(requestCtx, &cmtservice.GetLatestBlockRequest{})
 		if err != nil {
 			return retry.Retryable(errors.WithStack(err))
 		}
@@ -357,7 +357,7 @@ func AwaitNextBlocks(
 	clientCtx Context,
 	nextBlocks int64,
 ) error {
-	tmQueryClient := tmservice.NewServiceClient(clientCtx)
+	tmQueryClient := cmtservice.NewServiceClient(clientCtx)
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxNextBlocksTimeout)
 	defer cancel()
 
@@ -366,7 +366,7 @@ func AwaitNextBlocks(
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
-		res, err := tmQueryClient.GetLatestBlock(requestCtx, &tmservice.GetLatestBlockRequest{})
+		res, err := tmQueryClient.GetLatestBlock(requestCtx, &cmtservice.GetLatestBlockRequest{})
 		if err != nil {
 			return retry.Retryable(errors.WithStack(err))
 		}
@@ -381,7 +381,7 @@ func AwaitNextBlocks(
 	return AwaitTargetHeight(timeoutCtx, clientCtx, heightToStart+nextBlocks)
 }
 
-func blockHeightFromResponse(res *tmservice.GetLatestBlockResponse) int64 {
+func blockHeightFromResponse(res *cmtservice.GetLatestBlockResponse) int64 {
 	if res.SdkBlock != nil {
 		return res.SdkBlock.Header.Height
 	}

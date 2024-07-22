@@ -167,3 +167,11 @@ func NetworkConfigByChainID(id constant.ChainID) (NetworkConfig, error) {
 
 	return nc, nil
 }
+
+func ValPrefixFromAddressPrefix(addressPrefix string) string {
+	return addressPrefix + "valoper"
+}
+
+func ConsPrefixFromAddressPrefix(addressPrefix string) string {
+	return addressPrefix + "valcons"
+}

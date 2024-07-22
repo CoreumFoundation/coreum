@@ -22,7 +22,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 
 	cdc := config.NewEncodingConfig(app.ModuleBasics).Codec
 	testApp := simapp.New()
-	ctxSDK := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctxSDK := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	delayKeeper := testApp.DelayKeeper

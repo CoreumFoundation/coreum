@@ -3,10 +3,11 @@ package keeper
 import (
 	"context"
 
+	"cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -28,15 +29,16 @@ type BaseKeeperWrapper struct {
 // NewKeeper returns a new BaseKeeperWrapper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeService store.KVStoreService,
 	ak banktypes.AccountKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
 	blockedAddrs map[string]bool,
 	ftProvider types.FungibleTokenProvider,
 	authority string,
+	logger log.Logger,
 ) BaseKeeperWrapper {
 	return BaseKeeperWrapper{
-		BaseKeeper: bankkeeper.NewBaseKeeper(cdc, storeKey, ak, blockedAddrs, authority),
+		BaseKeeper: bankkeeper.NewBaseKeeper(cdc, storeService, ak, blockedAddrs, authority, logger),
 		ak:         ak,
 		wasmKeeper: wasmKeeper,
 		ftProvider: ftProvider,
@@ -48,7 +50,7 @@ func NewKeeper(
 // the recipient address is black-listed or if sending the tokens fails.
 // !!! The code is the copy of the corresponding func of the bank module !!!
 func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(
-	ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins,
+	ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins,
 ) error {
 	senderAddr := k.ak.GetModuleAddress(senderModule)
 	if senderAddr == nil {
@@ -66,7 +68,7 @@ func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(
 // It will panic if either module account does not exist.
 // !!! The code is the copy of the corresponding func of the bank module !!!
 func (k BaseKeeperWrapper) SendCoinsFromModuleToModule(
-	ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins,
+	ctx context.Context, senderModule, recipientModule string, amt sdk.Coins,
 ) error {
 	senderAddr := k.ak.GetModuleAddress(senderModule)
 	if senderAddr == nil {
@@ -85,7 +87,7 @@ func (k BaseKeeperWrapper) SendCoinsFromModuleToModule(
 // It will panic if the module account does not exist.
 // !!! The code is the copy of the corresponding func of the bank module !!!
 func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(
-	ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
+	ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
 ) error {
 	recipientAcc := k.ak.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
@@ -96,30 +98,31 @@ func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(
 }
 
 // SendCoins is a BaseKeeper SendCoins wrapped method.
-func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	if k.isSmartContract(ctx, fromAddr) {
-		ctx = cwasmtypes.WithSmartContractSender(ctx, fromAddr.String())
+func (k BaseKeeperWrapper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+	if k.isSmartContract(sdkContext, fromAddr) {
+		ctx = cwasmtypes.WithSmartContractSender(sdkContext, fromAddr.String())
 	}
-	if k.isSmartContract(ctx, toAddr) {
-		ctx = cwasmtypes.WithSmartContractRecipient(ctx, toAddr.String())
+	if k.isSmartContract(sdkContext, toAddr) {
+		ctx = cwasmtypes.WithSmartContractRecipient(sdkContext, toAddr.String())
 	}
 
-	return k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt)
+	return k.ftProvider.BeforeSendCoins(sdkContext, fromAddr, toAddr, amt)
 }
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
 func (k BaseKeeperWrapper) InputOutputCoins(
-	ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output,
+	goCtx context.Context, input banktypes.Input, outputs []banktypes.Output,
 ) error {
-	for _, input := range inputs {
-		addr, err := sdk.AccAddressFromBech32(input.Address)
-		if err != nil {
-			return err
-		}
-		if k.isSmartContract(ctx, addr) {
-			ctx = cwasmtypes.WithSmartContractSender(ctx, input.Address)
-		}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	addr, err := sdk.AccAddressFromBech32(input.Address)
+	if err != nil {
+		return err
 	}
+	if k.isSmartContract(ctx, addr) {
+		ctx = cwasmtypes.WithSmartContractSender(ctx, input.Address)
+	}
+
 	for _, output := range outputs {
 		addr, err := sdk.AccAddressFromBech32(output.Address)
 		if err != nil {
@@ -130,7 +133,7 @@ func (k BaseKeeperWrapper) InputOutputCoins(
 		}
 	}
 
-	return k.ftProvider.BeforeInputOutputCoins(ctx, inputs, outputs)
+	return k.ftProvider.BeforeInputOutputCoins(ctx, input, outputs)
 }
 
 // ********** Query server **********

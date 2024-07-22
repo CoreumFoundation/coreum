@@ -4,10 +4,10 @@ import (
 	"time"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -137,7 +137,7 @@ func (k Keeper) ImportDelayedItems(ctx sdk.Context, items []types.DelayedItem) e
 func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelayedItemKeyPrefix)
 	delayedItems := []types.DelayedItem{}
-	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key, value []byte) error {
+	_, err := query.Paginate(store, &query.PageRequest{Limit: query.PaginationMaxLimit}, func(key, value []byte) error {
 		executionTime, id, err := types.ExtractTimeAndIDFromDelayedItemKey(key)
 		if err != nil {
 			return err

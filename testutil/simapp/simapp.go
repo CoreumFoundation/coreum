@@ -6,12 +6,13 @@ import (
 	"math/rand"
 	"time"
 
-	dbm "github.com/cometbft/cometbft-db"
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -90,10 +91,13 @@ func New(options ...Option) *App {
 		panic(errors.Errorf("can't Marshal genesisState: %s", err))
 	}
 
-	coreApp.InitChain(abci.RequestInitChain{
+	_, err = coreApp.InitChain(&abci.RequestInitChain{
 		ConsensusParams: simtestutil.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
+	if err != nil {
+		panic(errors.Errorf("can't init chain: %s", err))
+	}
 
 	simApp := &App{*coreApp}
 
@@ -106,13 +110,13 @@ func (s *App) BeginNextBlock(blockTime time.Time) sdk.Context {
 		blockTime = time.Now()
 	}
 	header := tmproto.Header{Height: s.App.LastBlockHeight() + 1, Time: blockTime}
-	s.App.BeginBlock(abci.RequestBeginBlock{Header: header})
-	return s.App.BaseApp.NewContext(false, header)
+	s.App.BeginBlocker(s.NewContext(false))
+	return s.App.BaseApp.NewContextLegacy(false, header)
 }
 
 // EndBlockAndCommit ends the current block and commit the state.
 func (s *App) EndBlockAndCommit(ctx sdk.Context) {
-	s.App.EndBlocker(ctx, abci.RequestEndBlock{Height: ctx.BlockHeight()})
+	s.App.EndBlocker(ctx)
 	s.App.Commit()
 }
 
@@ -207,7 +211,7 @@ func (s *App) SimulateFundAndSendTx(
 ) (sdk.GasInfo, *sdk.Result, error) {
 	simTx, err := s.GenTx(
 		ctx,
-		sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
+		sdk.NewCoin(constant.DenomDev, sdkmath.ZeroInt()),
 		0,
 		priv,
 		messages...,
@@ -225,7 +229,7 @@ func (s *App) SimulateFundAndSendTx(
 	if err != nil {
 		return sdk.GasInfo{}, nil, err
 	}
-	targetGas := sdk.NewInt(int64(simGas.GasUsed * 2))
+	targetGas := sdkmath.NewInt(int64(simGas.GasUsed * 2))
 	minGasPrice := s.App.FeeModelKeeper.GetMinGasPrice(ctx)
 	fee := sdk.NewCoin(minGasPrice.Denom, minGasPrice.Amount.MulInt(targetGas).MulInt64(2).RoundInt())
 

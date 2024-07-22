@@ -15,8 +15,8 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -153,7 +153,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 			Denom:   sendToOsmosisCoin.Denom,
 		})
 	requireT.NoError(err)
-	requireT.Equal(sdk.ZeroInt().String(), contractBalance.Balance.Amount.String())
+	requireT.Equal(sdkmath.ZeroInt().String(), contractBalance.Balance.Amount.String())
 
 	expectedOsmosisRecipientBalance := sdk.NewCoin(
 		ConvertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom),

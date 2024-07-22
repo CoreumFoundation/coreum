@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,7 +23,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	testApp := simapp.New()
 
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 	keeper := testApp.DelayKeeper
 
 	// prepare the genesis data
@@ -30,7 +31,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	msg1 := &banktypes.MsgSend{
 		FromAddress: "senderAddress1",
 		ToAddress:   "recipientAddress1",
-		Amount:      sdk.NewCoins(sdk.NewCoin("denom", sdk.OneInt())),
+		Amount:      sdk.NewCoins(sdk.NewCoin("denom", sdkmath.OneInt())),
 	}
 	msg2 := &assetfttypes.DelayedTokenUpgradeV1{
 		Denom: "denom",
@@ -38,7 +39,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	msg3 := &banktypes.MsgSend{
 		FromAddress: "senderAddress2",
 		ToAddress:   "recipientAddress2",
-		Amount:      sdk.NewCoins(sdk.NewCoin("denom", sdk.OneInt())),
+		Amount:      sdk.NewCoins(sdk.NewCoin("denom", sdkmath.OneInt())),
 	}
 	anyMsg1, err := codectypes.NewAnyWithValue(msg1)
 	requireT.NoError(err)

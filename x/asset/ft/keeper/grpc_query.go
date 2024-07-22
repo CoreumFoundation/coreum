@@ -39,8 +39,8 @@ type QueryKeeper interface {
 
 // BankKeeper represents required methods of bank keeper.
 type BankKeeper interface {
-	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	LockedCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	LockedCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 }
 
 // QueryService serves grpc query requests for assets module.

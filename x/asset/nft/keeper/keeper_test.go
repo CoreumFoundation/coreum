@@ -28,7 +28,7 @@ import (
 func TestKeeper_IssueClass(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -89,7 +89,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 func TestKeeper_GetClasses(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 
 	issuer1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -128,7 +128,7 @@ func TestKeeper_GetClasses(t *testing.T) {
 	}
 
 	// get all classes without the issuer
-	classes, _, err := nftKeeper.GetClasses(ctx, nil, &query.PageRequest{Limit: query.MaxLimit})
+	classes, _, err := nftKeeper.GetClasses(ctx, nil, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	requireT.NoError(err)
 	requireT.Equal(len(allSettings), len(classes))
 	sort.Slice(classes, func(i, j int) bool {
@@ -140,7 +140,7 @@ func TestKeeper_GetClasses(t *testing.T) {
 	}
 
 	// get issuer 2 classes
-	classes, _, err = nftKeeper.GetClasses(ctx, &issuer2, &query.PageRequest{Limit: query.MaxLimit})
+	classes, _, err = nftKeeper.GetClasses(ctx, &issuer2, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	requireT.NoError(err)
 	requireT.Len(classes, 2)
 	sort.Slice(classes, func(i, j int) bool {
@@ -158,7 +158,7 @@ func TestKeeper_GetClasses(t *testing.T) {
 func TestKeeper_Mint(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 	bankKeeper := testApp.BankKeeper
 
@@ -232,7 +232,7 @@ func TestKeeper_Mint(t *testing.T) {
 func TestKeeper_UpdateData(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	nftKeeper := testApp.AssetNFTKeeper
 
@@ -521,7 +521,7 @@ func TestKeeper_UpdateData(t *testing.T) {
 func TestKeeper_MintWithRecipient(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 	bankKeeper := testApp.BankKeeper
 
@@ -585,7 +585,7 @@ func TestKeeper_MintWithRecipient(t *testing.T) {
 func TestKeeper_MintWithRecipientAndWhitelisting(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
@@ -633,7 +633,7 @@ func TestKeeper_MintWithRecipientAndWhitelisting(t *testing.T) {
 func TestKeeper_Burn(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 
@@ -737,7 +737,7 @@ func TestKeeper_Burn(t *testing.T) {
 func TestKeeper_Burn_Frozen(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 
@@ -783,7 +783,7 @@ func TestKeeper_Burn_Frozen(t *testing.T) {
 func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
@@ -819,7 +819,7 @@ func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
 func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
@@ -854,7 +854,7 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 func TestKeeper_DisableSending(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 
@@ -904,7 +904,7 @@ func TestKeeper_DisableSending(t *testing.T) {
 func TestKeeper_Freeze(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 
@@ -970,7 +970,7 @@ func TestKeeper_Freeze(t *testing.T) {
 func TestKeeper_Freeze_Unfreezable(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
@@ -1011,7 +1011,7 @@ func TestKeeper_Freeze_Unfreezable(t *testing.T) {
 func TestKeeper_Freeze_Nonexistent(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
@@ -1046,7 +1046,7 @@ func TestKeeper_Freeze_Nonexistent(t *testing.T) {
 func TestKeeper_Whitelist(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 
@@ -1103,7 +1103,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.NoError(assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient2))
 
 	whitelistedNftAccounts, _, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(
-		ctx, classID, nftID, &query.PageRequest{Limit: query.MaxLimit},
+		ctx, classID, nftID, &query.PageRequest{Limit: query.PaginationMaxLimit},
 	)
 	requireT.NoError(err)
 	requireT.Len(whitelistedNftAccounts, 2)
@@ -1137,7 +1137,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 func TestKeeper_Whitelist_Unwhitelistable(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
@@ -1179,7 +1179,7 @@ func TestKeeper_Whitelist_Unwhitelistable(t *testing.T) {
 func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
@@ -1225,7 +1225,7 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 func TestKeeper_ClassWhitelist(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 
@@ -1288,7 +1288,7 @@ func TestKeeper_ClassWhitelist(t *testing.T) {
 	requireT.True(isWhitelisted)
 
 	whitelistedNftAccounts, _, err := assetNFTKeeper.GetClassWhitelistedAccounts(
-		ctx, classID, &query.PageRequest{Limit: query.MaxLimit},
+		ctx, classID, &query.PageRequest{Limit: query.PaginationMaxLimit},
 	)
 	requireT.NoError(err)
 	requireT.Len(whitelistedNftAccounts, 2)
@@ -1322,7 +1322,7 @@ func TestKeeper_ClassWhitelist(t *testing.T) {
 func TestKeeper_ClassWhitelist_And_NFTWhitelist(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -1373,7 +1373,7 @@ func TestKeeper_ClassWhitelist_And_NFTWhitelist(t *testing.T) {
 func TestKeeper_ClassWhitelist_Unwhitelistable(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
@@ -1401,7 +1401,7 @@ func TestKeeper_ClassWhitelist_Unwhitelistable(t *testing.T) {
 func TestKeeper_ClassWhitelist_NonExistent(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -1417,7 +1417,7 @@ func TestKeeper_ClassWhitelist_NonExistent(t *testing.T) {
 func TestKeeper_ClassFreeze(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 
@@ -1485,7 +1485,7 @@ func TestKeeper_ClassFreeze(t *testing.T) {
 func TestKeeper_ClassFreeze_And_NFTFreeze(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -1536,7 +1536,7 @@ func TestKeeper_ClassFreeze_And_NFTFreeze(t *testing.T) {
 func TestKeeper_ClassFreeze_Unfreezable(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
@@ -1577,7 +1577,7 @@ func TestKeeper_ClassFreeze_Unfreezable(t *testing.T) {
 func TestKeeper_ClassFreeze_Nonexistent(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	account := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -1596,7 +1596,7 @@ func TestKeeper_ClassFreeze_Nonexistent(t *testing.T) {
 func TestKeeper_Soulbound(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 
@@ -1646,7 +1646,7 @@ func TestKeeper_Soulbound(t *testing.T) {
 func TestKeeper_Soulbound_Burning(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
 	nftKeeper := testApp.NFTKeeper
 

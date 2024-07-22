@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmostx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/v4/app"
 	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v4/testutil/network"
 )
@@ -47,14 +49,14 @@ func TestAutoGasPrices(t *testing.T) {
 			name:  "specific gas prices are provided",
 			flags: []string{fmt.Sprintf("--gas-prices=0.1%s", denom), "--gas=115000"},
 			feeAssertion: func(t *testing.T, fee sdk.Coins) {
-				assert.True(t, fee.IsEqual(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(11500)))))
+				assert.True(t, fee.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(11500)))))
 			},
 		},
 		{
 			name:  "specific fees are provided",
 			flags: []string{fmt.Sprintf("--fees=12345%s", denom)},
 			feeAssertion: func(t *testing.T, fee sdk.Coins) {
-				assert.True(t, fee.IsEqual(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(12345)))))
+				assert.True(t, fee.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(12345)))))
 			},
 		},
 		{
@@ -74,7 +76,7 @@ func TestAutoGasPrices(t *testing.T) {
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 			}, tc.flags...)
-			bankTx := bankcli.NewTxCmd()
+			bankTx := bankcli.NewTxCmd(addresscodec.NewBech32Codec(app.ChosenNetwork.Provider.GetAddressPrefix()))
 			addQueryGasPriceToAllLeafs(bankTx)
 
 			res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, bankTx, args)

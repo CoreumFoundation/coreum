@@ -3,14 +3,20 @@ package wbank
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/stretchr/testify/require"
 	golanggrpc "google.golang.org/grpc"
+	googlegrpc "google.golang.org/grpc"
+)
+
+var (
+	_ module.Configurator = &configuratorMock{}
 )
 
 type grpcServerMock struct{}
@@ -48,11 +54,20 @@ func (c *configuratorMock) RegisterMigration(
 	return nil
 }
 
+func (c *configuratorMock) RegisterService(sd *googlegrpc.ServiceDesc, ss interface{}) {
+
+}
+
+func (c *configuratorMock) Error() error {
+	return nil
+}
+
 // The test checks the migration registration of the original bank.
 // Since we override the "Register Services" we want to be sure that after the update of the SDK,
 // The original bank won't have unexpected migrations.
 func TestAppModuleOriginalBank_RegisterServices(t *testing.T) {
-	bankModule := bank.NewAppModule(&codec.AminoCodec{}, bankkeeper.BaseKeeper{}, keeper.AccountKeeper{}, nil)
+	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}).Codec
+	bankModule := bank.NewAppModule(cdc, bankkeeper.BaseKeeper{}, keeper.AccountKeeper{}, nil)
 	configurator := newConfiguratorMock()
 	bankModule.RegisterServices(configurator)
 	require.Equal(t, []uint64{1, 2, 3}, configurator.capturedMigrationVersions)

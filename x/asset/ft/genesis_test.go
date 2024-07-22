@@ -23,7 +23,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	testApp := simapp.New()
 
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
@@ -44,8 +44,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 				types.Feature_freezing,
 				types.Feature_whitelisting,
 			},
-			BurnRate:           sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
-			SendCommissionRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
+			BurnRate:           sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("0.%d", i)),
+			SendCommissionRate: sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
 			Version:            i,
 			URI:                fmt.Sprintf("https://my-class-meta.invalid/%d", i),
 			URIHash:            fmt.Sprintf("content-hash%d", i),

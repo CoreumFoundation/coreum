@@ -4,10 +4,10 @@ import (
 	"context"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/x/nft"
+	nftkeeper "cosmossdk.io/x/nft/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/nft"
-	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 
 	"github.com/CoreumFoundation/coreum/v4/x/wnft/types"
 )

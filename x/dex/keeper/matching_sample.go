@@ -301,12 +301,12 @@ func (app *App) matchOrder(takerOrder Order, makerOB, ob *OrderBook) error {
 				takerOrder.Quantity.BigInt(), makerInvPriceRat,
 			)
 			// taker receives
-			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.SellDenom, sdk.NewIntFromBigInt(quantityRemainder)))
+			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.SellDenom, sdkmath.NewIntFromBigInt(quantityRemainder)))
 			app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdkmath.NewIntFromBigInt(invMaxExecutionQuantity)))
 			// maker receives
-			app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
+			app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdkmath.NewIntFromBigInt(maxExecutionQuantity)))
 			// update state
-			makerOBRecord.RemainingQuantity = makerOBRecord.RemainingQuantity.Sub(sdk.NewIntFromBigInt(invMaxExecutionQuantity))
+			makerOBRecord.RemainingQuantity = makerOBRecord.RemainingQuantity.Sub(sdkmath.NewIntFromBigInt(invMaxExecutionQuantity))
 			recordUpdated, err := makerOB.UpdateRecord(makerOBRecord)
 			if err != nil {
 				return true, err
@@ -324,16 +324,16 @@ func (app *App) matchOrder(takerOrder Order, makerOB, ob *OrderBook) error {
 			makerOBRecord.RemainingQuantity.BigInt(), makerPriceRat,
 		)
 		// maker receives
-		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdk.NewIntFromBigInt(invMaxExecutionQuantity)))
-		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, sdk.NewIntFromBigInt(quantityRemainder)))
+		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.BuyDenom, sdkmath.NewIntFromBigInt(invMaxExecutionQuantity)))
+		app.SendCoin(makerOBRecord.Account, sdk.NewCoin(makerOB.SellDenom, sdkmath.NewIntFromBigInt(quantityRemainder)))
 		// taker receives
-		app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdk.NewIntFromBigInt(maxExecutionQuantity)))
+		app.SendCoin(takerOrder.Account, sdk.NewCoin(takerOrder.BuyDenom, sdkmath.NewIntFromBigInt(maxExecutionQuantity)))
 		// remove reduced record
 		if err := makerOB.RemoveRecord(makerOBRecord); err != nil {
 			return true, err
 		}
 		// update state
-		takerOrder.Quantity = takerOrder.Quantity.Sub(sdk.NewIntFromBigInt(invMaxExecutionQuantity))
+		takerOrder.Quantity = takerOrder.Quantity.Sub(sdkmath.NewIntFromBigInt(invMaxExecutionQuantity))
 		if BigIntEqZero(takerOrder.Quantity.BigInt()) {
 			return true, nil
 		}

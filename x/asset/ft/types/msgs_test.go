@@ -125,7 +125,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid negative burn rate",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
-				msg.BurnRate = sdk.MustNewDecFromStr("-0.1")
+				msg.BurnRate = sdkmath.LegacyMustNewDecFromStr("-0.1")
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -133,7 +133,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid negative send commission rate",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
-				msg.SendCommissionRate = sdk.MustNewDecFromStr("-0.1")
+				msg.SendCommissionRate = sdkmath.LegacyMustNewDecFromStr("-0.1")
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,

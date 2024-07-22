@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/x/nft"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -17,7 +18,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -69,7 +69,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 			assetnfttypes.ClassFeature_burning,
 			assetnfttypes.ClassFeature_disable_sending,
 		},
-		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
+		RoyaltyRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
@@ -136,7 +136,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 			assetnfttypes.ClassFeature_burning,
 			assetnfttypes.ClassFeature_disable_sending,
 		},
-		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
+		RoyaltyRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}, issuedEvent)
 
 	// query nft asset with features
@@ -158,7 +158,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 			assetnfttypes.ClassFeature_burning,
 			assetnfttypes.ClassFeature_disable_sending,
 		},
-		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
+		RoyaltyRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 	requireT.Equal(expectedClass, assetNftClassRes.Class)
 
@@ -332,7 +332,7 @@ func TestAssetNFTIssueClassInvalidFeatures(t *testing.T) {
 		Description: "description",
 		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
-		RoyaltyRate: sdk.ZeroDec(),
+		RoyaltyRate: sdkmath.LegacyZeroDec(),
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_burning,
 			assetnfttypes.ClassFeature_freezing,
@@ -356,7 +356,7 @@ func TestAssetNFTIssueClassInvalidFeatures(t *testing.T) {
 		Description: "description",
 		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
-		RoyaltyRate: sdk.ZeroDec(),
+		RoyaltyRate: sdkmath.LegacyZeroDec(),
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_burning,
 			100,
@@ -727,7 +727,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origParams := chain.QueryAssetNFTParams(ctx, t)
 	newParams := origParams
-	newParams.MintFee.Amount = sdk.OneInt()
+	newParams.MintFee.Amount = sdkmath.OneInt()
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
 		"-", "-", "-", govtypesv1.OptionYes,
@@ -743,7 +743,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 			&assetnfttypes.MsgIssueClass{},
 			&assetnfttypes.MsgMint{},
 		},
-		Amount: sdk.OneInt(),
+		Amount: sdkmath.OneInt(),
 	})
 
 	// issue new NFT class
@@ -780,7 +780,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 
 	burntStr, err := event.FindStringEventAttribute(res.Events, banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(chain.ChainSettings.Denom, sdk.OneInt()).String(), burntStr)
+	requireT.Equal(sdk.NewCoin(chain.ChainSettings.Denom, sdkmath.OneInt()).String(), burntStr)
 
 	// check that balance is 0 meaning mint fee was taken
 
@@ -2395,7 +2395,7 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 	})
 
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdk.NewInt(1),
+		Amount: sdkmath.NewInt(1),
 	})
 
 	// issue new NFT class

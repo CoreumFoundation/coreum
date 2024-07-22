@@ -54,7 +54,7 @@ func TestAuthFeeLimits(t *testing.T) {
 	}
 
 	gasPriceWithMaxDiscount := feeModel.InitialGasPrice.
-		Mul(sdk.OneDec().Sub(feeModel.MaxDiscount))
+		Mul(sdkmath.LegacyOneDec().Sub(feeModel.MaxDiscount))
 
 	// the gas price is too low
 	_, err := client.BroadcastTx(ctx,
@@ -437,7 +437,7 @@ func TestAuthSignModeDirectAux(t *testing.T) {
 	feePayer := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	amountToSend := sdk.NewIntFromUint64(1000)
+	amountToSend := sdkmath.NewIntFromUint64(1000)
 	chain.FundAccountWithOptions(ctx, t, feePayer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
@@ -480,7 +480,7 @@ func TestAuthSignModeDirectAux(t *testing.T) {
 	signBytes, err := builder.GetSignBytes()
 	requireT.NoError(err)
 
-	tipperSignature, _, err := chain.ClientContext.Keyring().SignByAddress(tipper, signBytes)
+	tipperSignature, _, err := chain.ClientContext.Keyring().SignByAddress(tipper, signBytes, signing.SignMode_SIGN_MODE_DIRECT_AUX)
 	requireT.NoError(err)
 
 	builder.SetSignature(tipperSignature)
@@ -492,16 +492,19 @@ func TestAuthSignModeDirectAux(t *testing.T) {
 	requireT.NoError(txBuilder.AddAuxSignerData(tipperSignerData))
 	txBuilder.SetFeePayer(feePayer)
 	txBuilder.SetFeeAmount(sdk.NewCoins(
-		chain.NewCoin(chain.ChainSettings.GasPrice.Mul(sdk.NewDecFromInt(sdk.NewIntFromUint64(gas))).Ceil().RoundInt()),
+		chain.NewCoin(chain.ChainSettings.GasPrice.Mul(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(gas))).Ceil().RoundInt()),
 	))
 	txBuilder.SetGasLimit(gas)
 
-	requireT.NoError(clienttx.Sign(chain.TxFactory().
-		WithAccountNumber(feePayerAccountInfo.GetAccountNumber()).
-		WithSequence(feePayerAccountInfo.GetSequence()),
+	requireT.NoError(clienttx.Sign(
+		ctx,
+		chain.TxFactory().
+			WithAccountNumber(feePayerAccountInfo.GetAccountNumber()).
+			WithSequence(feePayerAccountInfo.GetSequence()),
 		feePayerKey.Name,
 		txBuilder,
-		false))
+		false,
+	))
 	txBytes, err := chain.ClientContext.TxConfig().TxEncoder()(txBuilder.GetTx())
 	requireT.NoError(err)
 
@@ -527,8 +530,8 @@ func TestAuthSignModeDirectAux(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), tipperBalanceResp.Balance.String())
-	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), feePayerBalanceResp.Balance.String())
+	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), tipperBalanceResp.Balance.String())
+	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), feePayerBalanceResp.Balance.String())
 	requireT.Equal(chain.NewCoin(amountToSend).String(), recipientBalanceResp.Balance.String())
 }
 
@@ -616,7 +619,8 @@ func signTxWithMultipleSignatures(
 	requireT := require.New(t)
 
 	txConfig := chain.ClientContext.TxConfig()
-	signMod := txConfig.SignModeHandler().DefaultMode()
+	signMod, err := authsign.APISignModeToInternal(txConfig.SignModeHandler().DefaultMode())
+	requireT.NoError(err)
 
 	signerAccInfos := make([]authtypes.AccountI, len(signers))
 	// Fetch account info for all signers.
@@ -663,9 +667,15 @@ func signTxWithMultipleSignatures(
 			Sequence:      signerAccInfos[i].GetSequence(),
 			PubKey:        sigs[i].PubKey,
 		}
-		signBytes, err := txConfig.SignModeHandler().GetSignBytes(signMod, signerData, txBuilder.GetTx())
+		signBytes, err := authsign.GetSignBytesAdapter(
+			ctx,
+			txConfig.SignModeHandler(),
+			signMod,
+			signerData,
+			txBuilder.GetTx(),
+		)
 		requireT.NoError(err)
-		sig, _, err := chain.TxFactory().Keybase().SignByAddress(signer, signBytes)
+		sig, _, err := chain.TxFactory().Keybase().SignByAddress(signer, signBytes, signMod)
 		requireT.NoError(err)
 
 		sigs[i].Data.(*signing.SingleSignatureData).Signature = sig
