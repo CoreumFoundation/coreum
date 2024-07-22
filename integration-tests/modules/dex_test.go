@@ -42,8 +42,8 @@ func TestOrdersMatching(t *testing.T) {
 		},
 	})
 
-	denom1 := issuerAssetFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
-	denom2 := issuerAssetFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:     acc1.String(),
@@ -147,7 +147,7 @@ func TestOrdersMatching(t *testing.T) {
 	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 }
 
-func issuerAssetFT(
+func issueFT(
 	ctx context.Context,
 	t *testing.T,
 	chain integration.CoreumChain,
