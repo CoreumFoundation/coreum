@@ -160,8 +160,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/v4/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
-	cnftkeeper "github.com/CoreumFoundation/coreum/v4/x/nft/keeper"
-	cnftmodule "github.com/CoreumFoundation/coreum/v4/x/nft/module"
 	wasmcustomhandler "github.com/CoreumFoundation/coreum/v4/x/wasm/handler"
 	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/v4/x/wbank"
@@ -226,7 +224,6 @@ var (
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
 		wnft.AppModuleBasic{},
-		cnftmodule.AppModuleBasic{},
 		assetft.AppModuleBasic{},
 		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
@@ -325,7 +322,8 @@ type App struct {
 	ScopedWASMKeeper          capabilitykeeper.ScopedKeeper
 
 	// ModuleManager is the module manager
-	ModuleManager *module.Manager
+	ModuleManager      *module.Manager
+	BasicModuleManager module.BasicManager
 
 	// sm is the simulation manager
 	sm *module.SimulationManager
@@ -349,14 +347,15 @@ func New(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
 	deterministicGasConfig := deterministicgas.DefaultConfig()
+	addressPrefix := ChosenNetwork.Provider.GetAddressPrefix()
 	interfaceRegistry, _ := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
 		ProtoFiles: proto.HybridResolver,
 		SigningOptions: signing.Options{
 			AddressCodec: address.Bech32Codec{
-				Bech32Prefix: ChosenNetwork.Provider.GetAddressPrefix(),
+				Bech32Prefix: addressPrefix,
 			},
 			ValidatorAddressCodec: address.Bech32Codec{
-				Bech32Prefix: config.ValPrefixFromAddressPrefix(ChosenNetwork.Provider.GetAddressPrefix()),
+				Bech32Prefix: config.ValPrefixFromAddressPrefix(addressPrefix),
 			},
 		},
 	})
@@ -391,6 +390,11 @@ func New(
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+
+	// register streaming services
+	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
+		panic(err)
+	}
 
 	app := &App{
 		BaseApp:           bApp,
@@ -441,7 +445,7 @@ func New(
 		authtypes.ProtoBaseAccount,
 		maccPerms,
 		interfaceRegistry.SigningContext().AddressCodec(),
-		ChosenNetwork.Provider.GetAddressPrefix(),
+		addressPrefix,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -505,8 +509,8 @@ func New(
 		app.AccountKeeper,
 		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		interfaceRegistry.SigningContext().AddressCodec(),
 		interfaceRegistry.SigningContext().ValidatorAddressCodec(),
+		address.NewBech32Codec(config.ConsPrefixFromAddressPrefix(addressPrefix)),
 	)
 
 	app.MintKeeper = mintkeeper.NewKeeper(
@@ -617,7 +621,7 @@ func New(
 
 	// IBC Hooks.
 	// The contract WASM keeper needs to be set later since it depends on WASM hooks.
-	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, ChosenNetwork.Provider.GetAddressPrefix())
+	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, addressPrefix)
 	app.Ics20WasmHooks = &wasmHooks
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
@@ -941,6 +945,28 @@ func New(
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 	)
 
+	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
+	// non-dependant module elements, such as codec registration and genesis verification.
+	// By default it is composed of all the module from the module manager.
+	// Additionally, app module basics can be overwritten by passing them as argument.
+	app.BasicModuleManager = module.NewBasicManagerFromManager(
+		app.ModuleManager,
+		map[string]module.AppModuleBasic{
+			genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+			govtypes.ModuleName: gov.NewAppModuleBasic(
+				[]govclient.ProposalHandler{
+					paramsclient.ProposalHandler,
+				},
+			),
+		})
+	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
+	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
+
+	// NOTE: upgrade module is required to be prioritized
+	app.ModuleManager.SetOrderPreBlockers(
+		upgradetypes.ModuleName,
+	)
+
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
@@ -1067,14 +1093,11 @@ func New(
 		),
 		app.GRPCQueryRouter(),
 	)
-	app.ModuleManager.RegisterServices(app.configurator)
+	if err = app.ModuleManager.RegisterServices(app.configurator); err != nil {
+		panic(err)
+	}
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
-
-	// TODO (v5): remove cnftModule.RegisterServices alongside the module when we drop deprecated handlers of the module.
-	cnftmodule.
-		NewAppModule(app.AppCodec(), cnftkeeper.NewKeeper(app.NFTKeeper)).
-		RegisterServices(app.configurator)
 
 	reflectionSvc, err := runtimeservices.NewReflectionService()
 	if err != nil {
@@ -1109,9 +1132,6 @@ func New(
 	app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
-	app.SetInitChainer(app.InitChainer)
-	app.SetBeginBlocker(app.BeginBlocker)
-
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
 			HandlerOptions: authante.HandlerOptions{
@@ -1133,6 +1153,9 @@ func New(
 		panic(err)
 	}
 
+	app.SetInitChainer(app.InitChainer)
+	app.SetBeginBlocker(app.BeginBlocker)
+	app.SetPreBlocker(app.PreBlocker)
 	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
@@ -1203,6 +1226,20 @@ func New(
 		}
 	}
 
+	// TODO(fix-proto-annotaion)
+	// At startup, after all modules have been registered, check that all prot
+	// annotations are correct.
+	// protoFiles, err := proto.MergedRegistry()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// err = msgservice.ValidateProtoAnnotations(protoFiles)
+	// if err != nil {
+	// 	// Once we switch to using protoreflect-based antehandlers, we might
+	// 	// want to panic here instead of logging a warning.
+	// 	fmt.Fprintln(os.Stderr, err.Error())
+	// }
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
@@ -1224,6 +1261,11 @@ func (app *App) Name() string { return app.BaseApp.Name() }
 
 // GetBaseApp returns the base app of the application.
 func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
+
+// PreBlocker application updates every pre block
+func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+	return app.ModuleManager.PreBlock(ctx)
+}
 
 // BeginBlocker application updates every begin block.
 func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
@@ -1347,15 +1389,6 @@ func (app *App) RegisterAPIRoutes(apiSvr *serverapi.Server, _ serverconfig.APICo
 
 	// Register grpc-gateway routes for all modules.
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-
-	// TODO(v5) remove alongside the cnft module
-	// Regsiter cnft routes.
-	// We register the tx and query handlers here, since we don't want to introduce a new module to the
-	// list of app.Modules where we have to handle genesis registration and migraitons. we only need to
-	// keep these deprecated handlers around to give time to users to migrate.
-	cnftmodule.
-		NewAppModule(app.AppCodec(), cnftkeeper.NewKeeper(app.NFTKeeper)).
-		RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register app's OpenAPI routes.
 	apiSvr.Router.Handle("/static/openapi.json", http.FileServer(http.FS(docs.Docs)))

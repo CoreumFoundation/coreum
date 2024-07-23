@@ -130,14 +130,14 @@ func buildCoredInDocker(
 			)
 			ccRelativePath = "/bin/x86_64-linux-musl-gcc"
 			wasmHostDirPath = tools.Path("lib/libwasmvm_muslc.x86_64.a", targetPlatform)
-			wasmCCLibRelativeLibPath = "/x86_64-linux-musl/lib/libwasmvm_muslc.a"
+			wasmCCLibRelativeLibPath = "/x86_64-linux-musl/lib/libwasmvm_muslc.x86_64.a"
 		case tools.TargetPlatformLinuxARM64InDocker:
 			hostCCDirPath = filepath.Dir(
 				filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", targetPlatform)),
 			)
 			ccRelativePath = "/bin/aarch64-linux-musl-gcc"
 			wasmHostDirPath = tools.Path("lib/libwasmvm_muslc.aarch64.a", targetPlatform)
-			wasmCCLibRelativeLibPath = "/aarch64-linux-musl/lib/libwasmvm_muslc.a"
+			wasmCCLibRelativeLibPath = "/aarch64-linux-musl/lib/libwasmvm_muslc.aarch64.a"
 		default:
 			return errors.Errorf("building is not possible for platform %s", targetPlatform)
 		}

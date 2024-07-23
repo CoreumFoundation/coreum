@@ -53,7 +53,7 @@ const ledgerAppName = "Coreum"
 func NewRootCmd() *cobra.Command {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	// encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
-	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(""))
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
 	encodingConfig := config.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
 		Codec:             tempApp.AppCodec(),
@@ -472,4 +472,14 @@ func appExport(
 	}
 
 	return coreumApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+func tempDir() string {
+	dir, err := os.MkdirTemp("", "wasmd")
+	if err != nil {
+		panic("failed to create temp dir: " + err.Error())
+	}
+	defer os.RemoveAll(dir)
+
+	return dir
 }
