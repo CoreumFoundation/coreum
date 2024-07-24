@@ -13,15 +13,17 @@ import (
 )
 
 const (
-	maxNumLen = 19
-	// maxExp is the max allowed exponent. Technically it's limited by MinInt8 (-128) + `maxNumLen` (required for
+	// MaxNumLen is max allowed num part length.
+	MaxNumLen = 19
+	// MinExt is the max allowed exponent. Technically it's limited by MinInt8 (-128) + `MaxNumLen` (required for
 	//	normalization). But to make the range value easier for understanding and still keeping enough precision we set
 	//	it to -100.
-	minExt = -100
-	// maxExp is the max allowed exponent. Technically it's limited by MaxInt8 (127) but to make it similar to
+	MinExt = int8(-100)
+	// MaxExp is the max allowed exponent. Technically it's limited by MaxInt8 (127) but to make it similar to
 	// mixExp we set it to 100.
-	maxExp                = 100
-	exponentStr           = "e"
+	MaxExp = int8(100)
+	// ExponentSymbol is symbol used to represent the exponent in the string price.
+	ExponentSymbol        = "e"
 	orderedBytesPriceSize = store.Int8OrderedBytesSize + store.Uint64OrderedBytesSize
 )
 
@@ -36,14 +38,16 @@ func NewPriceFromString(str string) (Price, error) {
 	if len(str) == 0 {
 		return Price{}, errors.New("price can't be empty")
 	}
-	parts := strings.Split(str, exponentStr)
+	parts := strings.Split(str, ExponentSymbol)
 	numPart := parts[0]
-	// the price must be represented with exponent if it's possible to use the exponent.
-	if numPart != "0" && (strings.HasPrefix(numPart, "0") || strings.HasSuffix(numPart, "0")) {
-		return Price{}, errors.Errorf("invalid price num part %s, can't start or end with 0", numPart)
+	// the num should be deterministic
+	if strings.HasPrefix(numPart, "0") ||
+		strings.HasSuffix(numPart, "0") ||
+		strings.HasPrefix(numPart, "+") {
+		return Price{}, errors.Errorf("invalid price num part %s", numPart)
 	}
-	if len(numPart) > maxNumLen {
-		return Price{}, errors.Errorf("invalid price num part length, max %d", maxNumLen)
+	if len(numPart) > MaxNumLen {
+		return Price{}, errors.Errorf("invalid price num part length, max %d", MaxNumLen)
 	}
 
 	var (
@@ -60,17 +64,24 @@ func NewPriceFromString(str string) (Price, error) {
 	case 1:
 		exp = 0
 	case 2:
-		if numPart == "0" {
-			return Price{}, errors.New("the exponent can't be provided for the zero num")
+		expPart := parts[1]
+		// the exponent should be deterministic
+		if strings.HasPrefix(expPart, "0") ||
+			strings.HasPrefix(expPart, "+") ||
+			strings.HasPrefix(expPart, "-0") {
+			return Price{}, errors.Errorf("invalid exponent %s", expPart)
 		}
 		var intExp int64
-		intExp, err = strconv.ParseInt(parts[1], 10, 8)
+		intExp, err = strconv.ParseInt(expPart, 10, 8)
 		if err != nil {
-			return Price{}, errors.Errorf("invalid price exp part %s", parts[1])
+			return Price{}, errors.Errorf("invalid price exp part %s", expPart)
+		}
+		if intExp == 0 {
+			return Price{}, errors.New("zero exponent is prohibited")
 		}
 		// the range check is required for the normalization
-		if intExp < minExt || intExp > maxExp {
-			return Price{}, errors.Errorf("invalid exp %d, must be in the rage %d:%d", intExp, minExt, maxExp)
+		if int8(intExp) < MinExt || int8(intExp) > MaxExp {
+			return Price{}, errors.Errorf("invalid exp %d, must be in the rage %d:%d", intExp, MinExt, MaxExp)
 		}
 		exp = int8(intExp)
 	default:
@@ -137,7 +148,7 @@ func (p *Price) UnmarshallFromOrderedBytes(bytes []byte) ([]byte, error) {
 func (p Price) String() string {
 	var expPart string
 	if p.exp != 0 {
-		expPart = exponentStr + strconv.Itoa(int(p.exp))
+		expPart = ExponentSymbol + strconv.Itoa(int(p.exp))
 	}
 	return strconv.FormatUint(p.num, 10) + expPart
 }
@@ -201,7 +212,7 @@ func (p *Price) UnmarshalAmino(bz []byte) error { return p.Unmarshal(bz) }
 // exp correspondingly.
 func normalizeForOrderedBytes(exp int8, num uint64) (int8, uint64, error) {
 	srtNum := strconv.FormatUint(num, 10)
-	offset := maxNumLen - len(srtNum)
+	offset := MaxNumLen - len(srtNum)
 	srtNum += strings.Repeat("0", offset)
 	num, err := strconv.ParseUint(srtNum, 10, 64)
 	if err != nil {
@@ -217,7 +228,7 @@ func normalizeForOrderedBytes(exp int8, num uint64) (int8, uint64, error) {
 func denormalizeForOrderedBytes(exp int8, num uint64) (int8, uint64, error) {
 	srtNum := strconv.FormatUint(num, 10)
 	srtNum = strings.TrimRight(srtNum, "0")
-	offset := maxNumLen - len(srtNum)
+	offset := MaxNumLen - len(srtNum)
 	num, err := strconv.ParseUint(srtNum, 10, 64)
 	if err != nil {
 		return 0, 0, errors.Wrapf(err, "failed to parse uint64 from %s", srtNum)

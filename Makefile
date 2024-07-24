@@ -20,6 +20,10 @@ lint:
 test:
 	$(BUILDER) test
 
+.PHONY: test-fuzz
+test-fuzz:
+	$(BUILDER) test-fuzz
+
 .PHONY: build
 build:
 	$(BUILDER) build

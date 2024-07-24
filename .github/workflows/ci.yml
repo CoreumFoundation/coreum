@@ -14,6 +14,7 @@ jobs:
         ci_step: [
           "lint",
           "test",
+          "test-fuzz",
           "integration tests coreum-modules",
           "integration tests coreum-ibc",
           "integration tests coreum-upgrade-v4.0.0",
@@ -26,6 +27,9 @@ jobs:
             command: make test
             codecov: true
             codecov-name: coreum
+          - ci_step: "test-fuzz"
+            command: make test-fuzz
+            codecov: false
           - ci_step: "integration tests coreum-modules"
             command: make integration-tests-modules
             codecov: true

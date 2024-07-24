@@ -68,6 +68,7 @@ var Commands = map[string]types.Command{
 	"release":        {Fn: coreum.ReleaseCored, Description: "Releases cored binary"},
 	"release/images": {Fn: coreum.ReleaseCoredImage, Description: "Releases cored docker images"},
 	"test":           {Fn: coreum.Test, Description: "Runs unit tests"},
+	"test-fuzz":      {Fn: coreum.TestFuzz, Description: "Runs fuzz tests"},
 	"tidy":           {Fn: golang.Tidy, Description: "Runs go mod tidy"},
 	"wasm": {
 		Fn:          coreum.CompileAllSmartContracts,
