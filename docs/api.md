@@ -1518,6 +1518,7 @@
     - [MsgIBCCloseChannel](#cosmwasm.wasm.v1.MsgIBCCloseChannel)
     - [MsgIBCSend](#cosmwasm.wasm.v1.MsgIBCSend)
     - [MsgIBCSendResponse](#cosmwasm.wasm.v1.MsgIBCSendResponse)
+    - [MsgIBCWriteAcknowledgementResponse](#cosmwasm.wasm.v1.MsgIBCWriteAcknowledgementResponse)
   
 - [cosmwasm/wasm/v1/proposal_legacy.proto](#cosmwasm/wasm/v1/proposal_legacy.proto)
     - [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate)
@@ -25681,6 +25682,20 @@ MsgIBCSendResponse
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `sequence` | [uint64](#uint64) |  |  `Sequence number of the IBC packet sent`  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgIBCWriteAcknowledgementResponse"></a>
+
+### MsgIBCWriteAcknowledgementResponse
+
+```
+MsgIBCWriteAcknowledgementResponse
+```
+
 
 
 
