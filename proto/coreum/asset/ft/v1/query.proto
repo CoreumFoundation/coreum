@@ -119,10 +119,21 @@ message QueryBalanceResponse {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // locked is the balance locked by vesting.
+  // locked is the balance locked by bank and assetft.
   string locked = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
+  ];
+  // locked is the balance locked by bank.
+  string locked_by_bank = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // locked is the balance locked by assetft.
+  string locked_by_ft = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "LockedByFT"
   ];
 }
 

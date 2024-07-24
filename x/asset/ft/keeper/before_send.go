@@ -83,8 +83,11 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 		for _, coin := range output.Coins {
 			def, err := k.GetDefinition(ctx, coin.Denom)
 			if sdkerrors.IsOf(err, types.ErrInvalidDenom, types.ErrTokenNotFound) {
-				// if the token is not defined in asset ft module, we assume this is different
-				// type of token (e.g core, ibc, etc) and don't apply asset ft rules.
+				// if the token doesn't have the definition we validate locking rule only.
+				if _, err := k.validateCoinIsNotLocked(ctx, sender, coin); err != nil {
+					return err
+				}
+
 				if err := k.bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coin)); err != nil {
 					return err
 				}
@@ -139,11 +142,11 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 				}
 			}
 
-			if err := k.isCoinSpendable(ctx, sender, def, coin.Amount); err != nil {
+			if err := k.validateCoinSpendable(ctx, sender, def, coin.Amount); err != nil {
 				return err
 			}
 
-			if err := k.isCoinReceivable(ctx, recipient, def, coin.Amount); err != nil {
+			if err := k.validateCoinReceivable(ctx, recipient, def, coin.Amount); err != nil {
 				return err
 			}
 

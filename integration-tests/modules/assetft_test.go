@@ -5,6 +5,7 @@ package modules
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -360,7 +362,7 @@ func TestBalanceQuery(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	assertT := assert.New(t)
+	requireT := require.New(t)
 
 	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 
@@ -371,6 +373,7 @@ func TestBalanceQuery(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
+			&vestingtypes.MsgCreateVestingAccount{},
 			&assetfttypes.MsgFreeze{},
 			&assetfttypes.MsgGloballyFreeze{},
 			&banktypes.MsgSend{},
@@ -396,13 +399,16 @@ func TestBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
 		msgIssue,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	denom := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+
 	whitelistedCoin := sdk.NewInt64Coin(denom, 30)
+	vestingCoin := sdk.NewInt64Coin(denom, 5)
 	frozenCoin := sdk.NewInt64Coin(denom, 20)
 	sendCoin := sdk.NewInt64Coin(denom, 10)
 
+	// whitelist the user to allow to create vesting account
 	msgWhitelist := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
@@ -414,8 +420,25 @@ func TestBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgWhitelist)),
 		msgWhitelist,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
+	// create vesting account
+	createAccMsg := &vestingtypes.MsgCreateVestingAccount{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(vestingCoin),
+		EndTime:     math.MaxInt64,
+		Delayed:     true,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createAccMsg)),
+		createAccMsg,
+	)
+	requireT.NoError(err)
+
+	// freeze
 	msgFreeze := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
@@ -427,8 +450,9 @@ func TestBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
 		msgFreeze,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
+	// send some coins to the recipient
 	msgSend := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
@@ -440,22 +464,27 @@ func TestBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	resp, err := ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+	ftBalanceRes, err := ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: recipient.String(),
 		Denom:   denom,
 	})
-	require.NoError(t, err)
+	requireT.NoError(err)
 
-	assertT.Equal(whitelistedCoin.Amount.String(), resp.Whitelisted.String())
-	assertT.Equal(frozenCoin.Amount.String(), resp.Frozen.String())
-	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
-	assertT.Equal("0", resp.Locked.String())
+	requireT.Equal(
+		assetfttypes.QueryBalanceResponse{
+			Balance:      sdk.NewInt(15),
+			Whitelisted:  whitelistedCoin.Amount,
+			Frozen:       frozenCoin.Amount,
+			Locked:       vestingCoin.Amount,
+			LockedByBank: vestingCoin.Amount,
+			LockedByFT:   sdk.ZeroInt(),
+		}, *ftBalanceRes,
+	)
 
 	// freeze globally now
-
 	msgGloballyFreeze := &assetfttypes.MsgGloballyFreeze{
 		Sender: issuer.String(),
 		Denom:  denom,
@@ -466,25 +495,32 @@ func TestBalanceQuery(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgGloballyFreeze)),
 		msgGloballyFreeze,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 
-	resp, err = ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+	ftBalanceRes, err = ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: recipient.String(),
 		Denom:   denom,
 	})
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-	recipientBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	bankBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: recipient.String(),
 		Denom:   denom,
 	})
-	require.NoError(t, err)
+	requireT.NoError(err)
 
-	assertT.Equal(whitelistedCoin.Amount.String(), resp.Whitelisted.String())
-	assertT.Equal(recipientBalanceRes.Balance.Amount.String(), resp.Frozen.String())
-	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
-	assertT.Equal("0", resp.Locked.String())
+	requireT.Equal(
+		assetfttypes.QueryBalanceResponse{
+			Balance:     bankBalanceRes.Balance.Amount,
+			Whitelisted: whitelistedCoin.Amount,
+			// balance is frozen
+			Frozen:       bankBalanceRes.Balance.Amount,
+			Locked:       vestingCoin.Amount,
+			LockedByBank: vestingCoin.Amount,
+			LockedByFT:   sdk.ZeroInt(),
+		}, *ftBalanceRes,
+	)
 }
 
 func TestSpendableBalanceQuery(t *testing.T) {
@@ -697,7 +733,7 @@ func TestEmptyBalanceQuery(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	assertT := assert.New(t)
+	requireT := require.New(t)
 
 	account := chain.GenAccount()
 
@@ -708,10 +744,16 @@ func TestEmptyBalanceQuery(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assertT.Equal("0", resp.Whitelisted.String())
-	assertT.Equal("0", resp.Frozen.String())
-	assertT.Equal("0", resp.Balance.String())
-	assertT.Equal("0", resp.Locked.String())
+	requireT.Equal(
+		assetfttypes.QueryBalanceResponse{
+			Balance:      sdk.ZeroInt(),
+			Whitelisted:  sdk.ZeroInt(),
+			Frozen:       sdk.ZeroInt(),
+			Locked:       sdk.ZeroInt(),
+			LockedByBank: sdk.ZeroInt(),
+			LockedByFT:   sdk.ZeroInt(),
+		}, *resp,
+	)
 }
 
 // TestAssetFTMint tests mint functionality of fungible tokens.

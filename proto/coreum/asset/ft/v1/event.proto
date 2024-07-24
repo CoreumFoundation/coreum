@@ -67,6 +67,19 @@ message EventWhitelistedAmountChanged {
   ];
 }
 
+message EventLockedAmountChanged {
+  string account = 1;
+  string denom = 2;
+  string previous_amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string current_amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 message EventAdminTransferred {
   string denom = 1;
   string previous_admin = 2;

@@ -20,6 +20,8 @@ message GenesisState {
   repeated Balance whitelisted_balances = 4 [(gogoproto.nullable) = false];
   // pending_token_upgrades contains pending token upgrades.
   repeated PendingTokenUpgrade pending_token_upgrades = 5 [(gogoproto.nullable) = false];
+  // locked_balances contains the locked balances on all of the accounts
+  repeated Balance locked_balances = 6 [(gogoproto.nullable) = false];
 }
 
 // Balance defines an account address and balance pair used module genesis genesis state.

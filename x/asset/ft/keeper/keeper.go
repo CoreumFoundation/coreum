@@ -689,6 +689,98 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 	}
 }
 
+// Lock locks specified token from the specified account.
+func (k Keeper) Lock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	// in the final implementation the `Lock` will accept lock reason struct from dex, to let assetft decide
+	// whether the locking is allowed. The same struct will be passed to the extensions smart contract.
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "locking amount must be positive")
+	}
+
+	if err := k.lockingChecks(ctx, addr, coin); err != nil {
+		return err
+	}
+
+	lockedStore := k.lockedAccountBalanceStore(ctx, addr)
+	lockedBalance := lockedStore.Balance(coin.Denom)
+	newLockedBalance := lockedBalance.Add(coin)
+	lockedStore.SetBalance(newLockedBalance)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventLockedAmountChanged{
+		Account:        addr.String(),
+		Denom:          coin.Denom,
+		PreviousAmount: lockedBalance.Amount,
+		CurrentAmount:  newLockedBalance.Amount,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventLockedAmountChanged event: %s", err)
+	}
+
+	return nil
+}
+
+// Unlock unlocks specified tokens from the specified account.
+func (k Keeper) Unlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "unlock amount should be positive")
+	}
+
+	lockedStore := k.lockedAccountBalanceStore(ctx, addr)
+	lockedBalance := lockedStore.Balance(coin.Denom)
+	if !lockedBalance.IsGTE(coin) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
+			"unlock request %s is greater than the available locked balance %s",
+			coin.String(),
+			lockedBalance.String(),
+		)
+	}
+
+	newLockedBalance := lockedBalance.Sub(coin)
+	lockedStore.SetBalance(newLockedBalance)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventLockedAmountChanged{
+		Account:        addr.String(),
+		Denom:          coin.Denom,
+		PreviousAmount: lockedBalance.Amount,
+		CurrentAmount:  newLockedBalance.Amount,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventLockedAmountChanged event: %s", err)
+	}
+
+	return nil
+}
+
+// GetLockedBalance returns the balance locked by assetft.
+func (k Keeper) GetLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+	return k.lockedAccountBalanceStore(ctx, addr).Balance(denom)
+}
+
+// GetLockedBalances returns the locked balances of an account.
+func (k Keeper) GetLockedBalances(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	pagination *query.PageRequest,
+) (sdk.Coins, *query.PageResponse, error) {
+	return k.lockedAccountBalanceStore(ctx, addr).Balances(pagination)
+}
+
+// GetAccountsLockedBalances returns the locked balance on all the account.
+func (k Keeper) GetAccountsLockedBalances(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.Balance, *query.PageResponse, error) {
+	return collectBalances(k.cdc, k.lockedBalancesStore(ctx), pagination)
+}
+
+// SetLockedBalances sets the locked balances of a specified account.
+// Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you
+// need set zero amount use the slice []sdk.Coins.
+func (k Keeper) SetLockedBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
+	lockedStore := k.lockedAccountBalanceStore(ctx, addr)
+	for _, coin := range coins {
+		lockedStore.SetBalance(coin)
+	}
+}
+
 // TransferAdmin changes admin of a fungible token.
 func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, denom string) error {
 	def, err := k.GetDefinition(ctx, denom)
@@ -772,7 +864,7 @@ func (k Keeper) mintIfReceivable(
 		ctx = cwasmtypes.WithSmartContractRecipient(ctx, recipient.String())
 	}
 
-	if err := k.isCoinReceivable(ctx, recipient, def, amount); err != nil {
+	if err := k.validateCoinReceivable(ctx, recipient, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not receivable")
 	}
 
@@ -799,7 +891,7 @@ func (k Keeper) burnIfSpendable(
 	def types.Definition,
 	amount sdkmath.Int,
 ) error {
-	if err := k.isCoinSpendable(ctx, account, def, amount); err != nil {
+	if err := k.validateCoinSpendable(ctx, account, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}
 
@@ -818,11 +910,16 @@ func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, coinsToBurn sdk.Co
 	return nil
 }
 
-func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdkmath.Int) error {
+func (k Keeper) validateCoinSpendable(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	def types.Definition,
+	amount sdkmath.Int,
+) error {
 	// This check is effective when IBC transfer is acknowledged by the peer chain. It happens in two situations:
 	// - when transfer succeeded
 	// - when transfer has been rejected by the other chain.
-	// `isCoinSpendable` is called only in the second case, that's why we don't need to differentiate them here.
+	// `validateCoinSpendable` is called only in the second case, that's why we don't need to differentiate them here.
 	// So, whenever it happens here, it means transfer has been rejected. It means that funds are going to be refunded
 	// back to the sender by the IBC transfer module.
 	// It should succeed even if the issuer decided, for whatever reason, to freeze the escrow address.
@@ -861,17 +958,30 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		)
 	}
 
+	// notLockedAmt is amount without the locked by assetft amount
+	notLockedAmt, err := k.validateCoinIsNotLocked(ctx, addr, sdk.NewCoin(def.Denom, amount))
+	if err != nil {
+		return err
+	}
+
 	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
-		availableBalance := k.availableBalance(ctx, addr, def.Denom)
-		if !availableBalance.Amount.GTE(amount) {
-			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s",
-				sdk.NewCoin(def.Denom, amount), availableBalance)
+		frozenAmt := k.GetFrozenBalance(ctx, addr, def.Denom).Amount
+		notFrozenAmt := notLockedAmt.Sub(frozenAmt)
+		if notFrozenAmt.LT(amount) {
+			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s%s is not available, available %s%s",
+				amount.String(), def.Denom, notFrozenAmt.String(), def.Denom)
 		}
 	}
+
 	return nil
 }
 
-func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdkmath.Int) error {
+func (k Keeper) validateCoinReceivable(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	def types.Definition,
+	amount sdkmath.Int,
+) error {
 	// This check is effective when funds for IBC transfers are received by the escrow address.
 	// If IBC is enabled we always accept escrow address as a receiver of the funds because it must work
 	// despite the fact that address is not whitelisted.
@@ -888,7 +998,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 	// This check is effective when IBC transfer is acknowledged by the peer chain. It happens in two situations:
 	// - when transfer succeeded
 	// - when transfer has been rejected by the other chain.
-	// `isCoinReceivable` is called only in the second case, that's why we don't need to differentiate them here.
+	// `validateCoinReceivable` is called only in the second case, that's why we don't need to differentiate them here.
 	// So, whenever it happens here, it means transfer has been rejected. It means that funds are going to be refunded
 	// back to the sender by the IBC transfer module.
 	// That means we should allow to do this even if the sender is no longer whitelisted. It might happen that between
@@ -930,19 +1040,6 @@ func (k Keeper) isSymbolDuplicated(ctx sdk.Context, symbol string, issuer sdk.Ac
 	compositeKey := types.CreateSymbolKey(issuer, symbol)
 	rawBytes := ctx.KVStore(k.storeKey).Get(compositeKey)
 	return rawBytes != nil
-}
-
-func (k Keeper) availableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
-	balance := k.bankKeeper.GetBalance(ctx, addr, denom)
-	if balance.IsZero() {
-		return balance
-	}
-
-	frozenBalance := k.GetFrozenBalance(ctx, addr, denom)
-	if frozenBalance.IsGTE(balance) {
-		return sdk.NewCoin(denom, sdkmath.ZeroInt())
-	}
-	return balance.Sub(frozenBalance)
 }
 
 func (k Keeper) getDefinitions(
@@ -1095,6 +1192,57 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 // whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account.
 func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateWhitelistedBalancesKey(addr))
+}
+
+// lockedBalancesStore get the store for the locked balances of all accounts.
+func (k Keeper) lockedBalancesStore(ctx sdk.Context) prefix.Store {
+	return prefix.NewStore(ctx.KVStore(k.storeKey), types.LockedBalancesKeyPrefix)
+}
+
+// lockedAccountBalanceStore gets the store for the locked balances of an account.
+func (k Keeper) lockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
+	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateLockedBalancesKey(addr))
+}
+
+func (k Keeper) lockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	notLockedAmt, err := k.validateCoinIsNotLocked(ctx, addr, coin)
+	if err != nil {
+		return err
+	}
+
+	frozenAmt := k.GetFrozenBalance(ctx, addr, coin.Denom).Amount
+	notFrozenTotalAmt := notLockedAmt.Sub(frozenAmt)
+	if notFrozenTotalAmt.LT(coin.Amount) {
+		return sdkerrors.Wrapf(
+			cosmoserrors.ErrInsufficientFunds,
+			"failed to lock %s available balance %s%s",
+			coin.String(),
+			notFrozenTotalAmt,
+			coin.Denom,
+		)
+	}
+
+	return nil
+}
+
+func (k Keeper) validateCoinIsNotLocked(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	coin sdk.Coin,
+) (sdkmath.Int, error) {
+	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
+	notLockedAmt := balance.Amount.Sub(k.GetLockedBalance(ctx, addr, coin.Denom).Amount)
+
+	bankLockedAmt := k.bankKeeper.LockedCoins(ctx, addr).AmountOf(coin.Denom)
+	// validate that we don't use the coins locked by bank
+	notBankLockedAmt := notLockedAmt.Sub(bankLockedAmt)
+	if notBankLockedAmt.LT(coin.Amount) {
+		return sdkmath.Int{},
+			sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s%s",
+				coin.String(), notBankLockedAmt.String(), coin.Denom)
+	}
+
+	return notLockedAmt, nil
 }
 
 // logger returns the Keeper logger.

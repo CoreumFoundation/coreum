@@ -15,6 +15,7 @@
     - [EventAmountClawedBack](#coreum.asset.ft.v1.EventAmountClawedBack)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
+    - [EventLockedAmountChanged](#coreum.asset.ft.v1.EventLockedAmountChanged)
     - [EventWhitelistedAmountChanged](#coreum.asset.ft.v1.EventWhitelistedAmountChanged)
   
 - [coreum/asset/ft/v1/genesis.proto](#coreum/asset/ft/v1/genesis.proto)
@@ -1721,6 +1722,24 @@ EventIssued is emitted on MsgIssue.
 
 
 
+<a name="coreum.asset.ft.v1.EventLockedAmountChanged"></a>
+
+### EventLockedAmountChanged
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `account` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
+| `previous_amount` | [string](#string) |  |    |
+| `current_amount` | [string](#string) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.EventWhitelistedAmountChanged"></a>
 
 ### EventWhitelistedAmountChanged
@@ -1792,6 +1811,7 @@ GenesisState defines the module genesis state.
 | `frozen_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |  `frozen_balances contains the frozen balances on all of the accounts`  |
 | `whitelisted_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |  `whitelisted_balances contains the whitelisted balances on all of the accounts`  |
 | `pending_token_upgrades` | [PendingTokenUpgrade](#coreum.asset.ft.v1.PendingTokenUpgrade) | repeated |  `pending_token_upgrades contains pending token upgrades.`  |
+| `locked_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |  `locked_balances contains the locked balances on all of the accounts`  |
 
 
 
@@ -1898,7 +1918,9 @@ Params store gov manageable parameters.
 | `balance` | [string](#string) |  |  `balance contains the balance with the queried account and denom`  |
 | `whitelisted` | [string](#string) |  |  `whitelisted is the whitelisted amount of the denom on the account.`  |
 | `frozen` | [string](#string) |  |  `frozen is the frozen amount of the denom on the account.`  |
-| `locked` | [string](#string) |  |  `locked is the balance locked by vesting.`  |
+| `locked` | [string](#string) |  |  `locked is the balance locked by bank and assetft.`  |
+| `locked_by_bank` | [string](#string) |  |  `locked is the balance locked by bank.`  |
+| `locked_by_ft` | [string](#string) |  |  `locked is the balance locked by ft.`  |
 
 
 
