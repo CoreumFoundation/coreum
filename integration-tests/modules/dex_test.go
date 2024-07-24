@@ -70,7 +70,6 @@ func TestOrdersMatching(t *testing.T) {
 		Id:      placeSellOrderMsg.ID,
 	})
 	requireT.NoError(err)
-	requireT.NotNil(sellOrderRes.Order)
 
 	requireT.Equal(dextypes.Order{
 		Account:           acc1.String(),
@@ -82,7 +81,7 @@ func TestOrdersMatching(t *testing.T) {
 		Side:              dextypes.Side_sell,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
-	}, *sellOrderRes.Order)
+	}, sellOrderRes.Order)
 
 	// place buy order to match the sell
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
@@ -104,13 +103,11 @@ func TestOrdersMatching(t *testing.T) {
 	requireT.NoError(err)
 
 	// now query the sell order
-	sellOrderRes, err = dexClient.Order(ctx, &dextypes.QueryOrderRequest{
+	_, err = dexClient.Order(ctx, &dextypes.QueryOrderRequest{
 		Account: placeSellOrderMsg.Sender,
 		Id:      placeSellOrderMsg.ID,
 	})
-	requireT.NoError(err)
-	// sell order was matched fully
-	requireT.Nil(sellOrderRes.Order)
+	requireT.ErrorContains(err, dextypes.ErrRecordNotFound.Error())
 
 	// check remaining buy order
 	buyOrderRes, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
@@ -130,7 +127,7 @@ func TestOrdersMatching(t *testing.T) {
 		Side:              dextypes.Side_buy,
 		RemainingQuantity: sdkmath.NewInt(200),
 		RemainingBalance:  sdkmath.NewInt(23),
-	}, *buyOrderRes.Order)
+	}, buyOrderRes.Order)
 
 	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc1.String(),

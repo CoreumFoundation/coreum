@@ -110,9 +110,8 @@ func placeRandomOrderAndAssertOrdering(
 
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 
-	orderBookID, found, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, baseDenom, quoteDenom)
+	orderBookID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, baseDenom, quoteDenom)
 	require.NoError(t, err)
-	require.True(t, found)
 
 	assertOrdersOrdering(t, testApp, sdkCtx, orderBookID, side)
 

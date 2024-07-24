@@ -11,4 +11,6 @@ var (
 	ErrInvalidKey = sdkerrors.Register(ModuleName, 2, "invalid key")
 	// ErrInvalidState is returned when state of the module is invalid.
 	ErrInvalidState = sdkerrors.Register(ModuleName, 3, "invalid state")
+	// ErrRecordNotFound is returned when record is not found in the store.
+	ErrRecordNotFound = sdkerrors.Register(ModuleName, 4, "record not found")
 )

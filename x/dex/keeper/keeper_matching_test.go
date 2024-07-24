@@ -674,8 +674,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orderBooksIDs := make(map[uint32]struct{})
 			for _, order := range tt.orders(accSet) {
 				require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
-				orderBooksID, found, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, order.BaseDenom, order.QuoteDenom)
-				require.True(t, found)
+				orderBooksID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, order.BaseDenom, order.QuoteDenom)
 				require.NoError(t, err)
 				orderBooksIDs[orderBooksID] = struct{}{}
 			}

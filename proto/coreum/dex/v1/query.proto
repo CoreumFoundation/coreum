@@ -25,5 +25,5 @@ message QueryOrderRequest {
 
 // QueryOrderRequestResponse defines the response type for the `Order` query.
 message QueryOrderResponse {
-  Order order = 1 [(gogoproto.nullable) = true];
+  Order order = 1 [(gogoproto.nullable) = false];
 }

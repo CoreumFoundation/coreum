@@ -83,12 +83,10 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 		testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 
 		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
-		selfOrderBookID, found, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, item.baseDenom, item.quoteDenom)
+		selfOrderBookID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, item.baseDenom, item.quoteDenom)
 		require.NoError(t, err)
-		require.True(t, found)
-		oppositeOrderBookID, found, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, item.quoteDenom, item.baseDenom)
+		oppositeOrderBookID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, item.quoteDenom, item.baseDenom)
 		require.NoError(t, err)
-		require.True(t, found)
 
 		require.Equal(t, item.expectedSelfOrderBookID, selfOrderBookID)
 		require.Equal(t, item.expectedOppositeOrderBookID, oppositeOrderBookID)
@@ -119,13 +117,14 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
 
 	// try to place the sellOrder one more time
-	require.ErrorContains(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder), "is already created")
+	err = dexKeeper.PlaceOrder(sdkCtx, sellOrder)
+	require.ErrorIs(t, err, types.ErrInvalidInput)
+	require.ErrorContains(t, err, "is already created")
 
-	gotOrder, found, err := dexKeeper.GetOrderByAddressAndID(
+	gotOrder, err := dexKeeper.GetOrderByAddressAndID(
 		sdkCtx, sdk.MustAccAddressFromBech32(sellOrder.Account), sellOrder.ID,
 	)
 	require.NoError(t, err)
-	require.True(t, found)
 
 	// set expected values
 	sellOrder.RemainingQuantity = sdkmath.NewInt(10)
@@ -149,11 +148,10 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
 
-	gotOrder, found, err = dexKeeper.GetOrderByAddressAndID(
+	gotOrder, err = dexKeeper.GetOrderByAddressAndID(
 		sdkCtx, sdk.MustAccAddressFromBech32(buyOrder.Account), buyOrder.ID,
 	)
 	require.NoError(t, err)
-	require.True(t, found)
 
 	// set expected values
 	buyOrder.RemainingQuantity = sdkmath.NewInt(100)
@@ -172,9 +170,8 @@ func getOrderBookOrders(
 	orders := make([]types.Order, 0, len(records))
 	for _, record := range records {
 		addr := sdk.MustAccAddressFromBech32(testApp.AccountKeeper.GetAccountAddressByID(sdkCtx, record.AccountNumber))
-		order, found, err := testApp.DEXKeeper.GetOrderByAddressAndID(sdkCtx, addr, record.OrderID)
+		order, err := testApp.DEXKeeper.GetOrderByAddressAndID(sdkCtx, addr, record.OrderID)
 		require.NoError(t, err)
-		require.True(t, found)
 		orders = append(orders, order)
 	}
 

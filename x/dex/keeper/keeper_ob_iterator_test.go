@@ -271,10 +271,8 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 					require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 
-					var found bool
-					orderBookID, found, err = testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, baseDenom, quoteDenom)
+					orderBookID, err = testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, baseDenom, quoteDenom)
 					require.NoError(t, err)
-					require.True(t, found)
 					orderBookIsCreated = true
 
 					// check just after saving

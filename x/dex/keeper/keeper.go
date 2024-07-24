@@ -47,12 +47,14 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 		return err
 	}
 
-	_, found, err := k.getOrderSeqByID(ctx, accNumber, order.ID)
+	// validate duplicated order ID
+	_, err = k.getOrderSeqByID(ctx, accNumber, order.ID)
 	if err != nil {
-		return err
-	}
-	if found {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "order with the id %q is already created", order.ID)
+		if !sdkerrors.IsOf(err, types.ErrRecordNotFound) {
+			return err
+		}
+	} else {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "order with the id %q is already created", order.ID)
 	}
 
 	orderBookID, _, err := k.getOrGenOrderBookIDs(ctx, order.BaseDenom, order.QuoteDenom)
@@ -64,51 +66,43 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 }
 
 // GetOrderBookIDByDenoms returns order book ID by it's denoms.
-func (k Keeper) GetOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, bool, error) {
+func (k Keeper) GetOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, error) {
 	orderBookIDKey, err := types.CreateOrderBookKey(baseDenom, quoteDenom)
 	if err != nil {
-		return 0, false, err
+		return 0, err
 	}
 
-	return k.getOrderBookIDByKey(ctx, orderBookIDKey)
+	orderBookID, err := k.getOrderBookIDByKey(ctx, orderBookIDKey)
+	if err != nil {
+		return 0, sdkerrors.Wrapf(err, "faild to get order book ID, baseDenom: %s, quoteDenom: %s", baseDenom, quoteDenom)
+	}
+
+	return orderBookID, nil
 }
 
 // GetOrderByAddressAndID returns order by holder address and it's ID.
-func (k Keeper) GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orderID string) (types.Order, bool, error) {
+func (k Keeper) GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orderID string) (types.Order, error) {
 	accountNumber, err := k.getAccountNumber(ctx, acc.String())
 	if err != nil {
-		return types.Order{}, false, err
+		return types.Order{}, err
 	}
 
-	orderSeq, found, err := k.getOrderSeqByID(ctx, accountNumber, orderID)
+	orderSeq, err := k.getOrderSeqByID(ctx, accountNumber, orderID)
 	if err != nil {
-		return types.Order{}, false, err
-	}
-	if !found {
-		return types.Order{}, false, nil
+		return types.Order{}, err
 	}
 
-	orderData, found, err := k.getOrderData(ctx, orderSeq)
+	orderData, err := k.getOrderData(ctx, orderSeq)
 	if err != nil {
-		return types.Order{}, false, err
-	}
-	if !found {
-		return types.Order{}, false, sdkerrors.Wrapf(
-			types.ErrInvalidState, "failed to get order data by order seq, not found: %d", orderSeq,
-		)
+		return types.Order{}, err
 	}
 
-	orderBookData, found, err := k.getOrderBookData(ctx, orderData.OrderBookID)
+	orderBookData, err := k.getOrderBookData(ctx, orderData.OrderBookID)
 	if err != nil {
-		return types.Order{}, false, err
-	}
-	if !found {
-		return types.Order{}, false, sdkerrors.Wrapf(
-			types.ErrInvalidState, "failed to get order book data by ID, not found: %d", orderData.OrderBookID,
-		)
+		return types.Order{}, err
 	}
 
-	orderBookRecord, found, err := k.getOrderBookRecord(
+	orderBookRecord, err := k.getOrderBookRecord(
 		ctx,
 		orderData.OrderBookID,
 		orderData.Side,
@@ -116,12 +110,7 @@ func (k Keeper) GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orde
 		orderSeq,
 	)
 	if err != nil {
-		return types.Order{}, false, err
-	}
-	if !found {
-		return types.Order{}, false, sdkerrors.Wrapf(
-			types.ErrInvalidState, "failed to get order record, orderData: %v, orderSeq: %d", orderData, orderSeq,
-		)
+		return types.Order{}, err
 	}
 
 	return types.Order{
@@ -134,7 +123,7 @@ func (k Keeper) GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orde
 		Side:              orderData.Side,
 		RemainingQuantity: orderBookRecord.RemainingQuantity,
 		RemainingBalance:  orderBookRecord.RemainingBalance,
-	}, true, nil
+	}, nil
 }
 
 func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, uint32, error) {
@@ -152,13 +141,14 @@ func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom stri
 	if err != nil {
 		return 0, 0, err
 	}
-	orderBookID0, found, err := k.getOrderBookIDByKey(ctx, key0)
+	orderBookID0, err := k.getOrderBookIDByKey(ctx, key0)
 	if err != nil {
-		return 0, 0, err
-	}
-	if !found {
-		orderBookID0, err = k.genOrderBookIDsFromDenoms(ctx, key0, denom0, denom1)
-		if err != nil {
+		if sdkerrors.IsOf(err, types.ErrRecordNotFound) {
+			orderBookID0, err = k.genOrderBookIDsFromDenoms(ctx, key0, denom0, denom1)
+			if err != nil {
+				return 0, 0, err
+			}
+		} else {
 			return 0, 0, err
 		}
 	}
@@ -170,10 +160,13 @@ func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom stri
 	return orderBookID0 + 1, orderBookID0, nil
 }
 
-func (k Keeper) getOrderBookIDByKey(ctx sdk.Context, key []byte) (uint32, bool, error) {
+func (k Keeper) getOrderBookIDByKey(ctx sdk.Context, key []byte) (uint32, error) {
 	var val gogotypes.UInt32Value
-	found, err := k.getDataFromStore(ctx, key, &val)
-	return val.GetValue(), found, err
+	if err := k.getDataFromStore(ctx, key, &val); err != nil {
+		return 0, sdkerrors.Wrapf(err, "faild to get order book ID by key %v", key)
+	}
+
+	return val.GetValue(), nil
 }
 
 func (k Keeper) genOrderBookIDsFromDenoms(ctx sdk.Context, key []byte, denom0, denom1 string) (uint32, error) {
@@ -271,10 +264,13 @@ func (k Keeper) saveOrderBookData(ctx sdk.Context, orderBookID uint32, data type
 	return k.setDataToStore(ctx, types.CreateOrderBookDataKey(orderBookID), &data)
 }
 
-func (k Keeper) getOrderBookData(ctx sdk.Context, orderBookID uint32) (types.OrderBookData, bool, error) {
+func (k Keeper) getOrderBookData(ctx sdk.Context, orderBookID uint32) (types.OrderBookData, error) {
 	var val types.OrderBookData
-	found, err := k.getDataFromStore(ctx, types.CreateOrderBookDataKey(orderBookID), &val)
-	return val, found, err
+	if err := k.getDataFromStore(ctx, types.CreateOrderBookDataKey(orderBookID), &val); err != nil {
+		return types.OrderBookData{},
+			sdkerrors.Wrapf(err, "failed to get order book data, orderBookID: %d", orderBookID)
+	}
+	return val, nil
 }
 
 func (k Keeper) genNextOrderSeq(ctx sdk.Context) (uint64, error) {
@@ -306,15 +302,21 @@ func (k Keeper) getOrderBookRecord(
 	side types.Side,
 	price types.Price,
 	orderSeq uint64,
-) (types.OrderBookRecordData, bool, error) {
+) (types.OrderBookRecordData, error) {
 	key, err := types.CreateOrderBookRecordKey(orderBookID, side, price, orderSeq)
 	if err != nil {
-		return types.OrderBookRecordData{}, false, err
+		return types.OrderBookRecordData{}, err
 	}
 
 	var val types.OrderBookRecordData
-	found, err := k.getDataFromStore(ctx, key, &val)
-	return val, found, err
+	if err := k.getDataFromStore(ctx, key, &val); err != nil {
+		return types.OrderBookRecordData{},
+			sdkerrors.Wrapf(
+				err,
+				"faild to get order book record, orderBookID: %d, side: %s, price: %s, orderSeq: %d",
+				orderBookID, side.String(), price.String(), orderSeq)
+	}
+	return val, nil
 }
 
 func (k Keeper) removeOrderBookRecord(
@@ -341,10 +343,12 @@ func (k Keeper) removeOrderData(ctx sdk.Context, orderSeq uint64) {
 	ctx.KVStore(k.storeKey).Delete(types.CreateOrderKey(orderSeq))
 }
 
-func (k Keeper) getOrderData(ctx sdk.Context, orderSeq uint64) (types.OrderData, bool, error) {
+func (k Keeper) getOrderData(ctx sdk.Context, orderSeq uint64) (types.OrderData, error) {
 	var val types.OrderData
-	found, err := k.getDataFromStore(ctx, types.CreateOrderKey(orderSeq), &val)
-	return val, found, err
+	if err := k.getDataFromStore(ctx, types.CreateOrderKey(orderSeq), &val); err != nil {
+		return types.OrderData{}, sdkerrors.Wrapf(err, "failed to get order data, orderSeq: %d", orderSeq)
+	}
+	return val, nil
 }
 
 func (k Keeper) savaOrderIDToSeq(ctx sdk.Context, accountNumber uint64, orderID string, orderSeq uint64) error {
@@ -365,14 +369,16 @@ func (k Keeper) removeOrderIDToSeq(ctx sdk.Context, accountNumber uint64, orderI
 	return nil
 }
 
-func (k Keeper) getOrderSeqByID(ctx sdk.Context, accountNumber uint64, orderID string) (uint64, bool, error) {
+func (k Keeper) getOrderSeqByID(ctx sdk.Context, accountNumber uint64, orderID string) (uint64, error) {
 	key, err := types.CreateOrderIDToSeqKey(accountNumber, orderID)
 	if err != nil {
-		return 0, false, err
+		return 0, err
 	}
 	var val gogotypes.UInt64Value
-	found, err := k.getDataFromStore(ctx, key, &val)
-	return val.GetValue(), found, err
+	if err := k.getDataFromStore(ctx, key, &val); err != nil {
+		return 0, sdkerrors.Wrapf(err, "failed to get order seq, accountNumber: %d, orderID: %s", accountNumber, orderID)
+	}
+	return val.GetValue(), err
 }
 
 func (k Keeper) setDataToStore(
@@ -392,17 +398,17 @@ func (k Keeper) getDataFromStore(
 	ctx sdk.Context,
 	key []byte,
 	val codec.ProtoMarshaler,
-) (bool, error) {
+) error {
 	bz := ctx.KVStore(k.storeKey).Get(key)
 	if bz == nil {
-		return false, nil
+		return sdkerrors.Wrapf(types.ErrRecordNotFound, "store type %T", val)
 	}
 
 	if err := k.cdc.Unmarshal(bz, val); err != nil {
-		return false, sdkerrors.Wrapf(types.ErrInvalidState, "failed to unmarshal %T, err: %s", err, val)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to unmarshal %T, err: %s", err, val)
 	}
 
-	return true, nil
+	return nil
 }
 
 // logger returns the Keeper logger.

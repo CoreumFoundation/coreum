@@ -13,7 +13,7 @@ var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
-	GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orderID string) (types.Order, bool, error)
+	GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orderID string) (types.Order, error)
 }
 
 // QueryService serves grpc query requests for the module.
@@ -34,15 +34,12 @@ func (qs QueryService) Order(ctx context.Context, req *types.QueryOrderRequest) 
 	if err != nil {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", req.Account)
 	}
-	order, found, err := qs.keeper.GetOrderByAddressAndID(sdk.UnwrapSDKContext(ctx), accAddr, req.Id)
+	order, err := qs.keeper.GetOrderByAddressAndID(sdk.UnwrapSDKContext(ctx), accAddr, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	if !found {
-		return &types.QueryOrderResponse{}, nil
-	}
 
 	return &types.QueryOrderResponse{
-		Order: &order,
+		Order: order,
 	}, nil
 }
