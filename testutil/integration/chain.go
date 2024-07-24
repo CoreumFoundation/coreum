@@ -5,10 +5,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,6 +20,7 @@ import (
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -274,9 +278,17 @@ func NewChain(
 	chainSettings ChainSettings,
 	fundingMnemonic string,
 ) Chain {
-	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
+	encodingConfig := config.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Codec:             tempApp.AppCodec(),
+		TxConfig:          tempApp.TxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
 
 	clientCtx := client.NewContext(DefaultClientContextConfig(), app.ModuleBasics).
+		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+		WithTxConfig(encodingConfig.TxConfig).
 		WithChainID(chainSettings.ChainID).
 		WithKeyring(coreumkeyring.NewConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
 		WithBroadcastMode(flags.BroadcastSync).
@@ -403,4 +415,14 @@ func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 	}
 
 	return grpcClient, nil
+}
+
+func tempDir() string {
+	dir, err := os.MkdirTemp("", "integration-test")
+	if err != nil {
+		panic("failed to create temp dir: " + err.Error())
+	}
+	defer os.RemoveAll(dir)
+
+	return dir
 }

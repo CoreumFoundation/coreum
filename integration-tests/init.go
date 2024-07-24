@@ -125,8 +125,12 @@ func init() {
 	coreumSettings.GasPrice = coreumFeemodelParamsRes.Params.Model.InitialGasPrice
 	coreumSettings.CoinType = constant.CoinType
 	coreumSettings.RPCAddress = coreumRPCAddress
-
-	config.SetSDKConfig(coreumSettings.AddressPrefix, constant.CoinType)
+	network, err := config.NetworkConfigByChainID(constant.ChainID(coreumSettings.ChainID))
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
+	app.ChosenNetwork = network
+	network.SetSDKConfig()
 
 	coreumRPCClient, err := sdkclient.NewClientFromNode(coreumRPCAddress)
 	if err != nil {

@@ -99,16 +99,16 @@ func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(
 }
 
 // SendCoins is a BaseKeeper SendCoins wrapped method.
-func (k BaseKeeperWrapper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	sdkContext := sdk.UnwrapSDKContext(ctx)
-	if k.isSmartContract(sdkContext, fromAddr) {
-		ctx = cwasmtypes.WithSmartContractSender(sdkContext, fromAddr.String())
+func (k BaseKeeperWrapper) SendCoins(goCtx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if k.isSmartContract(ctx, fromAddr) {
+		ctx = cwasmtypes.WithSmartContractSender(ctx, fromAddr.String())
 	}
-	if k.isSmartContract(sdkContext, toAddr) {
-		ctx = cwasmtypes.WithSmartContractRecipient(sdkContext, toAddr.String())
+	if k.isSmartContract(ctx, toAddr) {
+		ctx = cwasmtypes.WithSmartContractRecipient(ctx, toAddr.String())
 	}
 
-	return k.ftProvider.BeforeSendCoins(sdkContext, fromAddr, toAddr, amt)
+	return k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt)
 }
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
