@@ -60,6 +60,9 @@ service Msg {
 
 // MsgIssue defines message to issue new fungible token.
 message MsgIssue {
+  option (cosmos.msg.v1.signer) = "issuer";
+  option (amino.name) = "assetft/MsgIssue";
+
   string issuer = 1;
   string symbol = 2;
   string subunit = 3;
@@ -109,69 +112,105 @@ message ExtensionIssueSettings {
 }
 
 message MsgMint {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgMint";
+
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
   string recipient = 3;
 }
 
 message MsgBurn {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgBurn";
+
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgFreeze {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgFreeze";
+
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgUnfreeze {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgUnfreeze";
+
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgSetFrozen {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/SetFrozen";
+
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgGloballyFreeze {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgGloballyFreeze";
+
   string sender = 1;
   string denom = 2;
 }
 
 message MsgGloballyUnfreeze {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgGloballyUnfreeze";
+
   string sender = 1;
   string denom = 2;
 }
 
 message MsgClawback {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgClawback";
+
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgSetWhitelistedLimit {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgSetWhitelistedLimit";
+
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgTransferAdmin {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgTransferAdmin";
+
   string sender = 1;
   string account = 2;
   string denom = 3;
 }
 
 message MsgClearAdmin {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgClearAdmin";
+
   string sender = 1;
   string denom = 2;
 }
 
 // MsgUpgradeTokenV1 is the message upgrading token to V1.
 message MsgUpgradeTokenV1 {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgUpgradeTokenV1";
+
   string sender = 1;
   string denom = 2;
   bool ibc_enabled = 3;

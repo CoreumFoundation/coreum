@@ -53,6 +53,9 @@ service Msg {
 
 // MsgIssueClass defines message for the IssueClass method.
 message MsgIssueClass {
+  option (cosmos.msg.v1.signer) = "issuer";
+  option (amino.name) = "assetnft/MsgIssueClass";
+
   string issuer = 1;
   string symbol = 2;
   string name = 3;
@@ -69,6 +72,9 @@ message MsgIssueClass {
 
 // MsgMint defines message for the Mint method.
 message MsgMint {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgMint";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
@@ -81,6 +87,9 @@ message MsgMint {
 
 // MsgUpdateData defines message to update the dynamic data.
 message MsgUpdateData {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgUpdateData";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
@@ -89,36 +98,54 @@ message MsgUpdateData {
 
 // MsgBurn defines message for the Burn method.
 message MsgBurn {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgBurn";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
 }
 
 message MsgFreeze {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgFreeze";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
 }
 
 message MsgUnfreeze {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgUnfreeze";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
 }
 
 message MsgClassFreeze {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgClassFreeze";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string account = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 message MsgClassUnfreeze {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgClassUnfreeze";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string account = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 message MsgAddToWhitelist {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgAddToWhitelist";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
@@ -126,6 +153,9 @@ message MsgAddToWhitelist {
 }
 
 message MsgRemoveFromWhitelist {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgRemoveFromWhitelist";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
@@ -133,12 +163,18 @@ message MsgRemoveFromWhitelist {
 }
 
 message MsgAddToClassWhitelist {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgAddToClassWhitelist";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string account = 3;
 }
 
 message MsgRemoveFromClassWhitelist {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetnft/MsgRemoveFromClassWhitelist";
+
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string account = 3;
