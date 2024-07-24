@@ -662,16 +662,21 @@ func TestAssetNFTWithLongData(t *testing.T) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 
+	// func account initially to create it on chain
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+			&assetnfttypes.MsgMint{},
+		},
+		// minting fee and some tokens on top to cover the extra bytes
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount.AddRaw(100_000),
+	})
+
 	authParams, err := authtypes.NewQueryClient(chain.ClientContext).Params(ctx, &authtypes.QueryParamsRequest{})
 	require.NoError(t, err)
 
-	const (
-		extraBytesIssue = 3395
-		extraBytesMint  = 3441
-	)
-
 	data, err := codectypes.NewAnyWithValue(
-		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, 5117)},
+		&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, 6000)},
 	) // 3 bytes added by Any
 	requireT.NoError(err)
 
@@ -682,40 +687,38 @@ func TestAssetNFTWithLongData(t *testing.T) {
 		Data:   data,
 	}
 
-	mintMsg := &assetnfttypes.MsgMint{
-		Sender: issuer.String(),
-		ID:     "id-1",
-		Data:   data,
-	}
-
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			issueMsg,
-			mintMsg,
-			&assetnfttypes.MsgMint{},
-		},
-		NondeterministicMessagesGas: (extraBytesIssue + extraBytesMint) * authParams.Params.TxSizeCostPerByte,
-		Amount:                      chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
+	txBytes, err := chain.BuildSignedTx(ctx, chain.TxFactoryAuto(), issuer, issueMsg)
+	requireT.NoError(err)
+	extraBytes := uint64(len(txBytes)) - chain.DeterministicGasConfig.FreeBytes
 
 	resp, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)+extraBytesIssue*authParams.Params.TxSizeCostPerByte),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)+extraBytes*authParams.Params.TxSizeCostPerByte),
 		issueMsg,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(len(resp.Tx.GetValue()), chain.DeterministicGasConfig.FreeBytes+extraBytesIssue)
+	requireT.EqualValues(len(resp.Tx.GetValue()), chain.DeterministicGasConfig.FreeBytes+extraBytes)
 
-	mintMsg.ClassID = assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ClassID: assetnfttypes.BuildClassID(issueMsg.Symbol, issuer),
+		ID:      "id-1",
+		Data:    data,
+	}
+
+	txBytes, err = chain.BuildSignedTx(ctx, chain.TxFactoryAuto(), issuer, mintMsg)
+	requireT.NoError(err)
+	extraBytes = uint64(len(txBytes)) - chain.DeterministicGasConfig.FreeBytes
+
 	resp, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)+extraBytesMint*authParams.Params.TxSizeCostPerByte),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)+extraBytes*authParams.Params.TxSizeCostPerByte),
 		mintMsg,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(len(resp.Tx.GetValue()), chain.DeterministicGasConfig.FreeBytes+extraBytesMint)
+	requireT.EqualValues(len(resp.Tx.GetValue()), chain.DeterministicGasConfig.FreeBytes+extraBytes)
 }
 
 // TestAssetNFTMintFeeProposal tests proposal upgrading mint fee.

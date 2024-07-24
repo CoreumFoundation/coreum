@@ -133,9 +133,36 @@ func CalculateGas(
 	txf Factory,
 	msgs ...sdk.Msg,
 ) (*sdktx.SimulateResponse, uint64, error) {
-	txf, err := prepareFactory(ctx, clientCtx, txf)
+	txBytes, err := BuildTxForSimulation(ctx, clientCtx, txf, msgs...)
 	if err != nil {
 		return nil, 0, err
+	}
+
+	txSvcClient := sdktx.NewServiceClient(clientCtx)
+	simRes, err := txSvcClient.Simulate(ctx, &sdktx.SimulateRequest{
+		TxBytes: txBytes,
+	})
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "transaction estimation failed")
+	}
+
+	if txf.GasAdjustment() == 0 {
+		txf = txf.WithGasAdjustment(clientCtx.GasAdjustment())
+	}
+
+	return simRes, uint64(txf.GasAdjustment() * float64(simRes.GasInfo.GasUsed)), nil
+}
+
+// BuildTxForSimulation build transaction for the gas simulation.
+func BuildTxForSimulation(
+	ctx context.Context,
+	clientCtx Context,
+	txf Factory,
+	msgs ...sdk.Msg,
+) ([]byte, error) {
+	txf, err := prepareFactory(ctx, clientCtx, txf)
+	if err != nil {
+		return nil, err
 	}
 	if txf.GasAdjustment() == 0 {
 		txf = txf.WithGasAdjustment(clientCtx.GasAdjustment())
@@ -143,14 +170,14 @@ func CalculateGas(
 
 	keyInfo, err := txf.Keybase().KeyByAddress(clientCtx.FromAddress())
 	if err != nil {
-		return nil, 0, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	msgsAny := make([]*codectypes.Any, 0, len(msgs))
 	for _, msg := range msgs {
 		msgAny, err := codectypes.NewAnyWithValue(msg)
 		if err != nil {
-			return nil, 0, errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 		msgsAny = append(msgsAny, msgAny)
 	}
@@ -160,12 +187,12 @@ func CalculateGas(
 		Memo:     txf.Memo(),
 	})
 	if err != nil {
-		return nil, 0, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	pubKey, err := keyInfo.GetPubKey()
 	if err != nil {
-		return nil, 0, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 	var signatureData signing.SignatureData
 	if multisigPubKey, ok := pubKey.(*multisig.LegacyAminoPubKey); ok {
@@ -197,7 +224,7 @@ func CalculateGas(
 		Fee: &sdktx.Fee{},
 	})
 	if err != nil {
-		return nil, 0, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	txBytes, err := proto.Marshal(&sdktx.TxRaw{
@@ -208,18 +235,10 @@ func CalculateGas(
 		},
 	})
 	if err != nil {
-		return nil, 0, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
-	txSvcClient := sdktx.NewServiceClient(clientCtx)
-	simRes, err := txSvcClient.Simulate(ctx, &sdktx.SimulateRequest{
-		TxBytes: txBytes,
-	})
-	if err != nil {
-		return nil, 0, errors.Wrap(err, "transaction estimation failed")
-	}
-
-	return simRes, uint64(txf.GasAdjustment() * float64(simRes.GasInfo.GasUsed)), nil
+	return txBytes, nil
 }
 
 // BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.

@@ -14,15 +14,13 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 )
 
-// BroadcastTxWithSigner prepares the tx with the provided signer address and broadcasts it.
-// The main difference from the client.BroadcastTx is that this function uses the custom account addresses decoding with
-// the custom chain prefixes, which allows to execute transactions for different chains.
-func (c ChainContext) BroadcastTxWithSigner(
+// BuildSignedTx builds signed tx.
+func (c ChainContext) BuildSignedTx(
 	ctx context.Context,
 	txf client.Factory,
 	signerAddress sdk.AccAddress,
 	msgs ...sdk.Msg,
-) (*sdk.TxResponse, error) {
+) ([]byte, error) {
 	clientCtx := c.ClientContext.WithFromAddress(signerAddress)
 
 	// add account info
@@ -54,11 +52,24 @@ func (c ChainContext) BroadcastTxWithSigner(
 		return nil, err
 	}
 
-	txBytes, err := clientCtx.TxConfig().TxEncoder()(unsignedTx.GetTx())
+	return clientCtx.TxConfig().TxEncoder()(unsignedTx.GetTx())
+}
+
+// BroadcastTxWithSigner prepares the tx with the provided signer address and broadcasts it.
+// The main difference from the client.BroadcastTx is that this function uses the custom account addresses decoding with
+// the custom chain prefixes, which allows to execute transactions for different chains.
+func (c ChainContext) BroadcastTxWithSigner(
+	ctx context.Context,
+	txf client.Factory,
+	signerAddress sdk.AccAddress,
+	msgs ...sdk.Msg,
+) (*sdk.TxResponse, error) {
+	txBytes, err := c.BuildSignedTx(ctx, txf, signerAddress, msgs...)
 	if err != nil {
 		return nil, err
 	}
 
+	clientCtx := c.ClientContext.WithFromAddress(signerAddress)
 	return client.BroadcastRawTx(ctx, clientCtx, txBytes)
 }
 
@@ -122,6 +133,7 @@ func sign(
 		SignMode:  signMode,
 		Signature: nil,
 	}
+
 	sig := signing.SignatureV2{
 		PubKey:   pubKey,
 		Data:     &sigData,
