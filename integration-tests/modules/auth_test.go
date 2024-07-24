@@ -271,7 +271,7 @@ func TestGasEstimation(t *testing.T) {
 		name        string
 		fromAddress sdk.AccAddress
 		msgs        []sdk.Msg
-		expectedGas uint64
+		expectedGas func(txBytes []byte) uint64
 	}{
 		{
 			name:        "singlesig_bank_send",
@@ -284,7 +284,9 @@ func TestGasEstimation(t *testing.T) {
 				},
 			},
 			// single signature no extra bytes.
-			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas,
+			expectedGas: func(txBytes []byte) uint64 {
+				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
+			},
 		},
 		{
 			name:        "multisig_2_3_bank_send",
@@ -297,7 +299,9 @@ func TestGasEstimation(t *testing.T) {
 				},
 			},
 			// single signature no extra bytes.
-			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas,
+			expectedGas: func(txBytes []byte) uint64 {
+				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
+			},
 		},
 		{
 			name:        "multisig_6_7_bank_send",
@@ -309,9 +313,12 @@ func TestGasEstimation(t *testing.T) {
 					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
 				},
 			},
-			// estimation uses worst case to estimate number of bytes in tx which causes possible overflow of free bytes.
-			// 10 is price for each extra byte over FreeBytes.
-			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + 1133*authParams.Params.TxSizeCostPerByte,
+			expectedGas: func(txBytes []byte) uint64 {
+				signatureCost := uint64(3790)
+				bytesCost := uint64(len(txBytes)) * authParams.Params.TxSizeCostPerByte
+				expectedGas := dgc.FixedGas + deterministicgas.BankSendPerCoinGas + bytesCost + signatureCost
+				return expectedGas
+			},
 		},
 		{
 			name:        "singlesig_auth_exec_and_bank_send",
@@ -332,16 +339,27 @@ func TestGasEstimation(t *testing.T) {
 				},
 			},
 			// single signature no extra bytes.
-			expectedGas: dgc.FixedGas +
-				1*deterministicgas.BankSendPerCoinGas +
-				1*deterministicgas.AuthzExecOverhead +
-				1*deterministicgas.BankSendPerCoinGas,
+			expectedGas: func(txBytes []byte) uint64 {
+				return dgc.FixedGas +
+					deterministicgas.BankSendPerCoinGas +
+					deterministicgas.AuthzExecOverhead +
+					deterministicgas.BankSendPerCoinGas
+			},
 		},
 	}
 	for _, tt := range testsDeterm {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
+			txBytes, err := client.BuildTxForSimulation(
+				ctx,
+				chain.ClientContext.WithFromAddress(tt.fromAddress),
+				chain.TxFactory(),
+				tt.msgs...,
+			)
+			require.NoError(t, err)
+
 			_, estimatedGas, err := client.CalculateGas(
 				ctx,
 				chain.ClientContext.WithFromAddress(tt.fromAddress),
@@ -349,7 +367,8 @@ func TestGasEstimation(t *testing.T) {
 				tt.msgs...,
 			)
 			require.NoError(t, err)
-			require.Equal(t, int(tt.expectedGas), int(estimatedGas))
+
+			require.Equal(t, int(tt.expectedGas(txBytes)), int(estimatedGas))
 		})
 	}
 
