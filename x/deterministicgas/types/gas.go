@@ -53,9 +53,6 @@ type deterministicMsgServer struct {
 }
 
 func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, handler interface{}) {
-	// TODO(v5): Fix deterministic gas handler
-	s.baseServer.RegisterService(sd, handler)
-	return
 	//nolint:lll // the comment contains multiple URLs that cannot be broken down.
 	// To understand this implementation it is recommended to study the code in
 	// https://github.com/cosmos/cosmos-sdk/blob/ff416ee63d32da5d520a8b2d16b00da762416146/baseapp/msg_service_router.go#L109
