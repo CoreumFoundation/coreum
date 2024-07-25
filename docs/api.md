@@ -1920,7 +1920,7 @@ Params store gov manageable parameters.
 | `frozen` | [string](#string) |  |  `frozen is the frozen amount of the denom on the account.`  |
 | `locked` | [string](#string) |  |  `locked is the balance locked by bank and assetft.`  |
 | `locked_by_bank` | [string](#string) |  |  `locked is the balance locked by bank.`  |
-| `locked_by_ft` | [string](#string) |  |  `locked is the balance locked by ft.`  |
+| `locked_by_ft` | [string](#string) |  |  `locked is the balance locked by assetft.`  |
 
 
 

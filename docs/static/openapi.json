@@ -9141,7 +9141,7 @@
         },
         "locked_by_ft": {
           "type": "string",
-          "description": "locked is the balance locked by ft."
+          "description": "locked is the balance locked by assetft."
         }
       }
     },

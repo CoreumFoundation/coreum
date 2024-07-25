@@ -461,7 +461,7 @@ type QueryBalanceResponse struct {
 	Locked github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=locked,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"locked"`
 	// locked is the balance locked by bank.
 	LockedByBank github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=locked_by_bank,json=lockedByBank,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"locked_by_bank"`
-	// locked is the balance locked by ft.
+	// locked is the balance locked by assetft.
 	LockedByFT github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=locked_by_ft,json=lockedByFt,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"locked_by_ft"`
 }
 
