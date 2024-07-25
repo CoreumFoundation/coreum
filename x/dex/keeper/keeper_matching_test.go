@@ -41,7 +41,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -50,7 +50,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_sell,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -63,7 +63,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -95,7 +95,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -105,7 +105,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:     types.Side_sell,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -118,7 +118,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -150,7 +150,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -159,7 +159,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_sell,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -172,7 +172,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -204,7 +204,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -213,7 +213,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_sell,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -227,7 +227,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -259,7 +259,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -268,7 +268,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_buy,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -281,7 +281,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -313,7 +313,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -322,7 +322,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_buy,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -335,7 +335,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -367,7 +367,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -376,7 +376,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_buy,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -389,7 +389,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -421,7 +421,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -430,7 +430,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_sell,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -463,7 +463,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return []types.Order{
 					// "id1" and "id2" orders don't match
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -472,7 +472,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_sell,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -481,9 +481,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_sell,
 					},
 					// "id3" will match with the "id1" and "id2" cover them fully and the remainder will be returned
-					//	to the account's balance
+					//	to the creator's balance
 					{
-						Account:    accSet.acc3.String(),
+						Creator:    accSet.acc3.String(),
 						ID:         "id3",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -517,7 +517,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return []types.Order{
 					// "id1" and "id2" orders don't match
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -526,7 +526,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_buy,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -536,7 +536,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 					// "id3" closes "id1" and "id2", with better price for the "id3", expected to receive 80, but receive 100
 					{
-						Account:    accSet.acc3.String(),
+						Creator:    accSet.acc3.String(),
 						ID:         "id3",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -568,7 +568,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id1",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -577,7 +577,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_buy,
 					},
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -587,7 +587,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 					// remain no match bad price
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id3",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -597,7 +597,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 					// the part of the order should remain
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id4",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -606,7 +606,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.Side_buy,
 					},
 					{
-						Account:    accSet.acc2.String(),
+						Creator:    accSet.acc2.String(),
 						ID:         "id5",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
@@ -619,7 +619,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{
 					{
-						Account:           accSet.acc1.String(),
+						Creator:           accSet.acc1.String(),
 						ID:                "id3",
 						BaseDenom:         denom1,
 						QuoteDenom:        denom2,
@@ -630,7 +630,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						RemainingBalance:  sdkmath.NewInt(4),
 					},
 					{
-						Account:    accSet.acc1.String(),
+						Creator:    accSet.acc1.String(),
 						ID:         "id4",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,

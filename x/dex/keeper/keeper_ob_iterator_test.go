@@ -257,7 +257,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 						quantity = sdkmath.NewInt(1)
 					}
 					order := types.Order{
-						Account:    acc.String(),
+						Creator:    acc.String(),
 						ID:         uuid.Generate().String(),
 						BaseDenom:  baseDenom,
 						QuoteDenom: quoteDenom,

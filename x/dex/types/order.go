@@ -41,7 +41,7 @@ func (s Side) Opposite() (Side, error) {
 // NewOrderFormMsgPlaceOrder creates and validates Order from MsgPlaceOrder.
 func NewOrderFormMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 	o := Order{
-		Account:    msg.Sender,
+		Creator:    msg.Sender,
 		ID:         msg.ID,
 		BaseDenom:  msg.BaseDenom,
 		QuoteDenom: msg.QuoteDenom,
@@ -58,8 +58,8 @@ func NewOrderFormMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 
 // Validate validates order object.
 func (o Order) Validate() error {
-	if _, err := sdk.AccAddressFromBech32(o.Account); err != nil {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid address: %s", o.Account)
+	if _, err := sdk.AccAddressFromBech32(o.Creator); err != nil {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid address: %s", o.Creator)
 	}
 
 	if !orderIDRegex.MatchString(o.ID) {

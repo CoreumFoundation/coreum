@@ -42,7 +42,7 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 		return err
 	}
 
-	accNumber, err := k.getAccountNumber(ctx, order.Account)
+	accNumber, err := k.getAccountNumber(ctx, order.Creator)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (k Keeper) GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orde
 	}
 
 	return types.Order{
-		Account:           acc.String(),
+		Creator:           acc.String(),
 		ID:                orderID,
 		BaseDenom:         orderBookData.BaseDenom,
 		QuoteDenom:        orderBookData.QuoteDenom,

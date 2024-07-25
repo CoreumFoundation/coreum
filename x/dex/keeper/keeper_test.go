@@ -70,7 +70,7 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 		price := types.MustNewPriceFromString("1")
 		acc, _ := testApp.GenAccount(sdkCtx)
 		order := types.Order{
-			Account:    acc.String(),
+			Creator:    acc.String(),
 			ID:         uuid.Generate().String(),
 			BaseDenom:  item.baseDenom,
 			QuoteDenom: item.quoteDenom,
@@ -102,7 +102,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	acc, _ := testApp.GenAccount(sdkCtx)
 
 	sellOrder := types.Order{
-		Account:    acc.String(),
+		Creator:    acc.String(),
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
@@ -122,7 +122,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	require.ErrorContains(t, err, "is already created")
 
 	gotOrder, err := dexKeeper.GetOrderByAddressAndID(
-		sdkCtx, sdk.MustAccAddressFromBech32(sellOrder.Account), sellOrder.ID,
+		sdkCtx, sdk.MustAccAddressFromBech32(sellOrder.Creator), sellOrder.ID,
 	)
 	require.NoError(t, err)
 
@@ -134,7 +134,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	// check same buy with the buy order
 
 	buyOrder := types.Order{
-		Account:    acc.String(),
+		Creator:    acc.String(),
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom2,
 		QuoteDenom: denom3,
@@ -149,7 +149,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
 
 	gotOrder, err = dexKeeper.GetOrderByAddressAndID(
-		sdkCtx, sdk.MustAccAddressFromBech32(buyOrder.Account), buyOrder.ID,
+		sdkCtx, sdk.MustAccAddressFromBech32(buyOrder.Creator), buyOrder.ID,
 	)
 	require.NoError(t, err)
 

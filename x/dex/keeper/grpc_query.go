@@ -28,13 +28,13 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 	}
 }
 
-// Order queries order by account and ID.
+// Order queries order by creator and ID.
 func (qs QueryService) Order(ctx context.Context, req *types.QueryOrderRequest) (*types.QueryOrderResponse, error) {
-	accAddr, err := sdk.AccAddressFromBech32(req.Account)
+	creatorAddr, err := sdk.AccAddressFromBech32(req.Creator)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", req.Account)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", req.Creator)
 	}
-	order, err := qs.keeper.GetOrderByAddressAndID(sdk.UnwrapSDKContext(ctx), accAddr, req.Id)
+	order, err := qs.keeper.GetOrderByAddressAndID(sdk.UnwrapSDKContext(ctx), creatorAddr, req.Id)
 	if err != nil {
 		return nil, err
 	}

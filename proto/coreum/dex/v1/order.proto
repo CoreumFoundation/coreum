@@ -18,8 +18,8 @@ enum Side {
 
 // Order is a DEX order.
 message Order {
-  // account is order creator address.
-  string account = 1;
+  // creator is order creator address.
+  string creator = 1;
   // id is unique order ID.
   string id = 2 [(gogoproto.customname) = "ID"];
   // base_denom is base order denom.
@@ -89,7 +89,7 @@ message OrderBookRecord {
   ];
   // order_seq is order sequence.
   uint64 order_seq = 4;
-  // order ID provided by the account.
+  // order ID provided by the creator.
   string order_id = 5 [(gogoproto.customname) = "OrderID"];
   // account_number is account number which corresponds the order creator.
   uint64 account_number = 6;
@@ -107,7 +107,7 @@ message OrderBookRecord {
 
 // OrderBookRecordData is a single order book record used for the store.
 message OrderBookRecordData {
-  // order ID provided by the account.
+  // order ID provided by the creator.
   string order_id = 1 [(gogoproto.customname) = "OrderID"];
   // account_number is account number which corresponds the order creator.
   uint64 account_number = 2;

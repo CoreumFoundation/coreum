@@ -66,13 +66,13 @@ func TestOrdersMatching(t *testing.T) {
 	requireT.Equal(chain.GasLimitByMsgs(placeSellOrderMsg), uint64(txResult.GasUsed))
 
 	sellOrderRes, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
-		Account: placeSellOrderMsg.Sender,
+		Creator: placeSellOrderMsg.Sender,
 		Id:      placeSellOrderMsg.ID,
 	})
 	requireT.NoError(err)
 
 	requireT.Equal(dextypes.Order{
-		Account:           acc1.String(),
+		Creator:           acc1.String(),
 		ID:                "id1",
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,
@@ -104,21 +104,21 @@ func TestOrdersMatching(t *testing.T) {
 
 	// now query the sell order
 	_, err = dexClient.Order(ctx, &dextypes.QueryOrderRequest{
-		Account: placeSellOrderMsg.Sender,
+		Creator: placeSellOrderMsg.Sender,
 		Id:      placeSellOrderMsg.ID,
 	})
 	requireT.ErrorContains(err, dextypes.ErrRecordNotFound.Error())
 
 	// check remaining buy order
 	buyOrderRes, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
-		Account: placeBuyOrderMsg.Sender,
+		Creator: placeBuyOrderMsg.Sender,
 		Id:      placeBuyOrderMsg.ID,
 	})
 	requireT.NoError(err)
 	requireT.NotNil(buyOrderRes.Order)
 
 	requireT.Equal(dextypes.Order{
-		Account:           acc2.String(),
+		Creator:           acc2.String(),
 		ID:                "id1", // same ID allowed for different users
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,

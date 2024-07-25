@@ -144,7 +144,7 @@ func (k Keeper) lockOrderBalance(ctx sdk.Context, order types.Order) (sdk.Coin, 
 		return sdk.Coin{}, err
 	}
 	// currently we send the coins to module and from, but later we will implement the locking instead
-	if err := k.sendCoinToDEX(ctx, order.Account, lockedBalance); err != nil {
+	if err := k.sendCoinToDEX(ctx, order.Creator, lockedBalance); err != nil {
 		return sdk.Coin{}, err
 	}
 

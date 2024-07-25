@@ -9,16 +9,16 @@ option go_package = "github.com/CoreumFoundation/coreum/v4/x/dex/types";
 
 // Query defines the gRPC query service.
 service Query {
-  // Order queries order by account and ID.
+  // Order queries order by creator and ID.
   rpc Order(QueryOrderRequest) returns (QueryOrderResponse) {
-    option (google.api.http).get = "/coreum/dex/v1/orders/{account}/{id}";
+    option (google.api.http).get = "/coreum/dex/v1/orders/{creator}/{id}";
   }
 }
 
 // QueryOrderRequest defines the request type for the `Order` query.
 message QueryOrderRequest {
-  // account is order creator's account.
-  string account = 1;
+  // creator is order creator's account.
+  string creator = 1;
   // id is order ID.
   string id = 2; // we don't use the gogoproto.customname here since the google.api.http ignores it and generates invalid code.
 }

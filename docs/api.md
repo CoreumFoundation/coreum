@@ -4287,7 +4287,7 @@ Order is a DEX order.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `account` | [string](#string) |  |  `account is order creator address.`  |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
 | `base_denom` | [string](#string) |  |  `base_denom is base order denom.`  |
 | `quote_denom` | [string](#string) |  |  `quote_denom is quote order denom`  |
@@ -4338,7 +4338,7 @@ OrderBookRecord is a single order book record.
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `price` | [string](#string) |  |  `price is order book record price.`  |
 | `order_seq` | [uint64](#uint64) |  |  `order_seq is order sequence.`  |
-| `order_id` | [string](#string) |  |  `order ID provided by the account.`  |
+| `order_id` | [string](#string) |  |  `order ID provided by the creator.`  |
 | `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
 | `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
 | `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
@@ -4360,7 +4360,7 @@ OrderBookRecordData is a single order book record used for the store.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `order_id` | [string](#string) |  |  `order ID provided by the account.`  |
+| `order_id` | [string](#string) |  |  `order ID provided by the creator.`  |
 | `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
 | `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
 | `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
@@ -4438,7 +4438,7 @@ QueryOrderRequest defines the request type for the `Order` query.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `account` | [string](#string) |  |  `account is order creator's account.`  |
+| `creator` | [string](#string) |  |  `creator is order creator's account.`  |
 | `id` | [string](#string) |  |  `id is order ID.  we don't use the gogoproto.customname here since the google.api.http ignores it and generates invalid code.`  |
 
 
@@ -4482,7 +4482,7 @@ Query defines the gRPC query service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Order` | [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest) | [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse) | `Order queries order by account and ID.` | GET|/coreum/dex/v1/orders/{account}/{id} |
+| `Order` | [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest) | [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse) | `Order queries order by creator and ID.` | GET|/coreum/dex/v1/orders/{creator}/{id} |
 
  <!-- end services -->
 

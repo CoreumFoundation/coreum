@@ -92,7 +92,7 @@ func placeRandomOrderAndAssertOrdering(
 	}
 
 	order := types.Order{
-		Account:    acc.String(),
+		Creator:    acc.String(),
 		ID:         uuid.Generate().String(),
 		BaseDenom:  baseDenom,
 		QuoteDenom: quoteDenom,

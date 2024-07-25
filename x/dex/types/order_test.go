@@ -18,7 +18,7 @@ func TestOrder_Validate(t *testing.T) {
 	validOrder := func() types.Order {
 		price := types.MustNewPriceFromString("1e-1")
 		return types.Order{
-			Account:    sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+			Creator:    sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
 			ID:         "aA09+:._-",
 			BaseDenom:  "denom1",
 			QuoteDenom: "denom2",
@@ -41,7 +41,7 @@ func TestOrder_Validate(t *testing.T) {
 			name: "invalid_account",
 			order: func() types.Order {
 				order := validOrder()
-				order.Account = "inv_acc"
+				order.Creator = "inv_acc"
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,
