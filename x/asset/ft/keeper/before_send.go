@@ -83,8 +83,8 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 		for _, coin := range output.Coins {
 			def, err := k.GetDefinition(ctx, coin.Denom)
 			if sdkerrors.IsOf(err, types.ErrInvalidDenom, types.ErrTokenNotFound) {
-				// if the token doesn't have the definition we validate locking rule only.
-				if _, err := k.validateCoinIsNotLocked(ctx, sender, coin); err != nil {
+				// if the token doesn't have the definition we validate DEX locking rule only.
+				if _, err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, coin); err != nil {
 					return err
 				}
 
@@ -117,14 +117,14 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, sender, coin)
 
 			if def.IsFeatureEnabled(types.Feature_extension) {
-				if _, err := k.validateCoinIsNotLocked(ctx, sender, coin); err != nil {
+				if _, err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, coin); err != nil {
 					return err
 				}
 
 				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
 					return err
 				}
-				// We will not enforce any policies(e.g whitelisting, burn rate), apart from locking, or perform bank
+				// We will not enforce any policies(e.g whitelisting, burn rate), apart from DEX locking, or perform bank
 				//	transfers if the token has extensions. It is up to the contract to enforce them as needed.
 				//	As a result we will skip the next operations in this for loop.
 				continue

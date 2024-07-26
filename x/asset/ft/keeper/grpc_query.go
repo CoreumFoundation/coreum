@@ -35,7 +35,7 @@ type QueryKeeper interface {
 		pagination *query.PageRequest,
 	) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
 // BankKeeper represents required methods of bank keeper.
@@ -118,16 +118,16 @@ func (qs QueryService) Balance(
 	}
 
 	denom := req.GetDenom()
-	bankLocked := qs.bankKeeper.LockedCoins(ctx, account).AmountOf(denom)
-	ftLocked := qs.keeper.GetLockedBalance(ctx, account, denom).Amount
+	vestingLocked := qs.bankKeeper.LockedCoins(ctx, account).AmountOf(denom)
+	dexLocked := qs.keeper.GetDEXLockedBalance(ctx, account, denom).Amount
 
 	return &types.QueryBalanceResponse{
-		Balance:      qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
-		Whitelisted:  qs.keeper.GetWhitelistedBalance(ctx, account, denom).Amount,
-		Frozen:       qs.keeper.GetFrozenBalance(ctx, account, denom).Amount,
-		Locked:       bankLocked.Add(ftLocked),
-		LockedByBank: bankLocked,
-		LockedByFT:   ftLocked,
+		Balance:         qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
+		Whitelisted:     qs.keeper.GetWhitelistedBalance(ctx, account, denom).Amount,
+		Frozen:          qs.keeper.GetFrozenBalance(ctx, account, denom).Amount,
+		Locked:          vestingLocked.Add(dexLocked),
+		LockedInVesting: vestingLocked,
+		LockedInDEX:     dexLocked,
 	}, nil
 }
 

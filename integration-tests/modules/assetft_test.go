@@ -475,12 +475,12 @@ func TestBalanceQuery(t *testing.T) {
 
 	requireT.Equal(
 		assetfttypes.QueryBalanceResponse{
-			Balance:      sdk.NewInt(15),
-			Whitelisted:  whitelistedCoin.Amount,
-			Frozen:       frozenCoin.Amount,
-			Locked:       vestingCoin.Amount,
-			LockedByBank: vestingCoin.Amount,
-			LockedByFT:   sdk.ZeroInt(),
+			Balance:         sdk.NewInt(15),
+			Whitelisted:     whitelistedCoin.Amount,
+			Frozen:          frozenCoin.Amount,
+			Locked:          vestingCoin.Amount,
+			LockedInVesting: vestingCoin.Amount,
+			LockedInDEX:     sdk.ZeroInt(),
 		}, *ftBalanceRes,
 	)
 
@@ -515,10 +515,10 @@ func TestBalanceQuery(t *testing.T) {
 			Balance:     bankBalanceRes.Balance.Amount,
 			Whitelisted: whitelistedCoin.Amount,
 			// balance is frozen
-			Frozen:       bankBalanceRes.Balance.Amount,
-			Locked:       vestingCoin.Amount,
-			LockedByBank: vestingCoin.Amount,
-			LockedByFT:   sdk.ZeroInt(),
+			Frozen:          bankBalanceRes.Balance.Amount,
+			Locked:          vestingCoin.Amount,
+			LockedInVesting: vestingCoin.Amount,
+			LockedInDEX:     sdk.ZeroInt(),
 		}, *ftBalanceRes,
 	)
 }
@@ -746,12 +746,12 @@ func TestEmptyBalanceQuery(t *testing.T) {
 
 	requireT.Equal(
 		assetfttypes.QueryBalanceResponse{
-			Balance:      sdk.ZeroInt(),
-			Whitelisted:  sdk.ZeroInt(),
-			Frozen:       sdk.ZeroInt(),
-			Locked:       sdk.ZeroInt(),
-			LockedByBank: sdk.ZeroInt(),
-			LockedByFT:   sdk.ZeroInt(),
+			Balance:         sdk.ZeroInt(),
+			Whitelisted:     sdk.ZeroInt(),
+			Frozen:          sdk.ZeroInt(),
+			Locked:          sdk.ZeroInt(),
+			LockedInVesting: sdk.ZeroInt(),
+			LockedInDEX:     sdk.ZeroInt(),
 		}, *resp,
 	)
 }

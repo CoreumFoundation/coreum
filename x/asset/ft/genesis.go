@@ -65,13 +65,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.SetWhitelistedBalances(ctx, address, whitelistedBalance.Coins)
 	}
 
-	// Init locked balances
-	for _, lockedBalance := range genState.LockedBalances {
-		if err := types.ValidateAssetCoins(lockedBalance.Coins); err != nil {
+	// Init dexLocked balances
+	for _, dexLockedBalance := range genState.DEXLockedBalances {
+		if err := types.ValidateAssetCoins(dexLockedBalance.Coins); err != nil {
 			panic(err)
 		}
-		address := sdk.MustAccAddressFromBech32(lockedBalance.Address)
-		k.SetLockedBalances(ctx, address, lockedBalance.Coins)
+		address := sdk.MustAccAddressFromBech32(dexLockedBalance.Address)
+		k.SetDEXLockedBalances(ctx, address, dexLockedBalance.Coins)
 	}
 
 	// Init pending version upgrades
@@ -100,7 +100,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
-	lockedBalances, _, err := k.GetAccountsLockedBalances(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	dexLockedBalances, _, err := k.GetAccountsDEXLockedBalances(ctx, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
 		panic(err)
 	}
@@ -116,6 +116,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		FrozenBalances:       frozenBalances,
 		WhitelistedBalances:  whitelistedBalances,
 		PendingTokenUpgrades: pendingTokenUpgrades,
-		LockedBalances:       lockedBalances,
+		DEXLockedBalances:    dexLockedBalances,
 	}
 }

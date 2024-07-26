@@ -689,95 +689,95 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 	}
 }
 
-// Lock locks specified token from the specified account.
-func (k Keeper) Lock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
-	// in the final implementation the `Lock` will accept lock reason struct from dex, to let assetft decide
+// DEXLock locks specified token from the specified account.
+func (k Keeper) DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	// in the final implementation the `DEXLock` will accept lock reason struct from dex, to let assetft decide
 	// whether the locking is allowed. The same struct will be passed to the extensions smart contract.
 	if !coin.IsPositive() {
-		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "locking amount must be positive")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "DEX locking amount must be positive")
 	}
 
-	if err := k.lockingChecks(ctx, addr, coin); err != nil {
+	if err := k.dexLockingChecks(ctx, addr, coin); err != nil {
 		return err
 	}
 
-	lockedStore := k.lockedAccountBalanceStore(ctx, addr)
-	lockedBalance := lockedStore.Balance(coin.Denom)
-	newLockedBalance := lockedBalance.Add(coin)
-	lockedStore.SetBalance(newLockedBalance)
+	dexLockedStore := k.dexLockedAccountBalanceStore(ctx, addr)
+	dexLockedBalance := dexLockedStore.Balance(coin.Denom)
+	newDEXLockedBalance := dexLockedBalance.Add(coin)
+	dexLockedStore.SetBalance(newDEXLockedBalance)
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventLockedAmountChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXLockedAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
-		PreviousAmount: lockedBalance.Amount,
-		CurrentAmount:  newLockedBalance.Amount,
+		PreviousAmount: dexLockedBalance.Amount,
+		CurrentAmount:  newDEXLockedBalance.Amount,
 	}); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventLockedAmountChanged event: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventDEXLockedAmountChanged event: %s", err)
 	}
 
 	return nil
 }
 
-// Unlock unlocks specified tokens from the specified account.
-func (k Keeper) Unlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+// DEXUnlock unlocks specified tokens from the specified account.
+func (k Keeper) DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
-		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "unlock amount should be positive")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "DEX unlock amount should be positive")
 	}
 
-	lockedStore := k.lockedAccountBalanceStore(ctx, addr)
-	lockedBalance := lockedStore.Balance(coin.Denom)
-	if !lockedBalance.IsGTE(coin) {
+	dexLockedStore := k.dexLockedAccountBalanceStore(ctx, addr)
+	dexLockedBalance := dexLockedStore.Balance(coin.Denom)
+	if !dexLockedBalance.IsGTE(coin) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
-			"unlock request %s is greater than the available locked balance %s",
+			"DEX unlock request %s is greater than the available locked balance %s",
 			coin.String(),
-			lockedBalance.String(),
+			dexLockedBalance.String(),
 		)
 	}
 
-	newLockedBalance := lockedBalance.Sub(coin)
-	lockedStore.SetBalance(newLockedBalance)
+	newDEXLockedBalance := dexLockedBalance.Sub(coin)
+	dexLockedStore.SetBalance(newDEXLockedBalance)
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventLockedAmountChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXLockedAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
-		PreviousAmount: lockedBalance.Amount,
-		CurrentAmount:  newLockedBalance.Amount,
+		PreviousAmount: dexLockedBalance.Amount,
+		CurrentAmount:  newDEXLockedBalance.Amount,
 	}); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventLockedAmountChanged event: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventDEXLockedAmountChanged event: %s", err)
 	}
 
 	return nil
 }
 
-// GetLockedBalance returns the balance locked by assetft.
-func (k Keeper) GetLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
-	return k.lockedAccountBalanceStore(ctx, addr).Balance(denom)
+// GetDEXLockedBalance returns the DEX locked balance.
+func (k Keeper) GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+	return k.dexLockedAccountBalanceStore(ctx, addr).Balance(denom)
 }
 
-// GetLockedBalances returns the locked balances of an account.
-func (k Keeper) GetLockedBalances(
+// GetDEXLockedBalances returns the DEX locked balances of an account.
+func (k Keeper) GetDEXLockedBalances(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 	pagination *query.PageRequest,
 ) (sdk.Coins, *query.PageResponse, error) {
-	return k.lockedAccountBalanceStore(ctx, addr).Balances(pagination)
+	return k.dexLockedAccountBalanceStore(ctx, addr).Balances(pagination)
 }
 
-// GetAccountsLockedBalances returns the locked balance on all the account.
-func (k Keeper) GetAccountsLockedBalances(
+// GetAccountsDEXLockedBalances returns the DEX locked balance on all the account.
+func (k Keeper) GetAccountsDEXLockedBalances(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.Balance, *query.PageResponse, error) {
-	return collectBalances(k.cdc, k.lockedBalancesStore(ctx), pagination)
+	return collectBalances(k.cdc, k.dexLockedBalancesStore(ctx), pagination)
 }
 
-// SetLockedBalances sets the locked balances of a specified account.
+// SetDEXLockedBalances sets the DEX locked balances of a specified account.
 // Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you
 // need set zero amount use the slice []sdk.Coins.
-func (k Keeper) SetLockedBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
-	lockedStore := k.lockedAccountBalanceStore(ctx, addr)
+func (k Keeper) SetDEXLockedBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
+	dexLockedStore := k.dexLockedAccountBalanceStore(ctx, addr)
 	for _, coin := range coins {
-		lockedStore.SetBalance(coin)
+		dexLockedStore.SetBalance(coin)
 	}
 }
 
@@ -958,15 +958,14 @@ func (k Keeper) validateCoinSpendable(
 		)
 	}
 
-	// notLockedAmt is amount without the locked by assetft amount
-	notLockedAmt, err := k.validateCoinIsNotLocked(ctx, addr, sdk.NewCoin(def.Denom, amount))
+	notDEXLockedAmt, err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, sdk.NewCoin(def.Denom, amount))
 	if err != nil {
 		return err
 	}
 
 	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
 		frozenAmt := k.GetFrozenBalance(ctx, addr, def.Denom).Amount
-		notFrozenAmt := notLockedAmt.Sub(frozenAmt)
+		notFrozenAmt := notDEXLockedAmt.Sub(frozenAmt)
 		if notFrozenAmt.LT(amount) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s%s is not available, available %s%s",
 				amount.String(), def.Denom, notFrozenAmt.String(), def.Denom)
@@ -1194,28 +1193,28 @@ func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddr
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateWhitelistedBalancesKey(addr))
 }
 
-// lockedBalancesStore get the store for the locked balances of all accounts.
-func (k Keeper) lockedBalancesStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.LockedBalancesKeyPrefix)
+// dexLockedBalancesStore get the store for the DEX locked balances of all accounts.
+func (k Keeper) dexLockedBalancesStore(ctx sdk.Context) prefix.Store {
+	return prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXLockedBalancesKeyPrefix)
 }
 
-// lockedAccountBalanceStore gets the store for the locked balances of an account.
-func (k Keeper) lockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
-	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateLockedBalancesKey(addr))
+// dexLockedAccountBalanceStore gets the store for the DEX locked balances of an account.
+func (k Keeper) dexLockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
+	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateDEXLockedBalancesKey(addr))
 }
 
-func (k Keeper) lockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
-	notLockedAmt, err := k.validateCoinIsNotLocked(ctx, addr, coin)
+func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	notDEXLockedAmt, err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, coin)
 	if err != nil {
 		return err
 	}
 
 	frozenAmt := k.GetFrozenBalance(ctx, addr, coin.Denom).Amount
-	notFrozenTotalAmt := notLockedAmt.Sub(frozenAmt)
+	notFrozenTotalAmt := notDEXLockedAmt.Sub(frozenAmt)
 	if notFrozenTotalAmt.LT(coin.Amount) {
 		return sdkerrors.Wrapf(
 			cosmoserrors.ErrInsufficientFunds,
-			"failed to lock %s available balance %s%s",
+			"failed to DEX lock %s available balance %s%s",
 			coin.String(),
 			notFrozenTotalAmt,
 			coin.Denom,
@@ -1225,24 +1224,24 @@ func (k Keeper) lockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coi
 	return nil
 }
 
-func (k Keeper) validateCoinIsNotLocked(
+func (k Keeper) validateCoinIsNotLockedByDEXAndBank(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 	coin sdk.Coin,
 ) (sdkmath.Int, error) {
 	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
-	notLockedAmt := balance.Amount.Sub(k.GetLockedBalance(ctx, addr, coin.Denom).Amount)
+	notDEXLockedAmt := balance.Amount.Sub(k.GetDEXLockedBalance(ctx, addr, coin.Denom).Amount)
 
 	bankLockedAmt := k.bankKeeper.LockedCoins(ctx, addr).AmountOf(coin.Denom)
 	// validate that we don't use the coins locked by bank
-	notBankLockedAmt := notLockedAmt.Sub(bankLockedAmt)
+	notBankLockedAmt := notDEXLockedAmt.Sub(bankLockedAmt)
 	if notBankLockedAmt.LT(coin.Amount) {
 		return sdkmath.Int{},
 			sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s%s",
 				coin.String(), notBankLockedAmt.String(), coin.Denom)
 	}
 
-	return notLockedAmt, nil
+	return notDEXLockedAmt, nil
 }
 
 // logger returns the Keeper logger.

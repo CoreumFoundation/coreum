@@ -99,11 +99,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 			})
 	}
 
-	// locked balances
-	var lockedBalances []types.Balance
+	// DEX locked balances
+	var dexLockedBalances []types.Balance
 	for i := 0; i < 8; i++ {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-		lockedBalances = append(lockedBalances,
+		dexLockedBalances = append(dexLockedBalances,
 			types.Balance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
@@ -119,7 +119,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		FrozenBalances:       frozenBalances,
 		WhitelistedBalances:  whitelistedBalances,
 		PendingTokenUpgrades: pendingTokenUpgrades,
-		LockedBalances:       lockedBalances,
+		DEXLockedBalances:    dexLockedBalances,
 	}
 
 	// init the keeper
@@ -157,11 +157,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
-	// locked balances
-	for _, balance := range lockedBalances {
+	// DEX locked balances
+	for _, balance := range dexLockedBalances {
 		address, err := sdk.AccAddressFromBech32(balance.Address)
 		requireT.NoError(err)
-		coins, _, err := ftKeeper.GetLockedBalances(ctx, address, nil)
+		coins, _, err := ftKeeper.GetDEXLockedBalances(ctx, address, nil)
 		requireT.NoError(err)
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
@@ -174,5 +174,5 @@ func TestInitAndExportGenesis(t *testing.T) {
 	assertT.ElementsMatch(genState.PendingTokenUpgrades, exportedGenState.PendingTokenUpgrades)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)
-	assertT.ElementsMatch(genState.LockedBalances, exportedGenState.LockedBalances)
+	assertT.ElementsMatch(genState.DEXLockedBalances, exportedGenState.DEXLockedBalances)
 }

@@ -9133,15 +9133,15 @@
         },
         "locked": {
           "type": "string",
-          "description": "locked is the balance locked by bank and assetft."
+          "description": "locked is the balance locked in vesting and DEX."
         },
-        "locked_by_bank": {
+        "locked_in_vesting": {
           "type": "string",
-          "description": "locked is the balance locked by bank."
+          "description": "locked_in_vesting is the balance locked in bank vesting."
         },
-        "locked_by_ft": {
+        "locked_in_dex": {
           "type": "string",
-          "description": "locked is the balance locked by assetft."
+          "description": "locked_in_dex is the balance locked in DEX."
         }
       }
     },
