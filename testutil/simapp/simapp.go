@@ -4,6 +4,7 @@ package simapp
 import (
 	"fmt"
 	"math/rand"
+	"testing"
 	"time"
 
 	dbm "github.com/cometbft/cometbft-db"
@@ -21,19 +22,35 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 )
 
+// Settings for the simapp initialization.
+type Settings struct {
+	db     dbm.DB
+	logger log.Logger
+}
+
 // Option represents simapp customisations.
-type Option func() dbm.DB
+type Option func(settings Settings) Settings
 
 // WithCustomDB returns the simapp Option to run with different DB.
 func WithCustomDB(db dbm.DB) Option {
-	return func() dbm.DB {
-		return db
+	return func(s Settings) Settings {
+		s.db = db
+		return s
+	}
+}
+
+// WithCustomLogger returns the simapp Option to run with different logger.
+func WithCustomLogger(logger log.Logger) Option {
+	return func(s Settings) Settings {
+		s.logger = logger
+		return s
 	}
 }
 
@@ -44,16 +61,13 @@ type App struct {
 
 // New creates application instance with in-memory database and disabled logging.
 func New(options ...Option) *App {
-	var db dbm.DB
-
-	db = dbm.NewMemDB()
-	logger := log.NewNopLogger()
+	settings := Settings{
+		db:     dbm.NewMemDB(),
+		logger: log.NewNopLogger(),
+	}
 
 	for _, option := range options {
-		customDB := option()
-		if customDB != nil {
-			db = customDB
-		}
+		settings = option(settings)
 	}
 
 	network, err := config.NetworkConfigByChainID(constant.ChainIDDev)
@@ -64,7 +78,7 @@ func New(options ...Option) *App {
 	app.ChosenNetwork = network
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
 
-	coreApp := app.New(logger, db, nil, true, simtestutil.EmptyAppOptions{})
+	coreApp := app.New(settings.logger, settings.db, nil, true, simtestutil.EmptyAppOptions{})
 	pubKey, err := cryptocodec.ToTmPubKeyInterface(ed25519.GenPrivKey().PubKey())
 	if err != nil {
 		panic(fmt.Sprintf("can't generate validator pub key genesisState: %v", err))
@@ -241,5 +255,20 @@ func (s *App) SimulateFundAndSendTx(
 		targetGas.Uint64(),
 		priv,
 		messages...,
+	)
+}
+
+// MintAndSendCoin mints coin to the mint module and sends them to the recipient.
+func (s *App) MintAndSendCoin(
+	t *testing.T,
+	sdkCtx sdk.Context,
+	recipient sdk.AccAddress,
+	coins sdk.Coins,
+) {
+	require.NoError(
+		t, s.BankKeeper.MintCoins(sdkCtx, minttypes.ModuleName, coins),
+	)
+	require.NoError(
+		t, s.BankKeeper.SendCoinsFromModuleToAccount(sdkCtx, minttypes.ModuleName, recipient, coins),
 	)
 }

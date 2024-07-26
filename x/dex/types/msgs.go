@@ -3,11 +3,9 @@ package types
 import (
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
@@ -28,8 +26,8 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 
 // ValidateBasic validates the message.
 func (m MsgPlaceOrder) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender %s", m.Sender)
+	if _, err := NewOrderFormMsgPlaceOrder(m); err != nil {
+		return err
 	}
 
 	return nil
