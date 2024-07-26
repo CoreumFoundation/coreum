@@ -182,7 +182,13 @@ func (k BaseKeeperWrapper) getSpendableCoin(ctx sdk.Context, addr sdk.AccAddress
 	denom := coin.Denom
 	frozenCoin := k.ftProvider.GetFrozenBalance(ctx, addr, denom)
 	spendableAmount := coin.Amount.Sub(frozenCoin.Amount)
-	if spendableAmount.IsNegative() {
+	if !spendableAmount.IsPositive() {
+		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+	}
+
+	lockedCoin := k.ftProvider.GetDEXLockedBalance(ctx, addr, coin.Denom)
+	spendableAmount = spendableAmount.Sub(lockedCoin.Amount)
+	if !spendableAmount.IsPositive() {
 		return sdk.NewCoin(denom, sdkmath.ZeroInt())
 	}
 

@@ -35,6 +35,7 @@ type QueryKeeper interface {
 		pagination *query.PageRequest,
 	) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
 // BankKeeper represents required methods of bank keeper.
@@ -116,14 +117,17 @@ func (qs QueryService) Balance(
 		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	locked := qs.bankKeeper.LockedCoins(ctx, account)
-
 	denom := req.GetDenom()
+	vestingLocked := qs.bankKeeper.LockedCoins(ctx, account).AmountOf(denom)
+	dexLocked := qs.keeper.GetDEXLockedBalance(ctx, account, denom).Amount
+
 	return &types.QueryBalanceResponse{
-		Balance:     qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
-		Whitelisted: qs.keeper.GetWhitelistedBalance(ctx, account, denom).Amount,
-		Frozen:      qs.keeper.GetFrozenBalance(ctx, account, denom).Amount,
-		Locked:      locked.AmountOf(denom),
+		Balance:         qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
+		Whitelisted:     qs.keeper.GetWhitelistedBalance(ctx, account, denom).Amount,
+		Frozen:          qs.keeper.GetFrozenBalance(ctx, account, denom).Amount,
+		Locked:          vestingLocked.Add(dexLocked),
+		LockedInVesting: vestingLocked,
+		LockedInDEX:     dexLocked,
 	}, nil
 }
 

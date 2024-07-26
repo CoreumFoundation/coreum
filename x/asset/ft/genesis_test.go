@@ -87,9 +87,23 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// whitelisted balances
 	var whitelistedBalances []types.Balance
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 4; i++ {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		whitelistedBalances = append(whitelistedBalances,
+			types.Balance{
+				Address: addr.String(),
+				Coins: sdk.NewCoins(
+					sdk.NewCoin(tokens[0].Denom, sdkmath.NewInt(rand.Int63())),
+					sdk.NewCoin(tokens[1].Denom, sdkmath.NewInt(rand.Int63())),
+				),
+			})
+	}
+
+	// DEX locked balances
+	var dexLockedBalances []types.Balance
+	for i := 0; i < 8; i++ {
+		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		dexLockedBalances = append(dexLockedBalances,
 			types.Balance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
@@ -105,6 +119,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		FrozenBalances:       frozenBalances,
 		WhitelistedBalances:  whitelistedBalances,
 		PendingTokenUpgrades: pendingTokenUpgrades,
+		DEXLockedBalances:    dexLockedBalances,
 	}
 
 	// init the keeper
@@ -142,11 +157,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
-	// whitelisted balances
-	for _, balance := range whitelistedBalances {
+	// DEX locked balances
+	for _, balance := range dexLockedBalances {
 		address, err := sdk.AccAddressFromBech32(balance.Address)
 		requireT.NoError(err)
-		coins, _, err := ftKeeper.GetWhitelistedBalances(ctx, address, nil)
+		coins, _, err := ftKeeper.GetDEXLockedBalances(ctx, address, nil)
 		requireT.NoError(err)
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
@@ -159,4 +174,5 @@ func TestInitAndExportGenesis(t *testing.T) {
 	assertT.ElementsMatch(genState.PendingTokenUpgrades, exportedGenState.PendingTokenUpgrades)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)
+	assertT.ElementsMatch(genState.DEXLockedBalances, exportedGenState.DEXLockedBalances)
 }

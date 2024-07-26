@@ -41,6 +41,8 @@ var (
 	TokenUpgradeStatusesKeyPrefix = []byte{0x07}
 	// ParamsKey defines the key to store parameters of the module, set via governance.
 	ParamsKey = []byte{0x08}
+	// DEXLockedBalancesKeyPrefix defines the key prefix to track DEX locked balances.
+	DEXLockedBalancesKeyPrefix = []byte{0x09}
 )
 
 // StoreTrue keeps a value used by stores to indicate that key is present.
@@ -84,6 +86,11 @@ func CreateWhitelistedBalancesKey(addr []byte) []byte {
 // CreateTokenUpgradeStatusesKey creates the key for the fungible token upgrade statuses.
 func CreateTokenUpgradeStatusesKey(denom string) []byte {
 	return store.JoinKeys(TokenUpgradeStatusesKeyPrefix, []byte(denom))
+}
+
+// CreateDEXLockedBalancesKey creates the key for an account's locked balances.
+func CreateDEXLockedBalancesKey(addr []byte) []byte {
+	return store.JoinKeys(DEXLockedBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
 // AddressFromBalancesStore returns an account address from a balances prefix

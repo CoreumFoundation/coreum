@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 	"testing"
@@ -14,6 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -585,6 +588,14 @@ func TestKeeper_Burn(t *testing.T) {
 
 	// try to burn non-issuer frozen coins
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+
+	// DEX lock coins and try to burn
+	err = ftKeeper.DEXLock(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
 	requireT.NoError(err)
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
@@ -1601,6 +1612,174 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(15)))},
 		})
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
+}
+
+func TestKeeper_LockAndDEXUnlockFT(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features:      []types.Feature{types.Feature_freezing},
+	}
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	// create acc with permanently vesting locked coins
+	vestingCoin := sdk.NewInt64Coin(denom, 50)
+	baseVestingAccount := vestingtypes.NewDelayedVestingAccount(
+		authtypes.NewBaseAccountWithAddress(acc),
+		sdk.NewCoins(vestingCoin),
+		math.MaxInt64,
+	)
+	account := testApp.App.AccountKeeper.NewAccount(ctx, baseVestingAccount)
+	testApp.AccountKeeper.SetAccount(ctx, account)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(vestingCoin)))
+	// check vesting locked amount
+	requireT.Equal(vestingCoin.Amount.String(), bankKeeper.LockedCoins(ctx, acc).AmountOf(denom).String())
+
+	coinToSend := sdk.NewInt64Coin(denom, 1000)
+	// try to DEX lock more than balance
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend), cosmoserrors.ErrInsufficientFunds)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinToSend)))
+
+	// try to send full balance with the vesting locked coins
+	requireT.ErrorIs(
+		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(coinToSend.Add(vestingCoin))),
+		cosmoserrors.ErrInsufficientFunds,
+	)
+	// send max allowed amount
+	requireT.NoError(bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(coinToSend)))
+
+	// lock full allowed amount (but without the amount locked by vesting)
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend))
+	// try to send at least one coin
+	requireT.ErrorIs(
+		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom, 1))),
+		cosmoserrors.ErrInsufficientFunds,
+	)
+	// DEX unlock full balance
+	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, coinToSend))
+	// DEX lock one more time
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend))
+
+	balance := bankKeeper.GetBalance(ctx, acc, denom)
+	requireT.Equal(coinToSend.Add(vestingCoin).String(), balance.String())
+
+	// try to DEX lock coins which are locked by the vesting
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, vestingCoin), cosmoserrors.ErrInsufficientFunds)
+
+	// try lock unlock full balance
+	requireT.ErrorIs(ftKeeper.DEXUnlock(ctx, acc, balance), cosmoserrors.ErrInsufficientFunds)
+
+	// unlock part
+	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, sdk.NewInt64Coin(denom, 400)))
+	requireT.Equal(sdk.NewInt64Coin(denom, 600).String(), ftKeeper.GetDEXLockedBalance(ctx, acc, denom).String())
+
+	// freeze locked balance
+	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, coinToSend))
+
+	// unlock 2d part, even when it's frozen we allow it
+	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, sdk.NewInt64Coin(denom, 600)))
+	requireT.Equal(sdkmath.ZeroInt().String(), ftKeeper.GetDEXLockedBalance(ctx, acc, denom).Amount.String())
+
+	// try to lock now with the frozen coins
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend), cosmoserrors.ErrInsufficientFunds)
+
+	// unfreeze part
+	requireT.NoError(ftKeeper.Unfreeze(ctx, issuer, acc, sdk.NewInt64Coin(denom, 300)))
+	requireT.Equal(sdk.NewInt64Coin(denom, 700).String(), ftKeeper.GetFrozenBalance(ctx, acc, denom).String())
+
+	// now 700 frozen, 50 locked by vesting, 1050 balance
+	// try to lock more than allowed
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 351)), cosmoserrors.ErrInsufficientFunds)
+	// try to send more than allowed
+	requireT.ErrorIs(
+		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom, 351))),
+		cosmoserrors.ErrInsufficientFunds,
+	)
+
+	// try to lock with global freezing
+	requireT.NoError(ftKeeper.GloballyFreeze(ctx, issuer, denom))
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350)), cosmoserrors.ErrInsufficientFunds)
+	// globally unfreeze now and check that we can lock max allowed
+	requireT.NoError(ftKeeper.GloballyUnfreeze(ctx, issuer, denom))
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350)))
+	// freeze more than balance
+	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, sdk.NewInt64Coin(denom, 1_000_000)))
+}
+
+func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	faucet := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	denom := "denom1"
+	requireT.NoError(testApp.FundAccount(ctx, faucet, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewIntWithDecimal(1, 10)))))
+
+	// create acc with permanently locked coins (native)
+	vestingCoin := sdk.NewInt64Coin(denom, 50)
+	baseVestingAccount := vestingtypes.NewDelayedVestingAccount(
+		authtypes.NewBaseAccountWithAddress(acc),
+		sdk.NewCoins(vestingCoin),
+		math.MaxInt64,
+	)
+	account := testApp.App.AccountKeeper.NewAccount(ctx, baseVestingAccount)
+	testApp.AccountKeeper.SetAccount(ctx, account)
+	requireT.NoError(bankKeeper.SendCoins(ctx, faucet, acc, sdk.NewCoins(vestingCoin)))
+	// check bank locked amount
+	requireT.Equal(vestingCoin.Amount.String(), bankKeeper.LockedCoins(ctx, acc).AmountOf(denom).String())
+
+	coinToSend := sdk.NewInt64Coin(denom, 1000)
+	// try to lock more than balance
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend), cosmoserrors.ErrInsufficientFunds)
+	requireT.NoError(bankKeeper.SendCoins(ctx, faucet, acc, sdk.NewCoins(coinToSend)))
+
+	// try to send full balance with the vesting locked coins
+	requireT.ErrorIs(
+		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(coinToSend.Add(vestingCoin))),
+		cosmoserrors.ErrInsufficientFunds,
+	)
+
+	// lock full allowed amount (but without the amount locked by vesting)
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend))
+
+	// try to send at least one coin
+	requireT.ErrorIs(
+		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom, 1))),
+		cosmoserrors.ErrInsufficientFunds,
+	)
+
+	balance := bankKeeper.GetBalance(ctx, acc, denom)
+	requireT.Equal(coinToSend.Add(vestingCoin).String(), balance.String())
+
+	// try lock coins which are locked by the vesting
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, vestingCoin), cosmoserrors.ErrInsufficientFunds)
+
+	// try lock unlock full balance
+	requireT.ErrorIs(ftKeeper.DEXUnlock(ctx, acc, balance), cosmoserrors.ErrInsufficientFunds)
+
+	// unlock part
+	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, sdk.NewInt64Coin(denom, 400)))
+	requireT.Equal(sdk.NewInt64Coin(denom, 600).String(), ftKeeper.GetDEXLockedBalance(ctx, acc, denom).String())
 }
 
 func TestKeeper_IBC(t *testing.T) {
