@@ -50,7 +50,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run ${{ matrix.ci_step }}
-        run: ${{ matrix.command }}
+        run: rm -rf ~/.cache/golangci-lint && ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
