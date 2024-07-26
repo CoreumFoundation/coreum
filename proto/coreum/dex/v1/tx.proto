@@ -15,10 +15,26 @@ service Msg {
 
 // MsgPlaceOrder defines message to place an order on orderbook.
 message MsgPlaceOrder {
-  // sender is message sender/signer.
+  // sender is order creator address.
   string sender = 1;
-  // order is an order to place on orderbook.
-  Order order = 2;
+  // id is unique order ID.
+  string id = 2 [(gogoproto.customname) = "ID"];
+  // base_denom is base order denom.
+  string base_denom = 3;
+  // quote_denom is quote order denom
+  string quote_denom = 4;
+  // price is value of one unit of the base_denom expressed in terms of the quote_denom.
+  string price = 5 [
+    (gogoproto.customtype) = "Price",
+    (gogoproto.nullable) = false
+  ];
+  // quantity is amount of the base base_denom being traded.
+  string quantity = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // side is order side.
+  Side side = 7;
 }
 
 message EmptyResponse {}

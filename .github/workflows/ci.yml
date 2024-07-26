@@ -56,6 +56,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ github.workspace }}/coverage/${{ matrix.codecov-name }}
+          flags: ${{ matrix.codecov-name }}
           fail_ci_if_error: true
           verbose: true
         if: ${{ matrix.codecov }}
