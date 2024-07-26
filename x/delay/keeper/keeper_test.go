@@ -65,10 +65,10 @@ func TestDelayedExecution(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	testApp.InterfaceRegistry().RegisterImplementations((*codec.ProtoMarshaler)(nil), &delayedItem{})
+	testApp.InterfaceRegistry().RegisterImplementations((*proto.Message)(nil), &delayedItem{})
 
 	blockTime := time.Date(2023, 4, 3, 2, 3, 4, 0, time.UTC)
-	ctx := testApp.BeginNextBlock(blockTime)
+	ctx, _, _ := testApp.BeginNextBlock(blockTime)
 
 	delayed1 := &delayedItem{
 		Value: "value1",
@@ -128,10 +128,8 @@ func TestDelayedExecution(t *testing.T) {
 
 	requireT.Equal(expectedDelayedItems, delayedItems)
 
-	// should panic because handler is not registered
-	requireT.Panics(func() {
-		testApp.BeginNextBlock(blockTime.Add(time.Second))
-	})
+	_, _, err = testApp.BeginNextBlock(blockTime.Add(time.Second))
+	requireT.Error(err)
 
 	executedItems := []*delayedItem{}
 	requireT.NoError(delayKeeper.Router().RegisterHandler(&delayedItem{}, func(ctx sdk.Context, data proto.Message) error {
@@ -140,6 +138,7 @@ func TestDelayedExecution(t *testing.T) {
 	}))
 
 	// first item should be executed
+	testApp.FinalizeBlock()
 	testApp.BeginNextBlock(blockTime.Add(time.Second))
 	requireT.Len(executedItems, 1)
 	requireT.Equal(delayed1, executedItems[0])

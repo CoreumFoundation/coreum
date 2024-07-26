@@ -4,6 +4,7 @@ package simapp
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"testing"
 	"time"
 
@@ -35,6 +36,8 @@ type Settings struct {
 	db     dbm.DB
 	logger log.Logger
 }
+
+var sdkConfigOnce = &sync.Once{}
 
 // Option represents simapp customisations.
 type Option func(settings Settings) Settings
@@ -71,13 +74,15 @@ func New(options ...Option) *App {
 		settings = option(settings)
 	}
 
-	network, err := config.NetworkConfigByChainID(constant.ChainIDDev)
-	if err != nil {
-		panic(err)
-	}
+	sdkConfigOnce.Do(func() {
+		network, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+		if err != nil {
+			panic(err)
+		}
 
-	app.ChosenNetwork = network
-	encoding := config.NewEncodingConfig(app.ModuleBasics)
+		app.ChosenNetwork = network
+		network.SetSDKConfig()
+	})
 
 	coreApp := app.New(settings.logger, settings.db, nil, true, simtestutil.EmptyAppOptions{})
 	pubKey, err := cryptocodec.ToTmPubKeyInterface(ed25519.GenPrivKey().PubKey())
@@ -89,9 +94,9 @@ func New(options ...Option) *App {
 	senderPrivateKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivateKey.PubKey().Address().Bytes(), senderPrivateKey.PubKey(), 0, 0)
 
-	defaultGenesis := app.ModuleBasics.DefaultGenesis(encoding.Codec)
+	defaultGenesis := app.ModuleBasics.DefaultGenesis(coreApp.AppCodec())
 	genesisState, err := simtestutil.GenesisStateWithValSet(
-		encoding.Codec,
+		coreApp.AppCodec(),
 		defaultGenesis,
 		valSet,
 		[]authtypes.GenesisAccount{acc},
@@ -119,28 +124,30 @@ func New(options ...Option) *App {
 }
 
 // BeginNextBlock begins new SimApp block and returns the ctx of the new block.
-func (s *App) BeginNextBlock(blockTime time.Time) sdk.Context {
+func (s *App) BeginNextBlock(blockTime time.Time) (sdk.Context, sdk.BeginBlock, error) {
 	if blockTime.IsZero() {
 		blockTime = time.Now()
 	}
 	header := tmproto.Header{Height: s.App.LastBlockHeight() + 1, Time: blockTime}
-	s.App.BeginBlocker(s.NewContext(false))
-	return s.App.BaseApp.NewContextLegacy(false, header)
+	ctx := s.NewContextLegacy(false, header)
+	beginBlock, err := s.App.BeginBlocker(ctx)
+	return ctx, beginBlock, err
 }
 
-// EndBlockAndCommit ends the current block and commit the state.
-func (s *App) EndBlockAndCommit(ctx sdk.Context) {
-	s.App.EndBlocker(ctx)
-	s.App.Commit()
+// FinalizeBlock ends the current block and commit the state and creates a new block.
+func (s *App) FinalizeBlock() error {
+	_, err := s.App.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Height: s.LastBlockHeight() + 1,
+		Hash:   s.LastCommitID().Hash,
+	})
+	return err
 }
 
 // GenAccount creates a new account and registers it in the App.
 func (s *App) GenAccount(ctx sdk.Context) (sdk.AccAddress, *secp256k1.PrivKey) {
 	privateKey := secp256k1.GenPrivKey()
 	accountAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	account := s.App.AccountKeeper.NewAccount(ctx, &authtypes.BaseAccount{
-		Address: accountAddress.String(),
-	})
+	account := s.App.AccountKeeper.NewAccountWithAddress(ctx, accountAddress)
 	s.App.AccountKeeper.SetAccount(ctx, account)
 
 	return accountAddress, privateKey
@@ -205,7 +212,7 @@ func (s *App) GenTx(
 		messages,
 		sdk.NewCoins(feeAmt),
 		gas,
-		"",
+		s.ChainID(),
 		[]uint64{accountNum},
 		[]uint64{accountSeq},
 		priv,
