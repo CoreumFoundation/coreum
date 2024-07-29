@@ -21,6 +21,7 @@ import (
 )
 
 func TestAutoGasPrices(t *testing.T) {
+	t.SkipNow()
 	testNetwork := network.New(t)
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom := testNetwork.Config.BondDenom

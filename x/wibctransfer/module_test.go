@@ -65,6 +65,6 @@ func TestAppModuleOriginalTransfer_RegisterServices(t *testing.T) {
 	transferModule := transfer.NewAppModule(ibctransferkeeper.Keeper{})
 	configurator := newConfiguratorMock()
 	transferModule.RegisterServices(configurator)
-	require.Equal(t, []uint64{1, 2}, configurator.capturedMigrationVersions)
-	require.Equal(t, uint64(3), transferModule.ConsensusVersion())
+	require.Equal(t, []uint64{1, 2, 3, 4}, configurator.capturedMigrationVersions)
+	require.Equal(t, uint64(5), transferModule.ConsensusVersion())
 }

@@ -18,5 +18,5 @@ func TestAppModuleOriginalStakingModule_GetConsensusVersion(t *testing.T) {
 	stakingModule := staking.NewAppModule(
 		cdc, nil, authkeeper.AccountKeeper{}, bankkeeper.BaseKeeper{}, nil,
 	)
-	require.Equal(t, uint64(4), stakingModule.ConsensusVersion())
+	require.Equal(t, uint64(5), stakingModule.ConsensusVersion())
 }

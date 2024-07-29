@@ -4,6 +4,7 @@ package simapp
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -84,7 +85,7 @@ func New(options ...Option) *App {
 		network.SetSDKConfig()
 	})
 
-	coreApp := app.New(settings.logger, settings.db, nil, true, simtestutil.EmptyAppOptions{})
+	coreApp := app.New(settings.logger, settings.db, nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
 	pubKey, err := cryptocodec.ToTmPubKeyInterface(ed25519.GenPrivKey().PubKey())
 	if err != nil {
 		panic(fmt.Sprintf("can't generate validator pub key genesisState: %v", err))
@@ -282,4 +283,14 @@ func (s *App) MintAndSendCoin(
 	require.NoError(
 		t, s.BankKeeper.SendCoinsFromModuleToAccount(sdkCtx, minttypes.ModuleName, recipient, coins),
 	)
+}
+
+func tempDir() string {
+	dir, err := os.MkdirTemp("", "cored")
+	if err != nil {
+		panic("failed to create temp dir: " + err.Error())
+	}
+	defer os.RemoveAll(dir)
+
+	return dir
 }
