@@ -111,6 +111,13 @@ func NewRootCmd() *cobra.Command {
 		panic(err)
 	}
 
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Use == "tx" {
+			installAwaitBroadcastModeWrapper(cmd)
+			break
+		}
+	}
+
 	return rootCmd
 }
 
@@ -294,8 +301,6 @@ func txCommand() *cobra.Command {
 		authcmd.GetDecodeCommand(),
 		authcmd.GetSimulateCmd(),
 	)
-
-	installAwaitBroadcastModeWrapper(cmd)
 
 	return cmd
 }
