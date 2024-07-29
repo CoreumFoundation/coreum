@@ -35,7 +35,6 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
 	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
-	cnfttypes "github.com/CoreumFoundation/coreum/v4/x/nft"
 )
 
 // These constants define gas for messages which have custom calculation logic.
@@ -158,11 +157,6 @@ func DefaultConfig() Config {
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25_000),
-
-		// cnft
-		// Deprecated: this will be removed in the next release alongside the cnft types.
-		//nolint:staticcheck //deprecated
-		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25_000),
 
 		// slashing
 		// Unjail message is not used in any integration test because it's too much hassle. Instead, unjailing is estimated
