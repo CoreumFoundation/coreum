@@ -924,11 +924,7 @@ func New(
 		wstakingModule,
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		wibctransfer.NewAppModule(app.TransferKeeper),
-		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
-		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
 		wasm.NewAppModule(
 			appCodec,
 			&app.WasmKeeper,
@@ -948,6 +944,13 @@ func New(
 		dex.NewAppModule(appCodec, app.DEXKeeper),
 		// always be last to make sure that it checks for all invariants and not only part of them
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
+
+		// IBC modules
+		ibc.NewAppModule(app.IBCKeeper),
+		wibctransfer.NewAppModule(app.TransferKeeper),
+		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
+		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
+		ibctm.NewAppModule(),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -1393,7 +1396,7 @@ func (app *App) RegisterAPIRoutes(apiSvr *serverapi.Server, _ serverconfig.APICo
 	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// Register grpc-gateway routes for all modules.
-	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	app.BasicModuleManager.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register app's OpenAPI routes.
 	apiSvr.Router.Handle("/static/openapi.json", http.FileServer(http.FS(docs.Docs)))
