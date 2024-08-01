@@ -5,6 +5,7 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
@@ -14,11 +15,81 @@ var _ types.QueryServer = QueryService{}
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
 	GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orderID string) (types.Order, error)
+	GetOrders(
+		ctx sdk.Context,
+		creator sdk.AccAddress,
+		pagination *query.PageRequest,
+	) ([]types.Order, *query.PageResponse, error)
+	GetOrderBooks(
+		ctx sdk.Context,
+		pagination *query.PageRequest,
+	) ([]types.OrderBookData, *query.PageResponse, error)
+	GetOrderBookOrders(
+		ctx sdk.Context,
+		baseDenom, quoteDenom string,
+		side types.Side,
+		pagination *query.PageRequest,
+	) ([]types.Order, *query.PageResponse, error)
 }
 
 // QueryService serves grpc query requests for the module.
 type QueryService struct {
 	keeper QueryKeeper
+}
+
+// Orders returns creator orders.
+func (qs QueryService) Orders(
+	ctx context.Context,
+	req *types.QueryOrdersRequest,
+) (*types.QueryOrdersResponse, error) {
+	creatorAddr, err := sdk.AccAddressFromBech32(req.Creator)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", req.Creator)
+	}
+
+	orders, pageRes, err := qs.keeper.GetOrders(sdk.UnwrapSDKContext(ctx), creatorAddr, req.Pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryOrdersResponse{
+		Orders:     orders,
+		Pagination: pageRes,
+	}, nil
+}
+
+// OrderBooks queries order books.
+func (qs QueryService) OrderBooks(
+	ctx context.Context,
+	req *types.QueryOrderBooksRequest,
+) (*types.QueryOrderBooksResponse, error) {
+	orderBooks, pageRes, err := qs.keeper.GetOrderBooks(sdk.UnwrapSDKContext(ctx), req.Pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryOrderBooksResponse{
+		OrderBooks: orderBooks,
+		Pagination: pageRes,
+	}, nil
+}
+
+// OrdersBookOrders queries order book orders.
+func (qs QueryService) OrdersBookOrders(
+	ctx context.Context,
+	req *types.QueryOrderBookOrdersRequest,
+) (*types.QueryOrderBookOrdersResponse, error) {
+	orders, pageRes, err := qs.keeper.GetOrderBookOrders(
+		sdk.UnwrapSDKContext(ctx), req.BaseDenom, req.QuoteDenom, req.Side, req.Pagination,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryOrderBookOrdersResponse{
+		Orders:     orders,
+		Pagination: pageRes,
+	}, nil
 }
 
 // NewQueryService initiates the new instance of query service.

@@ -38,6 +38,16 @@ func (s Side) Opposite() (Side, error) {
 	}
 }
 
+// Validate validates order side.
+func (s Side) Validate() error {
+	switch s {
+	case Side_sell, Side_buy:
+		return nil
+	default:
+		return sdkerrors.Wrapf(ErrInvalidInput, "only %s and %s sides are allowed", s.String(), s.String())
+	}
+}
+
 // NewOrderFormMsgPlaceOrder creates and validates Order from MsgPlaceOrder.
 func NewOrderFormMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 	o := Order{
@@ -78,11 +88,8 @@ func (o Order) Validate() error {
 		return sdkerrors.Wrap(ErrInvalidInput, "quantity must be positive")
 	}
 
-	switch o.Side {
-	case Side_sell, Side_buy:
-		// ignore
-	default:
-		return sdkerrors.Wrapf(ErrInvalidInput, "only %s and %s sides are allowed", o.Side.String(), o.Side.String())
+	if err := o.Side.Validate(); err != nil {
+		return err
 	}
 
 	if !o.RemainingQuantity.IsNil() {

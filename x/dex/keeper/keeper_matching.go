@@ -155,15 +155,10 @@ func (k Keeper) lockOrderBalance(ctx sdk.Context, order types.Order) (sdk.Coin, 
 
 func isOppositeSideRecordMatches(takerRecord, oppositeSideRecord types.OrderBookRecord) bool {
 	if takerRecord.Side == types.Side_buy {
-		if cbig.RatGTE(takerRecord.Price.Rat(), oppositeSideRecord.Price.Rat()) {
-			return true
-		}
-	}
-	if cbig.RatLTE(takerRecord.Price.Rat(), oppositeSideRecord.Price.Rat()) {
-		return true
+		return cbig.RatGTE(takerRecord.Price.Rat(), oppositeSideRecord.Price.Rat())
 	}
 
-	return false
+	return cbig.RatLTE(takerRecord.Price.Rat(), oppositeSideRecord.Price.Rat())
 }
 
 func getRecordToCloseAndReduce(takerRecord, makerRecord *types.OrderBookRecord) (
