@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	appupgradev5 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v5"
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
@@ -42,15 +43,27 @@ func TestUpgrade(t *testing.T) {
 	infoRes, err := tmQueryClient.GetNodeInfo(ctx, &cmtservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
 
-	if strings.HasPrefix(infoRes.ApplicationVersion.Version, "v3.") {
+	if strings.HasPrefix(infoRes.ApplicationVersion.Version, "v4.") {
 		upgradeV4ToV5(t)
 		return
 	}
 	requireT.Failf("not supported cored version", "version: %s", infoRes.ApplicationVersion.Version)
 }
 
-// TODO(v5) write reall upgrade
 func upgradeV4ToV5(t *testing.T) {
+	tests := []upgradeTest{
+		&cosmosSDKVersion{},
+	}
+
+	for _, test := range tests {
+		test.Before(t)
+	}
+
+	runUpgrade(t, appupgradev5.Name, upgradeDelayInBlocks)
+
+	for _, test := range tests {
+		test.After(t)
+	}
 }
 
 func runUpgrade(
@@ -75,7 +88,7 @@ func runUpgrade(
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
 
-	upgradeHeight := latestBlockRes.Block.Header.Height + blocksToWait //nolint:staticcheck
+	upgradeHeight := latestBlockRes.SdkBlock.Header.Height + blocksToWait //nolint:staticcheck
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
