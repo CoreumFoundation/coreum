@@ -1185,6 +1185,11 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "claw back from module accounts is prohibited")
 	}
 
+	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, coin); err != nil {
+		return err
+	}
+
 	return def.CheckFeatureAllowed(sender, types.Feature_clawback)
 }
 
