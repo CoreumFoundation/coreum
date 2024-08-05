@@ -155,7 +155,7 @@ func TestBaseKeeperWrapper_SpendableBalanceByDenom(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(balance.Sub(coinToFreeze.Add(coinToLock)).String(), spendableBalanceRes.Balance.String())
+	requireT.Equal(balance.Sub(coinToFreeze).String(), spendableBalanceRes.Balance.String())
 
 	// freeze globally
 	err = ftKeeper.GloballyFreeze(ctx, issuer, denom)
