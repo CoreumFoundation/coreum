@@ -84,7 +84,8 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			def, err := k.GetDefinition(ctx, coin.Denom)
 			if sdkerrors.IsOf(err, types.ErrInvalidDenom, types.ErrTokenNotFound) {
 				// if the token doesn't have the definition we validate DEX locking rule only.
-				if _, err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, coin); err != nil {
+				balance := k.bankKeeper.GetBalance(ctx, sender, coin.Denom)
+				if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, balance, coin); err != nil {
 					return err
 				}
 
@@ -117,7 +118,8 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, sender, coin)
 
 			if def.IsFeatureEnabled(types.Feature_extension) {
-				if _, err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, coin); err != nil {
+				balance := k.bankKeeper.GetBalance(ctx, sender, coin.Denom)
+				if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, balance, coin); err != nil {
 					return err
 				}
 
