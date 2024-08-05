@@ -335,7 +335,7 @@ func getSorterOrderBookOrders(
 	orderBookID uint32,
 	side types.Side,
 ) []types.Order {
-	records := getSorterBookRecords(t, testApp, sdkCtx, orderBookID, side)
+	records := getSorterOrderBookRecords(t, testApp, sdkCtx, orderBookID, side)
 	orders := make([]types.Order, 0, len(records))
 	for _, record := range records {
 		addr := sdk.MustAccAddressFromBech32(testApp.AccountKeeper.GetAccountAddressByID(sdkCtx, record.AccountNumber))
@@ -347,7 +347,7 @@ func getSorterOrderBookOrders(
 	return orders
 }
 
-func getSorterBookRecords(
+func getSorterOrderBookRecords(
 	t *testing.T,
 	testApp *simapp.App,
 	sdkCtx sdk.Context,

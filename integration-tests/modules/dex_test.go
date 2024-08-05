@@ -172,17 +172,6 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			RemainingQuantity: sdkmath.NewInt(100),
 			RemainingBalance:  sdkmath.NewInt(100),
 		},
-		{
-			Creator:           acc1.String(),
-			ID:                "id2",
-			BaseDenom:         denom1,
-			QuoteDenom:        denom2,
-			Price:             dextypes.MustNewPriceFromString("998"),
-			Quantity:          sdkmath.NewInt(10),
-			Side:              dextypes.Side_sell,
-			RemainingQuantity: sdkmath.NewInt(10),
-			RemainingBalance:  sdkmath.NewInt(10),
-		},
 	}
 	acc1OrderPlaceMsgs := ordersToPlaceMsgs(acc1Orders)
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
@@ -203,22 +192,22 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			ID:                "id1",
 			BaseDenom:         denom1,
 			QuoteDenom:        denom2,
-			Price:             dextypes.MustNewPriceFromString("997"),
+			Price:             dextypes.MustNewPriceFromString("996"),
 			Quantity:          sdkmath.NewInt(10),
 			Side:              dextypes.Side_buy,
 			RemainingQuantity: sdkmath.NewInt(10),
-			RemainingBalance:  sdkmath.NewInt(9970),
+			RemainingBalance:  sdkmath.NewInt(9960),
 		},
 		{
 			Creator:           acc2.String(),
 			ID:                "id2",
 			BaseDenom:         denom1,
 			QuoteDenom:        denom2,
-			Price:             dextypes.MustNewPriceFromString("996"),
+			Price:             dextypes.MustNewPriceFromString("997"),
 			Quantity:          sdkmath.NewInt(10),
 			Side:              dextypes.Side_buy,
 			RemainingQuantity: sdkmath.NewInt(10),
-			RemainingBalance:  sdkmath.NewInt(9960),
+			RemainingBalance:  sdkmath.NewInt(9970),
 		},
 	}
 	acc2OrderPlaceMsgs := ordersToPlaceMsgs(acc2Orders)
@@ -253,14 +242,14 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	})
 	requireT.NoError(err)
 	// acc1 orders because all of them sell
-	requireT.ElementsMatch(acc1Orders, orderBookOrdersRes.Orders)
+	requireT.Equal(acc1Orders, orderBookOrdersRes.Orders)
 
 	// check account orders query
 	ordersRes, err := dexClient.Orders(ctx, &dextypes.QueryOrdersRequest{
 		Creator: acc2.String(),
 	})
 	requireT.NoError(err)
-	requireT.ElementsMatch(acc2Orders, ordersRes.Orders)
+	requireT.Equal(acc2Orders, ordersRes.Orders)
 }
 
 func issueFT(

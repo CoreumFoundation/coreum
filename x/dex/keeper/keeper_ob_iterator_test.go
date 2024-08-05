@@ -298,7 +298,7 @@ func assertOrdersOrdering(
 	side types.Side,
 ) {
 	t.Helper()
-	storedRecords := getSorterBookRecords(t, testApp, sdkCtx, orderBookID, side)
+	storedRecords := getSorterOrderBookRecords(t, testApp, sdkCtx, orderBookID, side)
 	if side == types.Side_buy {
 		// buy - price desc + order sec asc
 		for i := 0; i < len(storedRecords)-1; i++ {
