@@ -15,7 +15,7 @@ import (
 )
 
 func TestMain(t *testing.M) {
-	//TODO(fix-cli-tests)
+	// TODO(fix-cli-tests)
 	// we are intentionally skipping cli tests to fix them later
 }
 

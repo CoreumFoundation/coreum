@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/CoreumFoundation/coreum/v4/x/delay/types"
 )
@@ -44,12 +45,12 @@ func (k Keeper) Router() types.Router {
 }
 
 // DelayExecution stores an item to be executed later.
-func (k Keeper) DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error {
+func (k Keeper) DelayExecution(ctx sdk.Context, id string, data proto.Message, delay time.Duration) error {
 	return k.StoreDelayedExecution(ctx, id, data, ctx.BlockTime().Add(delay))
 }
 
 // StoreDelayedExecution stores delayed execution item using absolute time.
-func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, t time.Time) error {
+func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Message, t time.Time) error {
 	key, err := types.CreateDelayedItemKey(id, t)
 	if err != nil {
 		return err
@@ -100,7 +101,7 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 			return sdkerrors.Wrapf(types.ErrInvalidData, "decoding delayed message failed: %s", err.Error())
 		}
 
-		var data codec.ProtoMarshaler
+		var data proto.Message
 		if err := k.cdc.UnpackAny(dataAny, &data); err != nil {
 			return sdkerrors.Wrapf(types.ErrInvalidData, "unpacking delayed message failed: %s", err.Error())
 		}
@@ -121,7 +122,7 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 // ImportDelayedItems imports delayed items.
 func (k Keeper) ImportDelayedItems(ctx sdk.Context, items []types.DelayedItem) error {
 	for _, i := range items {
-		var data codec.ProtoMarshaler
+		var data proto.Message
 		if err := k.registry.UnpackAny(i.Data, &data); err != nil {
 			return sdkerrors.Wrapf(types.ErrInvalidData, "unpacking delayed message failed: %s", err.Error())
 		}

@@ -195,7 +195,7 @@ func genDocFromInput(
 	// genutil state
 	genutilState := genutiltypes.DefaultGenesisState()
 	for _, validatorInfo := range cfg.Validators {
-		pubKey, err := cryptocodec.FromTmPubKeyInterface(validatorInfo.Pubkey)
+		pubKey, err := cryptocodec.FromCmtPubKeyInterface(validatorInfo.Pubkey)
 		if err != nil {
 			return types.GenesisDoc{}, errors.Wrapf(err, "error converting public key, err:%s", err)
 		}

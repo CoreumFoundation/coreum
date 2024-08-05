@@ -89,7 +89,7 @@ func addAccountInfoToTxFactory(
 			return client.Factory{}, errors.WithStack(err)
 		}
 
-		var acc authtypes.AccountI
+		var acc sdk.AccountI
 		if err := clientCtx.InterfaceRegistry().UnpackAny(res.Account, &acc); err != nil {
 			return client.Factory{}, errors.WithStack(err)
 		}

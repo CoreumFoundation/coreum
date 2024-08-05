@@ -99,6 +99,8 @@ func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(
 }
 
 // SendCoins is a BaseKeeper SendCoins wrapped method.
+//
+//nolint:contextcheck // this is correct context passing.
 func (k BaseKeeperWrapper) SendCoins(goCtx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if k.isSmartContract(ctx, fromAddr) {
@@ -112,6 +114,8 @@ func (k BaseKeeperWrapper) SendCoins(goCtx context.Context, fromAddr, toAddr sdk
 }
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
+//
+//nolint:contextcheck // this is correct context passing.
 func (k BaseKeeperWrapper) InputOutputCoins(
 	goCtx context.Context, input banktypes.Input, outputs []banktypes.Output,
 ) error {

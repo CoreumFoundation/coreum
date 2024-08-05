@@ -390,7 +390,7 @@ func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 
 	// https - tls grpc
 	if parsedURL.Scheme == "https" {
-		grpcClient, err := grpc.Dial(
+		grpcClient, err := grpc.NewClient(
 			host,
 			grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
 			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
@@ -406,7 +406,7 @@ func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 		host = fmt.Sprintf("%s:%s", parsedURL.Scheme, parsedURL.Opaque)
 	}
 	// http - insecure
-	grpcClient, err := grpc.Dial(
+	grpcClient, err := grpc.NewClient(
 		host,
 		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -422,7 +422,7 @@ func tempDir() string {
 	if err != nil {
 		panic("failed to create temp dir: " + err.Error())
 	}
-	defer os.RemoveAll(dir)
+	defer os.RemoveAll(dir) //nolint:errcheck // we don't care
 
 	return dir
 }

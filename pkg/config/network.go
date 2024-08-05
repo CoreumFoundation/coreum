@@ -168,10 +168,12 @@ func NetworkConfigByChainID(id constant.ChainID) (NetworkConfig, error) {
 	return nc, nil
 }
 
+// ValPrefixFromAddressPrefix returns validator operator prefix.
 func ValPrefixFromAddressPrefix(addressPrefix string) string {
 	return addressPrefix + "valoper"
 }
 
+// ConsPrefixFromAddressPrefix returns consensus prefix.
 func ConsPrefixFromAddressPrefix(addressPrefix string) string {
 	return addressPrefix + "valcons"
 }

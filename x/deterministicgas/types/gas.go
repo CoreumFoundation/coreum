@@ -125,6 +125,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 							panic(recoveryObj)
 						}
 					}()
+					//nolint:contextcheck // we consider this correct context passing.
 					res, err := handler(newSDKCtx, req)
 					if err == nil && isDeterministicDeliverTx {
 						if err := reportDeterministicGas(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg)); err != nil {

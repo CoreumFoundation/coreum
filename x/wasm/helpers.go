@@ -1,6 +1,8 @@
 package wasm
 
 import (
+	"context"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -8,6 +10,6 @@ import (
 )
 
 // IsSmartContract checks if provided address is the address of smart contract.
-func IsSmartContract(ctx sdk.Context, addr sdk.AccAddress, wasmKeeper types.WasmKeeper) bool {
+func IsSmartContract(ctx context.Context, addr sdk.AccAddress, wasmKeeper types.WasmKeeper) bool {
 	return len(addr) == wasmtypes.ContractAddrLen && wasmKeeper.HasContractInfo(ctx, addr)
 }

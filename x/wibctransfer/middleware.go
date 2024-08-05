@@ -29,7 +29,8 @@ func (im PurposeMiddleware) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	return im.IBCModule.OnRecvPacket(types.WithPurpose(ctx, types.PurposeIn), packet, relayer)
+	ctx = sdk.UnwrapSDKContext(types.WithPurpose(ctx, types.PurposeIn))
+	return im.IBCModule.OnRecvPacket(ctx, packet, relayer)
 }
 
 // OnAcknowledgementPacket adds purpose-ack to the context and calls the upper implementation.
@@ -39,7 +40,8 @@ func (im PurposeMiddleware) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return im.IBCModule.OnAcknowledgementPacket(types.WithPurpose(ctx, types.PurposeAck), packet, acknowledgement, relayer)
+	ctx = sdk.UnwrapSDKContext(types.WithPurpose(ctx, types.PurposeAck))
+	return im.IBCModule.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
 // OnTimeoutPacket adds purpose-timeout to the context and calls the upper implementation.
@@ -48,5 +50,6 @@ func (im PurposeMiddleware) OnTimeoutPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	return im.IBCModule.OnTimeoutPacket(types.WithPurpose(ctx, types.PurposeTimeout), packet, relayer)
+	ctx = sdk.UnwrapSDKContext(types.WithPurpose(ctx, types.PurposeAck))
+	return im.IBCModule.OnTimeoutPacket(ctx, packet, relayer)
 }

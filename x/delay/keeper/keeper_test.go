@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -15,8 +14,7 @@ import (
 )
 
 var (
-	_ codec.ProtoMarshaler = &delayedItem{}
-	_ proto.Message        = &delayedItem{}
+	_ proto.Message = &delayedItem{}
 )
 
 type delayedItem struct {
@@ -62,7 +60,7 @@ func (di *delayedItem) String() string {
 func (di *delayedItem) ProtoMessage() {}
 
 func TestDelayedExecution(t *testing.T) {
-	//TODO (fix-tests)
+	// TODO (fix-tests)
 	t.SkipNow()
 	requireT := require.New(t)
 
@@ -140,14 +138,16 @@ func TestDelayedExecution(t *testing.T) {
 	}))
 
 	// first item should be executed
-	testApp.FinalizeBlock()
-	testApp.BeginNextBlock(blockTime.Add(time.Second))
+	requireT.NoError(testApp.FinalizeBlock())
+	_, _, err = testApp.BeginNextBlock(blockTime.Add(time.Second))
+	requireT.NoError(err)
 	requireT.Len(executedItems, 1)
 	requireT.Equal(delayed1, executedItems[0])
 
 	// three items should be executed
 	executedItems = []*delayedItem{}
-	testApp.BeginNextBlock(blockTime.Add(3 * time.Second))
+	_, _, err = testApp.BeginNextBlock(blockTime.Add(3 * time.Second))
+	requireT.NoError(err)
 	requireT.Len(executedItems, 3)
 	requireT.Equal(delayed2, executedItems[0])
 	requireT.Equal(delayed3, executedItems[1])
@@ -159,7 +159,7 @@ func TestDelayedExecution(t *testing.T) {
 	requireT.Empty(delayedItems)
 }
 
-func newAny(requireT *require.Assertions, data codec.ProtoMarshaler) *codectypes.Any {
+func newAny(requireT *require.Assertions, data proto.Message) *codectypes.Any {
 	v, err := codectypes.NewAnyWithValue(data)
 	requireT.NoError(err)
 	return &codectypes.Any{

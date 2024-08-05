@@ -86,7 +86,7 @@ func New(options ...Option) *App {
 	})
 
 	coreApp := app.New(settings.logger, settings.db, nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
-	pubKey, err := cryptocodec.ToTmPubKeyInterface(ed25519.GenPrivKey().PubKey())
+	pubKey, err := cryptocodec.ToCmtPubKeyInterface(ed25519.GenPrivKey().PubKey())
 	if err != nil {
 		panic(fmt.Sprintf("can't generate validator pub key genesisState: %v", err))
 	}
@@ -290,7 +290,7 @@ func tempDir() string {
 	if err != nil {
 		panic("failed to create temp dir: " + err.Error())
 	}
-	defer os.RemoveAll(dir)
+	defer os.RemoveAll(dir) //nolint:errcheck // we don't care
 
 	return dir
 }

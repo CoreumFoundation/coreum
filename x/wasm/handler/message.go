@@ -297,7 +297,7 @@ func (m *MessengerWrapper) DispatchMsg(
 	msg wasmvmtypes.CosmosMsg,
 ) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 	return m.parentMessenger.DispatchMsg(
-		types.WithSmartContractSender(ctx, contractAddr.String()),
+		sdk.UnwrapSDKContext(types.WithSmartContractSender(ctx, contractAddr.String())),
 		contractAddr,
 		contractIBCPortID,
 		msg,

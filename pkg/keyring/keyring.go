@@ -102,7 +102,9 @@ func (csk ConcurrentSafeKeyring) Sign(uid string, msg []byte, signMode signing.S
 }
 
 // SignByAddress sign byte messages with a user key providing the address.
-func (csk ConcurrentSafeKeyring) SignByAddress(address sdk.Address, msg []byte, signMode signing.SignMode) ([]byte, types.PubKey, error) {
+func (csk ConcurrentSafeKeyring) SignByAddress(
+	address sdk.Address, msg []byte, signMode signing.SignMode,
+) ([]byte, types.PubKey, error) {
 	csk.mu.RLock()
 	defer csk.mu.RUnlock()
 

@@ -295,7 +295,7 @@ func DefaultConfig() Config {
 			&ibcclienttypes.MsgCreateClient{},
 			&ibcclienttypes.MsgUpdateClient{},
 			&ibcclienttypes.MsgUpgradeClient{},
-			&ibcclienttypes.MsgSubmitMisbehaviour{},
+			&ibcclienttypes.MsgSubmitMisbehaviour{}, //nolint // TODO remove legacy message
 
 			// ibc/core/connection
 			&ibcconnectiontypes.MsgConnectionOpenInit{},

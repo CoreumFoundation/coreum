@@ -25,7 +25,7 @@ import (
 const nftID = "nft-1"
 
 func TestMain(t *testing.M) {
-	//TODO(fix-cli-tests)
+	// TODO(fix-cli-tests)
 	// we are intentionally skipping cli tests to fix them later
 }
 
@@ -162,7 +162,7 @@ func TestCmdMintToRecipient(t *testing.T) {
 
 	var resp nft.QueryOwnerResponse
 	args = []string{classID, nftID}
-	//TODO(fix-auto-cli)
+	// TODO(fix-cli-tests)
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), args, &resp))
 	requireT.Equal(recipient.String(), resp.Owner)
 }
@@ -212,7 +212,7 @@ func TestCmdMintDataDynamic(t *testing.T) {
 	// query stored
 
 	var nftRes nft.QueryNFTResponse
-	//TODO(fix-auto-cli)
+	// TODO(fix-cli-tests)
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), []string{classID, nftID}, &nftRes))
 
 	var gotDataDynamic types.DataDynamic
@@ -291,7 +291,7 @@ func TestCmdUpdateData(t *testing.T) {
 	// query stored
 
 	var nftRes nft.QueryNFTResponse
-	//TODO(fix-auto-cli)
+	// TODO(fix-cli-tests)
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), []string{classID, nftID}, &nftRes))
 
 	var gotDataDynamic types.DataDynamic

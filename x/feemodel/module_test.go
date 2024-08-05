@@ -133,7 +133,7 @@ func TestExport(t *testing.T) {
 func TestEndBlock(t *testing.T) {
 	module, keeper, state, _ := setup()
 
-	module.EndBlock(sdk.Context{})
+	require.NoError(t, module.EndBlock(sdk.Context{}))
 
 	model := types.NewModel(state.Params.Model)
 	minGasPrice := keeper.GetMinGasPrice(sdk.Context{})

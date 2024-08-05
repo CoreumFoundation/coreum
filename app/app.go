@@ -56,7 +56,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -364,7 +363,7 @@ func New(
 	})
 	appCodec := codec.NewProtoCodec(interfaceRegistry)
 	legacyAmino := codec.NewLegacyAmino()
-	txConfig := tx.NewTxConfig(appCodec, tx.DefaultSignModes)
+	txConfig := authtx.NewTxConfig(appCodec, authtx.DefaultSignModes)
 
 	std.RegisterLegacyAminoCodec(legacyAmino)
 	std.RegisterInterfaces(interfaceRegistry)
@@ -698,6 +697,7 @@ func New(
 		// TODO(v5): Remove once IBC upgrades to the new param management mechanism.
 		// Check ibc-go/modules/core/02-client/types/params.go
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
+		//nolint:staticcheck // we keep the deprecated function until we are sure that we don't need it.
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
@@ -1270,7 +1270,7 @@ func (app *App) Name() string { return app.BaseApp.Name() }
 // GetBaseApp returns the base app of the application.
 func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
-// PreBlocker application updates every pre block
+// PreBlocker application updates every pre block.
 func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
 	return app.ModuleManager.PreBlock(ctx)
 }

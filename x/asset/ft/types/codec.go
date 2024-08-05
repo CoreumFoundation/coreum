@@ -1,11 +1,11 @@
 package types
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/x/authz"
+	"github.com/cosmos/gogoproto/proto"
 )
 
 // RegisterInterfaces registers the asset module tx interfaces.
@@ -25,7 +25,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgSetWhitelistedLimit{},
 		&MsgUpgradeTokenV1{},
 	)
-	registry.RegisterImplementations((*codec.ProtoMarshaler)(nil),
+	registry.RegisterImplementations((*proto.Message)(nil),
 		&DelayedTokenUpgradeV1{},
 	)
 	registry.RegisterImplementations(

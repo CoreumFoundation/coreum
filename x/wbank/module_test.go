@@ -11,7 +11,6 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/stretchr/testify/require"
-	golanggrpc "google.golang.org/grpc"
 	googlegrpc "google.golang.org/grpc"
 )
 
@@ -21,7 +20,7 @@ var (
 
 type grpcServerMock struct{}
 
-func (s grpcServerMock) RegisterService(sd *golanggrpc.ServiceDesc, ss interface{}) {}
+func (s grpcServerMock) RegisterService(sd *googlegrpc.ServiceDesc, ss interface{}) {}
 
 type configuratorMock struct {
 	msgServer                 grpcServerMock

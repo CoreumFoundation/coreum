@@ -499,7 +499,9 @@ func TestAuthSignModeDirectAux(t *testing.T) {
 	signBytes, err := builder.GetSignBytes()
 	requireT.NoError(err)
 
-	tipperSignature, _, err := chain.ClientContext.Keyring().SignByAddress(tipper, signBytes, signing.SignMode_SIGN_MODE_DIRECT_AUX)
+	tipperSignature, _, err := chain.ClientContext.Keyring().SignByAddress(
+		tipper, signBytes, signing.SignMode_SIGN_MODE_DIRECT_AUX,
+	)
 	requireT.NoError(err)
 
 	builder.SetSignature(tipperSignature)
@@ -511,7 +513,12 @@ func TestAuthSignModeDirectAux(t *testing.T) {
 	requireT.NoError(txBuilder.AddAuxSignerData(tipperSignerData))
 	txBuilder.SetFeePayer(feePayer)
 	txBuilder.SetFeeAmount(sdk.NewCoins(
-		chain.NewCoin(chain.ChainSettings.GasPrice.Mul(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(gas))).Ceil().RoundInt()),
+		chain.NewCoin(
+			chain.ChainSettings.GasPrice.
+				Mul(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(gas))).
+				Ceil().
+				RoundInt(),
+		),
 	))
 	txBuilder.SetGasLimit(gas)
 
@@ -641,7 +648,7 @@ func signTxWithMultipleSignatures(
 	signMod, err := authsign.APISignModeToInternal(txConfig.SignModeHandler().DefaultMode())
 	requireT.NoError(err)
 
-	signerAccInfos := make([]authtypes.AccountI, len(signers))
+	signerAccInfos := make([]sdk.AccountI, len(signers))
 	// Fetch account info for all signers.
 	for i, signer := range signers {
 		accInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer)

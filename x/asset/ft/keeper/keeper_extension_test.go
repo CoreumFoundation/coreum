@@ -495,7 +495,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	issuerBalanceBefore := bankKeeper.GetBalance(ctx, issuer, unburnableDenom)
 	cwExtensionBalanceBefore := bankKeeper.GetBalance(ctx, unburnableDenomExtensionCWAddress, unburnableDenom)
-	totalSupplyBefore, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupplyBefore, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(676), totalSupplyBefore.Supply.AmountOf(unburnableDenom))
 
@@ -505,7 +505,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	issuerBalanceAfter := bankKeeper.GetBalance(ctx, issuer, unburnableDenom)
 	cwExtensionBalanceAfter := bankKeeper.GetBalance(ctx, unburnableDenomExtensionCWAddress, unburnableDenom)
-	totalSupplyAfter, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupplyAfter, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(575), totalSupplyAfter.Supply.AmountOf(unburnableDenom))
 
@@ -552,7 +552,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	recipientBalanceBefore := bankKeeper.GetBalance(ctx, recipient, burnableDenom)
 	cwExtensionBalanceBefore = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
-	totalSupplyBefore, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupplyBefore, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(777), totalSupplyBefore.Supply.AmountOf(burnableDenom))
 
@@ -564,7 +564,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	recipientBalanceAfter := bankKeeper.GetBalance(ctx, recipient, burnableDenom)
 	cwExtensionBalanceAfter = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
-	totalSupplyAfter, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupplyAfter, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(676), totalSupplyAfter.Supply.AmountOf(burnableDenom))
 
@@ -581,7 +581,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	issuerBalanceBefore = bankKeeper.GetBalance(ctx, issuer, burnableDenom)
 	cwExtensionBalanceBefore = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
-	totalSupplyBefore, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupplyBefore, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(676), totalSupplyBefore.Supply.AmountOf(burnableDenom))
 
@@ -593,7 +593,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	issuerBalanceAfter = bankKeeper.GetBalance(ctx, issuer, burnableDenom)
 	cwExtensionBalanceAfter = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
-	totalSupplyAfter, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupplyAfter, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(575), totalSupplyAfter.Supply.AmountOf(burnableDenom))
 
@@ -611,7 +611,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	balance := bankKeeper.GetBalance(ctx, issuer, burnableDenom)
 	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(474)), balance)
 
-	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(575), totalSupply.Supply.AmountOf(burnableDenom))
 
@@ -711,7 +711,7 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	balance := bankKeeper.GetBalance(ctx, addr, mintableDenom)
 	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(757)), balance)
 
-	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(987), totalSupply.Supply.AmountOf(mintableDenom))
 
@@ -722,7 +722,7 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
 	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(335)), balance)
 
-	totalSupply, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(1092), totalSupply.Supply.AmountOf(mintableDenom))
 }

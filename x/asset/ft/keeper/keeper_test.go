@@ -490,7 +490,7 @@ func TestKeeper_Mint(t *testing.T) {
 	balance := bankKeeper.GetBalance(ctx, addr, mintableDenom)
 	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(877)), balance)
 
-	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(877), totalSupply.Supply.AmountOf(mintableDenom))
 
@@ -501,7 +501,7 @@ func TestKeeper_Mint(t *testing.T) {
 	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
 	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)), balance)
 
-	totalSupply, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(977), totalSupply.Supply.AmountOf(mintableDenom))
 }
@@ -578,7 +578,7 @@ func TestKeeper_Burn(t *testing.T) {
 	balance := bankKeeper.GetBalance(ctx, issuer, burnableDenom)
 	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(477)), balance)
 
-	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(577), totalSupply.Supply.AmountOf(burnableDenom))
 
@@ -1824,7 +1824,7 @@ func TestKeeper_IBC(t *testing.T) {
 
 	// Trick the ctx to look like an outgoing IBC,
 	// so we may use regular bank send to test the logic.
-	ctx = wibctransfertypes.WithPurpose(ctx, wibctransfertypes.PurposeOut)
+	ctx = sdk.UnwrapSDKContext(wibctransfertypes.WithPurpose(ctx, wibctransfertypes.PurposeOut))
 
 	// transferring denom with disabled IBC should fail
 	err = bankKeeper.SendCoins(
@@ -2109,7 +2109,7 @@ func TestKeeper_TransferAdmin_Mint(t *testing.T) {
 	balance := bankKeeper.GetBalance(ctx, adminAddr, mintableDenom)
 	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)).String(), balance.String())
 
-	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(877), totalSupply.Supply.AmountOf(mintableDenom))
 
@@ -2124,7 +2124,7 @@ func TestKeeper_TransferAdmin_Mint(t *testing.T) {
 	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
 	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)), balance)
 
-	totalSupply, err = bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(977), totalSupply.Supply.AmountOf(mintableDenom))
 }
@@ -2226,7 +2226,7 @@ func TestKeeper_TransferAdmin_Burn(t *testing.T) {
 	balance := bankKeeper.GetBalance(ctx, admin, burnableDenom)
 	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(477)), balance)
 
-	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
 	requireT.EqualValues(sdkmath.NewInt(677), totalSupply.Supply.AmountOf(burnableDenom))
 
@@ -2780,7 +2780,7 @@ func TestKeeper_TransferAdmin_IBC(t *testing.T) {
 
 	// Trick the ctx to look like an outgoing IBC,
 	// so we may use regular bank send to test the logic.
-	ctx = wibctransfertypes.WithPurpose(ctx, wibctransfertypes.PurposeOut)
+	ctx = sdk.UnwrapSDKContext(wibctransfertypes.WithPurpose(ctx, wibctransfertypes.PurposeOut))
 
 	// transferring denom with disabled IBC should fail
 	err = bankKeeper.SendCoins(

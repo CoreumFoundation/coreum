@@ -12,12 +12,9 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
-	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
-type cosmosSDKVersion struct {
-	token assetfttypes.Token
-}
+type cosmosSDKVersion struct{}
 
 func (ftt *cosmosSDKVersion) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -31,7 +28,12 @@ func (ftt *cosmosSDKVersion) After(t *testing.T) {
 	assertCosmosSDKVersion(ctx, chain.ClientContext, requireT, "v0.50.")
 }
 
-func assertCosmosSDKVersion(ctx context.Context, clientCtx client.Context, requireT *require.Assertions, prefix string) {
+func assertCosmosSDKVersion(
+	ctx context.Context,
+	clientCtx client.Context,
+	requireT *require.Assertions,
+	prefix string,
+) {
 	cmtClient := cmtservice.NewServiceClient(clientCtx)
 	nodeInfo, err := cmtClient.GetNodeInfo(ctx, &cmtservice.GetNodeInfoRequest{})
 	requireT.NoError(err)

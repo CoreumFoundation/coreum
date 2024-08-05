@@ -279,7 +279,7 @@ func GetAccountInfo(
 	ctx context.Context,
 	clientCtx Context,
 	address sdk.AccAddress,
-) (authtypes.AccountI, error) {
+) (sdk.AccountI, error) {
 	req := &authtypes.QueryAccountRequest{
 		Address: address.String(),
 	}
@@ -289,7 +289,7 @@ func GetAccountInfo(
 		return nil, errors.WithStack(err)
 	}
 
-	var acc authtypes.AccountI
+	var acc sdk.AccountI
 	if err := clientCtx.InterfaceRegistry().UnpackAny(res.Account, &acc); err != nil {
 		return nil, errors.WithStack(err)
 	}

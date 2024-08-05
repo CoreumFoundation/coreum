@@ -46,10 +46,10 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	}
 
 	if err := cfg.RegisterMigration(ibctransfertypes.ModuleName, 3, m.MigrateParams); err != nil {
-		panic(fmt.Errorf("failed to migrate transfer app version 3 to 4 (self-managed params migration): %v", err))
+		panic(fmt.Errorf("failed to migrate transfer app version 3 to 4 (self-managed params migration): %w", err))
 	}
 
 	if err := cfg.RegisterMigration(ibctransfertypes.ModuleName, 4, m.MigrateDenomMetadata); err != nil {
-		panic(fmt.Errorf("failed to migrate transfer app from version 4 to 5 (set denom metadata migration): %v", err))
+		panic(fmt.Errorf("failed to migrate transfer app from version 4 to 5 (set denom metadata migration): %w", err))
 	}
 }

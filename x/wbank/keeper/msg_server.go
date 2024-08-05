@@ -5,7 +5,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/telemetry"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -22,14 +21,13 @@ var _ types.MsgServer = msgServer{}
 // NewMsgServerImpl returns an implementation of the bank MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper BaseKeeperWrapper) types.MsgServer {
-
 	return &msgServer{
 		MsgServer: bankkeeper.NewMsgServerImpl(keeper),
 		Keeper:    keeper,
 	}
 }
 
-func (k msgServer) Send(goCtx context.Context, msg *types.MsgSend) (*types.MsgSendResponse, error) {
+func (k msgServer) Send(ctx context.Context, msg *types.MsgSend) (*types.MsgSendResponse, error) {
 	var (
 		from, to []byte
 		err      error
@@ -52,7 +50,6 @@ func (k msgServer) Send(goCtx context.Context, msg *types.MsgSend) (*types.MsgSe
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidCoins, msg.Amount.String())
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := k.Keeper.IsSendEnabledCoins(ctx, msg.Amount...); err != nil {
 		return nil, err
 	}
@@ -81,7 +78,7 @@ func (k msgServer) Send(goCtx context.Context, msg *types.MsgSend) (*types.MsgSe
 	return &types.MsgSendResponse{}, nil
 }
 
-func (k msgServer) MultiSend(goCtx context.Context, msg *types.MsgMultiSend) (*types.MsgMultiSendResponse, error) {
+func (k msgServer) MultiSend(ctx context.Context, msg *types.MsgMultiSend) (*types.MsgMultiSendResponse, error) {
 	if len(msg.Inputs) == 0 {
 		return nil, types.ErrNoInputs
 	}
@@ -97,8 +94,6 @@ func (k msgServer) MultiSend(goCtx context.Context, msg *types.MsgMultiSend) (*t
 	if err := types.ValidateInputOutputs(msg.Inputs[0], msg.Outputs); err != nil {
 		return nil, err
 	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// NOTE: totalIn == totalOut should already have been checked
 	for _, in := range msg.Inputs {

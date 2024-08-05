@@ -654,7 +654,7 @@ func executeQuery[T, K any](
 	reqStruct T,
 	reqExecutor func(ctx context.Context, req T) (K, error),
 ) (json.RawMessage, error) {
-	res, err := reqExecutor(sdk.WrapSDKContext(ctx), reqStruct)
+	res, err := reqExecutor(ctx, reqStruct)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

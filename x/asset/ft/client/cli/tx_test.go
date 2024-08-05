@@ -34,7 +34,7 @@ import (
 )
 
 func TestMain(t *testing.M) {
-	//TODO(fix-cli-tests)
+	// TODO(fix-cli-tests)
 	// we are intentionally skipping cli tests to fix them later
 }
 
@@ -172,14 +172,15 @@ func TestMintBurn(t *testing.T) {
 	requireT.NoError(err)
 
 	var balanceRsp banktypes.QueryAllBalancesResponse
-	//TODO(fix-auto-cli)
+	// TODO(fix-cli-tests)
+	//nolint
 	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String()}, &balanceRsp))
 	requireT.Equal(sdkmath.NewInt(877).String(), balanceRsp.Balances.AmountOf(denom).String())
 
 	var supplyRsp sdk.Coin
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(
 		ctx,
-		nil, //TODO(fix-auto-cli)
+		nil, // TODO(fix-cli-tests)
 		// bankcli.GetCmdQueryTotalSupply(),
 		[]string{"--denom", denom},
 		&supplyRsp,
@@ -195,7 +196,7 @@ func TestMintBurn(t *testing.T) {
 
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(
 		ctx,
-		nil, //TODO(fix-auto-cli)
+		nil, // TODO(fix-cli-tests)
 		// bankcli.GetBalancesCmd(),
 		[]string{recipient.String()},
 		&balanceRsp,
@@ -210,7 +211,7 @@ func TestMintBurn(t *testing.T) {
 
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(
 		ctx,
-		nil, //TODO(fix-auto-cli)
+		nil, // TODO(fix-cli-tests)
 		//  bankcli.GetBalancesCmd(),
 		[]string{issuer.String()},
 		&balanceRsp),
@@ -219,7 +220,7 @@ func TestMintBurn(t *testing.T) {
 
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(
 		ctx,
-		nil, //TODO(fix-auto-cli)
+		nil, // TODO(fix-cli-tests)
 		// bankcli.GetCmdQueryTotalSupply(),
 		[]string{"--denom", denom},
 		&supplyRsp,
@@ -390,13 +391,21 @@ func TestClawback(t *testing.T) {
 	coin := sdk.NewInt64Coin(denom, 100)
 
 	valAddr := testNetwork.Validators[0].Address.String()
-	args := append([]string{valAddr, account.String(), coin.String()}, txValidator1Args(testNetwork)...)
-	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, bankcli.NewSendTxCmd(authcodec.NewBech32Codec(app.ChosenNetwork.Provider.GetAddressPrefix())), args)
+	args := append(
+		[]string{valAddr, account.String(), coin.String()},
+		txValidator1Args(testNetwork)...,
+	)
+	_, err := coreumclitestutil.ExecTxCmd(
+		ctx,
+		testNetwork,
+		bankcli.NewSendTxCmd(authcodec.NewBech32Codec(app.ChosenNetwork.Provider.GetAddressPrefix())),
+		args,
+	)
 	requireT.NoError(err)
 
 	var balanceRsp banktypes.QueryAllBalancesResponse
-	args = []string{account.String()}
-	//TODO(fix-auto-cli)
+	// TODO(fix-cli-tests)
+	// args = []string{account.String()}
 	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), args, &balanceRsp))
 	requireT.Equal(sdkmath.NewInt(100).String(), balanceRsp.Balances.AmountOf(denom).String())
 
@@ -404,8 +413,8 @@ func TestClawback(t *testing.T) {
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClawback(), args)
 	requireT.NoError(err)
 
-	args = []string{account.String()}
-	//TODO(fix-auto-cli)
+	// TODO(fix-cli-tests)
+	// args = []string{account.String()}
 	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), args, &balanceRsp))
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRsp.Balances.AmountOf(denom).String())
 }

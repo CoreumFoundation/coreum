@@ -95,7 +95,9 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	// Export whitelisted balances
-	whitelistedBalances, _, err := k.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	whitelistedBalances, _, err := k.GetAccountsWhitelistedBalances(ctx,
+		&query.PageRequest{Limit: query.PaginationMaxLimit},
+	)
 	if err != nil {
 		panic(err)
 	}

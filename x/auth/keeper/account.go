@@ -26,18 +26,26 @@ type InfiniteAccountKeeper struct {
 }
 
 // GetParams returns params.
+//
+//nolint:contextcheck // this is correct context passing
 func (iak InfiniteAccountKeeper) GetParams(ctx context.Context) (params types.Params) {
 	return iak.ak.GetParams(sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter()))
 }
 
 // GetAccount returns account info by address.
+//
+//nolint:contextcheck // this is correct context passing
 func (iak InfiniteAccountKeeper) GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI {
-	return iak.ak.GetAccount(sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter()), addr)
+	ctx = sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter())
+	return iak.ak.GetAccount(ctx, addr)
 }
 
 // SetAccount sets account info.
+//
+//nolint:contextcheck // this is correct context passing
 func (iak InfiniteAccountKeeper) SetAccount(ctx context.Context, acc sdk.AccountI) {
-	iak.ak.SetAccount(sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter()), acc)
+	ctx = sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter())
+	iak.ak.SetAccount(ctx, acc)
 }
 
 // GetModuleAddress returns address of a module.
@@ -47,5 +55,5 @@ func (iak InfiniteAccountKeeper) GetModuleAddress(moduleName string) sdk.AccAddr
 
 // AddressCodec returns the AddressCodec.
 func (iak InfiniteAccountKeeper) AddressCodec() address.Codec {
-	return iak.AddressCodec()
+	return iak.ak.AddressCodec()
 }

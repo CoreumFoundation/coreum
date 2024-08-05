@@ -29,7 +29,12 @@ type NFTKeeper interface {
 // BankKeeper defines the expected bank interface.
 type BankKeeper interface {
 	BurnCoins(ctx context.Context, moduleName string, amounts sdk.Coins) error
-	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	SendCoinsFromAccountToModule(
+		ctx context.Context,
+		senderAddr sdk.AccAddress,
+		recipientModule string,
+		amt sdk.Coins,
+	) error
 }
 
 // WasmKeeper represents the expected method from the wasm keeper.

@@ -890,7 +890,10 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	sendCommissionAmount = issueMsg.SendCommissionRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).TruncateInt()
 	receiveCoinGaia = sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
-	adminCommissionAmount := sdkmath.LegacyNewDecFromInt(sendCommissionAmount).Mul(sdkmath.LegacyMustNewDecFromStr("0.5")).TruncateInt()
+	adminCommissionAmount := sdkmath.
+		LegacyNewDecFromInt(sendCommissionAmount).
+		Mul(sdkmath.LegacyMustNewDecFromStr("0.5")).
+		TruncateInt()
 
 	// Normal IBC transfer.
 	ibcTransferAndAssertBalanceChanges(

@@ -51,9 +51,9 @@ func NewTransferKeeperWrapper(
 
 // Transfer defines a rpc handler method for MsgTransfer.
 func (k TransferKeeperWrapper) Transfer(
-	goCtx context.Context, msg *ibctransfertypes.MsgTransfer,
+	ctx context.Context, msg *ibctransfertypes.MsgTransfer,
 ) (*ibctransfertypes.MsgTransferResponse, error) {
-	goCtx = sdk.WrapSDKContext(types.WithPurpose(sdk.UnwrapSDKContext(goCtx), types.PurposeOut))
-	//nolint:contextcheck // it is fine to produce the context this way
-	return k.Keeper.Transfer(goCtx, msg)
+	ctx = types.WithPurpose(sdk.UnwrapSDKContext(ctx), types.PurposeOut)
+	//nolint:contextcheck // this is correct context passing
+	return k.Keeper.Transfer(ctx, msg)
 }

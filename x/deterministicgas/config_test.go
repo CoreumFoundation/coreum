@@ -28,7 +28,7 @@ import (
 var revProtoTypes map[reflect.Type]string
 
 func TestDeterministicGas_DeterministicMessages(t *testing.T) {
-	//TODO(fix-tests)
+	// TODO(fix-tests)
 	t.SkipNow()
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor nondeterministic.

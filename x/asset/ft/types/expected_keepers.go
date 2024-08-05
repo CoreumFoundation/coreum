@@ -5,9 +5,9 @@ import (
 	"time"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
 // AccountKeeper defines the expected account keeper interface.
@@ -23,15 +23,25 @@ type BankKeeper interface {
 	SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
 	MintCoins(ctx context.Context, moduleName string, amounts sdk.Coins) error
 	BurnCoins(ctx context.Context, moduleName string, amounts sdk.Coins) error
-	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(
+		ctx context.Context,
+		senderModule string,
+		recipientAddr sdk.AccAddress,
+		amt sdk.Coins,
+	) error
+	SendCoinsFromAccountToModule(
+		ctx context.Context,
+		senderAddr sdk.AccAddress,
+		recipientModule string,
+		amt sdk.Coins,
+	) error
 	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	LockedCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 }
 
 // DelayKeeper defines methods required from the delay keeper.
 type DelayKeeper interface {
-	DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error
+	DelayExecution(ctx sdk.Context, id string, data proto.Message, delay time.Duration) error
 }
 
 // WasmPermissionedKeeper defines methods required from the WASM permissioned keeper.

@@ -62,9 +62,10 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&stakingtypes.MsgUpdateParams{}): {},
 
 		// ibc/core/client
-		sdk.MsgTypeURL(&ibcclienttypes.MsgCreateClient{}):       {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateClient{}):       {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}):      {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgCreateClient{}):  {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateClient{}):  {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}): {},
+		//nolint:staticcheck // it is here so the list is complete.
 		sdk.MsgTypeURL(&ibcclienttypes.MsgSubmitMisbehaviour{}): {},
 
 		// ibc/core/connection
