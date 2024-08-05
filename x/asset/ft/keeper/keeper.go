@@ -958,14 +958,14 @@ func (k Keeper) validateCoinSpendable(
 		)
 	}
 
-	notDEXLockedAmt, err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, sdk.NewCoin(def.Denom, amount))
-	if err != nil {
+	balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, sdk.NewCoin(def.Denom, amount)); err != nil {
 		return err
 	}
 
 	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
 		frozenAmt := k.GetFrozenBalance(ctx, addr, def.Denom).Amount
-		notFrozenAmt := notDEXLockedAmt.Sub(frozenAmt)
+		notFrozenAmt := balance.Amount.Sub(frozenAmt)
 		if notFrozenAmt.LT(amount) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s%s is not available, available %s%s",
 				amount.String(), def.Denom, notFrozenAmt.String(), def.Denom)
@@ -1204,17 +1204,17 @@ func (k Keeper) dexLockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddres
 }
 
 func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
-	notDEXLockedAmt, err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, coin)
-	if err != nil {
+	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, coin); err != nil {
 		return err
 	}
 
 	frozenAmt := k.GetFrozenBalance(ctx, addr, coin.Denom).Amount
-	notFrozenTotalAmt := notDEXLockedAmt.Sub(frozenAmt)
+	notFrozenTotalAmt := balance.Amount.Sub(frozenAmt)
 	if notFrozenTotalAmt.LT(coin.Amount) {
 		return sdkerrors.Wrapf(
 			cosmoserrors.ErrInsufficientFunds,
-			"failed to DEX lock %s available balance %s%s",
+			"failed to DEX lock %s available %s%s",
 			coin.String(),
 			notFrozenTotalAmt,
 			coin.Denom,
@@ -1227,21 +1227,24 @@ func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.
 func (k Keeper) validateCoinIsNotLockedByDEXAndBank(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
-	coin sdk.Coin,
-) (sdkmath.Int, error) {
-	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
-	notDEXLockedAmt := balance.Amount.Sub(k.GetDEXLockedBalance(ctx, addr, coin.Denom).Amount)
+	balance, coin sdk.Coin,
+) error {
+	dexLockedAmt := k.GetDEXLockedBalance(ctx, addr, coin.Denom).Amount
+	availableAmt := balance.Amount.Sub(dexLockedAmt)
+	if availableAmt.LT(coin.Amount) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s%s",
+			coin.String(), availableAmt.String(), coin.Denom)
+	}
 
 	bankLockedAmt := k.bankKeeper.LockedCoins(ctx, addr).AmountOf(coin.Denom)
 	// validate that we don't use the coins locked by bank
-	notBankLockedAmt := notDEXLockedAmt.Sub(bankLockedAmt)
-	if notBankLockedAmt.LT(coin.Amount) {
-		return sdkmath.Int{},
-			sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s%s",
-				coin.String(), notBankLockedAmt.String(), coin.Denom)
+	availableAmt = availableAmt.Sub(bankLockedAmt)
+	if availableAmt.LT(coin.Amount) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s%s",
+			coin.String(), availableAmt.String(), coin.Denom)
 	}
 
-	return notDEXLockedAmt, nil
+	return nil
 }
 
 // logger returns the Keeper logger.

@@ -1614,7 +1614,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 }
 
-func TestKeeper_LockAndDEXUnlockFT(t *testing.T) {
+func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -1704,12 +1704,14 @@ func TestKeeper_LockAndDEXUnlockFT(t *testing.T) {
 
 	// now 700 frozen, 50 locked by vesting, 1050 balance
 	// try to lock more than allowed
-	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 351)), cosmoserrors.ErrInsufficientFunds)
+	err = ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 351))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorContains(err, "available 350")
+
 	// try to send more than allowed
-	requireT.ErrorIs(
-		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom, 351))),
-		cosmoserrors.ErrInsufficientFunds,
-	)
+	err = bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom, 351)))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorContains(err, "available 350")
 
 	// try to lock with global freezing
 	requireT.NoError(ftKeeper.GloballyFreeze(ctx, issuer, denom))
