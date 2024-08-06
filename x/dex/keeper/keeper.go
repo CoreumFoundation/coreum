@@ -6,9 +6,12 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	gogotypes "github.com/cosmos/gogoproto/types"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
@@ -42,7 +45,12 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 		return err
 	}
 
-	accNumber, err := k.getAccountNumber(ctx, order.Creator)
+	creator, err := sdk.AccAddressFromBech32(order.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
+	}
+
+	accNumber, err := k.getAccountNumber(ctx, creator)
 	if err != nil {
 		return err
 	}
@@ -82,12 +90,12 @@ func (k Keeper) GetOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom st
 
 // GetOrderByAddressAndID returns order by holder address and it's ID.
 func (k Keeper) GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orderID string) (types.Order, error) {
-	accountNumber, err := k.getAccountNumber(ctx, acc.String())
+	accNumber, err := k.getAccountNumber(ctx, acc)
 	if err != nil {
 		return types.Order{}, err
 	}
 
-	orderSeq, err := k.getOrderSeqByID(ctx, accountNumber, orderID)
+	orderSeq, err := k.getOrderSeqByID(ctx, accNumber, orderID)
 	if err != nil {
 		return types.Order{}, err
 	}
@@ -124,6 +132,38 @@ func (k Keeper) GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orde
 		RemainingQuantity: orderBookRecord.RemainingQuantity,
 		RemainingBalance:  orderBookRecord.RemainingBalance,
 	}, nil
+}
+
+// GetOrders returns creator orders.
+func (k Keeper) GetOrders(
+	ctx sdk.Context,
+	creator sdk.AccAddress,
+	pagination *query.PageRequest,
+) ([]types.Order, *query.PageResponse, error) {
+	return k.getPaginatedOrders(ctx, creator, pagination)
+}
+
+// GetOrderBooks returns order books.
+func (k Keeper) GetOrderBooks(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.OrderBookData, *query.PageResponse, error) {
+	return k.getPaginatedOrderBooks(ctx, pagination)
+}
+
+// GetOrderBookOrders returns order book records sorted by price asc. For the buy side it's expected to use the reverse
+// pagination, and sort the orders by the order sequence asc additionally on the client side.
+func (k Keeper) GetOrderBookOrders(
+	ctx sdk.Context,
+	baseDenom, quoteDenom string,
+	side types.Side,
+	pagination *query.PageRequest,
+) ([]types.Order, *query.PageResponse, error) {
+	if err := side.Validate(); err != nil {
+		return nil, nil, err
+	}
+
+	return k.getPaginatedOrderBookOrders(ctx, baseDenom, quoteDenom, side, pagination)
 }
 
 func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, uint32, error) {
@@ -319,6 +359,166 @@ func (k Keeper) getOrderBookRecord(
 	return val, nil
 }
 
+func (k Keeper) getPaginatedOrders(
+	ctx sdk.Context,
+	acc sdk.AccAddress,
+	pagination *query.PageRequest,
+) ([]types.Order, *query.PageResponse, error) {
+	accNumber, err := k.getAccountNumber(ctx, acc)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateOrderIDToSeqKeyPrefix(accNumber))
+	orderBookIDToOrderBookData := make(map[uint32]types.OrderBookData)
+	orders, pageRes, err := query.GenericFilteredPaginate(
+		k.cdc,
+		store,
+		pagination,
+		// builder
+		func(_ []byte, record *gogotypes.UInt64Value) (*types.Order, error) {
+			orderSeq := record.Value
+			orderData, err := k.getOrderData(ctx, orderSeq)
+			if err != nil {
+				return nil, err
+			}
+
+			orderBookID := orderData.OrderBookID
+			orderBookData, ok := orderBookIDToOrderBookData[orderBookID]
+			if !ok {
+				orderBookData, err = k.getOrderBookData(ctx, orderBookID)
+				if err != nil {
+					return nil, err
+				}
+				orderBookIDToOrderBookData[orderBookID] = orderBookData
+			}
+
+			orderBookRecord, err := k.getOrderBookRecord(
+				ctx,
+				orderData.OrderBookID,
+				orderData.Side,
+				orderData.Price,
+				orderSeq,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			return &types.Order{
+				Creator:           acc.String(),
+				ID:                orderBookRecord.OrderID,
+				BaseDenom:         orderBookData.BaseDenom,
+				QuoteDenom:        orderBookData.QuoteDenom,
+				Price:             orderData.Price,
+				Quantity:          orderData.Quantity,
+				Side:              orderData.Side,
+				RemainingQuantity: orderBookRecord.RemainingQuantity,
+				RemainingBalance:  orderBookRecord.RemainingBalance,
+			}, nil
+		},
+		// constructor
+		func() *gogotypes.UInt64Value {
+			return &gogotypes.UInt64Value{}
+		},
+	)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
+	}
+	return lo.Map(orders, func(order *types.Order, _ int) types.Order {
+		return *order
+	}), pageRes, nil
+}
+
+func (k Keeper) getPaginatedOrderBooks(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.OrderBookData, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.OrderBookDataKeyPrefix)
+	orders, pageRes, err := query.GenericFilteredPaginate(
+		k.cdc,
+		store,
+		pagination,
+		// builder
+		func(_ []byte, record *types.OrderBookData) (*types.OrderBookData, error) {
+			return record, nil
+		},
+		// constructor
+		func() *types.OrderBookData {
+			return &types.OrderBookData{}
+		},
+	)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
+	}
+	return lo.Map(orders, func(data *types.OrderBookData, _ int) types.OrderBookData {
+		return *data
+	}), pageRes, nil
+}
+
+func (k Keeper) getPaginatedOrderBookOrders(
+	ctx sdk.Context,
+	baseDenom, quoteDenom string,
+	side types.Side,
+	pagination *query.PageRequest,
+) ([]types.Order, *query.PageResponse, error) {
+	orderBookID, err := k.GetOrderBookIDByDenoms(ctx, baseDenom, quoteDenom)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateOrderBookSideKey(orderBookID, side))
+	accNumberToAddress := make(map[uint64]sdk.AccAddress)
+	orders, pageRes, err := query.GenericFilteredPaginate(
+		k.cdc,
+		store,
+		pagination,
+		// builder
+		func(key []byte, record *types.OrderBookRecordData) (*types.Order, error) {
+			// decode key to values
+			price, orderSeq, err := types.DecodeOrderBookSideRecordKey(key)
+			if err != nil {
+				return nil, err
+			}
+
+			acc, ok := accNumberToAddress[record.AccountNumber]
+			if !ok {
+				acc, err = k.getAccountAddress(ctx, record.AccountNumber)
+				if err != nil {
+					return nil, err
+				}
+				accNumberToAddress[record.AccountNumber] = acc
+			}
+
+			orderData, err := k.getOrderData(ctx, orderSeq)
+			if err != nil {
+				return nil, err
+			}
+
+			return &types.Order{
+				Creator:           acc.String(),
+				ID:                record.OrderID,
+				BaseDenom:         baseDenom,
+				QuoteDenom:        quoteDenom,
+				Price:             price,
+				Quantity:          orderData.Quantity,
+				Side:              side,
+				RemainingQuantity: record.RemainingQuantity,
+				RemainingBalance:  record.RemainingBalance,
+			}, nil
+		},
+		// constructor
+		func() *types.OrderBookRecordData {
+			return &types.OrderBookRecordData{}
+		},
+	)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
+	}
+	return lo.Map(orders, func(order *types.Order, _ int) types.Order {
+		return *order
+	}), pageRes, nil
+}
+
 func (k Keeper) removeOrderBookRecord(
 	ctx sdk.Context,
 	orderBookID uint32,
@@ -352,33 +552,22 @@ func (k Keeper) getOrderData(ctx sdk.Context, orderSeq uint64) (types.OrderData,
 }
 
 func (k Keeper) savaOrderIDToSeq(ctx sdk.Context, accountNumber uint64, orderID string, orderSeq uint64) error {
-	key, err := types.CreateOrderIDToSeqKey(accountNumber, orderID)
-	if err != nil {
-		return err
-	}
-
+	key := types.CreateOrderIDToSeqKey(accountNumber, orderID)
 	return k.setDataToStore(ctx, key, &gogotypes.UInt64Value{Value: orderSeq})
 }
 
 func (k Keeper) removeOrderIDToSeq(ctx sdk.Context, accountNumber uint64, orderID string) error {
-	key, err := types.CreateOrderIDToSeqKey(accountNumber, orderID)
-	if err != nil {
-		return err
-	}
-	ctx.KVStore(k.storeKey).Delete(key)
+	ctx.KVStore(k.storeKey).Delete(types.CreateOrderIDToSeqKey(accountNumber, orderID))
 	return nil
 }
 
 func (k Keeper) getOrderSeqByID(ctx sdk.Context, accountNumber uint64, orderID string) (uint64, error) {
-	key, err := types.CreateOrderIDToSeqKey(accountNumber, orderID)
-	if err != nil {
-		return 0, err
-	}
 	var val gogotypes.UInt64Value
-	if err := k.getDataFromStore(ctx, key, &val); err != nil {
+	if err := k.getDataFromStore(ctx, types.CreateOrderIDToSeqKey(accountNumber, orderID), &val); err != nil {
 		return 0, sdkerrors.Wrapf(err, "failed to get order seq, accountNumber: %d, orderID: %s", accountNumber, orderID)
 	}
-	return val.GetValue(), err
+
+	return val.GetValue(), nil
 }
 
 func (k Keeper) setDataToStore(
