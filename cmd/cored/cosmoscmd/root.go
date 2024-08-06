@@ -52,7 +52,6 @@ const ledgerAppName = "Coreum"
 // main function.
 func NewRootCmd() *cobra.Command {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
-	// encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
 	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
 	encodingConfig := config.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
