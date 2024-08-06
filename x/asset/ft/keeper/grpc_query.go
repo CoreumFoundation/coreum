@@ -118,7 +118,7 @@ func (qs QueryService) Balance(
 
 	denom := req.GetDenom()
 	vestingLocked := qs.bankKeeper.LockedCoins(ctx, account).AmountOf(denom)
-	dexLocked := qs.keeper.GetDEXLockedBalance(ctx, account, denom).Amount
+	dexLocked := qs.keeper.GetDEXLockedBalance(sdk.UnwrapSDKContext(ctx), account, denom).Amount
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	return &types.QueryBalanceResponse{

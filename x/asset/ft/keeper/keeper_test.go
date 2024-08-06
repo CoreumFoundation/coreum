@@ -1619,7 +1619,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContext(false)
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1640,11 +1640,12 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	// create acc with permanently vesting locked coins
 	vestingCoin := sdk.NewInt64Coin(denom, 50)
-	baseVestingAccount := vestingtypes.NewDelayedVestingAccount(
+	baseVestingAccount, err := vestingtypes.NewDelayedVestingAccount(
 		authtypes.NewBaseAccountWithAddress(acc),
 		sdk.NewCoins(vestingCoin),
 		math.MaxInt64,
 	)
+	requireT.NoError(err)
 	account := testApp.App.AccountKeeper.NewAccount(ctx, baseVestingAccount)
 	testApp.AccountKeeper.SetAccount(ctx, account)
 	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(vestingCoin)))
@@ -1728,7 +1729,7 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContext(false)
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1740,11 +1741,12 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 
 	// create acc with permanently locked coins (native)
 	vestingCoin := sdk.NewInt64Coin(denom, 50)
-	baseVestingAccount := vestingtypes.NewDelayedVestingAccount(
+	baseVestingAccount, err := vestingtypes.NewDelayedVestingAccount(
 		authtypes.NewBaseAccountWithAddress(acc),
 		sdk.NewCoins(vestingCoin),
 		math.MaxInt64,
 	)
+	requireT.NoError(err)
 	account := testApp.App.AccountKeeper.NewAccount(ctx, baseVestingAccount)
 	testApp.AccountKeeper.SetAccount(ctx, account)
 	requireT.NoError(bankKeeper.SendCoins(ctx, faucet, acc, sdk.NewCoins(vestingCoin)))

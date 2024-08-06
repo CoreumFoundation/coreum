@@ -161,7 +161,7 @@ func (k BaseKeeperWrapper) SpendableBalances(
 		return nil, err
 	}
 
-	bankLockedCoins := k.BaseKeeper.LockedCoins(sdk.UnwrapSDKContext(ctx), addr)
+	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
 
 	balances := balancesRes.Balances
 	for i := range balances {
@@ -197,7 +197,7 @@ func (k BaseKeeperWrapper) SpendableBalanceByDenom(
 		return &banktypes.QuerySpendableBalanceByDenomResponse{}, nil
 	}
 
-	bankLockedCoins := k.BaseKeeper.LockedCoins(sdk.UnwrapSDKContext(ctx), addr)
+	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
 	bankLockedCoin := sdk.NewCoin(req.Denom, bankLockedCoins.AmountOf(req.Denom))
 
 	return &banktypes.QuerySpendableBalanceByDenomResponse{

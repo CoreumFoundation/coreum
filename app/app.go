@@ -853,6 +853,7 @@ func New(
 		appCodec,
 		keys[dextypes.StoreKey],
 		app.AccountKeeper,
+		authkeeper.NewQueryServer(app.AccountKeeper),
 		app.BankKeeper,
 	)
 

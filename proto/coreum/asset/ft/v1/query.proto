@@ -126,12 +126,12 @@ message QueryBalanceResponse {
   ];
   // locked_in_vesting is the balance locked in bank vesting.
   string locked_in_vesting = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // locked_in_dex is the balance locked in DEX.
   string locked_in_dex = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "LockedInDEX"
   ];

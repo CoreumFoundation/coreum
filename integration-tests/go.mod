@@ -34,6 +34,7 @@ require (
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v8 v8.0.0-20240626224216-94190a9816cc
 	github.com/cosmos/ibc-go/v8 v8.3.2
 	github.com/cosmos/relayer/v2 v2.5.2
+	github.com/google/uuid v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.9.0
