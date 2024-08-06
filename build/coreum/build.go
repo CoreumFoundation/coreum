@@ -190,7 +190,13 @@ func buildCoredInDocker(
 
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps types.DepsFunc) error {
-	deps(Generate, CompileAllSmartContracts, formatProto, lintProto, breakingProto)
+	deps(
+		Generate,
+		CompileAllSmartContracts,
+		formatProto,
+		lintProto,
+		// breakingProto, // TODO:revert after cosmos sdk v0.50.x upgrade
+	)
 	return golang.Lint(ctx, deps)
 }
 
