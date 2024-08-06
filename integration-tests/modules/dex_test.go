@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
@@ -144,6 +145,113 @@ func TestOrdersMatching(t *testing.T) {
 	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 }
 
+// TestOrderBooksAndOrdersQueries tests the dex modules order queries.
+func TestOrderBooksAndOrdersQueries(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	// issue assetft
+	acc1 := chain.GenAccount()
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+	acc2 := chain.GenAccount()
+	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
+
+	// create acc1 orders
+	acc1Orders := []dextypes.Order{
+		{
+			Creator:           acc1.String(),
+			ID:                "id1",
+			BaseDenom:         denom1,
+			QuoteDenom:        denom2,
+			Price:             dextypes.MustNewPriceFromString("999"),
+			Quantity:          sdkmath.NewInt(100),
+			Side:              dextypes.Side_sell,
+			RemainingQuantity: sdkmath.NewInt(100),
+			RemainingBalance:  sdkmath.NewInt(100),
+		},
+	}
+	acc1OrderPlaceMsgs := ordersToPlaceMsgs(acc1Orders)
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: acc1OrderPlaceMsgs,
+	})
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(acc1OrderPlaceMsgs...)),
+		acc1OrderPlaceMsgs...,
+	)
+	requireT.NoError(err)
+
+	// create acc2 orders
+	acc2Orders := []dextypes.Order{
+		{
+			Creator:           acc2.String(),
+			ID:                "id1",
+			BaseDenom:         denom1,
+			QuoteDenom:        denom2,
+			Price:             dextypes.MustNewPriceFromString("996"),
+			Quantity:          sdkmath.NewInt(10),
+			Side:              dextypes.Side_buy,
+			RemainingQuantity: sdkmath.NewInt(10),
+			RemainingBalance:  sdkmath.NewInt(9960),
+		},
+		{
+			Creator:           acc2.String(),
+			ID:                "id2",
+			BaseDenom:         denom1,
+			QuoteDenom:        denom2,
+			Price:             dextypes.MustNewPriceFromString("997"),
+			Quantity:          sdkmath.NewInt(10),
+			Side:              dextypes.Side_buy,
+			RemainingQuantity: sdkmath.NewInt(10),
+			RemainingBalance:  sdkmath.NewInt(9970),
+		},
+	}
+	acc2OrderPlaceMsgs := ordersToPlaceMsgs(acc2Orders)
+	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
+		Messages: acc2OrderPlaceMsgs,
+	})
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(acc2OrderPlaceMsgs...)),
+		acc2OrderPlaceMsgs...,
+	)
+	requireT.NoError(err)
+
+	// check order books query
+	orderBooksRes, err := dexClient.OrderBooks(ctx, &dextypes.QueryOrderBooksRequest{})
+	requireT.NoError(err)
+	requireT.Contains(orderBooksRes.OrderBooks, dextypes.OrderBookData{
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+	})
+	requireT.Contains(orderBooksRes.OrderBooks, dextypes.OrderBookData{
+		BaseDenom:  denom2,
+		QuoteDenom: denom1,
+	})
+
+	// check order book orders query
+	orderBookOrdersRes, err := dexClient.OrdersBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Side:       dextypes.Side_sell,
+	})
+	requireT.NoError(err)
+	// acc1 orders because all of them sell
+	requireT.Equal(acc1Orders, orderBookOrdersRes.Orders)
+
+	// check account orders query
+	ordersRes, err := dexClient.Orders(ctx, &dextypes.QueryOrdersRequest{
+		Creator: acc2.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(acc2Orders, ordersRes.Orders)
+}
+
 func issueFT(
 	ctx context.Context,
 	t *testing.T,
@@ -172,4 +280,18 @@ func issueFT(
 	)
 	require.NoError(t, err)
 	return assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+}
+
+func ordersToPlaceMsgs(orders []dextypes.Order) []sdk.Msg {
+	return lo.Map(orders, func(order dextypes.Order, _ int) sdk.Msg {
+		return &dextypes.MsgPlaceOrder{
+			Sender:     order.Creator,
+			ID:         order.ID,
+			BaseDenom:  order.BaseDenom,
+			QuoteDenom: order.QuoteDenom,
+			Price:      order.Price,
+			Quantity:   order.Quantity,
+			Side:       order.Side,
+		}
+	})
 }

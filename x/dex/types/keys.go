@@ -68,20 +68,15 @@ func CreateOrderKey(orderSeq uint64) []byte {
 }
 
 // CreateOrderIDToSeqKey creates order ID to sequence key.
-func CreateOrderIDToSeqKey(accountNumber uint64, orderID string) ([]byte, error) {
+func CreateOrderIDToSeqKey(accountNumber uint64, orderID string) []byte {
+	return store.JoinKeys(CreateOrderIDToSeqKeyPrefix(accountNumber), []byte(orderID))
+}
+
+// CreateOrderIDToSeqKeyPrefix creates order ID to sequence key prefix.
+func CreateOrderIDToSeqKeyPrefix(accountNumber uint64) []byte {
 	key := make([]byte, 0)
 	key = store.AppendUint64ToOrderedBytes(key, accountNumber)
-	var err error
-	key, err = store.JoinKeysWithLength(key, []byte(orderID))
-	if err != nil {
-		return nil, sdkerrors.Wrapf(
-			ErrInvalidKey,
-			"failed to join order ID to seq key, accountNumber: %d, orderID:%s, err: %s",
-			accountNumber, orderID, err,
-		)
-	}
-
-	return store.JoinKeys(OrderIDToSeqKeyPrefix, key), nil
+	return store.JoinKeys(OrderIDToSeqKeyPrefix, key)
 }
 
 // CreateOrderBookRecordKey creates order book key record with fixed key length to support the correct ordering

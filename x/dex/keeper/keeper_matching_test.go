@@ -681,8 +681,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 
 			orders := make([]types.Order, 0)
 			for orderBookID := range orderBooksIDs {
-				orders = append(orders, getOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.Side_buy)...)
-				orders = append(orders, getOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.Side_sell)...)
+				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.Side_buy)...)
+				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.Side_sell)...)
 			}
 			require.ElementsMatch(t, tt.wantOrders(accSet), orders)
 

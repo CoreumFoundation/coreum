@@ -199,8 +199,14 @@
     - [Side](#coreum.dex.v1.Side)
   
 - [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
+    - [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest)
+    - [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse)
+    - [QueryOrderBooksRequest](#coreum.dex.v1.QueryOrderBooksRequest)
+    - [QueryOrderBooksResponse](#coreum.dex.v1.QueryOrderBooksResponse)
     - [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest)
     - [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse)
+    - [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest)
+    - [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse)
   
     - [Query](#coreum.dex.v1.Query)
   
@@ -4448,6 +4454,87 @@ Side is order side.
 
 
 
+<a name="coreum.dex.v1.QueryOrderBookOrdersRequest"></a>
+
+### QueryOrderBookOrdersRequest
+
+```
+QueryOrderBookOrdersRequest defines the request type for the `OrderBookOrders` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `base_denom` | [string](#string) |  |  `base_denom is base order denom.`  |
+| `quote_denom` | [string](#string) |  |  `quote_denom is quote order denom`  |
+| `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  |  `pagination defines an optional pagination for the request.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryOrderBookOrdersResponse"></a>
+
+### QueryOrderBookOrdersResponse
+
+```
+QueryOrderBookOrdersResponse defines the response type for the `OrderBookOrders` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `orders` | [Order](#coreum.dex.v1.Order) | repeated |    |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  |    |
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryOrderBooksRequest"></a>
+
+### QueryOrderBooksRequest
+
+```
+QueryOrderBooksRequest defines the request type for the `OrderBooks` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  |  `pagination defines an optional pagination for the request.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryOrderBooksResponse"></a>
+
+### QueryOrderBooksResponse
+
+```
+QueryOrderBooksResponse defines the response type for the `OrderBooks` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `order_books` | [OrderBookData](#coreum.dex.v1.OrderBookData) | repeated |    |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  |    |
+
+
+
+
+
+
 <a name="coreum.dex.v1.QueryOrderRequest"></a>
 
 ### QueryOrderRequest
@@ -4486,6 +4573,46 @@ QueryOrderRequestResponse defines the response type for the `Order` query.
 
 
 
+
+<a name="coreum.dex.v1.QueryOrdersRequest"></a>
+
+### QueryOrdersRequest
+
+```
+QueryOrdersRequest defines the request type for the `Orders` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `creator` | [string](#string) |  |  `creator is order creator's account.`  |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  |  `pagination defines an optional pagination for the request.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryOrdersResponse"></a>
+
+### QueryOrdersResponse
+
+```
+QueryOrdersRequestResponse defines the response type for the `Order` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `orders` | [Order](#coreum.dex.v1.Order) | repeated |    |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  |    |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -4505,6 +4632,9 @@ Query defines the gRPC query service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Order` | [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest) | [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse) | `Order queries order by creator and ID.` | GET|/coreum/dex/v1/orders/{creator}/{id} |
+| `Orders` | [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest) | [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse) | `Orders queries creator orders.` | GET|/coreum/dex/v1/orders/{creator} |
+| `OrderBooks` | [QueryOrderBooksRequest](#coreum.dex.v1.QueryOrderBooksRequest) | [QueryOrderBooksResponse](#coreum.dex.v1.QueryOrderBooksResponse) | `OrderBooks queries order books.` | GET|/coreum/dex/v1/order-books |
+| `OrdersBookOrders` | [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest) | [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse) | `OrdersBookOrders queries order book orders.` | GET|/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders |
 
  <!-- end services -->
 
