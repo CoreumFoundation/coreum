@@ -99,6 +99,7 @@ func TestQueryClassAndNFT(t *testing.T) {
 
 	var nftRes nft.QueryNFTResponse
 	// TODO(fix-cli-tests)
+	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), []string{classID, nftID}, &nftRes))
 
 	requireT.Equal(&expectedNFT, nftRes.Nft)

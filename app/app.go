@@ -393,11 +393,6 @@ func New(
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
-	// register streaming services
-	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
-		panic(err)
-	}
-
 	app := &App{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,

@@ -163,6 +163,7 @@ func TestCmdMintToRecipient(t *testing.T) {
 	var resp nft.QueryOwnerResponse
 	args = []string{classID, nftID}
 	// TODO(fix-cli-tests)
+	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryOwner(), args, &resp))
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), args, &resp))
 	requireT.Equal(recipient.String(), resp.Owner)
 }
@@ -213,6 +214,7 @@ func TestCmdMintDataDynamic(t *testing.T) {
 
 	var nftRes nft.QueryNFTResponse
 	// TODO(fix-cli-tests)
+	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), []string{classID, nftID}, &nftRes))
 
 	var gotDataDynamic types.DataDynamic
@@ -292,6 +294,7 @@ func TestCmdUpdateData(t *testing.T) {
 
 	var nftRes nft.QueryNFTResponse
 	// TODO(fix-cli-tests)
+	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
 	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), []string{classID, nftID}, &nftRes))
 
 	var gotDataDynamic types.DataDynamic

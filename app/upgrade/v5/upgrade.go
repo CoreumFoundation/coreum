@@ -14,7 +14,7 @@ import (
 // Name defines the upgrade name.
 const Name = "v5"
 
-// New makes an upgrade handler for v4 upgrade.
+// New makes an upgrade handler for v5 upgrade.
 func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
