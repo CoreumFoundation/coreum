@@ -37,6 +37,8 @@ func (k Keeper) matchOrder(ctx sdk.Context, accNumber uint64, orderBookID uint32
 	oppositeSideOrderBookIterator := k.NewOrderBookSideIterator(ctx, orderBookID, oppositeSide)
 	defer oppositeSideOrderBookIterator.Close()
 
+	accNumberToAddrCache := make(map[uint64]sdk.AccAddress)
+
 	for {
 		oppositeSideRecord, exist, err := oppositeSideOrderBookIterator.Next()
 		if err != nil {
@@ -74,17 +76,31 @@ func (k Keeper) matchOrder(ctx sdk.Context, accNumber uint64, orderBookID uint32
 		recordToCloseReceiveCoin, recordToReduceReceiveCoin := getRecordToCloseAndReceiveCoins(
 			recordToClose, order, executionQuantity, oppositeExecutionQuantity,
 		)
-		// send coins to account of the record to close
-		if err := k.sendCoinsFromDEX(
-			ctx, recordToClose.AccountNumber,
-			sdk.NewCoins(
-				recordToCloseReceiveCoin,
-				// refund the remaining balance
-				sdk.NewCoin(recordToReduceReceiveCoin.Denom, recordToClose.RemainingBalance.Sub(recordToReduceReceiveCoin.Amount)),
+
+		var recordToCloseAddr, recordToReduceAddr sdk.AccAddress
+		recordToCloseAddr, recordToReduceAddr, accNumberToAddrCache, err = k.getRecordToCloseAndReduceAddresses(
+			ctx, recordToClose, recordToReduce, accNumberToAddrCache)
+		if err != nil {
+			return err
+		}
+
+		if err := k.unlockAndSendCoin(
+			ctx, recordToReduceAddr, recordToCloseAddr, recordToCloseReceiveCoin,
+		); err != nil {
+			return err
+		}
+
+		if err := k.unlockCoin(
+			ctx,
+			recordToCloseAddr,
+			sdk.NewCoin(
+				recordToReduceReceiveCoin.Denom,
+				recordToClose.RemainingBalance.Sub(recordToReduceReceiveCoin.Amount),
 			),
 		); err != nil {
 			return err
 		}
+
 		recordToClose.RemainingQuantity = recordToClose.RemainingQuantity.Sub(recordToCloseReceiveCoin.Amount)
 		recordToClose.RemainingBalance = sdk.ZeroInt()
 
@@ -94,9 +110,9 @@ func (k Keeper) matchOrder(ctx sdk.Context, accNumber uint64, orderBookID uint32
 				"remainingQuantity", recordToClose.RemainingQuantity.String(),
 			)
 		}
-		// send coins to account of the record to reduce
-		if err := k.sendCoinsFromDEX(
-			ctx, recordToReduce.AccountNumber, sdk.NewCoins(recordToReduceReceiveCoin),
+
+		if err := k.unlockAndSendCoin(
+			ctx, recordToCloseAddr, recordToReduceAddr, recordToReduceReceiveCoin,
 		); err != nil {
 			return err
 		}
@@ -111,10 +127,12 @@ func (k Keeper) matchOrder(ctx sdk.Context, accNumber uint64, orderBookID uint32
 			// check if the maker record has what to fill later, or we can cancel the remaining part now
 			if recordToReduce.RemainingQuantity.IsZero() {
 				k.logger(ctx).Debug("Taker record is filled fully.")
-				// send remaining coins
-				if err := k.sendCoinsFromDEX(ctx, recordToReduce.AccountNumber, sdk.NewCoins(
+				// unlock remaining balance
+				if err := k.unlockCoin(
+					ctx,
+					recordToReduceAddr,
 					sdk.NewCoin(recordToCloseReceiveCoin.Denom, recordToReduce.RemainingBalance),
-				)); err != nil {
+				); err != nil {
 					return err
 				}
 				recordToReduce.RemainingBalance = sdk.ZeroInt()
@@ -138,19 +156,31 @@ func (k Keeper) matchOrder(ctx sdk.Context, accNumber uint64, orderBookID uint32
 	return nil
 }
 
-func (k Keeper) lockOrderBalance(ctx sdk.Context, order types.Order) (sdk.Coin, error) {
-	lockedBalance, err := order.ComputeLockedBalance()
+func (k Keeper) getRecordToCloseAndReduceAddresses(
+	ctx sdk.Context,
+	recordToClose, recordToReduce *types.OrderBookRecord,
+	accountNumberToAddr map[uint64]sdk.AccAddress,
+) (sdk.AccAddress, sdk.AccAddress, map[uint64]sdk.AccAddress, error) {
+	var (
+		recordToCloseAddr sdk.AccAddress
+		err               error
+	)
+	recordToCloseAddr, accountNumberToAddr, err = k.getAccountAddressWithCache(
+		ctx, recordToClose.AccountNumber, accountNumberToAddr,
+	)
 	if err != nil {
-		return sdk.Coin{}, err
-	}
-	// currently we send the coins to module and from, but later we will implement the locking instead
-	if err := k.sendCoinToDEX(ctx, order.Creator, lockedBalance); err != nil {
-		return sdk.Coin{}, err
+		return sdk.AccAddress{}, sdk.AccAddress{}, nil, err
 	}
 
-	k.logger(ctx).Debug("Locked order balance.", "lockedBalance", lockedBalance)
+	var recordToReduceAddr sdk.AccAddress
+	recordToReduceAddr, accountNumberToAddr, err = k.getAccountAddressWithCache(
+		ctx, recordToReduce.AccountNumber, accountNumberToAddr,
+	)
+	if err != nil {
+		return sdk.AccAddress{}, sdk.AccAddress{}, nil, err
+	}
 
-	return lockedBalance, nil
+	return recordToCloseAddr, recordToReduceAddr, accountNumberToAddr, nil
 }
 
 func isOppositeSideRecordMatches(takerRecord, oppositeSideRecord types.OrderBookRecord) bool {

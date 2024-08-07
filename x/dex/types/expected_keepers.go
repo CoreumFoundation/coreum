@@ -11,9 +11,9 @@ type AccountKeeper interface {
 	GetAccountAddressByID(ctx sdk.Context, id uint64) string
 }
 
-// BankKeeper represents required methods of bank keeper.
-type BankKeeper interface {
-	SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+// AssetFTKeeper represents required methods of asset ft keeper.
+type AssetFTKeeper interface {
+	DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
+	DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
+	DEXUnlockAndSend(ctx sdk.Context, from, to sdk.AccAddress, coin sdk.Coin) error
 }
