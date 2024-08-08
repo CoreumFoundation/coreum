@@ -21,6 +21,7 @@ import (
 )
 
 func TestAutoGasPrices(t *testing.T) {
+	// TODO(fix-tests)
 	t.SkipNow()
 	testNetwork := network.New(t)
 	ctx := testNetwork.Validators[0].ClientCtx

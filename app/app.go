@@ -938,8 +938,6 @@ func New(
 		customParamsModule,
 		delayModule,
 		dex.NewAppModule(appCodec, app.DEXKeeper),
-		// always be last to make sure that it checks for all invariants and not only part of them
-		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 
 		// IBC modules
 		ibc.NewAppModule(app.IBCKeeper),
@@ -947,6 +945,9 @@ func New(
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
 		ibctm.NewAppModule(),
+
+		// always be last to make sure that it checks for all invariants and not only part of them
+		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,

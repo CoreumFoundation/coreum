@@ -20,7 +20,7 @@ func TestBaseKeeperWrapper_SpendableBalances(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContext(false)
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper

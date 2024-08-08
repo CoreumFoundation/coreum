@@ -16,7 +16,6 @@ import (
 )
 
 func TestQueryTokens(t *testing.T) {
-	t.SkipNow()
 	requireT := require.New(t)
 
 	testNetwork := network.New(t)
