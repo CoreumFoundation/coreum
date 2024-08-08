@@ -79,7 +79,7 @@ func placeRandomOrderAndAssertOrdering(
 	priceStr := strconv.FormatUint(num, 10) + expPart
 	price := types.MustNewPriceFromString(priceStr)
 
-	sdkCtx := testApp.BeginNextBlock(time.Now())
+	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
 	acc, _ := testApp.GenAccount(sdkCtx)
 
 	var quantity sdkmath.Int
@@ -115,5 +115,6 @@ func placeRandomOrderAndAssertOrdering(
 
 	assertOrdersOrdering(t, testApp, sdkCtx, orderBookID, side)
 
-	testApp.EndBlockAndCommit(sdkCtx)
+	_, err = testApp.EndBlocker(sdkCtx)
+	require.NoError(t, err)
 }

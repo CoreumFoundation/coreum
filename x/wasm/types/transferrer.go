@@ -20,5 +20,6 @@ func NewBankCoinTransferrer(bankKeeper wasmtypes.BankKeeper) BankCoinTransferrer
 
 // TransferCoins transfers coins to the smart contract.
 func (c BankCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amount sdk.Coins) error {
-	return c.parentTransferrer.TransferCoins(WithSmartContractRecipient(ctx, toAddr.String()), fromAddr, toAddr, amount)
+	ctx = sdk.UnwrapSDKContext(WithSmartContractRecipient(ctx, toAddr.String()))
+	return c.parentTransferrer.TransferCoins(ctx, fromAddr, toAddr, amount)
 }

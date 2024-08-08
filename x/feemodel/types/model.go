@@ -2,7 +2,6 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // DefaultModel returns model with default params.
@@ -31,7 +30,7 @@ func (m Model) Params() ModelParams {
 
 // CalculateNextGasPrice calculates minimum gas price for next block.
 // Chart showing a sample output of the fee model: x/feemodel/spec/assets/curve.png.
-func (m Model) CalculateNextGasPrice(shortEMA, longEMA int64) sdk.Dec {
+func (m Model) CalculateNextGasPrice(shortEMA, longEMA int64) sdkmath.LegacyDec {
 	switch {
 	case shortEMA >= m.params.MaxBlockGas:
 		return m.CalculateMaxGasPrice()
@@ -49,44 +48,44 @@ func (m Model) CalculateNextGasPrice(shortEMA, longEMA int64) sdk.Dec {
 }
 
 // CalculateGasPriceWithMaxDiscount calculates gas price with maximum discount applied.
-func (m Model) CalculateGasPriceWithMaxDiscount() sdk.Dec {
-	return m.params.InitialGasPrice.Mul(sdk.OneDec().Sub(m.params.MaxDiscount))
+func (m Model) CalculateGasPriceWithMaxDiscount() sdkmath.LegacyDec {
+	return m.params.InitialGasPrice.Mul(sdkmath.LegacyOneDec().Sub(m.params.MaxDiscount))
 }
 
 // CalculateMaxGasPrice calculates maximum gas price.
-func (m Model) CalculateMaxGasPrice() sdk.Dec {
+func (m Model) CalculateMaxGasPrice() sdkmath.LegacyDec {
 	return m.params.InitialGasPrice.Mul(m.params.MaxGasPriceMultiplier)
 }
 
 // CalculateEscalationStartBlockGas calculates escalation start block gas.
 func (m Model) CalculateEscalationStartBlockGas() int64 {
-	return sdk.NewDec(m.params.MaxBlockGas).Mul(m.params.EscalationStartFraction).TruncateInt64()
+	return sdkmath.LegacyNewDec(m.params.MaxBlockGas).Mul(m.params.EscalationStartFraction).TruncateInt64()
 }
 
-func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Dec {
+func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdkmath.LegacyDec {
 	gasPriceWithMaxDiscount := m.CalculateGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
 	escalationStartBlockGas := m.CalculateEscalationStartBlockGas()
 	height := m.CalculateMaxGasPrice().Sub(gasPriceWithMaxDiscount)
-	width := sdk.NewDec(m.params.MaxBlockGas - escalationStartBlockGas)
-	x := sdk.NewDec(shortEMA - escalationStartBlockGas)
+	width := sdkmath.LegacyNewDec(m.params.MaxBlockGas - escalationStartBlockGas)
+	x := sdkmath.LegacyNewDec(shortEMA - escalationStartBlockGas)
 
 	offset := height.Mul(x.Quo(width).Power(exponent))
 	return gasPriceWithMaxDiscount.Add(offset)
 }
 
-func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA, longEMA int64) sdk.Dec {
+func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA, longEMA int64) sdkmath.LegacyDec {
 	gasPriceWithMaxDiscount := m.CalculateGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
 	height := m.params.InitialGasPrice.Sub(gasPriceWithMaxDiscount)
-	width := sdk.NewDecFromInt(sdkmath.NewInt(longEMA))
-	x := sdk.NewDec(shortEMA)
+	width := sdkmath.LegacyNewDecFromInt(sdkmath.NewInt(longEMA))
+	x := sdkmath.LegacyNewDec(shortEMA)
 
-	offset := height.Mul(x.Quo(width).Sub(sdk.OneDec()).Abs().Power(exponent))
+	offset := height.Mul(x.Quo(width).Sub(sdkmath.LegacyOneDec()).Abs().Power(exponent))
 	return gasPriceWithMaxDiscount.Add(offset)
 }
 

@@ -5,9 +5,7 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/cmd/cored/cosmoscmd"
@@ -28,12 +26,7 @@ func main() {
 	cosmoscmd.OverwriteDefaultChainIDFlags(rootCmd)
 	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	if err := svrcmd.Execute(rootCmd, coreumEnvPrefix, app.DefaultNodeHome); err != nil {
-		fmt.Printf("Error executing cmd, err: %s", err)
-		errCode := new(server.ErrorCode)
-		if errors.As(err, errCode) {
-			os.Exit(errCode.Code)
-		}
-
+		fmt.Fprintln(rootCmd.OutOrStderr(), err)
 		os.Exit(1)
 	}
 }

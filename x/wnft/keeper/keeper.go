@@ -4,10 +4,10 @@ import (
 	"context"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/x/nft"
+	nftkeeper "cosmossdk.io/x/nft/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/nft"
-	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 
 	"github.com/CoreumFoundation/coreum/v4/x/wnft/types"
 )
@@ -30,8 +30,7 @@ func NewWrappedNFTKeeper(originalKeeper nftkeeper.Keeper, provider types.NonFung
 // Copied from
 // https://github.com/cosmos/cosmos-sdk/blob/a1143138716b64bc4fa0aa53c0f0fa59eb675bb7/x/nft/keeper/msg_server.go#L14
 // On each update we need to make sure it is up-to-date with original cosmos version of nft.
-func (wk Wrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
+func (wk Wrapper) Send(ctx context.Context, msg *nft.MsgSend) (*nft.MsgSendResponse, error) {
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
@@ -47,11 +46,11 @@ func (wk Wrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendRes
 		return nil, err
 	}
 
-	if err := wk.Transfer(ctx, msg.ClassId, msg.Id, receiver); err != nil {
+	if err := wk.Transfer(sdk.UnwrapSDKContext(ctx), msg.ClassId, msg.Id, receiver); err != nil {
 		return nil, err
 	}
 
-	err = ctx.EventManager().EmitTypedEvent(&nft.EventSend{
+	err = sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(&nft.EventSend{
 		ClassId:  msg.ClassId,
 		Id:       msg.Id,
 		Sender:   msg.Sender,

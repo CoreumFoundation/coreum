@@ -11,6 +11,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	nfttypes "cosmossdk.io/x/nft"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,7 +22,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1134,8 +1134,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 			assetfttypes.Feature_whitelisting,
 			assetfttypes.Feature_clawback,
 		},
-		BurnRate:           sdk.MustNewDecFromStr("1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("1"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("1"),
 		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
 		URI:                issuanceReq.URI,
 		URIHash:            issuanceReq.URIHash,
@@ -1460,8 +1460,8 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 
 	// ********** Issuance **********
 
-	burnRate := sdk.MustNewDecFromStr("0.1")
-	sendCommissionRate := sdk.MustNewDecFromStr("0.2")
+	burnRate := sdkmath.LegacyMustNewDecFromStr("0.1")
+	sendCommissionRate := sdkmath.LegacyMustNewDecFromStr("0.2")
 
 	issuanceAmount := sdkmath.NewInt(10_000)
 	issuanceReq := issueFTLegacyRequest{
@@ -1951,7 +1951,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		URIHash:     issueClassReqNoWhitelist.URIHash,
 		Data:        dataToCompare,
 		Features:    issueClassReqNoWhitelist.Features,
-		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
+		RoyaltyRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 	requireT.Equal(
 		expectedClass, classRes.Class,
@@ -2471,7 +2471,7 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 
 	// ********** Issuance **********
 
-	royaltyRate := sdk.MustNewDecFromStr("0.1")
+	royaltyRate := sdkmath.LegacyMustNewDecFromStr("0.1")
 	data := make([]byte, 256)
 	for i := 0; i < 256; i++ {
 		data[i] = uint8(i)

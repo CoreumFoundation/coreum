@@ -1,7 +1,9 @@
 syntax = "proto3";
 package coreum.dex.v1;
 
+import "amino/amino.proto";
 import "coreum/dex/v1/order.proto";
+import "cosmos/msg/v1/msg.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v4/x/dex/types";
@@ -15,6 +17,9 @@ service Msg {
 
 // MsgPlaceOrder defines message to place an order on orderbook.
 message MsgPlaceOrder {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "dex/MsgPlaceOrder";
+
   // sender is order creator address.
   string sender = 1;
   // id is unique order ID.

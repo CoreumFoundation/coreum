@@ -2,13 +2,11 @@ package keeper_test
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -654,9 +652,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			logger := log.NewTestLogger(t)
 			testApp := simapp.New(simapp.WithCustomLogger(logger))
-			sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+			sdkCtx := testApp.BaseApp.NewContext(false)
 
 			acc1, _ := testApp.GenAccount(sdkCtx)
 			acc2, _ := testApp.GenAccount(sdkCtx)

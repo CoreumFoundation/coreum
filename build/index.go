@@ -11,12 +11,13 @@ import (
 
 // Commands is a definition of commands available in build system.
 var Commands = map[string]types.Command{
-	"build/me":   {Fn: crust.BuildBuilder, Description: "Builds the builder"},
+	"build/me":   {Fn: coreum.BuildBuilder, Description: "Builds the builder"},
 	"build/znet": {Fn: crust.BuildZNet, Description: "Builds znet binary"},
 	"build": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
 			coreum.BuildCored,
-			coreum.BuildExtendedCoredInDocker,
+			// TODO(fix-cored-ext)
+			// coreum.BuildExtendedCoredInDocker,
 		)
 		return nil
 	}, Description: "Builds cored binaries"},
@@ -26,7 +27,8 @@ var Commands = map[string]types.Command{
 	"images": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
 			coreum.BuildCoredDockerImage,
-			coreum.BuildExtendedCoredDockerImage,
+			// TODO(fix-cored-ext)
+			// coreum.BuildExtendedCoredDockerImage,
 		)
 		return nil
 	}, Description: "Builds cored docker images"},

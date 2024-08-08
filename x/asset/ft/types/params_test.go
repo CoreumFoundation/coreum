@@ -33,7 +33,7 @@ func TestParamsValidation(t *testing.T) {
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
-	testParams.IssueFee = sdk.Coin{Amount: sdk.OneInt()}
+	testParams.IssueFee = sdk.Coin{Amount: sdkmath.OneInt()}
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params

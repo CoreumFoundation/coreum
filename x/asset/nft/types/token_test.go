@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -104,8 +105,8 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 		Denom              string
 		Issuer             string
 		Features           []types.ClassFeature
-		BurnRate           sdk.Dec
-		SendCommissionRate sdk.Dec
+		BurnRate           sdkmath.LegacyDec
+		SendCommissionRate sdkmath.LegacyDec
 	}
 	type args struct {
 		addr    sdk.AccAddress

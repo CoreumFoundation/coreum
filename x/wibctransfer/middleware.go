@@ -2,9 +2,9 @@ package wibctransfer
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 
 	"github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
@@ -29,7 +29,8 @@ func (im PurposeMiddleware) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	return im.IBCModule.OnRecvPacket(types.WithPurpose(ctx, types.PurposeIn), packet, relayer)
+	ctx = sdk.UnwrapSDKContext(types.WithPurpose(ctx, types.PurposeIn))
+	return im.IBCModule.OnRecvPacket(ctx, packet, relayer)
 }
 
 // OnAcknowledgementPacket adds purpose-ack to the context and calls the upper implementation.
@@ -39,7 +40,8 @@ func (im PurposeMiddleware) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return im.IBCModule.OnAcknowledgementPacket(types.WithPurpose(ctx, types.PurposeAck), packet, acknowledgement, relayer)
+	ctx = sdk.UnwrapSDKContext(types.WithPurpose(ctx, types.PurposeAck))
+	return im.IBCModule.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
 // OnTimeoutPacket adds purpose-timeout to the context and calls the upper implementation.
@@ -48,5 +50,6 @@ func (im PurposeMiddleware) OnTimeoutPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	return im.IBCModule.OnTimeoutPacket(types.WithPurpose(ctx, types.PurposeTimeout), packet, relayer)
+	ctx = sdk.UnwrapSDKContext(types.WithPurpose(ctx, types.PurposeAck))
+	return im.IBCModule.OnTimeoutPacket(ctx, packet, relayer)
 }

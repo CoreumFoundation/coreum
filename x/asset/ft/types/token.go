@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
@@ -55,8 +55,8 @@ type IssueSettings struct {
 	URIHash            string
 	InitialAmount      sdkmath.Int
 	Features           []Feature
-	BurnRate           sdk.Dec
-	SendCommissionRate sdk.Dec
+	BurnRate           sdkmath.LegacyDec
+	SendCommissionRate sdkmath.LegacyDec
 	ExtensionSettings  *ExtensionIssueSettings
 }
 
@@ -235,7 +235,7 @@ func ValidateFeatures(features []Feature) error {
 }
 
 // ValidateBurnRate checks that the provided burn rate is valid.
-func ValidateBurnRate(burnRate sdk.Dec) error {
+func ValidateBurnRate(burnRate sdkmath.LegacyDec) error {
 	if err := validateRate(burnRate); err != nil {
 		return errors.Wrap(err, "burn rate is invalid")
 	}
@@ -243,14 +243,14 @@ func ValidateBurnRate(burnRate sdk.Dec) error {
 }
 
 // ValidateSendCommissionRate checks that provided send commission rate is valid.
-func ValidateSendCommissionRate(sendCommissionRate sdk.Dec) error {
+func ValidateSendCommissionRate(sendCommissionRate sdkmath.LegacyDec) error {
 	if err := validateRate(sendCommissionRate); err != nil {
 		return errors.Wrap(err, "send commission rate is invalid")
 	}
 	return nil
 }
 
-func validateRate(rate sdk.Dec) error {
+func validateRate(rate sdkmath.LegacyDec) error {
 	const maxRatePrecisionAllowed = 4
 
 	if rate.IsNil() {
@@ -261,7 +261,7 @@ func validateRate(rate sdk.Dec) error {
 		return sdkerrors.Wrap(ErrInvalidInput, "rate precision should not be more than 4 decimal places")
 	}
 
-	if rate.LT(sdk.NewDec(0)) || rate.GT(sdk.NewDec(1)) {
+	if rate.LT(sdkmath.LegacyNewDec(0)) || rate.GT(sdkmath.LegacyNewDec(1)) {
 		return sdkerrors.Wrap(ErrInvalidInput, "rate is not within acceptable range")
 	}
 
@@ -269,8 +269,8 @@ func validateRate(rate sdk.Dec) error {
 }
 
 // checks that dec precision is limited to the provided value.
-func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
-	return dec.Mul(sdk.NewDecFromInt(sdkmath.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
+func isDecPrecisionValid(dec sdkmath.LegacyDec, prec uint) bool {
+	return dec.Mul(sdkmath.LegacyNewDecFromInt(sdkmath.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
 }
 
 // TokenUpgradeV1Keeper defines methods required to update tokens to V1.

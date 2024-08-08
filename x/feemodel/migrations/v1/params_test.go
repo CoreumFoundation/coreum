@@ -3,8 +3,8 @@ package v1_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,14 +19,14 @@ func TestMigrateParams(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	testParams := types.Params{
 		Model: types.ModelParams{
-			InitialGasPrice:         sdk.NewDec(15),
-			MaxGasPriceMultiplier:   sdk.NewDec(1000),
-			MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
-			EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
+			InitialGasPrice:         sdkmath.LegacyNewDec(15),
+			MaxGasPriceMultiplier:   sdkmath.LegacyNewDec(1000),
+			MaxDiscount:             sdkmath.LegacyMustNewDecFromStr("0.1"),
+			EscalationStartFraction: sdkmath.LegacyMustNewDecFromStr("0.8"),
 			MaxBlockGas:             10,
 			ShortEmaBlockLength:     1,
 			LongEmaBlockLength:      3,

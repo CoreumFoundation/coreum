@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -59,7 +60,7 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	minDeposit := govParams.MinDeposit[0]
 	return g.chainCtx.NewCoin(minDeposit.Amount.Add(
 		g.chainCtx.ChainSettings.GasPrice.
-			Mul(sdk.NewDec(int64(submitProposalGas))).
+			Mul(sdkmath.LegacyNewDec(int64(submitProposalGas))).
 			Ceil().
 			RoundInt())), nil
 }
@@ -172,7 +173,7 @@ func (g Governance) NewMsgSubmitProposal(
 	}
 
 	msg, err := govtypesv1.NewMsgSubmitProposal(
-		messages, govParams.MinDeposit, proposer.String(), metadata, title, summary,
+		messages, govParams.MinDeposit, proposer.String(), metadata, title, summary, false,
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -251,8 +252,8 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 		return proposal.Status, err
 	}
 
-	tmQueryClient := tmservice.NewServiceClient(g.chainCtx.ClientContext)
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	tmQueryClient := cmtservice.NewServiceClient(g.chainCtx.ClientContext)
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
 	if err != nil {
 		return proposal.Status, errors.WithStack(err)
 	}

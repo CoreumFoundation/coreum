@@ -5,23 +5,22 @@
 package ante
 
 import (
+	"cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibcante "github.com/cosmos/ibc-go/v8/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
 	authkeeper "github.com/CoreumFoundation/coreum/v4/x/auth/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
 	deterministicgasante "github.com/CoreumFoundation/coreum/v4/x/deterministicgas/ante"
 	feemodelante "github.com/CoreumFoundation/coreum/v4/x/feemodel/ante"
-	wgovante "github.com/CoreumFoundation/coreum/v4/x/wgov/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
@@ -32,7 +31,7 @@ type HandlerOptions struct {
 	WasmConfig             wasmtypes.WasmConfig
 	IBCKeeper              *ibckeeper.Keeper
 	GovKeeper              *govkeeper.Keeper
-	WasmTXCounterStoreKey  storetypes.StoreKey
+	WasmTXCounterStoreKey  store.KVStoreService
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -130,7 +129,6 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewSigGasConsumeDecorator(infiniteAccountKeeper, options.SigGasConsumer),
 		deterministicgasante.NewChargeFixedGasDecorator(infiniteAccountKeeper, options.DeterministicGasConfig),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
-		wgovante.NewGovDepositDecorator(options.GovKeeper),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil

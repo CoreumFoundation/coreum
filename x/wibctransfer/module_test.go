@@ -5,10 +5,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/gogoproto/grpc"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	"github.com/stretchr/testify/require"
 	googlegrpc "google.golang.org/grpc"
+)
+
+var (
+	_ module.Configurator = &configuratorMock{}
 )
 
 type grpcServerMock struct{}
@@ -46,6 +50,14 @@ func (c *configuratorMock) RegisterMigration(
 	return nil
 }
 
+func (c *configuratorMock) RegisterService(sd *googlegrpc.ServiceDesc, ss interface{}) {
+
+}
+
+func (c *configuratorMock) Error() error {
+	return nil
+}
+
 // The test checks the migration registration of the original IBC transfer module.
 // Since we override the "Register Services" we want to be sure that after the update of the SDK,
 // The original transfer module won't have unexpected migrations.
@@ -53,6 +65,6 @@ func TestAppModuleOriginalTransfer_RegisterServices(t *testing.T) {
 	transferModule := transfer.NewAppModule(ibctransferkeeper.Keeper{})
 	configurator := newConfiguratorMock()
 	transferModule.RegisterServices(configurator)
-	require.Equal(t, []uint64{1, 2}, configurator.capturedMigrationVersions)
-	require.Equal(t, uint64(3), transferModule.ConsensusVersion())
+	require.Equal(t, []uint64{1, 2, 3, 4}, configurator.capturedMigrationVersions)
+	require.Equal(t, uint64(5), transferModule.ConsensusVersion())
 }
