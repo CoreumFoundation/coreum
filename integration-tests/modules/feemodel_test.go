@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -88,7 +89,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 
 	// Create invalid proposal MaxGasPriceMultiplier = 1.
 	newParams := oldParams
-	newParams.Model.MaxGasPriceMultiplier = sdk.OneDec()
+	newParams.Model.MaxGasPriceMultiplier = sdkmath.LegacyOneDec()
 
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
 		ctx, proposer,
@@ -108,7 +109,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	requireT.NoError(err)
 
 	// Don't change max discount drastically just decrease it by 1%.
-	targetMaxDiscount := feeModelParamsRes.Params.Model.MaxDiscount.Mul(sdk.MustNewDecFromStr("0.99"))
+	targetMaxDiscount := feeModelParamsRes.Params.Model.MaxDiscount.Mul(sdkmath.LegacyMustNewDecFromStr("0.99"))
 	newParams = feeModelParamsRes.Params
 	newParams.Model.MaxDiscount = targetMaxDiscount
 	requireT.NoError(err)

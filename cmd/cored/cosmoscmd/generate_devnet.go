@@ -1,6 +1,7 @@
 package cosmoscmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -50,6 +51,7 @@ func GenerateDevnetCmd() *cobra.Command {
 		Long:  `Generate devnet validators' and nodes' configuration files and genesis,`,
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
 			network := app.ChosenNetwork
 			if app.ChosenNetwork.ChainID() != constant.ChainIDDev {
 				return errors.Errorf("the command supports the %s chain id only", constant.ChainIDDev)
@@ -108,6 +110,7 @@ func GenerateDevnetCmd() *cobra.Command {
 					return errors.Wrap(err, "failed to generate mnemonic")
 				}
 				if network, err = addValidatorToNetwork(
+					ctx,
 					cosmosclient.GetClientContextFromCmd(cmd),
 					network,
 					validatorName,
@@ -157,6 +160,7 @@ func generateMnemonic() (string, error) {
 }
 
 func addValidatorToNetwork(
+	ctx context.Context,
 	clientCtx cosmosclient.Context,
 	network config.NetworkConfig,
 	validatorName string,
@@ -194,13 +198,13 @@ func addValidatorToNetwork(
 	)
 	stakerSelfDelegationAmount := sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(10_000_000_000_000))
 	commission := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+		Rate:          sdkmath.LegacyMustNewDecFromStr("0.1"),
+		MaxRate:       sdkmath.LegacyMustNewDecFromStr("0.2"),
+		MaxChangeRate: sdkmath.LegacyMustNewDecFromStr("0.01"),
 	}
 
 	msg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(stakerAddress),
+		sdk.ValAddress(stakerAddress).String(),
 		validatorPubKey,
 		stakerSelfDelegationAmount,
 		stakingtypes.Description{
@@ -221,7 +225,7 @@ func addValidatorToNetwork(
 	if err != nil {
 		return config.NetworkConfig{}, errors.Wrap(err, "failed to build MsgCreateValidator transaction")
 	}
-	if err := tx.Sign(txf, signerKeyName, txBuilder, true); err != nil {
+	if err := tx.Sign(ctx, txf, signerKeyName, txBuilder, true); err != nil {
 		return config.NetworkConfig{}, errors.Wrap(err, "failed to sign MsgCreateValidator transaction")
 	}
 	txBytes, err := clientCtx.TxConfig.TxJSONEncoder()(txBuilder.GetTx())

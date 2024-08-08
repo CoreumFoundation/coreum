@@ -122,25 +122,25 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 				return errors.WithStack(err)
 			}
 
-			burnRate := sdk.NewDec(0)
+			burnRate := sdkmath.LegacyNewDec(0)
 			burnRateStr, err := cmd.Flags().GetString(BurnRateFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			if len(burnRateStr) > 0 {
-				burnRate, err = sdk.NewDecFromStr(burnRateStr)
+				burnRate, err = sdkmath.LegacyNewDecFromStr(burnRateStr)
 				if err != nil {
 					return errors.Wrapf(err, "invalid burn-rate")
 				}
 			}
 
-			sendCommissionRate := sdk.NewDec(0)
+			sendCommissionRate := sdkmath.LegacyNewDec(0)
 			sendCommissionFeeStr, err := cmd.Flags().GetString(SendCommissionRateFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			if len(sendCommissionFeeStr) > 0 {
-				sendCommissionRate, err = sdk.NewDecFromStr(sendCommissionFeeStr)
+				sendCommissionRate, err = sdkmath.LegacyNewDecFromStr(sendCommissionFeeStr)
 				if err != nil {
 					return errors.Wrapf(err, "invalid send-commission-rate")
 				}

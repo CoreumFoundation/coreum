@@ -13,8 +13,8 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,8 +45,8 @@ func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Amount: issueFee.
-			Add(sdk.NewInt(1_000_000)). // added one million for contract upload.
-			Add(sdk.NewInt(2 * 500_000)),
+			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload.
+			Add(sdkmath.NewInt(2 * 500_000)),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -116,8 +116,8 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 			&assetfttypes.MsgSetWhitelistedLimit{},
 		},
 		Amount: issueFee.
-			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdk.NewInt(3 * 500_000)),
+			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdkmath.NewInt(3 * 500_000)),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -215,7 +215,7 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.ZeroInt()).String(), balanceRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.ZeroInt()).String(), balanceRes.Balance.String())
 }
 
 func TestExtensionIBCAssetFTFreezing(t *testing.T) {
@@ -246,11 +246,11 @@ func TestExtensionIBCAssetFTFreezing(t *testing.T) {
 			&assetfttypes.MsgFreeze{},
 		},
 		Amount: issueFee.
-			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdk.NewInt(500_000)),
+			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdkmath.NewInt(500_000)),
 	})
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdk.NewInt(2 * 500_000),
+		Amount: sdkmath.NewInt(2 * 500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -380,8 +380,8 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 			&assetfttypes.MsgSetWhitelistedLimit{},
 		},
 		Amount: issueFee.
-			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdk.NewInt(2 * 500_000)),
+			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdkmath.NewInt(2 * 500_000)),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -504,8 +504,8 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 
 		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 			Amount: issueFee.
-				Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-				Add(sdk.NewInt(2 * 500_000)),
+				Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+				Add(sdkmath.NewInt(2 * 500_000)),
 		})
 
 		codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -635,12 +635,12 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdk.NewInt(3 * 500_000)),
+			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdkmath.NewInt(3 * 500_000)),
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
-		Amount:  gaiaChain.NewCoin(sdk.NewIntFromUint64(100000)),
+		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(100000)),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -699,7 +699,7 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	// test that the reverse transfer from gaia to coreum is blocked too
 
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdk.NewInt(500_000),
+		Amount: sdkmath.NewInt(500_000),
 	})
 
 	sendToCoreumCoin := sdk.NewCoin(ibcGaiaDenom, sendToGaiaCoin.Amount)
@@ -773,12 +773,12 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	coreumIssuer := coreumChain.GenAccount()
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Amount: issueFee.Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-								Add(sdk.NewInt(2 * 500_000)),
+		Amount: issueFee.Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+									Add(sdkmath.NewInt(2 * 500_000)),
 	})
 
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdk.NewInt(3 * 500_000),
+		Amount: sdkmath.NewInt(3 * 500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -792,8 +792,8 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		Subunit:            "mysubunit",
 		Precision:          8,
 		InitialAmount:      sdkmath.NewInt(1_000_000),
-		BurnRate:           sdk.MustNewDecFromStr("0.1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_extension,
 		},
@@ -812,8 +812,8 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
 
 	sendCoin := sdk.NewCoin(denom, sdkmath.NewInt(1000))
-	burntAmount := issueMsg.BurnRate.Mul(sdk.NewDecFromInt(sendCoin.Amount)).TruncateInt()
-	sendCommissionAmount := issueMsg.SendCommissionRate.Mul(sdk.NewDecFromInt(sendCoin.Amount)).TruncateInt()
+	burntAmount := issueMsg.BurnRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).TruncateInt()
+	sendCommissionAmount := issueMsg.SendCommissionRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).TruncateInt()
 	extraAmount := sdkmath.NewInt(77) // some amount to be left at the end
 	msgSend := &banktypes.MsgSend{
 		FromAddress: coreumIssuer.String(),
@@ -838,7 +838,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	// ********** Coreum to Gaia **********
 	// IBC transfer trigger amount that ignores send commission rate.
 	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreSendCommissionRateTrigger))
-	burntAmount = issueMsg.BurnRate.Mul(sdk.NewDecFromInt(sendCoin.Amount)).RoundInt()
+	burntAmount = issueMsg.BurnRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).RoundInt()
 	receiveCoinGaia := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
 	ibcTransferAndAssertBalanceChanges(
@@ -862,7 +862,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 	// IBC transfer trigger amount that ignores burn rate.
 	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreBurnRateTrigger))
-	sendCommissionAmount = issueMsg.SendCommissionRate.Mul(sdk.NewDecFromInt(sendCoin.Amount)).RoundInt()
+	sendCommissionAmount = issueMsg.SendCommissionRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).RoundInt()
 	receiveCoinGaia = sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
 	ibcTransferAndAssertBalanceChanges(
@@ -886,11 +886,14 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	)
 
 	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(1000))
-	burntAmount = issueMsg.BurnRate.Mul(sdk.NewDecFromInt(sendCoin.Amount)).TruncateInt()
-	sendCommissionAmount = issueMsg.SendCommissionRate.Mul(sdk.NewDecFromInt(sendCoin.Amount)).TruncateInt()
+	burntAmount = issueMsg.BurnRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).TruncateInt()
+	sendCommissionAmount = issueMsg.SendCommissionRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).TruncateInt()
 	receiveCoinGaia = sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
-	adminCommissionAmount := sdk.NewDecFromInt(sendCommissionAmount).Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+	adminCommissionAmount := sdkmath.
+		LegacyNewDecFromInt(sendCommissionAmount).
+		Mul(sdkmath.LegacyMustNewDecFromStr("0.5")).
+		TruncateInt()
 
 	// Normal IBC transfer.
 	ibcTransferAndAssertBalanceChanges(
@@ -958,7 +961,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		map[string]sdkmath.Int{
 			coreumChain.MustConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount.Neg(),
 			coreumChain.MustConvertToBech32Address(coreumSender):              sendCoin.Amount,
-			coreumChain.MustConvertToBech32Address(coreumIssuer):              sdk.ZeroInt(),
+			coreumChain.MustConvertToBech32Address(coreumIssuer):              sdkmath.ZeroInt(),
 		},
 	)
 }
@@ -986,11 +989,11 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 			&assetfttypes.MsgSetWhitelistedLimit{},
 		},
 		Amount: issueFee.
-			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdk.NewInt(2 * 500_000)),
+			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdkmath.NewInt(2 * 500_000)),
 	})
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdk.NewInt(500_000),
+		Amount: sdkmath.NewInt(500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1136,11 +1139,11 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 				&assetfttypes.MsgSetWhitelistedLimit{},
 			},
 			Amount: issueFee.
-				Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-				Add(sdk.NewInt(2 * 500_000)),
+				Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+				Add(sdkmath.NewInt(2 * 500_000)),
 		})
 		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-			Amount: sdk.NewInt(500_000),
+			Amount: sdkmath.NewInt(500_000),
 		})
 
 		codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1322,11 +1325,11 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 		Amount: issueFee.
-			Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdk.NewInt(2 * 500_000)),
+			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+			Add(sdkmath.NewInt(2 * 500_000)),
 	})
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdk.NewInt(500_000),
+		Amount: sdkmath.NewInt(500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1347,8 +1350,8 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 			CodeId: codeID,
 			Label:  "testing-ibc",
 		},
-		BurnRate:           sdk.MustNewDecFromStr("0.1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1360,9 +1363,9 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
 
 	sendCoin := sdk.NewCoin(denom,
-		sdk.
-			NewDecFromInt(issueMsg.InitialAmount).
-			Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
+		sdkmath.
+			LegacyNewDecFromInt(issueMsg.InitialAmount).
+			Quo(sdkmath.LegacyOneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
 			TruncateInt(),
 	)
 
@@ -1384,8 +1387,8 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 	bankRes, err := bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(coreumSender, denom))
 	requireT.NoError(err)
 
-	sendAmount := sdk.NewDecFromInt(bankRes.Balance.Amount).
-		Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
+	sendAmount := sdkmath.LegacyNewDecFromInt(bankRes.Balance.Amount).
+		Quo(sdkmath.LegacyOneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
 		TruncateInt()
 
 	// Send coins from sender to blocked address on Gaia.
@@ -1457,11 +1460,11 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 
 		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
 			Amount: issueFee.
-				Add(sdk.NewInt(1_000_000)). // added one million for contract upload
-				Add(sdk.NewInt(2 * 500_000)),
+				Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+				Add(sdkmath.NewInt(2 * 500_000)),
 		})
 		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-			Amount: sdk.NewInt(500_000),
+			Amount: sdkmath.NewInt(500_000),
 		})
 
 		codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1482,8 +1485,8 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 				CodeId: codeID,
 				Label:  "testing-ibc",
 			},
-			BurnRate:           sdk.MustNewDecFromStr("0.1"),
-			SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+			BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+			SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 		}
 		_, err = client.BroadcastTx(
 			ctx,
@@ -1495,9 +1498,9 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 		denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
 
 		sendCoin := sdk.NewCoin(denom,
-			sdk.
-				NewDecFromInt(issueMsg.InitialAmount).
-				Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
+			sdkmath.
+				LegacyNewDecFromInt(issueMsg.InitialAmount).
+				Quo(sdkmath.LegacyOneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
 				TruncateInt(),
 		)
 
@@ -1519,9 +1522,9 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 		bankRes, err := bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(coreumSender, denom))
 		requireT.NoError(err)
 
-		sendAmount := sdk.
-			NewDecFromInt(bankRes.Balance.Amount).
-			Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
+		sendAmount := sdkmath.
+			LegacyNewDecFromInt(bankRes.Balance.Amount).
+			Quo(sdkmath.LegacyOneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
 			TruncateInt()
 
 		// Send coins from sender to Gaia.

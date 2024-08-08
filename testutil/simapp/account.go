@@ -30,7 +30,11 @@ func addTestAddrs(
 ) []sdk.AccAddress {
 	testAddrs := strategy(accNum)
 
-	initCoins := sdk.NewCoins(sdk.NewCoin(s.StakingKeeper.BondDenom(ctx), accAmt))
+	bondDenom, err := s.StakingKeeper.BondDenom(ctx)
+	if err != nil {
+		panic(err)
+	}
+	initCoins := sdk.NewCoins(sdk.NewCoin(bondDenom, accAmt))
 
 	for _, addr := range testAddrs {
 		initAccountWithCoins(s, ctx, addr, initCoins)

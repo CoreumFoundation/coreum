@@ -21,8 +21,10 @@ import (
 )
 
 //go:embed proto-breaking.tmpl.json
+//nolint:unused // will be reverted after cosmos sdk v0.50.x upgrade
 var configBreakingTmpl string
 
+//nolint:deadcode,unused // will be reverted after cosmos sdk v0.50.x upgrade
 func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(golang.Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
 
@@ -36,12 +38,12 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 		return err
 	}
 	if err := golang.DownloadDependencies(ctx, deps, masterDir); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	_, masterIncludeDirs, err := protoCDirectories(ctx, masterDir, deps)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	masterIncludeArgs := make([]string, 0, 2*len(masterIncludeDirs))
@@ -51,13 +53,13 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 
 	imageFile := filepath.Join(os.TempDir(), "coreum.binpb")
 	if err := os.MkdirAll(filepath.Dir(imageFile), 0o700); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer os.Remove(imageFile) //nolint:errcheck // error doesn't matter
 
 	masterProtoFiles, err := findAllProtoFiles([]string{filepath.Join(masterDir, "proto")})
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	cmdImage := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal),
@@ -66,12 +68,12 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 			masterProtoFiles...)...)
 
 	if err := libexec.Exec(ctx, cmdImage); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	_, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	includeArgs := make([]string, 0, 2*len(includeDirs))
@@ -81,12 +83,12 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 
 	absRepoPath, err := filepath.Abs(repoPath)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	masterProtoFiles, err = findAllProtoFiles([]string{filepath.Join(absRepoPath, "proto")})
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	configBuf := &bytes.Buffer{}

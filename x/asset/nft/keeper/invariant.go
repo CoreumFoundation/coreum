@@ -31,7 +31,7 @@ func FreezingInvariant(k Keeper) sdk.Invariant {
 			violationsCount int
 		)
 
-		frozenNFTs, _, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+		frozenNFTs, _, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 		if err != nil {
 			panic(err)
 		}
@@ -101,7 +101,7 @@ func BurntNFTInvariant(k Keeper) sdk.Invariant {
 			violationCount int
 		)
 
-		burntNFTs, _, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+		burntNFTs, _, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 		if err != nil {
 			panic(err)
 		}

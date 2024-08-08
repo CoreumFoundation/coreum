@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -71,10 +70,10 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 	genesisState := types.GenesisState{
 		Params: types.Params{
 			Model: types.ModelParams{
-				InitialGasPrice:         sdk.NewDec(15),
-				MaxGasPriceMultiplier:   sdk.NewDec(1000),
-				MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
-				EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
+				InitialGasPrice:         sdkmath.LegacyNewDec(15),
+				MaxGasPriceMultiplier:   sdkmath.LegacyNewDec(1000),
+				MaxDiscount:             sdkmath.LegacyMustNewDecFromStr("0.1"),
+				EscalationStartFraction: sdkmath.LegacyMustNewDecFromStr("0.8"),
 				MaxBlockGas:             10,
 				ShortEmaBlockLength:     1,
 				LongEmaBlockLength:      3,
@@ -93,15 +92,15 @@ func TestInitGenesis(t *testing.T) {
 	module, keeper, state, cdc := setup()
 
 	genesisState := state
-	genesisState.Params.Model.InitialGasPrice.Add(sdk.OneDec())
-	genesisState.Params.Model.MaxGasPriceMultiplier.Add(sdk.OneDec())
-	genesisState.Params.Model.MaxDiscount.Add(sdk.MustNewDecFromStr("0.2"))
-	genesisState.Params.Model.EscalationStartFraction.Sub(sdk.MustNewDecFromStr("0.1"))
+	genesisState.Params.Model.InitialGasPrice.Add(sdkmath.LegacyOneDec())
+	genesisState.Params.Model.MaxGasPriceMultiplier.Add(sdkmath.LegacyOneDec())
+	genesisState.Params.Model.MaxDiscount.Add(sdkmath.LegacyMustNewDecFromStr("0.2"))
+	genesisState.Params.Model.EscalationStartFraction.Sub(sdkmath.LegacyMustNewDecFromStr("0.1"))
 	genesisState.Params.Model.MaxBlockGas++
 	genesisState.Params.Model.ShortEmaBlockLength++
 	genesisState.Params.Model.LongEmaBlockLength++
 	genesisState.MinGasPrice.Denom = "coin2"
-	genesisState.MinGasPrice.Amount.Add(sdk.OneDec())
+	genesisState.MinGasPrice.Amount.Add(sdkmath.LegacyOneDec())
 
 	module.InitGenesis(sdk.Context{}, cdc, cdc.MustMarshalJSON(&genesisState))
 
@@ -134,7 +133,7 @@ func TestExport(t *testing.T) {
 func TestEndBlock(t *testing.T) {
 	module, keeper, state, _ := setup()
 
-	module.EndBlock(sdk.Context{}, abci.RequestEndBlock{})
+	require.NoError(t, module.EndBlock(sdk.Context{}))
 
 	model := types.NewModel(state.Params.Model)
 	minGasPrice := keeper.GetMinGasPrice(sdk.Context{})

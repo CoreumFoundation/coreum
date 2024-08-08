@@ -219,7 +219,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origParams := chain.QueryAssetFTParams(ctx, t)
 	newParams := origParams
-	newParams.IssueFee.Amount = sdk.ZeroInt()
+	newParams.IssueFee.Amount = sdkmath.ZeroInt()
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
 		"-", "-", "-", govtypesv1.OptionYes,
@@ -300,8 +300,8 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		Precision:          8,
 		Description:        "Wrapped BTC",
 		InitialAmount:      sdkmath.NewInt(777),
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 		URI:                "https://my-class-meta.invalid/1",
 		URIHash:            "content-hash",
 		Features: []assetfttypes.Feature{
@@ -389,8 +389,8 @@ func TestBalanceQuery(t *testing.T) {
 		Precision:          8,
 		Description:        "Wrapped BTC",
 		InitialAmount:      sdkmath.NewInt(200),
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing, assetfttypes.Feature_whitelisting},
 	}
 	_, err := client.BroadcastTx(
@@ -475,12 +475,12 @@ func TestBalanceQuery(t *testing.T) {
 
 	requireT.Equal(
 		assetfttypes.QueryBalanceResponse{
-			Balance:         sdk.NewInt(15),
+			Balance:         sdkmath.NewInt(15),
 			Whitelisted:     whitelistedCoin.Amount,
 			Frozen:          frozenCoin.Amount,
 			Locked:          vestingCoin.Amount,
 			LockedInVesting: vestingCoin.Amount,
-			LockedInDEX:     sdk.ZeroInt(),
+			LockedInDEX:     sdkmath.ZeroInt(),
 		}, *ftBalanceRes,
 	)
 
@@ -518,7 +518,7 @@ func TestBalanceQuery(t *testing.T) {
 			Frozen:          bankBalanceRes.Balance.Amount,
 			Locked:          vestingCoin.Amount,
 			LockedInVesting: vestingCoin.Amount,
-			LockedInDEX:     sdk.ZeroInt(),
+			LockedInDEX:     sdkmath.ZeroInt(),
 		}, *ftBalanceRes,
 	)
 }
@@ -556,8 +556,8 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		Subunit:            "wsatoshi",
 		Precision:          8,
 		InitialAmount:      sdkmath.NewInt(200),
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing},
 	}
 	_, err := client.BroadcastTx(
@@ -648,8 +648,8 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		Subunit:            "wsatoshi2",
 		Precision:          8,
 		InitialAmount:      sdkmath.NewInt(200),
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing},
 	}
 	_, err = client.BroadcastTx(
@@ -746,12 +746,12 @@ func TestEmptyBalanceQuery(t *testing.T) {
 
 	requireT.Equal(
 		assetfttypes.QueryBalanceResponse{
-			Balance:         sdk.ZeroInt(),
-			Whitelisted:     sdk.ZeroInt(),
-			Frozen:          sdk.ZeroInt(),
-			Locked:          sdk.ZeroInt(),
-			LockedInVesting: sdk.ZeroInt(),
-			LockedInDEX:     sdk.ZeroInt(),
+			Balance:         sdkmath.ZeroInt(),
+			Whitelisted:     sdkmath.ZeroInt(),
+			Frozen:          sdkmath.ZeroInt(),
+			Locked:          sdkmath.ZeroInt(),
+			LockedInVesting: sdkmath.ZeroInt(),
+			LockedInDEX:     sdkmath.ZeroInt(),
 		}, *resp,
 	)
 }
@@ -1183,8 +1183,8 @@ func TestAssetFTBurnRate(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 		},
-		BurnRate:           sdk.MustNewDecFromStr("0.10"),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.10"),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 	}
 
 	res, err := client.BroadcastTx(
@@ -1333,8 +1333,8 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 		},
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.10"),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.10"),
 	}
 
 	res, err := client.BroadcastTx(
@@ -1472,8 +1472,8 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 		Precision:          6,
 		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
-		BurnRate:           sdk.MustNewDecFromStr("0.10"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.20"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.10"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.20"),
 	}
 
 	_, err := client.BroadcastTx(
@@ -1645,8 +1645,8 @@ func TestAssetFTFeesAreNotChargedWhenTokensAreTransferredFromSmartContractUsingA
 		Precision:          6,
 		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
-		BurnRate:           sdk.MustNewDecFromStr("0.10"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.20"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.10"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.20"),
 	}
 
 	_, err := client.BroadcastTx(
@@ -2233,8 +2233,8 @@ func TestAssetFTClawbackSmartContract(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_clawback,
 		},
-		BurnRate:           sdk.ZeroDec(),
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyZeroDec(),
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	_, err := client.BroadcastTx(
@@ -2600,7 +2600,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 		Precision:          6,
 		Description:        "ABC Description",
 		InitialAmount:      sdkmath.NewInt(1000),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.3"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.3"),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 		},
@@ -2771,7 +2771,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdkmath.NewInt(1000),
-		BurnRate:      sdk.MustNewDecFromStr("0.1"),
+		BurnRate:      sdkmath.LegacyMustNewDecFromStr("0.1"),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 		},
@@ -2848,7 +2848,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 		Precision:          6,
 		Description:        "ABC Description",
 		InitialAmount:      sdkmath.NewInt(1000),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 		},
@@ -3172,7 +3172,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt())),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.OneInt())),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -3323,8 +3323,8 @@ func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_whitelisting,
 		},
-		BurnRate:           sdk.ZeroDec(),
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyZeroDec(),
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	_, err := client.BroadcastTx(
@@ -3397,8 +3397,8 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied(t *testing.T)
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_whitelisting,
 		},
-		BurnRate:           sdk.ZeroDec(),
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyZeroDec(),
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	_, err := client.BroadcastTx(
@@ -3463,8 +3463,8 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied(t *t
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_whitelisting,
 		},
-		BurnRate:           sdk.ZeroDec(),
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyZeroDec(),
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	_, err := client.BroadcastTx(
@@ -3790,7 +3790,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 	grantMintMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
-		assetfttypes.NewMintAuthorization(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1000)))),
+		assetfttypes.NewMintAuthorization(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1000)))),
 		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
@@ -3950,7 +3950,7 @@ func TestAuthzMintAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
 		granter,
 		grantee,
 		assetfttypes.NewMintAuthorization(sdk.NewCoins(
-			sdk.NewCoin(denom, sdk.NewInt(1000)),
+			sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 		)),
 		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
@@ -4015,7 +4015,7 @@ func TestAuthzMintAuthorizationLimit_MultipleCoins(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&authztypes.MsgGrant{},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdk.NewInt(2)),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdkmath.NewInt(2)),
 	})
 
 	// issue and grant authorization
@@ -4053,8 +4053,8 @@ func TestAuthzMintAuthorizationLimit_MultipleCoins(t *testing.T) {
 		issuer,
 		grantee,
 		assetfttypes.NewMintAuthorization(sdk.NewCoins(
-			sdk.NewCoin(denom1, sdk.NewInt(1000)),
-			sdk.NewCoin(denom2, sdk.NewInt(1000)),
+			sdk.NewCoin(denom1, sdkmath.NewInt(1000)),
+			sdk.NewCoin(denom2, sdkmath.NewInt(1000)),
 		)),
 		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
@@ -4145,7 +4145,7 @@ func TestAuthzBurnAuthorizationLimit(t *testing.T) {
 	grantBurnMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
-		assetfttypes.NewBurnAuthorization(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1000)))),
+		assetfttypes.NewBurnAuthorization(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1000)))),
 		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
@@ -4277,7 +4277,7 @@ func TestAuthzBurnAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdk.NewInt(2)),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdkmath.NewInt(2)),
 	})
 
 	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
@@ -4341,8 +4341,8 @@ func TestAuthzBurnAuthorizationLimit_GrantFromNonIssuer(t *testing.T) {
 		granter,
 		grantee,
 		assetfttypes.NewBurnAuthorization(sdk.NewCoins(
-			sdk.NewCoin(denomBurning, sdk.NewInt(1000)),
-			sdk.NewCoin(denomNoBurning, sdk.NewInt(1000)),
+			sdk.NewCoin(denomBurning, sdkmath.NewInt(1000)),
+			sdk.NewCoin(denomNoBurning, sdkmath.NewInt(1000)),
 		)),
 		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
@@ -4436,8 +4436,8 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_minting},
-		BurnRate:           sdk.MustNewDecFromStr("0.10"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.10"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.10"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.10"),
 	}
 
 	_, err := client.BroadcastTx(
@@ -4509,8 +4509,8 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning},
-		BurnRate:           sdk.MustNewDecFromStr("0.20"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.10"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.20"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.10"),
 	}
 
 	_, err := client.BroadcastTx(
@@ -4612,8 +4612,8 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning, assetfttypes.Feature_freezing},
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 	}
 
 	_, err := client.BroadcastTx(
@@ -4704,12 +4704,12 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 	//nolint:lll // we don't care about test cases.
 	testData := []struct {
 		description              string
-		burnRate                 sdk.Dec
-		sendCommissionRate       sdk.Dec
+		burnRate                 sdkmath.LegacyDec
+		sendCommissionRate       sdkmath.LegacyDec
 		expectedCoinDistribution []int
 	}{
-		{"WithBurnRateOutOfLimit", sdk.MustNewDecFromStr("0.50"), sdk.MustNewDecFromStr("0.10"), []int{510, 340, 100}},
-		{"WithSendCommissionRateOutOfLimit", sdk.MustNewDecFromStr("0.10"), sdk.MustNewDecFromStr("0.50"), []int{550, 340, 100}},
+		{"WithBurnRateOutOfLimit", sdkmath.LegacyMustNewDecFromStr("0.50"), sdkmath.LegacyMustNewDecFromStr("0.10"), []int{510, 340, 100}},
+		{"WithSendCommissionRateOutOfLimit", sdkmath.LegacyMustNewDecFromStr("0.10"), sdkmath.LegacyMustNewDecFromStr("0.50"), []int{550, 340, 100}},
 	}
 
 	for _, tc := range testData {
@@ -4873,8 +4873,8 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning, assetfttypes.Feature_freezing},
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 	}
 
 	_, err = chain.SignAndBroadcastMultisigTx(
@@ -4960,8 +4960,8 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning, assetfttypes.Feature_freezing},
-		BurnRate:           sdk.NewDec(0),
-		SendCommissionRate: sdk.NewDec(0),
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
 	}
 
 	execMsg := authztypes.NewMsgExec(multisigGranteeAddress, []sdk.Msg{issueMsg})
@@ -5017,8 +5017,8 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{},
-		BurnRate:           sdk.MustNewDecFromStr("0.10"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.20"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.10"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.20"),
 	}
 
 	_, err := client.BroadcastTx(
@@ -5231,8 +5231,8 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContractInstantiation(t *testi
 		InitialAmount:      sdkmath.NewInt(500),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{},
-		BurnRate:           sdk.MustNewDecFromStr("0.10"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.20"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.10"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.20"),
 	}
 
 	_, err := client.BroadcastTx(
@@ -5296,8 +5296,8 @@ func TestAssetFTSendingToSmartContractIsDenied(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 		},
-		BurnRate:           sdk.ZeroDec(),
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyZeroDec(),
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	_, err := client.BroadcastTx(
@@ -5392,8 +5392,8 @@ func TestAssetFTAttachingToSmartContractCallIsDenied(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 		},
-		BurnRate:           sdk.ZeroDec(),
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyZeroDec(),
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	_, err := client.BroadcastTx(
@@ -5458,8 +5458,8 @@ func TestAssetFTAttachingToSmartContractInstantiationIsDenied(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 		},
-		BurnRate:           sdk.ZeroDec(),
-		SendCommissionRate: sdk.ZeroDec(),
+		BurnRate:           sdkmath.LegacyZeroDec(),
+		SendCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 
 	_, err := client.BroadcastTx(
@@ -7955,7 +7955,7 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt())),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.OneInt())),
 	}
 	_, err = client.BroadcastTx(
 		ctx,

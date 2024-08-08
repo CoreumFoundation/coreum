@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -102,7 +103,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			royaltyRate, err := sdk.NewDecFromStr(royaltyStr)
+			royaltyRate, err := sdkmath.LegacyNewDecFromStr(royaltyStr)
 			if err != nil {
 				return errors.WithStack(err)
 			}

@@ -23,7 +23,7 @@ func TestOrder_Validate(t *testing.T) {
 			BaseDenom:  "denom1",
 			QuoteDenom: "denom2",
 			Price:      price,
-			Quantity:   sdk.NewInt(100),
+			Quantity:   sdkmath.NewInt(100),
 			Side:       types.Side_buy,
 		}
 	}
@@ -131,7 +131,7 @@ func TestOrder_Validate(t *testing.T) {
 			name: "invalid_not_nil_remaining_quantity",
 			order: func() types.Order {
 				order := validOrder()
-				order.RemainingQuantity = sdk.NewInt(1)
+				order.RemainingQuantity = sdkmath.NewInt(1)
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,
@@ -140,7 +140,7 @@ func TestOrder_Validate(t *testing.T) {
 			name: "invalid_not_nil_remaining_balance",
 			order: func() types.Order {
 				order := validOrder()
-				order.RemainingBalance = sdk.NewInt(1)
+				order.RemainingBalance = sdkmath.NewInt(1)
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,
@@ -149,7 +149,7 @@ func TestOrder_Validate(t *testing.T) {
 			name: "invalid_locked_balance",
 			order: func() types.Order {
 				order := validOrder()
-				order.Quantity = sdk.NewInt(111)
+				order.Quantity = sdkmath.NewInt(111)
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,
@@ -158,7 +158,7 @@ func TestOrder_Validate(t *testing.T) {
 			name: "invalid_locked_balance_out_or_range",
 			order: func() types.Order {
 				order := validOrder()
-				order.Quantity = sdk.NewInt(1_000_000)
+				order.Quantity = sdkmath.NewInt(1_000_000)
 				order.Price = types.MustNewPriceFromString(fmt.Sprintf("9999999999999999999e%d", types.MaxExp))
 				return order
 			}(),

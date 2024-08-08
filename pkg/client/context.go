@@ -14,6 +14,7 @@ import (
 	"time"
 
 	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -38,45 +39,7 @@ import (
 // fallBackCodec is used by Context in case Codec is not set.
 // it can process every gRPC type, except the ones which contain
 // interfaces in their types.
-var fallBackCodec = codec.NewProtoCodec(failingInterfaceRegistry{})
-
-var _ codectypes.InterfaceRegistry = failingInterfaceRegistry{}
-
-// failingInterfaceRegistry is used by the fallback codec
-// in case Context's Codec is not set.
-type failingInterfaceRegistry struct{}
-
-// errCodecNotSet is returned by failingInterfaceRegistry in case there is an attempt to decode
-// or encode a type which contains an interface field.
-var errCodecNotSet = errors.New("client: cannot encode or decode type which requires the application specific codec")
-
-func (f failingInterfaceRegistry) UnpackAny(_ *codectypes.Any, iface interface{}) error {
-	return errCodecNotSet
-}
-
-func (f failingInterfaceRegistry) Resolve(_ string) (gogoproto.Message, error) {
-	return nil, errCodecNotSet
-}
-
-func (f failingInterfaceRegistry) RegisterInterface(_ string, _ interface{}, _ ...gogoproto.Message) {
-	panic("cannot be called")
-}
-
-func (f failingInterfaceRegistry) RegisterImplementations(_ interface{}, _ ...gogoproto.Message) {
-	panic("cannot be called")
-}
-
-func (f failingInterfaceRegistry) ListAllInterfaces() []string {
-	panic("cannot be called")
-}
-
-func (f failingInterfaceRegistry) ListImplementations(_ string) []string {
-	panic("cannot be called")
-}
-
-func (f failingInterfaceRegistry) EnsureRegistered(_ interface{}) error {
-	panic("cannot be called")
-}
+var fallBackCodec = codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 
 // ContextConfig stores context config.
 type ContextConfig struct {
@@ -101,7 +64,7 @@ type TimeoutConfig struct {
 // GasConfig is the part of context config holding gas parameters.
 type GasConfig struct {
 	GasAdjustment      float64
-	GasPriceAdjustment sdk.Dec
+	GasPriceAdjustment sdkmath.LegacyDec
 }
 
 // DefaultContextConfig returns default context config.
@@ -109,7 +72,7 @@ func DefaultContextConfig() ContextConfig {
 	return ContextConfig{
 		GasConfig: GasConfig{
 			GasAdjustment:      1.0,
-			GasPriceAdjustment: sdk.MustNewDecFromStr("1.1"),
+			GasPriceAdjustment: sdkmath.LegacyMustNewDecFromStr("1.1"),
 		},
 		TimeoutConfig: TimeoutConfig{
 			RequestTimeout:           10 * time.Second,
@@ -170,7 +133,7 @@ func (c Context) GasAdjustment() float64 {
 }
 
 // GasPriceAdjustment returns gas price adjustment.
-func (c Context) GasPriceAdjustment() sdk.Dec {
+func (c Context) GasPriceAdjustment() sdkmath.LegacyDec {
 	return c.config.GasConfig.GasPriceAdjustment
 }
 
@@ -181,14 +144,14 @@ func (c Context) WithGasAdjustment(adj float64) Context {
 }
 
 // WithGasPriceAdjustment returns context with new gas price adjustment.
-func (c Context) WithGasPriceAdjustment(adj sdk.Dec) Context {
+func (c Context) WithGasPriceAdjustment(adj sdkmath.LegacyDec) Context {
 	c.config.GasConfig.GasPriceAdjustment = adj
 	return c
 }
 
 // WithClient returns a copy of the context with an updated RPC client
 // instance.
-func (c Context) WithClient(client client.TendermintRPC) Context {
+func (c Context) WithClient(client client.CometRPC) Context {
 	c.clientCtx = c.clientCtx.WithClient(client)
 	return c
 }
@@ -265,7 +228,7 @@ func (c Context) BroadcastMode() string {
 }
 
 // RPCClient returns RPC client.
-func (c Context) RPCClient() client.TendermintRPC {
+func (c Context) RPCClient() client.CometRPC {
 	return c.clientCtx.Client
 }
 

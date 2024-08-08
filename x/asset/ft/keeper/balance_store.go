@@ -3,8 +3,9 @@ package keeper
 import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -12,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
-func newBalanceStore(cdc codec.BinaryCodec, store sdk.KVStore, pref []byte) balanceStore {
+func newBalanceStore(cdc codec.BinaryCodec, store storetypes.KVStore, pref []byte) balanceStore {
 	return balanceStore{
 		cdc:   cdc,
 		store: prefix.NewStore(store, pref),
@@ -99,7 +100,7 @@ func (s balanceStore) SetBalance(coin sdk.Coin) {
 
 func collectBalances(
 	cdc codec.BinaryCodec,
-	store sdk.KVStore,
+	store storetypes.KVStore,
 	pagination *query.PageRequest,
 ) ([]types.Balance, *query.PageResponse, error) {
 	var balances []types.Balance

@@ -5,7 +5,7 @@ package modules
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/require"
 
@@ -23,5 +23,5 @@ func TestMintQueryInflation(t *testing.T) {
 	mintClient := minttypes.NewQueryClient(chain.ClientContext)
 	resp, err := mintClient.Inflation(ctx, &minttypes.QueryInflationRequest{})
 	requireT.NoError(err)
-	requireT.True(resp.Inflation.GT(sdk.ZeroDec()))
+	requireT.True(resp.Inflation.GT(sdkmath.LegacyZeroDec()))
 }

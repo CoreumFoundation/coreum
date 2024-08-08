@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -14,7 +15,7 @@ import (
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	googlegrpc "google.golang.org/grpc"
@@ -111,7 +112,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					defer func() {
 						// handle case when the expected deterministic message gas multiplied by fuseGasMultiplier exceeded spent gas
 						if recoveryObj := recover(); recoveryObj != nil {
-							_, isOutOfGasError := recoveryObj.(sdk.ErrorOutOfGas)
+							_, isOutOfGasError := recoveryObj.(storetypes.ErrorOutOfGas)
 							if isOutOfGasError && isDeterministicDeliverTx {
 								metrics.AddSampleWithLabels(
 									[]string{"deterministic_gas_exceed_fuse_gas_multiplier"},
@@ -124,8 +125,8 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 							panic(recoveryObj)
 						}
 					}()
-					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
-					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
+					//nolint:contextcheck // we consider this correct context passing.
+					res, err := handler(newSDKCtx, req)
 					if err == nil && isDeterministicDeliverTx {
 						if err := reportDeterministicGas(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg)); err != nil {
 							return nil, err
@@ -142,7 +143,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 func (s deterministicMsgServer) ctxForDeterministicGas(
 	ctx sdk.Context,
 	msg sdk.Msg,
-) (sdk.Context, sdk.Gas, bool, error) {
+) (sdk.Context, storetypes.Gas, bool, error) {
 	gasRequired, isDeterministic := s.deterministicGasConfig.GasRequiredByMessage(msg)
 	gasBefore := ctx.GasMeter().GasConsumed()
 	if isDeterministic {
@@ -172,7 +173,7 @@ func (s deterministicMsgServer) ctxForDeterministicGas(
 			// for the cases which are possible for the simulation only and require more gas
 			gasMultiplier = simFuseGasMultiplier
 		}
-		ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMultiplier * gasRequired))
+		ctx = ctx.WithGasMeter(storetypes.NewGasMeter(gasMultiplier * gasRequired))
 	}
 	return ctx, gasBefore, isDeterministic, nil
 }
@@ -243,7 +244,7 @@ func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper)
 	for _, coin := range coins {
 		// we should not count the used for this query, otherwise it will mess up the gas
 		// requirements of the message with deterministic gas.
-		ctxWithUntrackedGas := ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * untrackedMaxGasForQueries))
+		ctxWithUntrackedGas := ctx.WithGasMeter(storetypes.NewGasMeter(fuseGasMultiplier * untrackedMaxGasForQueries))
 		def, err := assetFTKeeper.GetDefinition(ctxWithUntrackedGas, coin.Denom)
 		if assetfttypes.ErrInvalidDenom.Is(err) || assetfttypes.ErrTokenNotFound.Is(err) {
 			// if the token is not defined in asset ft module, we assume this is different
@@ -259,7 +260,7 @@ func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper)
 	return false, nil
 }
 
-func reportDeterministicGas(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgURL string) error {
+func reportDeterministicGas(oldCtx, newCtx sdk.Context, gasBefore storetypes.Gas, msgURL string) error {
 	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
 	if deterministicGas == 0 {
 		return nil

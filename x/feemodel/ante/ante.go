@@ -63,7 +63,7 @@ func (fd FeeDecorator) actOnFeeModelOutput(ctx sdk.Context, feeTx sdk.FeeTx) err
 		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidCoins, "fee must be paid in '%s' coin only", minGasPrice.Denom)
 	}
 
-	gasDeclared := sdk.NewDecFromInt(sdkmath.NewIntFromUint64(feeTx.GetGas()))
+	gasDeclared := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(feeTx.GetGas()))
 	feeOffered := sdk.NewDecCoin(minGasPrice.Denom, fees.AmountOf(minGasPrice.Denom))
 	feeRequired := sdk.NewDecCoinFromDec(minGasPrice.Denom, gasDeclared.Mul(minGasPrice.Amount))
 

@@ -3,7 +3,7 @@ package wnft
 import (
 	"testing"
 
-	nft "github.com/cosmos/cosmos-sdk/x/nft/module"
+	nft "cosmossdk.io/x/nft/module"
 	"github.com/stretchr/testify/require"
 )
 

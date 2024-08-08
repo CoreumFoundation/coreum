@@ -3,8 +3,8 @@ package keeper
 import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -222,8 +222,14 @@ func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) 
 			params.Model.LongEmaBlockLength)
 		minLoadMinGasPrice := model.CalculateNextGasPrice(minShortEMA, minLongEMA)
 
-		highMinGasPrice = sdk.MaxDec(highMinGasPrice, sdk.MaxDec(maxLoadMinGasPrice, minLoadMinGasPrice))
-		lowMinGasPrice = sdk.MinDec(lowMinGasPrice, sdk.MinDec(maxLoadMinGasPrice, minLoadMinGasPrice))
+		highMinGasPrice = sdkmath.LegacyMaxDec(
+			highMinGasPrice,
+			sdkmath.LegacyMaxDec(maxLoadMinGasPrice, minLoadMinGasPrice),
+		)
+		lowMinGasPrice = sdkmath.LegacyMinDec(
+			lowMinGasPrice,
+			sdkmath.LegacyMinDec(maxLoadMinGasPrice, minLoadMinGasPrice),
+		)
 	}
 
 	denom := k.GetMinGasPrice(ctx).Denom

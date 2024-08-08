@@ -20,10 +20,10 @@ type Keeper interface {
 func (k Keeper) Router() types.Router
 
 // DelayExecution stores an item to be executed later.
-func (k Keeper) DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error
+func (k Keeper) DelayExecution(ctx sdk.Context, id string, data proto.Message, delay time.Duration) error
 
 // StoreDelayedExecution stores delayed execution item using absolute time.
-func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, t time.Time) error
+func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Message, t time.Time) error
 
 // ExecuteDelayedItems executes delayed logic. It executes all the previously stored delayed items having the execution time
 // equal to or earlier than the current block time.

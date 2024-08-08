@@ -5,18 +5,22 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -43,7 +47,7 @@ type ChainSettings struct {
 	ChainID       string
 	Denom         string
 	AddressPrefix string
-	GasPrice      sdk.Dec
+	GasPrice      sdkmath.LegacyDec
 	CoinType      uint32
 	RPCAddress    string
 }
@@ -140,7 +144,7 @@ func (c ChainContext) NewCoin(amount sdkmath.Int) sdk.Coin {
 }
 
 // NewDecCoin helper function to initialize sdk.DecCoin by passing just amount.
-func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
+func (c ChainContext) NewDecCoin(amount sdkmath.LegacyDec) sdk.DecCoin {
 	return sdk.NewDecCoinFromDec(c.ChainSettings.Denom, amount)
 }
 
@@ -225,7 +229,7 @@ func (c ChainContext) SignAndBroadcastMultisigTx(
 	}
 
 	for _, signersKeyName := range signersKeyNames {
-		if err := client.Sign(txf, signersKeyName, txBuilder, false); err != nil {
+		if err := client.Sign(ctx, txf, signersKeyName, txBuilder, false); err != nil {
 			return nil, err
 		}
 	}
@@ -274,9 +278,17 @@ func NewChain(
 	chainSettings ChainSettings,
 	fundingMnemonic string,
 ) Chain {
-	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
+	encodingConfig := config.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Codec:             tempApp.AppCodec(),
+		TxConfig:          tempApp.TxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
 
 	clientCtx := client.NewContext(DefaultClientContextConfig(), app.ModuleBasics).
+		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+		WithTxConfig(encodingConfig.TxConfig).
 		WithChainID(chainSettings.ChainID).
 		WithKeyring(coreumkeyring.NewConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
 		WithBroadcastMode(flags.BroadcastSync).
@@ -316,7 +328,7 @@ func QueryChainSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainS
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithGRPCClient(grpcClient)
 
-	infoBeforeRes, err := tmservice.NewServiceClient(clientCtx).GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	infoBeforeRes, err := cmtservice.NewServiceClient(clientCtx).GetNodeInfo(ctx, &cmtservice.GetNodeInfoRequest{})
 	if err != nil {
 		panic(fmt.Sprintf("failed to get node info, err: %s", err))
 	}
@@ -378,7 +390,7 @@ func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 
 	// https - tls grpc
 	if parsedURL.Scheme == "https" {
-		grpcClient, err := grpc.Dial(
+		grpcClient, err := grpc.NewClient(
 			host,
 			grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
 			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
@@ -394,7 +406,7 @@ func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 		host = fmt.Sprintf("%s:%s", parsedURL.Scheme, parsedURL.Opaque)
 	}
 	// http - insecure
-	grpcClient, err := grpc.Dial(
+	grpcClient, err := grpc.NewClient(
 		host,
 		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -403,4 +415,14 @@ func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 	}
 
 	return grpcClient, nil
+}
+
+func tempDir() string {
+	dir, err := os.MkdirTemp("", "integration-test")
+	if err != nil {
+		panic("failed to create temp dir: " + err.Error())
+	}
+	defer os.RemoveAll(dir) //nolint:errcheck // we don't care
+
+	return dir
 }

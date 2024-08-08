@@ -5,11 +5,12 @@ import (
 	"sort"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	rawnft "cosmossdk.io/x/nft"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	rawnft "github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -24,7 +25,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	testApp := simapp.New()
 
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 
 	// prepare the genesis data
@@ -41,7 +42,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 				types.ClassFeature_freezing,
 				types.ClassFeature_whitelisting,
 			},
-			RoyaltyRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", (i+1)%10)),
+			RoyaltyRate: sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("0.%d", (i+1)%10)),
 		}
 
 		rawGenState.Classes = append(rawGenState.Classes, &rawnft.Class{

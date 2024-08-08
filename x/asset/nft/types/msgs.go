@@ -144,7 +144,7 @@ func (m *MsgIssueClass) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgIssueClass) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -203,7 +203,7 @@ func (m *MsgMint) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgMint) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -254,7 +254,7 @@ func (m *MsgUpdateData) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgUpdateData) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -293,7 +293,7 @@ func (m *MsgBurn) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgBurn) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -332,7 +332,7 @@ func (m *MsgFreeze) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgFreeze) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -371,7 +371,7 @@ func (m *MsgUnfreeze) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgUnfreeze) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -414,7 +414,7 @@ func (m *MsgAddToWhitelist) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgAddToWhitelist) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -457,7 +457,7 @@ func (m *MsgRemoveFromWhitelist) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgRemoveFromWhitelist) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -496,7 +496,7 @@ func (m *MsgClassFreeze) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgClassFreeze) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -535,7 +535,7 @@ func (m *MsgClassUnfreeze) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgClassUnfreeze) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -565,7 +565,7 @@ func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -604,7 +604,7 @@ func (m *MsgAddToClassWhitelist) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgAddToClassWhitelist) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -643,7 +643,7 @@ func (m *MsgRemoveFromClassWhitelist) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgRemoveFromClassWhitelist) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -657,8 +657,7 @@ func (m MsgRemoveFromClassWhitelist) Type() string {
 }
 
 var (
-	amino          = codec.NewLegacyAmino()
-	moduleAminoCdc = codec.NewAminoCodec(amino)
+	amino = codec.NewLegacyAmino()
 )
 
 func init() {

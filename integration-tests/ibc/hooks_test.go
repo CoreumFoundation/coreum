@@ -13,8 +13,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v8/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -115,10 +115,10 @@ func TestIBCHooksCounterWASMCall(t *testing.T) {
 
 	sendToCoreumCoin := sdk.NewCoin(
 		expectedOsmosisRecipientBalance.Denom,
-		expectedOsmosisRecipientBalance.Amount.Quo(sdk.NewInt(2)),
+		expectedOsmosisRecipientBalance.Amount.Quo(sdkmath.NewInt(2)),
 	)
 
-	sendOsmosisToCoreumCoin := osmosisChain.NewCoin(sdk.NewInt(10_000))
+	sendOsmosisToCoreumCoin := osmosisChain.NewCoin(sdkmath.NewInt(10_000))
 	expectedOsmosisOnCoreumBalance := sdk.NewCoin(
 		ConvertToIBCDenom(coreumToOsmosisChannelID, sendOsmosisToCoreumCoin.Denom),
 		sendOsmosisToCoreumCoin.Amount,
@@ -356,7 +356,7 @@ func awaitHooksCounterContractState(
 
 		var totalFundsResponse ibcwasm.HooksTotalFundsState
 		require.NoError(t, json.Unmarshal(queryTotalFundsOut, &totalFundsResponse))
-		if !totalFundsResponse.TotalFunds.IsEqual(expectedFunds) {
+		if !totalFundsResponse.TotalFunds.Equal(expectedFunds) {
 			return retry.Retryable(errors.Errorf(
 				"total_funds is still not equal to expected, current:%s, expected:%s",
 				totalFundsResponse.TotalFunds.String(),

@@ -53,7 +53,6 @@ func generateProtoOpenAPI(ctx context.Context, deps types.DepsFunc) error {
 		filepath.Join(coreumPath, "asset", "nft", "v1"),
 		filepath.Join(coreumPath, "customparams", "v1"),
 		filepath.Join(coreumPath, "feemodel", "v1"),
-		filepath.Join(coreumPath, "nft", "v1beta1"),
 		filepath.Join(cosmosPath, "base", "node", "v1beta1"),
 		filepath.Join(cosmosPath, "base", "tendermint", "v1beta1"),
 		filepath.Join(cosmosPath, "tx", "v1beta1"),

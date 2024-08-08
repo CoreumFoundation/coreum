@@ -5,28 +5,18 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/config"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	assetftkeeper "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
 )
-
-func TestMain(m *testing.M) {
-	n, err := config.NetworkConfigByChainID(constant.ChainIDDev)
-	if err != nil {
-		panic(err)
-	}
-	n.SetSDKConfig()
-	m.Run()
-}
 
 func TestApplyRate(t *testing.T) {
 	genAccount := func() string {
@@ -43,7 +33,7 @@ func TestApplyRate(t *testing.T) {
 
 	issuer := genAccount()
 	dummyAddress := genAccount()
-	key := sdk.NewKVStoreKey(types.StoreKey)
+	key := storetypes.NewKVStoreKey(types.StoreKey)
 	assetFTKeeper := assetftkeeper.NewKeeper(nil, key, nil, nil, nil, nil, nil, "")
 
 	testCases := []struct {
@@ -168,7 +158,7 @@ func TestApplyRate(t *testing.T) {
 
 			appliedRate := assetFTKeeper.CalculateRate(
 				ctx,
-				sdk.MustNewDecFromStr(tc.rate),
+				sdkmath.LegacyMustNewDecFromStr(tc.rate),
 				sdk.MustAccAddressFromBech32(tc.sender),
 				sdk.NewCoin("test", tc.amount))
 			assertT.EqualValues(tc.appliedRate.String(), appliedRate.String())

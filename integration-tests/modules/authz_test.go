@@ -53,7 +53,7 @@ func TestAuthzDirectTransferFails(t *testing.T) {
 
 	// this is done because account must exist to send transaction
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdk.NewIntFromUint64(1),
+		Amount: sdkmath.NewIntFromUint64(1),
 	})
 
 	// try to send from grantee directly
