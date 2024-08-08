@@ -5,6 +5,7 @@ package modules
 import (
 	"testing"
 
+	tenderminttypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
@@ -71,6 +72,7 @@ func TestUpdatingMaxBlockSize(t *testing.T) {
 	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// Verify new consensus params.
+	consensusParams.Params.Abci = &tenderminttypes.ABCIParams{}
 	newConsensusParams, err := consensusClient.Params(ctx, &consensustypes.QueryParamsRequest{})
 	requireT.NoError(err)
 	requireT.Equal(consensusParams.Params, newConsensusParams.Params)
