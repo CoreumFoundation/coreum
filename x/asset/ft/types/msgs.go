@@ -660,9 +660,7 @@ func (m MsgUpdateParams) Type() string {
 	return TypeMsgUpdateParams
 }
 
-var (
-	amino = codec.NewLegacyAmino()
-)
+var amino = codec.NewLegacyAmino()
 
 func init() {
 	RegisterLegacyAminoCodec(amino)

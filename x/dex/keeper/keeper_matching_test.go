@@ -22,11 +22,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		balances     func(accSet AccSet) map[string]sdk.Coins
-		orders       func(accSet AccSet) []types.Order
-		wantBalances func(accSet AccSet) map[string]sdk.Coins
-		wantOrders   func(accSet AccSet) []types.Order
+		name                  string
+		balances              func(accSet AccSet) map[string]sdk.Coins
+		orders                func(accSet AccSet) []types.Order
+		wantAvailableBalances func(accSet AccSet) map[string]sdk.Coins
+		wantOrders            func(accSet AccSet) []types.Order
 	}{
 		{
 			name: "match_self_maker_sell_taker_buy_close_maker",
@@ -75,7 +75,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
@@ -130,7 +130,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 5), sdk.NewInt64Coin(denom2, 375)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
@@ -184,7 +184,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 1)),
@@ -239,7 +239,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 630)),
@@ -293,7 +293,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 376)),
@@ -347,7 +347,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 376)),
@@ -401,7 +401,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375)),
@@ -441,7 +441,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 50)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 100)),
@@ -494,7 +494,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 25)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 25)),
@@ -547,7 +547,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(accSet AccSet) []types.Order {
 				return []types.Order{}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 100)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 100)),
@@ -641,7 +641,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantBalances: func(accSet AccSet) map[string]sdk.Coins {
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 5000)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 1882)),
@@ -684,23 +684,57 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			}
 			require.ElementsMatch(t, tt.wantOrders(accSet), orders)
 
-			balances := make(map[string]sdk.Coins)
+			availableBalances := make(map[string]sdk.Coins)
+			lockedBalances := make(map[string]sdk.Coins)
 			for addr := range tt.balances(accSet) {
-				balances[addr] = testApp.BankKeeper.GetAllBalances(sdkCtx, sdk.MustAccAddressFromBech32(addr))
+				addrBalances := testApp.BankKeeper.GetAllBalances(sdkCtx, sdk.MustAccAddressFromBech32(addr))
+				addrFTLockedBalances := sdk.NewCoins()
+				for _, balance := range addrBalances {
+					lockedBalance := testApp.AssetFTKeeper.GetDEXLockedBalance(
+						sdkCtx, sdk.MustAccAddressFromBech32(addr), balance.Denom,
+					)
+					addrFTLockedBalances = addrFTLockedBalances.Add(lockedBalance)
+					addrBalances = addrBalances.Sub(lockedBalance)
+				}
+				availableBalances[addr] = addrBalances
+				lockedBalances[addr] = addrFTLockedBalances
 			}
+			availableBalances = removeEmptyBalances(availableBalances)
+			lockedBalances = removeEmptyBalances(lockedBalances)
 
-			wantBalances := tt.wantBalances(accSet)
-			require.True(t, reflect.DeepEqual(wantBalances, balances), fmt.Sprintf("want: %v, got: %v", wantBalances, balances))
-
-			// check the DEX locked balances
-			lockedBalances := sdk.NewCoins()
-			for _, order := range orders {
-				lockedBalances = lockedBalances.Add(sdk.NewCoin(order.GetLockedBalanceDenom(), order.RemainingBalance))
-			}
-			wantLockedBalances := testApp.BankKeeper.GetAllBalances(
-				sdkCtx, testApp.AccountKeeper.GetModuleAddress(types.ModuleName),
+			wantAvailableBalances := tt.wantAvailableBalances(accSet)
+			require.True(
+				t,
+				reflect.DeepEqual(wantAvailableBalances, availableBalances),
+				fmt.Sprintf("want: %v, got: %v", wantAvailableBalances, availableBalances),
 			)
-			require.Equal(t, wantLockedBalances, lockedBalances)
+
+			// check that balance locked in the orders correspond the balance locked in the asset ft
+			orderLockedBalances := make(map[string]sdk.Coins)
+			for _, order := range orders {
+				coins, ok := orderLockedBalances[order.Creator]
+				if !ok {
+					coins = sdk.NewCoins()
+				}
+				coins = coins.Add(sdk.NewCoin(order.GetLockedBalanceDenom(), order.RemainingBalance))
+				orderLockedBalances[order.Creator] = coins
+			}
+			orderLockedBalances = removeEmptyBalances(orderLockedBalances)
+			require.True(
+				t,
+				reflect.DeepEqual(lockedBalances, orderLockedBalances),
+				fmt.Sprintf("want: %v, got: %v", lockedBalances, orderLockedBalances),
+			)
 		})
 	}
+}
+
+func removeEmptyBalances(balances map[string]sdk.Coins) map[string]sdk.Coins {
+	for addr, balance := range balances {
+		if balance.IsZero() {
+			delete(balances, addr)
+		}
+	}
+
+	return balances
 }
