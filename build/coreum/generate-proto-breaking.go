@@ -21,10 +21,8 @@ import (
 )
 
 //go:embed proto-breaking.tmpl.json
-//nolint:unused // will be reverted after cosmos sdk v0.50.x upgrade
 var configBreakingTmpl string
 
-//nolint:deadcode,unused // will be reverted after cosmos sdk v0.50.x upgrade
 func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(golang.Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
 
