@@ -195,7 +195,7 @@ func Lint(ctx context.Context, deps types.DepsFunc) error {
 		CompileAllSmartContracts,
 		formatProto,
 		lintProto,
-		// breakingProto, // TODO:revert after cosmos sdk v0.50.x upgrade
+		breakingProto, // TODO:revert after cosmos sdk v0.50.x upgrade
 	)
 	return golang.Lint(ctx, deps)
 }
