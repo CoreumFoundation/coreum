@@ -13,8 +13,8 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -146,8 +146,8 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		Subunit:            "mysubunit",
 		Precision:          8,
 		InitialAmount:      sdkmath.NewInt(1_000_000),
-		BurnRate:           sdk.MustNewDecFromStr("0.1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_ibc,
@@ -163,8 +163,8 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
 
 	sendCoin := sdk.NewCoin(denom, sdkmath.NewInt(1000))
-	burntAmount := issueMsg.BurnRate.Mul(sdk.NewDecFromInt(sendCoin.Amount)).TruncateInt()
-	sendCommissionAmount := issueMsg.SendCommissionRate.Mul(sdk.NewDecFromInt(sendCoin.Amount)).TruncateInt()
+	burntAmount := issueMsg.BurnRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).TruncateInt()
+	sendCommissionAmount := issueMsg.SendCommissionRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).TruncateInt()
 	extraAmount := sdkmath.NewInt(77) // some amount to be left at the end
 	msgSend := &banktypes.MsgSend{
 		FromAddress: coreumIssuer.String(),
@@ -313,7 +313,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		map[string]sdkmath.Int{
 			coreumChain.MustConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount.Neg(),
 			coreumChain.MustConvertToBech32Address(coreumSender):              sendCoin.Amount,
-			coreumChain.MustConvertToBech32Address(coreumIssuer):              sdk.ZeroInt(),
+			coreumChain.MustConvertToBech32Address(coreumIssuer):              sdkmath.ZeroInt(),
 		},
 	)
 
@@ -355,7 +355,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		map[string]sdkmath.Int{
 			coreumChain.MustConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount.Neg(),
 			coreumChain.MustConvertToBech32Address(coreumSender):                 sendCoin.Amount,
-			coreumChain.MustConvertToBech32Address(coreumIssuer):                 sdk.ZeroInt(),
+			coreumChain.MustConvertToBech32Address(coreumIssuer):                 sdkmath.ZeroInt(),
 		},
 	)
 }
@@ -466,7 +466,7 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.ZeroInt()).String(), balanceRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.ZeroInt()).String(), balanceRes.Balance.String())
 }
 
 func TestIBCAssetFTFreezing(t *testing.T) {
@@ -850,7 +850,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.ZeroInt()).String(), balanceRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.ZeroInt()).String(), balanceRes.Balance.String())
 
 	// send coins back to recipient on coreum, it should fail
 	_, err = gaiaChain.ExecuteIBCTransfer(
@@ -864,7 +864,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.ZeroInt()).String(), balanceRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.ZeroInt()).String(), balanceRes.Balance.String())
 
 	// remove global freeze
 	unfreezeMsg := &assetfttypes.MsgGloballyUnfreeze{
@@ -1168,7 +1168,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
-		Amount:  gaiaChain.NewCoin(sdk.NewIntFromUint64(100000)),
+		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(100000)),
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -1626,8 +1626,8 @@ func TestIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T) {
 			assetfttypes.Feature_block_smart_contracts,
 			assetfttypes.Feature_ibc,
 		},
-		BurnRate:           sdk.MustNewDecFromStr("0.1"),
-		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}
 	_, err := client.BroadcastTx(
 		ctx,
@@ -1656,8 +1656,8 @@ func TestIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T) {
 	// We send everything except amount required to cover burn rate and send commission.
 	sendCoin := sdk.NewCoin(
 		denom,
-		sdk.NewDecFromInt(issueMsg.InitialAmount).
-			Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
+		sdkmath.LegacyNewDecFromInt(issueMsg.InitialAmount).
+			Quo(sdkmath.LegacyOneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
 			TruncateInt(),
 	)
 	_, err = coreumChain.ExecuteIBCTransfer(
@@ -1740,8 +1740,8 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 				assetfttypes.Feature_block_smart_contracts,
 				assetfttypes.Feature_ibc,
 			},
-			BurnRate:           sdk.MustNewDecFromStr("0.1"),
-			SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+			BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+			SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 		}
 		_, err := client.BroadcastTx(
 			ctx,
@@ -1769,9 +1769,9 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 		// Send coins from sender to Gaia.
 		// We send everything except amount required to cover burn rate and send commission.
 		sendCoin := sdk.NewCoin(denom,
-			sdk.
-				NewDecFromInt(issueMsg.InitialAmount).
-				Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
+			sdkmath.
+				LegacyNewDecFromInt(issueMsg.InitialAmount).
+				Quo(sdkmath.LegacyOneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).
 				TruncateInt(),
 		)
 

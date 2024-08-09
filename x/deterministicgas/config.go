@@ -1,9 +1,13 @@
 package deterministicgas
 
 import (
+	storetypes "cosmossdk.io/store/types"
+	evidencetypes "cosmossdk.io/x/evidence/types"
+	feegranttypes "cosmossdk.io/x/feegrant"
+	nfttypes "cosmossdk.io/x/nft"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/armon/go-metrics"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -12,22 +16,18 @@ import (
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/group"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
@@ -35,7 +35,6 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
 	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
-	cnfttypes "github.com/CoreumFoundation/coreum/v4/x/nft"
 )
 
 // These constants define gas for messages which have custom calculation logic.
@@ -158,11 +157,6 @@ func DefaultConfig() Config {
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25_000),
-
-		// cnft
-		// Deprecated: this will be removed in the next release alongside the cnft types.
-		//nolint:staticcheck //deprecated
-		MsgToMsgURL(&cnfttypes.MsgSend{}): constantGasFunc(25_000),
 
 		// slashing
 		// Unjail message is not used in any integration test because it's too much hassle. Instead, unjailing is estimated
@@ -301,7 +295,7 @@ func DefaultConfig() Config {
 			&ibcclienttypes.MsgCreateClient{},
 			&ibcclienttypes.MsgUpdateClient{},
 			&ibcclienttypes.MsgUpgradeClient{},
-			&ibcclienttypes.MsgSubmitMisbehaviour{},
+			&ibcclienttypes.MsgSubmitMisbehaviour{}, //nolint // TODO remove legacy message
 
 			// ibc/core/connection
 			&ibcconnectiontypes.MsgConnectionOpenInit{},

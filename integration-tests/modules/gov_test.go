@@ -231,19 +231,19 @@ func TestLegacyGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 		govtypesv1beta1.WeightedVoteOptions{
 			govtypesv1beta1.WeightedVoteOption{
 				Option: govtypesv1beta1.OptionNoWithVeto,
-				Weight: sdk.MustNewDecFromStr("0.7"),
+				Weight: sdkmath.LegacyMustNewDecFromStr("0.7"),
 			},
 			govtypesv1beta1.WeightedVoteOption{
 				Option: govtypesv1beta1.OptionNo,
-				Weight: sdk.MustNewDecFromStr("0.1"),
+				Weight: sdkmath.LegacyMustNewDecFromStr("0.1"),
 			},
 			govtypesv1beta1.WeightedVoteOption{
 				Option: govtypesv1beta1.OptionYes,
-				Weight: sdk.MustNewDecFromStr("0.1"),
+				Weight: sdkmath.LegacyMustNewDecFromStr("0.1"),
 			},
 			govtypesv1beta1.WeightedVoteOption{
 				Option: govtypesv1beta1.OptionAbstain,
-				Weight: sdk.MustNewDecFromStr("0.1"),
+				Weight: sdkmath.LegacyMustNewDecFromStr("0.1"),
 			},
 		},
 		proposalID,

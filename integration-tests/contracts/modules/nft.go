@@ -1,7 +1,7 @@
 package modules
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
 )
@@ -139,7 +139,7 @@ type AssetnftClass struct {
 	URIHash     string                       `json:"uri_hash"`
 	Data        string                       `json:"data"`
 	Features    []assetnfttypes.ClassFeature `json:"features"`
-	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
+	RoyaltyRate sdkmath.LegacyDec            `json:"royalty_rate"`
 }
 
 // AssetnftClassResponse is returned when querying for class info.

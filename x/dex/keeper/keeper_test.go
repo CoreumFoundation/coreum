@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/docker/distribution/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -22,7 +23,7 @@ const (
 
 func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	sdkCtx := testApp.BaseApp.NewContext(false)
 
 	type denomsToOrderBookIDs struct {
 		baseDenom                   string
@@ -96,7 +97,7 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 
 func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	sdkCtx := testApp.BaseApp.NewContext(false)
 	dexKeeper := testApp.DEXKeeper
 
 	price := types.MustNewPriceFromString("12e-1")
@@ -162,7 +163,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	sdkCtx := testApp.BaseApp.NewContext(false)
 	dexKeeper := testApp.DEXKeeper
 
 	acc1, _ := testApp.GenAccount(sdkCtx)
@@ -230,7 +231,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 	require.Len(t, acc1Orders, 2)
 
 	acc1Orders, _, err = testApp.DEXKeeper.GetOrders(sdkCtx, acc1, &query.PageRequest{
-		Limit: query.MaxLimit,
+		Limit: query.PaginationMaxLimit,
 	})
 	require.NoError(t, err)
 	require.ElementsMatch(t, []types.Order{
@@ -260,7 +261,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 		denom2,
 		types.Side_sell,
 		&query.PageRequest{
-			Limit: query.MaxLimit,
+			Limit: query.PaginationMaxLimit,
 		},
 	)
 	require.NoError(t, err)
@@ -271,7 +272,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 
 func TestKeeper_GetOrderBooks(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	sdkCtx := testApp.BaseApp.NewContext(false)
 	dexKeeper := testApp.DEXKeeper
 
 	acc1, _ := testApp.GenAccount(sdkCtx)
@@ -337,8 +338,14 @@ func getSorterOrderBookOrders(
 ) []types.Order {
 	records := getSorterOrderBookRecords(t, testApp, sdkCtx, orderBookID, side)
 	orders := make([]types.Order, 0, len(records))
+	authQueryServer := authkeeper.NewQueryServer(testApp.AccountKeeper)
 	for _, record := range records {
-		addr := sdk.MustAccAddressFromBech32(testApp.AccountKeeper.GetAccountAddressByID(sdkCtx, record.AccountNumber))
+		resp, err := authQueryServer.AccountAddressByID(
+			sdkCtx,
+			&authtypes.QueryAccountAddressByIDRequest{AccountId: record.AccountNumber},
+		)
+		require.NoError(t, err)
+		addr := sdk.MustAccAddressFromBech32(resp.AccountAddress)
 		order, err := testApp.DEXKeeper.GetOrderByAddressAndID(sdkCtx, addr, record.OrderID)
 		require.NoError(t, err)
 		orders = append(orders, order)

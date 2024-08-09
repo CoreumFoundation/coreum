@@ -2,9 +2,9 @@ package keeper
 
 import (
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"

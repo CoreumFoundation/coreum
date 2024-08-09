@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -21,7 +22,7 @@ func TestMigrateParams(t *testing.T) {
 
 	testApp := simapp.New()
 	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
-	ctx := testApp.NewContext(false, tmproto.Header{}).WithBlockTime(blockTime)
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{}).WithBlockTime(blockTime)
 
 	paramsKeeper := testApp.ParamsKeeper
 
@@ -31,7 +32,7 @@ func TestMigrateParams(t *testing.T) {
 	if !sp.HasKeyTable() {
 		sp.WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&types.Params{}))
 	}
-	sp.Set(ctx, types.KeyIssueFee, sdk.NewCoin("stake", sdk.ZeroInt()))
+	sp.Set(ctx, types.KeyIssueFee, sdk.NewCoin("stake", sdkmath.ZeroInt()))
 
 	requireT.NoError(v1.MigrateParams(ctx, paramsKeeper))
 

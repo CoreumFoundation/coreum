@@ -1,8 +1,10 @@
 package types
 
 import (
+	context "context"
+
+	"cosmossdk.io/x/nft"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -10,29 +12,34 @@ import (
 //
 //nolint:interfacebloat
 type NFTKeeper interface {
-	SaveClass(ctx sdk.Context, class nft.Class) error
-	GetClass(ctx sdk.Context, classID string) (nft.Class, bool)
-	UpdateClass(ctx sdk.Context, class nft.Class) error
-	GetNFTsOfClass(ctx sdk.Context, classID string) []nft.NFT
-	HasClass(ctx sdk.Context, classID string) bool
-	GetNFT(ctx sdk.Context, classID, nftID string) (nft.NFT, bool)
-	HasNFT(ctx sdk.Context, classID, id string) bool
-	Mint(ctx sdk.Context, token nft.NFT, receiver sdk.AccAddress) error
-	Burn(ctx sdk.Context, classID, nftID string) error
-	Update(ctx sdk.Context, n nft.NFT) error
-	GetOwner(ctx sdk.Context, classID, nftID string) sdk.AccAddress
-	Transfer(ctx sdk.Context, classID, nftID string, receiver sdk.AccAddress) error
+	SaveClass(ctx context.Context, class nft.Class) error
+	GetClass(ctx context.Context, classID string) (nft.Class, bool)
+	UpdateClass(ctx context.Context, class nft.Class) error
+	GetNFTsOfClass(ctx context.Context, classID string) []nft.NFT
+	HasClass(ctx context.Context, classID string) bool
+	GetNFT(ctx context.Context, classID, nftID string) (nft.NFT, bool)
+	HasNFT(ctx context.Context, classID, id string) bool
+	Mint(ctx context.Context, token nft.NFT, receiver sdk.AccAddress) error
+	Burn(ctx context.Context, classID, nftID string) error
+	Update(ctx context.Context, n nft.NFT) error
+	GetOwner(ctx context.Context, classID, nftID string) sdk.AccAddress
+	Transfer(ctx context.Context, classID, nftID string, receiver sdk.AccAddress) error
 }
 
 // BankKeeper defines the expected bank interface.
 type BankKeeper interface {
-	BurnCoins(ctx sdk.Context, moduleName string, amounts sdk.Coins) error
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	BurnCoins(ctx context.Context, moduleName string, amounts sdk.Coins) error
+	SendCoinsFromAccountToModule(
+		ctx context.Context,
+		senderAddr sdk.AccAddress,
+		recipientModule string,
+		amt sdk.Coins,
+	) error
 }
 
 // WasmKeeper represents the expected method from the wasm keeper.
 type WasmKeeper interface {
-	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
+	HasContractInfo(ctx context.Context, contractAddress sdk.AccAddress) bool
 }
 
 // ParamsKeeper specifies expected methods of params keeper.

@@ -1,11 +1,11 @@
 package wnft
 
 import (
+	"cosmossdk.io/x/nft"
+	nftmodule "cosmossdk.io/x/nft/module"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/nft"
-	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
 
 	"github.com/CoreumFoundation/coreum/v4/x/wnft/keeper"
 )

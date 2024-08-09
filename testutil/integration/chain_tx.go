@@ -47,7 +47,7 @@ func (c ChainContext) BuildSignedTx(
 		return nil, err
 	}
 
-	err = sign(clientCtx, txf, signerAddress, unsignedTx)
+	err = sign(ctx, clientCtx, txf, signerAddress, unsignedTx)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func addAccountInfoToTxFactory(
 			return client.Factory{}, errors.WithStack(err)
 		}
 
-		var acc authtypes.AccountI
+		var acc sdk.AccountI
 		if err := clientCtx.InterfaceRegistry().UnpackAny(res.Account, &acc); err != nil {
 			return client.Factory{}, errors.WithStack(err)
 		}
@@ -103,6 +103,7 @@ func addAccountInfoToTxFactory(
 }
 
 func sign(
+	ctx context.Context,
 	clientCtx client.Context,
 	txf client.Factory,
 	signerAddress sdk.AccAddress,
@@ -111,7 +112,11 @@ func sign(
 	signMode := txf.SignMode()
 	if signMode == signing.SignMode_SIGN_MODE_UNSPECIFIED {
 		// use the SignModeHandler's default mode if unspecified
-		signMode = clientCtx.TxConfig().SignModeHandler().DefaultMode()
+		var err error
+		signMode, err = authsigning.APISignModeToInternal(clientCtx.TxConfig().SignModeHandler().DefaultMode())
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	key, err := txf.Keybase().KeyByAddress(signerAddress)
@@ -145,13 +150,19 @@ func sign(
 	}
 
 	// Generate the bytes to be signed.
-	bytesToSign, err := clientCtx.TxConfig().SignModeHandler().GetSignBytes(signMode, signerData, txBuilder.GetTx())
+	bytesToSign, err := authsigning.GetSignBytesAdapter(
+		ctx,
+		clientCtx.TxConfig().SignModeHandler(),
+		signMode,
+		signerData,
+		txBuilder.GetTx(),
+	)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// Sign those bytes
-	sigBytes, _, err := txf.Keybase().SignByAddress(signerAddress, bytesToSign)
+	sigBytes, _, err := txf.Keybase().SignByAddress(signerAddress, bytesToSign, signMode)
 	if err != nil {
 		return errors.WithStack(err)
 	}

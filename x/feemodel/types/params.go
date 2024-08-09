@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/pkg/errors"
 )
@@ -21,10 +21,10 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func DefaultParams() Params {
 	return Params{
 		Model: ModelParams{
-			InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
-			MaxGasPriceMultiplier:   sdk.MustNewDecFromStr("1000.0"),
-			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-			EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
+			InitialGasPrice:         sdkmath.LegacyMustNewDecFromStr("0.0625"),
+			MaxGasPriceMultiplier:   sdkmath.LegacyMustNewDecFromStr("1000.0"),
+			MaxDiscount:             sdkmath.LegacyMustNewDecFromStr("0.5"),
+			EscalationStartFraction: sdkmath.LegacyMustNewDecFromStr("0.8"),
 			MaxBlockGas:             50000000, // 400 * BankSend message
 			ShortEmaBlockLength:     50,
 			LongEmaBlockLength:      1000,
@@ -61,23 +61,23 @@ func validateModelParams(i interface{}) error {
 	if !m.InitialGasPrice.IsPositive() {
 		return errors.New("initial gas price must be positive")
 	}
-	if m.MaxGasPriceMultiplier.LTE(sdk.OneDec()) {
+	if m.MaxGasPriceMultiplier.LTE(sdkmath.LegacyOneDec()) {
 		return errors.New("max gas price multiplier must be greater than one")
 	}
-	if m.MaxDiscount.LTE(sdk.ZeroDec()) {
+	if m.MaxDiscount.LTE(sdkmath.LegacyZeroDec()) {
 		return errors.New("max discount must be greater than 0")
 	}
-	if m.MaxDiscount.GTE(sdk.OneDec()) {
+	if m.MaxDiscount.GTE(sdkmath.LegacyOneDec()) {
 		return errors.New("max discount must be less than 1")
 	}
 
 	if m.EscalationStartFraction.IsNil() {
 		return errors.New("escalation start fraction is not set")
 	}
-	if m.EscalationStartFraction.LTE(sdk.ZeroDec()) {
+	if m.EscalationStartFraction.LTE(sdkmath.LegacyZeroDec()) {
 		return errors.New("escalation start fraction must be greater than 0")
 	}
-	if m.EscalationStartFraction.GTE(sdk.OneDec()) {
+	if m.EscalationStartFraction.GTE(sdkmath.LegacyOneDec()) {
 		return errors.New("escalation start fraction must be less than 1")
 	}
 	if m.ShortEmaBlockLength == 0 {

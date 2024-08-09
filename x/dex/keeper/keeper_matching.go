@@ -102,7 +102,7 @@ func (k Keeper) matchOrder(ctx sdk.Context, accNumber uint64, orderBookID uint32
 		}
 
 		recordToClose.RemainingQuantity = recordToClose.RemainingQuantity.Sub(recordToCloseReceiveCoin.Amount)
-		recordToClose.RemainingBalance = sdk.ZeroInt()
+		recordToClose.RemainingBalance = sdkmath.ZeroInt()
 
 		if recordToClose.RemainingQuantity.IsPositive() {
 			k.logger(ctx).Debug(
@@ -135,7 +135,7 @@ func (k Keeper) matchOrder(ctx sdk.Context, accNumber uint64, orderBookID uint32
 				); err != nil {
 					return err
 				}
-				recordToReduce.RemainingBalance = sdk.ZeroInt()
+				recordToReduce.RemainingBalance = sdkmath.ZeroInt()
 				break
 			}
 			k.logger(ctx).Debug("Going to next record in the order book.")
@@ -220,8 +220,8 @@ func computeMaxExecutionQuantity(priceRat *big.Rat, remainingQuantity sdkmath.In
 	maxExecutionQuantity := cbig.IntMul(n, priceDenom)
 	oppositeExecutionQuantity := cbig.IntMul(n, priceNum)
 
-	return sdk.NewIntFromBigInt(maxExecutionQuantity),
-		sdk.NewIntFromBigInt(oppositeExecutionQuantity)
+	return sdkmath.NewIntFromBigInt(maxExecutionQuantity),
+		sdkmath.NewIntFromBigInt(oppositeExecutionQuantity)
 }
 
 func getRecordToCloseAndReceiveCoins(

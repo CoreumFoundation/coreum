@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/cosmos/gogoproto/proto"
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/samber/lo"
 
@@ -18,9 +19,11 @@ import (
 
 // Keeper is the dex module keeper.
 type Keeper struct {
-	cdc           codec.BinaryCodec
-	storeKey      storetypes.StoreKey
-	accountKeeper types.AccountKeeper
+	cdc                codec.BinaryCodec
+	storeKey           storetypes.StoreKey
+	accountKeeper      types.AccountKeeper
+	accountQueryServer types.AccountQueryServer
+	bankKeeper         types.BankKeeper
 	assetFTKeeper types.AssetFTKeeper
 }
 
@@ -29,12 +32,16 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	accountKeeper types.AccountKeeper,
+	accountQueryServer types.AccountQueryServer,
+	bankKeeper types.BankKeeper,
 	assetFTKeeper types.AssetFTKeeper,
 ) Keeper {
 	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		accountKeeper: accountKeeper,
+		cdc:                cdc,
+		storeKey:           storeKey,
+		accountKeeper:      accountKeeper,
+		accountQueryServer: accountQueryServer,
+		bankKeeper:         bankKeeper,
 		assetFTKeeper: assetFTKeeper,
 	}
 }
@@ -571,7 +578,7 @@ func (k Keeper) getOrderSeqByID(ctx sdk.Context, accountNumber uint64, orderID s
 func (k Keeper) setDataToStore(
 	ctx sdk.Context,
 	key []byte,
-	val codec.ProtoMarshaler,
+	val proto.Message,
 ) error {
 	bz, err := k.cdc.Marshal(val)
 	if err != nil {
@@ -584,7 +591,7 @@ func (k Keeper) setDataToStore(
 func (k Keeper) getDataFromStore(
 	ctx sdk.Context,
 	key []byte,
-	val codec.ProtoMarshaler,
+	val proto.Message,
 ) error {
 	bz := ctx.KVStore(k.storeKey).Get(key)
 	if bz == nil {

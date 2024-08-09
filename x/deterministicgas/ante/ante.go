@@ -1,6 +1,7 @@
 package ante
 
 import (
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
@@ -31,7 +32,7 @@ func (sigmd SetInfiniteGasMeterDecorator) AnteHandle(
 	ctx.GasMeter().ConsumeGas(sigmd.deterministicGasConfig.FixedGas, "Fixed: signature verification and tx size")
 
 	// Set infinite gas meter for ante handler
-	return next(ctx.WithGasMeter(sdk.NewInfiniteGasMeter()), tx, simulate)
+	return next(ctx.WithGasMeter(storetypes.NewInfiniteGasMeter()), tx, simulate)
 }
 
 // AddBaseGasDecorator adds free gas to gas meter.
@@ -56,18 +57,18 @@ func NewAddBaseGasDecorator(
 func (abgd AddBaseGasDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
-	var gasMeter sdk.GasMeter
+	var gasMeter storetypes.GasMeter
 	if simulate || ctx.BlockHeight() == 0 {
 		// During simulation and genesis initialization infinite gas meter is set inside context by `SetUpContextDecorator`.
 		// Here, we reset it to initial state with 0 gas consumed.
-		gasMeter = sdk.NewInfiniteGasMeter()
+		gasMeter = storetypes.NewInfiniteGasMeter()
 	} else {
 		params := abgd.ak.GetParams(ctx)
 
 		// It is not needed to verify that tx really implements `GasTx` interface because it has been already done by
 		// `SetUpContextDecorator`
 		gasTx := tx.(authante.GasTx)
-		gasMeter = sdk.NewGasMeter(gasTx.GetGas() + abgd.deterministicGasConfig.TxBaseGas(params))
+		gasMeter = storetypes.NewGasMeter(gasTx.GetGas() + abgd.deterministicGasConfig.TxBaseGas(params))
 	}
 	return next(ctx.WithGasMeter(gasMeter), tx, simulate)
 }
@@ -99,13 +100,13 @@ func (cfgd ChargeFixedGasDecorator) AnteHandle(
 
 	params := cfgd.ak.GetParams(ctx)
 
-	var gasMeter sdk.GasMeter
+	var gasMeter storetypes.GasMeter
 	if simulate || ctx.BlockHeight() == 0 {
 		// During simulation and genesis initialization infinite gas meter is set inside context by `SetUpContextDecorator`.
 		// We reset it to initial state with 0 gas consumed.
-		gasMeter = sdk.NewInfiniteGasMeter()
+		gasMeter = storetypes.NewInfiniteGasMeter()
 	} else {
-		gasMeter = sdk.NewGasMeter(gasTx.GetGas())
+		gasMeter = storetypes.NewGasMeter(gasTx.GetGas())
 	}
 
 	gasConsumed := ctx.GasMeter().GasConsumed()

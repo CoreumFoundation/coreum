@@ -3,8 +3,8 @@ package v1_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -18,10 +18,10 @@ func TestMigrateParams(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	testParams := types.StakingParams{
-		MinSelfDelegation: sdk.NewInt(1245),
+		MinSelfDelegation: sdkmath.NewInt(1245),
 	}
 	keeper := testApp.CustomParamsKeeper
 	paramsKeeper := testApp.ParamsKeeper

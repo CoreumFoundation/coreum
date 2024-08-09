@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -303,7 +303,7 @@ func TestRejectedTransfer(t *testing.T) {
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
-		Amount:  gaiaChain.NewCoin(sdk.NewIntFromUint64(100000)),
+		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(100000)),
 	})
 
 	_, err := coreumChain.ExecuteIBCTransfer(

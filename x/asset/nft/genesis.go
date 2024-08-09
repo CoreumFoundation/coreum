@@ -93,32 +93,32 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 // ExportGenesis returns the module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	classDefinitions, _, err := k.GetClassDefinitions(ctx, nil, &query.PageRequest{Limit: query.MaxLimit})
+	classDefinitions, _, err := k.GetClassDefinitions(ctx, nil, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
-	frozen, _, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	frozen, _, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
-	whitelisted, _, err := k.GetWhitelistedAccounts(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	whitelisted, _, err := k.GetWhitelistedAccounts(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
-	classWhitelisted, _, err := k.GetAllClassWhitelistedAccounts(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	classWhitelisted, _, err := k.GetAllClassWhitelistedAccounts(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
-	classFrozen, _, err := k.GetAllClassFrozenAccounts(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	classFrozen, _, err := k.GetAllClassFrozenAccounts(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
-	burnt, _, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	burnt, _, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(err)
 	}

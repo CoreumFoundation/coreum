@@ -3,16 +3,16 @@ package types
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 )
 
 var params = Params{
 	Model: ModelParams{
-		InitialGasPrice:         sdk.NewDec(1500),
-		MaxGasPriceMultiplier:   sdk.NewDec(1000),
-		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-		EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
+		InitialGasPrice:         sdkmath.LegacyNewDec(1500),
+		MaxGasPriceMultiplier:   sdkmath.LegacyNewDec(1000),
+		MaxDiscount:             sdkmath.LegacyMustNewDecFromStr("0.5"),
+		EscalationStartFraction: sdkmath.LegacyMustNewDecFromStr("0.8"),
 		MaxBlockGas:             1000,
 		ShortEmaBlockLength:     10,
 		LongEmaBlockLength:      1000,
@@ -25,34 +25,34 @@ func TestParamsValidation(t *testing.T) {
 	requireT.NoError(params.ValidateBasic())
 
 	testParams := params
-	testParams.Model.InitialGasPrice = sdk.NewDec(0)
+	testParams.Model.InitialGasPrice = sdkmath.LegacyNewDec(0)
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.MaxGasPriceMultiplier = sdk.ZeroDec()
+	testParams.Model.MaxGasPriceMultiplier = sdkmath.LegacyZeroDec()
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.MaxGasPriceMultiplier = sdk.OneDec()
+	testParams.Model.MaxGasPriceMultiplier = sdkmath.LegacyOneDec()
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.MaxDiscount = sdk.ZeroDec()
+	testParams.Model.MaxDiscount = sdkmath.LegacyZeroDec()
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.MaxDiscount = sdk.OneDec()
+	testParams.Model.MaxDiscount = sdkmath.LegacyOneDec()
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.MaxDiscount = sdk.ZeroDec()
+	testParams.Model.MaxDiscount = sdkmath.LegacyZeroDec()
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.EscalationStartFraction = sdk.ZeroDec()
+	testParams.Model.EscalationStartFraction = sdkmath.LegacyZeroDec()
 	requireT.Error(testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.EscalationStartFraction = sdk.OneDec()
+	testParams.Model.EscalationStartFraction = sdkmath.LegacyOneDec()
 	requireT.Error(testParams.ValidateBasic())
 }

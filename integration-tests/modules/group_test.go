@@ -50,7 +50,7 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	accountsToFund := lo.Map(groupMembers, func(member group.MemberRequest, _ int) integration.FundedAccount {
 		return integration.FundedAccount{
 			Address: sdk.MustAccAddressFromBech32(member.Address),
-			Amount:  chain.NewCoin(sdk.NewInt(1_000_000)),
+			Amount:  chain.NewCoin(sdkmath.NewInt(1_000_000)),
 		}
 	})
 	chain.Faucet.FundAccounts(ctx, t, accountsToFund...)
@@ -112,7 +112,7 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	groupPolicy := groupPolicies.GroupPolicies[0]
 	t.Logf("created group policy, groupPolicyAddress:%s txHash:%s", groupPolicy.Address, result.TxHash)
 
-	groupSendCoin := chain.NewCoin(sdk.NewInt(100_000_000))
+	groupSendCoin := chain.NewCoin(sdkmath.NewInt(100_000_000))
 	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(groupPolicy.Address), integration.BalancesOptions{
 		Messages: []sdk.Msg{},
 		Amount:   groupSendCoin.Amount,
@@ -197,7 +197,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 	accountsToFund := lo.Map(groupMembers, func(acc sdk.AccAddress, _ int) integration.FundedAccount {
 		return integration.FundedAccount{
 			Address: acc,
-			Amount:  chain.NewCoin(sdk.NewInt(1_000_000)),
+			Amount:  chain.NewCoin(sdkmath.NewInt(1_000_000)),
 		}
 	})
 	chain.Faucet.FundAccounts(ctx, t, accountsToFund...)
@@ -334,7 +334,7 @@ func TestGroupForAssetFTIssuance(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(sdk.NewInt(1000), receiverBalance.Balance.Amount)
+	requireT.Equal(sdkmath.NewInt(1000), receiverBalance.Balance.Amount)
 }
 
 // TestGroupAdministration tests group administration functionality: update of metadata, admin, decision policy, etc.

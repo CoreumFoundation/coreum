@@ -46,7 +46,7 @@ func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes returns sign bytes for LegacyMsg.
 func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+	return sdk.MustSortJSON(amino.MustMarshalJSON(&m))
 }
 
 // Route returns message route for LegacyMsg.
@@ -60,8 +60,7 @@ func (m MsgUpdateParams) Type() string {
 }
 
 var (
-	amino          = codec.NewLegacyAmino()
-	moduleAminoCdc = codec.NewAminoCodec(amino)
+	amino = codec.NewLegacyAmino()
 )
 
 func init() {

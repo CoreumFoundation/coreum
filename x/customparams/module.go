@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	"cosmossdk.io/core/appmodule"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -22,9 +22,12 @@ import (
 
 var (
 	_ module.AppModule           = AppModule{}
-	_ module.HasGenesis          = AppModule{}
-	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.AppModuleBasic      = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
+	_ module.HasGenesis          = AppModule{}
+	_ module.HasServices         = AppModule{}
+
+	_ appmodule.AppModule = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the customparams module.
@@ -108,6 +111,12 @@ func NewAppModule(keeper keeper.Keeper, paramsKeeper types.ParamsKeeper) AppModu
 // Name returns the customparams module's name.
 func (AppModule) Name() string { return types.ModuleName }
 
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
 // RegisterInvariants registers the customparams module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
@@ -116,12 +125,11 @@ func (AppModule) QuerierRoute() string { return types.RouterKey }
 
 // InitGenesis performs genesis initialization for the customparams module. It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) {
 	genesis := &types.GenesisState{}
 	cdc.MustUnmarshalJSON(data, genesis)
 
 	am.keeper.InitGenesis(ctx, *genesis)
-	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the customparams
@@ -142,7 +150,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // RegisterStoreDecoder registers a decoder for supply module's types.
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
+func (am AppModule) RegisterStoreDecoder(_ simtypes.StoreDecoderRegistry) {}
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {

@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 )
 
 var _ keyring.Keyring = ConcurrentSafeKeyring{}
@@ -93,19 +94,21 @@ func (csk ConcurrentSafeKeyring) ExportPrivKeyArmorByAddress(
 }
 
 // Sign signs byte messages with a user key.
-func (csk ConcurrentSafeKeyring) Sign(uid string, msg []byte) ([]byte, types.PubKey, error) {
+func (csk ConcurrentSafeKeyring) Sign(uid string, msg []byte, signMode signing.SignMode) ([]byte, types.PubKey, error) {
 	csk.mu.RLock()
 	defer csk.mu.RUnlock()
 
-	return csk.kr.Sign(uid, msg)
+	return csk.kr.Sign(uid, msg, signMode)
 }
 
 // SignByAddress sign byte messages with a user key providing the address.
-func (csk ConcurrentSafeKeyring) SignByAddress(address sdk.Address, msg []byte) ([]byte, types.PubKey, error) {
+func (csk ConcurrentSafeKeyring) SignByAddress(
+	address sdk.Address, msg []byte, signMode signing.SignMode,
+) ([]byte, types.PubKey, error) {
 	csk.mu.RLock()
 	defer csk.mu.RUnlock()
 
-	return csk.kr.SignByAddress(address, msg)
+	return csk.kr.SignByAddress(address, msg, signMode)
 }
 
 // Write operations:

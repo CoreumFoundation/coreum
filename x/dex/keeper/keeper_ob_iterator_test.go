@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/docker/distribution/uuid"
 	"github.com/stretchr/testify/require"
@@ -229,8 +228,9 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
-			sdkCtx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-			testApp.EndBlockAndCommit(sdkCtx)
+			sdkCtx := testApp.BaseApp.NewContext(false)
+			_, err := testApp.EndBlocker(sdkCtx)
+			require.NoError(t, err)
 
 			baseDenom := denom1
 			quoteDenom := denom2
@@ -239,7 +239,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 				orderBookIsCreated bool
 			)
 			for _, priceGroup := range tt.priceGroups {
-				sdkCtx = testApp.BeginNextBlock(time.Now())
+				sdkCtx, _, _ = testApp.BeginNextBlock(time.Now())
 				if orderBookIsCreated {
 					// check after beginning of a new block
 					assertOrdersOrdering(t, testApp, sdkCtx, orderBookID, tt.side)
@@ -280,7 +280,8 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 				}
 				// check before commit
 				assertOrdersOrdering(t, testApp, sdkCtx, orderBookID, tt.side)
-				testApp.EndBlockAndCommit(sdkCtx)
+				_, err = testApp.EndBlocker(sdkCtx)
+				require.NoError(t, err)
 				// check after commit
 				assertOrdersOrdering(t, testApp, sdkCtx, orderBookID, tt.side)
 			}

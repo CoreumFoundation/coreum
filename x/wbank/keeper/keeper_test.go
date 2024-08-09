@@ -20,7 +20,7 @@ func TestBaseKeeperWrapper_SpendableBalances(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContext(false)
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -82,7 +82,7 @@ func TestBaseKeeperWrapper_SpendableBalances(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(
-		sdk.ZeroInt().String(),
+		sdkmath.ZeroInt().String(),
 		spendableBalancesRes.Balances.AmountOf(denom).String(),
 	)
 }
@@ -91,7 +91,7 @@ func TestBaseKeeperWrapper_SpendableBalanceByDenom(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper

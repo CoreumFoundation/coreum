@@ -18,7 +18,7 @@ message EventClassIssued {
   repeated ClassFeature features = 8;
   string royalty_rate = 9 [
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
 }
 

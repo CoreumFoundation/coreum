@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"cosmossdk.io/core/appmodule"
 	"github.com/armon/go-metrics"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -24,10 +24,13 @@ import (
 
 var (
 	_ module.AppModule           = AppModule{}
-	_ module.HasGenesis          = AppModule{}
+	_ module.AppModuleBasic      = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
-	_ module.EndBlockAppModule   = AppModule{}
-	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.HasGenesis          = AppModule{}
+	_ module.HasServices         = AppModule{}
+
+	_ appmodule.HasEndBlocker = AppModule{}
+	_ appmodule.AppModule     = AppModule{}
 )
 
 // Keeper defines an interface of keeper required by fee module.
@@ -134,7 +137,7 @@ func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
 // InitGenesis performs genesis initialization for the fee module. It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) {
 	genesis := &types.GenesisState{}
 	cdc.MustUnmarshalJSON(data, genesis)
 
@@ -142,7 +145,6 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 		panic(err)
 	}
 	am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice)
-	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the fee
@@ -154,12 +156,19 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 	})
 }
 
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // EndBlock returns the end blocker for the fee module. It returns no validator
 // updates.
-func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+func (am AppModule) EndBlock(c context.Context) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	currentGasUsage := am.keeper.TrackedGas(ctx)
 	params := am.keeper.GetParams(ctx)
 	model := types.NewModel(params.Model)
@@ -177,7 +186,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	am.keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec(previousMinGasPrice.Denom, newMinGasPrice))
 	metrics.SetGauge([]string{"min_gas_price"}, float32(newMinGasPrice.MustFloat64()))
 
-	return []abci.ValidatorUpdate{}
+	return nil
 }
 
 // AppModuleSimulation functions
@@ -188,7 +197,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // RegisterStoreDecoder registers a decoder for supply module's types.
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
+func (am AppModule) RegisterStoreDecoder(_ simtypes.StoreDecoderRegistry) {}
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {

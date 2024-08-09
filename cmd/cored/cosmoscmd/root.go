@@ -10,12 +10,12 @@ import (
 	"os"
 	"time"
 
-	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
+	"cosmossdk.io/log"
+	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/log"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	clientconfig "github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -29,11 +29,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	rosettaCmd "github.com/cosmos/rosetta/cmd"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -46,11 +48,17 @@ import (
 
 const ledgerAppName = "Coreum"
 
-// NewRootCmd creates a new root command for simd. It is called once in the
+// NewRootCmd creates a new root command. It is called once in the
 // main function.
 func NewRootCmd() *cobra.Command {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
-	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
+	encodingConfig := config.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Codec:             tempApp.AppCodec(),
+		TxConfig:          tempApp.TxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -92,6 +100,22 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	initRootCmd(rootCmd, encodingConfig)
+	// add keyring to autocli opts
+	autoCliOpts := tempApp.AutoCliOpts()
+	initClientCtx, _ = clientconfig.ReadDefaultValuesFromDefaultClientConfig(initClientCtx)
+	autoCliOpts.Keyring, _ = keyring.NewAutoCLIKeyring(initClientCtx.Keyring)
+	autoCliOpts.ClientCtx = initClientCtx
+
+	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
+		panic(err)
+	}
+
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Use == "tx" {
+			installAwaitBroadcastModeWrapper(cmd)
+			break
+		}
+	}
 
 	return rootCmd
 }
@@ -170,7 +194,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig config.EncodingConfig) {
 	rootCmd.AddCommand(
 		InitCmd(app.DefaultNodeHome),
 		debug.Cmd(),
-		clientconfig.Cmd(),
+		confixcmd.ConfigCommand(),
 		pruning.Cmd(newApp, app.DefaultNodeHome),
 		snapshot.Cmd(newApp),
 		GenerateDevnetCmd(),
@@ -181,11 +205,11 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig config.EncodingConfig) {
 
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(
-		rpc.StatusCommand(),
+		server.StatusCommand(),
 		genesisCommand(encodingConfig),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(app.DefaultNodeHome),
+		keys.Commands(),
 	)
 
 	// add rosetta
@@ -240,11 +264,13 @@ func queryCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		authcmd.GetAccountCmd(),
 		rpc.ValidatorCommand(),
-		rpc.BlockCommand(),
+		rpc.WaitTxCmd(),
+		server.QueryBlockCmd(),
 		authcmd.QueryTxsByEventsCmd(),
+		server.QueryBlocksCmd(),
 		authcmd.QueryTxCmd(),
+		server.QueryBlockResultsCmd(),
 	)
 
 	app.ModuleBasics.AddQueryCommands(cmd)
@@ -261,7 +287,6 @@ func txCommand() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	app.ModuleBasics.AddTxCommands(cmd)
 	addQueryGasPriceToAllLeafs(cmd)
 
 	cmd.AddCommand(
@@ -273,10 +298,8 @@ func txCommand() *cobra.Command {
 		authcmd.GetBroadcastCommand(),
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
-		authcmd.GetAuxToFeeCommand(),
+		authcmd.GetSimulateCmd(),
 	)
-
-	installAwaitBroadcastModeWrapper(cmd)
 
 	return cmd
 }
@@ -453,4 +476,14 @@ func appExport(
 	}
 
 	return coreumApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+func tempDir() string {
+	dir, err := os.MkdirTemp("", "cored")
+	if err != nil {
+		panic("failed to create temp dir: " + err.Error())
+	}
+	defer os.RemoveAll(dir) //nolint:errcheck // we don't care
+
+	return dir
 }

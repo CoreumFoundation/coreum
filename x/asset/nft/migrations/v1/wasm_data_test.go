@@ -1,16 +1,17 @@
 package v1_test
 
 import (
+	"context"
 	"encoding/base64"
 	"testing"
 
+	"cosmossdk.io/x/nft"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
@@ -23,7 +24,7 @@ func TestMigrateWasmCreatedNFTData(t *testing.T) {
 
 	simApp := simapp.New()
 
-	ctx := simApp.NewContext(true, tmproto.Header{})
+	ctx := simApp.NewContextLegacy(true, tmproto.Header{})
 
 	testCases := []struct {
 		name      string
@@ -138,7 +139,7 @@ func encodeDataToAny(t *testing.T, data []byte) *codectypes.Any {
 
 type mockWasmKeeper struct{}
 
-func (m mockWasmKeeper) HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
+func (m mockWasmKeeper) HasContractInfo(ctx context.Context, contractAddress sdk.AccAddress) bool {
 	return isSmartContractAddress(contractAddress)
 }
 

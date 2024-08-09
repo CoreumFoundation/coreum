@@ -3,12 +3,13 @@ package keeper_test
 import (
 	"testing"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/store"
+	"cosmossdk.io/store/metrics"
+	storetypes "cosmossdk.io/store/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,11 +22,11 @@ import (
 )
 
 func setup() (sdk.Context, keeper.Keeper) {
-	key := sdk.NewKVStoreKey(types.StoreKey)
-	tKey := sdk.NewTransientStoreKey(types.TransientStoreKey)
+	key := storetypes.NewKVStoreKey(types.StoreKey)
+	tKey := storetypes.NewTransientStoreKey(types.TransientStoreKey)
 
 	db := dbm.NewMemDB()
-	cms := store.NewCommitMultiStore(db)
+	cms := store.NewCommitMultiStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
 	cms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db)
 	cms.MountStoreWithDB(tKey, storetypes.StoreTypeTransient, db)
 	must.OK(cms.LoadLatestVersion())
@@ -98,10 +99,10 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 	ctx, keeper := setup()
 	defParams := types.Params{
 		Model: types.ModelParams{
-			InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
-			MaxGasPriceMultiplier:   sdk.MustNewDecFromStr("1000.0"),
-			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-			EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
+			InitialGasPrice:         sdkmath.LegacyMustNewDecFromStr("0.0625"),
+			MaxGasPriceMultiplier:   sdkmath.LegacyMustNewDecFromStr("1000.0"),
+			MaxDiscount:             sdkmath.LegacyMustNewDecFromStr("0.5"),
+			EscalationStartFraction: sdkmath.LegacyMustNewDecFromStr("0.8"),
 			MaxBlockGas:             50000000, // 400 * BankSend message
 			ShortEmaBlockLength:     50,
 			LongEmaBlockLength:      1000,
@@ -285,7 +286,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec("coin", sdk.MustNewDecFromStr("0.0625")))
+			keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec("coin", sdkmath.LegacyMustNewDecFromStr("0.0625")))
 			keeper.SetShortEMAGas(ctx, tc.shortEMA)
 			keeper.SetLongEMAGas(ctx, tc.longEMA)
 			low, high, err := keeper.CalculateEdgeGasPriceAfterBlocks(ctx, tc.afterBlocks)

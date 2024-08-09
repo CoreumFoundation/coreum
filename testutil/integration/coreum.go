@@ -43,7 +43,7 @@ func NewCoreumChain(chain Chain, stakerMnemonics []string) CoreumChain {
 type BalancesOptions struct {
 	Messages                    []sdk.Msg
 	NondeterministicMessagesGas uint64
-	GasPrice                    sdk.Dec
+	GasPrice                    sdkmath.LegacyDec
 	Amount                      sdkmath.Int
 }
 
@@ -145,14 +145,14 @@ func (c CoreumChain) CreateValidator(
 	// Create staker
 	validatorAddr := sdk.ValAddress(staker)
 	msg, err := stakingtypes.NewMsgCreateValidator(
-		validatorAddr,
+		validatorAddr.String(),
 		cosmosed25519.GenPrivKey().PubKey(),
 		c.NewCoin(stakingAmount),
 		stakingtypes.Description{Moniker: fmt.Sprintf("testing-staker-%s", staker)},
 		stakingtypes.NewCommissionRates(
-			sdk.MustNewDecFromStr("0.1"),
-			sdk.MustNewDecFromStr("0.1"),
-			sdk.MustNewDecFromStr("0.1"),
+			sdkmath.LegacyMustNewDecFromStr("0.1"),
+			sdkmath.LegacyMustNewDecFromStr("0.1"),
+			sdkmath.LegacyMustNewDecFromStr("0.1"),
 		),
 		selfDelegationAmount,
 	)
@@ -185,7 +185,7 @@ func (c CoreumChain) CreateValidator(
 
 	return staker, validatorAddr, func() {
 		// Undelegate coins, i.e. deactivate staker
-		undelegateMsg := stakingtypes.NewMsgUndelegate(staker, validatorAddr, c.NewCoin(stakingAmount))
+		undelegateMsg := stakingtypes.NewMsgUndelegate(staker.String(), validatorAddr.String(), c.NewCoin(stakingAmount))
 		_, err = client.BroadcastTx(
 			ctx,
 			c.ClientContext.WithFromAddress(staker),
