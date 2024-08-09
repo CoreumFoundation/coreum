@@ -656,9 +656,7 @@ func (m MsgRemoveFromClassWhitelist) Type() string {
 	return TypeMsgRemoveFromClassWhitelist
 }
 
-var (
-	amino = codec.NewLegacyAmino()
-)
+var amino = codec.NewLegacyAmino()
 
 func init() {
 	RegisterLegacyAminoCodec(amino)

@@ -23,8 +23,7 @@ type Keeper struct {
 	storeKey           storetypes.StoreKey
 	accountKeeper      types.AccountKeeper
 	accountQueryServer types.AccountQueryServer
-	bankKeeper         types.BankKeeper
-	assetFTKeeper types.AssetFTKeeper
+	assetFTKeeper      types.AssetFTKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -33,7 +32,6 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	accountKeeper types.AccountKeeper,
 	accountQueryServer types.AccountQueryServer,
-	bankKeeper types.BankKeeper,
 	assetFTKeeper types.AssetFTKeeper,
 ) Keeper {
 	return Keeper{
@@ -41,8 +39,7 @@ func NewKeeper(
 		storeKey:           storeKey,
 		accountKeeper:      accountKeeper,
 		accountQueryServer: accountQueryServer,
-		bankKeeper:         bankKeeper,
-		assetFTKeeper: assetFTKeeper,
+		assetFTKeeper:      assetFTKeeper,
 	}
 }
 

@@ -19,19 +19,9 @@ type AccountQueryServer interface {
 	) (*authtypes.QueryAccountAddressByIDResponse, error)
 }
 
-// BankKeeper represents required methods of bank keeper.
-type BankKeeper interface {
-	SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromModuleToAccount(
-		ctx context.Context,
-		senderModule string,
-		recipientAddr sdk.AccAddress,
-		amt sdk.Coins,
-	) error
-	SendCoinsFromAccountToModule(
-		ctx context.Context,
-		senderAddr sdk.AccAddress,
-		recipientModule string,
-		amt sdk.Coins,
-	) error
+// AssetFTKeeper represents required methods of asset ft keeper.
+type AssetFTKeeper interface {
+	DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
+	DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
+	DEXUnlockAndSend(ctx sdk.Context, from, to sdk.AccAddress, coin sdk.Coin) error
 }
