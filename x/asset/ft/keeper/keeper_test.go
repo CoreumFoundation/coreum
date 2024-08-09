@@ -1361,6 +1361,14 @@ func TestKeeper_Clawback(t *testing.T) {
 	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(denom, sdkmath.NewInt(110)))
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
+	// try to clawback locked balance
+	err = ftKeeper.DEXLock(ctx, from, sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(denom, sdkmath.NewInt(40)))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+	err = ftKeeper.DEXUnlock(ctx, from, sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+
 	// clawback, query balance
 	issuerBalanceBefore := bankKeeper.GetBalance(ctx, issuer, denom)
 	accountBalanceBefore := bankKeeper.GetBalance(ctx, from, denom)
