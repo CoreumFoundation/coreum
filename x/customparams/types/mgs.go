@@ -59,9 +59,7 @@ func (m MsgUpdateStakingParams) Type() string {
 	return TypeMsgUpdateStakingParams
 }
 
-var (
-	amino = codec.NewLegacyAmino()
-)
+var amino = codec.NewLegacyAmino()
 
 func init() {
 	RegisterLegacyAminoCodec(amino)

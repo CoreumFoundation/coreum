@@ -14,9 +14,7 @@ import (
 	googlegrpc "google.golang.org/grpc"
 )
 
-var (
-	_ module.Configurator = &configuratorMock{}
-)
+var _ module.Configurator = &configuratorMock{}
 
 type grpcServerMock struct{}
 
@@ -54,7 +52,6 @@ func (c *configuratorMock) RegisterMigration(
 }
 
 func (c *configuratorMock) RegisterService(sd *googlegrpc.ServiceDesc, ss interface{}) {
-
 }
 
 func (c *configuratorMock) Error() error {

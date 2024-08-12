@@ -749,6 +749,18 @@ func (k Keeper) DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) e
 	return nil
 }
 
+// DEXUnlockAndSend unlock the coin on the `fromAddr` balance and send to the `toAddr`.
+func (k Keeper) DEXUnlockAndSend(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, coin sdk.Coin) error {
+	if err := k.DEXUnlock(ctx, fromAddr, coin); err != nil {
+		return err
+	}
+	if err := k.bankKeeper.SendCoins(ctx, fromAddr, toAddr, sdk.NewCoins(coin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to send DEX unlocked coins")
+	}
+
+	return nil
+}
+
 // GetDEXLockedBalance returns the DEX locked balance.
 func (k Keeper) GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 	return k.dexLockedAccountBalanceStore(ctx, addr).Balance(denom)

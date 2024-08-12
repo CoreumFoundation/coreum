@@ -23,7 +23,7 @@ type Keeper struct {
 	storeKey           storetypes.StoreKey
 	accountKeeper      types.AccountKeeper
 	accountQueryServer types.AccountQueryServer
-	bankKeeper         types.BankKeeper
+	assetFTKeeper      types.AssetFTKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -32,14 +32,14 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	accountKeeper types.AccountKeeper,
 	accountQueryServer types.AccountQueryServer,
-	bankKeeper types.BankKeeper,
+	assetFTKeeper types.AssetFTKeeper,
 ) Keeper {
 	return Keeper{
 		cdc:                cdc,
 		storeKey:           storeKey,
 		accountKeeper:      accountKeeper,
 		accountQueryServer: accountQueryServer,
-		bankKeeper:         bankKeeper,
+		assetFTKeeper:      assetFTKeeper,
 	}
 }
 
@@ -471,7 +471,8 @@ func (k Keeper) getPaginatedOrderBookOrders(
 	}
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateOrderBookSideKey(orderBookID, side))
-	accNumberToAddress := make(map[uint64]sdk.AccAddress)
+	accNumberToAddCache := make(map[uint64]sdk.AccAddress)
+
 	orders, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,
@@ -484,13 +485,10 @@ func (k Keeper) getPaginatedOrderBookOrders(
 				return nil, err
 			}
 
-			acc, ok := accNumberToAddress[record.AccountNumber]
-			if !ok {
-				acc, err = k.getAccountAddress(ctx, record.AccountNumber)
-				if err != nil {
-					return nil, err
-				}
-				accNumberToAddress[record.AccountNumber] = acc
+			var acc sdk.AccAddress
+			acc, accNumberToAddCache, err = k.getAccountAddressWithCache(ctx, record.AccountNumber, accNumberToAddCache)
+			if err != nil {
+				return nil, err
 			}
 
 			orderData, err := k.getOrderData(ctx, orderSeq)

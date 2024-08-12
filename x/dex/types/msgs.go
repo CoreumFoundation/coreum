@@ -55,9 +55,7 @@ func (m MsgPlaceOrder) Type() string {
 	return TypeMsgPlaceOrder
 }
 
-var (
-	amino = codec.NewLegacyAmino()
-)
+var amino = codec.NewLegacyAmino()
 
 func init() {
 	RegisterLegacyAminoCodec(amino)
