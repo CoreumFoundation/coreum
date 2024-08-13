@@ -195,7 +195,7 @@ func Lint(ctx context.Context, deps types.DepsFunc) error {
 		CompileAllSmartContracts,
 		formatProto,
 		lintProto,
-		// breakingProto, //TODO enable after merging to master
+		breakingProto,
 	)
 	return golang.Lint(ctx, deps)
 }
