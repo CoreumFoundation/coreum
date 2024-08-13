@@ -80,7 +80,7 @@ func (op *OperationFactory) simulateMsgIssue(
 
 	err := op.sendMsg(ctx, r, chainID, []cryptotypes.PrivKey{senderAcc.PrivKey}, app, senderAcc.Address, msg)
 	if err != nil {
-		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "invalid issuance"), nil, err
+		return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "invalid issuance"), nil, err
 	}
 
 	return simtypes.NewOperationMsg(msg, false, ""), nil, nil

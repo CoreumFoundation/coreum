@@ -6,10 +6,10 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
@@ -650,11 +650,11 @@ func TestAmino(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		msg           legacytx.LegacyMsg
+		msg           sdk.Msg
 		wantAminoJSON string
 	}{
 		{
-			name: types.TypeMsgIssue,
+			name: sdk.MsgTypeURL(&types.MsgIssue{}),
 			msg: &types.MsgIssue{
 				Issuer: address,
 				Symbol: "ABC",
@@ -662,7 +662,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgIssue","value":{"burn_rate":"0","initial_amount":"0","issuer":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","send_commission_rate":"0","symbol":"ABC"}}`,
 		},
 		{
-			name: types.TypeMsgMint,
+			name: sdk.MsgTypeURL(&types.MsgMint{}),
 			msg: &types.MsgMint{
 				Sender: address,
 				Coin:   coin,
@@ -670,7 +670,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgMint","value":{"coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgBurn,
+			name: sdk.MsgTypeURL(&types.MsgBurn{}),
 			msg: &types.MsgBurn{
 				Sender: address,
 				Coin:   coin,
@@ -678,7 +678,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgBurn","value":{"coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgFreeze,
+			name: sdk.MsgTypeURL(&types.MsgFreeze{}),
 			msg: &types.MsgFreeze{
 				Sender: address,
 				Coin:   coin,
@@ -686,7 +686,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgFreeze","value":{"coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgUnfreeze,
+			name: sdk.MsgTypeURL(&types.MsgUnfreeze{}),
 			msg: &types.MsgUnfreeze{
 				Sender: address,
 				Coin:   coin,
@@ -694,7 +694,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgUnfreeze","value":{"coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgSetFrozen,
+			name: sdk.MsgTypeURL(&types.MsgSetFrozen{}),
 			msg: &types.MsgSetFrozen{
 				Sender:  address,
 				Account: address,
@@ -703,7 +703,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgSetFrozen","value":{"account":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgGloballyFreeze,
+			name: sdk.MsgTypeURL(&types.MsgGloballyFreeze{}),
 			msg: &types.MsgGloballyFreeze{
 				Sender: address,
 				Denom:  coin.Denom,
@@ -711,7 +711,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgGloballyFreeze","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgGloballyUnfreeze,
+			name: sdk.MsgTypeURL(&types.MsgGloballyUnfreeze{}),
 			msg: &types.MsgGloballyUnfreeze{
 				Sender: address,
 				Denom:  coin.Denom,
@@ -719,7 +719,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgGloballyUnfreeze","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgSetWhitelistedLimit,
+			name: sdk.MsgTypeURL(&types.MsgSetWhitelistedLimit{}),
 			msg: &types.MsgSetWhitelistedLimit{
 				Sender:  address,
 				Account: address,
@@ -728,7 +728,7 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgSetWhitelistedLimit","value":{"account":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: types.TypeMsgUpgradeTokenV1,
+			name: sdk.MsgTypeURL(&types.MsgUpgradeTokenV1{}),
 			msg: &types.MsgUpgradeTokenV1{
 				Sender:     address,
 				Denom:      coin.Denom,
@@ -737,10 +737,14 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgUpgradeTokenV1","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 	}
+
+	legacyAmino := codec.NewLegacyAmino()
+	types.RegisterLegacyAminoCodec(legacyAmino)
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.wantAminoJSON, string(tt.msg.GetSignBytes()))
+			generatedJSON := legacyAmino.Amino.MustMarshalJSON(tt.msg)
+			require.Equal(t, tt.wantAminoJSON, string(sdk.MustSortJSON(generatedJSON)))
 		})
 	}
 }
