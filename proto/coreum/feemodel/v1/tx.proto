@@ -7,11 +7,13 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v2/x/feemodel/types";
+option go_package = "github.com/CoreumFoundation/coreum/v4/x/feemodel/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // UpdateParams is a governance operation which allows fee models params to be modified.
   // NOTE: All parmas must be provided.
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
