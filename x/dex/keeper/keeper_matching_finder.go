@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
-// MatchingFinder is order finder responsible to find an order with the price and priority which matches the taker order.
+// MatchingFinder responsible to find orders with the best price and priority.
 type MatchingFinder struct {
 	log log.Logger
 
@@ -49,7 +49,7 @@ func (k Keeper) NewMatchingFinder(
 	}, nil
 }
 
-// Next returns order book record with the best price and priority and flag that indicates whether it matches
+// Next returns the next order book record with the best price and priority and flag that indicates whether it matches
 // the taker record.
 func (mf *MatchingFinder) Next() (types.OrderBookRecord, bool, error) {
 	if err := mf.loadOrders(); err != nil {
