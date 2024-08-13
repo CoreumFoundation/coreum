@@ -45,6 +45,7 @@ func NewKeeper(
 
 // PlaceOrder places an order on the corresponding order book, and matches the order.
 func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
+	k.logger(ctx).Debug("Placing order.", "order", order)
 	if err := order.Validate(); err != nil {
 		return err
 	}
@@ -69,12 +70,12 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "order with the id %q is already created", order.ID)
 	}
 
-	orderBookID, _, err := k.getOrGenOrderBookIDs(ctx, order.BaseDenom, order.QuoteDenom)
+	orderBookID, oppositeOrderBookID, err := k.getOrGenOrderBookIDs(ctx, order.BaseDenom, order.QuoteDenom)
 	if err != nil {
 		return err
 	}
 
-	return k.matchOrder(ctx, accNumber, orderBookID, order)
+	return k.matchOrder(ctx, accNumber, orderBookID, oppositeOrderBookID, order)
 }
 
 // GetOrderBookIDByDenoms returns order book ID by it's denoms.
