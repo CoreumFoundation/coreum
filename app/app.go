@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -1237,13 +1238,9 @@ func New(
 	}
 	err = msgservice.ValidateProtoAnnotations(protoFiles)
 	if err != nil {
-		// It is changed from fmt.Fprintln to panic, so we will be notified about needed
-		// changes in future.
-		//
-		// Original comos sdk comment:
 		// Once we switch to using protoreflect-based antehandlers, we might
 		// want to panic here instead of logging a warning.
-		panic(err)
+		fmt.Fprintln(os.Stderr, err.Error())
 	}
 
 	if loadLatest {
