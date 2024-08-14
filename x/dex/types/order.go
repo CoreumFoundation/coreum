@@ -130,12 +130,20 @@ func (o Order) ComputeLockedBalance() (sdk.Coin, error) {
 	return sdk.NewCoin(o.BaseDenom, o.Quantity), nil
 }
 
-// GetLockedBalanceDenom returns locked balance denom.
-func (o Order) GetLockedBalanceDenom() string {
+// GetBalanceDenom returns order balance denom.
+func (o Order) GetBalanceDenom() string {
 	if o.Side == Side_buy {
 		return o.QuoteDenom
 	}
 
+	return o.BaseDenom
+}
+
+// GetOppositeFromBalanceDenom returns the order denom which is not balance denom.
+func (o Order) GetOppositeFromBalanceDenom() string {
+	if o.BaseDenom == o.GetBalanceDenom() {
+		return o.QuoteDenom
+	}
 	return o.BaseDenom
 }
 
