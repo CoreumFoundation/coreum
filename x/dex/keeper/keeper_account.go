@@ -17,10 +17,10 @@ func (k Keeper) getAccountNumber(ctx sdk.Context, addr sdk.AccAddress) (uint64, 
 	return acc.GetAccountNumber(), nil
 }
 
-func (k Keeper) getAccountAddress(ctx sdk.Context, accountNumber uint64) (sdk.AccAddress, error) {
+func (k Keeper) getAccountAddress(ctx sdk.Context, accNumber uint64) (sdk.AccAddress, error) {
 	addr, err := k.accountQueryServer.AccountAddressByID(
 		ctx,
-		&authtypes.QueryAccountAddressByIDRequest{AccountId: accountNumber},
+		&authtypes.QueryAccountAddressByIDRequest{AccountId: accNumber},
 	)
 	if err != nil {
 		return nil, err
@@ -34,19 +34,19 @@ func (k Keeper) getAccountAddress(ctx sdk.Context, accountNumber uint64) (sdk.Ac
 	return acc, nil
 }
 
-func (k Keeper) getAccountAddressWithCache(ctx sdk.Context, accountNumber uint64, cache map[uint64]sdk.AccAddress) (
+func (k Keeper) getAccountAddressWithCache(ctx sdk.Context, accNumber uint64, cache map[uint64]sdk.AccAddress) (
 	sdk.AccAddress,
 	map[uint64]sdk.AccAddress,
 	error,
 ) {
-	addr, ok := cache[accountNumber]
+	addr, ok := cache[accNumber]
 	if !ok {
 		var err error
-		addr, err = k.getAccountAddress(ctx, accountNumber)
+		addr, err = k.getAccountAddress(ctx, accNumber)
 		if err != nil {
 			return nil, nil, err
 		}
-		cache[accountNumber] = addr
+		cache[accNumber] = addr
 	}
 
 	return addr, cache, nil

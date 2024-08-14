@@ -161,6 +161,74 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	require.Equal(t, buyOrder, gotOrder)
 }
 
+func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContext(false)
+	dexKeeper := testApp.DEXKeeper
+	assetFTKeeper := testApp.AssetFTKeeper
+
+	acc, _ := testApp.GenAccount(sdkCtx)
+
+	sellOrder := types.Order{
+		Creator:    acc.String(),
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Price:      types.MustNewPriceFromString("12e-1"),
+		Quantity:   sdkmath.NewInt(1_000),
+		Side:       types.Side_sell,
+	}
+	sellLockedBalance, err := sellOrder.ComputeLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(sellLockedBalance))
+
+	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
+	dexLockedBalance := assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, sellLockedBalance.Denom)
+	require.Equal(t, sellLockedBalance.String(), dexLockedBalance.String())
+
+	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, sellOrder.ID))
+	// check unlocking
+	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, sellLockedBalance.Denom)
+	require.True(t, dexLockedBalance.IsZero())
+
+	buyOrder := types.Order{
+		Creator:    acc.String(),
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Price:      types.MustNewPriceFromString("13e-1"),
+		Quantity:   sdkmath.NewInt(5_000),
+		Side:       types.Side_buy,
+	}
+	buyLockedBalance, err := buyOrder.ComputeLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(buyLockedBalance))
+
+	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
+	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
+	require.Equal(t, buyLockedBalance.String(), dexLockedBalance.String())
+
+	// check unlocking
+	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, buyOrder.ID))
+	// check unlocking
+	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
+	require.True(t, dexLockedBalance.IsZero())
+
+	// now place both orders to let them match partially
+	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
+	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
+
+	_, err = dexKeeper.GetOrderByAddressAndID(sdkCtx, acc, sellOrder.ID)
+	require.ErrorIs(t, err, types.ErrRecordNotFound)
+	buyOrder, err = dexKeeper.GetOrderByAddressAndID(sdkCtx, acc, buyOrder.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdkmath.NewInt(5300).String(), buyOrder.RemainingBalance.String())
+	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, buyOrder.ID))
+	// check unlocking
+	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
+	require.True(t, dexLockedBalance.IsZero())
+}
+
 func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)

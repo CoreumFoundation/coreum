@@ -156,28 +156,28 @@ func (k Keeper) initTakerRecord(
 func (k Keeper) getRecordToCloseAndReduceAddresses(
 	ctx sdk.Context,
 	recordToClose, recordToReduce *types.OrderBookRecord,
-	accountNumberToAddr map[uint64]sdk.AccAddress,
+	accNumberToAddr map[uint64]sdk.AccAddress,
 ) (sdk.AccAddress, sdk.AccAddress, map[uint64]sdk.AccAddress, error) {
 	var (
 		recordToCloseAddr sdk.AccAddress
 		err               error
 	)
-	recordToCloseAddr, accountNumberToAddr, err = k.getAccountAddressWithCache(
-		ctx, recordToClose.AccountNumber, accountNumberToAddr,
+	recordToCloseAddr, accNumberToAddr, err = k.getAccountAddressWithCache(
+		ctx, recordToClose.AccountNumber, accNumberToAddr,
 	)
 	if err != nil {
 		return sdk.AccAddress{}, sdk.AccAddress{}, nil, err
 	}
 
 	var recordToReduceAddr sdk.AccAddress
-	recordToReduceAddr, accountNumberToAddr, err = k.getAccountAddressWithCache(
-		ctx, recordToReduce.AccountNumber, accountNumberToAddr,
+	recordToReduceAddr, accNumberToAddr, err = k.getAccountAddressWithCache(
+		ctx, recordToReduce.AccountNumber, accNumberToAddr,
 	)
 	if err != nil {
 		return sdk.AccAddress{}, sdk.AccAddress{}, nil, err
 	}
 
-	return recordToCloseAddr, recordToReduceAddr, accountNumberToAddr, nil
+	return recordToCloseAddr, recordToReduceAddr, accNumberToAddr, nil
 }
 
 func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRecord *types.OrderBookRecord) (
