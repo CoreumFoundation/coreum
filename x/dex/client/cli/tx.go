@@ -28,6 +28,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdPlaceOrder(),
+		CmdCancelOrder(),
 	)
 
 	return cmd
@@ -82,6 +83,44 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 				Price:      price,
 				Quantity:   quantity,
 				Side:       types.Side(side),
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdCancelOrder returns CancelOrder cobra command.
+func CmdCancelOrder() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cancel-order [id] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Cancel order",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Cancel order.
+
+Example:
+$ %s tx %s cancel-order id1 --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			id := args[0]
+
+			msg := &types.MsgCancelOrder{
+				Sender: sender.String(),
+				ID:     id,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

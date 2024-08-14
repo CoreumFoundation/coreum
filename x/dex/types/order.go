@@ -72,8 +72,8 @@ func (o Order) Validate() error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid address: %s", o.Creator)
 	}
 
-	if !orderIDRegex.MatchString(o.ID) {
-		return sdkerrors.Wrapf(ErrInvalidInput, "order ID must match regex format '%s'", orderIDRegex)
+	if err := validateOrderID(o.ID); err != nil {
+		return err
 	}
 
 	if o.BaseDenom == "" {
@@ -145,6 +145,13 @@ func (o Order) GetOppositeFromBalanceDenom() string {
 		return o.QuoteDenom
 	}
 	return o.BaseDenom
+}
+
+func validateOrderID(id string) error {
+	if !orderIDRegex.MatchString(id) {
+		return sdkerrors.Wrapf(ErrInvalidInput, "order ID must match regex format '%s'", orderIDRegex)
+	}
+	return nil
 }
 
 // isBigIntOverflowsSDKInt checks if the big int overflows the sdkmath.Int.

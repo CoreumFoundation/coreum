@@ -16,13 +16,12 @@ import (
 
 func TestOrder_Validate(t *testing.T) {
 	validOrder := func() types.Order {
-		price := types.MustNewPriceFromString("1e-1")
 		return types.Order{
 			Creator:    sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
 			ID:         "aA09+:._-",
 			BaseDenom:  "denom1",
 			QuoteDenom: "denom2",
-			Price:      price,
+			Price:      types.MustNewPriceFromString("1e-1"),
 			Quantity:   sdkmath.NewInt(100),
 			Side:       types.Side_buy,
 		}

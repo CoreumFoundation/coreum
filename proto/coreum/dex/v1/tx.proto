@@ -13,6 +13,8 @@ option (gogoproto.goproto_getters_all) = false;
 service Msg {
   // PlaceOrder is a method to place an order on orderbook.
   rpc PlaceOrder(MsgPlaceOrder) returns (EmptyResponse);
+  // CancelOrder is a method to cancel the order in the orderbook.
+  rpc CancelOrder(MsgCancelOrder) returns (EmptyResponse);
 }
 
 // MsgPlaceOrder defines message to place an order on orderbook.
@@ -40,6 +42,17 @@ message MsgPlaceOrder {
   ];
   // side is order side.
   Side side = 7;
+}
+
+// MsgCancelOrder defines message to cancel the order in the orderbook.
+message MsgCancelOrder {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "dex/MsgCancelOrder";
+
+  // sender is order creator address.
+  string sender = 1;
+  // id is unique order ID.
+  string id = 2 [(gogoproto.customname) = "ID"];
 }
 
 message EmptyResponse {}

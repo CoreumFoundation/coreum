@@ -116,6 +116,7 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/coreum.asset.nft.v1.MsgRemoveFromClassWhitelist`                     | 3500                           |
 | `/coreum.asset.nft.v1.MsgRemoveFromWhitelist`                          | 3500                           |
 | `/coreum.asset.nft.v1.MsgUnfreeze`                                     | 5000                           |
+| `/coreum.dex.v1.MsgCancelOrder`                                        | 15000                          |
 | `/coreum.dex.v1.MsgPlaceOrder`                                         | 10000                          |
 | `/cosmos.authz.v1beta1.MsgGrant`                                       | 28000                          |
 | `/cosmos.authz.v1beta1.MsgRevoke`                                      | 8000                           |
