@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -49,6 +50,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -1228,19 +1230,18 @@ func New(
 		}
 	}
 
-	// TODO(fix-proto-annotaion)
-	// At startup, after all modules have been registered, check that all prot
+	// At startup, after all modules have been registered, check that all proto
 	// annotations are correct.
-	// protoFiles, err := proto.MergedRegistry()
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// err = msgservice.ValidateProtoAnnotations(protoFiles)
-	// if err != nil {
-	// 	// Once we switch to using protoreflect-based antehandlers, we might
-	// 	// want to panic here instead of logging a warning.
-	// 	fmt.Fprintln(os.Stderr, err.Error())
-	// }
+	protoFiles, err := proto.MergedRegistry()
+	if err != nil {
+		panic(err)
+	}
+	err = msgservice.ValidateProtoAnnotations(protoFiles)
+	if err != nil {
+		// Once we switch to using protoreflect-based antehandlers, we might
+		// want to panic here instead of logging a warning.
+		fmt.Fprintln(os.Stderr, err.Error())
+	}
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {

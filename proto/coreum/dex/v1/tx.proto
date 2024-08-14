@@ -4,6 +4,7 @@ package coreum.dex.v1;
 import "amino/amino.proto";
 import "coreum/dex/v1/order.proto";
 import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v4/x/dex/types";
@@ -11,6 +12,8 @@ option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // PlaceOrder is a method to place an order on orderbook.
   rpc PlaceOrder(MsgPlaceOrder) returns (EmptyResponse);
 }
@@ -21,7 +24,7 @@ message MsgPlaceOrder {
   option (amino.name) = "dex/MsgPlaceOrder";
 
   // sender is order creator address.
-  string sender = 1;
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // id is unique order ID.
   string id = 2 [(gogoproto.customname) = "ID"];
   // base_denom is base order denom.
