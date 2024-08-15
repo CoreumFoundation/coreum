@@ -4734,8 +4734,8 @@ Msg defines the Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `PlaceOrder` | [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `PlaceOrder is a method to place an order on orderbook.` |  |
-| `CancelOrder` | [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `CancelOrder is a method to cancel the order in the orderbook.` |  |
+| `PlaceOrder` | [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `PlaceOrder place an order on orderbook.` |  |
+| `CancelOrder` | [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `CancelOrder cancels an order in the orderbook.` |  |
 
  <!-- end services -->
 

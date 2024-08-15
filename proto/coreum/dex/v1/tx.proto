@@ -14,9 +14,9 @@ option (gogoproto.goproto_getters_all) = false;
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  // PlaceOrder is a method to place an order on orderbook.
+  // PlaceOrder place an order on orderbook.
   rpc PlaceOrder(MsgPlaceOrder) returns (EmptyResponse);
-  // CancelOrder is a method to cancel the order in the orderbook.
+  // CancelOrder cancels an order in the orderbook.
   rpc CancelOrder(MsgCancelOrder) returns (EmptyResponse);
 }
 

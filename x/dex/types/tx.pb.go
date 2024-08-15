@@ -216,9 +216,9 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// PlaceOrder is a method to place an order on orderbook.
+	// PlaceOrder place an order on orderbook.
 	PlaceOrder(ctx context.Context, in *MsgPlaceOrder, opts ...grpc.CallOption) (*EmptyResponse, error)
-	// CancelOrder is a method to cancel the order in the orderbook.
+	// CancelOrder cancels an order in the orderbook.
 	CancelOrder(ctx context.Context, in *MsgCancelOrder, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
@@ -250,9 +250,9 @@ func (c *msgClient) CancelOrder(ctx context.Context, in *MsgCancelOrder, opts ..
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// PlaceOrder is a method to place an order on orderbook.
+	// PlaceOrder place an order on orderbook.
 	PlaceOrder(context.Context, *MsgPlaceOrder) (*EmptyResponse, error)
-	// CancelOrder is a method to cancel the order in the orderbook.
+	// CancelOrder cancels an order in the orderbook.
 	CancelOrder(context.Context, *MsgCancelOrder) (*EmptyResponse, error)
 }
 
