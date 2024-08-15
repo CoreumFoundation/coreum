@@ -145,6 +145,73 @@ func TestOrdersMatching(t *testing.T) {
 	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 }
 
+// TestOrderCancellation tests the dex modules ability to place cancel placed order.
+func TestOrderCancellation(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+			&dextypes.MsgCancelOrder{},
+		},
+	})
+
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:     acc1.String(),
+		ID:         "id1",
+		BaseDenom:  denom1,
+		QuoteDenom: "denom2",
+		Price:      dextypes.MustNewPriceFromString("1e-1"),
+		Quantity:   sdkmath.NewInt(100),
+		Side:       dextypes.Side_sell,
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+
+	cancelOrderMsg := &dextypes.MsgCancelOrder{
+		Sender: placeSellOrderMsg.Sender,
+		ID:     placeSellOrderMsg.ID,
+	}
+
+	txResult, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(cancelOrderMsg)),
+		cancelOrderMsg,
+	)
+	requireT.NoError(err)
+	// validate the deterministic gas
+	requireT.Equal(chain.GasLimitByMsgs(cancelOrderMsg), uint64(txResult.GasUsed))
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	// check that nothing is locked
+	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+}
+
 // TestOrderBooksAndOrdersQueries tests the dex modules order queries.
 func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	t.Parallel()
