@@ -44,6 +44,36 @@ func TestCmdPlaceOrder(t *testing.T) {
 	})
 }
 
+func TestCmdCancelOrder(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	order := types.Order{
+		ID:         "id1",
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Price:      types.MustNewPriceFromString("123e-2"),
+		Quantity:   sdkmath.NewInt(100),
+		Side:       types.Side_sell,
+	}
+
+	placeOrder(ctx, requireT, testNetwork, order)
+
+	args := append(
+		[]string{
+			order.ID,
+		}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(
+		ctx,
+		testNetwork,
+		cli.CmdCancelOrder(),
+		args,
+	)
+	requireT.NoError(err)
+}
+
 func placeOrder(
 	ctx client.Context,
 	requireT *require.Assertions,

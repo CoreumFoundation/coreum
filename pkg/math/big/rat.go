@@ -12,6 +12,11 @@ func NewRatFromBigInts(nom, denom *big.Int) *big.Rat {
 	return (&big.Rat{}).SetFrac(nom, denom)
 }
 
+// RatMul multiplies Rat by Rat.
+func RatMul(x, y *big.Rat) *big.Rat {
+	return (&big.Rat{}).Mul(x, y)
+}
+
 // RatGTE returns true if x is greater or equal to y.
 func RatGTE(x, y *big.Rat) bool {
 	return x.Cmp(y) != -1
@@ -20,4 +25,9 @@ func RatGTE(x, y *big.Rat) bool {
 // RatLTE returns true if x is lower or equal to y.
 func RatLTE(x, y *big.Rat) bool {
 	return x.Cmp(y) != 1
+}
+
+// RatInv returns 1/x.
+func RatInv(x *big.Rat) *big.Rat {
+	return (&big.Rat{}).Inv(x)
 }

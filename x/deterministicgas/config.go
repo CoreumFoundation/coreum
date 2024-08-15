@@ -109,7 +109,8 @@ func DefaultConfig() Config {
 
 		// dex
 		// TODO (dex): update one we define the correct value
-		MsgToMsgURL(&dextypes.MsgPlaceOrder{}): constantGasFunc(10_000),
+		MsgToMsgURL(&dextypes.MsgPlaceOrder{}):  constantGasFunc(10_000),
+		MsgToMsgURL(&dextypes.MsgCancelOrder{}): constantGasFunc(15_000),
 
 		// authz
 		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),

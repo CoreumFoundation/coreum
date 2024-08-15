@@ -212,6 +212,7 @@
   
 - [coreum/dex/v1/tx.proto](#coreum/dex/v1/tx.proto)
     - [EmptyResponse](#coreum.dex.v1.EmptyResponse)
+    - [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder)
     - [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder)
   
     - [Msg](#coreum.dex.v1.Msg)
@@ -4671,6 +4672,26 @@ Query defines the gRPC query service.
 
 
 
+<a name="coreum.dex.v1.MsgCancelOrder"></a>
+
+### MsgCancelOrder
+
+```
+MsgCancelOrder defines message to cancel the order in the orderbook.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  `sender is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+
+
+
+
+
+
 <a name="coreum.dex.v1.MsgPlaceOrder"></a>
 
 ### MsgPlaceOrder
@@ -4713,7 +4734,8 @@ Msg defines the Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `PlaceOrder` | [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `PlaceOrder is a method to place an order on orderbook.` |  |
+| `PlaceOrder` | [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `PlaceOrder place an order on orderbook.` |  |
+| `CancelOrder` | [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `CancelOrder cancels an order in the orderbook.` |  |
 
  <!-- end services -->
 
