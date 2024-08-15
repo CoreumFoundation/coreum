@@ -13,9 +13,7 @@ type extendedMsg interface {
 	sdk.HasValidateBasic
 }
 
-var (
-	_ extendedMsg = &MsgPlaceOrder{}
-)
+var _ extendedMsg = &MsgPlaceOrder{}
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {

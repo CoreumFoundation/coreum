@@ -5,8 +5,7 @@
   "consensus_params": {
     "block": {
       "max_bytes": "22020096",
-      "max_gas": "50000000",
-      "time_iota_ms": "{{ .BlockTimeIotaMS }}"
+      "max_gas": "50000000"
     },
     "evidence": {
       "max_age_num_blocks": "100000",
@@ -86,6 +85,7 @@
       "index": "1",
       "owners": []
     },
+    "consensus": null,
     "crisis": {
       "constant_fee": {
         "denom": "{{ .Denom }}",
@@ -125,22 +125,33 @@
       "deposits": [],
       "votes": [],
       "proposals": [],
-      "deposit_params": {
+      "params": {
         "min_deposit": [
           {
             "denom": "{{ .Denom }}",
             "amount": "{{ .Gov.ProposalConfig.MinDepositAmount }}"
           }
         ],
-        "max_deposit_period": "336h"
-      },
-      "voting_params": {
-        "voting_period": "{{ .Gov.ProposalConfig.VotingPeriod }}"
-      },
-      "tally_params": {
+        "max_deposit_period": "336h",
+        "voting_period": "{{ .Gov.ProposalConfig.VotingPeriod }}",
         "quorum": "0.400000000000000000",
         "threshold": "0.500000000000000000",
-        "veto_threshold": "0.334000000000000000"
+        "veto_threshold": "0.334000000000000000",
+        "min_initial_deposit_ratio": "0.000000000000000000",
+        "proposal_cancel_ratio": "0.500000000000000000",
+        "proposal_cancel_dest": "",
+        "expedited_voting_period": "{{ .Gov.ProposalConfig.VotingPeriod }}",
+        "expedited_threshold": "0.667000000000000000",
+        "expedited_min_deposit": [
+          {
+            "denom": "{{ .Denom }}",
+            "amount": "{{ .Gov.ProposalConfig.MinDepositAmount }}"
+          }
+        ],
+        "burn_vote_quorum": false,
+        "burn_proposal_deposit_prevote": false,
+        "burn_vote_veto": true,
+        "min_deposit_ratio": "0.010000000000000000"
       }
     },
     "ibc": {
@@ -173,7 +184,37 @@
         "send_sequences": [],
         "recv_sequences": [],
         "ack_sequences": [],
-        "next_channel_sequence": "0"
+        "next_channel_sequence": "0",
+        "params": {
+          "upgrade_timeout": {
+            "height": {
+              "revision_number": "0",
+              "revision_height": "0"
+            },
+            "timestamp": "600000000000"
+          }
+        }
+      }
+    },
+    "interchainaccounts": {
+      "controller_genesis_state": {
+        "active_channels": [],
+        "interchain_accounts": [],
+        "ports": [],
+        "params": {
+          "controller_enabled": true
+        }
+      },
+      "host_genesis_state": {
+        "active_channels": [],
+        "interchain_accounts": [],
+        "port": "icahost",
+        "params": {
+          "host_enabled": true,
+          "allow_messages": [
+            "*"
+          ]
+        }
       }
     },
     "mint": {
@@ -190,24 +231,11 @@
         "blocks_per_year": "17900000"
       }
     },
-    "monitoringp": {
-      "port_id": "monitoringp",
-      "consumerClientID": null,
-      "connectionChannelID": null,
-      "monitoringInfo": null,
+    "packetfowardmiddleware": {
       "params": {
-        "lastBlockHeight": "1",
-        "consumerChainID": "spn-1",
-        "consumerConsensusState": {
-          "nextValidatorsHash": "",
-          "timestamp": "",
-          "root": {
-            "hash": ""
-          }
-        },
-        "consumerUnbondingPeriod": "1814400",
-        "consumerRevisionHeight": "1"
-      }
+        "fee_percentage": "0.000000000000000000"
+      },
+      "in_flight_packets": {}
     },
     "params": null,
     "slashing": {
@@ -227,7 +255,8 @@
         "max_validators": 32,
         "max_entries": 7,
         "historical_entries": 10000,
-        "bond_denom": "{{ .Denom }}"
+        "bond_denom": "{{ .Denom }}",
+        "min_commission_rate": "0.000000000000000000"
       },
       "last_total_power": "0",
       "last_validator_powers": [],
@@ -243,7 +272,8 @@
       "params": {
         "send_enabled": true,
         "receive_enabled": true
-      }
+      },
+      "total_escrowed": []
     },
     "upgrade": {},
     "vesting": {},
@@ -251,8 +281,7 @@
       "params": {
         "instantiate_default_permission": "Everybody",
         "code_upload_access": {
-          "permission": "Everybody",
-          "address": ""
+          "permission": "Everybody"
         }
       }
     },
@@ -279,6 +308,8 @@
         "min_self_delegation": "{{ .CustomParamsConfig.Staking.MinSelfDelegation }}"
       }
     },
-    "delay": {}
+    "delay": {},
+    "group": {},
+    "nft": {}
   }
 }

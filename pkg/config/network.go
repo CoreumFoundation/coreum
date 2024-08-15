@@ -13,17 +13,13 @@ import (
 )
 
 var (
-	// GenesisV1Template is the genesis template used by v1 version of the chain.
-	//go:embed genesis/genesis.v1.tmpl.json
-	GenesisV1Template string
-
-	// GenesisV2Template is the genesis template used by v2 version of the chain.
-	//go:embed genesis/genesis.v2.tmpl.json
-	GenesisV2Template string
-
 	// GenesisV3Template is the genesis template used by v3 version of the chain.
 	//go:embed genesis/genesis.v3.tmpl.json
 	GenesisV3Template string
+
+	// GenesisV5Template is the genesis template used by v5 version of the chain.
+	//go:embed genesis/genesis.v5.tmpl.json
+	GenesisV5Template string
 
 	networkConfigs map[constant.ChainID]NetworkConfig
 )
@@ -51,7 +47,7 @@ func init() {
 		},
 		constant.ChainIDDev: {
 			Provider: DynamicConfigProvider{
-				GenesisTemplate: GenesisV3Template,
+				GenesisTemplate: GenesisV5Template,
 				ChainID:         constant.ChainIDDev,
 				GenesisTime:     time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 				BlockTimeIota:   time.Second,

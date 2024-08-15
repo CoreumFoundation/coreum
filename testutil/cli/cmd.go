@@ -2,16 +2,22 @@ package cli
 
 import (
 	"fmt"
+	"testing"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/testutil/network"
 )
 
@@ -52,16 +58,38 @@ func ExecTxCmd(
 }
 
 // ExecQueryCmd is a func to execute query cmd.
-func ExecQueryCmd(clientCtx client.Context, cmd *cobra.Command, extraArgs []string, msg proto.Message) error {
+func ExecQueryCmd(t *testing.T, clientCtx client.Context, cmd *cobra.Command, extraArgs []string, msg proto.Message) {
+	t.Helper()
+
 	extraArgs = append(extraArgs, fmt.Sprintf("--%s=json", tmcli.OutputFlag))
 	buf, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, extraArgs)
-	if err != nil {
-		return errors.Errorf("can't execute, %s, err:%s", cmd.Use, err)
-	}
+	require.NoError(t, err, fmt.Sprintf("can't execute, %s, err:%s", cmd.Use, err))
 
-	if err := clientCtx.Codec.UnmarshalJSON(buf.Bytes(), msg); err != nil {
-		return errors.Errorf("can't decode response, %s, err:%s", buf.Bytes(), err)
-	}
+	err = clientCtx.Codec.UnmarshalJSON(buf.Bytes(), msg)
+	require.NoError(t, err, fmt.Sprintf("can't decode response, %s, err:%s", buf.Bytes(), err))
+}
 
-	return nil
+// ExecRootQueryCmd is a func to execute query cmd from root.
+func ExecRootQueryCmd(t *testing.T, clientCtx client.Context, args []string, msg proto.Message) {
+	t.Helper()
+	// prepend query
+	args = append([]string{"query"}, args...)
+	// append json
+	args = append(args, fmt.Sprintf("--%s=json", tmcli.OutputFlag))
+	cmd := &cobra.Command{
+		Use: "root",
+	}
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(t.TempDir()))
+
+	autoCliOpts := tempApp.AutoCliOpts()
+	autoCliOpts.ClientCtx = clientCtx
+	require.NoError(t, autoCliOpts.EnhanceRootCommand(cmd))
+
+	buf, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+	require.NoError(t, err, fmt.Sprintf("failed to execute, %v", args))
+	require.NoError(
+		t,
+		clientCtx.LegacyAmino.UnmarshalJSON(buf.Bytes(), msg),
+		fmt.Sprintf("failed to decode response, %s", buf.Bytes()),
+	)
 }
