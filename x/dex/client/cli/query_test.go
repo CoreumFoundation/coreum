@@ -35,14 +35,14 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 
 	// check single order
 	var orderRes types.QueryOrderResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
-		ctx, cli.CmdQueryOrder(), []string{creator.String(), order1.ID}, &orderRes,
-	))
+	coreumclitestutil.ExecQueryCmd(
+		t, ctx, cli.CmdQueryOrder(), []string{creator.String(), order1.ID}, &orderRes,
+	)
 	requireT.Equal(order1, orderRes.Order)
 
 	// check order books
 	var orderBooksRes types.QueryOrderBooksResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryOrderBooks(), []string{}, &orderBooksRes))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryOrderBooks(), []string{}, &orderBooksRes)
 	requireT.ElementsMatch([]types.OrderBookData{
 		{
 			BaseDenom:  denom1,
@@ -69,7 +69,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 
 	// check orders
 	var ordersRes types.QueryOrdersResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryOrders(), []string{creator.String()}, &ordersRes))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryOrders(), []string{creator.String()}, &ordersRes)
 	requireT.ElementsMatch([]types.Order{
 		order1,
 		order2,
@@ -77,8 +77,8 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 
 	// check order book orders
 	var orderBookOrdersRes types.QueryOrderBookOrdersResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
-		ctx, cli.CmdQueryOrderBookOrders(), []string{denom1, denom2, types.Side_sell.String()}, &orderBookOrdersRes),
+	coreumclitestutil.ExecQueryCmd(
+		t, ctx, cli.CmdQueryOrderBookOrders(), []string{denom1, denom2, types.Side_sell.String()}, &orderBookOrdersRes,
 	)
 	requireT.ElementsMatch([]types.Order{
 		order1,

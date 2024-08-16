@@ -8,14 +8,13 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/x/nft"
+	nfttypes "cosmossdk.io/x/nft"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v4/cmd/cored/cosmoscmd"
 	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v4/testutil/network"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/client/cli"
@@ -23,11 +22,6 @@ import (
 )
 
 const nftID = "nft-1"
-
-func TestMain(t *testing.M) {
-	// TODO(fix-cli-tests)
-	// we are intentionally skipping cli tests to fix them later
-}
 
 func TestCmdTxIssueClass(t *testing.T) {
 	requireT := require.New(t)
@@ -76,6 +70,7 @@ func TestCmdTxMint(t *testing.T) {
 		nftID,
 		"https://my-nft-meta.invalid/1",
 		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		"",
 		testNetwork,
 	)
 }
@@ -104,6 +99,7 @@ func TestCmdTxBurn(t *testing.T) {
 		"nft-1",
 		"https://my-nft-meta.invalid/1",
 		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		"",
 		testNetwork,
 	)
 
@@ -114,13 +110,13 @@ func TestCmdTxBurn(t *testing.T) {
 
 	var resp types.QueryBurntNFTResponse
 	args = []string{classID, "nft-1", "--output", "json"}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBurnt(), args, &resp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryBurnt(), args, &resp)
 
 	requireT.True(resp.Burnt)
 
 	args = []string{classID, "--output", "json"}
 	var respList types.QueryBurntNFTsInClassResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBurnt(), args, &respList))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryBurnt(), args, &respList)
 	requireT.Len(respList.NftIds, 1)
 }
 
@@ -159,12 +155,8 @@ func TestCmdMintToRecipient(t *testing.T) {
 	requireT.NoError(err)
 
 	// query recipient
-
-	var resp nft.QueryOwnerResponse
-	args = []string{classID, nftID}
-	// TODO(fix-cli-tests)
-	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryOwner(), args, &resp))
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), args, &resp))
+	var resp nfttypes.QueryOwnerResponse
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{nfttypes.ModuleName, "owner", classID, nftID}, &resp)
 	requireT.Equal(recipient.String(), resp.Owner)
 }
 
@@ -211,13 +203,10 @@ func TestCmdMintDataDynamic(t *testing.T) {
 	requireT.NoError(err)
 
 	// query stored
-
-	var nftRes nft.QueryNFTResponse
-	// TODO(fix-cli-tests)
-	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), []string{classID, nftID}, &nftRes))
-
+	var nftRes nfttypes.QueryNFTResponse
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{nfttypes.ModuleName, "nft", classID, nftID}, &nftRes)
 	var gotDataDynamic types.DataDynamic
+	decodeAnyDataFromAmino(t, ctx, nftRes.Nft.Data, &gotDataDynamic)
 	requireT.NoError(gotDataDynamic.Unmarshal(nftRes.Nft.Data.Value))
 	requireT.Equal(items, gotDataDynamic.Items)
 }
@@ -292,12 +281,11 @@ func TestCmdUpdateData(t *testing.T) {
 
 	// query stored
 
-	var nftRes nft.QueryNFTResponse
-	// TODO(fix-cli-tests)
-	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), []string{classID, nftID}, &nftRes))
+	var nftRes nfttypes.QueryNFTResponse
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{nfttypes.ModuleName, "nft", classID, nftID}, &nftRes)
 
 	var gotDataDynamic types.DataDynamic
+	decodeAnyDataFromAmino(t, ctx, nftRes.Nft.Data, &gotDataDynamic)
 	requireT.NoError(gotDataDynamic.Unmarshal(nftRes.Nft.Data.Value))
 	requireT.Equal(string(dataDynamicIndexedItems[0].Data), string(gotDataDynamic.Items[0].Data))
 }
@@ -331,6 +319,7 @@ func TestCmdFreeze(t *testing.T) {
 		nftID,
 		"https://my-nft-meta.invalid/1",
 		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		"",
 		testNetwork,
 	)
 
@@ -343,7 +332,7 @@ func TestCmdFreeze(t *testing.T) {
 	// query frozen
 	var frozenResp types.QueryFrozenResponse
 	args = []string{classID, nftID}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryFrozen(), args, &frozenResp)
 
 	// unfreeze
 	args = []string{classID, nftID}
@@ -353,7 +342,7 @@ func TestCmdFreeze(t *testing.T) {
 
 	// query frozen
 	args = []string{classID, nftID}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryFrozen(), args, &frozenResp)
 	requireT.False(frozenResp.Frozen)
 }
 
@@ -387,6 +376,7 @@ func TestCmdWhitelist(t *testing.T) {
 		nftID,
 		"https://my-nft-meta.invalid/1",
 		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		"",
 		testNetwork,
 	)
 
@@ -399,13 +389,13 @@ func TestCmdWhitelist(t *testing.T) {
 	// query whitelisted
 	var whitelistedResp types.QueryWhitelistedResponse
 	args = []string{classID, nftID, account.String()}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp)
 	requireT.True(whitelistedResp.Whitelisted)
 
 	// query with pagination
 	var resPage types.QueryWhitelistedAccountsForNFTResponse
 	args = []string{classID, nftID}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelistedAccounts(), args, &resPage))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryWhitelistedAccounts(), args, &resPage)
 	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
 
 	// unwhitelist
@@ -416,7 +406,7 @@ func TestCmdWhitelist(t *testing.T) {
 
 	// query whitelisted
 	args = []string{classID, nftID, account.String()}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp)
 	requireT.False(whitelistedResp.Whitelisted)
 }
 
@@ -451,6 +441,7 @@ func TestCmdClassWhitelist(t *testing.T) {
 		nftID,
 		"https://my-nft-meta.invalid/1",
 		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		"",
 		testNetwork,
 	)
 
@@ -463,13 +454,13 @@ func TestCmdClassWhitelist(t *testing.T) {
 	// query whitelisted
 	var whitelistedResp types.QueryWhitelistedResponse
 	args = []string{classID, nftID, account.String()}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp)
 	requireT.True(whitelistedResp.Whitelisted)
 
 	// query with pagination
 	var resPage types.QueryClassWhitelistedAccountsResponse
 	args = []string{classID}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassWhitelistedAccounts(), args, &resPage))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryClassWhitelistedAccounts(), args, &resPage)
 	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
 
 	// unwhitelist
@@ -480,7 +471,7 @@ func TestCmdClassWhitelist(t *testing.T) {
 
 	// query whitelisted
 	args = []string{classID, nftID, account.String()}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp)
 	requireT.False(whitelistedResp.Whitelisted)
 }
 
@@ -514,6 +505,7 @@ func TestCmdClassFreeze(t *testing.T) {
 		nftID,
 		"https://my-nft-meta.invalid/1",
 		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		"",
 		testNetwork,
 	)
 
@@ -526,19 +518,19 @@ func TestCmdClassFreeze(t *testing.T) {
 	// query class frozen
 	var classFrozenResp types.QueryFrozenResponse
 	args = []string{classID, account.String()}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassFrozen(), args, &classFrozenResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryClassFrozen(), args, &classFrozenResp)
 	requireT.True(classFrozenResp.Frozen)
 
 	// query frozen
 	var frozenResp types.QueryFrozenResponse
 	args = []string{classID, nftID}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryFrozen(), args, &frozenResp)
 	requireT.False(frozenResp.Frozen)
 
 	// query with pagination
 	var resPage types.QueryClassFrozenAccountsResponse
 	args = []string{classID}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassFrozenAccounts(), args, &resPage))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryClassFrozenAccounts(), args, &resPage)
 	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
 
 	// unfreeze
@@ -549,7 +541,7 @@ func TestCmdClassFreeze(t *testing.T) {
 
 	// query class frozen
 	args = []string{classID, account.String()}
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClassFrozen(), args, &classFrozenResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryClassFrozen(), args, &classFrozenResp)
 	requireT.False(classFrozenResp.Frozen)
 }
 

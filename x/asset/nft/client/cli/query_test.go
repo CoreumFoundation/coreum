@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,7 +9,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/x/nft"
+	nfttypes "cosmossdk.io/x/nft"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +17,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v4/cmd/cored/cosmoscmd"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v4/testutil/network"
@@ -46,7 +46,7 @@ func TestQueryClassAndNFT(t *testing.T) {
 	)
 
 	var classRes types.QueryClassResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClass(), []string{classID}, &classRes))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryClass(), []string{classID}, &classRes)
 
 	expectedClass := types.Class{
 		Id:          classID,
@@ -71,11 +71,12 @@ func TestQueryClassAndNFT(t *testing.T) {
 
 	// classes
 	var classesRes types.QueryClassesResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClasses(),
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryClasses(),
 		[]string{fmt.Sprintf("--%s", cli.IssuerFlag), testNetwork.Validators[0].Address.String(), "--output", "json"},
-		&classesRes))
+		&classesRes)
 	requireT.Equal(expectedClass, classesRes.Classes[0])
 
+	data := "data"
 	mint(
 		t,
 		ctx,
@@ -83,26 +84,32 @@ func TestQueryClassAndNFT(t *testing.T) {
 		nftID,
 		"https://my-nft-meta.invalid/1",
 		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		data,
 		testNetwork,
 	)
 
-	expectedNFT := nft.NFT{
+	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{
+		Data: []byte(data),
+	})
+	require.NoError(t, err)
+	expectedNFT := nfttypes.NFT{
 		ClassId: classID,
 		Id:      nftID,
 		Uri:     "https://my-nft-meta.invalid/1",
 		UriHash: "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
-		Data: &codectypes.Any{
-			TypeUrl: "/coreum.asset.nft.v1.DataBytes",
-			Value:   []byte{0xa, 0x2, 0x21, 0x22},
-		},
+		Data:    dataValue,
 	}
 
-	var nftRes nft.QueryNFTResponse
-	// TODO(fix-cli-tests)
-	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, nftcli.GetCmdQueryNFT(), []string{classID, nftID}, &nftRes))
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cosmoscmd.NewRootCmd(), []string{classID, nftID}, &nftRes))
+	var nftRes nfttypes.QueryNFTResponse
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{nfttypes.ModuleName, "nft", classID, nftID}, &nftRes)
+	gotNft := *nftRes.Nft
+	var dataBytes types.DataBytes
+	decodeAnyDataFromAmino(t, ctx, gotNft.Data, &dataBytes)
+	gotDataValue, err := codectypes.NewAnyWithValue(&dataBytes)
+	require.NoError(t, err)
+	gotNft.Data = gotDataValue
 
-	requireT.Equal(&expectedNFT, nftRes.Nft)
+	requireT.Equal(expectedNFT, gotNft)
 }
 
 func TestCmdQueryParams(t *testing.T) {
@@ -113,7 +120,7 @@ func TestCmdQueryParams(t *testing.T) {
 	ctx := testNetwork.Validators[0].ClientCtx
 
 	var resp types.QueryParamsResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryParams(), []string{}, &resp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryParams(), []string{}, &resp)
 	expectedMintFee := sdk.Coin{Denom: constant.DenomDev, Amount: sdkmath.NewInt(0)}
 	requireT.Equal(expectedMintFee, resp.Params.MintFee)
 }
@@ -122,12 +129,11 @@ func TestCmdQueryParams(t *testing.T) {
 func mint(
 	t *testing.T,
 	ctx client.Context,
-	classID, nftID, uri, uriHash string,
+	classID, nftID, uri, uriHash, data string,
 	testNetwork *network.Network,
 ) {
-	data := []byte{0x21, 0x22}
 	dataFile := filepath.Join(t.TempDir(), "data")
-	require.NoError(t, os.WriteFile(dataFile, data, 0o600))
+	require.NoError(t, os.WriteFile(dataFile, []byte(data), 0o600))
 
 	args := []string{
 		classID, nftID,
@@ -174,4 +180,17 @@ func issueClass(
 	require.NoError(t, err)
 
 	return types.BuildClassID(symbol, validator.Address)
+}
+
+func decodeAnyDataFromAmino(t *testing.T, clientCtx client.Context, anyData *codectypes.Any, ptr any) {
+	jsonData, err := anyData.MarshalJSON()
+	require.NoError(t, err)
+
+	// the structure used by amino
+	var aData struct {
+		Type  string          `json:"type"`
+		Value json.RawMessage `json:"value"`
+	}
+	require.NoError(t, clientCtx.LegacyAmino.UnmarshalJSON(jsonData, &aData))
+	require.NoError(t, clientCtx.LegacyAmino.UnmarshalJSON(aData.Value, ptr))
 }

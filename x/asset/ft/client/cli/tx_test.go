@@ -20,7 +20,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/app"
@@ -32,11 +31,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/client/cli"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
-
-func TestMain(t *testing.M) {
-	// TODO(fix-cli-tests)
-	// we are intentionally skipping cli tests to fix them later
-}
 
 func TestIssue(t *testing.T) {
 	requireT := require.New(t)
@@ -62,7 +56,7 @@ func TestIssue(t *testing.T) {
 	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
 
 	var resp types.QueryTokenResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryToken(), []string{denom}, &resp)
 	// set generated values
 	token.Denom = denom
 	token.Issuer = resp.Token.Issuer
@@ -85,11 +79,7 @@ func TestIssueWithExtension(t *testing.T) {
 	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, wasmcli.StoreCodeCmd(), args)
 	requireT.NoError(err)
 
-	lastEvent, err := lo.Last(res.Logs[0].Events)
-	requireT.NoError(err)
-	lastAttribute, err := lo.Last(lastEvent.Attributes)
-	requireT.NoError(err)
-	codeID, err := strconv.ParseUint(lastAttribute.Value, 10, 64)
+	codeID, err := event.FindUint64EventAttribute(res.Events, wasmtypes.EventTypeStoreCode, wasmtypes.AttributeKeyCodeID)
 	requireT.NoError(err)
 
 	token := types.Token{
@@ -128,7 +118,7 @@ func TestIssueWithExtension(t *testing.T) {
 	denom := issue(requireT, ctx, token, initialAmount, extension, testNetwork)
 
 	var resp types.QueryTokenResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryToken(), []string{denom}, &resp)
 	// set generated values
 	token.Denom = denom
 	token.Issuer = resp.Token.Issuer
@@ -140,7 +130,7 @@ func TestIssueWithExtension(t *testing.T) {
 
 	args = []string{resp.Token.ExtensionCWAddress, `{"query_issuance_msg":{}}`}
 	var queryResp wasmtypes.QuerySmartContractStateResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, wasmcli.GetCmdGetContractStateSmart(), args, &queryResp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, wasmcli.GetCmdGetContractStateSmart(), args, &queryResp)
 	requireT.NoError(json.Unmarshal(queryResp.Data, &issuanceMsg))
 	requireT.Equal("test", issuanceMsg.ExtraData)
 }
@@ -171,21 +161,13 @@ func TestMintBurn(t *testing.T) {
 	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
 	requireT.NoError(err)
 
-	var balanceRsp banktypes.QueryAllBalancesResponse
-	// TODO(fix-cli-tests)
-	//nolint
-	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String()}, &balanceRsp))
-	requireT.Equal(sdkmath.NewInt(877).String(), balanceRsp.Balances.AmountOf(denom).String())
+	var balanceRes banktypes.QueryAllBalancesResponse
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{banktypes.ModuleName, "balances", issuer.String()}, &balanceRes)
+	requireT.Equal(sdkmath.NewInt(877).String(), balanceRes.Balances.AmountOf(denom).String())
 
-	var supplyRsp sdk.Coin
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
-		ctx,
-		nil, // TODO(fix-cli-tests)
-		// bankcli.GetCmdQueryTotalSupply(),
-		[]string{"--denom", denom},
-		&supplyRsp,
-	))
-	requireT.Equal(sdk.NewInt64Coin(denom, 877).String(), supplyRsp.String())
+	var supplyRes banktypes.QuerySupplyOfResponse
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{banktypes.ModuleName, "total-supply-of", denom}, &supplyRes)
+	requireT.Equal(sdk.NewInt64Coin(denom, 877).String(), supplyRes.Amount.String())
 
 	// mint to recipient
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -194,14 +176,8 @@ func TestMintBurn(t *testing.T) {
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
 	requireT.NoError(err)
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
-		ctx,
-		nil, // TODO(fix-cli-tests)
-		// bankcli.GetBalancesCmd(),
-		[]string{recipient.String()},
-		&balanceRsp,
-	))
-	requireT.Equal(sdkmath.NewInt(100).String(), balanceRsp.Balances.AmountOf(denom).String())
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{banktypes.ModuleName, "balances", recipient.String()}, &balanceRes)
+	requireT.Equal(sdkmath.NewInt(100).String(), balanceRes.Balances.AmountOf(denom).String())
 
 	// burn tokens
 	coinToMint = sdk.NewInt64Coin(denom, 200)
@@ -209,23 +185,11 @@ func TestMintBurn(t *testing.T) {
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxBurn(), args)
 	requireT.NoError(err)
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
-		ctx,
-		nil, // TODO(fix-cli-tests)
-		//  bankcli.GetBalancesCmd(),
-		[]string{issuer.String()},
-		&balanceRsp),
-	)
-	requireT.Equal(sdkmath.NewInt(677).String(), balanceRsp.Balances.AmountOf(denom).String())
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{banktypes.ModuleName, "balances", issuer.String()}, &balanceRes)
+	requireT.Equal(sdkmath.NewInt(677).String(), balanceRes.Balances.AmountOf(denom).String())
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
-		ctx,
-		nil, // TODO(fix-cli-tests)
-		// bankcli.GetCmdQueryTotalSupply(),
-		[]string{"--denom", denom},
-		&supplyRsp,
-	))
-	requireT.Equal(sdk.NewInt64Coin(denom, 777).String(), supplyRsp.String())
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{banktypes.ModuleName, "total-supply-of", denom}, &supplyRes)
+	requireT.Equal(sdk.NewInt64Coin(denom, 777).String(), supplyRes.Amount.String())
 }
 
 func TestFreezeAndQueryFrozen(t *testing.T) {
@@ -255,22 +219,24 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 
 	// query frozen balance
 	var respFrozen types.QueryFrozenBalanceResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryFrozenBalance(),
 		[]string{recipient.String(), denom},
 		&respFrozen,
-	))
+	)
 	requireT.Equal(coinToFreeze.String(), respFrozen.Balance.String())
 
 	// query balance
 	var respBalance types.QueryBalanceResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryBalance(),
 		[]string{recipient.String(), denom},
 		&respBalance,
-	))
+	)
 	requireT.Equal(coinToFreeze.Amount.String(), respBalance.Frozen.String())
 
 	// issue and freeze more to test pagination
@@ -285,20 +251,22 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	}
 
 	var balancesResp types.QueryFrozenBalancesResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryFrozenBalances(),
 		[]string{recipient.String()},
 		&balancesResp,
-	))
+	)
 	requireT.Len(balancesResp.Balances, 3)
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryFrozenBalances(),
 		[]string{recipient.String(), "--limit", "1"},
 		&balancesResp,
-	))
+	)
 	requireT.Len(balancesResp.Balances, 1)
 
 	// unfreeze part of the frozen token
@@ -307,12 +275,13 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnfreeze(), args)
 	requireT.NoError(err)
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryFrozenBalance(),
 		[]string{recipient.String(), denom},
 		&respFrozen,
-	))
+	)
 	requireT.Equal(sdk.NewInt64Coin(denom, 25).String(), respFrozen.Balance.String())
 
 	// set absolute frozen amount
@@ -321,12 +290,13 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxSetFrozen(), args)
 	requireT.NoError(err)
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryFrozenBalance(),
 		[]string{recipient.String(), denom},
 		&respFrozen,
-	))
+	)
 	requireT.Equal(setFrozenTokens.String(), respFrozen.Balance.String())
 }
 
@@ -357,7 +327,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 	requireT.NoError(err)
 
 	var resp types.QueryTokenResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryToken(), []string{denom}, &resp)
 	requireT.True(resp.Token.GloballyFrozen)
 
 	// globally unfreeze the token
@@ -365,7 +335,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxGloballyUnfreeze(), args)
 	requireT.NoError(err)
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryToken(), []string{denom}, &resp)
 	requireT.False(resp.Token.GloballyFrozen)
 }
 
@@ -403,20 +373,16 @@ func TestClawback(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	var balanceRsp banktypes.QueryAllBalancesResponse
-	// TODO(fix-cli-tests)
-	// args = []string{account.String()}
-	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), args, &balanceRsp))
-	requireT.Equal(sdkmath.NewInt(100).String(), balanceRsp.Balances.AmountOf(denom).String())
+	var balanceRes banktypes.QueryAllBalancesResponse
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{banktypes.ModuleName, "balances", account.String()}, &balanceRes)
+	requireT.Equal(sdkmath.NewInt(100).String(), balanceRes.Balances.AmountOf(denom).String())
 
 	args = append([]string{account.String(), coin.String()}, txValidator1Args(testNetwork)...)
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxClawback(), args)
 	requireT.NoError(err)
 
-	// TODO(fix-cli-tests)
-	// args = []string{account.String()}
-	// requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), args, &balanceRsp))
-	requireT.Equal(sdkmath.NewInt(0).String(), balanceRsp.Balances.AmountOf(denom).String())
+	coreumclitestutil.ExecRootQueryCmd(t, ctx, []string{banktypes.ModuleName, "balances", account.String()}, &balanceRes)
+	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.Balances.AmountOf(denom).String())
 }
 
 func TestWhitelistAndQueryWhitelisted(t *testing.T) {
@@ -452,40 +418,44 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 
 		// query whitelisted balance
 		var respWhitelisted types.QueryWhitelistedBalanceResponse
-		requireT.NoError(coreumclitestutil.ExecQueryCmd(
+		coreumclitestutil.ExecQueryCmd(
+			t,
 			ctx,
 			cli.CmdQueryWhitelistedBalance(),
 			[]string{recipient.String(), denom},
 			&respWhitelisted,
-		))
+		)
 		requireT.Equal(coinToWhitelist.String(), respWhitelisted.Balance.String())
 
 		// query balance
 		var respBalance types.QueryBalanceResponse
-		requireT.NoError(coreumclitestutil.ExecQueryCmd(
+		coreumclitestutil.ExecQueryCmd(
+			t,
 			ctx,
 			cli.CmdQueryBalance(),
 			[]string{recipient.String(), denom},
 			&respBalance,
-		))
+		)
 		requireT.Equal(coinToWhitelist.Amount.String(), respBalance.Whitelisted.String())
 	}
 
 	var balancesResp types.QueryWhitelistedBalancesResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryWhitelistedBalances(),
 		[]string{recipient.String()},
 		&balancesResp,
-	))
+	)
 	requireT.Len(balancesResp.Balances, 2)
 
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryWhitelistedBalances(),
 		[]string{recipient.String(), "--limit", "1"},
 		&balancesResp,
-	))
+	)
 	requireT.Len(balancesResp.Balances, 1)
 }
 
@@ -516,12 +486,13 @@ func TestTransferAdmin(t *testing.T) {
 
 	// query token
 	var respToken types.QueryTokenResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryToken(),
 		[]string{denom},
 		&respToken,
-	))
+	)
 	requireT.Equal(newAdmin.String(), respToken.Token.Admin)
 
 	// try to transfer admin from issuer to new admin again
@@ -563,12 +534,13 @@ func TestClearAdmin(t *testing.T) {
 
 	// query token
 	var respToken types.QueryTokenResponse
-	requireT.NoError(coreumclitestutil.ExecQueryCmd(
+	coreumclitestutil.ExecQueryCmd(
+		t,
 		ctx,
 		cli.CmdQueryToken(),
 		[]string{denom},
 		&respToken,
-	))
+	)
 	requireT.Empty(respToken.Token.Admin)
 
 	// try to clear admin again

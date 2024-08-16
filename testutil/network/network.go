@@ -87,10 +87,11 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 	}
 	var cfg network.Config
 	if len(configs) == 0 {
-		cfg = DefaultConfig()
+		cfg = DefaultConfig(t)
 	} else {
 		cfg = configs[0]
 	}
+
 	net, err := network.New(t, t.TempDir(), cfg)
 	require.NoError(t, err)
 	t.Cleanup(net.Cleanup)
@@ -99,7 +100,7 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 
 // DefaultConfig will initialize config for the network with custom application,
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig.
-func DefaultConfig() network.Config {
+func DefaultConfig(t *testing.T) network.Config {
 	devNetwork, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(errors.Wrap(err, "can't get network config"))
@@ -137,7 +138,7 @@ func DefaultConfig() network.Config {
 				dbm.NewMemDB(),
 				nil,
 				true,
-				simtestutil.NewAppOptionsWithFlagHome(app.DefaultNodeHome),
+				simtestutil.NewAppOptionsWithFlagHome(t.TempDir()),
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
 				baseapp.SetChainID(chainID),
