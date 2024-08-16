@@ -8,43 +8,57 @@ option (gogoproto.goproto_getters_all) = false;
 
 // Side is order side.
 enum Side {
-  // unspecified reserves the default value, to protect against unexpected settings.
-  unspecified = 0;
-  // buy means that the order is to buy base_denom quantity with the price.
-  buy = 1;
-  // sell means that the order is to sell base_denom quantity with the price.
-  sell = 2;
+  option (gogoproto.goproto_enum_prefix) = false;
+  // SIDE_UNSPECIFIED reserves the default value, to protect against unexpected settings.
+  SIDE_UNSPECIFIED = 0;
+  // SIDE_BUY means that the order is to buy base_denom quantity with the price.
+  SIDE_BUY = 1;
+  // SIDE_SELL means that the order is to sell base_denom quantity with the price.
+  SIDE_SELL = 2;
+}
+
+// Type is order type.
+enum OrderType {
+  option (gogoproto.goproto_enum_prefix) = false;
+  // order_type_unspecified reserves the default value, to protect against unexpected settings.
+  ORDER_TYPE_UNSPECIFIED = 0;
+  // order_type_limit means that the order is limit order.
+  ORDER_TYPE_LIMIT = 1;
+  // limit order_type_market that the order is market order.
+  ORDER_TYPE_MARKET = 2;
 }
 
 // Order is a DEX order.
 message Order {
   // creator is order creator address.
   string creator = 1;
+  // type is order type.
+  OrderType type = 2;
   // id is unique order ID.
-  string id = 2 [(gogoproto.customname) = "ID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
   // base_denom is base order denom.
-  string base_denom = 3;
+  string base_denom = 4;
   // quote_denom is quote order denom
-  string quote_denom = 4;
+  string quote_denom = 5;
   // price is value of one unit of the base_denom expressed in terms of the quote_denom.
-  string price = 5 [
+  string price = 6 [
     (gogoproto.customtype) = "Price",
     (gogoproto.nullable) = false
   ];
   // quantity is amount of the base base_denom being traded.
-  string quantity = 6 [
+  string quantity = 7 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // side is order side.
-  Side side = 7;
+  Side side = 8;
   // remaining_quantity is remaining filling quantity sell/buy.
-  string remaining_quantity = 8 [
+  string remaining_quantity = 9 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // remaining_balance is remaining order balance.
-  string remaining_balance = 9 [
+  string remaining_balance = 10 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];

@@ -23,7 +23,7 @@ func TestOrder_Validate(t *testing.T) {
 			QuoteDenom: "denom2",
 			Price:      types.MustNewPriceFromString("1e-1"),
 			Quantity:   sdkmath.NewInt(100),
-			Side:       types.Side_buy,
+			Side:       types.SIDE_BUY,
 		}
 	}
 

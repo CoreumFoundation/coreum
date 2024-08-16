@@ -53,7 +53,7 @@ func TestOrdersMatching(t *testing.T) {
 		QuoteDenom: denom2,
 		Price:      dextypes.MustNewPriceFromString("1e-1"),
 		Quantity:   sdkmath.NewInt(100),
-		Side:       dextypes.Side_sell,
+		Side:       dextypes.SIDE_SELL,
 	}
 
 	txResult, err := client.BroadcastTx(
@@ -79,7 +79,7 @@ func TestOrdersMatching(t *testing.T) {
 		QuoteDenom:        denom2,
 		Price:             dextypes.MustNewPriceFromString("1e-1"),
 		Quantity:          sdkmath.NewInt(100),
-		Side:              dextypes.Side_sell,
+		Side:              dextypes.SIDE_SELL,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}, sellOrderRes.Order)
@@ -92,7 +92,7 @@ func TestOrdersMatching(t *testing.T) {
 		QuoteDenom: denom2,
 		Price:      dextypes.MustNewPriceFromString("11e-2"),
 		Quantity:   sdkmath.NewInt(300),
-		Side:       dextypes.Side_buy,
+		Side:       dextypes.SIDE_BUY,
 	}
 
 	_, err = client.BroadcastTx(
@@ -125,7 +125,7 @@ func TestOrdersMatching(t *testing.T) {
 		QuoteDenom:        denom2,
 		Price:             dextypes.MustNewPriceFromString("11e-2"),
 		Quantity:          sdkmath.NewInt(300),
-		Side:              dextypes.Side_buy,
+		Side:              dextypes.SIDE_BUY,
 		RemainingQuantity: sdkmath.NewInt(200),
 		RemainingBalance:  sdkmath.NewInt(23),
 	}, buyOrderRes.Order)
@@ -170,7 +170,7 @@ func TestOrderCancellation(t *testing.T) {
 		QuoteDenom: "denom2",
 		Price:      dextypes.MustNewPriceFromString("1e-1"),
 		Quantity:   sdkmath.NewInt(100),
-		Side:       dextypes.Side_sell,
+		Side:       dextypes.SIDE_SELL,
 	}
 
 	_, err := client.BroadcastTx(
@@ -235,7 +235,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			QuoteDenom:        denom2,
 			Price:             dextypes.MustNewPriceFromString("999"),
 			Quantity:          sdkmath.NewInt(100),
-			Side:              dextypes.Side_sell,
+			Side:              dextypes.SIDE_SELL,
 			RemainingQuantity: sdkmath.NewInt(100),
 			RemainingBalance:  sdkmath.NewInt(100),
 		},
@@ -261,7 +261,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			QuoteDenom:        denom2,
 			Price:             dextypes.MustNewPriceFromString("996"),
 			Quantity:          sdkmath.NewInt(10),
-			Side:              dextypes.Side_buy,
+			Side:              dextypes.SIDE_BUY,
 			RemainingQuantity: sdkmath.NewInt(10),
 			RemainingBalance:  sdkmath.NewInt(9960),
 		},
@@ -272,7 +272,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			QuoteDenom:        denom2,
 			Price:             dextypes.MustNewPriceFromString("997"),
 			Quantity:          sdkmath.NewInt(10),
-			Side:              dextypes.Side_buy,
+			Side:              dextypes.SIDE_BUY,
 			RemainingQuantity: sdkmath.NewInt(10),
 			RemainingBalance:  sdkmath.NewInt(9970),
 		},
@@ -305,7 +305,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	orderBookOrdersRes, err := dexClient.OrdersBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
-		Side:       dextypes.Side_sell,
+		Side:       dextypes.SIDE_SELL,
 	})
 	requireT.NoError(err)
 	// acc1 orders because all of them sell

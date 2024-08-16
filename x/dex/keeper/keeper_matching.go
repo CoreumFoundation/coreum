@@ -248,7 +248,7 @@ func getRecordsReceiveCoins(
 		recordToReduceReducedQuantity = oppositeExecutionQuantity
 	}
 
-	if recordToClose.Side == types.Side_buy {
+	if recordToClose.Side == types.SIDE_BUY {
 		recordToCloseReceiveAmt = executionQuantity
 		recordToReduceReceiveAmt = oppositeExecutionQuantity
 	} else {

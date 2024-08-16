@@ -47,7 +47,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -56,7 +56,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc1.String(),
@@ -65,7 +65,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("266e-2"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -74,7 +74,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("2659e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -87,7 +87,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("376e-3"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(1000),
 					},
@@ -98,7 +98,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("375e-3"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(375),
 					},
@@ -109,7 +109,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom1,
 						Price:             types.MustNewPriceFromString("266e-2"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(1000),
 					},
@@ -120,7 +120,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom1,
 						Price:             types.MustNewPriceFromString("2659e-3"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(2659),
 					},
@@ -150,7 +150,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -159,7 +159,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -172,7 +172,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 						// 10000 - 1000
 						RemainingQuantity: sdkmath.NewInt(9000),
 						// 376e-3 * 10000 - 375e-3 * 1000 = 3385
@@ -205,7 +205,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Price:      types.MustNewPriceFromString("375e-3"),
 						// only 1000 will be filled
 						Quantity: sdkmath.NewInt(1005),
-						Side:     types.Side_sell,
+						Side:     types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -214,7 +214,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -227,7 +227,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 						// 10000 - 1000
 						RemainingQuantity: sdkmath.NewInt(9000),
 						// 376e-3 * 10000 - 375e-3 * 1000 = 3385
@@ -259,7 +259,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -268,7 +268,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -281,7 +281,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 						// 10000 - 1000
 						RemainingQuantity: sdkmath.NewInt(9000),
 						// 10000 - 1000
@@ -313,7 +313,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -323,7 +323,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Price:      types.MustNewPriceFromString("1"),
 						// only 1000 will be filled
 						Quantity: sdkmath.NewInt(1005),
-						Side:     types.Side_buy,
+						Side:     types.SIDE_BUY,
 					},
 				}
 			},
@@ -336,7 +336,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 						// 10000 - 1000
 						RemainingQuantity: sdkmath.NewInt(9000),
 						// 10000 - 1000
@@ -368,7 +368,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -377,7 +377,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -390,7 +390,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 						// 10000 - 1000
 						RemainingQuantity: sdkmath.NewInt(9000),
 						// 10000 - 1000
@@ -422,7 +422,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -431,7 +431,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -444,7 +444,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 						// 10000 - 1000
 						RemainingQuantity: sdkmath.NewInt(9000),
 						// 376e-3 * 10000 - 376e-3 * 1000 = 3384
@@ -476,7 +476,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -485,7 +485,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -498,7 +498,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 						// 10000 - 1000
 						RemainingQuantity: sdkmath.NewInt(9000),
 						// 375e-3 * 10000 - 375e-3 * 1000 = 3375
@@ -530,7 +530,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(100),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -539,7 +539,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(100),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -572,7 +572,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(50),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -581,7 +581,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(50),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					// "id3" will match the "id1" and "id2" cover them fully and the remainder will be returned
 					//	to the creator's balance
@@ -592,7 +592,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("6e-1"),
 						Quantity:   sdkmath.NewInt(100),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -626,7 +626,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(100),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -635,7 +635,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(100),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					// "id3" closes "id1" and "id2", with better price for the "id3", expected to receive 80, but receive 100
 					{
@@ -645,7 +645,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("4e-1"),
 						Quantity:   sdkmath.NewInt(200),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -677,7 +677,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("377e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc1.String(),
@@ -686,7 +686,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					// remain no match bad price
 					{
@@ -696,7 +696,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("4e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					// the part of the order should remain
 					{
@@ -706,7 +706,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -715,7 +715,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("37e-2"),
 						Quantity:   sdkmath.NewInt(5000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -728,7 +728,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("4e-3"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(4),
 					},
@@ -739,7 +739,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 						// part was used
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(376),
@@ -770,7 +770,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc1.String(),
@@ -779,7 +779,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					// remain no match bad price
 					{
@@ -789,7 +789,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("4e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					// the part of the order should remain
 					{
@@ -799,7 +799,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -808,7 +808,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("378e-3"),
 						Quantity:   sdkmath.NewInt(5000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -821,7 +821,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("4e-1"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(1000),
 					},
@@ -833,7 +833,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("376e-3"),
 						Quantity:          sdkmath.NewInt(2000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(1000),
 					},
@@ -866,7 +866,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -875,7 +875,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -888,7 +888,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 
 						RemainingQuantity: sdkmath.NewInt(9625),
 						RemainingBalance:  sdkmath.NewInt(9625),
@@ -919,7 +919,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(1001),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -928,7 +928,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -941,7 +941,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 
 						RemainingQuantity: sdkmath.NewInt(9625),
 						RemainingBalance:  sdkmath.NewInt(9625),
@@ -972,7 +972,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -981,7 +981,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(999),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -994,7 +994,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 
 						RemainingQuantity: sdkmath.NewInt(7336),
 						RemainingBalance:  sdkmath.NewInt(7336),
@@ -1025,7 +1025,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1034,7 +1034,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(1001),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -1047,7 +1047,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 
 						RemainingQuantity: sdkmath.NewInt(7336),
 						RemainingBalance:  sdkmath.NewInt(7336),
@@ -1078,7 +1078,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("381e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1087,7 +1087,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -1100,7 +1100,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 
 						RemainingQuantity: sdkmath.NewInt(9619),
 						RemainingBalance:  sdkmath.NewInt(25500),
@@ -1131,7 +1131,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("381e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1140,7 +1140,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("265e-2"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -1153,7 +1153,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("381e-3"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 
 						RemainingQuantity: sdkmath.NewInt(8000),
 						RemainingBalance:  sdkmath.NewInt(3048),
@@ -1184,7 +1184,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1193,7 +1193,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -1206,7 +1206,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 
 						RemainingQuantity: sdkmath.NewInt(9500),
 						RemainingBalance:  sdkmath.NewInt(9500),
@@ -1237,7 +1237,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("2"),
 						Quantity:   sdkmath.NewInt(500),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1246,7 +1246,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -1279,7 +1279,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(50),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1288,7 +1288,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(50),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					// "id3" will match the "id1" and "id2" cover them fully and the remainder will be returned
 					//	to the creator's balance
@@ -1299,7 +1299,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("21e-1"),
 						Quantity:   sdkmath.NewInt(50),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -1331,7 +1331,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("377e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc1.String(),
@@ -1340,7 +1340,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					// remain no match bad price
 					{
@@ -1350,7 +1350,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("4e-3"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					// the part of the order should remain
 					{
@@ -1360,7 +1360,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1369,7 +1369,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("27e-1"),
 						Quantity:   sdkmath.NewInt(1850),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -1382,7 +1382,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("4e-3"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(4),
 					},
@@ -1393,7 +1393,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 						// part was used
 						RemainingQuantity: sdkmath.NewInt(1125),
 						RemainingBalance:  sdkmath.NewInt(423),
@@ -1424,7 +1424,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc1.String(),
@@ -1433,7 +1433,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("375e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					// remain no match bad price
 					{
@@ -1443,7 +1443,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("4e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					// the part of the order should remain
 					{
@@ -1453,7 +1453,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("376e-3"),
 						Quantity:   sdkmath.NewInt(2000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1462,7 +1462,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("26e-1"),
 						Quantity:   sdkmath.NewInt(1880),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -1475,7 +1475,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("4e-1"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(1000),
 					},
@@ -1487,7 +1487,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("376e-3"),
 						Quantity:          sdkmath.NewInt(2000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(1000),
 					},
@@ -1521,7 +1521,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1532,7 +1532,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						// order has fifo priority
 						Price:    types.MustNewPriceFromString("181e-2"),
 						Quantity: sdkmath.NewInt(100),
-						Side:     types.Side_sell,
+						Side:     types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1543,7 +1543,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						// will remain with the partial filling
 						Price:    types.MustNewPriceFromString("181e-2"),
 						Quantity: sdkmath.NewInt(10000),
-						Side:     types.Side_sell,
+						Side:     types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc3.String(),
@@ -1552,7 +1552,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("49e-2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -1565,7 +1565,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("5e-1"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(500),
 					},
@@ -1576,7 +1576,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom1,
 						Price:             types.MustNewPriceFromString("181e-2"),
 						Quantity:          sdkmath.NewInt(10000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(4600),
 						RemainingBalance:  sdkmath.NewInt(4600),
 					},
@@ -1607,7 +1607,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("21e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1618,7 +1618,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						//	with the best price and fifo priority
 						Price:    types.MustNewPriceFromString("5e-1"),
 						Quantity: sdkmath.NewInt(1000),
-						Side:     types.Side_buy,
+						Side:     types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1627,7 +1627,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc3.String(),
@@ -1636,7 +1636,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("22e-1"),
 						Quantity:   sdkmath.NewInt(100),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -1649,7 +1649,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("21e-1"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(1000),
 					},
@@ -1660,7 +1660,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom1,
 						Price:             types.MustNewPriceFromString("5e-1"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(800),
 						RemainingBalance:  sdkmath.NewInt(400),
 					},
@@ -1671,7 +1671,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom1,
 						Price:             types.MustNewPriceFromString("5e-1"),
 						Quantity:          sdkmath.NewInt(10000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(10000),
 						RemainingBalance:  sdkmath.NewInt(5000),
 					},
@@ -1702,7 +1702,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1711,7 +1711,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1720,7 +1720,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("19e-1"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc3.String(),
@@ -1729,7 +1729,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("55e-2"),
 						Quantity:   sdkmath.NewInt(1500),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -1742,7 +1742,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("5e-1"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(500),
 						RemainingBalance:  sdkmath.NewInt(500),
 					},
@@ -1753,7 +1753,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom1,
 						Price:             types.MustNewPriceFromString("19e-1"),
 						Quantity:          sdkmath.NewInt(10000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(10000),
 						RemainingBalance:  sdkmath.NewInt(19000),
 					},
@@ -1787,7 +1787,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						// order "id1", "id2" and "id3" matches, but we fill partially only "id1"
 						//	with the best price and fifo priority
 						Quantity: sdkmath.NewInt(1000),
-						Side:     types.Side_buy,
+						Side:     types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1796,7 +1796,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("21e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1805,7 +1805,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc3.String(),
@@ -1814,7 +1814,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("19e-1"),
 						Quantity:   sdkmath.NewInt(10),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -1827,7 +1827,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("21e-1"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(990),
 						RemainingBalance:  sdkmath.NewInt(2079),
 					},
@@ -1838,7 +1838,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("21e-1"),
 						Quantity:          sdkmath.NewInt(1000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(2100),
 					},
@@ -1849,7 +1849,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom1,
 						Price:             types.MustNewPriceFromString("5e-1"),
 						Quantity:          sdkmath.NewInt(10000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(10000),
 						RemainingBalance:  sdkmath.NewInt(10000),
 					},
@@ -1880,7 +1880,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1889,7 +1889,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("181e-2"),
 						Quantity:   sdkmath.NewInt(100),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1898,7 +1898,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("181e-2"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc3.String(),
@@ -1907,7 +1907,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("49e-2"),
 						Quantity:   sdkmath.NewInt(100000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 				}
 			},
@@ -1920,7 +1920,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("49e-2"),
 						Quantity:          sdkmath.NewInt(100000),
-						Side:              types.Side_sell,
+						Side:              types.SIDE_SELL,
 						RemainingQuantity: sdkmath.NewInt(80719),
 						RemainingBalance:  sdkmath.NewInt(80719),
 					},
@@ -1952,7 +1952,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1961,7 +1961,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("5e-1"),
 						Quantity:   sdkmath.NewInt(1000),
-						Side:       types.Side_sell,
+						Side:       types.SIDE_SELL,
 					},
 					{
 						Creator:    accSet.acc2.String(),
@@ -1970,7 +1970,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom1,
 						Price:      types.MustNewPriceFromString("19e-1"),
 						Quantity:   sdkmath.NewInt(10000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 					{
 						Creator:    accSet.acc3.String(),
@@ -1979,7 +1979,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom: denom2,
 						Price:      types.MustNewPriceFromString("55e-2"),
 						Quantity:   sdkmath.NewInt(150000),
-						Side:       types.Side_buy,
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -1992,7 +1992,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						QuoteDenom:        denom2,
 						Price:             types.MustNewPriceFromString("55e-2"),
 						Quantity:          sdkmath.NewInt(150000),
-						Side:              types.Side_buy,
+						Side:              types.SIDE_BUY,
 						RemainingQuantity: sdkmath.NewInt(129000),
 						RemainingBalance:  sdkmath.NewInt(71500),
 					},
@@ -2030,8 +2030,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 
 			orders := make([]types.Order, 0)
 			for orderBookID := range orderBooksIDs {
-				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.Side_buy)...)
-				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.Side_sell)...)
+				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_BUY)...)
+				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_SELL)...)
 			}
 			require.ElementsMatch(t, tt.wantOrders(accSet), orders)
 

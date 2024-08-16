@@ -27,7 +27,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 		QuoteDenom:        denom2,
 		Price:             types.MustNewPriceFromString("123e-2"),
 		Quantity:          sdkmath.NewInt(100),
-		Side:              types.Side_sell,
+		Side:              types.SIDE_SELL,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}
@@ -61,7 +61,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 		QuoteDenom:        denom3,
 		Price:             types.MustNewPriceFromString("124e-2"),
 		Quantity:          sdkmath.NewInt(100),
-		Side:              types.Side_sell,
+		Side:              types.SIDE_SELL,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}
@@ -78,7 +78,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 	// check order book orders
 	var orderBookOrdersRes types.QueryOrderBookOrdersResponse
 	coreumclitestutil.ExecQueryCmd(
-		t, ctx, cli.CmdQueryOrderBookOrders(), []string{denom1, denom2, types.Side_sell.String()}, &orderBookOrdersRes,
+		t, ctx, cli.CmdQueryOrderBookOrders(), []string{denom1, denom2, types.SIDE_SELL.String()}, &orderBookOrdersRes,
 	)
 	requireT.ElementsMatch([]types.Order{
 		order1,

@@ -78,7 +78,7 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 			QuoteDenom: item.quoteDenom,
 			Price:      price,
 			Quantity:   sdkmath.NewInt(1),
-			Side:       types.Side_sell,
+			Side:       types.SIDE_SELL,
 		}
 		lockedBalance, err := order.ComputeLockedBalance()
 		require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		QuoteDenom: denom2,
 		Price:      price,
 		Quantity:   sdkmath.NewInt(10),
-		Side:       types.Side_sell,
+		Side:       types.SIDE_SELL,
 	}
 	lockedBalance, err := sellOrder.ComputeLockedBalance()
 	require.NoError(t, err)
@@ -142,7 +142,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		QuoteDenom: denom3,
 		Price:      price,
 		Quantity:   sdkmath.NewInt(100),
-		Side:       types.Side_buy,
+		Side:       types.SIDE_BUY,
 	}
 	lockedBalance, err = buyOrder.ComputeLockedBalance()
 	require.NoError(t, err)
@@ -176,7 +176,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		QuoteDenom: denom2,
 		Price:      types.MustNewPriceFromString("12e-1"),
 		Quantity:   sdkmath.NewInt(1_000),
-		Side:       types.Side_sell,
+		Side:       types.SIDE_SELL,
 	}
 	sellLockedBalance, err := sellOrder.ComputeLockedBalance()
 	require.NoError(t, err)
@@ -198,7 +198,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		QuoteDenom: denom2,
 		Price:      types.MustNewPriceFromString("13e-1"),
 		Quantity:   sdkmath.NewInt(5_000),
-		Side:       types.Side_buy,
+		Side:       types.SIDE_BUY,
 	}
 	buyLockedBalance, err := buyOrder.ComputeLockedBalance()
 	require.NoError(t, err)
@@ -245,7 +245,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			QuoteDenom: denom2,
 			Price:      types.MustNewPriceFromString("13e-1"),
 			Quantity:   sdkmath.NewInt(2000),
-			Side:       types.Side_sell,
+			Side:       types.SIDE_SELL,
 		},
 		{
 			Creator:    acc1.String(),
@@ -254,7 +254,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			QuoteDenom: denom2,
 			Price:      types.MustNewPriceFromString("14e-1"),
 			Quantity:   sdkmath.NewInt(3000),
-			Side:       types.Side_buy,
+			Side:       types.SIDE_BUY,
 		},
 		{
 			Creator:    acc1.String(),
@@ -263,7 +263,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			QuoteDenom: denom2,
 			Price:      types.MustNewPriceFromString("12e-1"),
 			Quantity:   sdkmath.NewInt(1000),
-			Side:       types.Side_sell,
+			Side:       types.SIDE_SELL,
 		},
 		{
 			Creator:    acc2.String(),
@@ -272,7 +272,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			QuoteDenom: denom2,
 			Price:      types.MustNewPriceFromString("11e-1"),
 			Quantity:   sdkmath.NewInt(100),
-			Side:       types.Side_buy,
+			Side:       types.SIDE_BUY,
 		},
 	}
 
@@ -311,7 +311,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 		sdkCtx,
 		denom1,
 		denom2,
-		types.Side_sell,
+		types.SIDE_SELL,
 		&query.PageRequest{
 			Offset:     0,
 			Limit:      1,
@@ -327,7 +327,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 		sdkCtx,
 		denom1,
 		denom2,
-		types.Side_sell,
+		types.SIDE_SELL,
 		&query.PageRequest{
 			Limit: query.PaginationMaxLimit,
 		},
@@ -353,7 +353,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 			QuoteDenom: denom2,
 			Price:      types.MustNewPriceFromString("12e-1"),
 			Quantity:   sdkmath.NewInt(10),
-			Side:       types.Side_sell,
+			Side:       types.SIDE_SELL,
 		},
 		{
 			Creator:    acc1.String(),
@@ -362,7 +362,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 			QuoteDenom: denom2,
 			Price:      types.MustNewPriceFromString("13e-1"),
 			Quantity:   sdkmath.NewInt(10),
-			Side:       types.Side_buy,
+			Side:       types.SIDE_BUY,
 		},
 	}
 

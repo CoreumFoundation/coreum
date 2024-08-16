@@ -196,6 +196,7 @@
     - [OrderBookRecordData](#coreum.dex.v1.OrderBookRecordData)
     - [OrderData](#coreum.dex.v1.OrderData)
   
+    - [OrderType](#coreum.dex.v1.OrderType)
     - [Side](#coreum.dex.v1.Side)
   
 - [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
@@ -4331,6 +4332,7 @@ Order is a DEX order.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `type` | [OrderType](#coreum.dex.v1.OrderType) |  |  `type is order type.`  |
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
 | `base_denom` | [string](#string) |  |  `base_denom is base order denom.`  |
 | `quote_denom` | [string](#string) |  |  `quote_denom is quote order denom`  |
@@ -4437,6 +4439,24 @@ OrderData is a order data used for the store.
  <!-- end messages -->
 
 
+<a name="coreum.dex.v1.OrderType"></a>
+
+### OrderType
+
+```
+Type is order type.
+```
+
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ORDER_TYPE_UNSPECIFIED | 0 | `order_type_unspecified reserves the default value, to protect against unexpected settings.` |
+| ORDER_TYPE_LIMIT | 1 | `order_type_limit means that the order is limit order.` |
+| ORDER_TYPE_MARKET | 2 | `limit order_type_market that the order is market order.` |
+
+
+
 <a name="coreum.dex.v1.Side"></a>
 
 ### Side
@@ -4449,9 +4469,9 @@ Side is order side.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| unspecified | 0 | `unspecified reserves the default value, to protect against unexpected settings.` |
-| buy | 1 | `buy means that the order is to buy base_denom quantity with the price.` |
-| sell | 2 | `sell means that the order is to sell base_denom quantity with the price.` |
+| SIDE_UNSPECIFIED | 0 | `SIDE_UNSPECIFIED reserves the default value, to protect against unexpected settings.` |
+| SIDE_BUY | 1 | `SIDE_BUY means that the order is to buy base_denom quantity with the price.` |
+| SIDE_SELL | 2 | `SIDE_SELL means that the order is to sell base_denom quantity with the price.` |
 
 
  <!-- end enums -->
@@ -4705,6 +4725,7 @@ MsgPlaceOrder defines message to place an order on orderbook.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  |  `sender is order creator address.`  |
+| `type` | [OrderType](#coreum.dex.v1.OrderType) |  |  `type is order type.`  |
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
 | `base_denom` | [string](#string) |  |  `base_denom is base order denom.`  |
 | `quote_denom` | [string](#string) |  |  `quote_denom is quote order denom`  |

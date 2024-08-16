@@ -172,7 +172,7 @@ func (i *OrderBookIterator) readOrderBookRecordFromIterator() (types.OrderBookRe
 // NewOrderBookSideIterator returns order book iterator with the reading based on side (buy - tail, sell head).
 func (k Keeper) NewOrderBookSideIterator(ctx sdk.Context, orderBookID uint32, side types.Side) *OrderBookIterator {
 	readFromTail := false
-	if side == types.Side_buy {
+	if side == types.SIDE_BUY {
 		readFromTail = true
 	}
 

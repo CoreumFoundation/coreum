@@ -400,7 +400,7 @@ func (m *QueryOrderBookOrdersRequest) GetSide() Side {
 	if m != nil {
 		return m.Side
 	}
-	return Side_unspecified
+	return SIDE_UNSPECIFIED
 }
 
 func (m *QueryOrderBookOrdersRequest) GetPagination() *query.PageRequest {

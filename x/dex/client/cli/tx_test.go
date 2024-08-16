@@ -40,7 +40,7 @@ func TestCmdPlaceOrder(t *testing.T) {
 		QuoteDenom: denom2,
 		Price:      types.MustNewPriceFromString("123e-2"),
 		Quantity:   sdkmath.NewInt(100),
-		Side:       types.Side_sell,
+		Side:       types.SIDE_SELL,
 	})
 }
 
@@ -56,7 +56,7 @@ func TestCmdCancelOrder(t *testing.T) {
 		QuoteDenom: denom2,
 		Price:      types.MustNewPriceFromString("123e-2"),
 		Quantity:   sdkmath.NewInt(100),
-		Side:       types.Side_sell,
+		Side:       types.SIDE_SELL,
 	}
 
 	placeOrder(ctx, requireT, testNetwork, order)

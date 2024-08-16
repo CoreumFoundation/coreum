@@ -125,7 +125,7 @@ func (mf *MatchingFinder) isSelfRecordBestMatch(selfMatches, oppositeMatches boo
 	selfPriceRat := mf.selfRecord.Price.Rat()
 	oppositeInvPriceRat := cbig.RatInv(mf.oppositeRecord.Price.Rat())
 
-	if mf.takerRecordSide == types.Side_buy {
+	if mf.takerRecordSide == types.SIDE_BUY {
 		// find best sell - lower wins
 		return cbig.RatGTE(oppositeInvPriceRat, selfPriceRat)
 	}
@@ -172,7 +172,7 @@ func (mf *MatchingFinder) isOppositeRecordMatches() bool {
 }
 
 func (mf *MatchingFinder) isPriceMatches(priceRat *big.Rat) bool {
-	if mf.takerRecordSide == types.Side_buy {
+	if mf.takerRecordSide == types.SIDE_BUY {
 		return cbig.RatGTE(mf.takerRecordPrice.Rat(), priceRat)
 	}
 
