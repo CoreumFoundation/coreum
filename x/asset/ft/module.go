@@ -18,7 +18,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/client/cli"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper"
-	v1 "github.com/CoreumFoundation/coreum/v4/x/asset/ft/migrations/v1"
+	v3 "github.com/CoreumFoundation/coreum/v4/x/asset/ft/migrations/v3"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/simulation"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
@@ -110,7 +110,7 @@ type AppModule struct {
 	keeper        keeper.Keeper
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
-	paramsKeeper  v1.ParamsKeeper
+	paramsKeeper  v3.ParamsKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
@@ -119,7 +119,7 @@ func NewAppModule(
 	keeper keeper.Keeper,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	paramsKeeper v1.ParamsKeeper,
+	paramsKeeper v3.ParamsKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
@@ -148,12 +148,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper, am.bankKeeper))
 
 	m := keeper.NewMigrator(am.keeper, am.paramsKeeper)
-	if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
-		panic(err)
-	}
-	if err := cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3); err != nil {
-		panic(err)
-	}
 	if err := cfg.RegisterMigration(types.ModuleName, 3, m.Migrate3to4); err != nil {
 		panic(err)
 	}

@@ -2,6 +2,7 @@ package v3
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
@@ -10,6 +11,11 @@ import (
 type FTKeeper interface {
 	IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition) (bool, error)) error
 	SetDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition)
+}
+
+// ParamsKeeper specifies methods of params keeper required by the migration.
+type ParamsKeeper interface {
+	GetSubspace(s string) (paramstypes.Subspace, bool)
 }
 
 // MigrateDefinitions migrates asset ft definitions state from v2 to v3.

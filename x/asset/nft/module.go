@@ -147,9 +147,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 
 	m := keeper.NewMigrator(am.keeper, am.nftKeeper, am.wasmKeeper, am.paramsKeeper)
-	if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
-		panic(errors.Errorf("can't register module %s migrations, err: %s", types.ModuleName, err))
-	}
 	if err := cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3); err != nil {
 		panic(errors.Errorf("can't register module %s migrations, err: %s", types.ModuleName, err))
 	}
