@@ -93,15 +93,16 @@ func placeRandomOrderAndAssertOrdering(
 
 	order := types.Order{
 		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  baseDenom,
 		QuoteDenom: quoteDenom,
-		Price:      price,
+		Price:      &price,
 		Quantity:   quantity,
 		Side:       side,
 	}
 	t.Logf("Order to place: %s", order.String())
-	lockedBalance, err := order.ComputeLockedBalance()
+	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 	if err != nil {
 		// the generated balance might overflow the sdkmath.Int type
 		t.Skip()

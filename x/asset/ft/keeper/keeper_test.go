@@ -1697,9 +1697,12 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	// unlock part
 	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, sdk.NewInt64Coin(denom, 400)))
 	requireT.Equal(sdk.NewInt64Coin(denom, 600).String(), ftKeeper.GetDEXLockedBalance(ctx, acc, denom).String())
+	requireT.Equal(sdk.NewInt64Coin(denom, 400).String(), ftKeeper.GetSpendableBalance(ctx, acc, denom).String())
 
 	// freeze locked balance
 	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, coinToSend))
+	// 1050 - total, 600 locked by dex, 50 locked by bank, 1000 frozen
+	requireT.Equal(sdk.NewInt64Coin(denom, 50).String(), ftKeeper.GetSpendableBalance(ctx, acc, denom).String())
 
 	// unlock 2d part, even when it's frozen we allow it
 	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, sdk.NewInt64Coin(denom, 600)))
@@ -1726,6 +1729,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	// try to lock with global freezing
 	requireT.NoError(ftKeeper.GloballyFreeze(ctx, issuer, denom))
 	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350)), cosmoserrors.ErrInsufficientFunds)
+	requireT.True(ftKeeper.GetSpendableBalance(ctx, acc, denom).IsZero())
 	// globally unfreeze now and check that we can lock max allowed
 	requireT.NoError(ftKeeper.GloballyUnfreeze(ctx, issuer, denom))
 	requireT.NoError(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350)))

@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
@@ -18,10 +19,11 @@ func TestOrder_Validate(t *testing.T) {
 	validOrder := func() types.Order {
 		return types.Order{
 			Creator:    sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         "aA09+:._-",
 			BaseDenom:  "denom1",
 			QuoteDenom: "denom2",
-			Price:      types.MustNewPriceFromString("1e-1"),
+			Price:      lo.ToPtr(types.MustNewPriceFromString("1e-1")),
 			Quantity:   sdkmath.NewInt(100),
 			Side:       types.SIDE_BUY,
 		}
@@ -112,7 +114,7 @@ func TestOrder_Validate(t *testing.T) {
 			name: "invalid_side_unspecified",
 			order: func() types.Order {
 				order := validOrder()
-				order.Side = types.Side_unspecified
+				order.Side = types.SIDE_UNSPECIFIED
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,
@@ -158,7 +160,34 @@ func TestOrder_Validate(t *testing.T) {
 			order: func() types.Order {
 				order := validOrder()
 				order.Quantity = sdkmath.NewInt(1_000_000)
-				order.Price = types.MustNewPriceFromString(fmt.Sprintf("9999999999999999999e%d", types.MaxExp))
+				order.Price = lo.ToPtr(types.MustNewPriceFromString(fmt.Sprintf("9999999999999999999e%d", types.MaxExp)))
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_limit_with_nil_price",
+			order: func() types.Order {
+				order := validOrder()
+				order.Price = nil
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_market_with_not_nil_price",
+			order: func() types.Order {
+				order := validOrder()
+				order.Type = types.ORDER_TYPE_MARKET
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_unspecified_order_type",
+			order: func() types.Order {
+				order := validOrder()
+				order.Type = types.ORDER_TYPE_UNSPECIFIED
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,

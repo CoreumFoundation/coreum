@@ -30,9 +30,6 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 	}
 }
 
-// FIXME add deterministic gas
-// FIXME add CLI
-
 // PlaceOrder places an order on orderbook.
 func (ms MsgServer) PlaceOrder(ctx context.Context, msg *types.MsgPlaceOrder) (*types.EmptyResponse, error) {
 	order, err := types.NewOrderFormMsgPlaceOrder(*msg)

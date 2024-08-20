@@ -9,6 +9,11 @@ func NewBigIntFromUint64(x uint64) *big.Int {
 	return (&big.Int{}).SetUint64(x)
 }
 
+// IntAdd returns sum of x+y.
+func IntAdd(x, y *big.Int) *big.Int {
+	return (&big.Int{}).Add(x, y)
+}
+
 // IntSub subtracts Int by Int.
 func IntSub(x, y *big.Int) *big.Int {
 	return (&big.Int{}).Sub(x, y)

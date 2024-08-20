@@ -793,6 +793,33 @@ func (k Keeper) SetDEXLockedBalances(ctx sdk.Context, addr sdk.AccAddress, coins
 	}
 }
 
+// GetSpendableBalance returns balance allowed to be spendable.
+func (k Keeper) GetSpendableBalance(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	denom string,
+) sdk.Coin {
+	balance := k.bankKeeper.GetBalance(ctx, addr, denom)
+	if balance.Amount.IsZero() {
+		return balance
+	}
+
+	notLockedAmt := balance.Amount.
+		Sub(k.GetDEXLockedBalance(ctx, addr, denom).Amount).
+		Sub(k.bankKeeper.LockedCoins(ctx, addr).AmountOf(denom))
+	if notLockedAmt.IsNegative() {
+		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+	}
+
+	notFrozenAmt := balance.Amount.Sub(k.GetFrozenBalance(ctx, addr, denom).Amount)
+	if notFrozenAmt.IsNegative() {
+		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+	}
+
+	spendableAmount := sdkmath.MinInt(notLockedAmt, notFrozenAmt)
+	return sdk.NewCoin(denom, spendableAmount)
+}
+
 // TransferAdmin changes admin of a fungible token.
 func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, denom string) error {
 	def, err := k.GetDefinition(ctx, denom)

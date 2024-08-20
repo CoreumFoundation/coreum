@@ -19,8 +19,7 @@ type MatchingFinder struct {
 	selfIterator     *OrderBookIterator
 	oppositeIterator *OrderBookIterator
 
-	takerRecordSide  types.Side
-	takerRecordPrice types.Price
+	order types.Order
 
 	selfRecord     *types.OrderBookRecord
 	oppositeRecord *types.OrderBookRecord
@@ -30,10 +29,9 @@ type MatchingFinder struct {
 func (k Keeper) NewMatchingFinder(
 	ctx sdk.Context,
 	orderBookID, oppositeOrderBookID uint32,
-	takerRecordSide types.Side,
-	takerRecordPrice types.Price,
+	order types.Order,
 ) (*MatchingFinder, error) {
-	oppositeSide, err := takerRecordSide.Opposite()
+	oppositeSide, err := order.Side.Opposite()
 	if err != nil {
 		return nil, err
 	}
@@ -42,10 +40,9 @@ func (k Keeper) NewMatchingFinder(
 		log: k.logger(ctx),
 
 		selfIterator:     k.NewOrderBookSideIterator(ctx, orderBookID, oppositeSide),
-		oppositeIterator: k.NewOrderBookSideIterator(ctx, oppositeOrderBookID, takerRecordSide),
+		oppositeIterator: k.NewOrderBookSideIterator(ctx, oppositeOrderBookID, order.Side),
 
-		takerRecordSide:  takerRecordSide,
-		takerRecordPrice: takerRecordPrice,
+		order: order,
 	}, nil
 }
 
@@ -56,8 +53,23 @@ func (mf *MatchingFinder) Next() (types.OrderBookRecord, bool, error) {
 		return types.OrderBookRecord{}, false, err
 	}
 
-	selfMatches := mf.isSelfRecordMatches()
-	oppositeMatches := mf.isOppositeRecordMatches()
+	var selfMatches, oppositeMatches bool
+	switch mf.order.Type {
+	case types.ORDER_TYPE_LIMIT:
+		selfMatches = mf.isSelfRecordMatches()
+		oppositeMatches = mf.isOppositeRecordMatches()
+	case types.ORDER_TYPE_MARKET:
+		if mf.selfRecord != nil {
+			selfMatches = true
+		}
+		if mf.oppositeRecord != nil {
+			oppositeMatches = true
+		}
+	default:
+		return types.OrderBookRecord{}, false, sdkerrors.Wrapf(
+			types.ErrInvalidInput, "unexpect order type : %s", mf.order.Type.String(),
+		)
+	}
 
 	// no match
 	if !selfMatches && !oppositeMatches {
@@ -125,7 +137,7 @@ func (mf *MatchingFinder) isSelfRecordBestMatch(selfMatches, oppositeMatches boo
 	selfPriceRat := mf.selfRecord.Price.Rat()
 	oppositeInvPriceRat := cbig.RatInv(mf.oppositeRecord.Price.Rat())
 
-	if mf.takerRecordSide == types.SIDE_BUY {
+	if mf.order.Side == types.SIDE_BUY {
 		// find best sell - lower wins
 		return cbig.RatGTE(oppositeInvPriceRat, selfPriceRat)
 	}
@@ -143,8 +155,8 @@ func (mf *MatchingFinder) isSelfRecordMatches() bool {
 	mf.log.Debug(
 		"Compared self maker order",
 		"matches", matches,
-		"takerPrice", mf.takerRecordPrice,
-		"takerSide", mf.takerRecordSide,
+		"takerPrice", mf.order.Price,
+		"takerSide", mf.order.Side,
 		"makerOrderID", mf.selfRecord.OrderID,
 		"makerPrice", mf.selfRecord.Price,
 	)
@@ -162,8 +174,8 @@ func (mf *MatchingFinder) isOppositeRecordMatches() bool {
 	mf.log.Debug(
 		"Compared opposite maker order",
 		"matches", matches,
-		"takerPrice", mf.takerRecordPrice,
-		"takerSide", mf.takerRecordSide,
+		"takerPrice", mf.order.Price,
+		"takerSide", mf.order.Side,
 		"makerOrderID", mf.oppositeRecord.OrderID,
 		"makerInvPrice", fmt.Sprintf("1/%s", mf.oppositeRecord.Price),
 	)
@@ -172,9 +184,9 @@ func (mf *MatchingFinder) isOppositeRecordMatches() bool {
 }
 
 func (mf *MatchingFinder) isPriceMatches(priceRat *big.Rat) bool {
-	if mf.takerRecordSide == types.SIDE_BUY {
-		return cbig.RatGTE(mf.takerRecordPrice.Rat(), priceRat)
+	if mf.order.Side == types.SIDE_BUY {
+		return cbig.RatGTE(mf.order.Price.Rat(), priceRat)
 	}
 
-	return cbig.RatLTE(mf.takerRecordPrice.Rat(), priceRat)
+	return cbig.RatLTE(mf.order.Price.Rat(), priceRat)
 }

@@ -258,15 +258,16 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					}
 					order := types.Order{
 						Creator:    acc.String(),
+						Type:       types.ORDER_TYPE_LIMIT,
 						ID:         uuid.Generate().String(),
 						BaseDenom:  baseDenom,
 						QuoteDenom: quoteDenom,
-						Price:      price,
+						Price:      &price,
 						Quantity:   quantity,
 						Side:       tt.side,
 					}
 
-					lockedBalance, err := order.ComputeLockedBalance()
+					lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 					require.NoError(t, err)
 					testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 					require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))

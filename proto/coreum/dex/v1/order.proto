@@ -41,10 +41,7 @@ message Order {
   // quote_denom is quote order denom
   string quote_denom = 5;
   // price is value of one unit of the base_denom expressed in terms of the quote_denom.
-  string price = 6 [
-    (gogoproto.customtype) = "Price",
-    (gogoproto.nullable) = false
-  ];
+  string price = 6 [(gogoproto.customtype) = "Price"];
   // quantity is amount of the base base_denom being traded.
   string quantity = 7 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",

@@ -9,6 +9,7 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/docker/distribution/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
@@ -73,14 +74,15 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 		acc, _ := testApp.GenAccount(sdkCtx)
 		order := types.Order{
 			Creator:    acc.String(),
+			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
 			BaseDenom:  item.baseDenom,
 			QuoteDenom: item.quoteDenom,
-			Price:      price,
+			Price:      &price,
 			Quantity:   sdkmath.NewInt(1),
 			Side:       types.SIDE_SELL,
 		}
-		lockedBalance, err := order.ComputeLockedBalance()
+		lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), sdk.NewCoins(lockedBalance))
 
@@ -100,11 +102,12 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	sdkCtx := testApp.BaseApp.NewContext(false)
 	dexKeeper := testApp.DEXKeeper
 
-	price := types.MustNewPriceFromString("12e-1")
+	price := lo.ToPtr(types.MustNewPriceFromString("12e-1"))
 	acc, _ := testApp.GenAccount(sdkCtx)
 
 	sellOrder := types.Order{
 		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
@@ -112,7 +115,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		Quantity:   sdkmath.NewInt(10),
 		Side:       types.SIDE_SELL,
 	}
-	lockedBalance, err := sellOrder.ComputeLockedBalance()
+	lockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 
@@ -137,6 +140,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	buyOrder := types.Order{
 		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom2,
 		QuoteDenom: denom3,
@@ -144,7 +148,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		Quantity:   sdkmath.NewInt(100),
 		Side:       types.SIDE_BUY,
 	}
-	lockedBalance, err = buyOrder.ComputeLockedBalance()
+	lockedBalance, err = buyOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 
@@ -171,14 +175,15 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 
 	sellOrder := types.Order{
 		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
-		Price:      types.MustNewPriceFromString("12e-1"),
+		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   sdkmath.NewInt(1_000),
 		Side:       types.SIDE_SELL,
 	}
-	sellLockedBalance, err := sellOrder.ComputeLockedBalance()
+	sellLockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(sellLockedBalance))
 
@@ -193,14 +198,15 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 
 	buyOrder := types.Order{
 		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
-		Price:      types.MustNewPriceFromString("13e-1"),
+		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 		Quantity:   sdkmath.NewInt(5_000),
 		Side:       types.SIDE_BUY,
 	}
-	buyLockedBalance, err := buyOrder.ComputeLockedBalance()
+	buyLockedBalance, err := buyOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(buyLockedBalance))
 
@@ -240,44 +246,48 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 	orders := []types.Order{
 		{
 			Creator:    acc1.String(),
+			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
-			Price:      types.MustNewPriceFromString("13e-1"),
+			Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 			Quantity:   sdkmath.NewInt(2000),
 			Side:       types.SIDE_SELL,
 		},
 		{
 			Creator:    acc1.String(),
+			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
 			BaseDenom:  denom3,
 			QuoteDenom: denom2,
-			Price:      types.MustNewPriceFromString("14e-1"),
+			Price:      lo.ToPtr(types.MustNewPriceFromString("14e-1")),
 			Quantity:   sdkmath.NewInt(3000),
 			Side:       types.SIDE_BUY,
 		},
 		{
 			Creator:    acc1.String(),
+			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
-			Price:      types.MustNewPriceFromString("12e-1"),
+			Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 			Quantity:   sdkmath.NewInt(1000),
 			Side:       types.SIDE_SELL,
 		},
 		{
 			Creator:    acc2.String(),
+			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
-			Price:      types.MustNewPriceFromString("11e-1"),
+			Price:      lo.ToPtr(types.MustNewPriceFromString("11e-1")),
 			Quantity:   sdkmath.NewInt(100),
 			Side:       types.SIDE_BUY,
 		},
 	}
 
 	for i, order := range orders {
-		lockedBalance, err := order.ComputeLockedBalance()
+		lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), sdk.NewCoins(lockedBalance))
 		require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))
@@ -348,26 +358,28 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 	orders := []types.Order{
 		{
 			Creator:    acc1.String(),
+			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
-			Price:      types.MustNewPriceFromString("12e-1"),
+			Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 			Quantity:   sdkmath.NewInt(10),
 			Side:       types.SIDE_SELL,
 		},
 		{
 			Creator:    acc1.String(),
+			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
 			BaseDenom:  denom3,
 			QuoteDenom: denom2,
-			Price:      types.MustNewPriceFromString("13e-1"),
+			Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 			Quantity:   sdkmath.NewInt(10),
 			Side:       types.SIDE_BUY,
 		},
 	}
 
 	for _, order := range orders {
-		lockedBalance, err := order.ComputeLockedBalance()
+		lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), sdk.NewCoins(lockedBalance))
 		require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))

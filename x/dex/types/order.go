@@ -52,6 +52,7 @@ func (s Side) Validate() error {
 func NewOrderFormMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 	o := Order{
 		Creator:    msg.Sender,
+		Type:       msg.Type,
 		ID:         msg.ID,
 		BaseDenom:  msg.BaseDenom,
 		QuoteDenom: msg.QuoteDenom,
@@ -92,6 +93,28 @@ func (o Order) Validate() error {
 		return err
 	}
 
+	switch o.Type {
+	case ORDER_TYPE_LIMIT:
+		if o.Price == nil {
+			return sdkerrors.Wrap(
+				ErrInvalidInput, "price must be not nil for the limit order",
+			)
+		}
+		if _, err := o.ComputeLimitOrderLockedBalance(); err != nil {
+			return err
+		}
+	case ORDER_TYPE_MARKET:
+		if o.Price != nil {
+			return sdkerrors.Wrap(
+				ErrInvalidInput, "price must be nil for the limit order",
+			)
+		}
+	default:
+		return sdkerrors.Wrapf(
+			ErrInvalidInput, "unsupported order type : %s", o.Type.String(),
+		)
+	}
+
 	if !o.RemainingQuantity.IsNil() {
 		return sdkerrors.Wrap(ErrInvalidInput, "initial remaining quantity must be nil")
 	}
@@ -100,16 +123,13 @@ func (o Order) Validate() error {
 		return sdkerrors.Wrap(ErrInvalidInput, "initial remaining balance must be nil")
 	}
 
-	if _, err := o.ComputeLockedBalance(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-// ComputeLockedBalance computes the balance locked for the order.
-func (o Order) ComputeLockedBalance() (sdk.Coin, error) {
+// ComputeLimitOrderLockedBalance computes the order locked balance.
+func (o Order) ComputeLimitOrderLockedBalance() (sdk.Coin, error) {
 	if o.Side == SIDE_BUY {
+		// TODO(dzmitryhi) discuss with the team an ability to user balance + 1 as locked amount in case if remainder
 		balance, remainder := cbig.IntMulRatWithRemainder(o.Quantity.BigInt(), o.Price.Rat())
 		if !cbig.IntEqZero(remainder) {
 			return sdk.Coin{}, sdkerrors.Wrapf(

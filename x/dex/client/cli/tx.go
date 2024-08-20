@@ -16,6 +16,15 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
+const (
+	// PriceFlag is price flag.
+	PriceFlag = "price"
+	// OrderTypeLimit is limit order type.
+	OrderTypeLimit = "limit"
+	// OrderTypeMarket is limit order market.
+	OrderTypeMarket = "market"
+)
+
 // GetTxCmd returns the transaction commands for this module.
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -37,7 +46,7 @@ func GetTxCmd() *cobra.Command {
 // CmdPlaceOrder returns PlaceOrder cobra command.
 func CmdPlaceOrder() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "place-order [id] [base_denom] [quote_denom] [price] [quantity] [side] --from [sender]",
+		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --from [sender]", //nolint:lll // string example
 		Args:  cobra.ExactArgs(6),
 		Short: "Place new order",
 		Long: strings.TrimSpace(
@@ -56,14 +65,20 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 			}
 
 			sender := clientCtx.GetFromAddress()
-			id := args[0]
-			baseDenom := args[1]
-			quoteDenom := args[2]
 
-			price, err := types.NewPriceFromString(args[3])
-			if err != nil {
-				return sdkerrors.Wrap(err, "invalid price")
+			var orderType types.OrderType
+			switch args[0] {
+			case OrderTypeLimit:
+				orderType = types.ORDER_TYPE_LIMIT
+			case OrderTypeMarket:
+				orderType = types.ORDER_TYPE_MARKET
+			default:
+				return errors.Errorf("unknown type '%s'", args[0])
 			}
+
+			id := args[1]
+			baseDenom := args[2]
+			quoteDenom := args[3]
 
 			quantity, ok := sdkmath.NewIntFromString(args[4])
 			if !ok {
@@ -75,8 +90,22 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 				return errors.Errorf("unknown side '%s'", args[5])
 			}
 
+			priceStr, err := cmd.Flags().GetString(PriceFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			var price *types.Price
+			if priceStr != "" {
+				priceV, err := types.NewPriceFromString(priceStr)
+				if err != nil {
+					return sdkerrors.Wrap(err, "invalid price")
+				}
+				price = &priceV
+			}
+
 			msg := &types.MsgPlaceOrder{
 				Sender:     sender.String(),
+				Type:       orderType,
 				ID:         id,
 				BaseDenom:  baseDenom,
 				QuoteDenom: quoteDenom,
@@ -88,6 +117,8 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	cmd.Flags().String(PriceFlag, "", "Order price.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
