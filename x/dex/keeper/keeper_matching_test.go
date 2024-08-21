@@ -200,7 +200,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
-					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 3760)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 3761)),
 				}
 			},
 			orders: func(accSet AccSet) []types.Order {
@@ -222,7 +222,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
 						Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:   sdkmath.NewInt(10000),
+						Quantity:   sdkmath.NewInt(10001),
 						Side:       types.SIDE_BUY,
 					},
 				}
@@ -236,12 +236,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
 						Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:   sdkmath.NewInt(10000),
+						Quantity:   sdkmath.NewInt(10001),
 						Side:       types.SIDE_BUY,
 						// 10000 - 1000
-						RemainingQuantity: sdkmath.NewInt(9000),
-						// 376e-3 * 10000 - 375e-3 * 1000 = 3385
-						RemainingBalance: sdkmath.NewInt(3385),
+						RemainingQuantity: sdkmath.NewInt(9001),
+						// floor(376e-3 * 10001) + 1 - 375e-3 * 1000 = 3386
+						RemainingBalance: sdkmath.NewInt(3386),
 					},
 				}
 			},
@@ -349,7 +349,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 10000)),
-					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 376)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 377)),
 				}
 			},
 			orders: func(accSet AccSet) []types.Order {
@@ -371,7 +371,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
 						Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:   sdkmath.NewInt(1000),
+						Quantity:   sdkmath.NewInt(1001),
 						Side:       types.SIDE_BUY,
 					},
 				}
@@ -397,7 +397,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375)),
-					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 1)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 2)),
 				}
 			},
 		},
@@ -1641,7 +1641,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 381)),
-					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 26500)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 26506)),
 				}
 			},
 			orders: func(accSet AccSet) []types.Order {
@@ -1663,7 +1663,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:  denom2,
 						QuoteDenom: denom1,
 						Price:      lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:   sdkmath.NewInt(10000),
+						Quantity:   sdkmath.NewInt(10002),
 						Side:       types.SIDE_BUY,
 					},
 				}
@@ -1677,11 +1677,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:  denom2,
 						QuoteDenom: denom1,
 						Price:      lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:   sdkmath.NewInt(10000),
+						Quantity:   sdkmath.NewInt(10002),
 						Side:       types.SIDE_BUY,
 
-						RemainingQuantity: sdkmath.NewInt(9619),
-						RemainingBalance:  sdkmath.NewInt(25500),
+						RemainingQuantity: sdkmath.NewInt(9621),
+						RemainingBalance:  sdkmath.NewInt(25506),
 					},
 				}
 			},
@@ -1730,7 +1730,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			name: "match_limit_opposite_maker_buy_taker_buy_close_taker_with_partial_filling",
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 3810)),
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 4234)),
 					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 2650)),
 				}
 			},
@@ -1743,7 +1743,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
 						Price:      lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:   sdkmath.NewInt(10000),
+						Quantity:   sdkmath.NewInt(11111),
 						Side:       types.SIDE_BUY,
 					},
 					{
@@ -1767,11 +1767,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
 						Price:      lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:   sdkmath.NewInt(10000),
+						Quantity:   sdkmath.NewInt(11111),
 						Side:       types.SIDE_BUY,
 
-						RemainingQuantity: sdkmath.NewInt(8000),
-						RemainingBalance:  sdkmath.NewInt(3048),
+						RemainingQuantity: sdkmath.NewInt(9111),
+						RemainingBalance:  sdkmath.NewInt(3472),
 					},
 				}
 			},

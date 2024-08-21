@@ -82,15 +82,6 @@ func placeRandomOrderAndAssertOrdering(
 	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
 	acc, _ := testApp.GenAccount(sdkCtx)
 
-	var quantity sdkmath.Int
-	if side == types.SIDE_BUY {
-		// make the quantity big enough but not
-		quantity = sdkmath.NewIntFromBigInt(price.Rat().Denom())
-	} else {
-		// for the sell side we use constant to test the min and max price
-		quantity = sdkmath.NewInt(1)
-	}
-
 	order := types.Order{
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
@@ -98,7 +89,7 @@ func placeRandomOrderAndAssertOrdering(
 		BaseDenom:  baseDenom,
 		QuoteDenom: quoteDenom,
 		Price:      &price,
-		Quantity:   quantity,
+		Quantity:   sdkmath.NewInt(1),
 		Side:       side,
 	}
 	t.Logf("Order to place: %s", order.String())
