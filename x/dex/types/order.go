@@ -29,10 +29,10 @@ func init() {
 // Opposite returns opposite side.
 func (s Side) Opposite() (Side, error) {
 	switch s {
-	case Side_sell:
-		return Side_buy, nil
-	case Side_buy:
-		return Side_sell, nil
+	case SIDE_SELL:
+		return SIDE_BUY, nil
+	case SIDE_BUY:
+		return SIDE_SELL, nil
 	default:
 		return 0, sdkerrors.Wrapf(ErrInvalidInput, "invalid side: %s", s)
 	}
@@ -41,7 +41,7 @@ func (s Side) Opposite() (Side, error) {
 // Validate validates order side.
 func (s Side) Validate() error {
 	switch s {
-	case Side_sell, Side_buy:
+	case SIDE_SELL, SIDE_BUY:
 		return nil
 	default:
 		return sdkerrors.Wrapf(ErrInvalidInput, "only %s and %s sides are allowed", s.String(), s.String())
@@ -52,6 +52,7 @@ func (s Side) Validate() error {
 func NewOrderFormMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 	o := Order{
 		Creator:    msg.Sender,
+		Type:       msg.Type,
 		ID:         msg.ID,
 		BaseDenom:  msg.BaseDenom,
 		QuoteDenom: msg.QuoteDenom,
@@ -92,6 +93,28 @@ func (o Order) Validate() error {
 		return err
 	}
 
+	switch o.Type {
+	case ORDER_TYPE_LIMIT:
+		if o.Price == nil {
+			return sdkerrors.Wrap(
+				ErrInvalidInput, "price must be not nil for the limit order",
+			)
+		}
+		if _, err := o.ComputeLimitOrderLockedBalance(); err != nil {
+			return err
+		}
+	case ORDER_TYPE_MARKET:
+		if o.Price != nil {
+			return sdkerrors.Wrap(
+				ErrInvalidInput, "price must be nil for the limit order",
+			)
+		}
+	default:
+		return sdkerrors.Wrapf(
+			ErrInvalidInput, "unsupported order type : %s", o.Type.String(),
+		)
+	}
+
 	if !o.RemainingQuantity.IsNil() {
 		return sdkerrors.Wrap(ErrInvalidInput, "initial remaining quantity must be nil")
 	}
@@ -100,22 +123,19 @@ func (o Order) Validate() error {
 		return sdkerrors.Wrap(ErrInvalidInput, "initial remaining balance must be nil")
 	}
 
-	if _, err := o.ComputeLockedBalance(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-// ComputeLockedBalance computes the balance locked for the order.
-func (o Order) ComputeLockedBalance() (sdk.Coin, error) {
-	if o.Side == Side_buy {
+// ComputeLimitOrderLockedBalance computes the order locked balance.
+func (o Order) ComputeLimitOrderLockedBalance() (sdk.Coin, error) {
+	if o.Side == SIDE_BUY {
+		// TODO(dzmitryhi) discuss with the team an ability to user balance + 1 as locked amount in case if remainder
 		balance, remainder := cbig.IntMulRatWithRemainder(o.Quantity.BigInt(), o.Price.Rat())
 		if !cbig.IntEqZero(remainder) {
 			return sdk.Coin{}, sdkerrors.Wrapf(
 				ErrInvalidInput,
 				"quantity multiplied by price must be an integer, for %s side",
-				Side_buy.String(),
+				SIDE_BUY.String(),
 			)
 		}
 		if isBigIntOverflowsSDKInt(balance) {
@@ -132,7 +152,7 @@ func (o Order) ComputeLockedBalance() (sdk.Coin, error) {
 
 // GetBalanceDenom returns order balance denom.
 func (o Order) GetBalanceDenom() string {
-	if o.Side == Side_buy {
+	if o.Side == SIDE_BUY {
 		return o.QuoteDenom
 	}
 

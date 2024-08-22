@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
@@ -36,11 +37,12 @@ func TestCmdPlaceOrder(t *testing.T) {
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:         "id1",
+		Type:       types.ORDER_TYPE_LIMIT,
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
-		Price:      types.MustNewPriceFromString("123e-2"),
+		Price:      lo.ToPtr(types.MustNewPriceFromString("123e-2")),
 		Quantity:   sdkmath.NewInt(100),
-		Side:       types.Side_sell,
+		Side:       types.SIDE_SELL,
 	})
 }
 
@@ -52,11 +54,12 @@ func TestCmdCancelOrder(t *testing.T) {
 	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
 	order := types.Order{
 		ID:         "id1",
+		Type:       types.ORDER_TYPE_LIMIT,
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
-		Price:      types.MustNewPriceFromString("123e-2"),
+		Price:      lo.ToPtr(types.MustNewPriceFromString("123e-2")),
 		Quantity:   sdkmath.NewInt(100),
-		Side:       types.Side_sell,
+		Side:       types.SIDE_SELL,
 	}
 
 	placeOrder(ctx, requireT, testNetwork, order)
@@ -80,14 +83,25 @@ func placeOrder(
 	testNetwork *network.Network,
 	order types.Order,
 ) {
+	var orderType string
+	switch order.Type {
+	case types.ORDER_TYPE_LIMIT:
+		orderType = cli.OrderTypeLimit
+	case types.ORDER_TYPE_MARKET:
+		orderType = cli.OrderTypeMarket
+	default:
+		requireT.Fail(fmt.Sprintf("unknown type '%s'", order.Type))
+	}
+
 	args := append(
 		[]string{
+			orderType,
 			order.ID,
 			order.BaseDenom,
 			order.QuoteDenom,
-			order.Price.String(),
 			order.Quantity.String(),
 			order.Side.String(),
+			"--" + cli.PriceFlag, order.Price.String(),
 		}, txValidator1Args(testNetwork)...)
 	_, err := coreumclitestutil.ExecTxCmd(
 		ctx,

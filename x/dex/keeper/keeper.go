@@ -257,7 +257,7 @@ func (k Keeper) createOrder(
 
 	if err := k.savaOrderData(ctx, orderSeq, types.OrderData{
 		OrderBookID: record.OrderBookID,
-		Price:       order.Price,
+		Price:       *order.Price,
 		Quantity:    order.Quantity,
 		Side:        order.Side,
 	}); err != nil {
@@ -357,10 +357,11 @@ func (k Keeper) getOrderWithRecordByAddressAndID(
 
 	return types.Order{
 			Creator:           acc.String(),
+			Type:              types.ORDER_TYPE_LIMIT,
 			ID:                orderID,
 			BaseDenom:         orderBookData.BaseDenom,
 			QuoteDenom:        orderBookData.QuoteDenom,
-			Price:             orderBookRecord.Price,
+			Price:             &orderBookRecord.Price,
 			Quantity:          orderData.Quantity,
 			Side:              orderBookRecord.Side,
 			RemainingQuantity: orderBookRecord.RemainingQuantity,
@@ -449,10 +450,11 @@ func (k Keeper) getPaginatedOrders(
 
 			return &types.Order{
 				Creator:           acc.String(),
+				Type:              types.ORDER_TYPE_LIMIT,
 				ID:                orderBookRecord.OrderID,
 				BaseDenom:         orderBookData.BaseDenom,
 				QuoteDenom:        orderBookData.QuoteDenom,
-				Price:             orderData.Price,
+				Price:             &orderData.Price,
 				Quantity:          orderData.Quantity,
 				Side:              orderData.Side,
 				RemainingQuantity: orderBookRecord.RemainingQuantity,
@@ -537,10 +539,11 @@ func (k Keeper) getPaginatedOrderBookOrders(
 
 			return &types.Order{
 				Creator:           acc.String(),
+				Type:              types.ORDER_TYPE_LIMIT,
 				ID:                record.OrderID,
 				BaseDenom:         baseDenom,
 				QuoteDenom:        quoteDenom,
-				Price:             price,
+				Price:             &price,
 				Quantity:          orderData.Quantity,
 				Side:              side,
 				RemainingQuantity: record.RemainingQuantity,

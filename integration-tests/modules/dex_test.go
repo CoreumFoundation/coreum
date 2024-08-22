@@ -20,8 +20,8 @@ import (
 	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
-// TestOrdersMatching tests the dex modules ability to place get and match orders.
-func TestOrdersMatching(t *testing.T) {
+// TestLimitOrdersMatching tests the dex modules ability to place get and match limit orders.
+func TestLimitOrdersMatching(t *testing.T) {
 	t.Parallel()
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -48,12 +48,13 @@ func TestOrdersMatching(t *testing.T) {
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:     acc1.String(),
+		Type:       dextypes.ORDER_TYPE_LIMIT,
 		ID:         "id1",
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
-		Price:      dextypes.MustNewPriceFromString("1e-1"),
+		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
 		Quantity:   sdkmath.NewInt(100),
-		Side:       dextypes.Side_sell,
+		Side:       dextypes.SIDE_SELL,
 	}
 
 	txResult, err := client.BroadcastTx(
@@ -74,12 +75,13 @@ func TestOrdersMatching(t *testing.T) {
 
 	requireT.Equal(dextypes.Order{
 		Creator:           acc1.String(),
+		Type:              dextypes.ORDER_TYPE_LIMIT,
 		ID:                "id1",
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,
-		Price:             dextypes.MustNewPriceFromString("1e-1"),
+		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
 		Quantity:          sdkmath.NewInt(100),
-		Side:              dextypes.Side_sell,
+		Side:              dextypes.SIDE_SELL,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}, sellOrderRes.Order)
@@ -87,12 +89,13 @@ func TestOrdersMatching(t *testing.T) {
 	// place buy order to match the sell
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:     acc2.String(),
+		Type:       dextypes.ORDER_TYPE_LIMIT,
 		ID:         "id1", // same ID allowed for different user
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
-		Price:      dextypes.MustNewPriceFromString("11e-2"),
+		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
 		Quantity:   sdkmath.NewInt(300),
-		Side:       dextypes.Side_buy,
+		Side:       dextypes.SIDE_BUY,
 	}
 
 	_, err = client.BroadcastTx(
@@ -120,12 +123,13 @@ func TestOrdersMatching(t *testing.T) {
 
 	requireT.Equal(dextypes.Order{
 		Creator:           acc2.String(),
+		Type:              dextypes.ORDER_TYPE_LIMIT,
 		ID:                "id1", // same ID allowed for different users
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,
-		Price:             dextypes.MustNewPriceFromString("11e-2"),
+		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
 		Quantity:          sdkmath.NewInt(300),
-		Side:              dextypes.Side_buy,
+		Side:              dextypes.SIDE_BUY,
 		RemainingQuantity: sdkmath.NewInt(200),
 		RemainingBalance:  sdkmath.NewInt(23),
 	}, buyOrderRes.Order)
@@ -143,6 +147,94 @@ func TestOrdersMatching(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+}
+
+// TestMarketOrdersMatching tests the dex modules ability to place match market orders.
+func TestMarketOrdersMatching(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+		},
+	})
+
+	acc2 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+		},
+	})
+
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:     acc1.String(),
+		Type:       dextypes.ORDER_TYPE_LIMIT,
+		ID:         "id1",
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:   sdkmath.NewInt(100),
+		Side:       dextypes.SIDE_SELL,
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	// place buy market order to match the sell
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:     acc2.String(),
+		Type:       dextypes.ORDER_TYPE_MARKET,
+		ID:         "id2",
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Quantity:   sdkmath.NewInt(300),
+		Side:       dextypes.SIDE_BUY,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		placeBuyOrderMsg,
+	)
+	requireT.NoError(err)
+
+	acc1BalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+		Address: acc1.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(
+		sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(999900)),
+			sdk.NewCoin(denom2, sdkmath.NewInt(10)),
+		).String(),
+		acc1BalancesRes.Balances.String(),
+	)
+
+	acc2BalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+		Address: acc2.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(
+		sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+			sdk.NewCoin(denom2, sdkmath.NewInt(999990)),
+		).String(),
+		acc2BalancesRes.Balances.String(),
+	)
 }
 
 // TestOrderCancellation tests the dex modules ability to place cancel placed order.
@@ -165,12 +257,13 @@ func TestOrderCancellation(t *testing.T) {
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:     acc1.String(),
+		Type:       dextypes.ORDER_TYPE_LIMIT,
 		ID:         "id1",
 		BaseDenom:  denom1,
 		QuoteDenom: "denom2",
-		Price:      dextypes.MustNewPriceFromString("1e-1"),
+		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
 		Quantity:   sdkmath.NewInt(100),
-		Side:       dextypes.Side_sell,
+		Side:       dextypes.SIDE_SELL,
 	}
 
 	_, err := client.BroadcastTx(
@@ -230,12 +323,13 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	acc1Orders := []dextypes.Order{
 		{
 			Creator:           acc1.String(),
+			Type:              dextypes.ORDER_TYPE_LIMIT,
 			ID:                "id1",
 			BaseDenom:         denom1,
 			QuoteDenom:        denom2,
-			Price:             dextypes.MustNewPriceFromString("999"),
+			Price:             lo.ToPtr(dextypes.MustNewPriceFromString("999")),
 			Quantity:          sdkmath.NewInt(100),
-			Side:              dextypes.Side_sell,
+			Side:              dextypes.SIDE_SELL,
 			RemainingQuantity: sdkmath.NewInt(100),
 			RemainingBalance:  sdkmath.NewInt(100),
 		},
@@ -256,23 +350,25 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	acc2Orders := []dextypes.Order{
 		{
 			Creator:           acc2.String(),
+			Type:              dextypes.ORDER_TYPE_LIMIT,
 			ID:                "id1",
 			BaseDenom:         denom1,
 			QuoteDenom:        denom2,
-			Price:             dextypes.MustNewPriceFromString("996"),
+			Price:             lo.ToPtr(dextypes.MustNewPriceFromString("996")),
 			Quantity:          sdkmath.NewInt(10),
-			Side:              dextypes.Side_buy,
+			Side:              dextypes.SIDE_BUY,
 			RemainingQuantity: sdkmath.NewInt(10),
 			RemainingBalance:  sdkmath.NewInt(9960),
 		},
 		{
 			Creator:           acc2.String(),
+			Type:              dextypes.ORDER_TYPE_LIMIT,
 			ID:                "id2",
 			BaseDenom:         denom1,
 			QuoteDenom:        denom2,
-			Price:             dextypes.MustNewPriceFromString("997"),
+			Price:             lo.ToPtr(dextypes.MustNewPriceFromString("997")),
 			Quantity:          sdkmath.NewInt(10),
-			Side:              dextypes.Side_buy,
+			Side:              dextypes.SIDE_BUY,
 			RemainingQuantity: sdkmath.NewInt(10),
 			RemainingBalance:  sdkmath.NewInt(9970),
 		},
@@ -305,7 +401,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	orderBookOrdersRes, err := dexClient.OrdersBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
-		Side:       dextypes.Side_sell,
+		Side:       dextypes.SIDE_SELL,
 	})
 	requireT.NoError(err)
 	// acc1 orders because all of them sell
@@ -353,6 +449,7 @@ func ordersToPlaceMsgs(orders []dextypes.Order) []sdk.Msg {
 	return lo.Map(orders, func(order dextypes.Order, _ int) sdk.Msg {
 		return &dextypes.MsgPlaceOrder{
 			Sender:     order.Creator,
+			Type:       dextypes.ORDER_TYPE_LIMIT,
 			ID:         order.ID,
 			BaseDenom:  order.BaseDenom,
 			QuoteDenom: order.QuoteDenom,

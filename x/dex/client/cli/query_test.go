@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
@@ -22,12 +23,13 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 	creator := validator1Address(testNetwork)
 	order1 := types.Order{
 		Creator:           creator.String(),
+		Type:              types.ORDER_TYPE_LIMIT,
 		ID:                "id1",
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,
-		Price:             types.MustNewPriceFromString("123e-2"),
+		Price:             lo.ToPtr(types.MustNewPriceFromString("123e-2")),
 		Quantity:          sdkmath.NewInt(100),
-		Side:              types.Side_sell,
+		Side:              types.SIDE_SELL,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}
@@ -56,12 +58,13 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 
 	order2 := types.Order{
 		Creator:           creator.String(),
+		Type:              types.ORDER_TYPE_LIMIT,
 		ID:                "id2",
 		BaseDenom:         denom1,
 		QuoteDenom:        denom3,
-		Price:             types.MustNewPriceFromString("124e-2"),
+		Price:             lo.ToPtr(types.MustNewPriceFromString("124e-2")),
 		Quantity:          sdkmath.NewInt(100),
-		Side:              types.Side_sell,
+		Side:              types.SIDE_SELL,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}
@@ -78,7 +81,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 	// check order book orders
 	var orderBookOrdersRes types.QueryOrderBookOrdersResponse
 	coreumclitestutil.ExecQueryCmd(
-		t, ctx, cli.CmdQueryOrderBookOrders(), []string{denom1, denom2, types.Side_sell.String()}, &orderBookOrdersRes,
+		t, ctx, cli.CmdQueryOrderBookOrders(), []string{denom1, denom2, types.SIDE_SELL.String()}, &orderBookOrdersRes,
 	)
 	requireT.ElementsMatch([]types.Order{
 		order1,

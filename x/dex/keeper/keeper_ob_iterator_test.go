@@ -23,7 +23,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 		{
 			name:        "sell_no_record",
 			priceGroups: [][]string{},
-			side:        types.Side_sell,
+			side:        types.SIDE_SELL,
 		},
 		{
 			name: "sell_one_record",
@@ -32,7 +32,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"99e-3",
 				},
 			},
-			side: types.Side_sell,
+			side: types.SIDE_SELL,
 		},
 		{
 			name: "sell_three_records_with_different_prices",
@@ -43,7 +43,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1e2",
 				},
 			},
-			side: types.Side_sell,
+			side: types.SIDE_SELL,
 		},
 		{
 			name: "sell_combined",
@@ -91,12 +91,12 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1231239e-32",
 				},
 			},
-			side: types.Side_sell,
+			side: types.SIDE_SELL,
 		},
 		{
 			name:        "buy_no_record",
 			priceGroups: [][]string{},
-			side:        types.Side_buy,
+			side:        types.SIDE_BUY,
 		},
 		{
 			name: "buy_one_record",
@@ -105,7 +105,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"99e-3",
 				},
 			},
-			side: types.Side_buy,
+			side: types.SIDE_BUY,
 		},
 		{
 			name: "buy_three_records_with_different_prices",
@@ -116,7 +116,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1e2",
 				},
 			},
-			side: types.Side_buy,
+			side: types.SIDE_BUY,
 		},
 		{
 			name: "buy_multiple_prices_two_same",
@@ -128,7 +128,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"2e-1",
 				},
 			},
-			side: types.Side_buy,
+			side: types.SIDE_BUY,
 		},
 		{
 			name: "buy_two_same_prices",
@@ -138,7 +138,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1e-1",
 				},
 			},
-			side: types.Side_buy,
+			side: types.SIDE_BUY,
 		},
 		{
 			name: "buy_tree_same_prices",
@@ -149,7 +149,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1e-1",
 				},
 			},
-			side: types.Side_buy,
+			side: types.SIDE_BUY,
 		},
 		{
 			name: "buy_tree_same_prices_after_different",
@@ -161,7 +161,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1e-1",
 				},
 			},
-			side: types.Side_buy,
+			side: types.SIDE_BUY,
 		},
 		{
 			name: "buy_tree_same_prices_before_another",
@@ -173,7 +173,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1e-2",
 				},
 			},
-			side: types.Side_buy,
+			side: types.SIDE_BUY,
 		},
 		{
 			name: "buy_combined",
@@ -221,7 +221,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1231239e-32",
 				},
 			},
-			side: types.Side_buy,
+			side: types.SIDE_BUY,
 		},
 	}
 	for _, tt := range tests {
@@ -249,7 +249,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					acc, _ := testApp.GenAccount(sdkCtx)
 
 					var quantity sdkmath.Int
-					if tt.side == types.Side_buy {
+					if tt.side == types.SIDE_BUY {
 						// make the locked balance as Int for any side
 						quantity = sdkmath.NewIntFromBigInt(price.Rat().Denom())
 					} else {
@@ -258,15 +258,16 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					}
 					order := types.Order{
 						Creator:    acc.String(),
+						Type:       types.ORDER_TYPE_LIMIT,
 						ID:         uuid.Generate().String(),
 						BaseDenom:  baseDenom,
 						QuoteDenom: quoteDenom,
-						Price:      price,
+						Price:      &price,
 						Quantity:   quantity,
 						Side:       tt.side,
 					}
 
-					lockedBalance, err := order.ComputeLockedBalance()
+					lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 					require.NoError(t, err)
 					testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 					require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
@@ -300,7 +301,7 @@ func assertOrdersOrdering(
 ) {
 	t.Helper()
 	storedRecords := getSorterOrderBookRecords(t, testApp, sdkCtx, orderBookID, side)
-	if side == types.Side_buy {
+	if side == types.SIDE_BUY {
 		// buy - price desc + order sec asc
 		for i := 0; i < len(storedRecords)-1; i++ {
 			left := storedRecords[i]

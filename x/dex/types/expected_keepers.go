@@ -24,4 +24,5 @@ type AssetFTKeeper interface {
 	DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
 	DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
 	DEXUnlockAndSend(ctx sdk.Context, from, to sdk.AccAddress, coin sdk.Coin) error
+	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
