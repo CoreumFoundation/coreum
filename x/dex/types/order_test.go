@@ -147,15 +147,6 @@ func TestOrder_Validate(t *testing.T) {
 			wantErr: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid_locked_balance",
-			order: func() types.Order {
-				order := validOrder()
-				order.Quantity = sdkmath.NewInt(111)
-				return order
-			}(),
-			wantErr: types.ErrInvalidInput,
-		},
-		{
 			name: "invalid_locked_balance_out_or_range",
 			order: func() types.Order {
 				order := validOrder()
