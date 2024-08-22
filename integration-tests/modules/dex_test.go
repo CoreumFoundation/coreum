@@ -193,7 +193,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// place buy market rder to match the sell
+	// place buy market order to match the sell
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:     acc2.String(),
 		Type:       dextypes.ORDER_TYPE_MARKET,
