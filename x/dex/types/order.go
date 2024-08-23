@@ -129,14 +129,9 @@ func (o Order) Validate() error {
 // ComputeLimitOrderLockedBalance computes the order locked balance.
 func (o Order) ComputeLimitOrderLockedBalance() (sdk.Coin, error) {
 	if o.Side == SIDE_BUY {
-		// TODO(dzmitryhi) discuss with the team an ability to user balance + 1 as locked amount in case if remainder
 		balance, remainder := cbig.IntMulRatWithRemainder(o.Quantity.BigInt(), o.Price.Rat())
 		if !cbig.IntEqZero(remainder) {
-			return sdk.Coin{}, sdkerrors.Wrapf(
-				ErrInvalidInput,
-				"quantity multiplied by price must be an integer, for %s side",
-				SIDE_BUY.String(),
-			)
+			balance = cbig.IntAdd(balance, big.NewInt(1))
 		}
 		if isBigIntOverflowsSDKInt(balance) {
 			return sdk.Coin{}, sdkerrors.Wrapf(
