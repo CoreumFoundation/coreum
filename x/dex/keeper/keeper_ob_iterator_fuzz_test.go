@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"strconv"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -24,7 +22,7 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 	f.Add(uint64(1), types.MinExt)
 
 	testApp := simapp.New()
-	lock := &sync.Mutex{}
+	lock := sync.Mutex{}
 
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
 		lock.Lock()
@@ -40,10 +38,10 @@ func FuzzSaveBuyOrderAndReadWithSorting(f *testing.F) {
 	f.Add(uint64(9999999999999999999), int8(10))
 
 	testApp := simapp.New()
-	lock := &sync.Mutex{}
+	lock := sync.Mutex{}
 
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
-		// to prevent fast fail, because of out of sdk,Int range in the bank keeper at the time of the funding
+		// to prevent fast fail, because of out of sdkmath.Int range in the bank keeper at the time of the funding
 		// we limit the exponent.
 		if exp < -10 || exp > 10 {
 			t.Skip()
@@ -64,20 +62,10 @@ func placeRandomOrderAndAssertOrdering(
 	baseDenom := denom1
 	quoteDenom := denom2
 
-	// prepare valid price
-	var expPart string
-	if exp != 0 {
-		expPart = types.ExponentSymbol + strconv.Itoa(int(exp))
-	}
-	numPart := strconv.FormatUint(num, 10)
-	if strings.HasSuffix(numPart, "0") || len(numPart) > types.MaxNumLen {
+	price, ok := buildNumExpPrice(num, exp)
+	if !ok {
 		t.Skip()
 	}
-	if exp > types.MaxExp || exp < types.MinExt {
-		t.Skip()
-	}
-	priceStr := strconv.FormatUint(num, 10) + expPart
-	price := types.MustNewPriceFromString(priceStr)
 
 	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
 	acc, _ := testApp.GenAccount(sdkCtx)
@@ -94,10 +82,7 @@ func placeRandomOrderAndAssertOrdering(
 	}
 	t.Logf("Order to place: %s", order.String())
 	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
-	if err != nil {
-		// the generated balance might overflow the sdkmath.Int type
-		t.Skip()
-	}
+	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))

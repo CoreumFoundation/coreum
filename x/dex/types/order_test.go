@@ -93,6 +93,15 @@ func TestOrder_Validate(t *testing.T) {
 			wantErr: types.ErrInvalidInput,
 		},
 		{
+			name: "invalid_same_base_and_quote_denoms",
+			order: func() types.Order {
+				order := validOrder()
+				order.BaseDenom = order.QuoteDenom
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
 			name: "invalid_quantity_negative",
 			order: func() types.Order {
 				order := validOrder()
