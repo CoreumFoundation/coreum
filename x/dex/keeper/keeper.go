@@ -89,7 +89,7 @@ func (k Keeper) CancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 		return err
 	}
 
-	return k.assetFTKeeper.DEXUnlock(ctx, acc, sdk.NewCoin(order.GetBalanceDenom(), order.RemainingBalance))
+	return k.assetFTKeeper.DEXUnlock(ctx, acc, sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance))
 }
 
 // GetOrderBookIDByDenoms returns order book ID by it's denoms.

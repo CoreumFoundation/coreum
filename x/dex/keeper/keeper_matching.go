@@ -80,7 +80,7 @@ func (k Keeper) matchOrder(
 			if err := k.unlockCoin(
 				ctx,
 				creatorAddr,
-				sdk.NewCoin(order.GetBalanceDenom(), takerRecord.RemainingBalance),
+				sdk.NewCoin(order.GetSpendDenom(), takerRecord.RemainingBalance),
 			); err != nil {
 				return err
 			}
@@ -320,11 +320,11 @@ func getRecordsReceiveCoins(
 	}
 
 	if closeMaker { // recordToClose is maker
-		recordToCloseReceiveDenom = order.GetBalanceDenom()
-		recordToReduceReceiveDenom = order.GetOppositeFromBalanceDenom()
+		recordToCloseReceiveDenom = order.GetSpendDenom()
+		recordToReduceReceiveDenom = order.GetReceiveDenom()
 	} else { // recordToClose is taker
-		recordToCloseReceiveDenom = order.GetOppositeFromBalanceDenom()
-		recordToReduceReceiveDenom = order.GetBalanceDenom()
+		recordToCloseReceiveDenom = order.GetReceiveDenom()
+		recordToReduceReceiveDenom = order.GetSpendDenom()
 	}
 
 	recordToCloseReceiveCoin := sdk.NewCoin(recordToCloseReceiveDenom, recordToCloseReceiveAmt)
