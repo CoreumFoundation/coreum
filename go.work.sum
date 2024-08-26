@@ -316,6 +316,8 @@ github.com/CloudyKit/jet/v6 v6.2.0 h1:EpcZ6SR9n28BUGtNJSvlBqf90IpjeFr36Tizxhn/oM
 github.com/CloudyKit/jet/v6 v6.2.0/go.mod h1:d3ypHeIRNo2+XyqnGA8s+aphtcVpjP5hPwP/Lzo7Ro4=
 github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd h1:4nns+B+HSRdWLHSn8KHv1q4Y4/eNMvp8lyg4uA0/2Xg=
 github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd/go.mod h1:+tc+D5f9K7oNNtv8UazzNy8LheAhBG7UDc25JwY803Y=
+github.com/CoreumFoundation/crust v0.0.0-20240826114038-46fc12fae481 h1:EdgwleYocnP2EGb++I0CDMxVPFmbTbo3MxiZ+JGhaDI=
+github.com/CoreumFoundation/crust v0.0.0-20240826114038-46fc12fae481/go.mod h1:+tc+D5f9K7oNNtv8UazzNy8LheAhBG7UDc25JwY803Y=
 github.com/CosmWasm/wasmd v0.40.0-rc.1/go.mod h1:uacdue6EGn9JA1TqBNHB3iCe4PCIChuFT23AzIl2VME=
 github.com/CosmWasm/wasmvm v1.2.3/go.mod h1:vW/E3h8j9xBQs9bCoijDuawKo9kCtxOaS8N8J7KFtkc=
 github.com/CosmWasm/wasmvm v1.5.0/go.mod h1:fXB+m2gyh4v9839zlIXdMZGeLAxqUdYdFQqYsTha2hc=
@@ -616,8 +618,6 @@ github.com/cosmos/cosmos-proto v1.0.0-beta.4/go.mod h1:oeB+FyVzG3XrQJbJng0EnV8Vl
 github.com/cosmos/cosmos-sdk v0.47.3-0.20230513170018-83d600596f5d/go.mod h1:f3jiGiA4OauW0xaDL5KB09x4FtPP5ilvPGvi+S2dHCY=
 github.com/cosmos/cosmos-sdk v0.47.5/go.mod h1:EHwCeN9IXonsjKcjpS12MqeStdZvIdxt3VYXhus3G3c=
 github.com/cosmos/cosmos-sdk v0.47.8/go.mod h1:VTAtthIsmfplanhFfUTfT6ED4F+kkJxT7nmvmKXRthI=
-github.com/cosmos/cosmos-sdk v0.47.12 h1:KOZHAVWrcilHywBN/FabBaXbDFMzoFmtdX0hqy5Ory8=
-github.com/cosmos/cosmos-sdk v0.47.12/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
 github.com/cosmos/cosmos-sdk v0.50.1/go.mod h1:fsLSPGstCwn6MMsFDMAQWGJj8E4sYsN9Gnu1bGE5imA=
 github.com/cosmos/cosmos-sdk v0.50.4/go.mod h1:UbShFs6P8Ly29xxJvkNGaNaL/UGj5a686NRtb1Cqra0=
 github.com/cosmos/cosmos-sdk/db v1.0.0-beta.1.0.20220726092710-f848e4300a8a h1:2humuGPw3O5riJVFq/E2FRjF57UrO97W1qJcGVmK+6k=
