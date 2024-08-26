@@ -190,14 +190,12 @@ func buildCoredInDocker(
 
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps types.DepsFunc) error {
-	// FIXME(dzmitryhil) restore breakingProto
-	_ = breakingProto
 	deps(
 		Generate,
 		CompileAllSmartContracts,
 		formatProto,
 		lintProto,
-		// breakingProto, //nolint:gocritic
+		breakingProto,
 	)
 	return golang.Lint(ctx, deps)
 }

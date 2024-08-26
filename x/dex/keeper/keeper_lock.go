@@ -4,7 +4,6 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
@@ -39,12 +38,6 @@ func (k Keeper) lockOrderBalance(
 		)
 	}
 
-	if !lockedBalance.IsPositive() {
-		return sdkmath.Int{}, sdkerrors.Wrapf(
-			cosmoserrors.ErrInsufficientFunds, "no funds of denom: %s to lock", lockedBalance.Denom,
-		)
-	}
-
 	if err := k.lockCoin(ctx, creatorAddr, lockedBalance); err != nil {
 		return sdkmath.Int{}, err
 	}
@@ -62,7 +55,12 @@ func (k Keeper) lockCoin(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) er
 		"coin", coin.String(),
 	)
 
-	return k.assetFTKeeper.DEXLock(ctx, addr, coin)
+	err := k.assetFTKeeper.DEXLock(ctx, addr, coin)
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrFailedToLockCoin, "failed to lock order coins: %s", err)
+	}
+
+	return nil
 }
 
 func (k Keeper) unlockCoin(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {

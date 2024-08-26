@@ -85,6 +85,10 @@ func (o Order) Validate() error {
 		return sdkerrors.Wrap(ErrInvalidInput, "quote denom can't be empty")
 	}
 
+	if o.BaseDenom == o.QuoteDenom {
+		return sdkerrors.Wrap(ErrInvalidInput, "base and quote denoms must be different")
+	}
+
 	if !o.Quantity.IsPositive() {
 		return sdkerrors.Wrap(ErrInvalidInput, "quantity must be positive")
 	}
@@ -145,8 +149,8 @@ func (o Order) ComputeLimitOrderLockedBalance() (sdk.Coin, error) {
 	return sdk.NewCoin(o.BaseDenom, o.Quantity), nil
 }
 
-// GetBalanceDenom returns order balance denom.
-func (o Order) GetBalanceDenom() string {
+// GetSpendDenom returns order spending denom.
+func (o Order) GetSpendDenom() string {
 	if o.Side == SIDE_BUY {
 		return o.QuoteDenom
 	}
@@ -154,9 +158,9 @@ func (o Order) GetBalanceDenom() string {
 	return o.BaseDenom
 }
 
-// GetOppositeFromBalanceDenom returns the order denom which is not balance denom.
-func (o Order) GetOppositeFromBalanceDenom() string {
-	if o.BaseDenom == o.GetBalanceDenom() {
+// GetReceiveDenom returns the order receiving denom.
+func (o Order) GetReceiveDenom() string {
+	if o.BaseDenom == o.GetSpendDenom() {
 		return o.QuoteDenom
 	}
 	return o.BaseDenom
