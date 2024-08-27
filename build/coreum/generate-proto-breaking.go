@@ -32,7 +32,7 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	}
 	defer os.RemoveAll(masterDir) //nolint:errcheck // error doesn't matter
 
-	if err := git.CloneLocalBranch(ctx, masterDir, repoPath, "crust/proto-breaking", "master"); err != nil {
+	if err := git.CloneLocalBranch(ctx, masterDir, repoPath, "crust/release-v4/proto-breaking", "release-v4"); err != nil {
 		return err
 	}
 	if err := golang.DownloadDependencies(ctx, deps, masterDir); err != nil {
