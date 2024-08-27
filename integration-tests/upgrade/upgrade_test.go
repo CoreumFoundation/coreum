@@ -20,6 +20,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev4 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4"
+	appupgradev4patch1 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4patch1"
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
@@ -45,6 +46,7 @@ func TestUpgrade(t *testing.T) {
 
 	if strings.HasPrefix(infoRes.ApplicationVersion.Version, "v3.") {
 		upgradeV3ToV4(t)
+		upgradeV4ToV4Patch1(t)
 		return
 	}
 	requireT.Failf("not supported cored version", "version: %s", infoRes.ApplicationVersion.Version)
@@ -61,6 +63,21 @@ func upgradeV3ToV4(t *testing.T) {
 	}
 
 	runUpgrade(t, appupgradev4.Name, upgradeDelayInBlocks)
+
+	for _, test := range tests {
+		test.After(t)
+	}
+}
+
+func upgradeV4ToV4Patch1(t *testing.T) {
+	tests := []upgradeTest{
+		&wasmdUpgradeTest{},
+	}
+	for _, test := range tests {
+		test.Before(t)
+	}
+
+	runUpgrade(t, appupgradev4patch1.Name, upgradeDelayInBlocks)
 
 	for _, test := range tests {
 		test.After(t)
@@ -85,6 +102,7 @@ func runUpgrade(
 	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
+	t.Logf("Old binary version: %s", infoBeforeRes.ApplicationVersion.Version)
 
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
