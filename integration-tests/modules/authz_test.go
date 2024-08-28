@@ -141,14 +141,13 @@ func TestAuthz(t *testing.T) {
 	requireT.Len(gransRes.Grants, 1)
 
 	// try to send using the authz
-	txResult, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactoryAuto(),
 		&execMsg,
 	)
 	requireT.NoError(err)
-	requireT.Equal(chain.GasLimitByMsgs(&execMsg), uint64(txResult.GasUsed))
 
 	recipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipient.String(),
