@@ -45,7 +45,6 @@ const (
 	NFTIssueClassBaseGas          = 16_000
 	NFTMintBaseGas                = 39_000
 	NFTUpdateBaseGas              = 40_000
-	AuthzWriteCostPerByte         = 10
 	MsgGrantBaseGas               = 25000
 )
 
