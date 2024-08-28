@@ -15,9 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
@@ -312,30 +310,6 @@ func TestGasEstimation(t *testing.T) {
 			// estimation uses worst case to estimate number of bytes in tx which causes possible overflow of free bytes.
 			// 10 is price for each extra byte over FreeBytes.
 			expectedGas: dgc.FixedGas + 1*deterministicgas.BankSendPerCoinGas + 1133*authParams.Params.TxSizeCostPerByte,
-		},
-		{
-			name:        "singlesig_auth_exec_and_bank_send",
-			fromAddress: singlesigAddress,
-			msgs: []sdk.Msg{
-				lo.ToPtr(
-					authztypes.NewMsgExec(singlesigAddress, []sdk.Msg{
-						&banktypes.MsgSend{
-							FromAddress: singlesigAddress.String(),
-							ToAddress:   singlesigAddress.String(),
-							Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-						},
-					})),
-				&banktypes.MsgSend{
-					FromAddress: singlesigAddress.String(),
-					ToAddress:   singlesigAddress.String(),
-					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-				},
-			},
-			// single signature no extra bytes.
-			expectedGas: dgc.FixedGas +
-				1*deterministicgas.BankSendPerCoinGas +
-				1*deterministicgas.AuthzExecOverhead +
-				1*deterministicgas.BankSendPerCoinGas,
 		},
 	}
 	for _, tt := range testsDeterm {

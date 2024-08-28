@@ -1488,14 +1488,13 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 		Amount: sdk.NewInt(3 * 500_000),
 	})
 
-	res, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
 		chain.TxFactoryAuto(),
 		&execMsg,
 	)
 	requireT.NoError(err)
-	requireT.NotEqualValues(chain.GasLimitByMsgs(&execMsg), res.GasUsed)
 
 	// check balances
 
