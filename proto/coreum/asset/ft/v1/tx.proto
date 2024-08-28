@@ -220,7 +220,7 @@ message MsgUpgradeTokenV1 {
 
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "cosmos-sdk/MsgUpdateParams";
+  option (amino.name) = "assetft/MsgUpdateParams";
 
   string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   Params params = 2 [
