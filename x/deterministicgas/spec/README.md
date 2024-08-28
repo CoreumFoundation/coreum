@@ -106,6 +106,7 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/coreum.asset.ft.v1.MsgSetWhitelistedLimit`                           | 9000                           |
 | `/coreum.asset.ft.v1.MsgTransferAdmin`                                 | 10000                          |
 | `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 8500                           |
+| `/coreum.asset.ft.v1.MsgUpdateDEXSettings`                             | 10000                          |
 | `/coreum.asset.ft.v1.MsgUpgradeTokenV1`                                | 25000                          |
 | `/coreum.asset.nft.v1.MsgAddToClassWhitelist`                          | 7000                           |
 | `/coreum.asset.nft.v1.MsgAddToWhitelist`                               | 7000                           |

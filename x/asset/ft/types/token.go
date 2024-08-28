@@ -58,6 +58,7 @@ type IssueSettings struct {
 	BurnRate           sdkmath.LegacyDec
 	SendCommissionRate sdkmath.LegacyDec
 	ExtensionSettings  *ExtensionIssueSettings
+	DEXSettings        *DEXSettings
 }
 
 // BuildDenom builds the denom string from the symbol and issuer address.
@@ -263,6 +264,15 @@ func validateRate(rate sdkmath.LegacyDec) error {
 
 	if rate.LT(sdkmath.LegacyNewDec(0)) || rate.GT(sdkmath.LegacyNewDec(1)) {
 		return sdkerrors.Wrap(ErrInvalidInput, "rate is not within acceptable range")
+	}
+
+	return nil
+}
+
+// ValidateDEXSettings checks that provided DEX settings are valid.
+func ValidateDEXSettings(settings DEXSettings) error {
+	if !settings.UnifiedRefAmount.IsPositive() {
+		return sdkerrors.Wrap(ErrInvalidInput, "unified ref amount must be positive")
 	}
 
 	return nil

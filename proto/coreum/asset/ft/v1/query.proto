@@ -56,6 +56,11 @@ service Query {
   rpc WhitelistedBalance(QueryWhitelistedBalanceRequest) returns (QueryWhitelistedBalanceResponse) {
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted/{denom}";
   }
+
+  // DEXSettings returns DEX settings of the denom.
+  rpc DEXSettings(QueryDEXSettingsRequest) returns (QueryDEXSettingsResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}/dex-settings";
+  }
 }
 
 // QueryParamsRequest defines the request type for querying x/asset/ft parameters.
@@ -193,4 +198,17 @@ message QueryWhitelistedBalanceRequest {
 message QueryWhitelistedBalanceResponse {
   // balance contains the whitelisted balance with the queried account and denom
   cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryDEXSettingsRequest {
+  // denom specifies the denom onto which we query DEX settings
+  string denom = 1;
+}
+
+message QueryDEXSettingsResponse {
+  // dex_settings contains the DEX settings
+  DEXSettings dex_settings = 1 [
+    (gogoproto.customname) = "DEXSettings",
+    (gogoproto.nullable) = false
+  ];
 }
