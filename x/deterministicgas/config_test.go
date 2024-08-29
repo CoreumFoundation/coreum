@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 	_ "unsafe"
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cometbft/cometbft/crypto/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -17,6 +19,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
 	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas/types"
 )
@@ -95,8 +98,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic and extension types accidentally,
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 62, nondeterministicMsgCount)
-	assert.Equal(t, 70, deterministicMsgCount)
+	assert.Equal(t, 63, nondeterministicMsgCount)
+	assert.Equal(t, 69, deterministicMsgCount)
 	assert.Equal(t, 14, extensionMsgCount)
 	assert.Equal(t, 118, nonextensionMsgCount)
 }
@@ -109,7 +112,6 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 		assetFTIssue                 = 70000
 		bankSendPerCoinGas           = deterministicgas.BankSendPerCoinGas
 		bankMultiSendPerOperationGas = deterministicgas.BankMultiSendPerOperationsGas
-		authzMsgExecOverhead         = deterministicgas.AuthzExecOverhead
 	)
 
 	cfg := deterministicgas.DefaultConfig()
@@ -204,41 +206,6 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 			expectedIsDeterministic: true,
 		},
 		{
-			name:                    "authz.MsgExec: 0 messages",
-			msg:                     &authz.MsgExec{},
-			expectedGas:             authzMsgExecOverhead,
-			expectedIsDeterministic: true,
-		},
-		{
-			name: "authz.MsgExec: 1 bank.MsgSend & 1 bank.MsgMultiSend",
-			msg: lo.ToPtr(
-				authz.NewMsgExec(
-					sdk.AccAddress(address),
-					[]sdk.Msg{&banktypes.MsgSend{}, &banktypes.MsgMultiSend{}},
-				),
-			),
-			expectedGas:             authzMsgExecOverhead + bankSendPerCoinGas + 2*bankMultiSendPerOperationGas,
-			expectedIsDeterministic: true,
-		},
-		{
-			name: "authz.MsgExec: 1 authz.MsgExec (1 bank.MsgSend & 1 bank.MsgMultiSend) & bank.MsgSend",
-			msg: lo.ToPtr(
-				authz.NewMsgExec(
-					sdk.AccAddress(address),
-					[]sdk.Msg{
-						lo.ToPtr(authz.NewMsgExec(sdk.AccAddress(address), []sdk.Msg{&banktypes.MsgSend{}, &banktypes.MsgMultiSend{}})),
-						&banktypes.MsgSend{},
-					},
-				),
-			),
-			expectedGas: authzMsgExecOverhead +
-				authzMsgExecOverhead +
-				bankSendPerCoinGas +
-				2*bankMultiSendPerOperationGas +
-				bankSendPerCoinGas,
-			expectedIsDeterministic: true,
-		},
-		{
 			name: "authz.MsgExec: 1 bank.MsgSend & 1 wasm.MsgExecuteContract",
 			msg: lo.ToPtr(
 				authz.NewMsgExec(
@@ -258,5 +225,97 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 			assert.Equal(t, tc.expectedIsDeterministic, isDeterministic)
 			assert.Equal(t, tc.expectedGas, gas)
 		})
+	}
+}
+
+func TestDeterministicGas_AuthzGrant(t *testing.T) {
+	address := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	testCases := []struct {
+		name            string
+		authzItemsCount int
+		expectedGas     uint64
+	}{
+		{
+			name:            "1_item",
+			authzItemsCount: 1,
+			expectedGas:     28000,
+		},
+		{
+			name:            "50_items",
+			authzItemsCount: 50,
+			expectedGas:     187000,
+		},
+		{
+			name:            "100_items",
+			authzItemsCount: 100,
+			expectedGas:     350000,
+		},
+	}
+	genAuthFuncs := []struct {
+		name string
+		fn   func(itemsCount int) authz.Authorization
+	}{
+		{
+			name: "send_auth",
+			fn: func(itemsCount int) authz.Authorization {
+				authorization := &assetnfttypes.SendAuthorization{}
+				for i := 0; i < itemsCount; i++ {
+					authorization.Nfts = append(authorization.Nfts, assetnfttypes.NFTIdentifier{
+						ClassId: "class-id-" + address.String(),
+						Id:      "id-" + address.String(),
+					})
+				}
+				return authorization
+			},
+		},
+		{
+			name: "mint_auth",
+			fn: func(itemsCount int) authz.Authorization {
+				authorization := &assetfttypes.MintAuthorization{}
+				for i := 0; i < itemsCount; i++ {
+					authorization.MintLimit = append(
+						authorization.MintLimit,
+						sdk.NewCoin("random-denom-"+address.String(), sdkmath.NewInt(1_000_000_000_000)),
+					)
+				}
+				return authorization
+			},
+		},
+		{
+			name: "burn_auth",
+			fn: func(itemsCount int) authz.Authorization {
+				authorization := &assetfttypes.BurnAuthorization{}
+				for i := 0; i < itemsCount; i++ {
+					authorization.BurnLimit = append(
+						authorization.BurnLimit,
+						sdk.NewCoin("random-denom-"+address.String(), sdkmath.NewInt(1_000_000_000_000)),
+					)
+				}
+				return authorization
+			},
+		},
+	}
+
+	cfg := deterministicgas.DefaultConfig()
+	for _, gen := range genAuthFuncs {
+		for _, tc := range testCases {
+			tc := tc
+			gen := gen
+			t.Run(tc.name+"_"+gen.name, func(t *testing.T) {
+				requireT := require.New(t)
+				authorization := gen.fn(tc.authzItemsCount)
+				grantMsg, err := authz.NewMsgGrant(
+					address,
+					address,
+					authorization,
+					lo.ToPtr(time.Now().Add(time.Minute)),
+				)
+				requireT.NoError(err)
+
+				deterministicGas, ok := cfg.GasRequiredByMessage(grantMsg)
+				requireT.True(ok)
+				requireT.InEpsilon(tc.expectedGas, deterministicGas, 0.3)
+			})
+		}
 	}
 }
