@@ -14,6 +14,7 @@ var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
+	GetParams(ctx sdk.Context) types.Params
 	GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orderID string) (types.Order, error)
 	GetOrders(
 		ctx sdk.Context,
@@ -35,6 +36,13 @@ type QueryKeeper interface {
 // QueryService serves grpc query requests for the module.
 type QueryService struct {
 	keeper QueryKeeper
+}
+
+// Params queries the parameters of x/asset/ft module.
+func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	return &types.QueryParamsResponse{
+		Params: qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx)),
+	}, nil
 }
 
 // Orders returns creator orders.

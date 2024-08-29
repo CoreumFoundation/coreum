@@ -13,6 +13,18 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
+func TestQueryParams(t *testing.T) {
+	requireT := require.New(t)
+
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+
+	var resp types.QueryParamsResponse
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryParams(), []string{}, &resp)
+	requireT.Equal(types.DefaultParams(), resp.Params)
+}
+
 func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)

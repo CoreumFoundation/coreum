@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/docker/distribution/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -21,6 +23,28 @@ const (
 	denom2 = "denom2"
 	denom3 = "denom3"
 )
+
+func TestKeeper_UpdateParams(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContext(false)
+	dexKeeper := testApp.DEXKeeper
+
+	gotParams := dexKeeper.GetParams(sdkCtx)
+	require.Equal(t, types.DefaultParams(), gotParams)
+
+	newPrams := gotParams
+	newPrams.DefaultUnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("33.33")
+	newPrams.PriceTickExponent = -33
+
+	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	// try to update for random address
+	require.ErrorIs(t, dexKeeper.UpdateParams(sdkCtx, randomAddr.String(), newPrams), govtypes.ErrInvalidSigner)
+
+	govAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	require.NoError(t, dexKeeper.UpdateParams(sdkCtx, govAddr, newPrams))
+	gotParams = dexKeeper.GetParams(sdkCtx)
+	require.Equal(t, newPrams, gotParams)
+}
 
 func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 	testApp := simapp.New()
