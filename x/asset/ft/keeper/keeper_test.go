@@ -220,7 +220,7 @@ func TestKeeper_Issue_ZeroPrecision(t *testing.T) {
 	}, storedMetadata)
 }
 
-func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
+func TestKeeper_Issue_EqualDisplayAndBaseDenom(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -252,7 +252,7 @@ func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
 	requireT.True(strings.Contains(err.Error(), "duplicate denomination"))
 }
 
-func TestKeeper_IssueValidateSymbol(t *testing.T) {
+func TestKeeper_Issue_ValidateSymbol(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
@@ -315,7 +315,7 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 	}
 }
 
-func TestKeeper_IssueValidateSubunit(t *testing.T) {
+func TestKeeper_Issue_ValidateSubunit(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
@@ -429,6 +429,47 @@ func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 
 	_, err := ftKeeper.Issue(ctx, settings)
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+}
+
+func TestKeeper_Issue_WithDEXSettings(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(777),
+		DEXSettings: &types.DEXSettings{
+			UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("0.01"),
+		},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	gotToken, err := ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	requireT.Equal(types.Token{
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Description:        settings.Description,
+		Subunit:            strings.ToLower(settings.Subunit),
+		Precision:          settings.Precision,
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
+		Version:            types.CurrentTokenVersion,
+		Admin:              settings.Issuer.String(),
+		DEXSettings:        settings.DEXSettings,
+	}, gotToken)
 }
 
 func TestKeeper_Mint(t *testing.T) {
@@ -2972,4 +3013,75 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 	// send some amount between two accounts
 	err = bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))))
 	requireT.NoError(err)
+}
+
+func TestKeeper_UpdateDEXSettings(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(777),
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	gotToken, err := ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	expectToken := types.Token{
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Description:        settings.Description,
+		Subunit:            strings.ToLower(settings.Subunit),
+		Precision:          settings.Precision,
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
+		Version:            types.CurrentTokenVersion,
+		Admin:              settings.Issuer.String(),
+		DEXSettings:        settings.DEXSettings,
+	}
+	requireT.Equal(expectToken, gotToken)
+
+	// try to update with the invalid settings
+	dexSettings := types.DEXSettings{
+		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("-0.01"),
+	}
+	requireT.ErrorIs(ftKeeper.UpdateDEXSettings(ctx, issuer, denom, dexSettings), types.ErrInvalidInput)
+
+	// try to update from not issuer
+	dexSettings = types.DEXSettings{
+		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("0.01"),
+	}
+	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.ErrorIs(ftKeeper.UpdateDEXSettings(ctx, randomAddr, denom, dexSettings), cosmoserrors.ErrUnauthorized)
+
+	// update the settings
+	requireT.NoError(ftKeeper.UpdateDEXSettings(ctx, issuer, denom, dexSettings))
+
+	gotToken, err = ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	expectToken.DEXSettings = &dexSettings
+	requireT.Equal(expectToken, gotToken)
+
+	// update the settings one more time
+	dexSettings = types.DEXSettings{
+		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("999"),
+	}
+	requireT.NoError(ftKeeper.UpdateDEXSettings(ctx, issuer, denom, dexSettings))
+
+	gotToken, err = ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	expectToken.DEXSettings = &dexSettings
+	requireT.Equal(expectToken, gotToken)
 }

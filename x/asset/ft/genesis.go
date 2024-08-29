@@ -78,6 +78,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	if err := k.ImportPendingTokenUpgrades(ctx, genState.PendingTokenUpgrades); err != nil {
 		panic(err)
 	}
+
+	for _, settings := range genState.DEXSettings {
+		k.SetDEXSettings(ctx, settings.Denom, settings.DEXSettings)
+	}
 }
 
 // ExportGenesis returns the asset module's exported genesis.
@@ -112,6 +116,11 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	dexSettings, _, err := k.GetDEXSettingsWithDenoms(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
 		Params:               k.GetParams(ctx),
 		Tokens:               tokens,
@@ -119,5 +128,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		WhitelistedBalances:  whitelistedBalances,
 		PendingTokenUpgrades: pendingTokenUpgrades,
 		DEXLockedBalances:    dexLockedBalances,
+		DEXSettings:          dexSettings,
 	}
 }

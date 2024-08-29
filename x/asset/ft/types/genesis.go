@@ -27,6 +27,18 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	for _, balance := range gs.DEXLockedBalances {
+		if err := ValidateAssetCoins(balance.Coins); err != nil {
+			return err
+		}
+	}
+
+	for _, settings := range gs.DEXSettings {
+		if err := ValidateDEXSettings(settings.DEXSettings); err != nil {
+			return err
+		}
+	}
+
 	return gs.Params.ValidateBasic()
 }
 

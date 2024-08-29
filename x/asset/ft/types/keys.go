@@ -15,12 +15,6 @@ const (
 
 	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
-
-	// RouterKey is the message route for slashing.
-	RouterKey = ModuleName
-
-	// QuerierRoute defines the module's query routing key.
-	QuerierRoute = ModuleName
 )
 
 // Store key prefixes.
@@ -43,6 +37,8 @@ var (
 	ParamsKey = []byte{0x08}
 	// DEXLockedBalancesKeyPrefix defines the key prefix to track DEX locked balances.
 	DEXLockedBalancesKeyPrefix = []byte{0x09}
+	// DEXSettingsKeyPrefix defines the key prefix for the DEX settings.
+	DEXSettingsKeyPrefix = []byte{0x10}
 )
 
 // StoreTrue keeps a value used by stores to indicate that key is present.
@@ -93,6 +89,11 @@ func CreateDEXLockedBalancesKey(addr []byte) []byte {
 	return store.JoinKeys(DEXLockedBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
+// CreateDEXSettingsKey creates the key for DEX settings.
+func CreateDEXSettingsKey(denom string) []byte {
+	return store.JoinKeys(DEXSettingsKeyPrefix, []byte(denom))
+}
+
 // AddressFromBalancesStore returns an account address from a balances prefix
 // store. The key must not contain the prefix BalancesPrefix as the prefix store
 // iterator discards the actual prefix.
@@ -108,4 +109,13 @@ func AddressFromBalancesStore(key []byte) (sdk.AccAddress, error) {
 		return nil, ErrInvalidKey
 	}
 	return key[1 : bound+1], nil
+}
+
+// DecodeDenomFromKey decodes a fungible token denom form the store key.
+func DecodeDenomFromKey(key []byte) (string, error) {
+	if len(key) == 0 {
+		return "", ErrInvalidKey
+	}
+
+	return string(key), nil
 }

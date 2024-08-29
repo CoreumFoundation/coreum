@@ -36,6 +36,7 @@ type QueryKeeper interface {
 	) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error)
 }
 
 // BankKeeper represents required methods of bank keeper.
@@ -204,5 +205,22 @@ func (qs QueryService) WhitelistedBalance(
 
 	return &types.QueryWhitelistedBalanceResponse{
 		Balance: balance,
+	}, nil
+}
+
+// DEXSettings returns DEX settings.
+func (qs QueryService) DEXSettings(
+	goCtx context.Context,
+	req *types.QueryDEXSettingsRequest,
+) (*types.QueryDEXSettingsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	settings, err := qs.keeper.GetDEXSettings(ctx, req.Denom)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryDEXSettingsResponse{
+		DEXSettings: settings,
 	}, nil
 }

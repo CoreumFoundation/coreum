@@ -1905,16 +1905,14 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{freezeMsg})
 
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&execMsg,
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount.
+			Add(sdkmath.NewInt(20_000)),
 	})
 
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactoryAuto(),
 		&execMsg,
 	)
 	requireT.NoError(err)
@@ -2392,9 +2390,9 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
 			&assetnfttypes.MsgMint{},
-			&authztypes.MsgGrant{},
 		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount.
+			Add(sdkmath.NewInt(20_000)), // added 20k for the grant msg
 	})
 
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
@@ -2436,16 +2434,13 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{sendMsg})
 
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&execMsg,
-			&execMsg,
-		},
+		Amount: sdkmath.NewInt(40_000),
 	})
 
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactory().WithGas(200_000),
 		&execMsg,
 	)
 	requireT.Error(err)
@@ -2488,7 +2483,7 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactoryAuto(),
 		&execMsg,
 	)
 	requireT.NoError(err)

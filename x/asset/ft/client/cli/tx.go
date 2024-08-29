@@ -24,20 +24,21 @@ import (
 
 // Flags defined on transactions.
 const (
-	FeaturesFlag           = "features"
-	BurnRateFlag           = "burn-rate"
-	SendCommissionRateFlag = "send-commission-rate"
-	IBCEnabledFlag         = "ibc-enabled"
-	MintLimitFlag          = "mint-limit"
-	BurnLimitFlag          = "burn-limit"
-	ExpirationFlag         = "expiration"
-	RecipientFlag          = "recipient"
-	URIFlag                = "uri"
-	URIHashFlag            = "uri_hash"
-	ExtensionCodeID        = "extension_code_id"
-	ExtensionLabel         = "extension_label"
-	ExtensionFunds         = "extension_funds"
-	ExtensionIssuanceMsg   = "extension_issuance_msg"
+	FeaturesFlag             = "features"
+	BurnRateFlag             = "burn-rate"
+	SendCommissionRateFlag   = "send-commission-rate"
+	IBCEnabledFlag           = "ibc-enabled"
+	MintLimitFlag            = "mint-limit"
+	BurnLimitFlag            = "burn-limit"
+	ExpirationFlag           = "expiration"
+	RecipientFlag            = "recipient"
+	URIFlag                  = "uri"
+	URIHashFlag              = "uri_hash"
+	ExtensionCodeIDFlag      = "extension_code_id"
+	ExtensionLabelFlag       = "extension_label"
+	ExtensionFundsFlag       = "extension_funds"
+	ExtensionIssuanceMsgFlag = "extension_issuance_msg"
+	DEXUnifiedRefAmountFlag  = "dex-unified-ref-amount"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -65,6 +66,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxClearAdmin(),
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
+		CmdUpdateDEXSettings(),
 	)
 
 	return cmd
@@ -166,7 +168,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 			}
 
 			var extensionSettings *types.ExtensionIssueSettings
-			extensionCodeID, err := cmd.Flags().GetUint64(ExtensionCodeID)
+			extensionCodeID, err := cmd.Flags().GetUint64(ExtensionCodeIDFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -174,12 +176,12 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 			if extensionCodeID > 0 {
 				extensionSettings = &types.ExtensionIssueSettings{CodeId: extensionCodeID}
 
-				extensionSettings.Label, err = cmd.Flags().GetString(ExtensionLabel)
+				extensionSettings.Label, err = cmd.Flags().GetString(ExtensionLabelFlag)
 				if err != nil {
 					return errors.WithStack(err)
 				}
 
-				extensionFunds, err := cmd.Flags().GetString(ExtensionFunds)
+				extensionFunds, err := cmd.Flags().GetString(ExtensionFundsFlag)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -191,12 +193,27 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 					}
 				}
 
-				extensionIssuanceMsg, err := cmd.Flags().GetString(ExtensionIssuanceMsg)
+				extensionIssuanceMsg, err := cmd.Flags().GetString(ExtensionIssuanceMsgFlag)
 				if err != nil {
 					return errors.WithStack(err)
 				}
 
 				extensionSettings.IssuanceMsg = []byte(extensionIssuanceMsg)
+			}
+
+			var dexSettings *types.DEXSettings
+			unifiedRefAmountStr, err := cmd.Flags().GetString(DEXUnifiedRefAmountFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			if len(unifiedRefAmountStr) > 0 {
+				unifiedRefAmount, err := sdkmath.LegacyNewDecFromStr(unifiedRefAmountStr)
+				if err != nil {
+					return errors.Wrapf(err, "invalid %s value", DEXUnifiedRefAmountFlag)
+				}
+				dexSettings = &types.DEXSettings{
+					UnifiedRefAmount: unifiedRefAmount,
+				}
 			}
 
 			msg := &types.MsgIssue{
@@ -212,6 +229,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 				URI:                uri,
 				URIHash:            uriHash,
 				ExtensionSettings:  extensionSettings,
+				DEXSettings:        dexSettings,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -225,11 +243,14 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 	cmd.Flags().String(SendCommissionRateFlag, "0", "Indicates the rate at which coins will be sent to the issuer on top of the sent amount in every send action. Must be between 0 and 1.")
 	cmd.Flags().String(URIFlag, "", "Token URI.")
 	cmd.Flags().String(URIHashFlag, "", "Token URI hash.")
-	cmd.Flags().Uint64(ExtensionCodeID, 0, "CodeID of the stored WASM smart contract to be used as the asset extension.")
-	cmd.Flags().String(ExtensionLabel, "", "Optional label to be given to the extension contract.")
-	cmd.Flags().String(ExtensionFunds, "", "Coins that are transferred to the contract on instantiation.")
 	//nolint:lll // breaking this down will make it look worse when printed to user screen.
-	cmd.Flags().String(ExtensionIssuanceMsg, "{}", "Optional json encoded data to pass to WASM on instantiation by the ft issuer.")
+	cmd.Flags().Uint64(ExtensionCodeIDFlag, 0, "CodeID of the stored WASM smart contract to be used as the asset extension.")
+	cmd.Flags().String(ExtensionLabelFlag, "", "Optional label to be given to the extension contract.")
+	cmd.Flags().String(ExtensionFundsFlag, "", "Coins that are transferred to the contract on instantiation.")
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
+	cmd.Flags().String(ExtensionIssuanceMsgFlag, "{}", "Optional json encoded data to pass to WASM on instantiation by the ft issuer.")
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
+	cmd.Flags().String(DEXUnifiedRefAmountFlag, "", "DEX unified ref amount is the approximate amount you need to by 1USD, used to define the price tick size.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -829,6 +850,52 @@ $ %s tx grant <grantee_addr> burn --burn-limit 100ucore --expiration 1667979596
 	cmd.Flags().Int64(ExpirationFlag, 0, "Expire time as Unix timestamp. Set zero (0) for no expiry.")
 	cmd.Flags().String(BurnLimitFlag, "", "The Amount that is allowed to be burnt.")
 	cmd.Flags().String(MintLimitFlag, "", "The Amount that is allowed to be minted.")
+	return cmd
+}
+
+// CmdUpdateDEXSettings returns UpdateDEXSettings cobra command.
+func CmdUpdateDEXSettings() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-dex-settings [denom] [unified_ref_price] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Update DEX settings",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Update DEX settings.
+Example:
+$ %s tx %s update-dex-settings ABC-%s 1000.5 --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			denom := args[0]
+			if err = sdk.ValidateDenom(denom); err != nil {
+				return sdkerrors.Wrap(err, "invalid denom")
+			}
+			unifiedRefAmount, err := sdkmath.LegacyNewDecFromStr(args[1])
+			if err != nil {
+				return errors.Wrapf(err, "invalid %s value", DEXUnifiedRefAmountFlag)
+			}
+
+			msg := &types.MsgUpdateDEXSettings{
+				Sender: sender.String(),
+				Denom:  denom,
+				DEXSettings: types.DEXSettings{
+					UnifiedRefAmount: unifiedRefAmount,
+				},
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
 
