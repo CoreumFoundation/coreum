@@ -108,10 +108,9 @@ func TestAuthz(t *testing.T) {
 	})
 
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
+		Amount: sdk.NewInt(40_000),
 		Messages: []sdk.Msg{
 			msgBankSend,
-			&execMsg,
-			&execMsg,
 		},
 	})
 
@@ -142,14 +141,13 @@ func TestAuthz(t *testing.T) {
 	requireT.Len(gransRes.Grants, 1)
 
 	// try to send using the authz
-	txResult, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactoryAuto(),
 		&execMsg,
 	)
 	requireT.NoError(err)
-	requireT.Equal(chain.GasLimitByMsgs(&execMsg), uint64(txResult.GasUsed))
 
 	recipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipient.String(),
@@ -179,7 +177,7 @@ func TestAuthz(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactory().WithGas(200_000),
 		&execMsg,
 	)
 	requireT.ErrorIs(err, authztypes.ErrNoAuthorizationFound)
@@ -236,15 +234,13 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	}
 	execMsg := authztypes.NewMsgExec(multisigAddress, []sdk.Msg{msgBankSend})
 	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&execMsg,
-		},
+		Amount: sdk.NewInt(20_000),
 	})
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(multisigAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactory().WithGas(200_000),
 		&execMsg,
 		signer1KeyName)
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
@@ -254,7 +250,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(multisigAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactoryAuto(),
 		&execMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
@@ -322,15 +318,13 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend})
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&execMsg,
-		},
+		Amount: sdk.NewInt(20_000),
 	})
 
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		chain.TxFactoryAuto(),
 		&execMsg,
 	)
 	requireT.NoError(err)

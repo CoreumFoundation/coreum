@@ -91,7 +91,7 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/coreum.asset.nft.v1.MsgIssueClass`                                   | [special case](#special-cases) |
 | `/coreum.asset.nft.v1.MsgMint`                                         | [special case](#special-cases) |
 | `/coreum.asset.nft.v1.MsgUpdateData`                                   | [special case](#special-cases) |
-| `/cosmos.authz.v1beta1.MsgExec`                                        | [special case](#special-cases) |
+| `/cosmos.authz.v1beta1.MsgGrant`                                       | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgMultiSend`                                    | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgSend`                                         | [special case](#special-cases) |
 | `/coreum.asset.ft.v1.MsgBurn`                                          | 35000                          |
@@ -117,7 +117,6 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/coreum.asset.nft.v1.MsgRemoveFromWhitelist`                          | 3500                           |
 | `/coreum.asset.nft.v1.MsgUnfreeze`                                     | 5000                           |
 | `/coreum.nft.v1beta1.MsgSend`                                          | 25000                          |
-| `/cosmos.authz.v1beta1.MsgGrant`                                       | 28000                          |
 | `/cosmos.authz.v1beta1.MsgRevoke`                                      | 8000                           |
 | `/cosmos.distribution.v1beta1.MsgFundCommunityPool`                    | 17000                          |
 | `/cosmos.distribution.v1beta1.MsgSetWithdrawAddress`                   | 5000                           |
@@ -175,11 +174,17 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 `bankMultiSendPerOperationGas` is currently equal to `35000`.
 
-##### `/cosmos.authz.v1beta1.MsgExec`
+##### `/cosmos.authz.v1beta1.MsgGrant`
+MsgGrant is deterministic with gas value of `25000`, but if the authorization type is
+one of the following, then it gets an overhead for every byte of the authorization.
+The authorization types with overhead are:
+- `/coreum.assert.nft.SendAuthorization`
+- `/coreum.assert.ft.MintAuthorization`
+- `/coreum.assert.ft.BurnAuthorization`
 
-`DeterministicGasForMsg = authzMsgExecOverhead + Sum(DeterministicGas(ChildMsg))`
+and the formula for them is
+`DeterministicGas = MsgGrantBaseGas + Size(Authorization) * WriteCostPerByte `
 
-`authzMsgExecOverhead` is currently equal to `1500`.
 
 ##### `/coreum.asset.nft.v1.MsgIssueClass`
 
@@ -202,6 +207,7 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/coreum.customparams.v1.MsgUpdateStakingParams`                       |
 | `/coreum.feemodel.v1.MsgUpdateParams`                                  |
 | `/cosmos.auth.v1beta1.MsgUpdateParams`                                 |
+| `/cosmos.authz.v1beta1.MsgExec`                                        |
 | `/cosmos.bank.v1beta1.MsgSetSendEnabled`                               |
 | `/cosmos.bank.v1beta1.MsgUpdateParams`                                 |
 | `/cosmos.consensus.v1.MsgUpdateParams`                                 |
