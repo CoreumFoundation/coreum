@@ -51,7 +51,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid issuer address",
+			name: "invalid_issuer_address",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.Issuer = "invalid"
 				return msg
@@ -59,7 +59,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
-			name: "invalid missing symbol",
+			name: "invalid_missing_symbol",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.Symbol = ""
 				return msg
@@ -67,7 +67,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid long symbol",
+			name: "invalid_long_symbol",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.Symbol = string(make([]byte, 10000))
 				return msg
@@ -75,7 +75,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid prohibited chars in symbol",
+			name: "invalid_prohibited_chars_in_symbol",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.Symbol = "1BT"
 				return msg
@@ -83,7 +83,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid nil initial amount",
+			name: "invalid_nil_initial_amount",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.InitialAmount = sdkmath.Int{} // nil
 				return msg
@@ -91,7 +91,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid negative initial amount",
+			name: "invalid_negative_initial_amount",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.InitialAmount = sdkmath.NewInt(-100)
 				return msg
@@ -99,7 +99,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid long description",
+			name: "invalid_long_description",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.Description = string(make([]byte, 10000))
 				return msg
@@ -107,7 +107,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid empty subunit",
+			name: "invalid_empty_subunit",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.Subunit = ""
 				return msg
@@ -115,7 +115,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid empty subunit",
+			name: "invalid_empty_subunit",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.Subunit = ""
 				return msg
@@ -123,7 +123,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid negative burn rate",
+			name: "invalid_negative_burn_rate",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.BurnRate = sdkmath.LegacyMustNewDecFromStr("-0.1")
 				return msg
@@ -131,7 +131,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid negative send commission rate",
+			name: "invalid_negative_send_commission_rate",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.SendCommissionRate = sdkmath.LegacyMustNewDecFromStr("-0.1")
 				return msg
@@ -139,7 +139,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid duplicated feature",
+			name: "invalid_duplicated_feature",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.Features = []types.Feature{
 					types.Feature_burning,
@@ -151,7 +151,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid uri",
+			name: "invalid_uri",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.URI = string(make([]byte, 257))
 				return msg
@@ -159,9 +159,19 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid uri hash",
+			name: "invalid_uri_hash",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.URIHash = strings.Repeat("x", 129)
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_dex_settings",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.DEXSettings = &types.DEXSettings{
+					UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("0"),
+				}
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -643,6 +653,58 @@ func TestMsgClearAdmin_ValidateBasic(t *testing.T) {
 	}
 }
 
+func TestMsgUpdateDEXSettings_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgUpdateDEXSettings{
+		Sender: sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String(),
+		Denom:  "dnm",
+		DEXSettings: types.DEXSettings{
+			UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1.3"),
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		messageFunc   func(msg types.MsgUpdateDEXSettings) types.MsgUpdateDEXSettings
+		expectedError error
+	}{
+		{
+			name: "valid",
+			messageFunc: func(msg types.MsgUpdateDEXSettings) types.MsgUpdateDEXSettings {
+				return msg
+			},
+		},
+		{
+			name: "invalid_sender",
+			messageFunc: func(msg types.MsgUpdateDEXSettings) types.MsgUpdateDEXSettings {
+				msg.Sender = "invalid"
+				return msg
+			},
+			expectedError: cosmoserrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid_unified_ref_amount",
+			messageFunc: func(msg types.MsgUpdateDEXSettings) types.MsgUpdateDEXSettings {
+				msg.DEXSettings.UnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("-1")
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			err := tc.messageFunc(validMessage).ValidateBasic()
+			if tc.expectedError == nil {
+				requireT.NoError(err)
+			} else {
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
 //nolint:lll // we don't care about test strings
 func TestAmino(t *testing.T) {
 	const address = "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"
@@ -735,6 +797,17 @@ func TestAmino(t *testing.T) {
 				IbcEnabled: false,
 			},
 			wantAminoJSON: `{"type":"assetft/MsgUpgradeTokenV1","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+		},
+		{
+			name: sdk.MsgTypeURL(&types.MsgUpdateDEXSettings{}),
+			msg: &types.MsgUpdateDEXSettings{
+				Sender: address,
+				Denom:  coin.Denom,
+				DEXSettings: types.DEXSettings{
+					UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1.3"),
+				},
+			},
+			wantAminoJSON: `{"type":"assetft/MsgUpdateDEXSettings","value":{"denom":"my-denom","dex_settings":{"unified_ref_amount":"1.300000000000000000"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 	}
 

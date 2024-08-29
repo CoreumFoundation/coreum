@@ -58,6 +58,9 @@ service Msg {
   // UpdateParams is a governance operation to modify the parameters of the module.
   // NOTE: all parameters must be provided.
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
+
+  // UpdateDEXSettings upgrades token DEX settings.
+  rpc UpdateDEXSettings(MsgUpdateDEXSettings) returns (EmptyResponse);
 }
 
 // MsgIssue defines message to issue new fungible token.
@@ -91,6 +94,7 @@ message MsgIssue {
   string uri_hash = 11 [(gogoproto.customname) = "URIHash"];
   // extension_settings must be provided in case wasm extensions are enabled.
   ExtensionIssueSettings extension_settings = 12;
+  DEXSettings dex_settings = 13 [(gogoproto.customname) = "DEXSettings"];
 }
 
 // ExtensionIssueSettings are settings that will be used to Instantiate the smart contract which contains
@@ -226,6 +230,18 @@ message MsgUpdateParams {
   Params params = 2 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
+  ];
+}
+
+message MsgUpdateDEXSettings {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgUpdateDEXSettings";
+
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string denom = 2;
+  DEXSettings dex_settings = 3 [
+    (gogoproto.customname) = "DEXSettings",
+    (gogoproto.nullable) = false
   ];
 }
 

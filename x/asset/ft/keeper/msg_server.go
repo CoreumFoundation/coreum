@@ -30,6 +30,7 @@ type MsgKeeper interface {
 	ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
+	UpdateDEXSettings(ctx sdk.Context, sender sdk.AccAddress, denom string, settings types.DEXSettings) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -63,6 +64,7 @@ func (ms MsgServer) Issue(ctx context.Context, req *types.MsgIssue) (*types.Empt
 		URI:                req.URI,
 		URIHash:            req.URIHash,
 		ExtensionSettings:  req.ExtensionSettings,
+		DEXSettings:        req.DEXSettings,
 	})
 	if err != nil {
 		return nil, err
@@ -308,6 +310,25 @@ func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgUpgradeT
 // UpdateParams is a governance operation that sets parameters of the module.
 func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
 	if err := ms.keeper.UpdateParams(sdk.UnwrapSDKContext(goCtx), req.Authority, req.Params); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// UpdateDEXSettings upgrades token DEX settings.
+func (ms MsgServer) UpdateDEXSettings(
+	goCtx context.Context,
+	req *types.MsgUpdateDEXSettings,
+) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	err = ms.keeper.UpdateDEXSettings(ctx, sender, req.Denom, req.DEXSettings)
+	if err != nil {
 		return nil, err
 	}
 

@@ -391,6 +391,38 @@
         ]
       }
     },
+    "/coreum/asset/ft/v1/tokens/{denom}/dex-settings": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV4XAssetFtTypesDEXSettings",
+        "parameters": [
+          {
+            "name": "denom",
+            "description": "denom specifies the denom onto which we query DEX settings",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.asset.ft.v1.QueryDEXSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "DEXSettings returns DEX settings of the denom.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/coreum/asset/ft/v1/tokens/{denom}/upgrade-statuses": {
       "get": {
         "operationId": "GithubComCoreumFoundationCoreumV4XAssetFtTypesTokenUpgradeStatuses",
@@ -9150,6 +9182,16 @@
     }
   },
   "definitions": {
+    "coreum.asset.ft.v1.DEXSettings": {
+      "type": "object",
+      "properties": {
+        "unified_ref_amount": {
+          "type": "string",
+          "title": "unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size"
+        }
+      },
+      "description": "DEXSettings defines the token settings of the dex."
+    },
     "coreum.asset.ft.v1.Feature": {
       "type": "string",
       "enum": [
@@ -9210,6 +9252,15 @@
         "locked_in_dex": {
           "type": "string",
           "description": "locked_in_dex is the balance locked in DEX."
+        }
+      }
+    },
+    "coreum.asset.ft.v1.QueryDEXSettingsResponse": {
+      "type": "object",
+      "properties": {
+        "dex_settings": {
+          "$ref": "#/definitions/coreum.asset.ft.v1.DEXSettings",
+          "title": "dex_settings contains the DEX settings"
         }
       }
     },
@@ -9360,6 +9411,9 @@
         },
         "admin": {
           "type": "string"
+        },
+        "dex_settings": {
+          "$ref": "#/definitions/coreum.asset.ft.v1.DEXSettings"
         }
       },
       "description": "Token is a full representation of the fungible token."

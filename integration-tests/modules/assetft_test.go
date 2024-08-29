@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -265,6 +266,97 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		},
 	)
+}
+
+// TestAssetFTDEXSettingsCreationAndUpdate tests DEX settings creation and update.
+func TestAssetFTDEXSettingsCreationAndUpdate(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgUpdateDEXSettings{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:    issuer.String(),
+		Symbol:    "ABC",
+		Subunit:   "uabc",
+		Precision: 6,
+		DEXSettings: &assetfttypes.DEXSettings{
+			UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("3.3"),
+		},
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	// query token admin
+	gotTokenRes, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	expectToken := assetfttypes.Token{
+		Denom:              denom,
+		Issuer:             issueMsg.Issuer,
+		Symbol:             issueMsg.Symbol,
+		Description:        issueMsg.Description,
+		Subunit:            strings.ToLower(issueMsg.Subunit),
+		Precision:          issueMsg.Precision,
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
+		Version:            assetfttypes.CurrentTokenVersion,
+		Admin:              issueMsg.Issuer,
+		DEXSettings:        issueMsg.DEXSettings,
+	}
+	requireT.Equal(expectToken, gotTokenRes.Token)
+
+	newDEXSettings := assetfttypes.DEXSettings{
+		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("3.4"),
+	}
+	updateDEXSettingsMsg := &assetfttypes.MsgUpdateDEXSettings{
+		Sender:      issuer.String(),
+		Denom:       denom,
+		DEXSettings: newDEXSettings,
+	}
+
+	txRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(updateDEXSettingsMsg)),
+		updateDEXSettingsMsg,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(updateDEXSettingsMsg), uint64(txRes.GasUsed))
+
+	dEXSettingsChangedEvts, err := event.FindTypedEvents[*assetfttypes.EventDEXSettingsChanged](txRes.Events)
+	requireT.NoError(err)
+	evt := dEXSettingsChangedEvts[0]
+	requireT.NotNil(evt.PreviousSettings)
+	requireT.Equal(*issueMsg.DEXSettings, *evt.PreviousSettings)
+	requireT.Equal(newDEXSettings, evt.NewSettings)
+
+	// query the DEX settings independently of token
+	dexSettingsRes, err := ftClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(newDEXSettings, dexSettingsRes.DEXSettings)
 }
 
 // TestAssetIssueAndQueryTokens checks that tokens query works as expected.

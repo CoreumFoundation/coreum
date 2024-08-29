@@ -14,12 +14,14 @@
     - [EventAdminTransferred](#coreum.asset.ft.v1.EventAdminTransferred)
     - [EventAmountClawedBack](#coreum.asset.ft.v1.EventAmountClawedBack)
     - [EventDEXLockedAmountChanged](#coreum.asset.ft.v1.EventDEXLockedAmountChanged)
+    - [EventDEXSettingsChanged](#coreum.asset.ft.v1.EventDEXSettingsChanged)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
     - [EventWhitelistedAmountChanged](#coreum.asset.ft.v1.EventWhitelistedAmountChanged)
   
 - [coreum/asset/ft/v1/genesis.proto](#coreum/asset/ft/v1/genesis.proto)
     - [Balance](#coreum.asset.ft.v1.Balance)
+    - [DEXSettingsWithDenom](#coreum.asset.ft.v1.DEXSettingsWithDenom)
     - [GenesisState](#coreum.asset.ft.v1.GenesisState)
     - [PendingTokenUpgrade](#coreum.asset.ft.v1.PendingTokenUpgrade)
   
@@ -29,6 +31,8 @@
 - [coreum/asset/ft/v1/query.proto](#coreum/asset/ft/v1/query.proto)
     - [QueryBalanceRequest](#coreum.asset.ft.v1.QueryBalanceRequest)
     - [QueryBalanceResponse](#coreum.asset.ft.v1.QueryBalanceResponse)
+    - [QueryDEXSettingsRequest](#coreum.asset.ft.v1.QueryDEXSettingsRequest)
+    - [QueryDEXSettingsResponse](#coreum.asset.ft.v1.QueryDEXSettingsResponse)
     - [QueryFrozenBalanceRequest](#coreum.asset.ft.v1.QueryFrozenBalanceRequest)
     - [QueryFrozenBalanceResponse](#coreum.asset.ft.v1.QueryFrozenBalanceResponse)
     - [QueryFrozenBalancesRequest](#coreum.asset.ft.v1.QueryFrozenBalancesRequest)
@@ -49,6 +53,7 @@
     - [Query](#coreum.asset.ft.v1.Query)
   
 - [coreum/asset/ft/v1/token.proto](#coreum/asset/ft/v1/token.proto)
+    - [DEXSettings](#coreum.asset.ft.v1.DEXSettings)
     - [Definition](#coreum.asset.ft.v1.Definition)
     - [DelayedTokenUpgradeV1](#coreum.asset.ft.v1.DelayedTokenUpgradeV1)
     - [Token](#coreum.asset.ft.v1.Token)
@@ -72,6 +77,7 @@
     - [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit)
     - [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin)
     - [MsgUnfreeze](#coreum.asset.ft.v1.MsgUnfreeze)
+    - [MsgUpdateDEXSettings](#coreum.asset.ft.v1.MsgUpdateDEXSettings)
     - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
     - [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1)
   
@@ -1715,6 +1721,22 @@ the granter's account.
 
 
 
+<a name="coreum.asset.ft.v1.EventDEXSettingsChanged"></a>
+
+### EventDEXSettingsChanged
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `previous_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
+| `new_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.EventFrozenAmountChanged"></a>
 
 ### EventFrozenAmountChanged
@@ -1758,6 +1780,7 @@ EventIssued is emitted on MsgIssue.
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
 | `admin` | [string](#string) |  |    |
+| `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
 
 
 
@@ -1818,6 +1841,22 @@ Balance defines an account address and balance pair used module genesis genesis 
 
 
 
+<a name="coreum.asset.ft.v1.DEXSettingsWithDenom"></a>
+
+### DEXSettingsWithDenom
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |    |
+| `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.GenesisState"></a>
 
 ### GenesisState
@@ -1836,6 +1875,7 @@ GenesisState defines the module genesis state.
 | `whitelisted_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |  `whitelisted_balances contains the whitelisted balances on all of the accounts`  |
 | `pending_token_upgrades` | [PendingTokenUpgrade](#coreum.asset.ft.v1.PendingTokenUpgrade) | repeated |  `pending_token_upgrades contains pending token upgrades.`  |
 | `dex_locked_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |  `dex_locked_balances contains the DEX locked balances on all of the accounts`  |
+| `dex_settings` | [DEXSettingsWithDenom](#coreum.asset.ft.v1.DEXSettingsWithDenom) | repeated |    |
 
 
 
@@ -1945,6 +1985,36 @@ Params store gov manageable parameters.
 | `locked` | [string](#string) |  |  `locked is the balance locked in vesting and DEX.`  |
 | `locked_in_vesting` | [string](#string) |  |  `locked_in_vesting is the balance locked in bank vesting.`  |
 | `locked_in_dex` | [string](#string) |  |  `locked_in_dex is the balance locked in DEX.`  |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.QueryDEXSettingsRequest"></a>
+
+### QueryDEXSettingsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |  `denom specifies the denom onto which we query DEX settings`  |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.QueryDEXSettingsResponse"></a>
+
+### QueryDEXSettingsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |  `dex_settings contains the DEX settings`  |
 
 
 
@@ -2228,6 +2298,7 @@ Query defines the gRPC querier service.
 | `FrozenBalance` | [QueryFrozenBalanceRequest](#coreum.asset.ft.v1.QueryFrozenBalanceRequest) | [QueryFrozenBalanceResponse](#coreum.asset.ft.v1.QueryFrozenBalanceResponse) | `FrozenBalance returns frozen balance of the denom for the account.` | GET|/coreum/asset/ft/v1/accounts/{account}/balances/frozen/{denom} |
 | `WhitelistedBalances` | [QueryWhitelistedBalancesRequest](#coreum.asset.ft.v1.QueryWhitelistedBalancesRequest) | [QueryWhitelistedBalancesResponse](#coreum.asset.ft.v1.QueryWhitelistedBalancesResponse) | `WhitelistedBalances returns all the whitelisted balances for the account.` | GET|/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted |
 | `WhitelistedBalance` | [QueryWhitelistedBalanceRequest](#coreum.asset.ft.v1.QueryWhitelistedBalanceRequest) | [QueryWhitelistedBalanceResponse](#coreum.asset.ft.v1.QueryWhitelistedBalanceResponse) | `WhitelistedBalance returns whitelisted balance of the denom for the account.` | GET|/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted/{denom} |
+| `DEXSettings` | [QueryDEXSettingsRequest](#coreum.asset.ft.v1.QueryDEXSettingsRequest) | [QueryDEXSettingsResponse](#coreum.asset.ft.v1.QueryDEXSettingsResponse) | `DEXSettings returns DEX settings of the denom.` | GET|/coreum/asset/ft/v1/tokens/{denom}/dex-settings |
 
  <!-- end services -->
 
@@ -2237,6 +2308,25 @@ Query defines the gRPC querier service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## coreum/asset/ft/v1/token.proto
+
+
+
+<a name="coreum.asset.ft.v1.DEXSettings"></a>
+
+### DEXSettings
+
+```
+DEXSettings defines the token settings of the dex.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `unified_ref_amount` | [string](#string) |  |  `unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size`  |
+
+
+
 
 
 
@@ -2314,6 +2404,7 @@ Token is a full representation of the fungible token.
 | `uri_hash` | [string](#string) |  |    |
 | `extension_cw_address` | [string](#string) |  |    |
 | `admin` | [string](#string) |  |    |
+| `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
 
 
 
@@ -2554,6 +2645,7 @@ MsgIssue defines message to issue new fungible token.
 | `uri` | [string](#string) |  |    |
 | `uri_hash` | [string](#string) |  |    |
 | `extension_settings` | [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
+| `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
 
 
 
@@ -2645,6 +2737,23 @@ MsgIssue defines message to issue new fungible token.
 
 
 
+<a name="coreum.asset.ft.v1.MsgUpdateDEXSettings"></a>
+
+### MsgUpdateDEXSettings
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
+| `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.MsgUpdateParams"></a>
 
 ### MsgUpdateParams
@@ -2713,6 +2822,7 @@ Msg defines the Msg service.
 | `ClearAdmin` | [MsgClearAdmin](#coreum.asset.ft.v1.MsgClearAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `ClearAdmin removes admin of a fungible token.` |  |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
+| `UpdateDEXSettings` | [MsgUpdateDEXSettings](#coreum.asset.ft.v1.MsgUpdateDEXSettings) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXSettings upgrades token DEX settings.` |  |
 
  <!-- end services -->
 

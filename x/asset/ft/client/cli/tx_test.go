@@ -135,6 +135,30 @@ func TestIssueWithExtension(t *testing.T) {
 	requireT.Equal("test", issuanceMsg.ExtraData)
 }
 
+func TestIssueWithDEXSetting(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		DEXSettings: &types.DEXSettings{
+			UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("0.9"),
+		},
+	}
+
+	initialAmount := sdkmath.NewInt(100)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
+
+	var resp types.QueryTokenResponse
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryToken(), []string{denom}, &resp)
+	requireT.Equal(*token.DEXSettings, *resp.Token.DEXSettings)
+}
+
 func TestMintBurn(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
@@ -603,6 +627,43 @@ func TestUpgradeV1(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
+func TestUpdateDEXSettings(t *testing.T) {
+	requireT := require.New(t)
+	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+	requireT.NoError(err)
+	app.ChosenNetwork = networkCfg
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_ibc,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdkmath.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
+
+	newUnifiedRefAmount := sdkmath.LegacyMustNewDecFromStr("333.3")
+	args := append([]string{
+		denom,
+		newUnifiedRefAmount.String(),
+	}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdUpdateDEXSettings(), args)
+	requireT.NoError(err)
+
+	var resp types.QueryDEXSettingsResponse
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryDEXSettings(), []string{denom}, &resp)
+	requireT.Equal(types.DEXSettings{
+		UnifiedRefAmount: newUnifiedRefAmount,
+	}, resp.DEXSettings)
+}
+
 func issue(
 	requireT *require.Assertions,
 	ctx client.Context,
@@ -642,6 +703,9 @@ func issue(
 	if extensionSettings != nil && extensionSettings.CodeId > 0 {
 		args = parseExtensionArgs(args, extensionSettings)
 	}
+	if token.DEXSettings != nil {
+		args = append(args, fmt.Sprintf("--%s=%s", cli.DEXUnifiedRefAmountFlag, token.DEXSettings.UnifiedRefAmount.String()))
+	}
 
 	args = append(args, txValidator1Args(testNetwork)...)
 	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssue(), args)
@@ -666,18 +730,18 @@ func issue(
 
 func parseExtensionArgs(args []string, extensionSettings *types.ExtensionIssueSettings) []string {
 	args = append(args,
-		fmt.Sprintf("--%s=%d", cli.ExtensionCodeID, extensionSettings.CodeId),
+		fmt.Sprintf("--%s=%d", cli.ExtensionCodeIDFlag, extensionSettings.CodeId),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 2000000),
 	)
 	if len(extensionSettings.Label) > 0 {
-		args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionLabel, extensionSettings.Label))
+		args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionLabelFlag, extensionSettings.Label))
 	}
 	if extensionSettings.Funds != nil && extensionSettings.Funds.IsAllPositive() {
-		args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionFunds, extensionSettings.Funds.String()))
+		args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionFundsFlag, extensionSettings.Funds.String()))
 	}
 	if len(extensionSettings.IssuanceMsg) > 0 {
 		if jsonEncodedMessage, err := extensionSettings.IssuanceMsg.MarshalJSON(); err == nil {
-			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionIssuanceMsg, string(jsonEncodedMessage)))
+			args = append(args, fmt.Sprintf("--%s=%s", cli.ExtensionIssuanceMsgFlag, string(jsonEncodedMessage)))
 		}
 	}
 	return args

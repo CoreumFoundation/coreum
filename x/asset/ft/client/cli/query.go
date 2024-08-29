@@ -32,6 +32,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(CmdQueryWhitelistedBalance())
 	cmd.AddCommand(CmdQueryWhitelistedBalances())
 	cmd.AddCommand(CmdQueryParams())
+	cmd.AddCommand(CmdQueryDEXSettings())
 
 	return cmd
 }
@@ -381,6 +382,42 @@ $ %[1]s query %s params
 
 			params := &types.QueryParamsRequest{}
 			res, err := queryClient.Params(cmd.Context(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryDEXSettings returns the QueryDEXSettings cobra command.
+func CmdQueryDEXSettings() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "dex-settings [denom]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query DEX settings",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query DEX settings.
+
+Example:
+$ %[1]s query %s dex-settings [denom]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			denom := args[0]
+			res, err := queryClient.DEXSettings(cmd.Context(), &types.QueryDEXSettingsRequest{
+				Denom: denom,
+			})
 			if err != nil {
 				return err
 			}

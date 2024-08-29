@@ -92,7 +92,8 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgTransferAdmin{}):       constantGasFunc(10_000),
 		MsgToMsgURL(&assetfttypes.MsgClearAdmin{}):          constantGasFunc(8_500),
 		// TODO(v5): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
-		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}): constantGasFunc(25_000),
+		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):    constantGasFunc(25_000),
+		MsgToMsgURL(&assetfttypes.MsgUpdateDEXSettings{}): constantGasFunc(10_000),
 
 		// asset/nft
 		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                     constantGasFunc(26_000),
@@ -109,7 +110,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromClassWhitelist{}): constantGasFunc(3_500),
 
 		// dex
-		// TODO (dex): update one we define the correct value
+		// TODO (dex): update with new values once we finish the DEX
 		MsgToMsgURL(&dextypes.MsgPlaceOrder{}):  constantGasFunc(10_000),
 		MsgToMsgURL(&dextypes.MsgCancelOrder{}): constantGasFunc(15_000),
 
