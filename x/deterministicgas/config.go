@@ -22,6 +22,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
@@ -41,10 +42,10 @@ import (
 const (
 	BankSendPerCoinGas            = 50000
 	BankMultiSendPerOperationsGas = 35000
-	AuthzExecOverhead             = 1500
 	NFTIssueClassBaseGas          = 16_000
 	NFTMintBaseGas                = 39_000
 	NFTUpdateBaseGas              = 40_000
+	MsgGrantBaseGas               = 25000
 )
 
 type (
@@ -75,7 +76,7 @@ func DefaultConfig() Config {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 	}
-
+	storeConfig := storetypes.KVGasConfig()
 	cfg.gasByMsg = map[MsgURL]gasByMsgFunc{
 		// asset/ft
 		MsgToMsgURL(&assetfttypes.MsgIssue{}):               constantGasFunc(70_000),
@@ -114,8 +115,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&dextypes.MsgCancelOrder{}): constantGasFunc(15_000),
 
 		// authz
-		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
-		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(28_000),
+		MsgToMsgURL(&authz.MsgGrant{}):  authzMsgGrantGasFunc(MsgGrantBaseGas, storeConfig.WriteCostPerByte),
 		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(8_000),
 
 		// bank
@@ -210,6 +210,9 @@ func DefaultConfig() Config {
 
 			// auth
 			&authtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+
+			// authz
+			&authz.MsgExec{}, // This is non-deterministic because the authorization object might be a listing object and quite big
 
 			// bank
 			&banktypes.MsgSetSendEnabled{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
@@ -366,28 +369,22 @@ func MsgToMsgURL(msg sdk.Msg) MsgURL {
 	return MsgURL(sdk.MsgTypeURL(msg))
 }
 
-// NOTE: we need to pass Config by pointer here because
-// it needs to be initialized later map with all msg types inside to estimate gas recursively.
-func (cfg *Config) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
+func authzMsgGrantGasFunc(baseGas uint64, gasPerByte uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
-		m, ok := msg.(*authz.MsgExec)
+		m, ok := msg.(*authz.MsgGrant)
 		if !ok {
 			return 0, false
 		}
 
-		totalGas := authzMsgExecOverhead
-		childMsgs, err := m.GetMessages()
-		if err != nil {
-			return 0, false
+		var overHead uint64
+		if m.Grant.Authorization != nil && lo.Contains([]string{
+			"/" + proto.MessageName(&assetnfttypes.SendAuthorization{}),
+			"/" + proto.MessageName(&assetfttypes.MintAuthorization{}),
+			"/" + proto.MessageName(&assetfttypes.BurnAuthorization{}),
+		}, m.Grant.Authorization.TypeUrl) {
+			overHead = uint64(len(m.Grant.Authorization.Value)) * gasPerByte
 		}
-		for _, childMsg := range childMsgs {
-			gas, isDeterministic := cfg.GasRequiredByMessage(childMsg)
-			if !isDeterministic {
-				return 0, false
-			}
-			totalGas += gas
-		}
-		return totalGas, true
+		return baseGas + overHead, true
 	}
 }
 
