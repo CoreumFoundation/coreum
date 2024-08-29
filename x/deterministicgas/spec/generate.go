@@ -90,7 +90,7 @@ func main() {
 		MsgIssueGasPrice              uint64
 		BankSendPerCoinGas            uint64
 		BankMultiSendPerOperationsGas uint64
-		AuthzExecOverhead             uint64
+		MsgGrantBaseGas               uint64
 		NFTMsgIssueClassCost          uint64
 		NFTMsgMintCost                uint64
 
@@ -113,7 +113,7 @@ func main() {
 		MsgIssueGasPrice:              msgIssueGasPrice,
 		BankSendPerCoinGas:            deterministicgas.BankSendPerCoinGas,
 		BankMultiSendPerOperationsGas: deterministicgas.BankMultiSendPerOperationsGas,
-		AuthzExecOverhead:             deterministicgas.AuthzExecOverhead,
+		MsgGrantBaseGas:               deterministicgas.MsgGrantBaseGas,
 		NFTMsgIssueClassCost:          deterministicgas.NFTIssueClassBaseGas,
 		NFTMsgMintCost:                deterministicgas.NFTMintBaseGas,
 

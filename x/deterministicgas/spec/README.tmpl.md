@@ -111,11 +111,17 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 `bankMultiSendPerOperationGas` is currently equal to `{{ .BankMultiSendPerOperationsGas }}`.
 
-##### `/cosmos.authz.v1beta1.MsgExec`
+##### `/cosmos.authz.v1beta1.MsgGrant`
+MsgGrant is deterministic with gas value of `{{ .MsgGrantBaseGas}}`, but if the authorization type is
+one of the following, then it gets an overhead for every byte of the authorization.
+The authorization types with overhead are:
+- `/coreum.assert.nft.SendAuthorization`
+- `/coreum.assert.ft.MintAuthorization`
+- `/coreum.assert.ft.BurnAuthorization`
 
-`DeterministicGasForMsg = authzMsgExecOverhead + Sum(DeterministicGas(ChildMsg))`
+and the formula for them is
+`DeterministicGas = MsgGrantBaseGas + Size(Authorization) * WriteCostPerByte `
 
-`authzMsgExecOverhead` is currently equal to `{{ .AuthzExecOverhead }}`.
 
 ##### `/coreum.asset.nft.v1.MsgIssueClass`
 
