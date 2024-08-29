@@ -18,6 +18,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v4/x/wasm"
@@ -299,6 +300,13 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 
 	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
+	if settings.DEXSettings != nil {
+		if err := types.ValidateDEXSettings(*settings.DEXSettings); err != nil {
+			return "", err
+		}
+		k.SetDEXSettings(ctx, denom, *settings.DEXSettings)
+	}
+
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventIssued{
 		Denom:              denom,
 		Issuer:             settings.Issuer.String(),
@@ -313,6 +321,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		URI:                settings.URI,
 		URIHash:            settings.URIHash,
 		Admin:              settings.Issuer.String(),
+		DEXSettings:        settings.DEXSettings,
 	}); err != nil {
 		return "", sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventIssued event: %s", err)
 	}
@@ -889,6 +898,85 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 	return nil
 }
 
+// UpdateDEXSettings updates the DEX settings of a specified denom.
+func (k Keeper) UpdateDEXSettings(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	denom string,
+	settings types.DEXSettings,
+) error {
+	if err := types.ValidateDEXSettings(settings); err != nil {
+		return err
+	}
+
+	def, err := k.GetDefinition(ctx, denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
+	}
+
+	if !def.IsAdmin(sender) {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can update DEX settings")
+	}
+
+	prevSettings, err := k.getDEXSettingsOrNil(ctx, denom)
+	if err != nil {
+		return err
+	}
+	k.SetDEXSettings(ctx, denom, settings)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXSettingsChanged{
+		PreviousSettings: prevSettings,
+		NewSettings:      settings,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventDEXSettingsChanged event: %s", err)
+	}
+
+	return nil
+}
+
+// SetDEXSettings sets the DEX settings of a specified denom.
+func (k Keeper) SetDEXSettings(ctx sdk.Context, denom string, settings types.DEXSettings) {
+	ctx.KVStore(k.storeKey).Set(types.CreateDEXSettingsKey(denom), k.cdc.MustMarshal(&settings))
+}
+
+// GetDEXSettings gets the DEX settings of a specified denom.
+func (k Keeper) GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error) {
+	bz := ctx.KVStore(k.storeKey).Get(types.CreateDEXSettingsKey(denom))
+	if bz == nil {
+		return types.DEXSettings{}, sdkerrors.Wrapf(types.ErrDEXSettingsNotFound, "denom: %s", denom)
+	}
+	var settings types.DEXSettings
+	k.cdc.MustUnmarshal(bz, &settings)
+
+	return settings, nil
+}
+
+// GetDEXSettingsWithDenoms returns all DEX settings with the corresponding denoms.
+func (k Keeper) GetDEXSettingsWithDenoms(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.DEXSettingsWithDenom, *query.PageResponse, error) {
+	dexSettings := make([]types.DEXSettingsWithDenom, 0)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXSettingsKeyPrefix)
+	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+		denom, err := types.DecodeDenomFromKey(key)
+		if err != nil {
+			return err
+		}
+		var settings types.DEXSettings
+		k.cdc.MustUnmarshal(value, &settings)
+
+		dexSettings = append(dexSettings, types.DEXSettingsWithDenom{
+			Denom:       denom,
+			DEXSettings: settings,
+		})
+
+		return nil
+	})
+
+	return dexSettings, pageRes, err
+}
+
 func (k Keeper) mintIfReceivable(
 	ctx sdk.Context,
 	def types.Definition,
@@ -1121,6 +1209,11 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		return types.Token{}, sdkerrors.Wrap(types.ErrInvalidInput, "precision not found")
 	}
 
+	dexSettings, err := k.getDEXSettingsOrNil(ctx, definition.Denom)
+	if err != nil {
+		return types.Token{}, err
+	}
+
 	return types.Token{
 		Denom:              definition.Denom,
 		Issuer:             definition.Issuer,
@@ -1137,6 +1230,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		URIHash:            definition.URIHash,
 		Admin:              definition.Admin,
 		ExtensionCWAddress: definition.ExtensionCWAddress,
+		DEXSettings:        dexSettings,
 	}, nil
 }
 
@@ -1289,6 +1383,18 @@ func (k Keeper) validateCoinIsNotLockedByDEXAndBank(
 	}
 
 	return nil
+}
+
+func (k Keeper) getDEXSettingsOrNil(ctx sdk.Context, denom string) (*types.DEXSettings, error) {
+	dexSettings, err := k.GetDEXSettings(ctx, denom)
+	if err != nil {
+		if errors.Is(err, types.ErrDEXSettingsNotFound) {
+			return nil, nil //nolint:nilnil //returns nil if data not found
+		}
+		return nil, err
+	}
+
+	return &dexSettings, nil
 }
 
 // logger returns the Keeper logger.

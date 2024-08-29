@@ -25,6 +25,10 @@ message GenesisState {
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "DEXLockedBalances"
   ];
+  repeated DEXSettingsWithDenom dex_settings = 7 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "DEXSettings"
+  ];
 }
 
 // Balance defines an account address and balance pair used module genesis genesis state.
@@ -43,4 +47,12 @@ message Balance {
 message PendingTokenUpgrade {
   string denom = 1;
   uint32 version = 2;
+}
+
+message DEXSettingsWithDenom {
+  string denom = 1;
+  DEXSettings dex_settings = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "DEXSettings"
+  ];
 }
