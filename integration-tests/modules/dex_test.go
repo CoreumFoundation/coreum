@@ -440,41 +440,39 @@ func TestDEXProposalParamChange(t *testing.T) {
 	requireT.NoError(err)
 	initialParams := dexParamsRes.Params
 
-	// Create invalid proposal MaxGasPriceMultiplier = 1.
+	// restore params at the end of test
+	defer func() {
+		t.Logf("Restoring initial dex params.")
+		chain.Governance.ProposalFromMsgAndVote(
+			ctx, t, nil,
+			"-", "-", "-", govtypesv1.OptionYes,
+			&dextypes.MsgUpdateParams{
+				Params:    initialParams,
+				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			},
+		)
+		dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+		requireT.NoError(err)
+		requireT.Equal(initialParams, dexParamsRes.Params)
+	}()
+
 	newParams := initialParams
 	newParams.DefaultUnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("33.01")
 	newParams.PriceTickExponent = -33
 
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
-		ctx, proposer,
-		[]sdk.Msg{&dextypes.MsgUpdateParams{
-			Params:    newParams,
-			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		}},
-		"-", "-", "-",
-	)
-
-	requireT.NoError(err)
-	_, err = chain.Governance.Propose(ctx, t, proposalMsg)
-	requireT.ErrorIs(err, govtypes.ErrInvalidProposalMsg)
-
-	dexParamsRes, err = dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
-	requireT.NoError(err)
-	requireT.Equal(newParams, dexParamsRes.Params)
-
-	// restore params
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
 		"-", "-", "-", govtypesv1.OptionYes,
 		&dextypes.MsgUpdateParams{
-			Params:    initialParams,
+			Params:    newParams,
 			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		},
 	)
+	requireT.NoError(err)
 
 	dexParamsRes, err = dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	requireT.Equal(initialParams, dexParamsRes.Params)
+	requireT.Equal(newParams, dexParamsRes.Params)
 }
 
 func issueFT(
