@@ -114,6 +114,7 @@ func New(options ...Option) *App {
 	_, err = coreApp.InitChain(&abci.RequestInitChain{
 		ConsensusParams: simtestutil.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
+		Time:            time.Now(),
 	})
 	if err != nil {
 		panic(errors.Errorf("can't init chain: %s", err))
@@ -140,6 +141,7 @@ func (s *App) FinalizeBlock() error {
 	_, err := s.App.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height: s.LastBlockHeight() + 1,
 		Hash:   s.LastCommitID().Hash,
+		Time:   time.Now().UTC(),
 	})
 	return err
 }

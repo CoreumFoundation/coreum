@@ -12,7 +12,7 @@ option go_package = "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types";
 // the granter's account.
 message MintAuthorization {
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
-  option (amino.name) = "cosmos-sdk/MintAuthorization";
+  option (amino.name) = "assetft/MintAuthorization";
 
   repeated cosmos.base.v1beta1.Coin mint_limit = 1 [
     (gogoproto.nullable) = false,
@@ -25,7 +25,7 @@ message MintAuthorization {
 // the granter's account.
 message BurnAuthorization {
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
-  option (amino.name) = "cosmos-sdk/BurnAuthorization";
+  option (amino.name) = "assetft/BurnAuthorization";
 
   repeated cosmos.base.v1beta1.Coin burn_limit = 1 [
     (gogoproto.nullable) = false,
