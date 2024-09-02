@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+	"math"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -15,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v4/x/dex/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
@@ -259,6 +263,114 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.True(t, dexLockedBalance.IsZero())
 }
 
+func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
+	tests := []struct {
+		name                string
+		price               types.Price
+		baseDenomRefAmount  *sdkmath.LegacyDec
+		quoteDenomRefAmount *sdkmath.LegacyDec
+		wantTickError       bool
+	}{
+		{
+			name:          "valid_default_price",
+			price:         types.MustNewPriceFromString("1e-5"),
+			wantTickError: false,
+		},
+		{
+			name:          "invalid_default_price",
+			price:         types.MustNewPriceFromString("1e-6"),
+			wantTickError: true,
+		},
+		{
+			name:               "valid_base_custom",
+			price:              types.MustNewPriceFromString("33e-6"),
+			baseDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
+			wantTickError:      false,
+		},
+		{
+			name:                "valid_quote_custom",
+			price:               types.MustNewPriceFromString("1e-6"),
+			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000")),
+			wantTickError:       false,
+		},
+		{
+			name:                "valid_both_custom",
+			price:               types.MustNewPriceFromString("14e-3"),
+			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("1")),
+			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100")),
+			wantTickError:       false,
+		},
+		{
+			name:                "valid_both_custom_tick_greater_than_one",
+			price:               types.MustNewPriceFromString("14e1"),
+			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
+			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
+			wantTickError:       false,
+		},
+		{
+			name:                "invalid_both_custom_tick_greater_than_one",
+			price:               types.MustNewPriceFromString("14"),
+			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
+			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
+			wantTickError:       true,
+		},
+		{
+			name:                "valid_both_custom_base_less_than_one",
+			price:               types.MustNewPriceFromString("3e33"),
+			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
+			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000")),
+			wantTickError:       false,
+		},
+		{
+			name:                "invalid_both_custom_base_less_than_one",
+			price:               types.MustNewPriceFromString("3e32"),
+			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
+			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000")),
+			wantTickError:       true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			testApp := simapp.New()
+			sdkCtx := testApp.BaseApp.NewContext(false)
+
+			if tt.baseDenomRefAmount != nil {
+				testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
+					UnifiedRefAmount: *tt.baseDenomRefAmount,
+				})
+			}
+
+			if tt.quoteDenomRefAmount != nil {
+				testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
+					UnifiedRefAmount: *tt.quoteDenomRefAmount,
+				})
+			}
+
+			acc, _ := testApp.GenAccount(sdkCtx)
+			order := types.Order{
+				Creator:    acc.String(),
+				Type:       types.ORDER_TYPE_LIMIT,
+				ID:         uuid.Generate().String(),
+				BaseDenom:  denom1,
+				QuoteDenom: denom2,
+				Price:      &tt.price,
+				Quantity:   sdkmath.NewInt(1_000),
+				Side:       types.SIDE_SELL,
+			}
+			lockedBalance, err := order.ComputeLimitOrderLockedBalance()
+			require.NoError(t, err)
+			testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
+			err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
+			if tt.wantTickError {
+				require.ErrorContains(t, err, "the price must be multible of")
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
@@ -433,6 +545,80 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 	}, orderBooks)
 }
 
+func TestKeeper_ComputePriceTick(t *testing.T) {
+	tests := []struct {
+		name  string
+		base  float64
+		quote float64
+	}{
+		{
+			name:  "3.0/27.123",
+			base:  3.0,
+			quote: 27.123,
+		},
+
+		{
+			name:  "10000.0/10000.0",
+			base:  10000.0,
+			quote: 10000.0,
+		},
+		{
+			name:  "3000.0/20.0",
+			base:  3000.0,
+			quote: 20.0,
+		},
+		{
+			name:  "300000.0/20.0",
+			base:  300000.0,
+			quote: 20.0,
+		},
+		{
+			name:  "2.0/2.0",
+			base:  2.0,
+			quote: 2.0,
+		},
+		{
+			name:  "100.0/1.0",
+			base:  100.0,
+			quote: 1.0,
+		},
+		{
+			name:  "3.0/1.0",
+			base:  3.0,
+			quote: 1.0,
+		},
+
+		{
+			name:  "3100000.0/8.0",
+			base:  3100000.0,
+			quote: 8.0,
+		},
+		{
+			name:  "0.00017/100",
+			base:  0.00017,
+			quote: 100,
+		},
+		{
+			name:  "0.000001/10000000",
+			base:  0.000001,
+			quote: 10000000,
+		},
+		{
+			name:  "100/1000000000000",
+			base:  100,
+			quote: 1000000000000,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			assertTickCalculations(t, tt.base, tt.quote)
+			assertTickCalculations(t, tt.quote, tt.base)
+		})
+	}
+}
+
 func getSorterOrderBookOrders(
 	t *testing.T,
 	testApp *simapp.App,
@@ -479,4 +665,16 @@ func getSorterOrderBookRecords(
 	}
 
 	return records
+}
+
+func assertTickCalculations(t *testing.T, base, quote float64) {
+	tickExponent := -5
+
+	finalTickExp := math.Floor(math.Log10(quote/base)) + float64(tickExponent)
+	finalTick := math.Pow(10, finalTickExp)
+
+	baseDenomRefAmount := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%.15f", base))
+	quoteRefAmount := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%.15f", quote))
+	keeperPriceTick := keeper.ComputePriceTick(baseDenomRefAmount, quoteRefAmount, int32(tickExponent))
+	require.Equal(t, fmt.Sprintf("%.15f", finalTick), keeperPriceTick.FloatString(15))
 }
