@@ -14,9 +14,6 @@ const (
 
 	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
-
-	// RouterKey is the message route for slashing.
-	RouterKey = ModuleName
 )
 
 // Store key prefixes.
@@ -35,6 +32,8 @@ var (
 	OrderIDToSeqKeyPrefix = []byte{0x06}
 	// OrderBookRecordKeyPrefix defines the key prefix for the order book record.
 	OrderBookRecordKeyPrefix = []byte{0x07}
+	// ParamsKey defines the key to store parameters of the module, set via governance.
+	ParamsKey = []byte{0x09}
 )
 
 // CreateOrderBookKey creates order book key.

@@ -849,6 +849,7 @@ func New(
 		app.AccountKeeper,
 		authkeeper.NewQueryServer(app.AccountKeeper),
 		app.AssetFTKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	/****  Module Options ****/

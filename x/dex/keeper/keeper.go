@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/gogoproto/proto"
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/samber/lo"
@@ -24,6 +25,7 @@ type Keeper struct {
 	accountKeeper      types.AccountKeeper
 	accountQueryServer types.AccountQueryServer
 	assetFTKeeper      types.AssetFTKeeper
+	authority          string
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -33,6 +35,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	accountQueryServer types.AccountQueryServer,
 	assetFTKeeper types.AssetFTKeeper,
+	authority string,
 ) Keeper {
 	return Keeper{
 		cdc:                cdc,
@@ -40,6 +43,7 @@ func NewKeeper(
 		accountKeeper:      accountKeeper,
 		accountQueryServer: accountQueryServer,
 		assetFTKeeper:      assetFTKeeper,
+		authority:          authority,
 	}
 }
 
@@ -147,6 +151,38 @@ func (k Keeper) GetOrderBookOrders(
 	}
 
 	return k.getPaginatedOrderBookOrders(ctx, baseDenom, quoteDenom, side, pagination)
+}
+
+// GetParams gets the parameters of the module.
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.ParamsKey)
+	var params types.Params
+	k.cdc.MustUnmarshal(bz, &params)
+	return params
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	if k.authority != authority {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+	if err := params.ValidateBasic(); err != nil {
+		return err
+	}
+
+	return k.SetParams(ctx, params)
+}
+
+// SetParams sets the parameters of the module.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	store := ctx.KVStore(k.storeKey)
+	bz, err := k.cdc.Marshal(&params)
+	if err != nil {
+		return err
+	}
+	store.Set(types.ParamsKey, bz)
+	return nil
 }
 
 func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, uint32, error) {
