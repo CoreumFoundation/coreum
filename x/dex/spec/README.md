@@ -226,8 +226,7 @@ This feature introduces an enhancement to the `restricted_trade` functionality, 
 trading pairs, ensuring that denom(asset FT) can only be exchanged with certain currencies or assets, as specified by
 the admin or governance.
 
-### Extensions
+## Extensions
 
-Before placing an order in the order book, the DEX verifies whether the order is permitted by interacting with the
-specific interface provided by the extensions' smart contract. If the required interface is not implemented, the DEX
-will reject the order, preventing it from being placed.
+The current version of the DEX doesn't support the extensions. It means if a user places an order with the asset FT 
+extension token, such an order will be rejected.
