@@ -369,7 +369,7 @@ func MsgToMsgURL(msg sdk.Msg) MsgURL {
 	return MsgURL(sdk.MsgTypeURL(msg))
 }
 
-func authzMsgGrantGasFunc(baseGas uint64, gasPerByte uint64) gasByMsgFunc {
+func authzMsgGrantGasFunc(baseGas, gasPerByte uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgGrant)
 		if !ok {
