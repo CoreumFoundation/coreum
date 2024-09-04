@@ -143,29 +143,23 @@ or the token doesn't have and admin this variable can be set/updated by the chai
 The formula taken for the price tick is:
 
 ```
-price_tick(base_denom/quote_denom) = round_to_power_of_ten(price_tick_multiplier * unified_ref_amount(quote_denom) / unified_ref_amount(base_denom))
+price_tick(base_denom/quote_denom) = 10^(floor(log10((unified_ref_amount(quote_denom) / unified_ref_amount(base_denom)))) + price_tick_exponent)
 ```
 
-The `price_tick_multiplier` is the coefficient used to give better price precision for the token orders. The default
-`price_tick_multiplier` is `10^-5`, and can be updated by the governance.
-
-The `round_to_power_of_ten` is the function that finds nearest power of ten value to define the tick. For the rounding
-it uses half round up rounding.
+The `price_tick_exponent` is the coefficient used to give better price precision for the token orders. The default
+`price_tick_exponent` is `-5`, and can be updated by the governance.
 
 Tick size example:
 
 | unified_ref_amount(AAA) | unified_ref_amount(BBB) | price_tick(AAA/BBB) | price_tick(BBB/AAA) |    
 |-------------------------|-------------------------|---------------------|---------------------|
 | 10000.0                 | 10000.0                 | 10^-5               | 10^-5               | 
-| 3000.0                  | 20.0                    | 10^-7               | 10^-3               | 
+| 3000.0                  | 20.0                    | 10^-8               | 10^-3               | 
 | 3100000.0               | 8.0                     | 10^-11              | 1                   |
-| 0.00017                 | 100.0                   | 10                  | 10^-11              |
+| 0.00017                 | 100.0                   | 1                   | 10^-11              |
+| 0.000001                | 10000000                | 10^8                | 10^-18              |
 
 The update of the `unified_ref_amount` doesn't affect the created orders.
-
-The Coreum DEX price supports up to 100 decimals for the price precision. Which means that max price tick is equal to
-the max supported price precision. If the price tick of two traded coins exceeds 100 decimals we use `10^-100` as the
-price tick for such a token.
 
 ### Balance locking
 
