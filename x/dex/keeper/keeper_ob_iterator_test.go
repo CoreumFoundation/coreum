@@ -232,6 +232,11 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 			_, err := testApp.EndBlocker(sdkCtx)
 			require.NoError(t, err)
 
+			// don't limit the price tick
+			params := testApp.DEXKeeper.GetParams(sdkCtx)
+			params.PriceTickExponent = int32(types.MinExt)
+			require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
+
 			baseDenom := denom1
 			quoteDenom := denom2
 			var (
