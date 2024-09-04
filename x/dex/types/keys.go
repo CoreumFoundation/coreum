@@ -24,8 +24,8 @@ var (
 	OrderBookSeqKey = []byte{0x02}
 	// OrderBookDataKeyPrefix defines the key prefix for the order book data.
 	OrderBookDataKeyPrefix = []byte{0x03}
-	// OrderSequenceKey defines the key for the order sequence.
-	OrderSequenceKey = []byte{0x04}
+	// OrderSeqKey defines the key for the order sequence.
+	OrderSeqKey = []byte{0x04}
 	// OrderKeyPrefix defines the key prefix for the order.
 	OrderKeyPrefix = []byte{0x05}
 	// OrderIDToSeqKeyPrefix defines the key prefix for the order ID to sequence.
@@ -59,6 +59,15 @@ func CreateOrderBookDataKey(orderBookID uint32) []byte {
 	return store.JoinKeys(OrderBookDataKeyPrefix, key)
 }
 
+// DecodeOrderBookDataKey decodes order book data key and returns the order book ID.
+func DecodeOrderBookDataKey(key []byte) (uint32, error) {
+	orderBookID, _, err := store.ReadOrderedBytesToUint32(key)
+	if err != nil {
+		return 0, err
+	}
+	return orderBookID, nil
+}
+
 // CreateOrderKey creates order key.
 func CreateOrderKey(orderSeq uint64) []byte {
 	key := make([]byte, 0)
@@ -76,6 +85,16 @@ func CreateOrderIDToSeqKeyPrefix(accountNumber uint64) []byte {
 	key := make([]byte, 0)
 	key = store.AppendUint64ToOrderedBytes(key, accountNumber)
 	return store.JoinKeys(OrderIDToSeqKeyPrefix, key)
+}
+
+// DecodeOrderIDToSeqKey decodes order ID to sequence key and returns the account number and order ID.
+func DecodeOrderIDToSeqKey(key []byte) (uint64, string, error) {
+	accNumber, orderID, err := store.ReadOrderedBytesToUint64(key)
+	if err != nil {
+		return 0, "", err
+	}
+
+	return accNumber, string(orderID), nil
 }
 
 // CreateOrderBookRecordKey creates order book key record with fixed key length to support the correct ordering

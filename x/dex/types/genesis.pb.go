@@ -26,7 +26,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // GenesisState defines the module genesis state.
 type GenesisState struct {
 	// params defines all the parameters of the module.
-	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	Params     Params                `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	OrderBooks []OrderBookDataWithID `protobuf:"bytes,2,rep,name=order_books,json=orderBooks,proto3" json:"order_books"`
+	Orders     []OrderWithSequence   `protobuf:"bytes,3,rep,name=orders,proto3" json:"orders"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -69,27 +71,163 @@ func (m *GenesisState) GetParams() Params {
 	return Params{}
 }
 
+func (m *GenesisState) GetOrderBooks() []OrderBookDataWithID {
+	if m != nil {
+		return m.OrderBooks
+	}
+	return nil
+}
+
+func (m *GenesisState) GetOrders() []OrderWithSequence {
+	if m != nil {
+		return m.Orders
+	}
+	return nil
+}
+
+// OrderBookDataWithID is a order book data with it's corresponding ID.
+type OrderBookDataWithID struct {
+	// id is order book ID.
+	ID uint32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// data is order book data.
+	Data OrderBookData `protobuf:"bytes,2,opt,name=data,proto3" json:"data"`
+}
+
+func (m *OrderBookDataWithID) Reset()         { *m = OrderBookDataWithID{} }
+func (m *OrderBookDataWithID) String() string { return proto.CompactTextString(m) }
+func (*OrderBookDataWithID) ProtoMessage()    {}
+func (*OrderBookDataWithID) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a9d24a0566883c25, []int{1}
+}
+func (m *OrderBookDataWithID) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OrderBookDataWithID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OrderBookDataWithID.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OrderBookDataWithID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OrderBookDataWithID.Merge(m, src)
+}
+func (m *OrderBookDataWithID) XXX_Size() int {
+	return m.Size()
+}
+func (m *OrderBookDataWithID) XXX_DiscardUnknown() {
+	xxx_messageInfo_OrderBookDataWithID.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OrderBookDataWithID proto.InternalMessageInfo
+
+func (m *OrderBookDataWithID) GetID() uint32 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *OrderBookDataWithID) GetData() OrderBookData {
+	if m != nil {
+		return m.Data
+	}
+	return OrderBookData{}
+}
+
+// OrderWithSequence is a order with it's corresponding sequence.
+type OrderWithSequence struct {
+	// sequence is order sequence.
+	Sequence uint64 `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	// data is order book data.
+	Order Order `protobuf:"bytes,2,opt,name=order,proto3" json:"order"`
+}
+
+func (m *OrderWithSequence) Reset()         { *m = OrderWithSequence{} }
+func (m *OrderWithSequence) String() string { return proto.CompactTextString(m) }
+func (*OrderWithSequence) ProtoMessage()    {}
+func (*OrderWithSequence) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a9d24a0566883c25, []int{2}
+}
+func (m *OrderWithSequence) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OrderWithSequence) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OrderWithSequence.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OrderWithSequence) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OrderWithSequence.Merge(m, src)
+}
+func (m *OrderWithSequence) XXX_Size() int {
+	return m.Size()
+}
+func (m *OrderWithSequence) XXX_DiscardUnknown() {
+	xxx_messageInfo_OrderWithSequence.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OrderWithSequence proto.InternalMessageInfo
+
+func (m *OrderWithSequence) GetSequence() uint64 {
+	if m != nil {
+		return m.Sequence
+	}
+	return 0
+}
+
+func (m *OrderWithSequence) GetOrder() Order {
+	if m != nil {
+		return m.Order
+	}
+	return Order{}
+}
+
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "coreum.dex.v1.GenesisState")
+	proto.RegisterType((*OrderBookDataWithID)(nil), "coreum.dex.v1.OrderBookDataWithID")
+	proto.RegisterType((*OrderWithSequence)(nil), "coreum.dex.v1.OrderWithSequence")
 }
 
 func init() { proto.RegisterFile("coreum/dex/v1/genesis.proto", fileDescriptor_a9d24a0566883c25) }
 
 var fileDescriptor_a9d24a0566883c25 = []byte{
-	// 203 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4e, 0xce, 0x2f, 0x4a,
-	0x2d, 0xcd, 0xd5, 0x4f, 0x49, 0xad, 0xd0, 0x2f, 0x33, 0xd4, 0x4f, 0x4f, 0xcd, 0x4b, 0x2d, 0xce,
-	0x2c, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x85, 0x48, 0xea, 0xa5, 0xa4, 0x56, 0xe8,
-	0x95, 0x19, 0x4a, 0x49, 0xa1, 0xaa, 0x2d, 0x48, 0x2c, 0x4a, 0xcc, 0x85, 0x2a, 0x95, 0x12, 0x49,
-	0xcf, 0x4f, 0xcf, 0x07, 0x33, 0xf5, 0x41, 0x2c, 0x88, 0xa8, 0x92, 0x33, 0x17, 0x8f, 0x3b, 0xc4,
-	0xc4, 0xe0, 0x92, 0xc4, 0x92, 0x54, 0x21, 0x63, 0x2e, 0x36, 0x88, 0x2e, 0x09, 0x46, 0x05, 0x46,
-	0x0d, 0x6e, 0x23, 0x51, 0x3d, 0x14, 0x1b, 0xf4, 0x02, 0xc0, 0x92, 0x4e, 0x2c, 0x27, 0xee, 0xc9,
-	0x33, 0x04, 0x41, 0x95, 0x3a, 0x79, 0x9f, 0x78, 0x24, 0xc7, 0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83,
-	0x47, 0x72, 0x8c, 0x13, 0x1e, 0xcb, 0x31, 0x5c, 0x78, 0x2c, 0xc7, 0x70, 0xe3, 0xb1, 0x1c, 0x43,
-	0x94, 0x61, 0x7a, 0x66, 0x49, 0x46, 0x69, 0x92, 0x5e, 0x72, 0x7e, 0xae, 0xbe, 0x33, 0xd8, 0x20,
-	0xb7, 0xfc, 0xd2, 0xbc, 0x94, 0xc4, 0x92, 0xcc, 0xfc, 0x3c, 0x7d, 0xa8, 0x63, 0xcb, 0x4c, 0xf4,
-	0x2b, 0xc0, 0x2e, 0x2e, 0xa9, 0x2c, 0x48, 0x2d, 0x4e, 0x62, 0x03, 0x3b, 0xcc, 0x18, 0x10, 0x00,
-	0x00, 0xff, 0xff, 0xe0, 0x5d, 0xe7, 0x21, 0xf8, 0x00, 0x00, 0x00,
+	// 364 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x92, 0x31, 0x4f, 0xc2, 0x40,
+	0x1c, 0xc5, 0xdb, 0x82, 0x8d, 0x39, 0x64, 0xf0, 0x44, 0x53, 0xab, 0x29, 0xa4, 0x13, 0x53, 0x2b,
+	0x60, 0x1c, 0x1d, 0x2a, 0xd1, 0x10, 0x07, 0x0d, 0x0c, 0x26, 0x2e, 0xe6, 0xa0, 0x97, 0xd2, 0x10,
+	0xfa, 0xc7, 0xde, 0x95, 0xe0, 0xb7, 0xf0, 0x63, 0x31, 0x19, 0x46, 0x27, 0x62, 0xca, 0x17, 0x31,
+	0xdc, 0x1d, 0x26, 0x28, 0x71, 0xfb, 0x5f, 0xff, 0xef, 0xbd, 0xdf, 0xbb, 0xf4, 0xd0, 0xd9, 0x00,
+	0x52, 0x9a, 0x8d, 0xfd, 0x90, 0xce, 0xfc, 0x69, 0xc3, 0x8f, 0x68, 0x42, 0x59, 0xcc, 0xbc, 0x49,
+	0x0a, 0x1c, 0x70, 0x59, 0x2e, 0xbd, 0x90, 0xce, 0xbc, 0x69, 0xc3, 0x3e, 0xdd, 0xd6, 0x42, 0x1a,
+	0xd2, 0x54, 0x2a, 0x6d, 0x7b, 0x7b, 0x35, 0x21, 0x29, 0x19, 0xab, 0x14, 0xbb, 0x12, 0x41, 0x04,
+	0x62, 0xf4, 0xd7, 0x93, 0xfc, 0xea, 0x7e, 0xe8, 0xe8, 0xe0, 0x4e, 0xd2, 0x7a, 0x9c, 0x70, 0x8a,
+	0x5b, 0xc8, 0x94, 0x36, 0x4b, 0xaf, 0xe9, 0xf5, 0x52, 0xf3, 0xd8, 0xdb, 0xa2, 0x7b, 0x8f, 0x62,
+	0x19, 0x14, 0xe7, 0xcb, 0xaa, 0xd6, 0x55, 0x52, 0xdc, 0x41, 0x25, 0x51, 0xe3, 0xa5, 0x0f, 0x30,
+	0x62, 0x96, 0x51, 0x2b, 0xd4, 0x4b, 0x4d, 0xf7, 0x97, 0xf3, 0x61, 0xad, 0x08, 0x00, 0x46, 0x6d,
+	0xc2, 0xc9, 0x53, 0xcc, 0x87, 0x9d, 0xb6, 0x8a, 0x41, 0xb0, 0x59, 0x31, 0x7c, 0x8d, 0x4c, 0x71,
+	0x62, 0x56, 0x41, 0xa4, 0xd4, 0x76, 0xa5, 0xac, 0xdd, 0x3d, 0xfa, 0x9a, 0xd1, 0x64, 0x40, 0x37,
+	0x55, 0xa4, 0xcb, 0xa5, 0xe8, 0x68, 0x07, 0x08, 0x9f, 0x20, 0x23, 0x0e, 0xc5, 0x95, 0xca, 0x81,
+	0x99, 0x2f, 0xab, 0x46, 0xa7, 0xdd, 0x35, 0xe2, 0x10, 0x5f, 0xa1, 0x62, 0x48, 0x38, 0xb1, 0x0c,
+	0x71, 0xd9, 0xf3, 0xff, 0x2a, 0x2b, 0x90, 0xd0, 0xbb, 0x04, 0x1d, 0xfe, 0x69, 0x82, 0x6d, 0xb4,
+	0xcf, 0xd4, 0x2c, 0x50, 0xc5, 0xee, 0xcf, 0x19, 0x5f, 0xa0, 0x3d, 0xd1, 0x50, 0x91, 0x2a, 0x3b,
+	0x49, 0x92, 0x20, 0x85, 0xc1, 0xfd, 0x3c, 0x77, 0xf4, 0x45, 0xee, 0xe8, 0x5f, 0xb9, 0xa3, 0xbf,
+	0xaf, 0x1c, 0x6d, 0xb1, 0x72, 0xb4, 0xcf, 0x95, 0xa3, 0x3d, 0x37, 0xa2, 0x98, 0x0f, 0xb3, 0xbe,
+	0x37, 0x80, 0xb1, 0x7f, 0x23, 0x62, 0x6e, 0x21, 0x4b, 0x42, 0xc2, 0x63, 0x48, 0x7c, 0xf5, 0x04,
+	0xa6, 0x97, 0xfe, 0x4c, 0xbc, 0x03, 0xfe, 0x36, 0xa1, 0xac, 0x6f, 0x8a, 0xdf, 0xdd, 0xfa, 0x0e,
+	0x00, 0x00, 0xff, 0xff, 0x61, 0x60, 0xd2, 0xd4, 0x69, 0x02, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -112,6 +250,34 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Orders) > 0 {
+		for iNdEx := len(m.Orders) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Orders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.OrderBooks) > 0 {
+		for iNdEx := len(m.OrderBooks) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.OrderBooks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
 	{
 		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -122,6 +288,82 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *OrderBookDataWithID) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OrderBookDataWithID) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OrderBookDataWithID) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Data.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if m.ID != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.ID))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OrderWithSequence) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OrderWithSequence) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OrderWithSequence) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Order.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if m.Sequence != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.Sequence))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -143,6 +385,46 @@ func (m *GenesisState) Size() (n int) {
 	var l int
 	_ = l
 	l = m.Params.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	if len(m.OrderBooks) > 0 {
+		for _, e := range m.OrderBooks {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.Orders) > 0 {
+		for _, e := range m.Orders {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *OrderBookDataWithID) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.ID != 0 {
+		n += 1 + sovGenesis(uint64(m.ID))
+	}
+	l = m.Data.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	return n
+}
+
+func (m *OrderWithSequence) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Sequence != 0 {
+		n += 1 + sovGenesis(uint64(m.Sequence))
+	}
+	l = m.Order.Size()
 	n += 1 + l + sovGenesis(uint64(l))
 	return n
 }
@@ -212,6 +494,278 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OrderBooks", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OrderBooks = append(m.OrderBooks, OrderBookDataWithID{})
+			if err := m.OrderBooks[len(m.OrderBooks)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Orders", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Orders = append(m.Orders, OrderWithSequence{})
+			if err := m.Orders[len(m.Orders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OrderBookDataWithID) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OrderBookDataWithID: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OrderBookDataWithID: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
+			}
+			m.ID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ID |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Data.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OrderWithSequence) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OrderWithSequence: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OrderWithSequence: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sequence", wireType)
+			}
+			m.Sequence = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Sequence |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Order", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Order.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

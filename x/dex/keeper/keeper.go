@@ -109,17 +109,7 @@ func (k Keeper) CancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 
 // GetOrderBookIDByDenoms returns order book ID by it's denoms.
 func (k Keeper) GetOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, error) {
-	orderBookIDKey, err := types.CreateOrderBookKey(baseDenom, quoteDenom)
-	if err != nil {
-		return 0, err
-	}
-
-	orderBookID, err := k.getOrderBookIDByKey(ctx, orderBookIDKey)
-	if err != nil {
-		return 0, sdkerrors.Wrapf(err, "faild to get order book ID, baseDenom: %s, quoteDenom: %s", baseDenom, quoteDenom)
-	}
-
-	return orderBookID, nil
+	return k.getOrderBookIDByDenoms(ctx, baseDenom, quoteDenom)
 }
 
 // GetOrderByAddressAndID returns order by holder address and it's ID.
@@ -146,7 +136,13 @@ func (k Keeper) GetOrderBooks(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.OrderBookData, *query.PageResponse, error) {
-	return k.getPaginatedOrderBooks(ctx, pagination)
+	orderBookWithIDs, pageRes, err := k.getPaginatedOrderBooksWithID(ctx, pagination)
+	if err != nil {
+		return nil, nil, err
+	}
+	return lo.Map(orderBookWithIDs, func(orderBookWithID types.OrderBookDataWithID, _ int) types.OrderBookData {
+		return orderBookWithID.Data
+	}), pageRes, nil
 }
 
 // GetOrderBookOrders returns order book records sorted by price asc. For the buy side it's expected to use the reverse
@@ -196,6 +192,119 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	return nil
 }
 
+// GetPaginatedOrdersWithSequence returns orders with sequence.
+func (k Keeper) GetPaginatedOrdersWithSequence(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.OrderWithSequence, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.OrderIDToSeqKeyPrefix)
+	orderBookIDToOrderBookData := make(map[uint32]types.OrderBookData)
+	accNumberToAddCache := make(map[uint64]sdk.AccAddress)
+	orders, pageRes, err := query.GenericFilteredPaginate(
+		k.cdc,
+		store,
+		pagination,
+		// builder
+		func(key []byte, record *gogotypes.UInt64Value) (*types.OrderWithSequence, error) {
+			accNumber, _, err := types.DecodeOrderIDToSeqKey(key)
+			if err != nil {
+				return nil, err
+			}
+
+			var acc sdk.AccAddress
+			acc, accNumberToAddCache, err = k.getAccountAddressWithCache(ctx, accNumber, accNumberToAddCache)
+			if err != nil {
+				return nil, err
+			}
+
+			orderSeq := record.Value
+			orderData, err := k.getOrderData(ctx, orderSeq)
+			if err != nil {
+				return nil, err
+			}
+
+			orderBookID := orderData.OrderBookID
+			orderBookData, ok := orderBookIDToOrderBookData[orderBookID]
+			if !ok {
+				orderBookData, err = k.getOrderBookData(ctx, orderBookID)
+				if err != nil {
+					return nil, err
+				}
+				orderBookIDToOrderBookData[orderBookID] = orderBookData
+			}
+
+			orderBookRecord, err := k.getOrderBookRecord(
+				ctx,
+				orderData.OrderBookID,
+				orderData.Side,
+				orderData.Price,
+				orderSeq,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			return &types.OrderWithSequence{
+				Sequence: orderSeq,
+				Order: types.Order{
+					Creator:           acc.String(),
+					Type:              types.ORDER_TYPE_LIMIT,
+					ID:                orderBookRecord.OrderID,
+					BaseDenom:         orderBookData.BaseDenom,
+					QuoteDenom:        orderBookData.QuoteDenom,
+					Price:             &orderData.Price,
+					Quantity:          orderData.Quantity,
+					Side:              orderData.Side,
+					RemainingQuantity: orderBookRecord.RemainingQuantity,
+					RemainingBalance:  orderBookRecord.RemainingBalance,
+				},
+			}, nil
+		},
+		// constructor
+		func() *gogotypes.UInt64Value {
+			return &gogotypes.UInt64Value{}
+		},
+	)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
+	}
+	return lo.Map(orders, func(orderWithSeq *types.OrderWithSequence, _ int) types.OrderWithSequence {
+		return *orderWithSeq
+	}), pageRes, nil
+}
+
+// GetPaginatedOrderBoosWithID returns order books with IDs.
+func (k Keeper) GetPaginatedOrderBoosWithID(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.OrderBookDataWithID, *query.PageResponse, error) {
+	return k.getPaginatedOrderBooksWithID(ctx, pagination)
+}
+
+// SaveOrderBookIDWithData saves order book ID with corresponding data.
+func (k Keeper) SaveOrderBookIDWithData(ctx sdk.Context, orderBookID uint32, data types.OrderBookData) error {
+	return k.saveOrderBookIDWithData(ctx, orderBookID, data.BaseDenom, data.QuoteDenom)
+}
+
+// SetOrderSeq sets order sequence.
+func (k Keeper) SetOrderSeq(ctx sdk.Context, seq uint64) error {
+	return k.setUint64Seq(ctx, types.OrderSeqKey, seq)
+}
+
+// SetOrderBookSeq sets order book sequence.
+func (k Keeper) SetOrderBookSeq(ctx sdk.Context, seq uint32) error {
+	return k.setUint32Seq(ctx, types.OrderBookSeqKey, seq)
+}
+
+// SaveOrderWithOrderBookRecord saves order with order book record.
+func (k Keeper) SaveOrderWithOrderBookRecord(
+	ctx sdk.Context,
+	order types.Order,
+	record types.OrderBookRecord,
+) error {
+	return k.saveOrderWithOrderBookRecord(ctx, order, record)
+}
+
 func (k Keeper) validatePriceTick(ctx sdk.Context, baseDenom, quoteDenom string, price types.Price) error {
 	baseDenomRefAmount, buyRefAmountFound, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom)
 	if err != nil {
@@ -240,6 +349,20 @@ func (k Keeper) getAssetFTUnifiedRefAmount(ctx sdk.Context, denom string) (sdkma
 	return settings.UnifiedRefAmount, found, nil
 }
 
+func (k Keeper) getOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, error) {
+	orderBookIDKey, err := types.CreateOrderBookKey(baseDenom, quoteDenom)
+	if err != nil {
+		return 0, err
+	}
+
+	orderBookID, err := k.getOrderBookIDByKey(ctx, orderBookIDKey)
+	if err != nil {
+		return 0, sdkerrors.Wrapf(err, "faild to get order book ID, baseDenom: %s, quoteDenom: %s", baseDenom, quoteDenom)
+	}
+
+	return orderBookID, nil
+}
+
 func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, uint32, error) {
 	// the function optimizes the read, by writing ordered denoms
 	var denom0, denom1 string
@@ -258,7 +381,7 @@ func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom stri
 	orderBookID0, err := k.getOrderBookIDByKey(ctx, key0)
 	if err != nil {
 		if sdkerrors.IsOf(err, types.ErrRecordNotFound) {
-			orderBookID0, err = k.genOrderBookIDsFromDenoms(ctx, key0, denom0, denom1)
+			orderBookID0, err = k.genOrderBookIDsFromDenoms(ctx, denom0, denom1)
 			if err != nil {
 				return 0, 0, err
 			}
@@ -283,46 +406,52 @@ func (k Keeper) getOrderBookIDByKey(ctx sdk.Context, key []byte) (uint32, error)
 	return val.GetValue(), nil
 }
 
-func (k Keeper) genOrderBookIDsFromDenoms(ctx sdk.Context, key []byte, denom0, denom1 string) (uint32, error) {
-	orderBookID0, err := k.genNextOrderBookID(ctx, key)
+func (k Keeper) genOrderBookIDsFromDenoms(ctx sdk.Context, denom0, denom1 string) (uint32, error) {
+	orderBookID0, err := k.genNextOrderBookID(ctx)
 	if err != nil {
 		return 0, err
 	}
-	if err := k.saveOrderBookData(ctx, orderBookID0, types.OrderBookData{
-		BaseDenom:  denom0,
-		QuoteDenom: denom1,
-	}); err != nil {
+	if err := k.saveOrderBookIDWithData(ctx, orderBookID0, denom0, denom1); err != nil {
 		return 0, err
 	}
 
-	key1, err := types.CreateOrderBookKey(denom1, denom0)
+	orderBookID1, err := k.genNextOrderBookID(ctx)
 	if err != nil {
 		return 0, err
 	}
-	orderBookID1, err := k.genNextOrderBookID(ctx, key1)
-	if err != nil {
-		return 0, err
-	}
-	if err := k.saveOrderBookData(ctx, orderBookID1, types.OrderBookData{
-		BaseDenom:  denom1,
-		QuoteDenom: denom0,
-	}); err != nil {
+	if err := k.saveOrderBookIDWithData(ctx, orderBookID1, denom1, denom0); err != nil {
 		return 0, err
 	}
 
 	return orderBookID0, nil
 }
 
-func (k Keeper) genNextOrderBookID(ctx sdk.Context, key []byte) (uint32, error) {
+func (k Keeper) genNextOrderBookID(ctx sdk.Context) (uint32, error) {
 	id, err := k.genNextUint32Seq(ctx, types.OrderBookSeqKey)
 	if err != nil {
 		return 0, err
 	}
-	if err := k.setDataToStore(ctx, key, &gogotypes.UInt32Value{Value: id}); err != nil {
-		return 0, err
-	}
 
 	return id, nil
+}
+
+func (k Keeper) saveOrderBookIDWithData(
+	ctx sdk.Context,
+	orderBookID uint32,
+	denom0, denom1 string,
+) error {
+	key, err := types.CreateOrderBookKey(denom0, denom1)
+	if err != nil {
+		return err
+	}
+	if err := k.setDataToStore(ctx, key, &gogotypes.UInt32Value{Value: orderBookID}); err != nil {
+		return err
+	}
+
+	return k.saveOrderBookData(ctx, orderBookID, types.OrderBookData{
+		BaseDenom:  denom0,
+		QuoteDenom: denom1,
+	})
 }
 
 func (k Keeper) createOrder(
@@ -342,11 +471,19 @@ func (k Keeper) createOrder(
 	}
 	record.OrderSeq = orderSeq
 
+	return k.saveOrderWithOrderBookRecord(ctx, order, record)
+}
+
+func (k Keeper) saveOrderWithOrderBookRecord(
+	ctx sdk.Context,
+	order types.Order,
+	record types.OrderBookRecord,
+) error {
 	if err := k.saveOrderBookRecord(ctx, record); err != nil {
 		return err
 	}
 
-	if err := k.savaOrderData(ctx, orderSeq, types.OrderData{
+	if err := k.savaOrderData(ctx, record.OrderSeq, types.OrderData{
 		OrderBookID: record.OrderBookID,
 		Price:       *order.Price,
 		Quantity:    order.Quantity,
@@ -355,7 +492,7 @@ func (k Keeper) createOrder(
 		return err
 	}
 
-	return k.savaOrderIDToSeq(ctx, record.AccountNumber, record.OrderID, orderSeq)
+	return k.savaOrderIDToSeq(ctx, record.AccountNumber, record.OrderID, record.OrderSeq)
 }
 
 func (k Keeper) removeOrderByRecord(
@@ -388,7 +525,7 @@ func (k Keeper) getOrderBookData(ctx sdk.Context, orderBookID uint32) (types.Ord
 }
 
 func (k Keeper) genNextOrderSeq(ctx sdk.Context) (uint64, error) {
-	return k.genNextUint64Seq(ctx, types.OrderSequenceKey)
+	return k.genNextUint64Seq(ctx, types.OrderSeqKey)
 }
 
 func (k Keeper) saveOrderBookRecord(
@@ -565,18 +702,26 @@ func (k Keeper) getPaginatedOrders(
 	}), pageRes, nil
 }
 
-func (k Keeper) getPaginatedOrderBooks(
+func (k Keeper) getPaginatedOrderBooksWithID(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
-) ([]types.OrderBookData, *query.PageResponse, error) {
+) ([]types.OrderBookDataWithID, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.OrderBookDataKeyPrefix)
 	orders, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,
 		pagination,
 		// builder
-		func(_ []byte, record *types.OrderBookData) (*types.OrderBookData, error) {
-			return record, nil
+		func(key []byte, record *types.OrderBookData) (*types.OrderBookDataWithID, error) {
+			id, err := types.DecodeOrderBookDataKey(key)
+			if err != nil {
+				return nil, err
+			}
+
+			return &types.OrderBookDataWithID{
+				ID:   id,
+				Data: *record,
+			}, nil
 		},
 		// constructor
 		func() *types.OrderBookData {
@@ -586,7 +731,7 @@ func (k Keeper) getPaginatedOrderBooks(
 	if err != nil {
 		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
 	}
-	return lo.Map(orders, func(data *types.OrderBookData, _ int) types.OrderBookData {
+	return lo.Map(orders, func(data *types.OrderBookDataWithID, _ int) types.OrderBookDataWithID {
 		return *data
 	}), pageRes, nil
 }
@@ -597,7 +742,7 @@ func (k Keeper) getPaginatedOrderBookOrders(
 	side types.Side,
 	pagination *query.PageRequest,
 ) ([]types.Order, *query.PageResponse, error) {
-	orderBookID, err := k.GetOrderBookIDByDenoms(ctx, baseDenom, quoteDenom)
+	orderBookID, err := k.getOrderBookIDByDenoms(ctx, baseDenom, quoteDenom)
 	if err != nil {
 		return nil, nil, err
 	}
