@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
 // AccountKeeper defines the expected account keeper interface.
@@ -25,4 +27,5 @@ type AssetFTKeeper interface {
 	DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
 	DEXUnlockAndSend(ctx sdk.Context, from, to sdk.AccAddress, coin sdk.Coin) error
 	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error)
 }

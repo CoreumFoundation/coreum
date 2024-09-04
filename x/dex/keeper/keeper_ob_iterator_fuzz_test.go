@@ -24,6 +24,16 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 	testApp := simapp.New()
 	lock := sync.Mutex{}
 
+	// don't limit the price tick
+	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
+
+	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params.PriceTickExponent = int32(types.MinExt)
+	require.NoError(f, testApp.DEXKeeper.SetParams(sdkCtx, params))
+
+	_, err := testApp.EndBlocker(sdkCtx)
+	require.NoError(f, err)
+
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
 		lock.Lock()
 		defer lock.Unlock()
@@ -39,6 +49,16 @@ func FuzzSaveBuyOrderAndReadWithSorting(f *testing.F) {
 
 	testApp := simapp.New()
 	lock := sync.Mutex{}
+
+	// don't limit the price tick
+	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
+
+	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params.PriceTickExponent = int32(types.MinExt)
+	require.NoError(f, testApp.DEXKeeper.SetParams(sdkCtx, params))
+
+	_, err := testApp.EndBlocker(sdkCtx)
+	require.NoError(f, err)
 
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
 		// to prevent fast fail, because of out of sdkmath.Int range in the bank keeper at the time of the funding
