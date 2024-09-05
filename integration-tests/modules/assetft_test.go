@@ -21,6 +21,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -357,6 +358,68 @@ func TestAssetFTDEXSettingsCreationAndUpdate(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(newDEXSettings, dexSettingsRes.DEXSettings)
+}
+
+func TestAssetFTDEXSettingsCreationAndUpdateVIAGov(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	// Create new proposer.
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+	// fund twice for 2 proposals
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance.Add(proposerBalance)))
+
+	denom := "denom" + uuid.NewString()[:4]
+	_, err = assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
+		Denom: denom,
+	})
+	requireT.ErrorContains(err, assetfttypes.ErrDEXSettingsNotFound.Error())
+
+	// create DEX settings VIA gov
+	newDEXSettings := assetfttypes.DEXSettings{
+		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("3.4"),
+	}
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateDEXSettings{
+			Sender:      authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Denom:       denom,
+			DEXSettings: newDEXSettings,
+		},
+	)
+
+	dexSettingsRes, err := assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(newDEXSettings, dexSettingsRes.DEXSettings)
+
+	// update DEX settings VIA gov
+	updatedDEXSettings := assetfttypes.DEXSettings{
+		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("2.2"),
+	}
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateDEXSettings{
+			Sender:      authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Denom:       denom,
+			DEXSettings: updatedDEXSettings,
+		},
+	)
+
+	dexSettingsRes, err = assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(updatedDEXSettings, dexSettingsRes.DEXSettings)
 }
 
 // TestAssetIssueAndQueryTokens checks that tokens query works as expected.
