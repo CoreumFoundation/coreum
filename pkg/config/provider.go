@@ -10,7 +10,6 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/btcutil/bech32"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcosmostypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
@@ -102,12 +101,12 @@ func (dcp DynamicConfigProvider) EncodeGenesis() ([]byte, error) {
 
 // AppState returns the app state from the genesis doc of the network.
 func (dcp DynamicConfigProvider) AppState() (map[string]json.RawMessage, error) {
-	codec := NewEncodingConfig(module.NewBasicManager(
+	codec := NewEncodingConfig(
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		bank.AppModuleBasic{},
-	)).Codec
+	).Codec
 
 	genesisJSON, err := dcp.genesisByTemplate()
 	if err != nil {
@@ -266,9 +265,9 @@ func NewStaticConfigProvider(content []byte) StaticConfigProvider {
 		panic(err)
 	}
 
-	codec := NewEncodingConfig(module.NewBasicManager(
+	codec := NewEncodingConfig(
 		staking.AppModuleBasic{},
-	)).Codec
+	).Codec
 	stakingGenesisState := stakingtypes.GetGenesisStateFromAppState(codec, appStateMapJSONRawMessage)
 	bankGenesisState := banktypes.GetGenesisStateFromAppState(codec, appStateMapJSONRawMessage)
 	addressPrefix, _, err := bech32.Decode(bankGenesisState.Balances[0].Address, 1023)

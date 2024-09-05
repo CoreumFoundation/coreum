@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
@@ -31,7 +32,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
@@ -63,7 +63,7 @@ type GenesisInitConfig struct {
 }
 
 // GenerateGenesisCmd returns a cobra command that generates the gensis file, given an input config.
-func GenerateGenesisCmd() *cobra.Command {
+func GenerateGenesisCmd(basiManager module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate-genesis",
 		Short: "Generate gensis file",
@@ -92,7 +92,7 @@ func GenerateGenesisCmd() *cobra.Command {
 				sdk.DefaultBondDenom = genCfg.Denom
 			}
 
-			genDoc, err := genDocFromInput(ctx, genCfg, cosmosClientCtx)
+			genDoc, err := genDocFromInput(ctx, genCfg, cosmosClientCtx, basiManager)
 			if err != nil {
 				return err
 			}
@@ -118,9 +118,10 @@ func genDocFromInput(
 	ctx context.Context,
 	cfg GenesisInitConfig,
 	cosmosClientCtx cosmosclient.Context,
+	basicManager module.BasicManager,
 ) (types.GenesisDoc, error) {
 	cdc := cosmosClientCtx.Codec
-	appGenState := app.ModuleBasics.DefaultGenesis(cdc)
+	appGenState := basicManager.DefaultGenesis(cdc)
 
 	// set gov config
 	govGenesis := govtypesv1.DefaultGenesisState()
@@ -244,7 +245,7 @@ func signedCreateValidatorTxBytes(
 ) ([]byte, error) {
 	const signerKeyName = "signer"
 	clientCtx = clientCtx.WithFrom(signerKeyName)
-	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
+	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig().Codec)
 	k, err := inMemKeyring.NewAccount(
 		signerKeyName,
 		mnemonic,

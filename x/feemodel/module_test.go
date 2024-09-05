@@ -6,7 +6,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -81,7 +80,7 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 		},
 		MinGasPrice: sdk.NewDecCoin("coin", sdkmath.NewInt(155)),
 	}
-	cdc := config.NewEncodingConfig(module.NewBasicManager()).Codec
+	cdc := config.NewEncodingConfig(feemodel.AppModuleBasic{}).Codec
 	keeper := newKeeperMock(genesisState)
 	module := feemodel.NewAppModule(keeper, nil)
 

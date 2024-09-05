@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/x/feemodel"
 	"github.com/CoreumFoundation/coreum/v4/x/feemodel/keeper"
 	"github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
 )
@@ -31,7 +31,7 @@ func setup() (sdk.Context, keeper.Keeper) {
 	cms.MountStoreWithDB(tKey, storetypes.StoreTypeTransient, db)
 	must.OK(cms.LoadLatestVersion())
 	ctx := sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())
-	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	encodingConfig := config.NewEncodingConfig(feemodel.AppModuleBasic{})
 	return ctx, keeper.NewKeeper(key, tKey, encodingConfig.Codec, "")
 }
 

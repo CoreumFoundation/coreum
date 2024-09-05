@@ -11,16 +11,16 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	assetft "github.com/CoreumFoundation/coreum/v4/x/asset/ft"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
 func TestTokenUpgradeV1(t *testing.T) {
 	requireT := require.New(t)
 
-	cdc := config.NewEncodingConfig(app.ModuleBasics).Codec
+	cdc := config.NewEncodingConfig(assetft.AppModuleBasic{}).Codec
 	testApp := simapp.New()
 	ctxSDK := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 

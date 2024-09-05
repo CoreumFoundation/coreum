@@ -113,7 +113,7 @@ func init() {
 
 	coreumSettings := integration.QueryChainSettings(queryCtx, coreumGRPCClient)
 
-	coreumClientCtx := client.NewContext(integration.DefaultClientContextConfig(), app.ModuleBasics).
+	coreumClientCtx := client.NewContext(integration.DefaultClientContextConfig()).
 		WithGRPCClient(coreumGRPCClient)
 
 	coreumFeemodelParamsRes, err := feemodeltypes.

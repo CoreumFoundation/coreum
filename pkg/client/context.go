@@ -86,8 +86,8 @@ func DefaultContextConfig() ContextConfig {
 }
 
 // NewContext returns new context.
-func NewContext(contextConfig ContextConfig, modules module.BasicManager) Context {
-	encodingConfig := config.NewEncodingConfig(modules)
+func NewContext(contextConfig ContextConfig, modules ...module.AppModuleBasic) Context {
+	encodingConfig := config.NewEncodingConfig(modules...)
 	return Context{
 		config: contextConfig,
 		clientCtx: client.Context{}.
@@ -95,6 +95,14 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 			WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 			WithTxConfig(encodingConfig.TxConfig).
 			WithLegacyAmino(encodingConfig.Amino),
+	}
+}
+
+// NewContext returns new context.
+func NewContextFromCosmosContext(contextConfig ContextConfig, cosmosContext client.Context) Context {
+	return Context{
+		config:    contextConfig,
+		clientCtx: cosmosContext,
 	}
 }
 
