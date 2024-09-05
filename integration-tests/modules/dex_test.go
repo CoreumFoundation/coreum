@@ -8,7 +8,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -413,6 +416,63 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(acc2Orders, ordersRes.Orders)
+}
+
+// TestDEXProposalParamChange checks that dex param change proposal works correctly.
+func TestDEXProposalParamChange(t *testing.T) {
+	// Since this test changes global we can't run it in parallel with other tests.
+	// That's why t.Parallel() is not here.
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	// Create new proposer.
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	// For the test we need to create the proposal twice.
+	proposerBalance = proposerBalance.Add(proposerBalance)
+	requireT.NoError(err)
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	initialParams := dexParamsRes.Params
+
+	// restore params at the end of test
+	defer func() {
+		t.Logf("Restoring initial dex params.")
+		chain.Governance.ProposalFromMsgAndVote(
+			ctx, t, nil,
+			"-", "-", "-", govtypesv1.OptionYes,
+			&dextypes.MsgUpdateParams{
+				Params:    initialParams,
+				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			},
+		)
+		dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+		requireT.NoError(err)
+		requireT.Equal(initialParams, dexParamsRes.Params)
+	}()
+
+	newParams := initialParams
+	newParams.DefaultUnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("33.01")
+	newParams.PriceTickExponent = -33
+
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&dextypes.MsgUpdateParams{
+			Params:    newParams,
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		},
+	)
+	requireT.NoError(err)
+
+	dexParamsRes, err = dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	requireT.Equal(newParams, dexParamsRes.Params)
 }
 
 func issueFT(

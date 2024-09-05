@@ -42,6 +42,11 @@ func IntTenToThePower(x *big.Int) *big.Int {
 	return (&big.Int{}).Exp(big.NewInt(10), x, nil)
 }
 
+// IntGTE returns true if x is greater or equal to y.
+func IntGTE(x, y *big.Int) bool {
+	return x.Cmp(y) != -1
+}
+
 // IntEqZero returns true if x is equal to zero.
 func IntEqZero(x *big.Int) bool {
 	return x.Sign() == 0

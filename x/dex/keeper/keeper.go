@@ -2,18 +2,24 @@ package keeper
 
 import (
 	"fmt"
+	"math/big"
 
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/gogoproto/proto"
 	gogotypes "github.com/cosmos/gogoproto/types"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
+	cbig "github.com/CoreumFoundation/coreum/v4/pkg/math/big"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
@@ -24,6 +30,7 @@ type Keeper struct {
 	accountKeeper      types.AccountKeeper
 	accountQueryServer types.AccountQueryServer
 	assetFTKeeper      types.AssetFTKeeper
+	authority          string
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -33,6 +40,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	accountQueryServer types.AccountQueryServer,
 	assetFTKeeper types.AssetFTKeeper,
+	authority string,
 ) Keeper {
 	return Keeper{
 		cdc:                cdc,
@@ -40,6 +48,7 @@ func NewKeeper(
 		accountKeeper:      accountKeeper,
 		accountQueryServer: accountQueryServer,
 		assetFTKeeper:      assetFTKeeper,
+		authority:          authority,
 	}
 }
 
@@ -53,6 +62,12 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 	creator, err := sdk.AccAddressFromBech32(order.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
+	}
+
+	if order.Type == types.ORDER_TYPE_LIMIT {
+		if err := k.validatePriceTick(ctx, order.BaseDenom, order.QuoteDenom, *order.Price); err != nil {
+			return err
+		}
 	}
 
 	accNumber, err := k.getAccountNumber(ctx, creator)
@@ -147,6 +162,82 @@ func (k Keeper) GetOrderBookOrders(
 	}
 
 	return k.getPaginatedOrderBookOrders(ctx, baseDenom, quoteDenom, side, pagination)
+}
+
+// GetParams gets the parameters of the module.
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.ParamsKey)
+	var params types.Params
+	k.cdc.MustUnmarshal(bz, &params)
+	return params
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	if k.authority != authority {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+	if err := params.ValidateBasic(); err != nil {
+		return err
+	}
+
+	return k.SetParams(ctx, params)
+}
+
+// SetParams sets the parameters of the module.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	store := ctx.KVStore(k.storeKey)
+	bz, err := k.cdc.Marshal(&params)
+	if err != nil {
+		return err
+	}
+	store.Set(types.ParamsKey, bz)
+	return nil
+}
+
+func (k Keeper) validatePriceTick(ctx sdk.Context, baseDenom, quoteDenom string, price types.Price) error {
+	baseDenomRefAmount, buyRefAmountFound, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom)
+	if err != nil {
+		return err
+	}
+
+	quoteDenomRefAmount, sellRefAmountFound, err := k.getAssetFTUnifiedRefAmount(ctx, quoteDenom)
+	if err != nil {
+		return err
+	}
+
+	params := k.GetParams(ctx)
+	if !buyRefAmountFound {
+		baseDenomRefAmount = params.DefaultUnifiedRefAmount
+	}
+	if !sellRefAmountFound {
+		quoteDenomRefAmount = params.DefaultUnifiedRefAmount
+	}
+
+	priceTickRat := ComputePriceTick(baseDenomRefAmount, quoteDenomRefAmount, params.PriceTickExponent)
+	_, remainder := cbig.RatQuoWithIntRemainder(price.Rat(), priceTickRat)
+	if !cbig.IntEqZero(remainder) {
+		return errors.Errorf(
+			"invalid price %s, the price must be multible of %s", price.Rat().String(), priceTickRat.String(),
+		)
+	}
+
+	return nil
+}
+
+func (k Keeper) getAssetFTUnifiedRefAmount(ctx sdk.Context, denom string) (sdkmath.LegacyDec, bool, error) {
+	found := false
+	settings, err := k.assetFTKeeper.GetDEXSettings(ctx, denom)
+	if err != nil {
+		if !errors.Is(err, assetfttypes.ErrDEXSettingsNotFound) {
+			return sdkmath.LegacyDec{}, false, err
+		}
+	} else {
+		found = true
+	}
+
+	return settings.UnifiedRefAmount, found, nil
 }
 
 func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, uint32, error) {
@@ -647,4 +738,39 @@ func (k Keeper) getDataFromStore(
 // logger returns the Keeper logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// ComputePriceTick returns the price tick of a given ref amounts and price tick exponent.
+func ComputePriceTick(baseDenomRefAmount, quoteRefAmount sdkmath.LegacyDec, priceTickExponent int32) *big.Rat {
+	// 10^(floor(log10((quoteRefAmountRat / baseRefAmountRat))) + price_tick_exponent)
+	exponent := ratFloorLog10(
+		cbig.NewRatFromBigInts(quoteRefAmount.BigInt(), baseDenomRefAmount.BigInt()),
+	) + int(priceTickExponent)
+	if exponent < 0 {
+		return cbig.NewRatFromBigInts(big.NewInt(1), cbig.IntTenToThePower(big.NewInt(int64(-exponent))))
+	}
+
+	return cbig.NewRatFromBigInt(cbig.IntTenToThePower(big.NewInt(int64(exponent))))
+}
+
+func ratFloorLog10(val *big.Rat) int {
+	num := val.Num()
+	denom := val.Denom()
+
+	// if val >= 1 the floor(log10(val)) value is equal to length of int part
+	if cbig.IntGTE(num, denom) {
+		return len(cbig.IntQuo(num, denom).Text(10)) - 1
+	}
+
+	// define the max exponent as dif or num and denom length
+	exponent := len(num.Text(10)) - len(denom.Text(10))
+	// if (val * 10^-exp) < 1 we need to decrease the exponent to get the correct floor(log10(val))
+	if cbig.RatLT(
+		cbig.RatMul(val, cbig.NewRatFromBigInt(cbig.IntTenToThePower(big.NewInt(int64(-exponent))))),
+		cbig.NewRatFromInt64(1),
+	) {
+		exponent--
+	}
+
+	return exponent
 }

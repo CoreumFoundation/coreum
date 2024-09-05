@@ -909,13 +909,14 @@ func (k Keeper) UpdateDEXSettings(
 		return err
 	}
 
-	def, err := k.GetDefinition(ctx, denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
-	}
-
-	if !def.IsAdmin(sender) {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin can update DEX settings")
+	if k.authority != sender.String() {
+		def, err := k.GetDefinition(ctx, denom)
+		if err != nil {
+			return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
+		}
+		if !def.IsAdmin(sender) {
+			return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin and gov can update DEX settings")
+		}
 	}
 
 	prevSettings, err := k.getDEXSettingsOrNil(ctx, denom)

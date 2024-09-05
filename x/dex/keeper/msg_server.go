@@ -14,6 +14,7 @@ var _ types.MsgServer = MsgServer{}
 
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
+	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 	PlaceOrder(ctx sdk.Context, order types.Order) error
 	CancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string) error
 }
@@ -28,6 +29,15 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 	return MsgServer{
 		keeper: keeper,
 	}
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
+	if err := ms.keeper.UpdateParams(sdk.UnwrapSDKContext(goCtx), req.Authority, req.Params); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
 }
 
 // PlaceOrder places an order on orderbook.

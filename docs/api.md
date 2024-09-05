@@ -205,6 +205,9 @@
     - [OrderType](#coreum.dex.v1.OrderType)
     - [Side](#coreum.dex.v1.Side)
   
+- [coreum/dex/v1/params.proto](#coreum/dex/v1/params.proto)
+    - [Params](#coreum.dex.v1.Params)
+  
 - [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
     - [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest)
     - [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse)
@@ -214,6 +217,8 @@
     - [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse)
     - [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest)
     - [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse)
+    - [QueryParamsRequest](#coreum.dex.v1.QueryParamsRequest)
+    - [QueryParamsResponse](#coreum.dex.v1.QueryParamsResponse)
   
     - [Query](#coreum.dex.v1.Query)
   
@@ -221,6 +226,7 @@
     - [EmptyResponse](#coreum.dex.v1.EmptyResponse)
     - [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder)
     - [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder)
+    - [MsgUpdateParams](#coreum.dex.v1.MsgUpdateParams)
   
     - [Msg](#coreum.dex.v1.Msg)
   
@@ -4409,6 +4415,11 @@ GenesisState defines the module genesis state.
 
 
 
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#coreum.dex.v1.Params) |  |  `params defines all the parameters of the module.`  |
+
+
 
 
 
@@ -4592,6 +4603,42 @@ Side is order side.
 
 
 
+<a name="coreum/dex/v1/params.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/params.proto
+
+
+
+<a name="coreum.dex.v1.Params"></a>
+
+### Params
+
+```
+Params keeps gov manageable parameters.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `default_unified_ref_amount` | [string](#string) |  |  `default_unified_ref_amount is the default approximate amount you need to by 1USD, used to for tokens without custom value`  |
+| `price_tick_exponent` | [int32](#int32) |  |  `price_tick_exponent is the exponent used for the price tick calculation`  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
 <a name="coreum/dex/v1/query.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -4758,6 +4805,39 @@ QueryOrdersRequestResponse defines the response type for the `Order` query.
 
 
 
+
+<a name="coreum.dex.v1.QueryParamsRequest"></a>
+
+### QueryParamsRequest
+
+```
+QueryParamsRequest defines the request type for querying x/dex parameters.
+```
+
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryParamsResponse"></a>
+
+### QueryParamsResponse
+
+```
+QueryParamsResponse defines the response type for querying x/dex parameters.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#coreum.dex.v1.Params) |  |    |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -4776,6 +4856,7 @@ Query defines the gRPC query service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Params` | [QueryParamsRequest](#coreum.dex.v1.QueryParamsRequest) | [QueryParamsResponse](#coreum.dex.v1.QueryParamsResponse) | `Params queries the parameters of x/dex module.` | GET|/coreum/dex/v1/params |
 | `Order` | [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest) | [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse) | `Order queries order by creator and ID.` | GET|/coreum/dex/v1/orders/{creator}/{id} |
 | `Orders` | [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest) | [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse) | `Orders queries creator orders.` | GET|/coreum/dex/v1/orders/{creator} |
 | `OrderBooks` | [QueryOrderBooksRequest](#coreum.dex.v1.QueryOrderBooksRequest) | [QueryOrderBooksResponse](#coreum.dex.v1.QueryOrderBooksResponse) | `OrderBooks queries order books.` | GET|/coreum/dex/v1/order-books |
@@ -4847,6 +4928,22 @@ MsgPlaceOrder defines message to place an order on orderbook.
 
 
 
+
+<a name="coreum.dex.v1.MsgUpdateParams"></a>
+
+### MsgUpdateParams
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  |    |
+| `params` | [Params](#coreum.dex.v1.Params) |  |    |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -4865,6 +4962,7 @@ Msg defines the Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `UpdateParams` | [MsgUpdateParams](#coreum.dex.v1.MsgUpdateParams) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
 | `PlaceOrder` | [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `PlaceOrder place an order on orderbook.` |  |
 | `CancelOrder` | [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `CancelOrder cancels an order in the orderbook.` |  |
 

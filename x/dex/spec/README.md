@@ -1,13 +1,15 @@
-# DEX
+# Coreum DEX Specification
 
-The spec describes the coreum DEX specification.
+## Overview
+
+The Coreum DEX allows any Coreum user to create orders for trading any token pair. This means the order book is
+bidirectional and permissionless, allowing for flexible and open trading.
 
 ## Order book
 
-The Coreum DEX orders can be created for any-to-any token by any Coreum user. Which meas that the order book
-is bidirectional and permissionless.
+### Order Attributes
 
-The user can place an order with the attributes:
+Users can place orders with the following attributes:
 
 * `order_id` - unique order identifier of the order.
 * `base_denom` - when you buy, you are buying the `base_denom`, when you sell, you are selling the `base_denom`.
@@ -26,10 +28,11 @@ The user can place an order with the attributes:
     * `good_til_block_height` - max block height to execute the order, or it will be canceled.
     * `good_til_block_time` - max block time to execute the order, or it will be canceled.
 
-Once an order is placed, the DEX will try to match the order with the same order book opposite side orders and opposite
-order book same side orders. And depending on order type and settings execute it.
-
 ## Order placement and matching
+
+Once an order is placed, the DEX attempts to match it with opposite orders in the same order book and with orders in the
+corresponding inverse order book. The system ensures execution at the best available price, depending on the order type
+and settings.
 
 ### Rounding issue
 
@@ -124,11 +127,13 @@ The order1 is filled partially with the exact price 9999750 BBB / 26666000 AAA =
 The order2 expected to sell 10000000 BBB, and receive 26000000 AAA, but received more 26666000 AAA and
 additionally not filled 250 BBB.
 
-#### 2-way matching
+### 2-way matching
 
-Coreum DEX supports 2-way matching for all placed orders. This means that it matches the order with the `self` order
-book with the same base and quote denom (e.g. AAA/BBB) and with the opposite order book as well (e.g. BBB/AAA) to find
-the best price to execute the order.
+Coreum DEX uses a 2-way matching system for processing all placed orders. This approach matches orders within its own
+order book (the self order book), where the base and quote denominations are identical (e.g., AAA/BBB). Additionally,
+it simultaneously checks the corresponding opposite order book (e.g., BBB/AAA) to find the best possible execution
+price. This 2-way order book matching ensures that orders are filled at the most favorable rates available,
+whether within the same trading pair or its inverse, optimizing the trading experience.
 
 ### Price tick and precision
 
@@ -143,29 +148,23 @@ or the token doesn't have and admin this variable can be set/updated by the chai
 The formula taken for the price tick is:
 
 ```
-price_tick(base_denom/quote_denom) = round_to_power_of_ten(price_tick_multiplier * unified_ref_amount(quote_denom) / unified_ref_amount(base_denom))
+price_tick(base_denom/quote_denom) = 10^(floor(log10((unified_ref_amount(quote_denom) / unified_ref_amount(base_denom)))) + price_tick_exponent)
 ```
 
-The `price_tick_multiplier` is the coefficient used to give better price precision for the token orders. The default
-`price_tick_multiplier` is `10^-5`, and can be updated by the governance.
-
-The `round_to_power_of_ten` is the function that finds nearest power of ten value to define the tick. For the rounding
-it uses half round up rounding.
+The `price_tick_exponent` is the coefficient used to give better price precision for the token orders. The default
+`price_tick_exponent` is `-5`, and can be updated by the governance.
 
 Tick size example:
 
 | unified_ref_amount(AAA) | unified_ref_amount(BBB) | price_tick(AAA/BBB) | price_tick(BBB/AAA) |    
 |-------------------------|-------------------------|---------------------|---------------------|
 | 10000.0                 | 10000.0                 | 10^-5               | 10^-5               | 
-| 3000.0                  | 20.0                    | 10^-7               | 10^-3               | 
+| 3000.0                  | 20.0                    | 10^-8               | 10^-3               | 
 | 3100000.0               | 8.0                     | 10^-11              | 1                   |
-| 0.00017                 | 100.0                   | 10                  | 10^-11              |
+| 0.00017                 | 100.0                   | 1                   | 10^-11              |
+| 0.000001                | 10000000                | 10^8                | 10^-18              |
 
 The update of the `unified_ref_amount` doesn't affect the created orders.
-
-The Coreum DEX price supports up to 100 decimals for the price precision. Which means that max price tick is equal to
-the max supported price precision. If the price tick of two traded coins exceeds 100 decimals we use `10^-100` as the
-price tick for such a token.
 
 ### Balance locking
 
@@ -176,4 +175,58 @@ If such an interface is not implemented we don't allow the order placement.
 If, at the time of matching, the assetft rules for the maker orders are changed, the orders will be still executed with
 the amounts in the order book.
 
+### Time in force
 
+The `time_in_force` setting specifies the execution conditions of an order, dictating how long it should remain active
+or how it should be executed:
+
+* `GTC (Good Til Canceled)`: The order remains active until it is fully executed or manually canceled by the trader.
+  There is no time limit for the order to stay in the order book.
+
+* `IOC (Immediate Or Cancel)`: The order must be executed immediately, either in full or partially. Any portion of the
+  order that cannot be filled immediately is canceled.
+
+* `FOK (Fill or Kill)`: The order must be executed immediately and completely. If the order cannot be filled in its
+  entirety right away, it is canceled in full.
+
+### Good til
+
+The `good_til` setting specifies how long an order remains active based on certain conditions:
+
+* `good_til_block_height`: The order remains active until a specific blockchain block height is reached. Once the
+  blockchain reaches the specified block height, the order is automatically canceled if it hasn't been executed.
+
+* `good_til_block_time`: The order stays active until a specified time, based on the blockchain’s timestamp. If the
+  order is not executed by this time, it is automatically canceled.
+
+### Order reserve
+
+This feature introduces an order reserve requirement for each order placed on the chain. The reserve acts as a security
+deposit that ensures users have a vested interest in their orders, helping to prevent spam and malicious activities.
+Once the order is executed that reserve is released.
+The default reserve amount is  `10 CORE` and can be updated by the governance.
+
+## Asset FT and DEX
+
+### Unified ref amount
+
+The `unified_ref_amount` used in [price tick and precision](#price-tick-and-precision) can be updated and by the gov
+or the token admin. Check the [price tick and precision](#price-tick-and-precision) to get the details.
+
+### Order cancellation
+
+The token admin or gov can cancel user orders within the system. It grants specific administrative or
+governance roles the power to manage and oversee active orders, providing a safeguard against potential issues
+such as erroneous trades, malicious activity, or market manipulation.
+
+### Restricted trade
+
+This feature introduces an enhancement to the `restricted_trade` functionality, permitting the asset FT
+(a specific fungible token) to be traded only against a predefined set of denoms. This adds a layer of control over
+trading pairs, ensuring that denom(asset FT) can only be exchanged with certain currencies or assets, as specified by
+the admin or governance.
+
+## Extensions
+
+The current version of the DEX doesn't support the extensions. It means if a user places an order with the asset FT 
+extension token, such an order will be rejected.

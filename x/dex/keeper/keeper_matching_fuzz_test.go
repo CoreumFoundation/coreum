@@ -33,6 +33,11 @@ func NewFuzzApp(t *testing.T, accountsCount, assetFTDenomsCount, nativeDenomCoun
 	testApp := simapp.New()
 
 	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
+
+	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params.PriceTickExponent = int32(types.MinExt)
+	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
+
 	accounts := lo.RepeatBy(accountsCount, func(_ int) sdk.AccAddress {
 		acc, _ := testApp.GenAccount(sdkCtx)
 		return acc

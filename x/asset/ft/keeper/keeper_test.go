@@ -18,6 +18,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -3074,11 +3075,11 @@ func TestKeeper_UpdateDEXSettings(t *testing.T) {
 	expectToken.DEXSettings = &dexSettings
 	requireT.Equal(expectToken, gotToken)
 
-	// update the settings one more time
+	// update the settings one more time but with the gov acc
 	dexSettings = types.DEXSettings{
 		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("999"),
 	}
-	requireT.NoError(ftKeeper.UpdateDEXSettings(ctx, issuer, denom, dexSettings))
+	requireT.NoError(ftKeeper.UpdateDEXSettings(ctx, authtypes.NewModuleAddress(govtypes.ModuleName), denom, dexSettings))
 
 	gotToken, err = ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
