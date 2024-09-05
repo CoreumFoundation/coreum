@@ -31,6 +31,8 @@ import (
 	group "github.com/cosmos/cosmos-sdk/x/group/module"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
+	ibc "github.com/cosmos/ibc-go/v8/modules/core"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -384,6 +386,8 @@ func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 		authz.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		group.AppModuleBasic{},
+		ibc.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
 	)
 
 	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
