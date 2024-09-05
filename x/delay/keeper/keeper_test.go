@@ -58,15 +58,14 @@ func (di *delayedItem) String() string {
 func (di *delayedItem) ProtoMessage() {}
 
 func TestDelayedExecution(t *testing.T) {
-	// TODO (fix-tests)
-	t.SkipNow()
 	requireT := require.New(t)
 
 	testApp := simapp.New()
 	testApp.InterfaceRegistry().RegisterImplementations((*proto.Message)(nil), &delayedItem{})
 
 	blockTime := time.Date(2023, 4, 3, 2, 3, 4, 0, time.UTC)
-	ctx, _, _ := testApp.BeginNextBlock(blockTime)
+	ctx, _, err := testApp.BeginNextBlock(blockTime)
+	requireT.NoError(err)
 
 	delayed1 := &delayedItem{
 		Value: "value1",
@@ -136,7 +135,7 @@ func TestDelayedExecution(t *testing.T) {
 	}))
 
 	// first item should be executed
-	requireT.NoError(testApp.FinalizeBlock())
+	requireT.NoError(testApp.FinalizeBlock(blockTime))
 	_, _, err = testApp.BeginNextBlock(blockTime.Add(time.Second))
 	requireT.NoError(err)
 	requireT.Len(executedItems, 1)
