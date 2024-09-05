@@ -194,6 +194,8 @@
   
 - [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
     - [GenesisState](#coreum.dex.v1.GenesisState)
+    - [OrderBookDataWithID](#coreum.dex.v1.OrderBookDataWithID)
+    - [OrderWithSequence](#coreum.dex.v1.OrderWithSequence)
   
 - [coreum/dex/v1/order.proto](#coreum/dex/v1/order.proto)
     - [Order](#coreum.dex.v1.Order)
@@ -4418,6 +4420,48 @@ GenesisState defines the module genesis state.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#coreum.dex.v1.Params) |  |  `params defines all the parameters of the module.`  |
+| `order_books` | [OrderBookDataWithID](#coreum.dex.v1.OrderBookDataWithID) | repeated |    |
+| `orders` | [OrderWithSequence](#coreum.dex.v1.OrderWithSequence) | repeated |    |
+
+
+
+
+
+
+<a name="coreum.dex.v1.OrderBookDataWithID"></a>
+
+### OrderBookDataWithID
+
+```
+OrderBookDataWithID is a order book data with it's corresponding ID.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [uint32](#uint32) |  |  `id is order book ID.`  |
+| `data` | [OrderBookData](#coreum.dex.v1.OrderBookData) |  |  `data is order book data.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.OrderWithSequence"></a>
+
+### OrderWithSequence
+
+```
+OrderWithSequence is a order with it's corresponding sequence.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sequence` | [uint64](#uint64) |  |  `sequence is order sequence.`  |
+| `order` | [Order](#coreum.dex.v1.Order) |  |  `data is order book data.`  |
 
 
 

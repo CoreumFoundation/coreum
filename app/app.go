@@ -937,7 +937,7 @@ func New(
 		wnftModule,
 		customParamsModule,
 		delayModule,
-		dex.NewAppModule(appCodec, app.DEXKeeper),
+		dex.NewAppModule(appCodec, app.DEXKeeper, app.AccountKeeper),
 
 		// IBC modules
 		ibc.NewAppModule(app.IBCKeeper),
@@ -1081,6 +1081,7 @@ func New(
 		assetfttypes.ModuleName,
 		assetnfttypes.ModuleName,
 		delaytypes.ModuleName,
+		// dex depends on auth(account) module
 		dextypes.ModuleName,
 	}
 
