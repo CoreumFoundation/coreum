@@ -98,7 +98,7 @@ func NewContext(contextConfig ContextConfig, modules ...module.AppModuleBasic) C
 	}
 }
 
-// NewContext returns new context.
+// NewContextFromCosmosContext returns new context from cosmos context.
 func NewContextFromCosmosContext(contextConfig ContextConfig, cosmosContext client.Context) Context {
 	return Context{
 		config:    contextConfig,
