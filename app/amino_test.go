@@ -22,7 +22,8 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	proto2 "github.com/golang/protobuf/proto"
+	//nolint:staticcheck // We need this dependency to convert protos to be able to read their options
+	protobuf "github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
@@ -116,7 +117,7 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 			continue
 		}
 
-		options := proto2.MessageV2(protoInterface).ProtoReflect().Descriptor().Options()
+		options := protobuf.MessageV2(protoInterface).ProtoReflect().Descriptor().Options()
 
 		signersFields := proto.GetExtension(options, msgv1.E_Signer).([]string)
 		if len(signersFields) == 0 && messageURL != "/cosmos.tx.v1beta1.Tx" {
