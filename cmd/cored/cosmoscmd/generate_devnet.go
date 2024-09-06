@@ -174,7 +174,7 @@ func addValidatorToNetwork(
 
 	const signerKeyName = "signer"
 	clientCtx = clientCtx.WithFrom(signerKeyName)
-	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
+	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig().Codec)
 	k, err := inMemKeyring.NewAccount(
 		signerKeyName,
 		mnemonic,

@@ -24,9 +24,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
+	authz "github.com/cosmos/cosmos-sdk/x/authz/module"
+	group "github.com/cosmos/cosmos-sdk/x/group/module"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
+	ibc "github.com/cosmos/ibc-go/v8/modules/core"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -286,7 +292,7 @@ func NewChain(
 		Amino:             tempApp.LegacyAmino(),
 	}
 
-	clientCtx := client.NewContext(DefaultClientContextConfig(), app.ModuleBasics).
+	clientCtx := client.NewContext(DefaultClientContextConfig(), auth.AppModuleBasic{}).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithChainID(chainSettings.ChainID).
@@ -325,7 +331,7 @@ func DefaultClientContextConfig() client.ContextConfig {
 
 // QueryChainSettings queries the chain setting using the provided GRPC client.
 func QueryChainSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainSettings {
-	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
+	clientCtx := client.NewContext(client.DefaultContextConfig(), auth.AppModuleBasic{}).
 		WithGRPCClient(grpcClient)
 
 	infoBeforeRes, err := cmtservice.NewServiceClient(clientCtx).GetNodeInfo(ctx, &cmtservice.GetNodeInfoRequest{})
@@ -375,7 +381,15 @@ func QueryChainSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainS
 
 // DialGRPCClient creates the grpc connection for the given URL.
 func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
-	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	encodingConfig := config.NewEncodingConfig(
+		auth.AppModuleBasic{},
+		authz.AppModuleBasic{},
+		vesting.AppModuleBasic{},
+		group.AppModuleBasic{},
+		ibc.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
+	)
+
 	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
 	if !ok {
 		panic("failed to cast codec to codec.GRPCCodecProvider)")

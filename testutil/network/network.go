@@ -2,10 +2,12 @@ package network
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"testing"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
@@ -124,13 +126,13 @@ func DefaultConfig(t *testing.T) network.Config {
 		panic(errors.Wrap(err, "can't get network's app state"))
 	}
 
-	encoding := config.NewEncodingConfig(app.ModuleBasics)
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
 	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return network.Config{
-		Codec:             encoding.Codec,
-		LegacyAmino:       encoding.Amino,
-		InterfaceRegistry: encoding.InterfaceRegistry,
-		TxConfig:          encoding.TxConfig,
+		Codec:             tempApp.AppCodec(),
+		LegacyAmino:       tempApp.LegacyAmino(),
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		TxConfig:          tempApp.TxConfig(),
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
 			return app.New(
@@ -172,4 +174,14 @@ func ApplyConfigOptions(cfg network.Config, options ...ConfigOption) (network.Co
 	}
 
 	return cfg, nil
+}
+
+func tempDir() string {
+	dir, err := os.MkdirTemp("", "cored")
+	if err != nil {
+		panic("failed to create temp dir: " + err.Error())
+	}
+	defer os.RemoveAll(dir) //nolint:errcheck // we don't care
+
+	return dir
 }

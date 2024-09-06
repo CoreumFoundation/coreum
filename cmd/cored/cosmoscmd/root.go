@@ -31,6 +31,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
@@ -99,7 +100,7 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
-	initRootCmd(rootCmd, encodingConfig)
+	initRootCmd(rootCmd, encodingConfig, tempApp.BasicModuleManager)
 	// add keyring to autocli opts
 	autoCliOpts := tempApp.AutoCliOpts()
 	initClientCtx, _ = clientconfig.ReadDefaultValuesFromDefaultClientConfig(initClientCtx)
@@ -187,7 +188,11 @@ memory_cache_size = {{ .WASM.MemoryCacheSize }}
 	return customAppTemplate, customAppConfig
 }
 
-func initRootCmd(rootCmd *cobra.Command, encodingConfig config.EncodingConfig) {
+func initRootCmd(
+	rootCmd *cobra.Command,
+	encodingConfig config.EncodingConfig,
+	basicManager module.BasicManager,
+) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
@@ -198,7 +203,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig config.EncodingConfig) {
 		pruning.Cmd(newApp, app.DefaultNodeHome),
 		snapshot.Cmd(newApp),
 		GenerateDevnetCmd(),
-		GenerateGenesisCmd(),
+		GenerateGenesisCmd(basicManager),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
@@ -206,7 +211,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig config.EncodingConfig) {
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
-		genesisCommand(encodingConfig),
+		genesisCommand(encodingConfig.TxConfig, basicManager),
 		queryCommand(),
 		txCommand(),
 		keys.Commands(),
@@ -244,8 +249,8 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 
 // genesisCommand builds genesis-related `simd genesis` command.
 // Users may provide application specific commands as a parameter.
-func genesisCommand(encodingConfig config.EncodingConfig, cmds ...*cobra.Command) *cobra.Command {
-	cmd := genutilcli.GenesisCoreCommand(encodingConfig.TxConfig, app.ModuleBasics, app.DefaultNodeHome)
+func genesisCommand(txConfig client.TxConfig, basicManager module.BasicManager, cmds ...*cobra.Command) *cobra.Command {
+	cmd := genutilcli.GenesisCoreCommand(txConfig, basicManager, app.DefaultNodeHome)
 
 	for _, sub_cmd := range cmds { //nolint:revive,stylecheck // sdk code copy
 		cmd.AddCommand(sub_cmd)
@@ -272,8 +277,6 @@ func queryCommand() *cobra.Command {
 		authcmd.QueryTxCmd(),
 		server.QueryBlockResultsCmd(),
 	)
-
-	app.ModuleBasics.AddQueryCommands(cmd)
 
 	return cmd
 }
@@ -402,7 +405,7 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 			}
 
 			// Once we read tx hash from the output produced by cosmos sdk we may await the transaction.
-			awaitClientCtx := coreumclient.NewContext(coreumclient.DefaultContextConfig(), app.ModuleBasics).
+			awaitClientCtx := coreumclient.NewContextFromCosmosContext(coreumclient.DefaultContextConfig(), clientCtx).
 				WithGRPCClient(clientCtx.GRPCClient).WithClient(clientCtx.Client)
 			ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
 			defer cancel()

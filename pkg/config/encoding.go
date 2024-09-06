@@ -19,7 +19,7 @@ type EncodingConfig struct {
 }
 
 // NewEncodingConfig creates an EncodingConfig for the provided module.BasicManager.
-func NewEncodingConfig(modules module.BasicManager) EncodingConfig {
+func NewEncodingConfig(modules ...module.AppModuleBasic) EncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := types.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
@@ -31,9 +31,10 @@ func NewEncodingConfig(modules module.BasicManager) EncodingConfig {
 		TxConfig:          txCfg,
 		Amino:             amino,
 	}
+	mb := module.NewBasicManager(modules...)
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	modules.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	modules.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	mb.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	mb.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	return encodingConfig
 }

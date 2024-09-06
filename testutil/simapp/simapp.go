@@ -95,7 +95,7 @@ func New(options ...Option) *App {
 	senderPrivateKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivateKey.PubKey().Address().Bytes(), senderPrivateKey.PubKey(), 0, 0)
 
-	defaultGenesis := app.ModuleBasics.DefaultGenesis(coreApp.AppCodec())
+	defaultGenesis := coreApp.DefaultGenesis()
 	genesisState, err := simtestutil.GenesisStateWithValSet(
 		coreApp.AppCodec(),
 		defaultGenesis,
@@ -184,7 +184,7 @@ func (s *App) SendTx(
 		return sdk.GasInfo{}, nil, err
 	}
 
-	txCfg := config.NewEncodingConfig(app.ModuleBasics).TxConfig
+	txCfg := s.TxConfig()
 	return s.App.SimDeliver(txCfg.TxEncoder(), tx)
 }
 
@@ -207,7 +207,7 @@ func (s *App) GenTx(
 	accountNum := account.GetAccountNumber()
 	accountSeq := account.GetSequence()
 
-	txCfg := config.NewEncodingConfig(app.ModuleBasics).TxConfig
+	txCfg := s.TxConfig()
 
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -243,7 +243,7 @@ func (s *App) SimulateFundAndSendTx(
 	if err != nil {
 		return sdk.GasInfo{}, nil, err
 	}
-	txCfg := config.NewEncodingConfig(app.ModuleBasics).TxConfig
+	txCfg := s.TxConfig()
 	txBytes, err := txCfg.TxEncoder()(simTx)
 	if err != nil {
 		return sdk.GasInfo{}, nil, err
