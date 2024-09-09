@@ -9,13 +9,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/gogoproto/proto"
 	ibctypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
-	delaytypes "github.com/CoreumFoundation/coreum/v4/x/delay/types"
 )
 
 var (
@@ -281,16 +279,4 @@ func ValidateDEXSettings(settings DEXSettings) error {
 // checks that dec precision is limited to the provided value.
 func isDecPrecisionValid(dec sdkmath.LegacyDec, prec uint) bool {
 	return dec.Mul(sdkmath.LegacyNewDecFromInt(sdkmath.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
-}
-
-// TokenUpgradeV1Keeper defines methods required to update tokens to V1.
-type TokenUpgradeV1Keeper interface {
-	UpgradeTokenToV1(ctx sdk.Context, data *DelayedTokenUpgradeV1) error
-}
-
-// NewTokenUpgradeV1Handler handles token V1 upgrade.
-func NewTokenUpgradeV1Handler(keeper TokenUpgradeV1Keeper) delaytypes.Handler {
-	return func(ctx sdk.Context, data proto.Message) error {
-		return keeper.UpgradeTokenToV1(ctx, data.(*DelayedTokenUpgradeV1))
-	}
 }

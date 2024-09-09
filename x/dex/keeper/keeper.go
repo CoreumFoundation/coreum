@@ -30,8 +30,11 @@ type Keeper struct {
 	accountKeeper      types.AccountKeeper
 	accountQueryServer types.AccountQueryServer
 	assetFTKeeper      types.AssetFTKeeper
+	delayKeeper        types.DelayKeeper
 	authority          string
 }
+
+// FIXME add integration tests !!!
 
 // NewKeeper creates a new instance of the Keeper.
 func NewKeeper(
@@ -40,6 +43,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	accountQueryServer types.AccountQueryServer,
 	assetFTKeeper types.AssetFTKeeper,
+	delayKeeper types.DelayKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -49,25 +53,21 @@ func NewKeeper(
 		accountQueryServer: accountQueryServer,
 		assetFTKeeper:      assetFTKeeper,
 		authority:          authority,
+		delayKeeper:        delayKeeper,
 	}
 }
 
 // PlaceOrder places an order on the corresponding order book, and matches the order.
 func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 	k.logger(ctx).Debug("Placing order.", "order", order)
-	if err := order.Validate(); err != nil {
+
+	if err := k.validateOrder(ctx, order); err != nil {
 		return err
 	}
 
 	creator, err := sdk.AccAddressFromBech32(order.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
-	}
-
-	if order.Type == types.ORDER_TYPE_LIMIT {
-		if err := k.validatePriceTick(ctx, order.BaseDenom, order.QuoteDenom, *order.Price); err != nil {
-			return err
-		}
 	}
 
 	accNumber, err := k.getAccountNumber(ctx, creator)
@@ -95,16 +95,21 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 
 // CancelOrder cancels order and unlock locked balance.
 func (k Keeper) CancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string) error {
-	order, record, err := k.getOrderWithRecordByAddressAndID(ctx, acc, orderID)
+	return k.cancelOrder(ctx, acc, orderID)
+}
+
+// CancelOrderIfExists cancels order and unlock locked balance is the order still exist.
+func (k Keeper) CancelOrderIfExists(ctx sdk.Context, acc sdk.AccAddress, orderID string) error {
+	accNumber, err := k.getAccountNumber(ctx, acc)
 	if err != nil {
 		return err
 	}
-
-	if err := k.removeOrderByRecord(ctx, record); err != nil {
-		return err
+	if !k.hasOrderID(ctx, accNumber, orderID) {
+		k.logger(ctx).Debug("Order does not exist.", "orderID", orderID)
+		return nil
 	}
 
-	return k.assetFTKeeper.DEXUnlock(ctx, acc, sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance))
+	return k.cancelOrder(ctx, acc, orderID)
 }
 
 // GetOrderBookIDByDenoms returns order book ID by it's denoms.
@@ -257,6 +262,7 @@ func (k Keeper) GetPaginatedOrdersWithSequence(
 					Side:              orderData.Side,
 					RemainingQuantity: orderBookRecord.RemainingQuantity,
 					RemainingBalance:  orderBookRecord.RemainingBalance,
+					GoodTil:           orderData.GoodTil,
 				},
 			}, nil
 		},
@@ -327,9 +333,40 @@ func (k Keeper) validatePriceTick(ctx sdk.Context, baseDenom, quoteDenom string,
 	priceTickRat := ComputePriceTick(baseDenomRefAmount, quoteDenomRefAmount, params.PriceTickExponent)
 	_, remainder := cbig.RatQuoWithIntRemainder(price.Rat(), priceTickRat)
 	if !cbig.IntEqZero(remainder) {
-		return errors.Errorf(
-			"invalid price %s, the price must be multible of %s", price.Rat().String(), priceTickRat.String(),
+		return sdkerrors.Wrapf(
+			types.ErrInvalidInput,
+			"invalid price %s, the price must be multiple of %s",
+			price.Rat().String(), priceTickRat.String(),
 		)
+	}
+
+	return nil
+}
+
+func (k Keeper) validateOrder(ctx sdk.Context, order types.Order) error {
+	if err := order.Validate(); err != nil {
+		return err
+	}
+
+	// price
+	if order.Type == types.ORDER_TYPE_LIMIT {
+		if err := k.validatePriceTick(ctx, order.BaseDenom, order.QuoteDenom, *order.Price); err != nil {
+			return err
+		}
+	}
+
+	// good til
+	if order.GoodTil != nil {
+		if order.GoodTil.GoodTilBlockHeight > 0 {
+			currentHeight := ctx.BlockHeight()
+			if order.GoodTil.GoodTilBlockHeight <= uint64(currentHeight) {
+				return sdkerrors.Wrapf(
+					types.ErrInvalidInput,
+					"good til block height %d must be greater than current block height %d",
+					order.GoodTil.GoodTilBlockHeight, currentHeight,
+				)
+			}
+		}
 	}
 
 	return nil
@@ -483,11 +520,29 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 		return err
 	}
 
+	creator, err := sdk.AccAddressFromBech32(order.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
+	}
+
+	if order.GoodTil != nil {
+		if err := k.delayGoodTilCancellation(
+			ctx,
+			*order.GoodTil,
+			record.OrderSeq,
+			creator,
+			order.ID,
+		); err != nil {
+			return err
+		}
+	}
+
 	if err := k.savaOrderData(ctx, record.OrderSeq, types.OrderData{
 		OrderBookID: record.OrderBookID,
 		Price:       *order.Price,
 		Quantity:    order.Quantity,
 		Side:        order.Side,
+		GoodTil:     order.GoodTil,
 	}); err != nil {
 		return err
 	}
@@ -507,12 +562,36 @@ func (k Keeper) removeOrderByRecord(
 	if err := k.removeOrderBookRecord(ctx, record.OrderBookID, record.Side, record.Price, record.OrderSeq); err != nil {
 		return err
 	}
+
+	orderData, err := k.getOrderData(ctx, record.OrderSeq)
+	if err != nil {
+		return err
+	}
+	if orderData.GoodTil != nil {
+		if err := k.removeGoodTilDelay(ctx, *orderData.GoodTil, record.OrderSeq); err != nil {
+			return err
+		}
+	}
 	k.removeOrderData(ctx, record.OrderSeq)
+
 	return k.removeOrderIDToSeq(ctx, record.AccountNumber, record.OrderID)
 }
 
 func (k Keeper) saveOrderBookData(ctx sdk.Context, orderBookID uint32, data types.OrderBookData) error {
 	return k.setDataToStore(ctx, types.CreateOrderBookDataKey(orderBookID), &data)
+}
+
+func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string) error {
+	order, record, err := k.getOrderWithRecordByAddressAndID(ctx, acc, orderID)
+	if err != nil {
+		return err
+	}
+
+	if err := k.removeOrderByRecord(ctx, record); err != nil {
+		return err
+	}
+
+	return k.assetFTKeeper.DEXUnlock(ctx, acc, sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance))
 }
 
 func (k Keeper) getOrderBookData(ctx sdk.Context, orderBookID uint32) (types.OrderBookData, error) {
@@ -594,6 +673,7 @@ func (k Keeper) getOrderWithRecordByAddressAndID(
 			Side:              orderBookRecord.Side,
 			RemainingQuantity: orderBookRecord.RemainingQuantity,
 			RemainingBalance:  orderBookRecord.RemainingBalance,
+			GoodTil:           orderData.GoodTil,
 		},
 		orderBookRecord,
 		nil
@@ -687,6 +767,7 @@ func (k Keeper) getPaginatedOrders(
 				Side:              orderData.Side,
 				RemainingQuantity: orderBookRecord.RemainingQuantity,
 				RemainingBalance:  orderBookRecord.RemainingBalance,
+				GoodTil:           orderData.GoodTil,
 			}, nil
 		},
 		// constructor
@@ -784,6 +865,7 @@ func (k Keeper) getPaginatedOrderBookOrders(
 				Side:              side,
 				RemainingQuantity: record.RemainingQuantity,
 				RemainingBalance:  record.RemainingBalance,
+				GoodTil:           orderData.GoodTil,
 			}, nil
 		},
 		// constructor
@@ -848,6 +930,10 @@ func (k Keeper) getOrderSeqByID(ctx sdk.Context, accNumber uint64, orderID strin
 	}
 
 	return val.GetValue(), nil
+}
+
+func (k Keeper) hasOrderID(ctx sdk.Context, accNumber uint64, orderID string) bool {
+	return ctx.KVStore(k.storeKey).Has(types.CreateOrderIDToSeqKey(accNumber, orderID))
 }
 
 func (k Keeper) setDataToStore(

@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -244,7 +243,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 				orderBookIsCreated bool
 			)
 			for _, priceGroup := range tt.priceGroups {
-				sdkCtx, _, _ = testApp.BeginNextBlock(time.Now())
+				sdkCtx, _, _ = testApp.BeginNextBlock()
 				if orderBookIsCreated {
 					// check after beginning of a new block
 					assertOrdersOrdering(t, testApp, sdkCtx, orderBookID, tt.side)

@@ -2,6 +2,7 @@ package types
 
 import (
 	"crypto/sha256"
+	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
 
@@ -144,4 +145,10 @@ func CreateOrderBookSideKey(orderBookID uint32, side Side) []byte {
 	key = store.AppendUint8ToOrderedBytes(key, uint8(side))
 
 	return store.JoinKeys(OrderBookRecordKeyPrefix, key)
+}
+
+// BuildGoodTilBlockHeightDelayKey builds the key for the good til block height delay store.
+func BuildGoodTilBlockHeightDelayKey(orderSeq uint64) string {
+	// the string will be store the delay store and must be unique for the app
+	return fmt.Sprintf("%stlh%d", ModuleName, orderSeq)
 }

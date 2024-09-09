@@ -114,7 +114,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 	delayedItems, err = delayKeeper.ExportDelayedItems(ctxSDK)
 	requireT.NoError(err)
 	requireT.Len(delayedItems, 1)
-	requireT.Equal("assetft-upgrade-1-"+denom2, delayedItems[0].Id)
+	requireT.Equal("assetft-upgrade-1-"+denom2, delayedItems[0].ID)
 	requireT.Equal(ctxSDK.BlockTime().Add(params.TokenUpgradeGracePeriod), delayedItems[0].ExecutionTime)
 
 	var delayedItem proto.Message

@@ -12,7 +12,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v4/x/dex"
-	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
 const (
@@ -32,83 +32,89 @@ func TestInitAndExportGenesis(t *testing.T) {
 	acc1, _ := testApp.GenAccount(ctx)
 	acc2, _ := testApp.GenAccount(ctx)
 
-	prams := dextypes.DefaultParams()
-	genState := dextypes.GenesisState{
+	prams := types.DefaultParams()
+	genState := types.GenesisState{
 		Params: prams,
-		OrderBooks: []dextypes.OrderBookDataWithID{
+		OrderBooks: []types.OrderBookDataWithID{
 			{
 				ID: 0,
-				Data: dextypes.OrderBookData{
+				Data: types.OrderBookData{
 					BaseDenom:  denom1,
 					QuoteDenom: denom2,
 				},
 			},
 			{
 				ID: 1,
-				Data: dextypes.OrderBookData{
+				Data: types.OrderBookData{
 					BaseDenom:  denom2,
 					QuoteDenom: denom1,
 				},
 			},
 			{
 				ID: 2,
-				Data: dextypes.OrderBookData{
+				Data: types.OrderBookData{
 					BaseDenom:  denom2,
 					QuoteDenom: denom3,
 				},
 			},
 			{
 				ID: 3,
-				Data: dextypes.OrderBookData{
+				Data: types.OrderBookData{
 					BaseDenom:  denom3,
 					QuoteDenom: denom2,
 				},
 			},
 		},
-		Orders: []dextypes.OrderWithSequence{
+		Orders: []types.OrderWithSequence{
 			{
 				Sequence: 0,
-				Order: dextypes.Order{
+				Order: types.Order{
 					Creator:           acc1.String(),
-					Type:              dextypes.ORDER_TYPE_LIMIT,
+					Type:              types.ORDER_TYPE_LIMIT,
 					ID:                "id1",
 					BaseDenom:         denom1,
 					QuoteDenom:        denom2,
-					Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-2")),
+					Price:             lo.ToPtr(types.MustNewPriceFromString("1e-2")),
 					Quantity:          sdkmath.NewInt(100),
-					Side:              dextypes.SIDE_BUY,
+					Side:              types.SIDE_BUY,
 					RemainingQuantity: sdkmath.NewInt(90),
 					RemainingBalance:  sdkmath.NewInt(90),
+					GoodTil: &types.GoodTil{
+						GoodTilBlockHeight: 1000,
+					},
 				},
 			},
 			{
 				Sequence: 1,
-				Order: dextypes.Order{
+				Order: types.Order{
 					Creator:           acc2.String(),
-					Type:              dextypes.ORDER_TYPE_LIMIT,
+					Type:              types.ORDER_TYPE_LIMIT,
 					ID:                "id2",
 					BaseDenom:         denom2,
 					QuoteDenom:        denom1,
-					Price:             lo.ToPtr(dextypes.MustNewPriceFromString("3e3")),
+					Price:             lo.ToPtr(types.MustNewPriceFromString("3e3")),
 					Quantity:          sdkmath.NewInt(100),
-					Side:              dextypes.SIDE_SELL,
+					Side:              types.SIDE_SELL,
 					RemainingQuantity: sdkmath.NewInt(90),
 					RemainingBalance:  sdkmath.NewInt(90),
 				},
 			},
 			{
 				Sequence: 2,
-				Order: dextypes.Order{
+				Order: types.Order{
 					Creator:           acc2.String(),
-					Type:              dextypes.ORDER_TYPE_LIMIT,
+					Type:              types.ORDER_TYPE_LIMIT,
 					ID:                "id3",
 					BaseDenom:         denom2,
 					QuoteDenom:        denom3,
-					Price:             lo.ToPtr(dextypes.MustNewPriceFromString("11111e12")),
+					Price:             lo.ToPtr(types.MustNewPriceFromString("11111e12")),
 					Quantity:          sdkmath.NewInt(10000000),
-					Side:              dextypes.SIDE_BUY,
+					Side:              types.SIDE_BUY,
 					RemainingQuantity: sdkmath.NewInt(70000),
 					RemainingBalance:  sdkmath.NewInt(50),
+					GoodTil: &types.GoodTil{
+						GoodTilBlockHeight: 323,
+					},
 				},
 			},
 		},
@@ -130,15 +136,15 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// check that imported state is valid
 
 	// place an order with the existing order book
-	orderWithExisingOrderBook := dextypes.Order{
+	orderWithExisingOrderBook := types.Order{
 		Creator:    acc2.String(),
-		Type:       dextypes.ORDER_TYPE_LIMIT,
+		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         "id4",
 		BaseDenom:  denom2,
 		QuoteDenom: denom3,
-		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("4e3")),
+		Price:      lo.ToPtr(types.MustNewPriceFromString("4e3")),
 		Quantity:   sdkmath.NewInt(10000000),
-		Side:       dextypes.SIDE_BUY,
+		Side:       types.SIDE_BUY,
 	}
 	lockedBalance, err := orderWithExisingOrderBook.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
@@ -167,15 +173,15 @@ func TestInitAndExportGenesis(t *testing.T) {
 	require.True(t, orderFound)
 
 	// place an order in the new order book
-	orderWithNewOrderBook := dextypes.Order{
+	orderWithNewOrderBook := types.Order{
 		Creator:    acc1.String(),
-		Type:       dextypes.ORDER_TYPE_LIMIT,
+		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         "id5",
 		BaseDenom:  denom1,
 		QuoteDenom: denom3,
-		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("4e3")),
+		Price:      lo.ToPtr(types.MustNewPriceFromString("4e3")),
 		Quantity:   sdkmath.NewInt(10000000),
-		Side:       dextypes.SIDE_BUY,
+		Side:       types.SIDE_BUY,
 	}
 	lockedBalance, err = orderWithNewOrderBook.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)

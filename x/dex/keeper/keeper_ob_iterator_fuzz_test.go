@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"sync"
 	"testing"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,7 +24,7 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 	lock := sync.Mutex{}
 
 	// don't limit the price tick
-	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
+	sdkCtx, _, _ := testApp.BeginNextBlock()
 
 	params := testApp.DEXKeeper.GetParams(sdkCtx)
 	params.PriceTickExponent = int32(types.MinExt)
@@ -51,7 +50,7 @@ func FuzzSaveBuyOrderAndReadWithSorting(f *testing.F) {
 	lock := sync.Mutex{}
 
 	// don't limit the price tick
-	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
+	sdkCtx, _, _ := testApp.BeginNextBlock()
 
 	params := testApp.DEXKeeper.GetParams(sdkCtx)
 	params.PriceTickExponent = int32(types.MinExt)
@@ -87,7 +86,7 @@ func placeRandomOrderAndAssertOrdering(
 		t.Skip()
 	}
 
-	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
+	sdkCtx, _, _ := testApp.BeginNextBlock()
 	acc, _ := testApp.GenAccount(sdkCtx)
 
 	order := types.Order{

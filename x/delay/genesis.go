@@ -17,6 +17,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	if err := k.ImportDelayedItems(ctx, genState.DelayedItems); err != nil {
 		panic(err)
 	}
+	if err := k.ImportBlockItems(ctx, genState.BlockItems); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the module's exported genesis.
@@ -25,7 +28,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
+	blockItems, err := k.ExportBlockItems(ctx)
+	if err != nil {
+		panic(err)
+	}
 	return &types.GenesisState{
 		DelayedItems: delayedItems,
+		BlockItems:   blockItems,
 	}
 }

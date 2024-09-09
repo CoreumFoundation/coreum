@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
@@ -28,4 +29,10 @@ type AssetFTKeeper interface {
 	DEXUnlockAndSend(ctx sdk.Context, from, to sdk.AccAddress, coin sdk.Coin) error
 	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error)
+}
+
+// DelayKeeper defines methods required from the delay keeper.
+type DelayKeeper interface {
+	ExecuteAfterBlock(ctx sdk.Context, id string, data proto.Message, height uint64) error
+	RemoveExecuteAtBlock(ctx sdk.Context, id string, height uint64) error
 }

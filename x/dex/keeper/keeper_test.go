@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -142,6 +143,9 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		Price:      price,
 		Quantity:   sdkmath.NewInt(10),
 		Side:       types.SIDE_SELL,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 390,
+		},
 	}
 	lockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
@@ -195,7 +199,9 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Height: 100,
+	})
 	dexKeeper := testApp.DEXKeeper
 	assetFTKeeper := testApp.AssetFTKeeper
 
@@ -233,10 +239,24 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 		Quantity:   sdkmath.NewInt(5_000),
 		Side:       types.SIDE_BUY,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: uint64(sdkCtx.BlockHeight() + 1),
+		},
 	}
 	buyLockedBalance, err := buyOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(buyLockedBalance))
+
+	// try to place order with the invalid GoodTilBlockHeight
+	buyOrderWithGoodTilHeight := buyOrder
+	buyOrderWithGoodTilHeight.GoodTil = &types.GoodTil{
+		GoodTilBlockHeight: uint64(sdkCtx.BlockHeight() - 1),
+	}
+	require.ErrorContains(
+		t,
+		dexKeeper.PlaceOrder(sdkCtx, buyOrderWithGoodTilHeight),
+		"good til block height 99 must be greater than current block height 100: invalid input",
+	)
 
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
@@ -363,7 +383,7 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 			err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
 			if tt.wantTickError {
-				require.ErrorContains(t, err, "the price must be multible of")
+				require.ErrorContains(t, err, "the price must be multiple of")
 			} else {
 				require.NoError(t, err)
 			}
@@ -399,6 +419,9 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			Price:      lo.ToPtr(types.MustNewPriceFromString("14e-1")),
 			Quantity:   sdkmath.NewInt(3000),
 			Side:       types.SIDE_BUY,
+			GoodTil: &types.GoodTil{
+				GoodTilBlockHeight: 32,
+			},
 		},
 		{
 			Creator:    acc1.String(),
@@ -409,6 +432,9 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 			Quantity:   sdkmath.NewInt(1000),
 			Side:       types.SIDE_SELL,
+			GoodTil: &types.GoodTil{
+				GoodTilBlockHeight: 1000,
+			},
 		},
 		{
 			Creator:    acc2.String(),

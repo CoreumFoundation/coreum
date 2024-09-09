@@ -9,12 +9,17 @@ func (gs GenesisState) Validate() error {
 			return err
 		}
 	}
+	for _, bi := range gs.BlockItems {
+		if err := bi.Validate(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 // Validate checks all the fields are valid.
 func (di DelayedItem) Validate() error {
-	if di.Id == "" {
+	if di.ID == "" {
 		return errors.New("id is empty")
 	}
 	if di.Data == nil {
@@ -22,6 +27,20 @@ func (di DelayedItem) Validate() error {
 	}
 	if di.ExecutionTime.Unix() < 0 {
 		return errors.New("unix timestamp of the execution time must be non-negative")
+	}
+	return nil
+}
+
+// Validate checks all the fields are valid.
+func (di BlockItem) Validate() error {
+	if di.ID == "" {
+		return errors.New("id is empty")
+	}
+	if di.Data == nil {
+		return errors.New("data is nil")
+	}
+	if di.Height == 0 {
+		return errors.New("height must be non-zero")
 	}
 	return nil
 }

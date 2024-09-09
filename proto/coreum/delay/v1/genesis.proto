@@ -9,15 +9,23 @@ option go_package = "github.com/CoreumFoundation/coreum/v4/x/delay/types";
 
 // GenesisState defines the module genesis state.
 message GenesisState {
-  // tokens keep the fungible token state
+  // delayed_items is a list of delayed items.
   repeated DelayedItem delayed_items = 1 [(gogoproto.nullable) = false];
+  // block_items is a list of block items.
+  repeated BlockItem block_items = 2 [(gogoproto.nullable) = false];
 }
 
 message DelayedItem {
-  string id = 1;
+  string id = 1 [(gogoproto.customname) = "ID"];
   google.protobuf.Timestamp execution_time = 2 [
     (gogoproto.nullable) = false,
     (gogoproto.stdtime) = true
   ];
+  google.protobuf.Any data = 3;
+}
+
+message BlockItem {
+  string id = 1 [(gogoproto.customname) = "ID"];
+  uint64 height = 2;
   google.protobuf.Any data = 3;
 }
