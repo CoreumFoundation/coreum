@@ -34,8 +34,6 @@ type Keeper struct {
 	authority          string
 }
 
-// FIXME add integration tests !!!
-
 // NewKeeper creates a new instance of the Keeper.
 func NewKeeper(
 	cdc codec.BinaryCodec,

@@ -15,7 +15,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
-func TestKeeper_GoodTill(t *testing.T) {
+func TestKeeper_GoodTil(t *testing.T) {
 	tests := []struct {
 		name string
 		// height to orders
