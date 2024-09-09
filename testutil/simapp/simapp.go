@@ -137,11 +137,14 @@ func (s *App) BeginNextBlock(blockTime time.Time) (sdk.Context, sdk.BeginBlock, 
 }
 
 // FinalizeBlock ends the current block and commit the state and creates a new block.
-func (s *App) FinalizeBlock() error {
+func (s *App) FinalizeBlock(blockTime time.Time) error {
+	if blockTime.IsZero() {
+		blockTime = time.Now()
+	}
 	_, err := s.App.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height: s.LastBlockHeight() + 1,
 		Hash:   s.LastCommitID().Hash,
-		Time:   time.Now().UTC(),
+		Time:   blockTime,
 	})
 	return err
 }

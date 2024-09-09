@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -22,18 +23,18 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 	require.NoError(t, simApp.CustomParamsKeeper.SetStakingParams(ctx, customparamstypes.StakingParams{
 		MinSelfDelegation: minSelfDelegation,
 	}))
-	require.NoError(t, simApp.FinalizeBlock())
+	require.NoError(t, simApp.FinalizeBlock(time.Now()))
 
 	// create new account
 	accountAddress, privateKey := simApp.GenAccount(ctx)
-	require.NoError(t, simApp.FinalizeBlock())
+	require.NoError(t, simApp.FinalizeBlock(time.Now()))
 
 	// fund account
 	bondDenom, err := simApp.StakingKeeper.BondDenom(ctx)
 	require.NoError(t, err)
 	balance := sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(100_000_000_000)))
 	require.NoError(t, simApp.FundAccount(ctx, accountAddress, balance))
-	require.NoError(t, simApp.FinalizeBlock())
+	require.NoError(t, simApp.FinalizeBlock(time.Now()))
 
 	// create validator
 	description := stakingtypes.Description{Moniker: "moniker"}
@@ -73,5 +74,5 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 	_, _, err = simApp.SendTx(ctx, feeAmt, gas, privateKey, createValidatorMsg)
 	require.NoError(t, err)
 
-	require.NoError(t, simApp.FinalizeBlock())
+	require.NoError(t, simApp.FinalizeBlock(time.Now()))
 }
