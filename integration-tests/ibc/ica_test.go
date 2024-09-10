@@ -24,8 +24,6 @@ import (
 
 // TestICAController tests the ICA controller capabilities.
 func TestICACoreumController(t *testing.T) {
-	// TODO(fix-tests)
-	t.SkipNow()
 	t.Parallel()
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	testICAIntegration(ctx, t, chains.Coreum.Chain, chains.Gaia)
