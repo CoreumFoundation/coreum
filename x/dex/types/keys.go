@@ -152,3 +152,9 @@ func BuildGoodTilBlockHeightDelayKey(orderSeq uint64) string {
 	// the string will be store the delay store and must be unique for the app
 	return fmt.Sprintf("%stlh%d", ModuleName, orderSeq)
 }
+
+// BuildGoodTilBlockTimeDelayKey builds the key for the good til block time delay store.
+func BuildGoodTilBlockTimeDelayKey(orderSeq uint64) string {
+	// the string will be store the delay store and must be unique for the app
+	return fmt.Sprintf("%stlt%d", ModuleName, orderSeq)
+}

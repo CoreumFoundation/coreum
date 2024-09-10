@@ -16,6 +16,8 @@ import (
 )
 
 func TestKeeper_GoodTil(t *testing.T) {
+	blockTime := time.Second + time.Second/2
+	initialBlockTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	tests := []struct {
 		name string
 		// height to orders
@@ -96,6 +98,90 @@ func TestKeeper_GoodTil(t *testing.T) {
 						RemainingQuantity: sdkmath.NewInt(1000),
 						RemainingBalance:  sdkmath.NewInt(1000),
 						GoodTil:           &types.GoodTil{GoodTilBlockHeight: 343},
+					},
+				}
+			},
+			startHeight: 300,
+			endHeight:   310,
+		},
+		{
+			name: "no_match_with_good_til_block_time",
+			orders: func(accSet AccSet) map[uint64][]types.Order {
+				return map[uint64][]types.Order{
+					301: {
+						{
+							Creator:    accSet.acc1.String(),
+							Type:       types.ORDER_TYPE_LIMIT,
+							ID:         "id1",
+							BaseDenom:  denom1,
+							QuoteDenom: denom2,
+							Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+							Quantity:   sdkmath.NewInt(1000),
+							Side:       types.SIDE_SELL,
+							GoodTil:    &types.GoodTil{GoodTilBlockTime: lo.ToPtr(initialBlockTime.Add(time.Hour))},
+						},
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:           accSet.acc1.String(),
+						Type:              types.ORDER_TYPE_LIMIT,
+						ID:                "id1",
+						BaseDenom:         denom1,
+						QuoteDenom:        denom2,
+						Price:             lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:          sdkmath.NewInt(1000),
+						Side:              types.SIDE_SELL,
+						RemainingQuantity: sdkmath.NewInt(1000),
+						RemainingBalance:  sdkmath.NewInt(1000),
+						GoodTil:           &types.GoodTil{GoodTilBlockTime: lo.ToPtr(initialBlockTime.Add(time.Hour))},
+					},
+				}
+			},
+			startHeight: 300,
+			endHeight:   310,
+		},
+		{
+			name: "no_match_with_good_til_block_high_and_time",
+			orders: func(accSet AccSet) map[uint64][]types.Order {
+				return map[uint64][]types.Order{
+					301: {
+						{
+							Creator:    accSet.acc1.String(),
+							Type:       types.ORDER_TYPE_LIMIT,
+							ID:         "id1",
+							BaseDenom:  denom1,
+							QuoteDenom: denom2,
+							Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+							Quantity:   sdkmath.NewInt(1000),
+							Side:       types.SIDE_SELL,
+							GoodTil: &types.GoodTil{
+								GoodTilBlockHeight: 343,
+								GoodTilBlockTime:   lo.ToPtr(initialBlockTime.Add(time.Hour)),
+							},
+						},
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:           accSet.acc1.String(),
+						Type:              types.ORDER_TYPE_LIMIT,
+						ID:                "id1",
+						BaseDenom:         denom1,
+						QuoteDenom:        denom2,
+						Price:             lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:          sdkmath.NewInt(1000),
+						Side:              types.SIDE_SELL,
+						RemainingQuantity: sdkmath.NewInt(1000),
+						RemainingBalance:  sdkmath.NewInt(1000),
+						GoodTil: &types.GoodTil{
+							GoodTilBlockHeight: 343,
+							GoodTilBlockTime:   lo.ToPtr(initialBlockTime.Add(time.Hour)),
+						},
 					},
 				}
 			},
@@ -311,6 +397,111 @@ func TestKeeper_GoodTil(t *testing.T) {
 			startHeight: 300,
 			endHeight:   344,
 		},
+		{
+			name: "no_match_with_good_til_block_time_remove_from_max_time",
+			orders: func(accSet AccSet) map[uint64][]types.Order {
+				return map[uint64][]types.Order{
+					101: {
+						// this order will be cancelled by good til
+						{
+							Creator:    accSet.acc1.String(),
+							Type:       types.ORDER_TYPE_LIMIT,
+							ID:         "id1",
+							BaseDenom:  denom1,
+							QuoteDenom: denom2,
+							Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+							Quantity:   sdkmath.NewInt(1000),
+							Side:       types.SIDE_SELL,
+							GoodTil: &types.GoodTil{
+								GoodTilBlockTime: lo.ToPtr(initialBlockTime.Add(blockTime * time.Duration(3))),
+							}, // same height as in next order
+						},
+					},
+					// this order will be cancelled by good til
+					102: {
+						{
+							Creator:    accSet.acc1.String(),
+							Type:       types.ORDER_TYPE_LIMIT,
+							ID:         "id2",
+							BaseDenom:  denom2,
+							QuoteDenom: denom3,
+							Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+							Quantity:   sdkmath.NewInt(1000),
+							Side:       types.SIDE_SELL,
+							GoodTil: &types.GoodTil{
+								GoodTilBlockTime: lo.ToPtr(initialBlockTime.Add(blockTime * time.Duration(3))),
+							}, // same height as in next order
+						},
+					},
+					// this order will remain in the order book
+					108: {
+						{
+							Creator:    accSet.acc1.String(),
+							Type:       types.ORDER_TYPE_LIMIT,
+							ID:         "id3",
+							BaseDenom:  denom1,
+							QuoteDenom: denom3,
+							Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+							Quantity:   sdkmath.NewInt(1000),
+							Side:       types.SIDE_SELL,
+							GoodTil: &types.GoodTil{
+								GoodTilBlockTime: lo.ToPtr(initialBlockTime.Add(time.Hour)),
+							},
+						},
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:           accSet.acc1.String(),
+						Type:              types.ORDER_TYPE_LIMIT,
+						ID:                "id3",
+						BaseDenom:         denom1,
+						QuoteDenom:        denom3,
+						Price:             lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:          sdkmath.NewInt(1000),
+						Side:              types.SIDE_SELL,
+						RemainingQuantity: sdkmath.NewInt(1000),
+						RemainingBalance:  sdkmath.NewInt(1000),
+						GoodTil: &types.GoodTil{
+							GoodTilBlockTime: lo.ToPtr(initialBlockTime.Add(time.Hour)),
+						},
+					},
+				}
+			},
+			startHeight: 100,
+			endHeight:   110,
+		},
+		{
+			name: "no_match_with_good_til_block_time_and_height_remove_both",
+			orders: func(accSet AccSet) map[uint64][]types.Order {
+				return map[uint64][]types.Order{
+					101: {
+						// this order will be cancelled by good til
+						{
+							Creator:    accSet.acc1.String(),
+							Type:       types.ORDER_TYPE_LIMIT,
+							ID:         "id1",
+							BaseDenom:  denom1,
+							QuoteDenom: denom2,
+							Price:      lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+							Quantity:   sdkmath.NewInt(1000),
+							Side:       types.SIDE_SELL,
+							GoodTil: &types.GoodTil{
+								GoodTilBlockHeight: 103,
+								GoodTilBlockTime:   lo.ToPtr(initialBlockTime.Add(blockTime * time.Duration(3))),
+							},
+						},
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{}
+			},
+			startHeight: 100,
+			endHeight:   110,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -323,7 +514,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 
 			// place all in the start height block
 			sdkCtx := testApp.NewContextLegacy(false, cmtproto.Header{
-				Time:   time.Now(),
+				Time:   initialBlockTime,
 				Height: int64(tt.startHeight),
 			})
 			accSet := getAccSet(sdkCtx, testApp)
@@ -341,7 +532,8 @@ func TestKeeper_GoodTil(t *testing.T) {
 			for i := 1; i <= int(tt.endHeight-tt.startHeight); i++ {
 				height := tt.startHeight + uint64(i)
 				sdkCtx := testApp.NewContextLegacy(false, cmtproto.Header{
-					Time:   time.Now(),
+					// increase block time every block
+					Time:   initialBlockTime.Add(blockTime * time.Duration(i)),
 					Height: int64(height),
 				})
 				_, err := testApp.BeginBlocker(sdkCtx)

@@ -57,7 +57,7 @@ func (di *dummyExecutionMessage) String() string {
 
 func (di *dummyExecutionMessage) ProtoMessage() {}
 
-func TestDelayedExecution(t *testing.T) {
+func TestTimeExecution(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -95,8 +95,11 @@ func TestDelayedExecution(t *testing.T) {
 	requireT.NoError(testApp.DelayKeeper.DelayExecution(ctx, "delayed-id-1", delayed2, 2*time.Second))
 
 	// two items intentionally executed at the same time
-	requireT.NoError(testApp.DelayKeeper.DelayExecution(ctx, "delayed-id-3", delayed3, 3*time.Second))
-	requireT.NoError(testApp.DelayKeeper.DelayExecution(ctx, "delayed-id-4", delayed4, 3*time.Second))
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-3", delayed3, ctx.BlockTime().Add(3*time.Second)))
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-4", delayed4, ctx.BlockTime().Add(3*time.Second)))
+	// save and remove
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-5", delayed4, ctx.BlockTime().Add(3*time.Second)))
+	requireT.NoError(testApp.DelayKeeper.RemoveExecuteAfter(ctx, "delayed-id-5", ctx.BlockTime().Add(3*time.Second)))
 
 	requireT.Error(testApp.DelayKeeper.StoreDelayedExecution(
 		ctx, "delayed-id-4", delayed1, time.Date(1969, 12, 31, 23, 59, 59, 0, time.UTC),

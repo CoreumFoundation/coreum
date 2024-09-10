@@ -96,20 +96,6 @@ func (k Keeper) CancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 	return k.cancelOrder(ctx, acc, orderID)
 }
 
-// CancelOrderIfExists cancels order and unlock locked balance is the order still exist.
-func (k Keeper) CancelOrderIfExists(ctx sdk.Context, acc sdk.AccAddress, orderID string) error {
-	accNumber, err := k.getAccountNumber(ctx, acc)
-	if err != nil {
-		return err
-	}
-	if !k.hasOrderID(ctx, accNumber, orderID) {
-		k.logger(ctx).Debug("Order does not exist.", "orderID", orderID)
-		return nil
-	}
-
-	return k.cancelOrder(ctx, acc, orderID)
-}
-
 // GetOrderBookIDByDenoms returns order book ID by it's denoms.
 func (k Keeper) GetOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, error) {
 	return k.getOrderBookIDByDenoms(ctx, baseDenom, quoteDenom)
@@ -355,15 +341,33 @@ func (k Keeper) validateOrder(ctx sdk.Context, order types.Order) error {
 
 	// good til
 	if order.GoodTil != nil {
-		if order.GoodTil.GoodTilBlockHeight > 0 {
-			currentHeight := ctx.BlockHeight()
-			if order.GoodTil.GoodTilBlockHeight <= uint64(currentHeight) {
-				return sdkerrors.Wrapf(
-					types.ErrInvalidInput,
-					"good til block height %d must be greater than current block height %d",
-					order.GoodTil.GoodTilBlockHeight, currentHeight,
-				)
-			}
+		if err := k.validateGoodTil(ctx, order); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) validateGoodTil(ctx sdk.Context, order types.Order) error {
+	if order.GoodTil.GoodTilBlockHeight > 0 {
+		currentHeight := ctx.BlockHeight()
+		if order.GoodTil.GoodTilBlockHeight <= uint64(currentHeight) {
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput,
+				"good til block height %d must be greater than current block height %d",
+				order.GoodTil.GoodTilBlockHeight, currentHeight,
+			)
+		}
+	}
+	if order.GoodTil.GoodTilBlockTime != nil {
+		currentTime := ctx.BlockTime()
+		if !order.GoodTil.GoodTilBlockTime.After(currentTime) {
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput,
+				"good til block height %s must be greater than current block height %s",
+				order.GoodTil.GoodTilBlockTime, currentTime,
+			)
 		}
 	}
 
@@ -928,10 +932,6 @@ func (k Keeper) getOrderSeqByID(ctx sdk.Context, accNumber uint64, orderID strin
 	}
 
 	return val.GetValue(), nil
-}
-
-func (k Keeper) hasOrderID(ctx sdk.Context, accNumber uint64, orderID string) bool {
-	return ctx.KVStore(k.storeKey).Has(types.CreateOrderIDToSeqKey(accNumber, orderID))
 }
 
 func (k Keeper) setDataToStore(

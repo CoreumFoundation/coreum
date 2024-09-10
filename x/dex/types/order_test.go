@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -197,6 +198,50 @@ func TestOrder_Validate(t *testing.T) {
 			order: func() types.Order {
 				order := validOrder()
 				order.GoodTil = &types.GoodTil{}
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
+			name: "valid_good_til_block_height",
+			order: func() types.Order {
+				order := validOrder()
+				order.GoodTil = &types.GoodTil{
+					GoodTilBlockHeight: 1,
+				}
+				return order
+			}(),
+		},
+		{
+			name: "valid_good_til_block_time",
+			order: func() types.Order {
+				order := validOrder()
+				order.GoodTil = &types.GoodTil{
+					GoodTilBlockTime: lo.ToPtr(time.Now()),
+				}
+				return order
+			}(),
+		},
+		{
+			name: "valid_good_til_block_time_and_height",
+			order: func() types.Order {
+				order := validOrder()
+				order.GoodTil = &types.GoodTil{
+					GoodTilBlockHeight: 1,
+					GoodTilBlockTime:   lo.ToPtr(time.Now()),
+				}
+				return order
+			}(),
+		},
+		{
+			name: "invalid_good_til_with_market",
+			order: func() types.Order {
+				order := validOrder()
+				order.Type = types.ORDER_TYPE_MARKET
+				order.Price = nil
+				order.GoodTil = &types.GoodTil{
+					GoodTilBlockTime: lo.ToPtr(time.Now()),
+				}
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,

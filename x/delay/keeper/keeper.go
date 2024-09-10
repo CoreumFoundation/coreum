@@ -49,6 +49,11 @@ func (k Keeper) DelayExecution(ctx sdk.Context, id string, data proto.Message, d
 	return k.StoreDelayedExecution(ctx, id, data, ctx.BlockTime().Add(delay))
 }
 
+// ExecuteAfter stores an item to be executed after specified time.
+func (k Keeper) ExecuteAfter(ctx sdk.Context, id string, data proto.Message, time time.Time) error {
+	return k.StoreDelayedExecution(ctx, id, data, time)
+}
+
 // ExecuteAfterBlock stores an item to be executed after specified block.
 func (k Keeper) ExecuteAfterBlock(ctx sdk.Context, id string, data proto.Message, height uint64) error {
 	return k.StoreBlockExecution(ctx, id, data, height)
@@ -66,8 +71,20 @@ func (k Keeper) RemoveExecuteAtBlock(ctx sdk.Context, id string, height uint64) 
 	return nil
 }
 
+// RemoveExecuteAfter removes an item to be executed at after specified time.
+func (k Keeper) RemoveExecuteAfter(ctx sdk.Context, id string, time time.Time) error {
+	key, err := types.CreateDelayedItemKey(id, time)
+	if err != nil {
+		return err
+	}
+
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(key)
+	return nil
+}
+
 // StoreDelayedExecution stores delayed execution item using absolute time.
-func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Message, t time.Time) error {
+func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Message, time time.Time) error {
 	if !k.router.Has(data) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidData,
@@ -75,7 +92,7 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Mes
 			id, proto.MessageName(data),
 		)
 	}
-	key, err := types.CreateDelayedItemKey(id, t)
+	key, err := types.CreateDelayedItemKey(id, time)
 	if err != nil {
 		return err
 	}

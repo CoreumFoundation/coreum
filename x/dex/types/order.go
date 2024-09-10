@@ -100,8 +100,8 @@ func (o Order) Validate() error {
 
 	if o.GoodTil != nil {
 		// if the good til provided at least one setting should be set
-		if o.GoodTil.GoodTilBlockHeight == 0 {
-			return sdkerrors.Wrap(ErrInvalidInput, "good til block height must be positive")
+		if o.GoodTil.GoodTilBlockHeight == 0 && o.GoodTil.GoodTilBlockTime == nil {
+			return sdkerrors.Wrap(ErrInvalidInput, "good til block height or time must be provided")
 		}
 	}
 
@@ -118,7 +118,12 @@ func (o Order) Validate() error {
 	case ORDER_TYPE_MARKET:
 		if o.Price != nil {
 			return sdkerrors.Wrap(
-				ErrInvalidInput, "price must be nil for the limit order",
+				ErrInvalidInput, "price must be nil for the market order",
+			)
+		}
+		if o.GoodTil != nil {
+			return sdkerrors.Wrap(
+				ErrInvalidInput, "good til must be nil for the market order",
 			)
 		}
 	default:
