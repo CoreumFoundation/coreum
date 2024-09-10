@@ -640,7 +640,7 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
-		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(100000)),
+		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(1000000)),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(

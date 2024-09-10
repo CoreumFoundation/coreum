@@ -734,7 +734,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
-		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
+		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(2000000)), // coin for the fees
 	})
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
@@ -1168,7 +1168,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
-		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(100000)),
+		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(1000000)),
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
