@@ -432,12 +432,10 @@ func New(
 		&app.AccountKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
-	err := delayRouter.RegisterHandler(
+	if err := delayRouter.RegisterHandler(
 		&assetfttypes.DelayedTokenUpgradeV1{},
-		assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper),
-	)
-	if err != nil {
+		assetftkeeper.NewDelayTokenUpgradeV1Handler(app.AssetFTKeeper),
+	); err != nil {
 		panic(err)
 	}
 
@@ -804,8 +802,15 @@ func New(
 		app.AccountKeeper,
 		authkeeper.NewQueryServer(app.AccountKeeper),
 		app.AssetFTKeeper,
+		app.DelayKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	if err := delayRouter.RegisterHandler(
+		&dextypes.CancelGoodTil{},
+		dexkeeper.NewDelayCancelOrderHandler(app.DEXKeeper),
+	); err != nil {
+		panic(err)
+	}
 
 	/****  Module Options ****/
 

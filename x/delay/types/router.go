@@ -16,6 +16,7 @@ type Handler = func(ctx sdk.Context, data proto.Message) error
 type Router interface {
 	RegisterHandler(data proto.Message, h Handler) error
 	Handler(data proto.Message) (Handler, error)
+	Has(data proto.Message) bool
 }
 
 type router struct {
@@ -49,4 +50,11 @@ func (rtr *router) Handler(data proto.Message) (Handler, error) {
 	}
 
 	return h, nil
+}
+
+// Has checks whether the router support the data type.
+func (rtr *router) Has(data proto.Message) bool {
+	name := proto.MessageName(data)
+	_, exists := rtr.routes[name]
+	return exists
 }

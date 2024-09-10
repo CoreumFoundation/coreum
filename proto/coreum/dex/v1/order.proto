@@ -28,6 +28,20 @@ enum OrderType {
   ORDER_TYPE_MARKET = 2;
 }
 
+// GoodTil is a good til order settings.
+message GoodTil {
+  // good_til_block_height means that order remains active until a specific blockchain block height is reached.
+  uint64 good_til_block_height = 1;
+}
+
+// CancelGoodTil is a cancel good til message for the delay router.
+message CancelGoodTil {
+  // creator is order creator address.
+  string creator = 1;
+  // order_id is order ID.
+  string order_id = 2 [(gogoproto.customname) = "OrderID"];
+}
+
 // Order is a DEX order.
 message Order {
   // creator is order creator address.
@@ -59,6 +73,8 @@ message Order {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+  // good_til is order good til
+  GoodTil good_til = 11;
 }
 
 // OrderData is a order data used for the store.
@@ -77,6 +93,8 @@ message OrderData {
   ];
   // side is order side.
   Side side = 4;
+  // good_til is order good til
+  GoodTil good_til = 9;
 }
 
 // OrderBookData is a order book data used by order for the store.

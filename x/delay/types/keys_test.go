@@ -134,7 +134,7 @@ func TestDelayedItemKey(t *testing.T) {
 			assertT.Equal(tc.ExpectedTimePrefix, key[1:9])
 			assertT.Equal(tc.ID, string(key[9:]))
 
-			execTime, id, err := ExtractTimeAndIDFromDelayedItemKey(key[1:])
+			execTime, id, err := DecodeDelayedItemKey(key[1:])
 			requireT.NoError(err)
 
 			assertT.Equal(expectedExecTime, execTime)
@@ -161,7 +161,59 @@ func TestInvalidDelayedItemKeys(t *testing.T) {
 
 	assertT := assert.New(t)
 	for _, tc := range tCases {
-		_, _, err := ExtractTimeAndIDFromDelayedItemKey(tc)
+		_, _, err := DecodeDelayedItemKey(tc)
 		assertT.Error(err, tc) //nolint:testifylint // We don't want to use require here.
+	}
+}
+
+func TestBlockItemKey(t *testing.T) {
+	t.Parallel()
+
+	type tCase struct {
+		name      string
+		id        string
+		height    uint64
+		wantError bool
+	}
+
+	tCases := []tCase{
+		{
+			name:   "max_uint_64",
+			id:     "id",
+			height: math.MaxUint64,
+		},
+		{
+			name:   "long_id",
+			id:     "idjgudf98gHJJLKJKLjdoopiods8rsrfkds;fkfdisdiofidso",
+			height: 332,
+		},
+		{
+			name:      "invalid_empty_id",
+			id:        "",
+			height:    1,
+			wantError: true,
+		},
+	}
+	for _, tc := range tCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			requireT := require.New(t)
+			assertT := assert.New(t)
+
+			key, err := CreateBlockItemKey(tc.id, tc.height)
+			if tc.wantError {
+				requireT.Error(err)
+				return
+			}
+			requireT.NoError(err)
+
+			height, id, err := DecodeBlockItemKey(key[1:])
+			requireT.NoError(err)
+
+			assertT.Equal(tc.height, height)
+			assertT.Equal(tc.id, id)
+		})
 	}
 }

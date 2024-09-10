@@ -186,6 +186,7 @@
     - [Msg](#coreum.customparams.v1.Msg)
   
 - [coreum/delay/v1/genesis.proto](#coreum/delay/v1/genesis.proto)
+    - [BlockItem](#coreum.delay.v1.BlockItem)
     - [DelayedItem](#coreum.delay.v1.DelayedItem)
     - [GenesisState](#coreum.delay.v1.GenesisState)
   
@@ -198,6 +199,8 @@
     - [OrderWithSequence](#coreum.dex.v1.OrderWithSequence)
   
 - [coreum/dex/v1/order.proto](#coreum/dex/v1/order.proto)
+    - [CancelGoodTil](#coreum.dex.v1.CancelGoodTil)
+    - [GoodTil](#coreum.dex.v1.GoodTil)
     - [Order](#coreum.dex.v1.Order)
     - [OrderBookData](#coreum.dex.v1.OrderBookData)
     - [OrderBookRecord](#coreum.dex.v1.OrderBookRecord)
@@ -4318,6 +4321,23 @@ Msg defines the Msg service.
 
 
 
+<a name="coreum.delay.v1.BlockItem"></a>
+
+### BlockItem
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  |    |
+| `height` | [uint64](#uint64) |  |    |
+| `data` | [google.protobuf.Any](#google.protobuf.Any) |  |    |
+
+
+
+
+
+
 <a name="coreum.delay.v1.DelayedItem"></a>
 
 ### DelayedItem
@@ -4347,7 +4367,8 @@ GenesisState defines the module genesis state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `delayed_items` | [DelayedItem](#coreum.delay.v1.DelayedItem) | repeated |  `tokens keep the fungible token state`  |
+| `delayed_items` | [DelayedItem](#coreum.delay.v1.DelayedItem) | repeated |  `delayed_items is a list of delayed items.`  |
+| `block_items` | [BlockItem](#coreum.delay.v1.BlockItem) | repeated |  `block_items is a list of block items.`  |
 
 
 
@@ -4484,6 +4505,45 @@ OrderWithSequence is a order with it's corresponding sequence.
 
 
 
+<a name="coreum.dex.v1.CancelGoodTil"></a>
+
+### CancelGoodTil
+
+```
+CancelGoodTil is a cancel good til message for the delay router.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `order_id` | [string](#string) |  |  `order_id is order ID.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.GoodTil"></a>
+
+### GoodTil
+
+```
+GoodTil is a good til order settings.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `good_til_block_height` | [uint64](#uint64) |  |  `good_til_block_height means that order remains active until a specific blockchain block height is reached.`  |
+
+
+
+
+
+
 <a name="coreum.dex.v1.Order"></a>
 
 ### Order
@@ -4506,6 +4566,7 @@ Order is a DEX order.
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
 | `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
+| `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
 
 
 
@@ -4596,6 +4657,7 @@ OrderData is a order data used for the store.
 | `price` | [string](#string) |  |  `price is value of one unit of the base_denom expressed in terms of the quote_denom.`  |
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
+| `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
 
 
 
@@ -4967,6 +5029,7 @@ MsgPlaceOrder defines message to place an order on orderbook.
 | `price` | [string](#string) |  |  `price is value of one unit of the base_denom expressed in terms of the quote_denom.`  |
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
+| `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
 
 
 

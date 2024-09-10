@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -315,6 +316,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 
 	requireT := require.New(t)
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 
 	// issue assetft
 	acc1 := chain.GenAccount()
@@ -323,6 +325,8 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
 
 	// create acc1 orders
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
 	acc1Orders := []dextypes.Order{
 		{
 			Creator:           acc1.String(),
@@ -335,13 +339,16 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			Side:              dextypes.SIDE_SELL,
 			RemainingQuantity: sdkmath.NewInt(100),
 			RemainingBalance:  sdkmath.NewInt(100),
+			GoodTil: &dextypes.GoodTil{
+				GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
+			},
 		},
 	}
 	acc1OrderPlaceMsgs := ordersToPlaceMsgs(acc1Orders)
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: acc1OrderPlaceMsgs,
 	})
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(acc1OrderPlaceMsgs...)),
@@ -362,6 +369,9 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			Side:              dextypes.SIDE_BUY,
 			RemainingQuantity: sdkmath.NewInt(10),
 			RemainingBalance:  sdkmath.NewInt(9960),
+			GoodTil: &dextypes.GoodTil{
+				GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 1000),
+			},
 		},
 		{
 			Creator:           acc2.String(),
@@ -516,6 +526,7 @@ func ordersToPlaceMsgs(orders []dextypes.Order) []sdk.Msg {
 			Price:      order.Price,
 			Quantity:   order.Quantity,
 			Side:       order.Side,
+			GoodTil:    order.GoodTil,
 		}
 	})
 }

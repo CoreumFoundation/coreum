@@ -126,21 +126,41 @@ func New(options ...Option) *App {
 }
 
 // BeginNextBlock begins new SimApp block and returns the ctx of the new block.
-func (s *App) BeginNextBlock(blockTime time.Time) (sdk.Context, sdk.BeginBlock, error) {
-	if blockTime.IsZero() {
-		blockTime = time.Now()
-	}
+func (s *App) BeginNextBlock() (sdk.Context, sdk.BeginBlock, error) {
+	header := tmproto.Header{Height: s.App.LastBlockHeight() + 1, Time: time.Now()}
+	ctx := s.NewContextLegacy(false, header)
+	beginBlock, err := s.App.BeginBlocker(ctx)
+	return ctx, beginBlock, err
+}
+
+// BeginNextBlockAtTime begins new SimApp block and returns the ctx of the new block with given time.
+func (s *App) BeginNextBlockAtTime(blockTime time.Time) (sdk.Context, sdk.BeginBlock, error) {
 	header := tmproto.Header{Height: s.App.LastBlockHeight() + 1, Time: blockTime}
 	ctx := s.NewContextLegacy(false, header)
 	beginBlock, err := s.App.BeginBlocker(ctx)
 	return ctx, beginBlock, err
 }
 
+// BeginNextBlockAtHeight begins new SimApp block and returns the ctx of the new block with given hight.
+func (s *App) BeginNextBlockAtHeight(height int64) (sdk.Context, sdk.BeginBlock, error) {
+	header := tmproto.Header{Height: height, Time: time.Now()}
+	ctx := s.NewContextLegacy(false, header)
+	beginBlock, err := s.App.BeginBlocker(ctx)
+	return ctx, beginBlock, err
+}
+
 // FinalizeBlock ends the current block and commit the state and creates a new block.
-func (s *App) FinalizeBlock(blockTime time.Time) error {
-	if blockTime.IsZero() {
-		blockTime = time.Now()
-	}
+func (s *App) FinalizeBlock() error {
+	_, err := s.App.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Height: s.LastBlockHeight() + 1,
+		Hash:   s.LastCommitID().Hash,
+		Time:   time.Now(),
+	})
+	return err
+}
+
+// FinalizeBlockAtTime ends the current block and commit the state and creates a new block at specified time.
+func (s *App) FinalizeBlockAtTime(blockTime time.Time) error {
 	_, err := s.App.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height: s.LastBlockHeight() + 1,
 		Hash:   s.LastCommitID().Hash,

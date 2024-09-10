@@ -59,6 +59,8 @@ message MsgPlaceOrder {
   ];
   // side is order side.
   Side side = 8;
+  // good_til is order good til
+  GoodTil good_til = 9;
 }
 
 // MsgCancelOrder defines message to cancel the order in the orderbook.

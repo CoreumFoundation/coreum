@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,7 +31,7 @@ type FuzzApp struct {
 func NewFuzzApp(t *testing.T, accountsCount, assetFTDenomsCount, nativeDenomCount int) FuzzApp {
 	testApp := simapp.New()
 
-	sdkCtx, _, _ := testApp.BeginNextBlock(time.Now())
+	sdkCtx, _, _ := testApp.BeginNextBlock()
 
 	params := testApp.DEXKeeper.GetParams(sdkCtx)
 	params.PriceTickExponent = int32(types.MinExt)
@@ -206,7 +205,7 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			rootRnd := rand.New(rand.NewSource(int64(rootSeed)))
 
 			// process generated orders
-			sdkCtx, _, _ := fuzzApp.testApp.BeginNextBlock(time.Now())
+			sdkCtx, _, _ := fuzzApp.testApp.BeginNextBlock()
 
 			t.Logf("Generating orders with rootSeed: %d", rootSeed)
 			for i := 0; i < ordersCount; i++ {

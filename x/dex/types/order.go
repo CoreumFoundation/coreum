@@ -59,6 +59,7 @@ func NewOrderFormMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 		Price:      msg.Price,
 		Quantity:   msg.Quantity,
 		Side:       msg.Side,
+		GoodTil:    msg.GoodTil,
 	}
 	if err := o.Validate(); err != nil {
 		return Order{}, err
@@ -95,6 +96,13 @@ func (o Order) Validate() error {
 
 	if err := o.Side.Validate(); err != nil {
 		return err
+	}
+
+	if o.GoodTil != nil {
+		// if the good til provided at least one setting should be set
+		if o.GoodTil.GoodTilBlockHeight == 0 {
+			return sdkerrors.Wrap(ErrInvalidInput, "good til block height must be positive")
+		}
 	}
 
 	switch o.Type {

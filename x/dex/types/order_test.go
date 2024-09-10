@@ -192,6 +192,15 @@ func TestOrder_Validate(t *testing.T) {
 			}(),
 			wantErr: types.ErrInvalidInput,
 		},
+		{
+			name: "invalid_good_til",
+			order: func() types.Order {
+				order := validOrder()
+				order.GoodTil = &types.GoodTil{}
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
