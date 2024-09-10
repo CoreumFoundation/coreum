@@ -165,7 +165,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		gaiaGRPClient, err := integration.DialGRPCClient(gaiaGRPCAddress)
 		require.NoError(t, err)
 		gaiaSettings := integration.QueryChainSettings(queryCtx, gaiaGRPClient)
-		gaiaSettings.GasPrice = sdkmath.LegacyMustNewDecFromStr("0.01")
+		gaiaSettings.GasPrice = sdkmath.LegacyMustNewDecFromStr("1.0")
 		gaiaSettings.CoinType = sdk.CoinType // gaia coin type
 		gaiaSettings.RPCAddress = gaiaRPCAddress
 
