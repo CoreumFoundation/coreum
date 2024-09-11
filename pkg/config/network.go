@@ -55,9 +55,10 @@ func init() {
 				AddressPrefix:   constant.AddressPrefixDev,
 				GovConfig: GovConfig{
 					ProposalConfig: GovProposalConfig{
-						MinDepositAmount:      "4000000000", // 4,000 CORE
-						VotingPeriod:          "4h",         // 4 hours
-						ExpeditedVotingPeriod: "1h",         // 1 hours
+						MinDepositAmount:          "4000000000", // 4,000 CORE
+						ExpeditedMinDepositAmount: "4000000000", // 4,000 CORE
+						VotingPeriod:              "4h",         // 4 hours
+						ExpeditedVotingPeriod:     "1h",         // 1 hours
 					},
 				},
 				CustomParamsConfig: CustomParamsConfig{
