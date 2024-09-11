@@ -55,8 +55,9 @@ func init() {
 				AddressPrefix:   constant.AddressPrefixDev,
 				GovConfig: GovConfig{
 					ProposalConfig: GovProposalConfig{
-						MinDepositAmount: "4000000000", // 4,000 CORE
-						VotingPeriod:     "4h",         // 4 hours
+						MinDepositAmount:      "4000000000", // 4,000 CORE
+						VotingPeriod:          "4h",         // 4 hours
+						ExpeditedVotingPeriod: "1h",         // 1 hours
 					},
 				},
 				CustomParamsConfig: CustomParamsConfig{
@@ -89,6 +90,9 @@ type GovProposalConfig struct {
 
 	// VotingPeriod is the proposal voting period duration.
 	VotingPeriod string
+
+	// ExpeditedVotingPeriod is the expedited proposal voting period duration.
+	ExpeditedVotingPeriod string
 }
 
 // CustomParamsStakingConfig contains custom params for the staking module configuration.
