@@ -272,6 +272,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	requireT := require.New(t)
 	gov := chain.Governance
 	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(500000))
+	t.Logf("[*] missingDepositAmount: %s", missingDepositAmount.String()) // ?
 
 	govParams, err := gov.QueryGovParams(ctx)
 	requireT.NoError(err)
@@ -281,7 +282,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 		t.Log("ExpeditedMinDeposit is not set")
 		t.SkipNow()
 	} else {
-		t.Logf("ExpeditedMinDeposit: %s", expeditedMinDeposit.String())
+		t.Logf("[*] ExpeditedMinDeposit: %s", expeditedMinDeposit.String()) // 50000000stake
 	}
 
 	// Create new proposer.
@@ -289,7 +290,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	proposerBalance, err := gov.ComputeProposerBalance(ctx, true)
 	requireT.NoError(err)
 
-	t.Logf("initial proposerBalance: %s", proposerBalance.String())
+	t.Logf("[*] initial proposerBalance: %s", proposerBalance.String()) // 50025000udevcore
 
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
 	chain.Faucet.FundAccounts(ctx, t,
@@ -299,8 +300,8 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 		},
 	)
 
-	t.Logf("missingDepositAmount: %s", missingDepositAmount.String())
-	t.Logf("proposerBalance: %s", missingDepositAmount.String())
+	t.Logf("[*] missingDepositAmount: %s", missingDepositAmount.String())
+	t.Logf("[*] proposerBalance: %s", missingDepositAmount.String())
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
@@ -325,12 +326,12 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	requireT.NoError(err)
 	proposalMsg.InitialDeposit = sdk.NewCoins(proposalMsg.InitialDeposit...).Sub(sdk.Coins{missingDepositAmount}...)
 
-	t.Logf("proposalMsg.InitialDeposit: %s", proposalMsg.InitialDeposit.String())
+	t.Logf("[*] proposalMsg.InitialDeposit: %s", proposalMsg.InitialDeposit.String())
 
 	proposalID, err := gov.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
-	t.Logf("Proposal created, proposalID: %d", proposalID)
+	t.Logf("[*] Proposal created, proposalID: %d", proposalID)
 
 	// Verify that proposal is waiting for deposit.
 	requirePropStatusFunc := func(expectedStatus govtypesv1.ProposalStatus) {
@@ -351,7 +352,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	requireT.NoError(err)
 	require.Equal(t, chain.GasLimitByMsgs(depositMsg), uint64(result.GasUsed))
 
-	t.Logf("Deposited more funds to proposal, txHash:%s, gasUsed:%d", result.TxHash, result.GasUsed)
+	t.Logf("[*] Deposited more funds to proposal, txHash:%s, gasUsed:%d", result.TxHash, result.GasUsed)
 
 	// Verify that proposal voting has started.
 	requirePropStatusFunc(govtypesv1.StatusVotingPeriod)
