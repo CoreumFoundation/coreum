@@ -276,15 +276,21 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	govParams, err := gov.QueryGovParams(ctx)
 	requireT.NoError(err)
 
-	if sdk.NewCoins(govParams.ExpeditedMinDeposit...).IsZero() {
+	expeditedMinDeposit := sdk.NewCoins(govParams.ExpeditedMinDeposit...)
+	if expeditedMinDeposit.IsZero() {
 		t.Log("ExpeditedMinDeposit is not set")
 		t.SkipNow()
+	} else {
+		t.Logf("ExpeditedMinDeposit: %s", expeditedMinDeposit.String())
 	}
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
 	proposerBalance, err := gov.ComputeProposerBalance(ctx, true)
 	requireT.NoError(err)
+
+	t.Logf("initial proposerBalance: %s", proposerBalance.String())
+
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
 	chain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
@@ -292,6 +298,9 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 			Amount:  proposerBalance,
 		},
 	)
+
+	t.Logf("missingDepositAmount: %s", missingDepositAmount.String())
+	t.Logf("proposerBalance: %s", missingDepositAmount.String())
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
@@ -315,6 +324,9 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	)
 	requireT.NoError(err)
 	proposalMsg.InitialDeposit = sdk.NewCoins(proposalMsg.InitialDeposit...).Sub(sdk.Coins{missingDepositAmount}...)
+
+	t.Logf("proposalMsg.InitialDeposit: %s", proposalMsg.InitialDeposit.String())
+
 	proposalID, err := gov.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
