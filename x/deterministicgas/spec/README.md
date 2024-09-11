@@ -126,6 +126,7 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission`          | 22000                          |
 | `/cosmos.feegrant.v1beta1.MsgGrantAllowance`                           | 11000                          |
 | `/cosmos.feegrant.v1beta1.MsgRevokeAllowance`                          | 2500                           |
+| `/cosmos.gov.v1.MsgCancelProposal`                                     | 66000                          |
 | `/cosmos.gov.v1.MsgDeposit`                                            | 65000                          |
 | `/cosmos.gov.v1.MsgVote`                                               | 6000                           |
 | `/cosmos.gov.v1.MsgVoteWeighted`                                       | 6500                           |
