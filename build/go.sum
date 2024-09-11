@@ -54,8 +54,8 @@ github.com/BurntSushi/toml v1.3.2/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbi
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68 h1:Tb9avuSQW3smVGrUnDh/Y+ML4eK802UsvJNZHsBgOGg=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/crust v0.0.0-20240910084945-51add516ee39 h1:8leo/6kcV7hH18uuERxEj66tMOtlRiIhWVB3/OOWOIo=
-github.com/CoreumFoundation/crust v0.0.0-20240910084945-51add516ee39/go.mod h1:jl7aUqRGQj20pctlDXGs64EZJa8g1jtxDiQOCkxx9Gs=
+github.com/CoreumFoundation/crust v0.0.0-20240911085608-5dbef4df822a h1:qr7DHYH7IbIfrCjE13XmkDdI/uqLMbGgAgzg2VrbrXY=
+github.com/CoreumFoundation/crust v0.0.0-20240911085608-5dbef4df822a/go.mod h1:3+amReRdITwzbCw3BUy4XSKf/TVypH3i/z9uekMeyGI=
 github.com/CosmWasm/wasmd v0.53.0 h1:kdaoAi20bIb4VCsxw9pRaT2g5PpIp82Wqrr9DRVN9ao=
 github.com/CosmWasm/wasmd v0.53.0/go.mod h1:FJl/aWjdpGof3usAMFQpDe07Rkx77PUzp0cygFMOvtw=
 github.com/CosmWasm/wasmvm/v2 v2.1.2 h1:GkJ5bAsRlLHfIQVg/FY1VHwLyBwlCjAhDea0B8L+e20=

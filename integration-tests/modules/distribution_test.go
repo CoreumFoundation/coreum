@@ -72,7 +72,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 
 	// create new proposer
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 
 	communityPoolRecipient := chain.GenAccount()
@@ -92,6 +92,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 		"Spend community pool",
 		"Spend community pool",
 		"Spend community pool",
+		false,
 	)
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
