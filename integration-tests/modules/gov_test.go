@@ -273,6 +273,14 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	gov := chain.Governance
 	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(500000))
 
+	govParams, err := gov.QueryGovParams(ctx)
+	requireT.NoError(err)
+
+	if sdk.NewCoins(govParams.ExpeditedMinDeposit...).IsZero() {
+		t.Log("ExpeditedMinDeposit is not set")
+		t.SkipNow()
+	}
+
 	// Create new proposer.
 	proposer := chain.GenAccount()
 	proposerBalance, err := gov.ComputeProposerBalance(ctx, true)
