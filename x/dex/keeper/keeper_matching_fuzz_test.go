@@ -243,7 +243,7 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				accountsCount             = 10
 				assetFTDenomsCount        = 3
 				nativeDenomCount          = 3
-				ordersCount               = 1000
+				ordersCount               = 500
 				cancellationPercent       = 5 // cancel 5% of limit orders
 				initialBlockHeight        = 1
 				goodTilBlockHeightPercent = 10

@@ -364,27 +364,23 @@ func TestOrderTilBlockHeight(t *testing.T) {
 
 	// await for cancellation
 	requireT.NoError(chain.AwaitState(ctx, func(ctx context.Context) error {
-		blockRes, err = tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
-		if err != nil {
-			return err
-		}
-		if placeSellOrderMsg.GoodTil.GoodTilBlockHeight < uint64(blockRes.SdkBlock.Header.Height) {
+		// check that order is cancelled and balance is unlocked
+		balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+			Account: acc1.String(),
+			Denom:   denom1,
+		})
+		requireT.NoError(err)
+		// check that nothing is locked
+		if balanceRes.LockedInDEX.IsZero() {
 			return nil
 		}
+		// we are waiting for the cosmos state, not block, because the block might be updated but cosmos state not
 		return retry.Retryable(errors.Errorf(
-			"waiting for block: %d, current: %d",
+			"waiting for block: %d, current: %d and unlocked DEX coins",
 			placeSellOrderMsg.GoodTil.GoodTilBlockHeight+1, blockRes.SdkBlock.Header.Height,
 		))
 	}))
 
-	// check that order is cancelled and balance is unlocked
-	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
-		Account: acc1.String(),
-		Denom:   denom1,
-	})
-	requireT.NoError(err)
-	// check that nothing is locked
-	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
 }
 
 // TestOrderTilBlockTime tests the dex modules ability to place cancel placed order with good til block time.
@@ -443,23 +439,16 @@ func TestOrderTilBlockTime(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if !placeSellOrderMsg.GoodTil.GoodTilBlockTime.After(blockRes.SdkBlock.Header.Time) {
+		// check that nothing is locked
+		if balanceRes.LockedInDEX.IsZero() {
 			return nil
 		}
+		// we are waiting for the cosmos state, not block, because the block might be updated but cosmos state not
 		return retry.Retryable(errors.Errorf(
 			"waiting for time: %s, current: %s",
 			placeSellOrderMsg.GoodTil.GoodTilBlockTime, blockRes.SdkBlock.Header.Time,
 		))
 	}))
-
-	// check that order is cancelled and balance is unlocked
-	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
-		Account: acc1.String(),
-		Denom:   denom1,
-	})
-	requireT.NoError(err)
-	// check that nothing is locked
-	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
 }
 
 // TestOrderBooksAndOrdersQueries tests the dex modules order queries.
