@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -201,6 +202,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Height: 100,
+		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
 	})
 	dexKeeper := testApp.DEXKeeper
 	assetFTKeeper := testApp.AssetFTKeeper
@@ -241,6 +243,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		Side:       types.SIDE_BUY,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: uint64(sdkCtx.BlockHeight() + 1),
+			GoodTilBlockTime:   lo.ToPtr(sdkCtx.BlockTime().Add(time.Second)),
 		},
 	}
 	buyLockedBalance, err := buyOrder.ComputeLimitOrderLockedBalance()
@@ -256,6 +259,17 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		t,
 		dexKeeper.PlaceOrder(sdkCtx, buyOrderWithGoodTilHeight),
 		"good til block height 99 must be greater than current block height 100: invalid input",
+	)
+
+	// try to place order with the invalid GoodTilBlockTime
+	buyOrderWithGoodTilTime := buyOrder
+	buyOrderWithGoodTilTime.GoodTil = &types.GoodTil{
+		GoodTilBlockTime: lo.ToPtr(sdkCtx.BlockTime()),
+	}
+	require.ErrorContains(
+		t,
+		dexKeeper.PlaceOrder(sdkCtx, buyOrderWithGoodTilTime),
+		"good til block height 2023-03-02 01:11:12.000000013 +0000 UTC must be greater than current block height",
 	)
 
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))

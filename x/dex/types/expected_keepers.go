@@ -2,6 +2,7 @@ package types
 
 import (
 	context "context"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -34,5 +35,7 @@ type AssetFTKeeper interface {
 // DelayKeeper defines methods required from the delay keeper.
 type DelayKeeper interface {
 	ExecuteAfterBlock(ctx sdk.Context, id string, data proto.Message, height uint64) error
+	ExecuteAfter(ctx sdk.Context, id string, data proto.Message, time time.Time) error
 	RemoveExecuteAtBlock(ctx sdk.Context, id string, height uint64) error
+	RemoveExecuteAfter(ctx sdk.Context, id string, time time.Time) error
 }

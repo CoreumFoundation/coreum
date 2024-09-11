@@ -2,6 +2,7 @@ syntax = "proto3";
 package coreum.dex.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v4/x/dex/types";
 option (gogoproto.goproto_getters_all) = false;
@@ -32,6 +33,8 @@ enum OrderType {
 message GoodTil {
   // good_til_block_height means that order remains active until a specific blockchain block height is reached.
   uint64 good_til_block_height = 1;
+  // good_til_block_time means that order remains active until a specific blockchain block time is reached.
+  google.protobuf.Timestamp good_til_block_time = 2 [(gogoproto.stdtime) = true];
 }
 
 // CancelGoodTil is a cancel good til message for the delay router.

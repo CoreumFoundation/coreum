@@ -5,6 +5,7 @@ package modules
 import (
 	"context"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
@@ -14,9 +15,11 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
@@ -300,6 +303,156 @@ func TestOrderCancellation(t *testing.T) {
 	// validate the deterministic gas
 	requireT.Equal(chain.GasLimitByMsgs(cancelOrderMsg), uint64(txResult.GasUsed))
 
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	// check that nothing is locked
+	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+}
+
+// TestOrderTilBlockHeight tests the dex modules ability to place cancel placed order with good til block height.
+func TestOrderTilBlockHeight(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+		},
+	})
+
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:     acc1.String(),
+		Type:       dextypes.ORDER_TYPE_LIMIT,
+		ID:         "id1",
+		BaseDenom:  denom1,
+		QuoteDenom: "denom2",
+		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:   sdkmath.NewInt(100),
+		Side:       dextypes.SIDE_SELL,
+		GoodTil: lo.ToPtr(dextypes.GoodTil{
+			GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 20),
+		}),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+
+	// await for cancellation
+	requireT.NoError(chain.AwaitState(ctx, func(ctx context.Context) error {
+		blockRes, err = tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+		if err != nil {
+			return err
+		}
+		if placeSellOrderMsg.GoodTil.GoodTilBlockHeight < uint64(blockRes.SdkBlock.Header.Height) {
+			return nil
+		}
+		return retry.Retryable(errors.Errorf(
+			"waiting for block: %d, current: %d",
+			placeSellOrderMsg.GoodTil.GoodTilBlockHeight+1, blockRes.SdkBlock.Header.Height,
+		))
+	}))
+
+	// check that order is cancelled and balance is unlocked
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	// check that nothing is locked
+	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+}
+
+// TestOrderTilBlockTime tests the dex modules ability to place cancel placed order with good til block time.
+func TestOrderTilBlockTime(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+		},
+	})
+
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:     acc1.String(),
+		Type:       dextypes.ORDER_TYPE_LIMIT,
+		ID:         "id1",
+		BaseDenom:  denom1,
+		QuoteDenom: "denom2",
+		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:   sdkmath.NewInt(100),
+		Side:       dextypes.SIDE_SELL,
+		GoodTil: lo.ToPtr(dextypes.GoodTil{
+			GoodTilBlockTime: lo.ToPtr(blockRes.SdkBlock.Header.Time.Add(6 * time.Second)),
+		}),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+
+	// await for cancellation
+	requireT.NoError(chain.AwaitState(ctx, func(ctx context.Context) error {
+		blockRes, err = tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+		if err != nil {
+			return err
+		}
+		if !placeSellOrderMsg.GoodTil.GoodTilBlockTime.After(blockRes.SdkBlock.Header.Time) {
+			return nil
+		}
+		return retry.Retryable(errors.Errorf(
+			"waiting for time: %s, current: %s",
+			placeSellOrderMsg.GoodTil.GoodTilBlockTime, blockRes.SdkBlock.Header.Time,
+		))
+	}))
+
+	// check that order is cancelled and balance is unlocked
 	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
 		Denom:   denom1,

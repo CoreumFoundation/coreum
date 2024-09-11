@@ -4538,6 +4538,7 @@ GoodTil is a good til order settings.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `good_til_block_height` | [uint64](#uint64) |  |  `good_til_block_height means that order remains active until a specific blockchain block height is reached.`  |
+| `good_til_block_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `good_til_block_time means that order remains active until a specific blockchain block time is reached.`  |
 
 
 
