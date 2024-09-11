@@ -301,7 +301,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	)
 
 	t.Logf("[*] missingDepositAmount: %s", missingDepositAmount.String())
-	t.Logf("[*] proposerBalance: %s", missingDepositAmount.String())
+	t.Logf("[*] proposerBalance: %s", proposerBalance.String())
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
@@ -324,6 +324,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 		true,
 	)
 	requireT.NoError(err)
+	t.Log("[*] proposal msg created")
 	proposalMsg.InitialDeposit = sdk.NewCoins(proposalMsg.InitialDeposit...).Sub(sdk.Coins{missingDepositAmount}...)
 
 	t.Logf("[*] proposalMsg.InitialDeposit: %s", proposalMsg.InitialDeposit.String())
