@@ -7,10 +7,13 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/docker/distribution/uuid"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
@@ -26,9 +29,25 @@ type FuzzApp struct {
 	orderTypes []types.OrderType
 	denoms     []string
 	sides      []types.Side
+
+	initialBlockHeight        uint64
+	initialBlockTime          time.Time
+	goodTilBlockHeightPercent int
+	goodTilBlockTimePercent   int
+	blockTime                 time.Duration
 }
 
-func NewFuzzApp(t *testing.T, accountsCount, assetFTDenomsCount, nativeDenomCount int) FuzzApp {
+func NewFuzzApp(
+	t *testing.T,
+	accountsCount,
+	assetFTDenomsCount,
+	nativeDenomCount int,
+	initialBlockHeight uint64,
+	initialBlockTime time.Time,
+	goodTilBlockHeightPercent int,
+	goodTilBlockTimePercent int,
+	blockTime time.Duration,
+) FuzzApp {
 	testApp := simapp.New()
 
 	sdkCtx, _, _ := testApp.BeginNextBlock()
@@ -84,6 +103,12 @@ func NewFuzzApp(t *testing.T, accountsCount, assetFTDenomsCount, nativeDenomCoun
 		orderTypes: orderTypes,
 		denoms:     denoms,
 		sides:      sides,
+
+		initialBlockHeight:        initialBlockHeight,
+		initialBlockTime:          initialBlockTime,
+		goodTilBlockHeightPercent: goodTilBlockHeightPercent,
+		goodTilBlockTimePercent:   goodTilBlockTimePercent,
+		blockTime:                 blockTime,
 	}
 }
 
@@ -112,15 +137,32 @@ func (fa *FuzzApp) GenOrder(
 	priceNum := rnd.Uint32()
 
 	// generate price exponent in order not to overflow the sdkmath.Int when fund accounts
-	const minExp, maxExp = -10, 10
-	priceExp := int8(rnd.Intn(maxExp-minExp+1) + minExp)
+	priceExp := int8(randIntInRange(rnd, -10, 10))
 
-	var price *types.Price
+	var (
+		price   *types.Price
+		goodTil *types.GoodTil
+	)
 	if orderType == types.ORDER_TYPE_LIMIT {
 		v, ok := buildNumExpPrice(uint64(priceNum), priceExp)
 		// since we use Uint32 as num it never exceed the max num length
 		require.True(t, ok)
 		price = &v
+
+		if randBoolWithPercent(rnd, fa.goodTilBlockHeightPercent) {
+			goodTil = &types.GoodTil{
+				GoodTilBlockHeight: fa.initialBlockHeight + uint64(randIntInRange(rnd, 0, 2000)),
+			}
+		}
+
+		if randBoolWithPercent(rnd, fa.goodTilBlockTimePercent) {
+			if goodTil == nil {
+				goodTil = &types.GoodTil{}
+			}
+			goodTil.GoodTilBlockTime = lo.ToPtr(
+				fa.initialBlockTime.Add(time.Duration(randIntInRange(rnd, 0, 2000)) * fa.blockTime),
+			)
+		}
 	}
 
 	// the quantity can't be zero
@@ -136,6 +178,7 @@ func (fa *FuzzApp) GenOrder(
 		BaseDenom:  baseDenom,
 		QuoteDenom: quoteDenom,
 		Price:      price,
+		GoodTil:    goodTil,
 		Quantity:   sdkmath.NewIntFromUint64(quantity),
 		Side:       side,
 	}
@@ -163,8 +206,10 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 	if err != nil {
 		t.Logf("Placement failed, err: %s", err.Error())
 		// expected fail
-		require.ErrorIs(t, err, types.ErrFailedToLockCoin)
-		return
+		if errors.Is(err, types.ErrFailedToLockCoin) || strings.Contains(err.Error(), "good til") {
+			return
+		}
+		require.NoError(t, err)
 	}
 	require.NoError(t, err)
 	t.Log("Placement passed")
@@ -195,20 +240,43 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			rootSeed uint32,
 		) {
 			const (
-				accountsCount       = 10
-				assetFTDenomsCount  = 3
-				nativeDenomCount    = 3
-				ordersCount         = 1000
-				cancellationPercent = 5 // cancel 5% of limit orders
+				accountsCount             = 10
+				assetFTDenomsCount        = 3
+				nativeDenomCount          = 3
+				ordersCount               = 1000
+				cancellationPercent       = 5 // cancel 5% of limit orders
+				initialBlockHeight        = 1
+				goodTilBlockHeightPercent = 10
+				goodTilBlockTimePercent   = 10
+				blockTime                 = time.Second
 			)
-			fuzzApp := NewFuzzApp(t, accountsCount, assetFTDenomsCount, nativeDenomCount)
+			var (
+				initialBlockTime = time.Date(2023, 1, 2, 3, 4, 5, 6, time.UTC)
+			)
+
+			fuzzApp := NewFuzzApp(
+				t,
+				accountsCount,
+				assetFTDenomsCount,
+				nativeDenomCount,
+				initialBlockHeight,
+				initialBlockTime,
+				goodTilBlockHeightPercent,
+				goodTilBlockTimePercent,
+				blockTime,
+			)
 			rootRnd := rand.New(rand.NewSource(int64(rootSeed)))
 
-			// process generated orders
-			sdkCtx, _, _ := fuzzApp.testApp.BeginNextBlock()
+			sdkCtx := fuzzApp.testApp.NewContextLegacy(false, tmproto.Header{
+				Height: initialBlockHeight,
+				Time:   initialBlockTime,
+			})
 
 			t.Logf("Generating orders with rootSeed: %d", rootSeed)
 			for i := 0; i < ordersCount; i++ {
+				_, err := fuzzApp.testApp.BeginBlocker(sdkCtx)
+				require.NoError(t, err)
+
 				orderSeed := rootRnd.Int63()
 				orderRnd := rand.New(rand.NewSource(orderSeed))
 
@@ -236,17 +304,29 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 
 				if order.Type == types.ORDER_TYPE_LIMIT {
 					// simulate percent based cancellation
-					const minRange, maxRange = 1, 100
-					shouldCancelOrder := orderRnd.Intn(maxRange-minRange+1)+minRange < cancellationPercent
-					if shouldCancelOrder {
+					if randBoolWithPercent(orderRnd, cancellationPercent) {
 						fuzzApp.CancelOrder(t, sdkCtx, order)
 					}
 				}
-			}
 
-			_, err := fuzzApp.testApp.EndBlocker(sdkCtx)
-			require.NoError(t, err)
+				_, err = fuzzApp.testApp.EndBlocker(sdkCtx)
+				require.NoError(t, err)
+
+				sdkCtx = fuzzApp.testApp.NewContextLegacy(false, tmproto.Header{
+					Height: sdkCtx.BlockHeight() + 1,
+					Time:   sdkCtx.BlockTime().Add(blockTime),
+				})
+			}
 		})
+}
+
+func randBoolWithPercent(orderRnd *rand.Rand, cancellationPercent int) bool {
+	shouldCancelOrder := randIntInRange(orderRnd, 1, 100) < cancellationPercent
+	return shouldCancelOrder
+}
+
+func randIntInRange(rnd *rand.Rand, minRange, maxRange int) int {
+	return rnd.Intn(maxRange-minRange+1) + minRange
 }
 
 func buildNumExpPrice(
