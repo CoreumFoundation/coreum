@@ -48,8 +48,9 @@ type GenesisInitConfig struct {
 	AddressPrefix string           `json:"address_prefix"`
 	GenesisTime   time.Time        `json:"genesis_time"`
 	GovConfig     struct {
-		MinDeposit   sdk.Coins     `json:"min_deposit"`
-		VotingPeriod time.Duration `json:"voting_period"`
+		MinDeposit            sdk.Coins     `json:"min_deposit"`
+		VotingPeriod          time.Duration `json:"voting_period"`
+		ExpeditedVotingPeriod time.Duration `json:"expedited_voting_period"`
 	} `json:"gov_config"`
 	CustomParamsConfig struct {
 		MinSelfDelegation sdkmath.Int `json:"min_self_delegation"`
@@ -130,6 +131,9 @@ func genDocFromInput(
 	}
 	if cfg.GovConfig.VotingPeriod > 0 {
 		govGenesis.Params.VotingPeriod = &cfg.GovConfig.VotingPeriod
+	}
+	if cfg.GovConfig.ExpeditedVotingPeriod > 0 {
+		govGenesis.Params.ExpeditedVotingPeriod = &cfg.GovConfig.ExpeditedVotingPeriod
 	}
 	fourteenDays := 14 * 24 * time.Hour
 	govGenesis.Params.MaxDepositPeriod = &fourteenDays
