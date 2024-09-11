@@ -88,6 +88,9 @@ type GovProposalConfig struct {
 	// MinDepositAmount is the minimum amount needed to create a proposal. Basically anti-spam policy.
 	MinDepositAmount string
 
+	// ExpeditedMinDepositAmount is the minimum amount needed to create an expedited proposal.
+	ExpeditedMinDepositAmount string
+
 	// VotingPeriod is the proposal voting period duration.
 	VotingPeriod string
 
