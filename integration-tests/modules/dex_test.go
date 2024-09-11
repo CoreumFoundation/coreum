@@ -380,7 +380,6 @@ func TestOrderTilBlockHeight(t *testing.T) {
 			placeSellOrderMsg.GoodTil.GoodTilBlockHeight+1, blockRes.SdkBlock.Header.Height,
 		))
 	}))
-
 }
 
 // TestOrderTilBlockTime tests the dex modules ability to place cancel placed order with good til block time.
