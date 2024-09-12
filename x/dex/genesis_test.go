@@ -69,19 +69,20 @@ func TestInitAndExportGenesis(t *testing.T) {
 			{
 				Sequence: 0,
 				Order: types.Order{
-					Creator:           acc1.String(),
-					Type:              types.ORDER_TYPE_LIMIT,
-					ID:                "id1",
-					BaseDenom:         denom1,
-					QuoteDenom:        denom2,
-					Price:             lo.ToPtr(types.MustNewPriceFromString("1e-2")),
-					Quantity:          sdkmath.NewInt(100),
-					Side:              types.SIDE_BUY,
-					RemainingQuantity: sdkmath.NewInt(90),
-					RemainingBalance:  sdkmath.NewInt(90),
+					Creator:    acc1.String(),
+					Type:       types.ORDER_TYPE_LIMIT,
+					ID:         "id1",
+					BaseDenom:  denom1,
+					QuoteDenom: denom2,
+					Price:      lo.ToPtr(types.MustNewPriceFromString("1e-2")),
+					Quantity:   sdkmath.NewInt(100),
+					Side:       types.SIDE_BUY,
 					GoodTil: &types.GoodTil{
 						GoodTilBlockHeight: 1000,
 					},
+					TimeInForce:       types.TIME_IN_FORCE_GTC,
+					RemainingQuantity: sdkmath.NewInt(90),
+					RemainingBalance:  sdkmath.NewInt(90),
 				},
 			},
 			{
@@ -95,6 +96,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 					Price:             lo.ToPtr(types.MustNewPriceFromString("3e3")),
 					Quantity:          sdkmath.NewInt(100),
 					Side:              types.SIDE_SELL,
+					TimeInForce:       types.TIME_IN_FORCE_GTC,
 					RemainingQuantity: sdkmath.NewInt(90),
 					RemainingBalance:  sdkmath.NewInt(90),
 				},
@@ -102,19 +104,20 @@ func TestInitAndExportGenesis(t *testing.T) {
 			{
 				Sequence: 2,
 				Order: types.Order{
-					Creator:           acc2.String(),
-					Type:              types.ORDER_TYPE_LIMIT,
-					ID:                "id3",
-					BaseDenom:         denom2,
-					QuoteDenom:        denom3,
-					Price:             lo.ToPtr(types.MustNewPriceFromString("11111e12")),
-					Quantity:          sdkmath.NewInt(10000000),
-					Side:              types.SIDE_BUY,
-					RemainingQuantity: sdkmath.NewInt(70000),
-					RemainingBalance:  sdkmath.NewInt(50),
+					Creator:    acc2.String(),
+					Type:       types.ORDER_TYPE_LIMIT,
+					ID:         "id3",
+					BaseDenom:  denom2,
+					QuoteDenom: denom3,
+					Price:      lo.ToPtr(types.MustNewPriceFromString("11111e12")),
+					Quantity:   sdkmath.NewInt(10000000),
+					Side:       types.SIDE_BUY,
 					GoodTil: &types.GoodTil{
 						GoodTilBlockHeight: 323,
 					},
+					TimeInForce:       types.TIME_IN_FORCE_GTC,
+					RemainingQuantity: sdkmath.NewInt(70000),
+					RemainingBalance:  sdkmath.NewInt(50),
 				},
 			},
 		},
@@ -137,14 +140,15 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// place an order with the existing order book
 	orderWithExisingOrderBook := types.Order{
-		Creator:    acc2.String(),
-		Type:       types.ORDER_TYPE_LIMIT,
-		ID:         "id4",
-		BaseDenom:  denom2,
-		QuoteDenom: denom3,
-		Price:      lo.ToPtr(types.MustNewPriceFromString("4e3")),
-		Quantity:   sdkmath.NewInt(10000000),
-		Side:       types.SIDE_BUY,
+		Creator:     acc2.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          "id4",
+		BaseDenom:   denom2,
+		QuoteDenom:  denom3,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("4e3")),
+		Quantity:    sdkmath.NewInt(10000000),
+		Side:        types.SIDE_BUY,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
 	lockedBalance, err := orderWithExisingOrderBook.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
@@ -174,14 +178,15 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// place an order in the new order book
 	orderWithNewOrderBook := types.Order{
-		Creator:    acc1.String(),
-		Type:       types.ORDER_TYPE_LIMIT,
-		ID:         "id5",
-		BaseDenom:  denom1,
-		QuoteDenom: denom3,
-		Price:      lo.ToPtr(types.MustNewPriceFromString("4e3")),
-		Quantity:   sdkmath.NewInt(10000000),
-		Side:       types.SIDE_BUY,
+		Creator:     acc1.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          "id5",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom3,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("4e3")),
+		Quantity:    sdkmath.NewInt(10000000),
+		Side:        types.SIDE_BUY,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
 	lockedBalance, err = orderWithNewOrderBook.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)

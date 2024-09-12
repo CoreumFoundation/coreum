@@ -209,6 +209,7 @@
   
     - [OrderType](#coreum.dex.v1.OrderType)
     - [Side](#coreum.dex.v1.Side)
+    - [TimeInForce](#coreum.dex.v1.TimeInForce)
   
 - [coreum/dex/v1/params.proto](#coreum/dex/v1/params.proto)
     - [Params](#coreum.dex.v1.Params)
@@ -4568,6 +4569,7 @@ Order is a DEX order.
 | `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
 | `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
 | `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
+| `time_in_force` | [TimeInForce](#coreum.dex.v1.TimeInForce) |  |  `time_in_force is order time in force`  |
 
 
 
@@ -4659,6 +4661,7 @@ OrderData is a order data used for the store.
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
+| `time_in_force` | [TimeInForce](#coreum.dex.v1.TimeInForce) |  |  `time_in_force is order time in force`  |
 
 
 
@@ -4700,6 +4703,23 @@ Side is order side.
 | SIDE_UNSPECIFIED | 0 | `SIDE_UNSPECIFIED reserves the default value, to protect against unexpected settings.` |
 | SIDE_BUY | 1 | `SIDE_BUY means that the order is to buy base_denom quantity with the price.` |
 | SIDE_SELL | 2 | `SIDE_SELL means that the order is to sell base_denom quantity with the price.` |
+
+
+
+<a name="coreum.dex.v1.TimeInForce"></a>
+
+### TimeInForce
+
+```
+TimeInForce is order time in force.
+```
+
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TIME_IN_FORCE_UNSPECIFIED | 0 | `time_in_force_unspecified reserves the default value, to protect against unexpected settings.` |
+| TIME_IN_FORCE_GTC | 1 | `time_in_force_gtc means that the order remains active until it is fully executed or manually canceled.` |
 
 
  <!-- end enums -->
@@ -5031,6 +5051,7 @@ MsgPlaceOrder defines message to place an order on orderbook.
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
+| `time_in_force` | [TimeInForce](#coreum.dex.v1.TimeInForce) |  |  `time_in_force is order time in force`  |
 
 
 

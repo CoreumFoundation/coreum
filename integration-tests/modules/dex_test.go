@@ -54,14 +54,15 @@ func TestLimitOrdersMatching(t *testing.T) {
 	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
-		Sender:     acc1.String(),
-		Type:       dextypes.ORDER_TYPE_LIMIT,
-		ID:         "id1",
-		BaseDenom:  denom1,
-		QuoteDenom: denom2,
-		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:   sdkmath.NewInt(100),
-		Side:       dextypes.SIDE_SELL,
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
 	txResult, err := client.BroadcastTx(
@@ -89,20 +90,22 @@ func TestLimitOrdersMatching(t *testing.T) {
 		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
 		Quantity:          sdkmath.NewInt(100),
 		Side:              dextypes.SIDE_SELL,
+		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}, sellOrderRes.Order)
 
 	// place buy order to match the sell
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
-		Sender:     acc2.String(),
-		Type:       dextypes.ORDER_TYPE_LIMIT,
-		ID:         "id1", // same ID allowed for different user
-		BaseDenom:  denom1,
-		QuoteDenom: denom2,
-		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:   sdkmath.NewInt(300),
-		Side:       dextypes.SIDE_BUY,
+		Sender:      acc2.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1", // same ID allowed for different user
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
+		Quantity:    sdkmath.NewInt(300),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
 	_, err = client.BroadcastTx(
@@ -137,6 +140,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
 		Quantity:          sdkmath.NewInt(300),
 		Side:              dextypes.SIDE_BUY,
+		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(200),
 		RemainingBalance:  sdkmath.NewInt(23),
 	}, buyOrderRes.Order)
@@ -182,14 +186,15 @@ func TestMarketOrdersMatching(t *testing.T) {
 	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
-		Sender:     acc1.String(),
-		Type:       dextypes.ORDER_TYPE_LIMIT,
-		ID:         "id1",
-		BaseDenom:  denom1,
-		QuoteDenom: denom2,
-		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:   sdkmath.NewInt(100),
-		Side:       dextypes.SIDE_SELL,
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
 	_, err := client.BroadcastTx(
@@ -263,14 +268,15 @@ func TestOrderCancellation(t *testing.T) {
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
-		Sender:     acc1.String(),
-		Type:       dextypes.ORDER_TYPE_LIMIT,
-		ID:         "id1",
-		BaseDenom:  denom1,
-		QuoteDenom: "denom2",
-		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:   sdkmath.NewInt(100),
-		Side:       dextypes.SIDE_SELL,
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  "denom2",
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
 	_, err := client.BroadcastTx(
@@ -345,6 +351,7 @@ func TestOrderTilBlockHeight(t *testing.T) {
 		GoodTil: lo.ToPtr(dextypes.GoodTil{
 			GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 20),
 		}),
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
 	_, err = client.BroadcastTx(
@@ -412,6 +419,7 @@ func TestOrderTilBlockTime(t *testing.T) {
 		GoodTil: lo.ToPtr(dextypes.GoodTil{
 			GoodTilBlockTime: lo.ToPtr(blockRes.SdkBlock.Header.Time.Add(10 * time.Second)),
 		}),
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
 	_, err = client.BroadcastTx(
@@ -466,19 +474,20 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	requireT.NoError(err)
 	acc1Orders := []dextypes.Order{
 		{
-			Creator:           acc1.String(),
-			Type:              dextypes.ORDER_TYPE_LIMIT,
-			ID:                "id1",
-			BaseDenom:         denom1,
-			QuoteDenom:        denom2,
-			Price:             lo.ToPtr(dextypes.MustNewPriceFromString("999")),
-			Quantity:          sdkmath.NewInt(100),
-			Side:              dextypes.SIDE_SELL,
-			RemainingQuantity: sdkmath.NewInt(100),
-			RemainingBalance:  sdkmath.NewInt(100),
+			Creator:    acc1.String(),
+			Type:       dextypes.ORDER_TYPE_LIMIT,
+			ID:         "id1",
+			BaseDenom:  denom1,
+			QuoteDenom: denom2,
+			Price:      lo.ToPtr(dextypes.MustNewPriceFromString("999")),
+			Quantity:   sdkmath.NewInt(100),
+			Side:       dextypes.SIDE_SELL,
 			GoodTil: &dextypes.GoodTil{
 				GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
 			},
+			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
+			RemainingQuantity: sdkmath.NewInt(100),
+			RemainingBalance:  sdkmath.NewInt(100),
 		},
 	}
 	acc1OrderPlaceMsgs := ordersToPlaceMsgs(acc1Orders)
@@ -496,19 +505,20 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	// create acc2 orders
 	acc2Orders := []dextypes.Order{
 		{
-			Creator:           acc2.String(),
-			Type:              dextypes.ORDER_TYPE_LIMIT,
-			ID:                "id1",
-			BaseDenom:         denom1,
-			QuoteDenom:        denom2,
-			Price:             lo.ToPtr(dextypes.MustNewPriceFromString("996")),
-			Quantity:          sdkmath.NewInt(10),
-			Side:              dextypes.SIDE_BUY,
-			RemainingQuantity: sdkmath.NewInt(10),
-			RemainingBalance:  sdkmath.NewInt(9960),
+			Creator:    acc2.String(),
+			Type:       dextypes.ORDER_TYPE_LIMIT,
+			ID:         "id1",
+			BaseDenom:  denom1,
+			QuoteDenom: denom2,
+			Price:      lo.ToPtr(dextypes.MustNewPriceFromString("996")),
+			Quantity:   sdkmath.NewInt(10),
+			Side:       dextypes.SIDE_BUY,
 			GoodTil: &dextypes.GoodTil{
 				GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 1000),
 			},
+			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
+			RemainingQuantity: sdkmath.NewInt(10),
+			RemainingBalance:  sdkmath.NewInt(9960),
 		},
 		{
 			Creator:           acc2.String(),
@@ -519,6 +529,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			Price:             lo.ToPtr(dextypes.MustNewPriceFromString("997")),
 			Quantity:          sdkmath.NewInt(10),
 			Side:              dextypes.SIDE_BUY,
+			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 			RemainingQuantity: sdkmath.NewInt(10),
 			RemainingBalance:  sdkmath.NewInt(9970),
 		},
@@ -655,15 +666,16 @@ func issueFT(
 func ordersToPlaceMsgs(orders []dextypes.Order) []sdk.Msg {
 	return lo.Map(orders, func(order dextypes.Order, _ int) sdk.Msg {
 		return &dextypes.MsgPlaceOrder{
-			Sender:     order.Creator,
-			Type:       dextypes.ORDER_TYPE_LIMIT,
-			ID:         order.ID,
-			BaseDenom:  order.BaseDenom,
-			QuoteDenom: order.QuoteDenom,
-			Price:      order.Price,
-			Quantity:   order.Quantity,
-			Side:       order.Side,
-			GoodTil:    order.GoodTil,
+			Sender:      order.Creator,
+			Type:        dextypes.ORDER_TYPE_LIMIT,
+			ID:          order.ID,
+			BaseDenom:   order.BaseDenom,
+			QuoteDenom:  order.QuoteDenom,
+			Price:       order.Price,
+			Quantity:    order.Quantity,
+			Side:        order.Side,
+			GoodTil:     order.GoodTil,
+			TimeInForce: order.TimeInForce,
 		}
 	})
 }

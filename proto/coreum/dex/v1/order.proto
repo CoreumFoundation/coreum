@@ -45,6 +45,15 @@ message CancelGoodTil {
   string order_id = 2 [(gogoproto.customname) = "OrderID"];
 }
 
+// TimeInForce is order time in force.
+enum TimeInForce {
+  option (gogoproto.goproto_enum_prefix) = false;
+  // time_in_force_unspecified reserves the default value, to protect against unexpected settings.
+  TIME_IN_FORCE_UNSPECIFIED = 0;
+  // time_in_force_gtc means that the order remains active until it is fully executed or manually canceled.
+  TIME_IN_FORCE_GTC = 1;
+}
+
 // Order is a DEX order.
 message Order {
   // creator is order creator address.
@@ -78,6 +87,8 @@ message Order {
   ];
   // good_til is order good til
   GoodTil good_til = 11;
+  // time_in_force is order time in force
+  TimeInForce time_in_force = 12;
 }
 
 // OrderData is a order data used for the store.
@@ -98,6 +109,8 @@ message OrderData {
   Side side = 4;
   // good_til is order good til
   GoodTil good_til = 9;
+  // time_in_force is order time in force
+  TimeInForce time_in_force = 10;
 }
 
 // OrderBookData is a order book data used by order for the store.

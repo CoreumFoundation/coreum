@@ -48,18 +48,28 @@ func (s Side) Validate() error {
 	}
 }
 
+// Validate validates time in force.
+func (t TimeInForce) Validate() error {
+	if _, exists := TimeInForce_name[int32(t)]; !exists {
+		return sdkerrors.Wrapf(ErrInvalidInput, "non-existing time in force provided: %d", t)
+	}
+
+	return nil
+}
+
 // NewOrderFormMsgPlaceOrder creates and validates Order from MsgPlaceOrder.
 func NewOrderFormMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 	o := Order{
-		Creator:    msg.Sender,
-		Type:       msg.Type,
-		ID:         msg.ID,
-		BaseDenom:  msg.BaseDenom,
-		QuoteDenom: msg.QuoteDenom,
-		Price:      msg.Price,
-		Quantity:   msg.Quantity,
-		Side:       msg.Side,
-		GoodTil:    msg.GoodTil,
+		Creator:     msg.Sender,
+		Type:        msg.Type,
+		ID:          msg.ID,
+		BaseDenom:   msg.BaseDenom,
+		QuoteDenom:  msg.QuoteDenom,
+		Price:       msg.Price,
+		Quantity:    msg.Quantity,
+		Side:        msg.Side,
+		GoodTil:     msg.GoodTil,
+		TimeInForce: msg.TimeInForce,
 	}
 	if err := o.Validate(); err != nil {
 		return Order{}, err
@@ -98,11 +108,8 @@ func (o Order) Validate() error {
 		return err
 	}
 
-	if o.GoodTil != nil {
-		// if the good til provided at least one setting should be set
-		if o.GoodTil.GoodTilBlockHeight == 0 && o.GoodTil.GoodTilBlockTime == nil {
-			return sdkerrors.Wrap(ErrInvalidInput, "good til block height or time must be provided")
-		}
+	if err := o.TimeInForce.Validate(); err != nil {
+		return err
 	}
 
 	switch o.Type {
@@ -110,6 +117,21 @@ func (o Order) Validate() error {
 		if o.Price == nil {
 			return sdkerrors.Wrap(
 				ErrInvalidInput, "price must be not nil for the limit order",
+			)
+		}
+		if o.GoodTil != nil {
+			// if the good til provided at least one setting should be set
+			if o.GoodTil.GoodTilBlockHeight == 0 && o.GoodTil.GoodTilBlockTime == nil {
+				return sdkerrors.Wrap(
+					ErrInvalidInput,
+					"good til block height or time must be provided if good til is not nil",
+				)
+			}
+		}
+		if o.TimeInForce == TIME_IN_FORCE_UNSPECIFIED {
+			return sdkerrors.Wrap(
+				ErrInvalidInput,
+				"it's required to specify the time in force for the limit order",
 			)
 		}
 		if _, err := o.ComputeLimitOrderLockedBalance(); err != nil {
@@ -124,6 +146,12 @@ func (o Order) Validate() error {
 		if o.GoodTil != nil {
 			return sdkerrors.Wrap(
 				ErrInvalidInput, "good til must be nil for the market order",
+			)
+		}
+		if o.TimeInForce != TIME_IN_FORCE_UNSPECIFIED {
+			return sdkerrors.Wrap(
+				ErrInvalidInput,
+				"the market order supports only unspecified time in force",
 			)
 		}
 	default:

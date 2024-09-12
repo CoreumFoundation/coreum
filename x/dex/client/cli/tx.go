@@ -66,10 +66,14 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 
 			sender := clientCtx.GetFromAddress()
 
-			var orderType types.OrderType
+			var (
+				orderType types.OrderType
+			)
+			timeInForce := types.TIME_IN_FORCE_UNSPECIFIED
 			switch args[0] {
 			case OrderTypeLimit:
 				orderType = types.ORDER_TYPE_LIMIT
+				timeInForce = types.TIME_IN_FORCE_GTC
 			case OrderTypeMarket:
 				orderType = types.ORDER_TYPE_MARKET
 			default:
@@ -104,14 +108,15 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 			}
 
 			msg := &types.MsgPlaceOrder{
-				Sender:     sender.String(),
-				Type:       orderType,
-				ID:         id,
-				BaseDenom:  baseDenom,
-				QuoteDenom: quoteDenom,
-				Price:      price,
-				Quantity:   quantity,
-				Side:       types.Side(side),
+				Sender:      sender.String(),
+				Type:        orderType,
+				ID:          id,
+				BaseDenom:   baseDenom,
+				QuoteDenom:  quoteDenom,
+				Price:       price,
+				Quantity:    quantity,
+				Side:        types.Side(side),
+				TimeInForce: timeInForce, // TODO(dzmitryhil) allow to modify
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
