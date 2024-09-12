@@ -140,9 +140,11 @@ func (fa *FuzzApp) GenOrder(
 	priceExp := int8(randIntInRange(rnd, -10, 10))
 
 	var (
-		price   *types.Price
-		goodTil *types.GoodTil
+		price       *types.Price
+		goodTil     *types.GoodTil
+		timeInForce = types.TIME_IN_FORCE_UNSPECIFIED
 	)
+
 	if orderType == types.ORDER_TYPE_LIMIT {
 		v, ok := buildNumExpPrice(uint64(priceNum), priceExp)
 		// since we use Uint32 as num it never exceed the max num length
@@ -163,6 +165,8 @@ func (fa *FuzzApp) GenOrder(
 				fa.initialBlockTime.Add(time.Duration(randIntInRange(rnd, 0, 2000)) * fa.blockTime),
 			)
 		}
+
+		timeInForce = types.TIME_IN_FORCE_GTC
 	}
 
 	// the quantity can't be zero
@@ -172,15 +176,16 @@ func (fa *FuzzApp) GenOrder(
 	}
 
 	return types.Order{
-		Creator:    creator.String(),
-		Type:       orderType,
-		ID:         uuid.Generate().String(),
-		BaseDenom:  baseDenom,
-		QuoteDenom: quoteDenom,
-		Price:      price,
-		GoodTil:    goodTil,
-		Quantity:   sdkmath.NewIntFromUint64(quantity),
-		Side:       side,
+		Creator:     creator.String(),
+		Type:        orderType,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   baseDenom,
+		QuoteDenom:  quoteDenom,
+		Price:       price,
+		Quantity:    sdkmath.NewIntFromUint64(quantity),
+		Side:        side,
+		GoodTil:     goodTil,
+		TimeInForce: timeInForce,
 	}
 }
 
@@ -250,9 +255,7 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				goodTilBlockTimePercent   = 10
 				blockTime                 = time.Second
 			)
-			var (
-				initialBlockTime = time.Date(2023, 1, 2, 3, 4, 5, 6, time.UTC)
-			)
+			initialBlockTime := time.Date(2023, 1, 2, 3, 4, 5, 6, time.UTC)
 
 			fuzzApp := NewFuzzApp(
 				t,

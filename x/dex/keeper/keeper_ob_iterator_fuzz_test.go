@@ -90,14 +90,15 @@ func placeRandomOrderAndAssertOrdering(
 	acc, _ := testApp.GenAccount(sdkCtx)
 
 	order := types.Order{
-		Creator:    acc.String(),
-		Type:       types.ORDER_TYPE_LIMIT,
-		ID:         uuid.Generate().String(),
-		BaseDenom:  baseDenom,
-		QuoteDenom: quoteDenom,
-		Price:      &price,
-		Quantity:   sdkmath.NewInt(1),
-		Side:       side,
+		Creator:     acc.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   baseDenom,
+		QuoteDenom:  quoteDenom,
+		Price:       &price,
+		Quantity:    sdkmath.NewInt(1),
+		Side:        side,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
 	t.Logf("Order to place: %s", order.String())
 	lockedBalance, err := order.ComputeLimitOrderLockedBalance()

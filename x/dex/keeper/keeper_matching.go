@@ -67,9 +67,14 @@ func (k Keeper) matchOrder(
 	if takerRecord.RemainingBalance.IsPositive() {
 		switch order.Type {
 		case types.ORDER_TYPE_LIMIT:
-			// create new order with the updated record
-			if err := k.createOrder(ctx, order, takerRecord); err != nil {
-				return err
+			switch order.TimeInForce {
+			case types.TIME_IN_FORCE_GTC:
+				// create new order with the updated record
+				if err := k.createOrder(ctx, order, takerRecord); err != nil {
+					return err
+				}
+			default:
+				return sdkerrors.Wrapf(types.ErrInvalidInput, "unsupported time in force: %s", order.TimeInForce.String())
 			}
 		case types.ORDER_TYPE_MARKET:
 			// unlock the remaining balance

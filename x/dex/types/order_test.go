@@ -19,14 +19,15 @@ import (
 func TestOrder_Validate(t *testing.T) {
 	validOrder := func() types.Order {
 		return types.Order{
-			Creator:    sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
-			Type:       types.ORDER_TYPE_LIMIT,
-			ID:         "aA09+:._-",
-			BaseDenom:  "denom1",
-			QuoteDenom: "denom2",
-			Price:      lo.ToPtr(types.MustNewPriceFromString("1e-1")),
-			Quantity:   sdkmath.NewInt(100),
-			Side:       types.SIDE_BUY,
+			Creator:     sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          "aA09+:._-",
+			BaseDenom:   "denom1",
+			QuoteDenom:  "denom2",
+			Price:       lo.ToPtr(types.MustNewPriceFromString("1e-1")),
+			Quantity:    sdkmath.NewInt(100),
+			Side:        types.SIDE_BUY,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}
 	}
 
@@ -242,6 +243,26 @@ func TestOrder_Validate(t *testing.T) {
 				order.GoodTil = &types.GoodTil{
 					GoodTilBlockTime: lo.ToPtr(time.Now()),
 				}
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_unspecified_time_in_force",
+			order: func() types.Order {
+				order := validOrder()
+				order.TimeInForce = types.TIME_IN_FORCE_UNSPECIFIED
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_gtc_time_in_force_for_market_order",
+			order: func() types.Order {
+				order := validOrder()
+				order.Type = types.ORDER_TYPE_MARKET
+				order.Price = nil
+				order.TimeInForce = types.TIME_IN_FORCE_GTC
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,

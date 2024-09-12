@@ -103,14 +103,15 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 		price := types.MustNewPriceFromString("1")
 		acc, _ := testApp.GenAccount(sdkCtx)
 		order := types.Order{
-			Creator:    acc.String(),
-			Type:       types.ORDER_TYPE_LIMIT,
-			ID:         uuid.Generate().String(),
-			BaseDenom:  item.baseDenom,
-			QuoteDenom: item.quoteDenom,
-			Price:      &price,
-			Quantity:   sdkmath.NewInt(1),
-			Side:       types.SIDE_SELL,
+			Creator:     acc.String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          uuid.Generate().String(),
+			BaseDenom:   item.baseDenom,
+			QuoteDenom:  item.quoteDenom,
+			Price:       &price,
+			Quantity:    sdkmath.NewInt(1),
+			Side:        types.SIDE_SELL,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}
 		lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
@@ -147,6 +148,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
 		},
+		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
 	lockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
@@ -172,14 +174,15 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	// check same buy with the buy order
 
 	buyOrder := types.Order{
-		Creator:    acc.String(),
-		Type:       types.ORDER_TYPE_LIMIT,
-		ID:         uuid.Generate().String(),
-		BaseDenom:  denom2,
-		QuoteDenom: denom3,
-		Price:      price,
-		Quantity:   sdkmath.NewInt(100),
-		Side:       types.SIDE_BUY,
+		Creator:     acc.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   denom2,
+		QuoteDenom:  denom3,
+		Price:       price,
+		Quantity:    sdkmath.NewInt(100),
+		Side:        types.SIDE_BUY,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
 	lockedBalance, err = buyOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
@@ -210,14 +213,15 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	acc, _ := testApp.GenAccount(sdkCtx)
 
 	sellOrder := types.Order{
-		Creator:    acc.String(),
-		Type:       types.ORDER_TYPE_LIMIT,
-		ID:         uuid.Generate().String(),
-		BaseDenom:  denom1,
-		QuoteDenom: denom2,
-		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(1_000),
-		Side:       types.SIDE_SELL,
+		Creator:     acc.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:    sdkmath.NewInt(1_000),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
 	sellLockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
@@ -245,6 +249,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 			GoodTilBlockHeight: uint64(sdkCtx.BlockHeight() + 1),
 			GoodTilBlockTime:   lo.ToPtr(sdkCtx.BlockTime().Add(time.Second)),
 		},
+		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
 	buyLockedBalance, err := buyOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
@@ -383,14 +388,15 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 
 			acc, _ := testApp.GenAccount(sdkCtx)
 			order := types.Order{
-				Creator:    acc.String(),
-				Type:       types.ORDER_TYPE_LIMIT,
-				ID:         uuid.Generate().String(),
-				BaseDenom:  denom1,
-				QuoteDenom: denom2,
-				Price:      &tt.price,
-				Quantity:   sdkmath.NewInt(1_000),
-				Side:       types.SIDE_SELL,
+				Creator:     acc.String(),
+				Type:        types.ORDER_TYPE_LIMIT,
+				ID:          uuid.Generate().String(),
+				BaseDenom:   denom1,
+				QuoteDenom:  denom2,
+				Price:       &tt.price,
+				Quantity:    sdkmath.NewInt(1_000),
+				Side:        types.SIDE_SELL,
+				TimeInForce: types.TIME_IN_FORCE_GTC,
 			}
 			lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 			require.NoError(t, err)
@@ -415,14 +421,15 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 
 	orders := []types.Order{
 		{
-			Creator:    acc1.String(),
-			Type:       types.ORDER_TYPE_LIMIT,
-			ID:         uuid.Generate().String(),
-			BaseDenom:  denom1,
-			QuoteDenom: denom2,
-			Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-			Quantity:   sdkmath.NewInt(2000),
-			Side:       types.SIDE_SELL,
+			Creator:     acc1.String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          uuid.Generate().String(),
+			BaseDenom:   denom1,
+			QuoteDenom:  denom2,
+			Price:       lo.ToPtr(types.MustNewPriceFromString("13e-1")),
+			Quantity:    sdkmath.NewInt(2000),
+			Side:        types.SIDE_SELL,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
 		{
 			Creator:    acc1.String(),
@@ -436,6 +443,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			GoodTil: &types.GoodTil{
 				GoodTilBlockHeight: 32,
 			},
+			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
 		{
 			Creator:    acc1.String(),
@@ -449,16 +457,18 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			GoodTil: &types.GoodTil{
 				GoodTilBlockHeight: 1000,
 			},
+			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
 		{
-			Creator:    acc2.String(),
-			Type:       types.ORDER_TYPE_LIMIT,
-			ID:         uuid.Generate().String(),
-			BaseDenom:  denom1,
-			QuoteDenom: denom2,
-			Price:      lo.ToPtr(types.MustNewPriceFromString("11e-1")),
-			Quantity:   sdkmath.NewInt(100),
-			Side:       types.SIDE_BUY,
+			Creator:     acc2.String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          uuid.Generate().String(),
+			BaseDenom:   denom1,
+			QuoteDenom:  denom2,
+			Price:       lo.ToPtr(types.MustNewPriceFromString("11e-1")),
+			Quantity:    sdkmath.NewInt(100),
+			Side:        types.SIDE_BUY,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
 	}
 
@@ -533,24 +543,26 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 
 	orders := []types.Order{
 		{
-			Creator:    acc1.String(),
-			Type:       types.ORDER_TYPE_LIMIT,
-			ID:         uuid.Generate().String(),
-			BaseDenom:  denom1,
-			QuoteDenom: denom2,
-			Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-			Quantity:   sdkmath.NewInt(10),
-			Side:       types.SIDE_SELL,
+			Creator:     acc1.String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          uuid.Generate().String(),
+			BaseDenom:   denom1,
+			QuoteDenom:  denom2,
+			Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+			Quantity:    sdkmath.NewInt(10),
+			Side:        types.SIDE_SELL,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
 		{
-			Creator:    acc1.String(),
-			Type:       types.ORDER_TYPE_LIMIT,
-			ID:         uuid.Generate().String(),
-			BaseDenom:  denom3,
-			QuoteDenom: denom2,
-			Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-			Quantity:   sdkmath.NewInt(10),
-			Side:       types.SIDE_BUY,
+			Creator:     acc1.String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          uuid.Generate().String(),
+			BaseDenom:   denom3,
+			QuoteDenom:  denom2,
+			Price:       lo.ToPtr(types.MustNewPriceFromString("13e-1")),
+			Quantity:    sdkmath.NewInt(10),
+			Side:        types.SIDE_BUY,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
 	}
 
