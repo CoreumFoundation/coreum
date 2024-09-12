@@ -271,8 +271,8 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	requireT := require.New(t)
 	gov := chain.Governance
-	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(500000))
-	t.Logf("[*] missingDepositAmount: %s", missingDepositAmount.String()) // ?
+	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(2000))
+	t.Logf("[*] missingDepositAmount: %s", missingDepositAmount.String()) // 500000udevcore
 
 	govParams, err := gov.QueryGovParams(ctx)
 	requireT.NoError(err)
@@ -282,7 +282,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 		t.Log("ExpeditedMinDeposit is not set")
 		t.SkipNow()
 	} else {
-		t.Logf("[*] ExpeditedMinDeposit: %s", expeditedMinDeposit.String()) // 50000000stake
+		t.Logf("[*] ExpeditedMinDeposit: %s", expeditedMinDeposit.String()) // 2000udevcore
 	}
 
 	// Create new proposer.
@@ -290,7 +290,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	proposerBalance, err := gov.ComputeProposerBalance(ctx, true)
 	requireT.NoError(err)
 
-	t.Logf("[*] initial proposerBalance: %s", proposerBalance.String()) // 50025000udevcore
+	t.Logf("[*] initial proposerBalance: %s", proposerBalance.String()) // 27000udevcore
 
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
 	chain.Faucet.FundAccounts(ctx, t,
