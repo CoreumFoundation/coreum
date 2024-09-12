@@ -296,9 +296,6 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 			"-", "-", "-", govtypesv1.OptionYes,
 			updateParamsMsg,
 		)
-
-		govParams, err = gov.QueryGovParams(ctx)
-		requireT.NoError(err)
 	}
 
 	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(20))
