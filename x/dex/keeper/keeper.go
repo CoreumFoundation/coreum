@@ -245,7 +245,7 @@ func (k Keeper) GetPaginatedOrdersWithSequence(
 					Quantity:          orderData.Quantity,
 					Side:              orderData.Side,
 					GoodTil:           orderData.GoodTil,
-					TimeInForce:       orderData.TimeInForce,
+					TimeInForce:       types.TIME_IN_FORCE_GTC,
 					RemainingQuantity: orderBookRecord.RemainingQuantity,
 					RemainingBalance:  orderBookRecord.RemainingBalance,
 				},
@@ -519,6 +519,14 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 	order types.Order,
 	record types.OrderBookRecord,
 ) error {
+	// additional check to prevent in unexpected state
+	if order.Type != types.ORDER_TYPE_LIMIT {
+		return errors.Errorf("it's prohibited to save not limit order types, type: %s", order.Type.String())
+	}
+	if order.TimeInForce != types.TIME_IN_FORCE_GTC {
+		return errors.Errorf("it's prohibited to save not GTC order types, type: %s", order.TimeInForce.String())
+	}
+
 	if err := k.saveOrderBookRecord(ctx, record); err != nil {
 		return err
 	}
@@ -546,7 +554,6 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 		Quantity:    order.Quantity,
 		Side:        order.Side,
 		GoodTil:     order.GoodTil,
-		TimeInForce: order.TimeInForce,
 	}); err != nil {
 		return err
 	}
@@ -676,7 +683,7 @@ func (k Keeper) getOrderWithRecordByAddressAndID(
 			Quantity:          orderData.Quantity,
 			Side:              orderBookRecord.Side,
 			GoodTil:           orderData.GoodTil,
-			TimeInForce:       orderData.TimeInForce,
+			TimeInForce:       types.TIME_IN_FORCE_GTC,
 			RemainingQuantity: orderBookRecord.RemainingQuantity,
 			RemainingBalance:  orderBookRecord.RemainingBalance,
 		},
@@ -771,7 +778,7 @@ func (k Keeper) getPaginatedOrders(
 				Quantity:          orderData.Quantity,
 				Side:              orderData.Side,
 				GoodTil:           orderData.GoodTil,
-				TimeInForce:       orderData.TimeInForce,
+				TimeInForce:       types.TIME_IN_FORCE_GTC,
 				RemainingQuantity: orderBookRecord.RemainingQuantity,
 				RemainingBalance:  orderBookRecord.RemainingBalance,
 			}, nil
@@ -870,7 +877,7 @@ func (k Keeper) getPaginatedOrderBookOrders(
 				Quantity:          orderData.Quantity,
 				Side:              side,
 				GoodTil:           orderData.GoodTil,
-				TimeInForce:       orderData.TimeInForce,
+				TimeInForce:       types.TIME_IN_FORCE_GTC,
 				RemainingQuantity: record.RemainingQuantity,
 				RemainingBalance:  record.RemainingBalance,
 			}, nil

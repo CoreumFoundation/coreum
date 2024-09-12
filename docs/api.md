@@ -4661,7 +4661,6 @@ OrderData is a order data used for the store.
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
-| `time_in_force` | [TimeInForce](#coreum.dex.v1.TimeInForce) |  |  `time_in_force is order time in force`  |
 
 
 
@@ -4720,6 +4719,7 @@ TimeInForce is order time in force.
 | ---- | ------ | ----------- |
 | TIME_IN_FORCE_UNSPECIFIED | 0 | `time_in_force_unspecified reserves the default value, to protect against unexpected settings.` |
 | TIME_IN_FORCE_GTC | 1 | `time_in_force_gtc means that the order remains active until it is fully executed or manually canceled.` |
+| TIME_IN_FORCE_IOC | 2 | `time_in_force_ioc  means that order must be executed immediately, either in full or partially. Any portion of the  order that cannot be filled immediately is canceled.` |
 
 
  <!-- end enums -->

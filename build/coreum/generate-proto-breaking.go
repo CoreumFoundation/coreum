@@ -20,9 +20,12 @@ import (
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
+// nolint:unused // temporary not used
+//
 //go:embed proto-breaking.tmpl.json
 var configBreakingTmpl string
 
+// nolint:deadcode // temporary not used
 func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(golang.Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
 
