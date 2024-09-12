@@ -146,12 +146,12 @@
         "min_initial_deposit_ratio": "0.000000000000000000",
         "proposal_cancel_ratio": "0.500000000000000000",
         "proposal_cancel_dest": "",
-        "expedited_voting_period": "{{ .Gov.ProposalConfig.VotingPeriod }}",
+        "expedited_voting_period": "{{ .Gov.ProposalConfig.ExpeditedVotingPeriod }}",
         "expedited_threshold": "0.667000000000000000",
         "expedited_min_deposit": [
           {
             "denom": "{{ .Denom }}",
-            "amount": "{{ .Gov.ProposalConfig.MinDepositAmount }}"
+            "amount": "{{ .Gov.ProposalConfig.ExpeditedMinDepositAmount }}"
           }
         ],
         "burn_vote_quorum": false,
