@@ -25,6 +25,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
@@ -127,10 +128,12 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(5_000),
 		MsgToMsgURL(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(79_000),
 		MsgToMsgURL(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(22_000),
+		MsgToMsgURL(&distributiontypes.MsgDepositValidatorRewardsPool{}): constantGasFunc(39_000),
 
 		// feegrant
 		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(11_000),
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2_500),
+		MsgToMsgURL(&feegranttypes.MsgPruneAllowances{}): constantGasFunc(500),
 
 		// gov
 		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6_000),
@@ -225,6 +228,9 @@ func DefaultConfig() Config {
 			// crisis
 			&crisistypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
+			// dex
+			&dextypes.MsgUpdateParams{},
+
 			// distribution
 			&distributiontypes.MsgUpdateParams{},       // This is non-deterministic because all the gov proposals are non-deterministic anyway
 			&distributiontypes.MsgCommunityPoolSpend{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
@@ -235,6 +241,7 @@ func DefaultConfig() Config {
 			&govtypesv1beta1.MsgSubmitProposal{},
 
 			&govtypesv1.MsgSubmitProposal{},
+			&govtypesv1.MsgCancelProposal{},
 			&govtypesv1.MsgExecLegacyContent{},
 			&govtypesv1.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
@@ -302,12 +309,16 @@ func DefaultConfig() Config {
 			&ibcclienttypes.MsgUpdateClient{},
 			&ibcclienttypes.MsgUpgradeClient{},
 			&ibcclienttypes.MsgSubmitMisbehaviour{}, //nolint // TODO remove legacy message
+			&ibcclienttypes.MsgUpdateParams{},
+			&ibcclienttypes.MsgIBCSoftwareUpgrade{},
+			&ibcclienttypes.MsgRecoverClient{},
 
 			// ibc/core/connection
 			&ibcconnectiontypes.MsgConnectionOpenInit{},
 			&ibcconnectiontypes.MsgConnectionOpenTry{},
 			&ibcconnectiontypes.MsgConnectionOpenAck{},
 			&ibcconnectiontypes.MsgConnectionOpenConfirm{},
+			&ibcconnectiontypes.MsgUpdateParams{},
 
 			// ibc/core/channel
 			&ibcchanneltypes.MsgChannelOpenInit{},
@@ -316,16 +327,29 @@ func DefaultConfig() Config {
 			&ibcchanneltypes.MsgChannelOpenConfirm{},
 			&ibcchanneltypes.MsgChannelCloseInit{},
 			&ibcchanneltypes.MsgChannelCloseConfirm{},
+			&ibcchanneltypes.MsgChannelUpgradeAck{},
+			&ibcchanneltypes.MsgChannelUpgradeCancel{},
+			&ibcchanneltypes.MsgChannelUpgradeConfirm{},
+			&ibcchanneltypes.MsgChannelUpgradeInit{},
+			&ibcchanneltypes.MsgChannelUpgradeOpen{},
+			&ibcchanneltypes.MsgChannelUpgradeTimeout{},
+			&ibcchanneltypes.MsgChannelUpgradeTry{},
+			&ibcchanneltypes.MsgPruneAcknowledgements{},
 			&ibcchanneltypes.MsgRecvPacket{},
 			&ibcchanneltypes.MsgTimeout{},
 			&ibcchanneltypes.MsgTimeoutOnClose{},
 			&ibcchanneltypes.MsgAcknowledgement{},
+			&ibcchanneltypes.MsgUpdateParams{},
 
 			// ibc/packetforward
 			&packetforwardtypes.MsgUpdateParams{},
 
 			// ibc/ica
 			&icacontrollertypes.MsgSendTx{},
+			&icahosttypes.MsgUpdateParams{},
+			&icahosttypes.MsgModuleQuerySafe{},
+			&icacontrollertypes.MsgUpdateParams{},
+			&ibctransfertypes.MsgUpdateParams{},
 		},
 	)
 

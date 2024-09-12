@@ -4,13 +4,16 @@ package modules
 
 import (
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/feegrant"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
@@ -26,18 +29,23 @@ func TestFeeGrant(t *testing.T) {
 	granter := chain.GenAccount()
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
+	feegrantClient := feegrant.NewQueryClient(chain.ClientContext)
+	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 
 	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
 			&feegrant.MsgGrantAllowance{},
+			&feegrant.MsgGrantAllowance{},
+			&feegrant.MsgPruneAllowances{},
 			&feegrant.MsgRevokeAllowance{},
 		},
 	})
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(1),
 	})
+
 	basicAllowance, err := codectypes.NewAnyWithValue(&feegrant.BasicAllowance{
 		SpendLimit: nil, // empty means no limit
 		Expiration: nil, // empty means no limit
@@ -57,7 +65,60 @@ func TestFeeGrant(t *testing.T) {
 		grantMsg,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(grantMsg))
+	requireT.EqualValues(chain.GasLimitByMsgs(grantMsg), res.GasUsed)
+
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
+
+	expiringAllowance, err := codectypes.NewAnyWithValue(&feegrant.BasicAllowance{
+		SpendLimit: nil, // empty means no limit
+		Expiration: lo.ToPtr(blockRes.SdkBlock.Header.Time.Add(10 * time.Second)),
+	})
+	requireT.NoError(err)
+
+	expiringGrantMsg := &feegrant.MsgGrantAllowance{
+		Granter:   granter.String(),
+		Grantee:   recipient.String(),
+		Allowance: expiringAllowance,
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(expiringGrantMsg)),
+		expiringGrantMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(chain.GasLimitByMsgs(expiringGrantMsg), res.GasUsed)
+
+	allowancesRes, err := feegrantClient.AllowancesByGranter(ctx, &feegrant.QueryAllowancesByGranterRequest{
+		Granter: granter.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(allowancesRes.Allowances, 2)
+
+	// await next 5 blocks
+	requireT.NoError(client.AwaitNextBlocks(ctx, chain.ClientContext, 5))
+
+	pruneAllowancesMsg := &feegrant.MsgPruneAllowances{
+		Pruner: granter.String(),
+	}
+
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(pruneAllowancesMsg)),
+		pruneAllowancesMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(chain.GasLimitByMsgs(pruneAllowancesMsg), res.GasUsed)
+
+	allowancesRes, err = feegrantClient.AllowancesByGranter(ctx, &feegrant.QueryAllowancesByGranterRequest{
+		Granter: granter.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(allowancesRes.Allowances, 1)
+
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: grantee.String(),
 		ToAddress:   recipient.String(),
@@ -84,7 +145,7 @@ func TestFeeGrant(t *testing.T) {
 		revokeMsg,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(revokeMsg))
+	requireT.EqualValues(chain.GasLimitByMsgs(revokeMsg), res.GasUsed)
 
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: grantee.String(),
