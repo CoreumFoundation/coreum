@@ -49,6 +49,7 @@ type GenesisInitConfig struct {
 	GenesisTime   time.Time        `json:"genesis_time"`
 	GovConfig     struct {
 		MinDeposit            sdk.Coins     `json:"min_deposit"`
+		ExpeditedMinDeposit   sdk.Coins     `json:"expedited_min_deposit"`
 		VotingPeriod          time.Duration `json:"voting_period"`
 		ExpeditedVotingPeriod time.Duration `json:"expedited_voting_period"`
 	} `json:"gov_config"`
@@ -128,6 +129,9 @@ func genDocFromInput(
 	govGenesis := govtypesv1.DefaultGenesisState()
 	if len(cfg.GovConfig.MinDeposit) > 0 {
 		govGenesis.Params.MinDeposit = cfg.GovConfig.MinDeposit
+	}
+	if len(cfg.GovConfig.ExpeditedMinDeposit) > 0 {
+		govGenesis.Params.ExpeditedMinDeposit = cfg.GovConfig.ExpeditedMinDeposit
 	}
 	if cfg.GovConfig.VotingPeriod > 0 {
 		govGenesis.Params.VotingPeriod = &cfg.GovConfig.VotingPeriod
