@@ -4711,7 +4711,7 @@ Side is order side.
 ### TimeInForce
 
 ```
-Type is order type.
+TimeInForce is order time in force.
 ```
 
 

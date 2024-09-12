@@ -45,7 +45,7 @@ message CancelGoodTil {
   string order_id = 2 [(gogoproto.customname) = "OrderID"];
 }
 
-// Type is order type.
+// TimeInForce is order time in force.
 enum TimeInForce {
   option (gogoproto.goproto_enum_prefix) = false;
   // time_in_force_unspecified reserves the default value, to protect against unexpected settings.

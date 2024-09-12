@@ -92,7 +92,7 @@ func (OrderType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_302bb6c9a553771c, []int{1}
 }
 
-// Type is order type.
+// TimeInForce is order time in force.
 type TimeInForce int32
 
 const (
