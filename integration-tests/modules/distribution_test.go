@@ -147,11 +147,12 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, delegator, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
+			&distributiontypes.MsgDepositValidatorRewardsPool{},
 			&distributiontypes.MsgWithdrawDelegatorReward{},
 			&distributiontypes.MsgSetWithdrawAddress{},
 			&distributiontypes.MsgWithdrawDelegatorReward{},
 		},
-		Amount: amountToDelegate,
+		Amount: amountToDelegate.Add(sdkmath.NewInt(5_000)),
 	})
 
 	delegatedCoin := chain.NewCoin(amountToDelegate)
@@ -185,6 +186,24 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	)
 	requireT.NoError(err)
 
+	// deposit in validator rewards pool
+	t.Log("Deposit some more amount in the validator rewards pool")
+	// withdraw the normal reward
+	depositValidatorRewardsPoolMsg := &distributiontypes.MsgDepositValidatorRewardsPool{
+		Depositor:        delegator.String(),
+		ValidatorAddress: validatorAddress.String(),
+		Amount:           sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1000))),
+	}
+	txResult, err := client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(depositValidatorRewardsPoolMsg)),
+		depositValidatorRewardsPoolMsg,
+	)
+	requireT.NoError(err)
+	// validate the deterministic gas
+	requireT.Equal(chain.GasLimitByMsgs(depositValidatorRewardsPoolMsg), uint64(txResult.GasUsed))
+
 	// capture the normal staker balance
 	delegatorBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: delegator.String(),
@@ -213,7 +232,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		DelegatorAddress: delegator.String(),
 		ValidatorAddress: validatorAddress.String(),
 	}
-	txResult, err := client.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(withdrawRewardMsg)),
