@@ -37,8 +37,8 @@ func (g *gov) After(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.Equal(sdkmath.LegacyMustNewDecFromStr("0.5").String(), govParams.ProposalCancelRatio)
-	requireT.Equal("", govParams.ProposalCancelDest)
-	requireT.Equal(lo.ToPtr(time.Hour), govParams.ExpeditedVotingPeriod)
+	requireT.Empty(govParams.ProposalCancelDest)
+	requireT.Equal(lo.ToPtr(24*time.Hour), govParams.ExpeditedVotingPeriod)
 	requireT.Equal(sdkmath.LegacyMustNewDecFromStr("0.667").String(), govParams.ExpeditedThreshold)
 	requireT.Equal(sdk.NewCoins(
 		sdk.NewCoin(chain.ChainSettings.Denom, sdkmath.NewInt(4_000_000_000)),

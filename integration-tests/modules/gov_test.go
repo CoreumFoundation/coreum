@@ -279,13 +279,13 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	// It is hardcoded from crust infra/apps/profiles.go and infra/apps/cored/config.go
 	// remember to change these values if they are changed there
-	unexpectedParams := govParams.ExpeditedVotingPeriod != lo.ToPtr(20*time.Second) ||
+	unexpectedParams := govParams.ExpeditedVotingPeriod != lo.ToPtr(15*time.Second) ||
 		len(govParams.ExpeditedMinDeposit) == 0 ||
 		govParams.ExpeditedMinDeposit[0].Denom != chain.ChainSettings.Denom
 
 	if unexpectedParams {
 		govParams.ExpeditedMinDeposit = sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(2000)))
-		govParams.ExpeditedVotingPeriod = lo.ToPtr(19 * time.Second)
+		govParams.ExpeditedVotingPeriod = lo.ToPtr(15 * time.Second)
 
 		updateParamsMsg := &govtypesv1.MsgUpdateParams{
 			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
