@@ -271,7 +271,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	requireT := require.New(t)
 	gov := chain.Governance
-	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(500000))
+	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(20))
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -364,7 +364,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	requireT.Equal(govtypesv1.StatusRejected, finalStatus)
 }
 
-// TestGovCancelProposalWithDepositAndWeightedVotes tests cancelling proposal.
+// TestGovCancelProposalWithDepositAndWeightedVotes tests cancelling proposals.
 func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
 	t.Parallel()
 
