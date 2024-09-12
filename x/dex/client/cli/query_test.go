@@ -42,6 +42,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 		Price:             lo.ToPtr(types.MustNewPriceFromString("123e-2")),
 		Quantity:          sdkmath.NewInt(100),
 		Side:              types.SIDE_SELL,
+		TimeInForce:       types.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}
@@ -77,6 +78,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 		Price:             lo.ToPtr(types.MustNewPriceFromString("124e-2")),
 		Quantity:          sdkmath.NewInt(100),
 		Side:              types.SIDE_SELL,
+		TimeInForce:       types.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
 	}
