@@ -5,6 +5,7 @@ package modules
 import (
 	"strings"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +14,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
@@ -271,14 +273,35 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	requireT := require.New(t)
 	gov := chain.Governance
-	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(20))
 
 	govParams, err := gov.QueryGovParams(ctx)
 	requireT.NoError(err)
 
-	if govParams.ExpeditedMinDeposit[0].Denom != chain.ChainSettings.Denom {
-		t.SkipNow()
+	// It is hardcoded from crust infra/apps/profiles.go and infra/apps/cored/config.go
+	// remember to change these values if they are changed there
+	unexpectedParams := govParams.ExpeditedVotingPeriod != lo.ToPtr(20*time.Second) ||
+		len(govParams.ExpeditedMinDeposit) == 0 ||
+		govParams.ExpeditedMinDeposit[0].Denom != chain.ChainSettings.Denom
+
+	if unexpectedParams {
+		govParams.ExpeditedMinDeposit = sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(2000)))
+		govParams.ExpeditedVotingPeriod = lo.ToPtr(19 * time.Second)
+
+		updateParamsMsg := &govtypesv1.MsgUpdateParams{
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Params:    *govParams,
+		}
+		gov.ProposalFromMsgAndVote(
+			ctx, t, nil,
+			"-", "-", "-", govtypesv1.OptionYes,
+			updateParamsMsg,
+		)
+
+		govParams, err = gov.QueryGovParams(ctx)
+		requireT.NoError(err)
 	}
+
+	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(20))
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
