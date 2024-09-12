@@ -61,6 +61,8 @@ message MsgPlaceOrder {
   Side side = 8;
   // good_til is order good til
   GoodTil good_til = 9;
+  // time_in_force is order time in force
+  TimeInForce time_in_force = 10;
 }
 
 // MsgCancelOrder defines message to cancel the order in the orderbook.

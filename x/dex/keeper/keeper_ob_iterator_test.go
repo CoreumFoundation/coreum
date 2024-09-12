@@ -261,14 +261,15 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 						quantity = sdkmath.NewInt(1)
 					}
 					order := types.Order{
-						Creator:    acc.String(),
-						Type:       types.ORDER_TYPE_LIMIT,
-						ID:         uuid.Generate().String(),
-						BaseDenom:  baseDenom,
-						QuoteDenom: quoteDenom,
-						Price:      &price,
-						Quantity:   quantity,
-						Side:       tt.side,
+						Creator:     acc.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          uuid.Generate().String(),
+						BaseDenom:   baseDenom,
+						QuoteDenom:  quoteDenom,
+						Price:       &price,
+						Quantity:    quantity,
+						Side:        tt.side,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
 					}
 
 					lockedBalance, err := order.ComputeLimitOrderLockedBalance()

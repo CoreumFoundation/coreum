@@ -244,9 +244,10 @@ func (k Keeper) GetPaginatedOrdersWithSequence(
 					Price:             &orderData.Price,
 					Quantity:          orderData.Quantity,
 					Side:              orderData.Side,
+					GoodTil:           orderData.GoodTil,
+					TimeInForce:       orderData.TimeInForce,
 					RemainingQuantity: orderBookRecord.RemainingQuantity,
 					RemainingBalance:  orderBookRecord.RemainingBalance,
-					GoodTil:           orderData.GoodTil,
 				},
 			}, nil
 		},
@@ -545,6 +546,7 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 		Quantity:    order.Quantity,
 		Side:        order.Side,
 		GoodTil:     order.GoodTil,
+		TimeInForce: order.TimeInForce,
 	}); err != nil {
 		return err
 	}
@@ -673,9 +675,10 @@ func (k Keeper) getOrderWithRecordByAddressAndID(
 			Price:             &orderBookRecord.Price,
 			Quantity:          orderData.Quantity,
 			Side:              orderBookRecord.Side,
+			GoodTil:           orderData.GoodTil,
+			TimeInForce:       orderData.TimeInForce,
 			RemainingQuantity: orderBookRecord.RemainingQuantity,
 			RemainingBalance:  orderBookRecord.RemainingBalance,
-			GoodTil:           orderData.GoodTil,
 		},
 		orderBookRecord,
 		nil
@@ -767,9 +770,10 @@ func (k Keeper) getPaginatedOrders(
 				Price:             &orderData.Price,
 				Quantity:          orderData.Quantity,
 				Side:              orderData.Side,
+				GoodTil:           orderData.GoodTil,
+				TimeInForce:       orderData.TimeInForce,
 				RemainingQuantity: orderBookRecord.RemainingQuantity,
 				RemainingBalance:  orderBookRecord.RemainingBalance,
-				GoodTil:           orderData.GoodTil,
 			}, nil
 		},
 		// constructor
@@ -865,9 +869,10 @@ func (k Keeper) getPaginatedOrderBookOrders(
 				Price:             &price,
 				Quantity:          orderData.Quantity,
 				Side:              side,
+				GoodTil:           orderData.GoodTil,
+				TimeInForce:       orderData.TimeInForce,
 				RemainingQuantity: record.RemainingQuantity,
 				RemainingBalance:  record.RemainingBalance,
-				GoodTil:           orderData.GoodTil,
 			}, nil
 		},
 		// constructor
