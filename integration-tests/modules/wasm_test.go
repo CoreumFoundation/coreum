@@ -439,7 +439,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	requireT := require.New(t)
 
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 	proposerBalance.Amount = proposerBalance.Amount.MulRaw(2)
 
@@ -497,6 +497,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		"",
 		"Pin smart contract",
 		"Testing smart contract pinning",
+		false,
 	)
 	requireT.NoError(err)
 
@@ -532,6 +533,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		"",
 		"Unpin smart contract",
 		"Testing smart contract unpinning",
+		false,
 	)
 	requireT.NoError(err)
 
