@@ -9202,7 +9202,8 @@
         "ibc",
         "block_smart_contracts",
         "clawback",
-        "extension"
+        "extension",
+        "block_dex"
       ],
       "default": "minting",
       "description": "Feature defines possible features of fungible token."

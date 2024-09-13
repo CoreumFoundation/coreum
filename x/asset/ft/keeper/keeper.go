@@ -1357,6 +1357,13 @@ func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.
 				coin.String(),
 			)
 		}
+		if def.IsFeatureEnabled(types.Feature_block_dex) {
+			return sdkerrors.Wrapf(
+				cosmoserrors.ErrUnauthorized,
+				"locking coins for DEX disabled for %s",
+				def.Denom,
+			)
+		}
 	}
 
 	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)

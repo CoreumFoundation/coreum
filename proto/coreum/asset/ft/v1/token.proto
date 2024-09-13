@@ -16,6 +16,7 @@ enum Feature {
   block_smart_contracts = 5;
   clawback = 6;
   extension = 7;
+  block_dex = 8;
 }
 
 // Definition defines the fungible token settings to store.
