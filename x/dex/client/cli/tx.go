@@ -66,9 +66,7 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 
 			sender := clientCtx.GetFromAddress()
 
-			var (
-				orderType types.OrderType
-			)
+			var orderType types.OrderType
 			timeInForce := types.TIME_IN_FORCE_UNSPECIFIED
 			switch args[0] {
 			case OrderTypeLimit:

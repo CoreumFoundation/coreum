@@ -6,9 +6,11 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -26,6 +28,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/v4/testutil/event"
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	testcontracts "github.com/CoreumFoundation/coreum/v4/x/asset/ft/keeper/test-contracts"
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v4/x/wbank/keeper"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
@@ -1669,7 +1672,10 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false)
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1777,6 +1783,29 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT.NoError(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350)))
 	// freeze more than balance
 	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, sdk.NewInt64Coin(denom, 1_000_000)))
+
+	// extension
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+	settingsWithExtension := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFEXT",
+		Subunit:       "defext",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features:      []types.Feature{types.Feature_extension},
+
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+	denomWithExtension, err := ftKeeper.Issue(ctx, settingsWithExtension)
+	requireT.NoError(err)
+	extensionCoin := sdk.NewInt64Coin(denomWithExtension, 50)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(extensionCoin)))
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, extensionCoin), "not supported for the tokens with extensions")
 }
 
 func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
