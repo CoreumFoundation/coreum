@@ -98,7 +98,7 @@ func TestFeeGrant(t *testing.T) {
 	requireT.Len(allowancesRes.Allowances, 2)
 
 	// await next 5 blocks
-	requireT.NoError(client.AwaitNextBlocks(ctx, chain.ClientContext, 5))
+	requireT.NoError(client.AwaitNextBlocks(ctx, chain.ClientContext, 10))
 
 	pruneAllowancesMsg := &feegrant.MsgPruneAllowances{
 		Pruner: granter.String(),
