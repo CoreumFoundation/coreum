@@ -133,7 +133,6 @@ func DefaultConfig() Config {
 		// feegrant
 		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(11_000),
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2_500),
-		MsgToMsgURL(&feegranttypes.MsgPruneAllowances{}): constantGasFunc(500),
 
 		// gov
 		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6_000),
@@ -227,6 +226,9 @@ func DefaultConfig() Config {
 
 			// crisis
 			&crisistypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+
+			// feegrant
+			&feegranttypes.MsgPruneAllowances{},
 
 			// dex
 			&dextypes.MsgUpdateParams{},

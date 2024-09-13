@@ -152,7 +152,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 			&distributiontypes.MsgSetWithdrawAddress{},
 			&distributiontypes.MsgWithdrawDelegatorReward{},
 		},
-		Amount: amountToDelegate.Add(sdkmath.NewInt(5_000)),
+		Amount: amountToDelegate.Add(sdkmath.NewInt(1_000)),
 	})
 
 	delegatedCoin := chain.NewCoin(amountToDelegate)
