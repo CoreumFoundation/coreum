@@ -70,25 +70,15 @@ func (k Keeper) matchOrder(
 			switch order.TimeInForce {
 			case types.TIME_IN_FORCE_GTC:
 				// create new order with the updated record
-				if err := k.createOrder(ctx, order, takerRecord); err != nil {
-					return err
-				}
+				return k.createOrder(ctx, order, takerRecord)
+			case types.TIME_IN_FORCE_IOC:
+				// unlock the remaining balance
+				return k.unlockRemainingBalance(ctx, order, takerRecord)
 			default:
 				return sdkerrors.Wrapf(types.ErrInvalidInput, "unsupported time in force: %s", order.TimeInForce.String())
 			}
 		case types.ORDER_TYPE_MARKET:
-			// unlock the remaining balance
-			creatorAddr, err := sdk.AccAddressFromBech32(order.Creator)
-			if err != nil {
-				return sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
-			}
-			if err := k.unlockCoin(
-				ctx,
-				creatorAddr,
-				sdk.NewCoin(order.GetSpendDenom(), takerRecord.RemainingBalance),
-			); err != nil {
-				return err
-			}
+			return k.unlockRemainingBalance(ctx, order, takerRecord)
 		default:
 			return sdkerrors.Wrapf(
 				types.ErrInvalidInput, "unexpect order type : %s", order.Type.String(),
@@ -278,6 +268,19 @@ func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRec
 	}
 
 	return recordToClose, recordToReduce, closeMaker
+}
+
+func (k Keeper) unlockRemainingBalance(ctx sdk.Context, order types.Order, takerRecord types.OrderBookRecord) error {
+	creatorAddr, err := sdk.AccAddressFromBech32(order.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
+	}
+
+	return k.unlockCoin(
+		ctx,
+		creatorAddr,
+		sdk.NewCoin(order.GetSpendDenom(), takerRecord.RemainingBalance),
+	)
 }
 
 func getRecordsReceiveCoins(

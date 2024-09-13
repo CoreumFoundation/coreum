@@ -52,6 +52,9 @@ enum TimeInForce {
   TIME_IN_FORCE_UNSPECIFIED = 0;
   // time_in_force_gtc means that the order remains active until it is fully executed or manually canceled.
   TIME_IN_FORCE_GTC = 1;
+  // time_in_force_ioc  means that order must be executed immediately, either in full or partially. Any portion of the
+  //  order that cannot be filled immediately is canceled.
+  TIME_IN_FORCE_IOC = 2;
 }
 
 // Order is a DEX order.
@@ -109,8 +112,6 @@ message OrderData {
   Side side = 4;
   // good_til is order good til
   GoodTil good_til = 9;
-  // time_in_force is order time in force
-  TimeInForce time_in_force = 10;
 }
 
 // OrderBookData is a order book data used by order for the store.
