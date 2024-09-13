@@ -104,7 +104,7 @@ func TestFeeGrant(t *testing.T) {
 		Pruner: granter.String(),
 	}
 
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(200_000),
