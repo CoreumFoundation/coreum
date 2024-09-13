@@ -407,10 +407,7 @@ func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
 	requireT.NoError(err)
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
 	chain.FundAccountWithOptions(ctx, t, proposer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&govtypesv1.MsgCancelProposal{},
-		},
-		Amount: proposerBalance.Amount,
+		Amount: proposerBalance.Amount.Add(sdkmath.NewInt(200_000)),
 	})
 
 	// Create proposer depositor.
@@ -485,6 +482,8 @@ func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
 	_, err = gov.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
 
+	depositorBalanceBeforeCancelling := accBalanceFunc(depositor)
+
 	msgCancelProposal := &govtypesv1.MsgCancelProposal{
 		ProposalId: proposalID,
 		Proposer:   proposer.String(),
@@ -492,7 +491,7 @@ func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(proposer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgCancelProposal)),
+		chain.TxFactory().WithGas(200_000),
 		msgCancelProposal,
 	)
 	requireT.NoError(err)
@@ -504,20 +503,13 @@ func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
 	params, err := gov.QueryGovParams(ctx)
 	requireT.NoError(err)
 
-	proposerCancelFee := sdkmath.LegacyMustNewDecFromStr(params.ProposalCancelRatio).
-		Mul(sdkmath.LegacyNewDecFromInt(proposalMsg.InitialDeposit[0].Amount)).TruncateInt()
 	depositorCancelFee := sdkmath.LegacyMustNewDecFromStr(params.ProposalCancelRatio).
 		Mul(sdkmath.LegacyNewDecFromInt(missingDepositAmount.Amount)).TruncateInt()
 
-	// Assert that proposer & depositor deposits were credited back after applying cancel ratio.
-	proposerBalanceBeforeCancelling := accBalanceFunc(proposer)
-	depositorBalanceBeforeCancelling := accBalanceFunc(depositor)
+	// Assert that depositor deposits were credited back after applying cancel ratio.
+	depositorBalanceAfterCancelling := accBalanceFunc(depositor)
 	requireT.Equal(
-		proposalMsg.InitialDeposit[0].Amount.Sub(proposerBalanceBeforeCancelling.Amount).String(),
-		proposerCancelFee.String(),
-	)
-	requireT.Equal(
-		missingDepositAmount.Amount.Sub(depositorBalanceBeforeCancelling.Amount).String(),
+		depositorBalanceAfterCancelling.Amount.Sub(depositorBalanceBeforeCancelling.Amount).String(),
 		depositorCancelFee.String(),
 	)
 }

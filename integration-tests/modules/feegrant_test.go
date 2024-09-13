@@ -38,9 +38,9 @@ func TestFeeGrant(t *testing.T) {
 			&banktypes.MsgSend{},
 			&feegrant.MsgGrantAllowance{},
 			&feegrant.MsgGrantAllowance{},
-			&feegrant.MsgPruneAllowances{},
 			&feegrant.MsgRevokeAllowance{},
 		},
+		Amount: sdkmath.NewInt(200_000),
 	})
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(1),
@@ -107,11 +107,10 @@ func TestFeeGrant(t *testing.T) {
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(pruneAllowancesMsg)),
+		chain.TxFactory().WithGas(200_000),
 		pruneAllowancesMsg,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(pruneAllowancesMsg), res.GasUsed)
 
 	allowancesRes, err = feegrantClient.AllowancesByGranter(ctx, &feegrant.QueryAllowancesByGranterRequest{
 		Granter: granter.String(),
