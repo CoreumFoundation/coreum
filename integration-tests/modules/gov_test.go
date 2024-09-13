@@ -5,6 +5,7 @@ package modules
 import (
 	"strings"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +14,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
@@ -35,7 +37,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := gov.ComputeProposerBalance(ctx)
+	proposerBalance, err := gov.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
 	chain.Faucet.FundAccounts(ctx, t,
@@ -67,6 +69,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 		textProposal.GetDescription(),
 		textProposal.GetTitle(),
 		textProposal.GetTitle(),
+		false,
 	)
 	requireT.NoError(err)
 	proposalMsg.InitialDeposit = sdk.NewCoins(proposalMsg.InitialDeposit...).Sub(sdk.Coins{missingDepositAmount}...)
@@ -260,4 +263,261 @@ func TestLegacyGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	depositorBalanceAfterVoting := accBalanceFunc(depositor)
 	requireT.Equal(proposerBalanceBeforeVoting, proposerBalanceAfterVoting)
 	requireT.Equal(depositorBalanceBeforeVoting, depositorBalanceAfterVoting)
+}
+
+// TestExpeditedGovProposalWithDepositAndWeightedVotes tests expedited proposals.
+func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	gov := chain.Governance
+
+	govParams, err := gov.QueryGovParams(ctx)
+	requireT.NoError(err)
+
+	// It is hardcoded from crust infra/apps/profiles.go and infra/apps/cored/config.go
+	// remember to change these values if they are changed there
+	unexpectedParams := govParams.ExpeditedVotingPeriod != lo.ToPtr(15*time.Second) ||
+		len(govParams.ExpeditedMinDeposit) == 0 ||
+		govParams.ExpeditedMinDeposit[0].Denom != chain.ChainSettings.Denom
+
+	if unexpectedParams {
+		govParams.ExpeditedMinDeposit = sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(2000)))
+		govParams.ExpeditedVotingPeriod = lo.ToPtr(15 * time.Second)
+
+		updateParamsMsg := &govtypesv1.MsgUpdateParams{
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Params:    *govParams,
+		}
+		gov.ProposalFromMsgAndVote(
+			ctx, t, nil,
+			"-", "-", "-", govtypesv1.OptionYes,
+			updateParamsMsg,
+		)
+	}
+
+	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(20))
+
+	// Create new proposer.
+	proposer := chain.GenAccount()
+	proposerBalance, err := gov.ComputeProposerBalance(ctx, true)
+	requireT.NoError(err)
+	proposerBalance = proposerBalance.Sub(missingDepositAmount)
+	chain.Faucet.FundAccounts(ctx, t,
+		integration.FundedAccount{
+			Address: proposer,
+			Amount:  proposerBalance,
+		},
+	)
+
+	// Create proposer depositor.
+	depositor := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, depositor, integration.BalancesOptions{
+		Messages: []sdk.Msg{&govtypesv1.MsgDeposit{}},
+		Amount:   missingDepositAmount.Amount,
+	})
+
+	textProposal := govtypesv1beta1.NewTextProposal("Proposal", "testing proposal")
+	msgContent, err := govtypesv1.NewLegacyContent(textProposal,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	require.NoError(t, err)
+	proposalMsg, err := gov.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		[]sdk.Msg{msgContent},
+		textProposal.GetDescription(),
+		textProposal.GetTitle(),
+		textProposal.GetTitle(),
+		true,
+	)
+	requireT.NoError(err)
+	proposalMsg.InitialDeposit = sdk.NewCoins(proposalMsg.InitialDeposit...).Sub(sdk.Coins{missingDepositAmount}...)
+
+	proposalID, err := gov.Propose(ctx, t, proposalMsg)
+	requireT.NoError(err)
+
+	// Verify that proposal is waiting for deposit.
+	requirePropStatusFunc := func(expectedStatus govtypesv1.ProposalStatus) {
+		proposal, err := gov.GetProposal(ctx, proposalID)
+		requireT.NoError(err)
+		requireT.Equal(expectedStatus, proposal.Status)
+	}
+	requirePropStatusFunc(govtypesv1.StatusDepositPeriod)
+
+	// Deposit missing amount to proposal.
+	depositMsg := govtypesv1.NewMsgDeposit(depositor, proposalID, sdk.Coins{missingDepositAmount})
+	result, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(depositor),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(depositMsg)),
+		depositMsg,
+	)
+	requireT.NoError(err)
+	require.Equal(t, chain.GasLimitByMsgs(depositMsg), uint64(result.GasUsed))
+
+	// Verify that proposal voting has started.
+	requirePropStatusFunc(govtypesv1.StatusVotingPeriod)
+
+	// Vote by all staker accounts:
+	// NoWithVeto 70% & No,Yes,Abstain 10% each.
+	err = gov.VoteAllWeighted(ctx,
+		govtypesv1.WeightedVoteOptions{
+			&govtypesv1.WeightedVoteOption{
+				Option: govtypesv1.OptionNoWithVeto,
+				Weight: "0.7",
+			},
+			&govtypesv1.WeightedVoteOption{
+				Option: govtypesv1.OptionNo,
+				Weight: "0.1",
+			},
+			&govtypesv1.WeightedVoteOption{
+				Option: govtypesv1.OptionYes,
+				Weight: "0.1",
+			},
+			&govtypesv1.WeightedVoteOption{
+				Option: govtypesv1.OptionAbstain,
+				Weight: "0.1",
+			},
+		},
+		proposalID,
+	)
+	requireT.NoError(err)
+
+	// Wait for proposal result.
+	finalStatus, err := gov.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypesv1.StatusRejected, finalStatus)
+}
+
+// TestGovCancelProposalWithDepositAndWeightedVotes tests cancelling proposals.
+func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	gov := chain.Governance
+	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(10))
+
+	// Create new proposer.
+	proposer := chain.GenAccount()
+	proposerBalance, err := gov.ComputeProposerBalance(ctx, false)
+	requireT.NoError(err)
+	proposerBalance = proposerBalance.Sub(missingDepositAmount)
+	chain.FundAccountWithOptions(ctx, t, proposer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&govtypesv1.MsgCancelProposal{},
+		},
+		Amount: proposerBalance.Amount,
+	})
+
+	// Create proposer depositor.
+	depositor := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, depositor, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&govtypesv1beta1.MsgDeposit{},
+		},
+		Amount: missingDepositAmount.Amount,
+	})
+
+	// Create proposal with deposit less than min deposit.
+	textProposal := govtypesv1beta1.NewTextProposal("Test proposal with weighted votes",
+		strings.Repeat("Description", 20))
+
+	msgExecLegacy, err := govtypesv1.NewLegacyContent(textProposal,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	requireT.NoError(err)
+
+	proposalMsg, err := gov.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		[]sdk.Msg{msgExecLegacy},
+		textProposal.GetDescription(),
+		textProposal.GetTitle(),
+		textProposal.GetTitle(),
+		false,
+	)
+	requireT.NoError(err)
+
+	proposalMsg.InitialDeposit = sdk.NewCoins(proposalMsg.InitialDeposit...).Sub(sdk.Coins{missingDepositAmount}...)
+	proposalID, err := gov.Propose(ctx, t, proposalMsg)
+	requireT.NoError(err)
+
+	t.Logf("Proposal created, proposalID: %d", proposalID)
+
+	// Store proposer and depositor balances before cancelling proposal.
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	accBalanceFunc := func(prop sdk.AccAddress) sdk.Coin {
+		accBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: prop.String(),
+			Denom:   chain.ChainSettings.Denom,
+		})
+		requireT.NoError(err)
+		return *accBalance.Balance
+	}
+
+	// Verify that proposal is waiting for deposit.
+	requirePropStatusFunc := func(expectedStatus govtypesv1.ProposalStatus) {
+		proposal, err := gov.GetProposal(ctx, proposalID)
+		requireT.NoError(err)
+		requireT.Equal(expectedStatus, proposal.Status)
+	}
+	requirePropStatusFunc(govtypesv1.StatusDepositPeriod)
+
+	// Deposit missing amount to proposal.
+	depositMsg := govtypesv1beta1.NewMsgDeposit(depositor, proposalID, sdk.Coins{missingDepositAmount})
+	result, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(depositor),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(depositMsg)),
+		depositMsg,
+	)
+	requireT.NoError(err)
+	require.Equal(t, chain.GasLimitByMsgs(depositMsg), uint64(result.GasUsed))
+
+	t.Logf("Deposited more funds to proposal, txHash:%s, gasUsed:%d", result.TxHash, result.GasUsed)
+
+	// Verify that proposal voting has started.
+	requirePropStatusFunc(govtypesv1.StatusVotingPeriod)
+
+	_, err = gov.GetProposal(ctx, proposalID)
+	requireT.NoError(err)
+
+	msgCancelProposal := &govtypesv1.MsgCancelProposal{
+		ProposalId: proposalID,
+		Proposer:   proposer.String(),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(proposer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgCancelProposal)),
+		msgCancelProposal,
+	)
+	requireT.NoError(err)
+
+	// Proposal should not exist anymore.
+	_, err = gov.GetProposal(ctx, proposalID)
+	requireT.ErrorContains(err, "doesn't exist")
+
+	params, err := gov.QueryGovParams(ctx)
+	requireT.NoError(err)
+
+	proposerCancelFee := sdkmath.LegacyMustNewDecFromStr(params.ProposalCancelRatio).
+		Mul(sdkmath.LegacyNewDecFromInt(proposalMsg.InitialDeposit[0].Amount)).TruncateInt()
+	depositorCancelFee := sdkmath.LegacyMustNewDecFromStr(params.ProposalCancelRatio).
+		Mul(sdkmath.LegacyNewDecFromInt(missingDepositAmount.Amount)).TruncateInt()
+
+	// Assert that proposer & depositor deposits were credited back after applying cancel ratio.
+	proposerBalanceBeforeCancelling := accBalanceFunc(proposer)
+	depositorBalanceBeforeCancelling := accBalanceFunc(depositor)
+	requireT.Equal(
+		proposalMsg.InitialDeposit[0].Amount.Sub(proposerBalanceBeforeCancelling.Amount).String(),
+		proposerCancelFee.String(),
+	)
+	requireT.Equal(
+		missingDepositAmount.Amount.Sub(depositorBalanceBeforeCancelling.Amount).String(),
+		depositorCancelFee.String(),
+	)
 }

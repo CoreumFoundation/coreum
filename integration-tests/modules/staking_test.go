@@ -35,7 +35,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 
 	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
@@ -67,6 +67,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 		"Change all params in staking module",
 		"Change all params in staking module",
 		"Change all params in staking module",
+		false,
 	)
 	requireT.NoError(err)
 
@@ -477,7 +478,7 @@ func setUnbondingTimeViaGovernance(
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 
 	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
@@ -503,6 +504,7 @@ func setUnbondingTimeViaGovernance(
 		fmt.Sprintf("Change the unbnunbondingdig time to %s", unbondingTime.String()),
 		"Changing unbonding time for the integration test",
 		"Changing unbonding time for the integration test",
+		false,
 	)
 	requireT.NoError(err)
 

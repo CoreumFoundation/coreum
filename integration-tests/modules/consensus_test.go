@@ -32,7 +32,7 @@ func TestUpdatingMaxBlockSize(t *testing.T) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := gov.ComputeProposerBalance(ctx)
+	proposerBalance, err := gov.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 	chain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
@@ -55,6 +55,7 @@ func TestUpdatingMaxBlockSize(t *testing.T) {
 		"",
 		"Reduce block size",
 		"Reduce block size",
+		false,
 	)
 	requireT.NoError(err)
 	proposalID, err := gov.Propose(ctx, t, proposalMsg)

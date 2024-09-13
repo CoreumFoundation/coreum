@@ -54,6 +54,7 @@ func upgradeV4ToV5(t *testing.T) {
 	tests := []upgradeTest{
 		&cosmosSDKVersion{},
 		&dex{},
+		&gov{},
 	}
 
 	for _, test := range tests {
@@ -93,7 +94,7 @@ func runUpgrade(
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 
 	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
@@ -115,6 +116,7 @@ func runUpgrade(
 		"Upgrade chain",
 		"Upgrade "+upgradeName,
 		"Running "+upgradeName+" in integration tests",
+		false,
 	)
 
 	requireT.NoError(err)

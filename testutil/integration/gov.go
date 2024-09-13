@@ -51,13 +51,16 @@ func NewGovernance(chainCtx ChainContext, stakerMnemonics []string, faucet Fauce
 }
 
 // ComputeProposerBalance computes the balance required for the proposer.
-func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error) {
+func (g Governance) ComputeProposerBalance(ctx context.Context, expedited bool) (sdk.Coin, error) {
 	govParams, err := g.QueryGovParams(ctx)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
 
 	minDeposit := govParams.MinDeposit[0]
+	if expedited {
+		minDeposit = govParams.ExpeditedMinDeposit[0]
+	}
 	return g.chainCtx.NewCoin(minDeposit.Amount.Add(
 		g.chainCtx.ChainSettings.GasPrice.
 			Mul(sdkmath.LegacyNewDec(int64(submitProposalGas))).
@@ -118,11 +121,11 @@ func (g Governance) ProposalFromMsgAndVote(
 		proposer = g.chainCtx.GenAccount()
 	}
 
-	proposerBalance, err := g.ComputeProposerBalance(ctx)
+	proposerBalance, err := g.ComputeProposerBalance(ctx, false)
 	require.NoError(t, err)
 	g.faucet.FundAccounts(ctx, t, NewFundedAccount(proposer, proposerBalance))
 
-	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, msgs, metadata, title, summary)
+	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, msgs, metadata, title, summary, false)
 	require.NoError(t, err)
 
 	g.ProposeAndVote(ctx, t, proposalMsg, option)
@@ -166,14 +169,19 @@ func (g Governance) NewMsgSubmitProposal(
 	metadata string,
 	title string,
 	summary string,
+	expedited bool,
 ) (*govtypesv1.MsgSubmitProposal, error) {
 	govParams, err := g.QueryGovParams(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	minDeposit := govParams.MinDeposit
+	if expedited {
+		minDeposit = govParams.ExpeditedMinDeposit
+	}
 	msg, err := govtypesv1.NewMsgSubmitProposal(
-		messages, govParams.MinDeposit, proposer.String(), metadata, title, summary, false,
+		messages, minDeposit, proposer.String(), metadata, title, summary, expedited,
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
