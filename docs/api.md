@@ -2485,6 +2485,7 @@ Feature defines possible features of fungible token.
 | block_smart_contracts | 5 |  |
 | clawback | 6 |  |
 | extension | 7 |  |
+| block_dex | 8 |  |
 
 
  <!-- end enums -->

@@ -137,6 +137,9 @@ the full functionality of BlockSmartContract, so allowing the two features toget
 
 _**Disclaimer**: if the admin claws back from the escrow address, then it will break the IBC. admins should not do this if they want the IBC to work for their token._
 
+### BlockDEX
+If the BlockDEX is enabled, then the token cannot be used for the DEX trading.
+
 ### Extension
 Extension is a powerful feature which lets the admin override some functionalities of the token by attaching a smart contract to the token that can administrate it. When a bank transfer is initiated, the smart contract account receives the amount plus any commission or burn amount if they should be applied, then it is called via a sudo call with the information related to the bank transfer and the context information. The smart contract then can decide to do whatever it decides with the transfer which may include overriding of some behaviors for the features explained before.
 The sudo call is received in the `pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg)` entry point of the smart contract and the message would be a `ExtensionTransfer` which is defined as follows.

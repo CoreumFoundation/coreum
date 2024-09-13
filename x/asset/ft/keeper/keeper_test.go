@@ -1808,6 +1808,40 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, extensionCoin), "not supported for the tokens with extensions")
 }
 
+func TestKeeper_DEXBlockDEXFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_block_dex,
+		},
+	}
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	coinToLock := sdk.NewInt64Coin(denom, 50)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinToLock)))
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, coinToLock), "locking coins for DEX disabled for")
+}
+
 func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 	requireT := require.New(t)
 
