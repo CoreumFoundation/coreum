@@ -1343,6 +1343,22 @@ func (k Keeper) dexLockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddres
 }
 
 func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	def, err := k.GetDefinition(ctx, coin.Denom)
+	if err != nil {
+		// check if the token is assetft
+		if !sdkerrors.IsOf(err, types.ErrInvalidDenom, types.ErrTokenNotFound) {
+			return err
+		}
+	} else {
+		if def.ExtensionCWAddress != "" {
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput,
+				"failed to DEX lock %s, not supported for the tokens with extensions",
+				coin.String(),
+			)
+		}
+	}
+
 	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
 	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, coin); err != nil {
 		return err

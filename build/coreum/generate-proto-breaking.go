@@ -21,9 +21,9 @@ import (
 )
 
 //go:embed proto-breaking.tmpl.json
-var configBreakingTmpl string //nolint:unused // temporary not used
+var configBreakingTmpl string
 
-func breakingProto(ctx context.Context, deps types.DepsFunc) error { //nolint:deadcode,unused // temporary not used
+func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(golang.Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
 
 	masterDir, err := os.MkdirTemp("", "coreum-master-*")
