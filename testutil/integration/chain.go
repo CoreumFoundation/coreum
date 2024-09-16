@@ -304,7 +304,9 @@ func NewChain(
 		WithClient(rpcClient).
 		WithAwaitTx(true)
 
-	enabledSignModes := append(authtx.DefaultSignModes, sdksigning.SignMode_SIGN_MODE_TEXTUAL)
+	enabledSignModes := make([]sdksigning.SignMode, 0)
+	enabledSignModes = append(enabledSignModes, authtx.DefaultSignModes...)
+	enabledSignModes = append(enabledSignModes, sdksigning.SignMode_SIGN_MODE_TEXTUAL)
 	txConfigOpts := authtx.ConfigOptions{
 		EnabledSignModes:           enabledSignModes,
 		TextualCoinMetadataQueryFn: tx.NewGRPCCoinMetadataQueryFn(clientCtx),
