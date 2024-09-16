@@ -25,6 +25,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	tx "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	authz "github.com/cosmos/cosmos-sdk/x/authz/module"
@@ -302,6 +304,20 @@ func NewChain(
 		WithClient(rpcClient).
 		WithAwaitTx(true)
 
+	enabledSignModes := append(authtx.DefaultSignModes, sdksigning.SignMode_SIGN_MODE_TEXTUAL)
+	txConfigOpts := authtx.ConfigOptions{
+		EnabledSignModes:           enabledSignModes,
+		TextualCoinMetadataQueryFn: tx.NewGRPCCoinMetadataQueryFn(clientCtx),
+	}
+	txConfig, err := authtx.NewTxConfigWithOptions(
+		clientCtx.Codec(),
+		txConfigOpts,
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	clientCtx = clientCtx.WithTxConfig(txConfig)
 	chainCtx := NewChainContext(encodingConfig, clientCtx, chainSettings)
 
 	var faucet Faucet
