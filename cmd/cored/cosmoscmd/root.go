@@ -114,6 +114,9 @@ func NewRootCmd() *cobra.Command {
 			}
 
 			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
+			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
+				return err
+			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
 			customTMConfig := app.ChosenNetwork.NodeConfig.TendermintNodeConfig(initTendermintConfig())
