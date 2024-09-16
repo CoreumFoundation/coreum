@@ -312,7 +312,7 @@ func NewChain(
 		TextualCoinMetadataQueryFn: tx.NewGRPCCoinMetadataQueryFn(clientCtx),
 	}
 	txConfig, err := authtx.NewTxConfigWithOptions(
-		clientCtx.Codec(),
+		encodingConfig.Codec,
 		txConfigOpts,
 	)
 	if err != nil {

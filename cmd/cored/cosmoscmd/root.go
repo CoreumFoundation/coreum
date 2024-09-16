@@ -100,18 +100,20 @@ func NewRootCmd() *cobra.Command {
 					TextualCoinMetadataQueryFn: tx.NewGRPCCoinMetadataQueryFn(initClientCtx),
 				}
 				txConfig, err := authtx.NewTxConfigWithOptions(
-					initClientCtx.Codec,
+					encodingConfig.Codec,
 					txConfigOpts,
 				)
 				if err != nil {
 					return err
 				}
 
-				initClientCtx = initClientCtx.WithTxConfig(txConfig).WithCmdContext(cmd.Context())
+				initClientCtx = initClientCtx.WithTxConfig(txConfig)
 			}
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
 				return err
 			}
+
+			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
 
 			customAppTemplate, customAppConfig := initAppConfig()
 			customTMConfig := app.ChosenNetwork.NodeConfig.TendermintNodeConfig(initTendermintConfig())
