@@ -51,6 +51,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
+	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -59,6 +60,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	tx "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -451,6 +453,22 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		logger,
 	)
+
+	enabledSignModes := make([]signingtypes.SignMode, 0)
+	enabledSignModes = append(enabledSignModes, authtx.DefaultSignModes...)
+	enabledSignModes = append(enabledSignModes, signingtypes.SignMode_SIGN_MODE_TEXTUAL)
+	txConfigOpts := authtx.ConfigOptions{
+		EnabledSignModes:           enabledSignModes,
+		TextualCoinMetadataQueryFn: tx.NewBankKeeperCoinMetadataQueryFn(app.BankKeeper),
+	}
+	var err error
+	txConfig, err = authtx.NewTxConfigWithOptions(
+		appCodec,
+		txConfigOpts,
+	)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
