@@ -42,14 +42,15 @@ func New(mm *module.Manager, configurator module.Configurator,
 				return nil, err
 			}
 
-			govParams.ProposalCancelRatio = sdkmath.LegacyMustNewDecFromStr("0.5").String()
+			govParams.ProposalCancelRatio = sdkmath.LegacyMustNewDecFromStr("1.0").String()
 			govParams.ProposalCancelDest = ""
 			govParams.ExpeditedVotingPeriod = lo.ToPtr(24 * time.Hour)
 			govParams.ExpeditedThreshold = sdkmath.LegacyMustNewDecFromStr("0.667").String()
 			govParams.ExpeditedMinDeposit = sdk.NewCoins(
-				sdk.NewCoin(chosenNetwork.Denom(), sdkmath.NewInt(4_000_000_000)),
+				sdk.NewCoin(chosenNetwork.Denom(), sdkmath.NewInt(20_000_000_000)),
 			)
 			govParams.MinDepositRatio = sdkmath.LegacyMustNewDecFromStr("0.01").String()
+			govParams.BurnVoteQuorum = true
 
 			err = govParamKeeper.Params.Set(ctx, govParams)
 			if err != nil {
