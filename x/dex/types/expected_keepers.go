@@ -25,7 +25,7 @@ type AccountQueryServer interface {
 
 // AssetFTKeeper represents required methods of asset ft keeper.
 type AssetFTKeeper interface {
-	DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
+	DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error
 	DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
 	DEXUnlockAndSend(ctx sdk.Context, from, to sdk.AccAddress, coin sdk.Coin) error
 	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin

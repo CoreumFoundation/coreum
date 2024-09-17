@@ -176,6 +176,26 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			},
 			expectedError: types.ErrInvalidInput,
 		},
+		{
+			name: "invalid_dex_restrictions_duplicate",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.DEXRestrictions = &types.DEXRestrictions{
+					DenomsToTradeWith: []string{"denom1", "denom1"},
+				}
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_dex_restrictions_invalid_denom",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.DEXRestrictions = &types.DEXRestrictions{
+					DenomsToTradeWith: []string{"123!!!!!!!123", "denom2"},
+				}
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
 	}
 	for _, testCase := range testCases {
 		tc := testCase
@@ -705,6 +725,58 @@ func TestMsgUpdateDEXSettings_ValidateBasic(t *testing.T) {
 	}
 }
 
+func TestMsgUpdateDEXRestrictions_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgUpdateDEXRestrictions{
+		Sender: sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String(),
+		Denom:  "dnm",
+		DEXRestrictions: types.DEXRestrictions{
+			DenomsToTradeWith: []string{"denom1", "denom2"},
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		messageFunc   func(msg types.MsgUpdateDEXRestrictions) types.MsgUpdateDEXRestrictions
+		expectedError error
+	}{
+		{
+			name: "valid",
+			messageFunc: func(msg types.MsgUpdateDEXRestrictions) types.MsgUpdateDEXRestrictions {
+				return msg
+			},
+		},
+		{
+			name: "invalid_dex_restrictions_duplicate",
+			messageFunc: func(msg types.MsgUpdateDEXRestrictions) types.MsgUpdateDEXRestrictions {
+				msg.DEXRestrictions.DenomsToTradeWith = []string{"denom1", "denom1"}
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_dex_restrictions_invalid_denom",
+			messageFunc: func(msg types.MsgUpdateDEXRestrictions) types.MsgUpdateDEXRestrictions {
+				msg.DEXRestrictions.DenomsToTradeWith = []string{"denom1", "1!!!!denom1"}
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			err := tc.messageFunc(validMessage).ValidateBasic()
+			if tc.expectedError == nil {
+				requireT.NoError(err)
+			} else {
+				requireT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
 //nolint:lll // we don't care about test strings
 func TestAmino(t *testing.T) {
 	const address = "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"
@@ -808,6 +880,17 @@ func TestAmino(t *testing.T) {
 				},
 			},
 			wantAminoJSON: `{"type":"assetft/MsgUpdateDEXSettings","value":{"denom":"my-denom","dex_settings":{"unified_ref_amount":"1.300000000000000000"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+		},
+		{
+			name: sdk.MsgTypeURL(&types.MsgUpdateDEXRestrictions{}),
+			msg: &types.MsgUpdateDEXRestrictions{
+				Sender: address,
+				Denom:  coin.Denom,
+				DEXRestrictions: types.DEXRestrictions{
+					DenomsToTradeWith: []string{"denom2", "denom3"},
+				},
+			},
+			wantAminoJSON: `{"type":"assetft/MsgUpdateDEXRestrictions","value":{"denom":"my-denom","dex_restrictions":{"denoms_to_trade_with":["denom2","denom3"]},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 	}
 

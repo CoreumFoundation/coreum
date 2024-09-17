@@ -57,6 +57,7 @@ type IssueSettings struct {
 	SendCommissionRate sdkmath.LegacyDec
 	ExtensionSettings  *ExtensionIssueSettings
 	DEXSettings        *DEXSettings
+	DEXRestrictions    *DEXRestrictions
 }
 
 // BuildDenom builds the denom string from the symbol and issuer address.
@@ -271,6 +272,27 @@ func validateRate(rate sdkmath.LegacyDec) error {
 func ValidateDEXSettings(settings DEXSettings) error {
 	if !settings.UnifiedRefAmount.IsPositive() {
 		return sdkerrors.Wrap(ErrInvalidInput, "unified ref amount must be positive")
+	}
+
+	return nil
+}
+
+// ValidateDEXRestrictions checks that provided DEX restrictions are valid.
+func ValidateDEXRestrictions(restrictions DEXRestrictions) error {
+	duplicates := lo.FindDuplicates(restrictions.DenomsToTradeWith)
+	if len(duplicates) != 0 {
+		return sdkerrors.Wrapf(
+			ErrInvalidInput, "duplicated denoms in the denoms to trade with list, duplicates: %v", duplicates,
+		)
+	}
+	for _, denom := range restrictions.DenomsToTradeWith {
+		if err := sdk.ValidateDenom(denom); err != nil {
+			return sdkerrors.Wrapf(
+				ErrInvalidInput,
+				"invalid denom in the denoms to trade with list, denom: %s, err: %s",
+				denom, err,
+			)
+		}
 	}
 
 	return nil

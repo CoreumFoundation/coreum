@@ -41,6 +41,7 @@ var (
 	_ extendedMsg = &MsgUpgradeTokenV1{}
 	_ extendedMsg = &MsgUpdateParams{}
 	_ extendedMsg = &MsgUpdateDEXSettings{}
+	_ extendedMsg = &MsgUpdateDEXRestrictions{}
 )
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
@@ -57,6 +58,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgUpgradeTokenV1{}, fmt.Sprintf("%s/MsgUpgradeTokenV1", ModuleName))
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName))
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateDEXSettings{}, fmt.Sprintf("%s/MsgUpdateDEXSettings", ModuleName))
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateDEXRestrictions{}, fmt.Sprintf("%s/MsgUpdateDEXRestrictions", ModuleName))
 }
 
 // ValidateBasic validates the message.
@@ -96,6 +98,12 @@ func (m MsgIssue) ValidateBasic() error {
 
 	if m.DEXSettings != nil {
 		if err := ValidateDEXSettings(*m.DEXSettings); err != nil {
+			return err
+		}
+	}
+
+	if m.DEXRestrictions != nil {
+		if err := ValidateDEXRestrictions(*m.DEXRestrictions); err != nil {
 			return err
 		}
 	}
@@ -342,4 +350,13 @@ func (m MsgUpdateDEXSettings) ValidateBasic() error {
 	}
 
 	return ValidateDEXSettings(m.DEXSettings)
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m MsgUpdateDEXRestrictions) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return cosmoserrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", err)
+	}
+
+	return ValidateDEXRestrictions(m.DEXRestrictions)
 }

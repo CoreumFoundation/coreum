@@ -476,6 +476,66 @@ func TestKeeper_Issue_WithDEXSettings(t *testing.T) {
 	}, gotToken)
 }
 
+func TestKeeper_Issue_WithDEXRestrictions(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(777),
+		DEXRestrictions: &types.DEXRestrictions{
+			DenomsToTradeWith: []string{"denom1", "denom2"},
+		},
+	}
+
+	// try to issue without the restrict_dex feature
+	_, err := ftKeeper.Issue(ctx, settings)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	// use the correct feature
+	settings = types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC2",
+		Subunit:       "abc2",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(777),
+		DEXRestrictions: &types.DEXRestrictions{
+			DenomsToTradeWith: []string{"denom1", "denom2"},
+		},
+		Features: []types.Feature{
+			types.Feature_restrict_dex,
+		},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	gotToken, err := ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	requireT.Equal(types.Token{
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Description:        settings.Description,
+		Subunit:            strings.ToLower(settings.Subunit),
+		Precision:          settings.Precision,
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
+		Version:            types.CurrentTokenVersion,
+		Admin:              settings.Issuer.String(),
+		DEXRestrictions:    settings.DEXRestrictions,
+		Features:           settings.Features,
+	}, gotToken)
+}
+
 func TestKeeper_Mint(t *testing.T) {
 	requireT := require.New(t)
 
@@ -640,7 +700,7 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 
 	// DEX lock coins and try to burn
-	err = ftKeeper.DEXLock(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	err = ftKeeper.DEXLock(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)), "")
 	requireT.NoError(err)
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
@@ -1407,7 +1467,7 @@ func TestKeeper_Clawback(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// try to clawback locked balance
-	err = ftKeeper.DEXLock(ctx, from, sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	err = ftKeeper.DEXLock(ctx, from, sdk.NewCoin(denom, sdkmath.NewInt(100)), "")
 	requireT.NoError(err)
 	err = ftKeeper.Clawback(ctx, issuer, from, sdk.NewCoin(denom, sdkmath.NewInt(40)))
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
@@ -1710,7 +1770,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 
 	coinToSend := sdk.NewInt64Coin(denom, 1000)
 	// try to DEX lock more than balance
-	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend), cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend, ""), cosmoserrors.ErrInsufficientFunds)
 	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinToSend)))
 
 	// try to send full balance with the vesting locked coins
@@ -1722,7 +1782,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT.NoError(bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(coinToSend)))
 
 	// lock full allowed amount (but without the amount locked by vesting)
-	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend))
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend, ""))
 	// try to send at least one coin
 	requireT.ErrorIs(
 		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom, 1))),
@@ -1731,13 +1791,13 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	// DEX unlock full balance
 	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, coinToSend))
 	// DEX lock one more time
-	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend))
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend, ""))
 
 	balance := bankKeeper.GetBalance(ctx, acc, denom)
 	requireT.Equal(coinToSend.Add(vestingCoin).String(), balance.String())
 
 	// try to DEX lock coins which are locked by the vesting
-	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, vestingCoin), cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, vestingCoin, ""), cosmoserrors.ErrInsufficientFunds)
 
 	// try lock unlock full balance
 	requireT.ErrorIs(ftKeeper.DEXUnlock(ctx, acc, balance), cosmoserrors.ErrInsufficientFunds)
@@ -1757,7 +1817,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT.Equal(sdkmath.ZeroInt().String(), ftKeeper.GetDEXLockedBalance(ctx, acc, denom).Amount.String())
 
 	// try to lock now with the frozen coins
-	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend), cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend, ""), cosmoserrors.ErrInsufficientFunds)
 
 	// unfreeze part
 	requireT.NoError(ftKeeper.Unfreeze(ctx, issuer, acc, sdk.NewInt64Coin(denom, 300)))
@@ -1765,7 +1825,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 
 	// now 700 frozen, 50 locked by vesting, 1050 balance
 	// try to lock more than allowed
-	err = ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 351))
+	err = ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 351), "")
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 	requireT.ErrorContains(err, "available 350")
 
@@ -1776,11 +1836,11 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 
 	// try to lock with global freezing
 	requireT.NoError(ftKeeper.GloballyFreeze(ctx, issuer, denom))
-	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350)), cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350), ""), cosmoserrors.ErrInsufficientFunds)
 	requireT.True(ftKeeper.GetSpendableBalance(ctx, acc, denom).IsZero())
 	// globally unfreeze now and check that we can lock max allowed
 	requireT.NoError(ftKeeper.GloballyUnfreeze(ctx, issuer, denom))
-	requireT.NoError(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350)))
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350), ""))
 	// freeze more than balance
 	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, sdk.NewInt64Coin(denom, 1_000_000)))
 
@@ -1805,10 +1865,10 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT.NoError(err)
 	extensionCoin := sdk.NewInt64Coin(denomWithExtension, 50)
 	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(extensionCoin)))
-	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, extensionCoin), "not supported for the tokens with extensions")
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, extensionCoin, ""), "not supported for the tokens with extensions")
 }
 
-func TestKeeper_DEXBlockDEXFeature(t *testing.T) {
+func TestKeeper_BlockDEXFeature(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -1839,7 +1899,46 @@ func TestKeeper_DEXBlockDEXFeature(t *testing.T) {
 
 	coinToLock := sdk.NewInt64Coin(denom, 50)
 	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinToLock)))
-	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, coinToLock), "locking coins for DEX disabled for")
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, coinToLock, ""), "locking coins for DEX disabled for")
+}
+
+func TestKeeper_RestrictDEXFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []types.Feature{
+			types.Feature_restrict_dex,
+		},
+		DEXRestrictions: &types.DEXRestrictions{
+			DenomsToTradeWith: []string{
+				"denom1",
+			},
+		},
+	}
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	coinToLock := sdk.NewInt64Coin(denom, 50)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinToLock)))
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, coinToLock, "denom2"), "is prohibited for receive denom denom2")
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToLock, "denom1"))
 }
 
 func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
@@ -1872,7 +1971,7 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 
 	coinToSend := sdk.NewInt64Coin(denom, 1000)
 	// try to lock more than balance
-	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend), cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend, ""), cosmoserrors.ErrInsufficientFunds)
 	requireT.NoError(bankKeeper.SendCoins(ctx, faucet, acc, sdk.NewCoins(coinToSend)))
 
 	// try to send full balance with the vesting locked coins
@@ -1882,7 +1981,7 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 	)
 
 	// lock full allowed amount (but without the amount locked by vesting)
-	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend))
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToSend, ""))
 
 	// try to send at least one coin
 	requireT.ErrorIs(
@@ -1894,7 +1993,7 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 	requireT.Equal(coinToSend.Add(vestingCoin).String(), balance.String())
 
 	// try lock coins which are locked by the vesting
-	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, vestingCoin), cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, vestingCoin, ""), cosmoserrors.ErrInsufficientFunds)
 
 	// try lock unlock full balance
 	requireT.ErrorIs(ftKeeper.DEXUnlock(ctx, acc, balance), cosmoserrors.ErrInsufficientFunds)
@@ -3147,5 +3246,83 @@ func TestKeeper_UpdateDEXSettings(t *testing.T) {
 	gotToken, err = ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
 	expectToken.DEXSettings = &dexSettings
+	requireT.Equal(expectToken, gotToken)
+}
+
+func TestKeeper_UpdateDEXRestrictions(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(777),
+		Features: []types.Feature{
+			types.Feature_restrict_dex,
+		},
+	}
+
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	gotToken, err := ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	expectToken := types.Token{
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Description:        settings.Description,
+		Subunit:            strings.ToLower(settings.Subunit),
+		Precision:          settings.Precision,
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
+		Version:            types.CurrentTokenVersion,
+		Admin:              settings.Issuer.String(),
+		DEXRestrictions:    settings.DEXRestrictions,
+		Features: []types.Feature{
+			types.Feature_restrict_dex,
+		},
+	}
+	requireT.Equal(expectToken, gotToken)
+
+	// try to update with the invalid restrictions
+	dexRestrictions := types.DEXRestrictions{
+		DenomsToTradeWith: []string{"1denom1"},
+	}
+	requireT.ErrorIs(ftKeeper.UpdateDEXRestrictions(ctx, issuer, denom, dexRestrictions), types.ErrInvalidInput)
+
+	// try to update from not issuer
+	dexRestrictions = types.DEXRestrictions{
+		DenomsToTradeWith: []string{"denom1"},
+	}
+	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.ErrorIs(ftKeeper.UpdateDEXRestrictions(ctx, randomAddr, denom, dexRestrictions), cosmoserrors.ErrUnauthorized)
+
+	// update the restrictions
+	requireT.NoError(ftKeeper.UpdateDEXRestrictions(ctx, issuer, denom, dexRestrictions))
+
+	gotToken, err = ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	expectToken.DEXRestrictions = &dexRestrictions
+	requireT.Equal(expectToken, gotToken)
+
+	// update the restriction to empty list to allow all denoms
+	dexRestrictions = types.DEXRestrictions{
+		DenomsToTradeWith: nil,
+	}
+	// update the restrictions
+	requireT.NoError(ftKeeper.UpdateDEXRestrictions(ctx, issuer, denom, dexRestrictions))
+
+	gotToken, err = ftKeeper.GetToken(ctx, denom)
+	requireT.NoError(err)
+	expectToken.DEXRestrictions = &dexRestrictions
 	requireT.Equal(expectToken, gotToken)
 }

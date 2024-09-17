@@ -31,6 +31,7 @@ message EventIssued {
   string uri_hash = 12 [(gogoproto.customname) = "URIHash"];
   string admin = 13;
   DEXSettings dex_settings = 14 [(gogoproto.customname) = "DEXSettings"];
+  DEXRestrictions dex_restrictions = 15 [(gogoproto.customname) = "DEXRestrictions"];
 }
 
 message EventFrozenAmountChanged {
@@ -95,4 +96,9 @@ message EventAdminCleared {
 message EventDEXSettingsChanged {
   DEXSettings previous_settings = 1;
   DEXSettings new_settings = 2 [(gogoproto.nullable) = false];
+}
+
+message EventDEXRestrictionsChanged {
+  DEXRestrictions previous_restrictions = 1;
+  DEXRestrictions new_restrictions = 2 [(gogoproto.nullable) = false];
 }

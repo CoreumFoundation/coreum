@@ -125,6 +125,18 @@ func TestInitAndExportGenesis(t *testing.T) {
 			})
 	}
 
+	// DEX restrictions
+	var dexRestrictions []types.DEXRestrictionsWithDenom
+	for i := 0; i < 4; i++ {
+		dexRestrictions = append(dexRestrictions,
+			types.DEXRestrictionsWithDenom{
+				Denom: fmt.Sprintf("denom-%d", i),
+				DEXRestrictions: types.DEXRestrictions{
+					DenomsToTradeWith: []string{"denom1", "denom2", fmt.Sprintf("denomx1.%d", i)},
+				},
+			})
+	}
+
 	genState := types.GenesisState{
 		Params:               types.DefaultParams(),
 		Tokens:               tokens,
@@ -133,6 +145,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		PendingTokenUpgrades: pendingTokenUpgrades,
 		DEXLockedBalances:    dexLockedBalances,
 		DEXSettings:          dexSettings,
+		DEXRestrictions:      dexRestrictions,
 	}
 
 	// init the keeper
@@ -184,6 +197,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 		storedSettings, err := ftKeeper.GetDEXSettings(ctx, settings.Denom)
 		requireT.NoError(err)
 		assertT.EqualValues(settings.DEXSettings, storedSettings)
+	}
+
+	for _, restrictions := range dexRestrictions {
+		storedSettings, err := ftKeeper.GetDEXRestrictions(ctx, restrictions.Denom)
+		requireT.NoError(err)
+		assertT.EqualValues(restrictions.DEXRestrictions, storedSettings)
 	}
 
 	// check that export is equal import

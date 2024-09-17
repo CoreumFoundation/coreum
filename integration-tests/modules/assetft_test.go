@@ -422,6 +422,94 @@ func TestAssetFTDEXSettingsCreationAndUpdateVIAGov(t *testing.T) {
 	requireT.Equal(updatedDEXSettings, dexSettingsRes.DEXSettings)
 }
 
+// TestAssetFTDEXRestrictionsCreationAndUpdate tests DEX restrictions creation and update.
+func TestAssetFTDEXRestrictionsCreationAndUpdate(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgUpdateDEXRestrictions{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:    issuer.String(),
+		Symbol:    "ABC",
+		Subunit:   "uabc",
+		Precision: 6,
+		DEXRestrictions: &assetfttypes.DEXRestrictions{
+			DenomsToTradeWith: []string{"denom1"},
+		},
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_restrict_dex,
+		},
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	// query token admin
+	gotTokenRes, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	expectToken := assetfttypes.Token{
+		Denom:              denom,
+		Issuer:             issueMsg.Issuer,
+		Symbol:             issueMsg.Symbol,
+		Description:        issueMsg.Description,
+		Subunit:            strings.ToLower(issueMsg.Subunit),
+		Precision:          issueMsg.Precision,
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
+		Version:            assetfttypes.CurrentTokenVersion,
+		Admin:              issueMsg.Issuer,
+		DEXRestrictions:    issueMsg.DEXRestrictions,
+		Features:           issueMsg.Features,
+	}
+	requireT.Equal(expectToken, gotTokenRes.Token)
+
+	newDEXRestrictions := assetfttypes.DEXRestrictions{
+		DenomsToTradeWith: []string{"denom2"},
+	}
+	updateDEXRestrictionsMsg := &assetfttypes.MsgUpdateDEXRestrictions{
+		Sender:          issuer.String(),
+		Denom:           denom,
+		DEXRestrictions: newDEXRestrictions,
+	}
+
+	txRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(updateDEXRestrictionsMsg)),
+		updateDEXRestrictionsMsg,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(updateDEXRestrictionsMsg), uint64(txRes.GasUsed))
+
+	dexRestrictionsChangedEvts, err := event.FindTypedEvents[*assetfttypes.EventDEXRestrictionsChanged](txRes.Events)
+	requireT.NoError(err)
+	evt := dexRestrictionsChangedEvts[0]
+	requireT.NotNil(evt.PreviousRestrictions)
+	requireT.Equal(*issueMsg.DEXRestrictions, *evt.PreviousRestrictions)
+	requireT.Equal(newDEXRestrictions, evt.NewRestrictions)
+}
+
 // TestAssetIssueAndQueryTokens checks that tokens query works as expected.
 func TestAssetIssueAndQueryTokens(t *testing.T) {
 	t.Parallel()

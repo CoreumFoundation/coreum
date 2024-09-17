@@ -31,6 +31,7 @@ type MsgKeeper interface {
 	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 	UpdateDEXSettings(ctx sdk.Context, sender sdk.AccAddress, denom string, settings types.DEXSettings) error
+	UpdateDEXRestrictions(ctx sdk.Context, sender sdk.AccAddress, denom string, restrictions types.DEXRestrictions) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -65,6 +66,7 @@ func (ms MsgServer) Issue(ctx context.Context, req *types.MsgIssue) (*types.Empt
 		URIHash:            req.URIHash,
 		ExtensionSettings:  req.ExtensionSettings,
 		DEXSettings:        req.DEXSettings,
+		DEXRestrictions:    req.DEXRestrictions,
 	})
 	if err != nil {
 		return nil, err
@@ -316,7 +318,7 @@ func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	return &types.EmptyResponse{}, nil
 }
 
-// UpdateDEXSettings upgrades token DEX settings.
+// UpdateDEXSettings updates token DEX settings.
 func (ms MsgServer) UpdateDEXSettings(
 	goCtx context.Context,
 	req *types.MsgUpdateDEXSettings,
@@ -328,6 +330,25 @@ func (ms MsgServer) UpdateDEXSettings(
 	}
 
 	err = ms.keeper.UpdateDEXSettings(ctx, sender, req.Denom, req.DEXSettings)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// UpdateDEXRestrictions updates token DEX restrictions.
+func (ms MsgServer) UpdateDEXRestrictions(
+	goCtx context.Context,
+	req *types.MsgUpdateDEXRestrictions,
+) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	err = ms.keeper.UpdateDEXRestrictions(ctx, sender, req.Denom, req.DEXRestrictions)
 	if err != nil {
 		return nil, err
 	}
