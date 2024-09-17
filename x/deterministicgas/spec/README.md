@@ -121,13 +121,13 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/coreum.dex.v1.MsgCancelOrder`                                        | 15000                          |
 | `/coreum.dex.v1.MsgPlaceOrder`                                         | 10000                          |
 | `/cosmos.authz.v1beta1.MsgRevoke`                                      | 8000                           |
+| `/cosmos.distribution.v1beta1.MsgDepositValidatorRewardsPool`          | 39000                          |
 | `/cosmos.distribution.v1beta1.MsgFundCommunityPool`                    | 17000                          |
 | `/cosmos.distribution.v1beta1.MsgSetWithdrawAddress`                   | 5000                           |
 | `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward`              | 79000                          |
 | `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission`          | 22000                          |
 | `/cosmos.feegrant.v1beta1.MsgGrantAllowance`                           | 11000                          |
 | `/cosmos.feegrant.v1beta1.MsgRevokeAllowance`                          | 2500                           |
-| `/cosmos.gov.v1.MsgCancelProposal`                                     | 66000                          |
 | `/cosmos.gov.v1.MsgDeposit`                                            | 65000                          |
 | `/cosmos.gov.v1.MsgVote`                                               | 6000                           |
 | `/cosmos.gov.v1.MsgVoteWeighted`                                       | 6500                           |
@@ -209,6 +209,7 @@ and the formula for them is
 | `/coreum.asset.ft.v1.MsgUpdateParams`                                  |
 | `/coreum.asset.nft.v1.MsgUpdateParams`                                 |
 | `/coreum.customparams.v1.MsgUpdateStakingParams`                       |
+| `/coreum.dex.v1.MsgUpdateParams`                                       |
 | `/coreum.feemodel.v1.MsgUpdateParams`                                  |
 | `/cosmos.auth.v1beta1.MsgUpdateParams`                                 |
 | `/cosmos.authz.v1beta1.MsgExec`                                        |
@@ -220,6 +221,8 @@ and the formula for them is
 | `/cosmos.distribution.v1beta1.MsgCommunityPoolSpend`                   |
 | `/cosmos.distribution.v1beta1.MsgUpdateParams`                         |
 | `/cosmos.evidence.v1beta1.MsgSubmitEvidence`                           |
+| `/cosmos.feegrant.v1beta1.MsgPruneAllowances`                          |
+| `/cosmos.gov.v1.MsgCancelProposal`                                     |
 | `/cosmos.gov.v1.MsgExecLegacyContent`                                  |
 | `/cosmos.gov.v1.MsgSubmitProposal`                                     |
 | `/cosmos.gov.v1.MsgUpdateParams`                                       |
@@ -250,6 +253,10 @@ and the formula for them is
 | `/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig`                         |
 | `/cosmwasm.wasm.v1.MsgUpdateParams`                                    |
 | `/ibc.applications.interchain_accounts.controller.v1.MsgSendTx`        |
+| `/ibc.applications.interchain_accounts.controller.v1.MsgUpdateParams`  |
+| `/ibc.applications.interchain_accounts.host.v1.MsgModuleQuerySafe`     |
+| `/ibc.applications.interchain_accounts.host.v1.MsgUpdateParams`        |
+| `/ibc.applications.transfer.v1.MsgUpdateParams`                        |
 | `/ibc.core.channel.v1.MsgAcknowledgement`                              |
 | `/ibc.core.channel.v1.MsgChannelCloseConfirm`                          |
 | `/ibc.core.channel.v1.MsgChannelCloseInit`                             |
@@ -257,17 +264,30 @@ and the formula for them is
 | `/ibc.core.channel.v1.MsgChannelOpenConfirm`                           |
 | `/ibc.core.channel.v1.MsgChannelOpenInit`                              |
 | `/ibc.core.channel.v1.MsgChannelOpenTry`                               |
+| `/ibc.core.channel.v1.MsgChannelUpgradeAck`                            |
+| `/ibc.core.channel.v1.MsgChannelUpgradeCancel`                         |
+| `/ibc.core.channel.v1.MsgChannelUpgradeConfirm`                        |
+| `/ibc.core.channel.v1.MsgChannelUpgradeInit`                           |
+| `/ibc.core.channel.v1.MsgChannelUpgradeOpen`                           |
+| `/ibc.core.channel.v1.MsgChannelUpgradeTimeout`                        |
+| `/ibc.core.channel.v1.MsgChannelUpgradeTry`                            |
+| `/ibc.core.channel.v1.MsgPruneAcknowledgements`                        |
 | `/ibc.core.channel.v1.MsgRecvPacket`                                   |
 | `/ibc.core.channel.v1.MsgTimeout`                                      |
 | `/ibc.core.channel.v1.MsgTimeoutOnClose`                               |
+| `/ibc.core.channel.v1.MsgUpdateParams`                                 |
 | `/ibc.core.client.v1.MsgCreateClient`                                  |
+| `/ibc.core.client.v1.MsgIBCSoftwareUpgrade`                            |
+| `/ibc.core.client.v1.MsgRecoverClient`                                 |
 | `/ibc.core.client.v1.MsgSubmitMisbehaviour`                            |
 | `/ibc.core.client.v1.MsgUpdateClient`                                  |
+| `/ibc.core.client.v1.MsgUpdateParams`                                  |
 | `/ibc.core.client.v1.MsgUpgradeClient`                                 |
 | `/ibc.core.connection.v1.MsgConnectionOpenAck`                         |
 | `/ibc.core.connection.v1.MsgConnectionOpenConfirm`                     |
 | `/ibc.core.connection.v1.MsgConnectionOpenInit`                        |
 | `/ibc.core.connection.v1.MsgConnectionOpenTry`                         |
+| `/ibc.core.connection.v1.MsgUpdateParams`                              |
 | `/packetforward.v1.MsgUpdateParams`                                    |
 
 [//]: # (GENERATED DOC.)

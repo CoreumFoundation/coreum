@@ -7,15 +7,18 @@ import (
 	"time"
 	_ "unsafe"
 
+	msgv1 "cosmossdk.io/api/cosmos/msg/v1"
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	protobuf "github.com/golang/protobuf/proto" //nolint:staticcheck // We need this dependency to convert protos to be able to read their options
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
@@ -31,8 +34,6 @@ import (
 var revProtoTypes map[reflect.Type]string
 
 func TestDeterministicGas_DeterministicMessages(t *testing.T) {
-	// TODO(fix-tests)
-	t.SkipNow()
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor nondeterministic.
 	ignoredMsgURLs := []deterministicgas.MsgURL{
@@ -49,6 +50,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/testpb.TestMsg",
 		"/testpb.MsgCreateDog",
 		"/cosmos.tx.v1beta1.Tx",
+		"/cosmos.bank.v1beta1.Input",
 	}
 
 	// This is required to compile all the messages used by the app, not only those included in deterministic gas config
@@ -59,10 +61,17 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	deterministicMsgCount := 0
 	nondeterministicMsgCount := 0
 	extensionMsgCount := 0
-	nonextensionMsgCount := 0
+	nonExtensionMsgCount := 0
 	for protoType := range revProtoTypes {
 		sdkMsg, ok := reflect.New(protoType.Elem()).Interface().(sdk.Msg)
 		if !ok {
+			continue
+		}
+
+		options := protobuf.MessageV2(reflect.New(protoType.Elem()).Interface()).ProtoReflect().Descriptor().Options()
+
+		signersFields := proto.GetExtension(options, msgv1.E_Signer).([]string)
+		if len(signersFields) == 0 {
 			continue
 		}
 
@@ -80,7 +89,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		_, _, nonExtensionMsg, err := types.TypeAssertMessages(sdkMsg)
 		require.NoError(t, err)
 		if nonExtensionMsg {
-			nonextensionMsgCount++
+			nonExtensionMsgCount++
 		} else {
 			extensionMsgCount++
 		}
@@ -98,10 +107,10 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic and extension types accidentally,
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 63, nondeterministicMsgCount)
-	assert.Equal(t, 69, deterministicMsgCount)
+	assert.Equal(t, 81, nondeterministicMsgCount)
+	assert.Equal(t, 71, deterministicMsgCount)
 	assert.Equal(t, 14, extensionMsgCount)
-	assert.Equal(t, 118, nonextensionMsgCount)
+	assert.Equal(t, 138, nonExtensionMsgCount)
 }
 
 func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {

@@ -32,7 +32,10 @@ import (
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	tx "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
@@ -88,7 +91,29 @@ func NewRootCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if !initClientCtx.Offline {
+				enabledSignModes := make([]signingtypes.SignMode, 0)
+				enabledSignModes = append(enabledSignModes, authtx.DefaultSignModes...)
+				enabledSignModes = append(enabledSignModes, signingtypes.SignMode_SIGN_MODE_TEXTUAL)
+				txConfigOpts := authtx.ConfigOptions{
+					EnabledSignModes:           enabledSignModes,
+					TextualCoinMetadataQueryFn: tx.NewGRPCCoinMetadataQueryFn(initClientCtx),
+				}
+				txConfig, err := authtx.NewTxConfigWithOptions(
+					encodingConfig.Codec,
+					txConfigOpts,
+				)
+				if err != nil {
+					return err
+				}
 
+				initClientCtx = initClientCtx.WithTxConfig(txConfig)
+			}
+			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
+				return err
+			}
+
+			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
 				return err
 			}
