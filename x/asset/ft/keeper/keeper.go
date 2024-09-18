@@ -1502,7 +1502,7 @@ func (k Keeper) dexLockingChecksForFT(ctx sdk.Context, def types.Definition, coi
 		if err != nil {
 			return err
 		}
-		if restrictions != nil && len(restrictions.DenomsToTradeWith) != 0 {
+		if restrictions != nil {
 			if !lo.Contains(restrictions.DenomsToTradeWith, receiveDenom) {
 				return sdkerrors.Wrapf(
 					cosmoserrors.ErrUnauthorized,
