@@ -207,6 +207,11 @@ func (o Order) GetReceiveDenom() string {
 	return o.BaseDenom
 }
 
+// Denoms returns the order denoms.
+func (o Order) Denoms() []string {
+	return []string{o.BaseDenom, o.QuoteDenom}
+}
+
 func validateOrderID(id string) error {
 	if !orderIDRegex.MatchString(id) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "order ID must match regex format '%s'", orderIDRegex)

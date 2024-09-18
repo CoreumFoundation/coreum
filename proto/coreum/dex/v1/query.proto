@@ -15,7 +15,6 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/coreum/dex/v1/params";
   }
-
   // Order queries order by creator and ID.
   rpc Order(QueryOrderRequest) returns (QueryOrderResponse) {
     option (google.api.http).get = "/coreum/dex/v1/orders/{creator}/{id}";
@@ -31,6 +30,10 @@ service Query {
   // OrdersBookOrders queries order book orders.
   rpc OrdersBookOrders(QueryOrderBookOrdersRequest) returns (QueryOrderBookOrdersResponse) {
     option (google.api.http).get = "/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders";
+  }
+  // AccountDenomOrdersCount queries account denom orders count.
+  rpc AccountDenomOrdersCount(QueryAccountDenomOrdersCountRequest) returns (QueryAccountDenomOrdersCountResponse) {
+    option (google.api.http).get = "/coreum/dex/v1/accounts/{account}/denoms/{denom}/orders-count";
   }
 }
 
@@ -97,4 +100,15 @@ message QueryOrderBookOrdersRequest {
 message QueryOrderBookOrdersResponse {
   repeated Order orders = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryAccountDenomOrdersCountRequest defines the request type for the `AccountDenomOrdersCount` query.
+message QueryAccountDenomOrdersCountRequest {
+  string account = 1;
+  string denom = 2;
+}
+
+// QueryAccountDenomOrdersCountResponse defines the response type for the `AccountDenomOrdersCount` query.
+message QueryAccountDenomOrdersCountResponse {
+  uint64 count = 1;
 }

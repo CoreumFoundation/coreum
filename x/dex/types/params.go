@@ -12,6 +12,9 @@ var (
 
 	// KeyPriceTickExponent represents the price tick exponent param key.
 	KeyPriceTickExponent = []byte("PriceTickExponent")
+
+	// KeyMaxOrdersPerDenom represents the max orders per denom param key.
+	KeyMaxOrdersPerDenom = []byte("MaxOrdersPerDenom")
 )
 
 // DefaultParams returns params with default values.
@@ -19,6 +22,7 @@ func DefaultParams() Params {
 	return Params{
 		DefaultUnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1000000"),
 		PriceTickExponent:       -5,
+		MaxOrdersPerDenom:       100,
 	}
 }
 
@@ -36,6 +40,11 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&m.PriceTickExponent,
 			validatePriceTickExponent,
 		),
+		paramtypes.NewParamSetPair(
+			KeyMaxOrdersPerDenom,
+			&m.MaxOrdersPerDenom,
+			validateMaxOrdersPerDenom,
+		),
 	}
 }
 
@@ -44,7 +53,12 @@ func (m Params) ValidateBasic() error {
 	if err := validateDefaultUnifiedRefAmount(m.DefaultUnifiedRefAmount); err != nil {
 		return err
 	}
-	return validatePriceTickExponent(m.PriceTickExponent)
+
+	if err := validatePriceTickExponent(m.PriceTickExponent); err != nil {
+		return err
+	}
+
+	return validateMaxOrdersPerDenom(m.MaxOrdersPerDenom)
 }
 
 func validateDefaultUnifiedRefAmount(i interface{}) error {
@@ -67,6 +81,21 @@ func validatePriceTickExponent(i interface{}) error {
 		return sdkerrors.Wrap(
 			ErrInvalidInput,
 			"price tick exponent must be negative",
+		)
+	}
+
+	return nil
+}
+
+func validateMaxOrdersPerDenom(i interface{}) error {
+	maxOrders, ok := i.(uint64)
+	if !ok {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T", i)
+	}
+	if maxOrders == 0 {
+		return sdkerrors.Wrap(
+			ErrInvalidInput,
+			"max orders per denom must be positive",
 		)
 	}
 
