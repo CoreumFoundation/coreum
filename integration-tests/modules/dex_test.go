@@ -633,12 +633,197 @@ func TestDEXProposalParamChange(t *testing.T) {
 	requireT.Equal(newParams, dexParamsRes.Params)
 }
 
+// TestLimitOrdersMatchingWithAssetFTFreeze tests the dex modules ability to place get and match limit orders
+// with asset ft with freezing
+func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	issuer1 := chain.GenAccount()
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&dextypes.MsgPlaceOrder{},
+		},
+	})
+
+	issuer2 := chain.GenAccount()
+	acc2 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer2, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&dextypes.MsgPlaceOrder{},
+		},
+	})
+
+	denom1 := issueFT(ctx, t, chain, issuer1, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
+	denom2 := issueFT(ctx, t, chain, issuer2, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer1.String(),
+		ToAddress:   acc1.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+		),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	msgSend = &banktypes.MsgSend{
+		FromAddress: issuer2.String(),
+		ToAddress:   acc2.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom2, sdkmath.NewInt(100)),
+		),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	// freeze 400 tokens
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  issuer1.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(400)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.NoError(err)
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	txResult, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+	// validate the deterministic gas
+	requireT.Equal(chain.GasLimitByMsgs(placeSellOrderMsg), uint64(txResult.GasUsed))
+
+	sellOrderRes, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
+		Creator: placeSellOrderMsg.Sender,
+		Id:      placeSellOrderMsg.ID,
+	})
+	requireT.NoError(err)
+
+	requireT.Equal(dextypes.Order{
+		Creator:           acc1.String(),
+		Type:              dextypes.ORDER_TYPE_LIMIT,
+		ID:                "id1",
+		BaseDenom:         denom1,
+		QuoteDenom:        denom2,
+		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:          sdkmath.NewInt(100),
+		Side:              dextypes.SIDE_SELL,
+		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
+		RemainingQuantity: sdkmath.NewInt(100),
+		RemainingBalance:  sdkmath.NewInt(100),
+	}, sellOrderRes.Order)
+
+	// place buy order to match the sell
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc2.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1", // same ID allowed for different user
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
+		Quantity:    sdkmath.NewInt(300),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		placeBuyOrderMsg,
+	)
+	requireT.NoError(err)
+
+	// now query the sell order
+	_, err = dexClient.Order(ctx, &dextypes.QueryOrderRequest{
+		Creator: placeSellOrderMsg.Sender,
+		Id:      placeSellOrderMsg.ID,
+	})
+	requireT.ErrorContains(err, dextypes.ErrRecordNotFound.Error())
+
+	// check remaining buy order
+	buyOrderRes, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
+		Creator: placeBuyOrderMsg.Sender,
+		Id:      placeBuyOrderMsg.ID,
+	})
+	requireT.NoError(err)
+	requireT.NotNil(buyOrderRes.Order)
+
+	requireT.Equal(dextypes.Order{
+		Creator:           acc2.String(),
+		Type:              dextypes.ORDER_TYPE_LIMIT,
+		ID:                "id1", // same ID allowed for different users
+		BaseDenom:         denom1,
+		QuoteDenom:        denom2,
+		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
+		Quantity:          sdkmath.NewInt(300),
+		Side:              dextypes.SIDE_BUY,
+		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
+		RemainingQuantity: sdkmath.NewInt(200),
+		RemainingBalance:  sdkmath.NewInt(23),
+	}, buyOrderRes.Order)
+
+	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc1.String(),
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(10).String(), acc1Denom2BalanceRes.Balance.Amount.String())
+
+	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc2.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+}
+
 func issueFT(
 	ctx context.Context,
 	t *testing.T,
 	chain integration.CoreumChain,
 	issuer sdk.AccAddress,
 	initialAmount sdkmath.Int,
+	features ...assetfttypes.Feature,
 ) string {
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -652,6 +837,7 @@ func issueFT(
 		Subunit:       "tkn" + uuid.NewString()[:4],
 		Precision:     5,
 		InitialAmount: initialAmount,
+		Features:      features,
 	}
 	_, err := client.BroadcastTx(
 		ctx,
