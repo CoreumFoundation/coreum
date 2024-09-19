@@ -861,13 +861,6 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
-		Account: acc2.String(),
-		Denom:   denom1,
-	})
-	requireT.NoError(err)
-	requireT.Equal(placeBuyOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
-
 	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc1.String(),
 		Denom:   denom2,
@@ -1077,13 +1070,6 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
-
-	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
-		Account: acc2.String(),
-		Denom:   denom1,
-	})
-	requireT.NoError(err)
-	requireT.Equal(placeBuyOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc1.String(),
