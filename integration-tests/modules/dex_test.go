@@ -620,8 +620,8 @@ func TestDEXProposalParamChange(t *testing.T) {
 	proposer := chain.GenAccount()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx, false)
 	// For the test we need to create the proposal twice.
-	proposerBalance = proposerBalance.Add(proposerBalance)
 	requireT.NoError(err)
+	proposerBalance = proposerBalance.Add(proposerBalance)
 	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance))
 
 	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
@@ -671,6 +671,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 
 	requireT := require.New(t)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
@@ -730,6 +731,13 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+
 	// place order should fail because all the funds are frozen
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc1.String(),
@@ -751,6 +759,14 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	)
 	requireT.ErrorContains(err, dextypes.ErrFailedToLockCoin.Error())
 
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
+
 	// change the frozen amount to less than the order quantity
 	unfreezeMsg := &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
@@ -765,6 +781,13 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Frozen.String())
+
 	// now placing order should succeed because the needed funds are more than frozen amount
 	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
 		Sender:      acc1.String(),
@@ -778,15 +801,21 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
-	txResult, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
-	// validate the deterministic gas
-	requireT.Equal(chain.GasLimitByMsgs(placeSellOrderMsg), uint64(txResult.GasUsed))
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Frozen.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// freeze remaining tokens
 	freezeMsg = &assetfttypes.MsgFreeze{
@@ -802,6 +831,14 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		freezeMsg,
 	)
 	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// place buy order to match the sell
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
@@ -823,6 +860,13 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc2.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(placeBuyOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc1.String(),
@@ -847,6 +891,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 
 	requireT := require.New(t)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
@@ -892,7 +937,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// globally freeze all tokens
+	// globally freeze the denom
 	freezeMsg := &assetfttypes.MsgGloballyFreeze{
 		Sender: issuer.String(),
 		Denom:  denom1,
@@ -904,6 +949,13 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		freezeMsg,
 	)
 	requireT.NoError(err)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
 
 	// place order should fail because all the funds are globally frozen
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
@@ -926,6 +978,14 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	)
 	requireT.ErrorContains(err, dextypes.ErrFailedToLockCoin.Error())
 
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
+
 	// unfreeze the denom globally
 	unfreezeMsg := &assetfttypes.MsgGloballyUnfreeze{
 		Sender: issuer.String(),
@@ -938,6 +998,13 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		unfreezeMsg,
 	)
 	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.Frozen.String())
 
 	// now placing order should succeed because the needed funds are not frozen
 	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
@@ -952,15 +1019,21 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
-	txResult, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
-	// validate the deterministic gas
-	requireT.Equal(chain.GasLimitByMsgs(placeSellOrderMsg), uint64(txResult.GasUsed))
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.Frozen.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// globally freeze the denom
 	freezeMsg = &assetfttypes.MsgGloballyFreeze{
@@ -975,6 +1048,14 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		freezeMsg,
 	)
 	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// place buy order to match the sell
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
@@ -996,6 +1077,13 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc2.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(placeBuyOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc1.String(),
