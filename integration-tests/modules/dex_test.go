@@ -634,7 +634,7 @@ func TestDEXProposalParamChange(t *testing.T) {
 }
 
 // TestLimitOrdersMatchingWithAssetFTFreeze tests the dex modules ability to place get and match limit orders
-// with asset ft with freezing
+// with asset ft with freezing.
 func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	t.Parallel()
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -810,7 +810,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 }
 
 // TestLimitOrdersMatchingWithAssetFTGloballyFreeze tests the dex modules ability to place get and match limit orders
-// with asset ft with globally freezing
+// with asset ft with globally freezing.
 func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	t.Parallel()
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
