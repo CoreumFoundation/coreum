@@ -227,7 +227,6 @@ func initRootCmd(
 		confixcmd.ConfigCommand(),
 		pruning.Cmd(newApp, app.DefaultNodeHome),
 		snapshot.Cmd(newApp),
-		GenerateDevnetCmd(),
 		GenerateGenesisCmd(basicManager),
 	)
 
