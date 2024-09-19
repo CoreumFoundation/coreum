@@ -31,6 +31,11 @@ type QueryKeeper interface {
 		side types.Side,
 		pagination *query.PageRequest,
 	) ([]types.Order, *query.PageResponse, error)
+	GetAccountDenomOrdersCount(
+		ctx sdk.Context,
+		acc sdk.AccAddress,
+		denom string,
+	) (uint64, error)
 }
 
 // QueryService serves grpc query requests for the module.
@@ -120,5 +125,24 @@ func (qs QueryService) Order(ctx context.Context, req *types.QueryOrderRequest) 
 
 	return &types.QueryOrderResponse{
 		Order: order,
+	}, nil
+}
+
+// AccountDenomOrdersCount queries account orders count.
+func (qs QueryService) AccountDenomOrdersCount(
+	ctx context.Context,
+	req *types.QueryAccountDenomOrdersCountRequest,
+) (*types.QueryAccountDenomOrdersCountResponse, error) {
+	acc, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", req.Account)
+	}
+	count, err := qs.keeper.GetAccountDenomOrdersCount(sdk.UnwrapSDKContext(ctx), acc, req.Denom)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryAccountDenomOrdersCountResponse{
+		Count: count,
 	}, nil
 }

@@ -256,6 +256,7 @@ func TestOrderCancellation(t *testing.T) {
 
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
@@ -266,6 +267,7 @@ func TestOrderCancellation(t *testing.T) {
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+	denom2 := "denom2"
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc1.String(),
@@ -294,6 +296,20 @@ func TestOrderCancellation(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
+	countRes, err := dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(uint64(1), countRes.Count)
+
+	countRes, err = dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
+		Account: acc1.String(),
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	requireT.Equal(uint64(1), countRes.Count)
+
 	cancelOrderMsg := &dextypes.MsgCancelOrder{
 		Sender: placeSellOrderMsg.Sender,
 		ID:     placeSellOrderMsg.ID,
@@ -316,6 +332,20 @@ func TestOrderCancellation(t *testing.T) {
 	requireT.NoError(err)
 	// check that nothing is locked
 	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+
+	countRes, err = dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(uint64(0), countRes.Count)
+
+	countRes, err = dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
+		Account: acc1.String(),
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	requireT.Equal(uint64(0), countRes.Count)
 }
 
 // TestOrderTilBlockHeight tests the dex modules ability to place cancel placed order with good til block height.

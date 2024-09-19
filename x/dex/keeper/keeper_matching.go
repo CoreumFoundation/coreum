@@ -13,6 +13,7 @@ import (
 
 func (k Keeper) matchOrder(
 	ctx sdk.Context,
+	params types.Params,
 	accNumber uint64,
 	orderBookID, oppositeOrderBookID uint32,
 	order types.Order,
@@ -70,7 +71,7 @@ func (k Keeper) matchOrder(
 			switch order.TimeInForce {
 			case types.TIME_IN_FORCE_GTC:
 				// create new order with the updated record
-				return k.createOrder(ctx, order, takerRecord)
+				return k.createOrder(ctx, params, order, takerRecord)
 			case types.TIME_IN_FORCE_IOC:
 				// unlock the remaining balance
 				return k.unlockRemainingBalance(ctx, order, takerRecord)
@@ -181,7 +182,7 @@ func (k Keeper) matchRecords(
 
 	// remove order only if it's maker, so it was saved before
 	if closeMaker {
-		if err := k.removeOrderByRecord(ctx, *recordToClose); err != nil {
+		if err := k.removeOrderByRecordAndUsedDenoms(ctx, *recordToClose, order.Denoms()); err != nil {
 			return nil, false, err
 		}
 		// check if the maker record has what to fill later, or we can cancel the remaining part now

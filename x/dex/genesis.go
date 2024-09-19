@@ -90,6 +90,12 @@ func InitGenesis(
 			panic(errors.Wrap(err, "failed to set order sequence"))
 		}
 	}
+
+	for _, accountDenomOrdersCount := range genState.AccountsDenomsOrdersCounts {
+		if err := dexKeeper.SetAccountDenomOrdersCount(ctx, accountDenomOrdersCount); err != nil {
+			panic(errors.Wrap(err, "failed to set accounts denoms orders counts"))
+		}
+	}
 }
 
 // ExportGenesis returns the dex module's exported genesis.
@@ -104,9 +110,17 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(errors.Wrap(err, "failed to get order books with ID"))
 	}
 
+	accountsDenomsOrdersCounts, _, err := k.GetPaginatedAccountsDenomsOrdersCounts(
+		ctx, &query.PageRequest{Limit: query.PaginationMaxLimit},
+	)
+	if err != nil {
+		panic(errors.Wrap(err, "failed to get accounts denoms orders counts"))
+	}
+
 	return &types.GenesisState{
-		Params:     k.GetParams(ctx),
-		Orders:     ordersWithSeq,
-		OrderBooks: orderBooksWithID,
+		Params:                     k.GetParams(ctx),
+		Orders:                     ordersWithSeq,
+		OrderBooks:                 orderBooksWithID,
+		AccountsDenomsOrdersCounts: accountsDenomsOrdersCounts,
 	}
 }

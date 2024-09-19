@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 	"math"
+	"reflect"
 	"testing"
 	"time"
 
@@ -671,6 +672,157 @@ func TestKeeper_ComputePriceTick(t *testing.T) {
 	}
 }
 
+func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Height: 100,
+		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
+	})
+
+	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params.MaxOrdersPerDenom = 2
+	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
+
+	acc1, _ := testApp.GenAccount(sdkCtx)
+	acc2, _ := testApp.GenAccount(sdkCtx)
+
+	order1 := types.Order{
+		Creator:     acc1.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:    sdkmath.NewInt(1_000),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	sellLockedBalance, err := order1.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order1))
+
+	require.True(t, reflect.DeepEqual(
+		map[string]uint64{
+			denom1: 1,
+			denom2: 1,
+		},
+		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
+	))
+
+	order2 := types.Order{
+		Creator:     acc1.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   denom2,
+		QuoteDenom:  denom3,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:    sdkmath.NewInt(1_000),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	sellLockedBalance, err = order2.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order2))
+
+	require.True(t, reflect.DeepEqual(
+		map[string]uint64{
+			denom1: 1,
+			denom2: 2,
+			denom3: 1,
+		},
+		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
+	))
+
+	// create order to reach max allowed limit for all denom
+	order3 := types.Order{
+		Creator:     acc1.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   denom3,
+		QuoteDenom:  denom1,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:    sdkmath.NewInt(1_000),
+		Side:        types.SIDE_BUY,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	sellLockedBalance, err = order3.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order3))
+
+	require.True(t, reflect.DeepEqual(
+		map[string]uint64{
+			denom1: 2,
+			denom2: 2,
+			denom3: 2,
+		},
+		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
+	))
+
+	// try to create one more order to exceed the limit
+	// create order to reach max allowed limit for denom1
+	trialCtx := simapp.CopyContextWithMultiStore(sdkCtx) // copy in order not to affect the state by the error
+	order4 := types.Order{
+		Creator:     acc1.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   denom3,
+		QuoteDenom:  denom1,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:    sdkmath.NewInt(1_000),
+		Side:        types.SIDE_BUY,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	sellLockedBalance, err = order4.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, trialCtx, acc1, sdk.NewCoins(sellLockedBalance))
+	require.ErrorContains(t,
+		testApp.DEXKeeper.PlaceOrder(trialCtx, order4),
+		"it's prohibited to save more than 2 orders per denom",
+	)
+
+	// cancel the order1 VIA matching
+	order5 := types.Order{
+		Creator:     acc2.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          uuid.Generate().String(),
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:    sdkmath.NewInt(10_000),
+		Side:        types.SIDE_BUY,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	sellLockedBalance, err = order5.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, sdkCtx, acc2, sdk.NewCoins(sellLockedBalance))
+
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order5))
+
+	require.True(t, reflect.DeepEqual(
+		map[string]uint64{
+			denom1: 1,
+			denom2: 1,
+			denom3: 2,
+		},
+		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
+	))
+
+	// cancel order manually
+	require.NoError(t, testApp.DEXKeeper.CancelOrder(sdkCtx, acc1, order2.ID))
+
+	require.True(t, reflect.DeepEqual(
+		map[string]uint64{
+			denom1: 1,
+			denom2: 0,
+			denom3: 1,
+		},
+		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
+	))
+}
+
 func getSorterOrderBookOrders(
 	t *testing.T,
 	testApp *simapp.App,
@@ -717,6 +869,33 @@ func getSorterOrderBookRecords(
 	}
 
 	return records
+}
+
+func getAccountDenomsOrdersCount(
+	t *testing.T,
+	testApp *simapp.App,
+	sdkCtx sdk.Context,
+	acc sdk.AccAddress,
+) map[string]uint64 {
+	denomToCount := make(map[string]uint64)
+	accountsDenomsOrdersCount, _, err := testApp.DEXKeeper.GetPaginatedAccountsDenomsOrdersCounts(
+		sdkCtx,
+		&query.PageRequest{
+			Limit: query.PaginationMaxLimit,
+		},
+	)
+	require.NoError(t, err)
+
+	accNumber := testApp.AccountKeeper.GetAccount(sdkCtx, acc).GetAccountNumber()
+
+	for _, accountDenomsOrdersCount := range accountsDenomsOrdersCount {
+		if accountDenomsOrdersCount.AccountNumber != accNumber {
+			continue
+		}
+		denomToCount[accountDenomsOrdersCount.Denom] = accountDenomsOrdersCount.OrdersCount
+	}
+
+	return denomToCount
 }
 
 func assertTickCalculations(t *testing.T, base, quote float64) {
