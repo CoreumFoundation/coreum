@@ -1037,6 +1037,291 @@
         ]
       }
     },
+    "/coreum/dex/v1/order-books": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV4XDexTypesOrderBooks",
+        "parameters": [
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.dex.v1.QueryOrderBooksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "OrderBooks queries order books.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV4XDexTypesOrdersBookOrders",
+        "parameters": [
+          {
+            "name": "base_denom",
+            "description": "base_denom is base order denom.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "quote_denom",
+            "description": "quote_denom is quote order denom",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "side",
+            "description": "side is order side.\n\n - SIDE_UNSPECIFIED: SIDE_UNSPECIFIED reserves the default value, to protect against unexpected settings.\n - SIDE_BUY: SIDE_BUY means that the order is to buy base_denom quantity with the price.\n - SIDE_SELL: SIDE_SELL means that the order is to sell base_denom quantity with the price.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "SIDE_UNSPECIFIED",
+              "SIDE_BUY",
+              "SIDE_SELL"
+            ],
+            "default": "SIDE_UNSPECIFIED"
+          },
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.dex.v1.QueryOrderBookOrdersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "OrdersBookOrders queries order book orders.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/coreum/dex/v1/orders/{creator}": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV4XDexTypesOrders",
+        "parameters": [
+          {
+            "name": "creator",
+            "description": "creator is order creator's account.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.dex.v1.QueryOrdersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "Orders queries creator orders.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/coreum/dex/v1/orders/{creator}/{id}": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV4XDexTypesOrder",
+        "parameters": [
+          {
+            "name": "creator",
+            "description": "creator is order creator's account.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "description": "id is order ID.\n\nwe don't use the gogoproto.customname here since the google.api.http ignores it and generates invalid code.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.dex.v1.QueryOrderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "Order queries order by creator and ID.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/coreum/dex/v1/params": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV4XDexTypesParams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.dex.v1.QueryParamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "Params queries the parameters of x/dex module.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/coreum/feemodel/v1/min_gas_price": {
       "get": {
         "operationId": "GithubComCoreumFoundationCoreumV4XFeemodelTypesMinGasPrice",
@@ -7453,6 +7738,89 @@
         ]
       }
     },
+    "/ibc/apps/interchain_accounts/controller/v1/owners/{owner}/connections/{connection_id}": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV8ModulesApps27InterchainAccountsControllerTypesInterchainAccount",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.interchain_accounts.controller.v1.QueryInterchainAccountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "InterchainAccount returns the interchain account address for a given owner address on a given connection",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/ibc/apps/interchain_accounts/controller/v1/params": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV8ModulesApps27InterchainAccountsControllerTypesParams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.interchain_accounts.controller.v1.QueryParamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "Params queries all parameters of the ICA controller submodule.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/ibc/apps/interchain_accounts/host/v1/params": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV8ModulesApps27InterchainAccountsHostTypesParams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.interchain_accounts.host.v1.QueryParamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "Params queries all parameters of the ICA host submodule.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address": {
       "get": {
         "operationId": "GithubComCosmosIbcGoV8ModulesAppsTransferTypesEscrowAddress",
@@ -9651,6 +10019,201 @@
         }
       },
       "description": "StakingParams defines the set of additional staking params for the staking module wrapper."
+    },
+    "coreum.dex.v1.GoodTil": {
+      "type": "object",
+      "properties": {
+        "good_til_block_height": {
+          "type": "string",
+          "format": "uint64",
+          "description": "good_til_block_height means that order remains active until a specific blockchain block height is reached."
+        },
+        "good_til_block_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "good_til_block_time means that order remains active until a specific blockchain block time is reached."
+        }
+      },
+      "description": "GoodTil is a good til order settings."
+    },
+    "coreum.dex.v1.Order": {
+      "type": "object",
+      "properties": {
+        "creator": {
+          "type": "string",
+          "description": "creator is order creator address."
+        },
+        "type": {
+          "$ref": "#/definitions/coreum.dex.v1.OrderType",
+          "description": "type is order type."
+        },
+        "id": {
+          "type": "string",
+          "description": "id is unique order ID."
+        },
+        "base_denom": {
+          "type": "string",
+          "description": "base_denom is base order denom."
+        },
+        "quote_denom": {
+          "type": "string",
+          "title": "quote_denom is quote order denom"
+        },
+        "price": {
+          "type": "string",
+          "description": "price is value of one unit of the base_denom expressed in terms of the quote_denom."
+        },
+        "quantity": {
+          "type": "string",
+          "description": "quantity is amount of the base base_denom being traded."
+        },
+        "side": {
+          "$ref": "#/definitions/coreum.dex.v1.Side",
+          "description": "side is order side."
+        },
+        "remaining_quantity": {
+          "type": "string",
+          "description": "remaining_quantity is remaining filling quantity sell/buy."
+        },
+        "remaining_balance": {
+          "type": "string",
+          "description": "remaining_balance is remaining order balance."
+        },
+        "good_til": {
+          "$ref": "#/definitions/coreum.dex.v1.GoodTil",
+          "title": "good_til is order good til"
+        },
+        "time_in_force": {
+          "$ref": "#/definitions/coreum.dex.v1.TimeInForce",
+          "title": "time_in_force is order time in force"
+        }
+      },
+      "description": "Order is a DEX order."
+    },
+    "coreum.dex.v1.OrderBookData": {
+      "type": "object",
+      "properties": {
+        "base_denom": {
+          "type": "string",
+          "description": "base_denom is base order book denom."
+        },
+        "quote_denom": {
+          "type": "string",
+          "title": "quote_denom is quote order book denom"
+        }
+      },
+      "description": "OrderBookData is a order book data used by order for the store."
+    },
+    "coreum.dex.v1.OrderType": {
+      "type": "string",
+      "enum": [
+        "ORDER_TYPE_UNSPECIFIED",
+        "ORDER_TYPE_LIMIT",
+        "ORDER_TYPE_MARKET"
+      ],
+      "default": "ORDER_TYPE_UNSPECIFIED",
+      "description": "Type is order type.\n\n - ORDER_TYPE_UNSPECIFIED: order_type_unspecified reserves the default value, to protect against unexpected settings.\n - ORDER_TYPE_LIMIT: order_type_limit means that the order is limit order.\n - ORDER_TYPE_MARKET: limit order_type_market that the order is market order."
+    },
+    "coreum.dex.v1.Params": {
+      "type": "object",
+      "properties": {
+        "default_unified_ref_amount": {
+          "type": "string",
+          "title": "default_unified_ref_amount is the default approximate amount you need to by 1USD, used to for tokens without custom value"
+        },
+        "price_tick_exponent": {
+          "type": "integer",
+          "format": "int32",
+          "title": "price_tick_exponent is the exponent used for the price tick calculation"
+        }
+      },
+      "description": "Params keeps gov manageable parameters."
+    },
+    "coreum.dex.v1.QueryOrderBookOrdersResponse": {
+      "type": "object",
+      "properties": {
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/coreum.dex.v1.Order"
+          }
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse"
+        }
+      },
+      "description": "QueryOrderBookOrdersResponse defines the response type for the `OrderBookOrders` query."
+    },
+    "coreum.dex.v1.QueryOrderBooksResponse": {
+      "type": "object",
+      "properties": {
+        "order_books": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/coreum.dex.v1.OrderBookData"
+          }
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse"
+        }
+      },
+      "description": "QueryOrderBooksResponse defines the response type for the `OrderBooks` query."
+    },
+    "coreum.dex.v1.QueryOrderResponse": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "$ref": "#/definitions/coreum.dex.v1.Order"
+        }
+      },
+      "description": "QueryOrderRequestResponse defines the response type for the `Order` query."
+    },
+    "coreum.dex.v1.QueryOrdersResponse": {
+      "type": "object",
+      "properties": {
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/coreum.dex.v1.Order"
+          }
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse"
+        }
+      },
+      "description": "QueryOrdersRequestResponse defines the response type for the `Order` query."
+    },
+    "coreum.dex.v1.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "$ref": "#/definitions/coreum.dex.v1.Params"
+        }
+      },
+      "description": "QueryParamsResponse defines the response type for querying x/dex parameters."
+    },
+    "coreum.dex.v1.Side": {
+      "type": "string",
+      "enum": [
+        "SIDE_UNSPECIFIED",
+        "SIDE_BUY",
+        "SIDE_SELL"
+      ],
+      "default": "SIDE_UNSPECIFIED",
+      "description": "Side is order side.\n\n - SIDE_UNSPECIFIED: SIDE_UNSPECIFIED reserves the default value, to protect against unexpected settings.\n - SIDE_BUY: SIDE_BUY means that the order is to buy base_denom quantity with the price.\n - SIDE_SELL: SIDE_SELL means that the order is to sell base_denom quantity with the price."
+    },
+    "coreum.dex.v1.TimeInForce": {
+      "type": "string",
+      "enum": [
+        "TIME_IN_FORCE_UNSPECIFIED",
+        "TIME_IN_FORCE_GTC",
+        "TIME_IN_FORCE_IOC"
+      ],
+      "default": "TIME_IN_FORCE_UNSPECIFIED",
+      "description": "TimeInForce is order time in force.\n\n - TIME_IN_FORCE_UNSPECIFIED: time_in_force_unspecified reserves the default value, to protect against unexpected settings.\n - TIME_IN_FORCE_GTC: time_in_force_gtc means that the order remains active until it is fully executed or manually canceled.\n - TIME_IN_FORCE_IOC: time_in_force_ioc  means that order must be executed immediately, either in full or partially. Any portion of the\n order that cannot be filled immediately is canceled."
     },
     "coreum.feemodel.v1.ModelParams": {
       "type": "object",
@@ -14216,6 +14779,62 @@
           }
         }
       }
+    },
+    "ibc.applications.interchain_accounts.controller.v1.Params": {
+      "type": "object",
+      "properties": {
+        "controller_enabled": {
+          "type": "boolean",
+          "description": "controller_enabled enables or disables the controller submodule."
+        }
+      },
+      "description": "Params defines the set of on-chain interchain accounts parameters.\nThe following parameters may be used to disable the controller submodule."
+    },
+    "ibc.applications.interchain_accounts.controller.v1.QueryInterchainAccountResponse": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        }
+      },
+      "description": "QueryInterchainAccountResponse the response type for the Query/InterchainAccount RPC method."
+    },
+    "ibc.applications.interchain_accounts.controller.v1.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "$ref": "#/definitions/ibc.applications.interchain_accounts.controller.v1.Params",
+          "description": "params defines the parameters of the module."
+        }
+      },
+      "description": "QueryParamsResponse is the response type for the Query/Params RPC method."
+    },
+    "ibc.applications.interchain_accounts.host.v1.Params": {
+      "type": "object",
+      "properties": {
+        "host_enabled": {
+          "type": "boolean",
+          "description": "host_enabled enables or disables the host submodule."
+        },
+        "allow_messages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "allow_messages defines a list of sdk message typeURLs allowed to be executed on a host chain."
+        }
+      },
+      "description": "Params defines the set of on-chain interchain accounts parameters.\nThe following parameters may be used to disable the host submodule."
+    },
+    "ibc.applications.interchain_accounts.host.v1.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "$ref": "#/definitions/ibc.applications.interchain_accounts.host.v1.Params",
+          "description": "params defines the parameters of the module."
+        }
+      },
+      "description": "QueryParamsResponse is the response type for the Query/Params RPC method."
     },
     "ibc.applications.transfer.v1.DenomTrace": {
       "type": "object",
