@@ -22,10 +22,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
-// FIXME
-// * query to get the count per denom
-// * update integration test to test the query
-
 // Keeper is the dex module keeper.
 type Keeper struct {
 	cdc                codec.BinaryCodec

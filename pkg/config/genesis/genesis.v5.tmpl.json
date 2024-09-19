@@ -95,7 +95,8 @@
     "dex": {
       "params": {
         "default_unified_ref_amount": "1000000",
-        "price_tick_exponent": -5
+        "price_tick_exponent": -5,
+        "max_orders_per_denom": 100
       }
     },
     "distribution": {
