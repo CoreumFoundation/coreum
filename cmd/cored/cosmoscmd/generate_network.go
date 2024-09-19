@@ -38,6 +38,17 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
 )
 
+const (
+	// FlagOutputPath defines an output path.
+	FlagOutputPath = "output-path"
+
+	// FlagInputPath defines an input path.
+	FlagInputPath = "input-path"
+
+	// FlagValidatorName defines a name of the validator.
+	FlagValidatorName = "validator-name"
+)
+
 // GenesisInitConfig is used to pass genesis creating paramers to cored.
 //
 //nolint:tagliatelle
