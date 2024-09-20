@@ -11,6 +11,7 @@ import (
 
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/json"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -318,4 +319,9 @@ func tempDir() string {
 	defer os.RemoveAll(dir) //nolint:errcheck // we don't care
 
 	return dir
+}
+
+// CopyContextWithMultiStore returns a sdk.Context with a copied MultiStore.
+func CopyContextWithMultiStore(sdkCtx sdk.Context) sdk.Context {
+	return sdkCtx.WithMultiStore(sdkCtx.MultiStore().CacheWrap().(storetypes.MultiStore))
 }

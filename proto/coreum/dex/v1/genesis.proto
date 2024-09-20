@@ -13,6 +13,7 @@ message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   repeated OrderBookDataWithID order_books = 2 [(gogoproto.nullable) = false];
   repeated OrderWithSequence orders = 3 [(gogoproto.nullable) = false];
+  repeated AccountDenomOrdersCount accounts_denoms_orders_counts = 4 [(gogoproto.nullable) = false];
 }
 
 // OrderBookDataWithID is a order book data with it's corresponding ID.
@@ -29,4 +30,11 @@ message OrderWithSequence {
   uint64 sequence = 1;
   // data is order book data.
   Order order = 2 [(gogoproto.nullable) = false];
+}
+
+// AccountDenomOrderCount is a count of orders per account and denom.
+message AccountDenomOrdersCount {
+  uint64 account_number = 2;
+  string denom = 1;
+  uint64 orders_count = 3;
 }

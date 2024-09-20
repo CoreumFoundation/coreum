@@ -1,6 +1,7 @@
 package dex_test
 
 import (
+	"fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -122,6 +123,29 @@ func TestInitAndExportGenesis(t *testing.T) {
 			},
 		},
 	}
+
+	accountDenomToAccountDenomOrdersCount := make(map[string]types.AccountDenomOrdersCount, 0)
+	for _, orderWithSeq := range genState.Orders {
+		accNum := testApp.AccountKeeper.GetAccount(
+			ctx, sdk.MustAccAddressFromBech32(orderWithSeq.Order.Creator),
+		).GetAccountNumber()
+		for _, denom := range orderWithSeq.Order.Denoms() {
+			key := fmt.Sprintf("%d%s", accNum, denom)
+			count, ok := accountDenomToAccountDenomOrdersCount[key]
+			if !ok {
+				count = types.AccountDenomOrdersCount{
+					AccountNumber: accNum,
+					Denom:         denom,
+					OrdersCount:   0,
+				}
+			}
+			count.OrdersCount++
+			accountDenomToAccountDenomOrdersCount[key] = count
+		}
+	}
+	// set the correct state
+	genState.AccountsDenomsOrdersCounts = lo.Values(accountDenomToAccountDenomOrdersCount)
+
 	// init the keeper
 	dex.InitGenesis(ctx, dexKeeper, testApp.AccountKeeper, genState)
 
@@ -137,6 +161,13 @@ func TestInitAndExportGenesis(t *testing.T) {
 	requireT.EqualValues(genState.Orders, exportedGenState.Orders)
 
 	// check that imported state is valid
+
+	denom2Count, err := dexKeeper.GetAccountDenomOrdersCount(ctx, acc2, denom2)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), denom2Count)
+	denom3Count, err := dexKeeper.GetAccountDenomOrdersCount(ctx, acc2, denom3)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), denom3Count)
 
 	// place an order with the existing order book
 	orderWithExisingOrderBook := types.Order{
@@ -158,6 +189,14 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// set the expected state
 	orderWithExisingOrderBook.RemainingQuantity = sdkmath.NewInt(10000000)
 	orderWithExisingOrderBook.RemainingBalance = sdkmath.NewInt(40000000000)
+
+	// check that denom orders counters are incremented
+	denom2Count, err = dexKeeper.GetAccountDenomOrdersCount(ctx, acc2, denom2)
+	require.NoError(t, err)
+	require.Equal(t, uint64(3), denom2Count)
+	denom3Count, err = dexKeeper.GetAccountDenomOrdersCount(ctx, acc2, denom3)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), denom3Count)
 
 	// check that this order sequence is next
 	ordersWithSeq, _, err := dexKeeper.GetPaginatedOrdersWithSequence(
