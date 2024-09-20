@@ -1,28 +1,21 @@
 package config
 
 import (
-	_ "embed"
+	"context"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v4/genesis"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 )
 
-var (
-	// GenesisV3Template is the genesis template used by v3 version of the chain.
-	//go:embed genesis/genesis.v3.tmpl.json
-	GenesisV3Template string
-
-	// GenesisV5Template is the genesis template used by v5 version of the chain.
-	//go:embed genesis/genesis.v5.tmpl.json
-	GenesisV5Template string
-
-	networkConfigs map[constant.ChainID]NetworkConfig
-)
+var networkConfigs map[constant.ChainID]NetworkConfig
 
 func init() {
 	// configs
@@ -47,30 +40,30 @@ func init() {
 		},
 		constant.ChainIDDev: {
 			Provider: DynamicConfigProvider{
-				GenesisTemplate: GenesisV5Template,
-				ChainID:         constant.ChainIDDev,
-				GenesisTime:     time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-				BlockTimeIota:   time.Second,
-				Denom:           constant.DenomDev,
-				AddressPrefix:   constant.AddressPrefixDev,
-				GovConfig: GovConfig{
-					ProposalConfig: GovProposalConfig{
-						MinDepositAmount:          "4000000000", // 4,000 CORE
-						ExpeditedMinDepositAmount: "4000000000", // 4,000 CORE
-						VotingPeriod:              "4h",         // 4 hours
-						ExpeditedVotingPeriod:     "1h",         // 1 hours
+				GenesisInitConfig: GenesisInitConfig{
+					ChainID:       constant.ChainIDDev,
+					GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+					Denom:         constant.DenomDev,
+					AddressPrefix: constant.AddressPrefixDev,
+					GovConfig: GenesisInitGovConfig{
+						MinDeposit: sdk.NewCoins(
+							sdk.NewCoin(constant.DenomDev, sdkmath.NewIntWithDecimal(4, 9)),
+						), // 4,000 CORE
+						ExpeditedMinDeposit: sdk.NewCoins(
+							sdk.NewCoin(constant.DenomDev, sdkmath.NewIntWithDecimal(4, 9)),
+						), // 4,000 CORE
+						VotingPeriod:          4 * time.Hour,
+						ExpeditedVotingPeriod: 1 * time.Hour,
 					},
-				},
-				CustomParamsConfig: CustomParamsConfig{
-					Staking: CustomParamsStakingConfig{
+					CustomParamsConfig: GenesisInitCustomParamsConfig{
 						MinSelfDelegation: sdkmath.NewInt(20_000_000_000), // 20k core
 					},
-				},
-				FundedAccounts: []FundedAccount{
-					// Faucet's account
-					{
-						Address:  "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
-						Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))), // 100m faucet
+					BankBalances: []banktypes.Balance{
+						// Faucet's account
+						{
+							Address: "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
+							Coins:   sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))), // 100m faucet,
+						},
 					},
 				},
 			},
@@ -156,8 +149,10 @@ func (c NetworkConfig) ChainID() constant.ChainID {
 }
 
 // EncodeGenesis returns the json encoded representation of the genesis file.
-func (c NetworkConfig) EncodeGenesis() ([]byte, error) {
-	return c.Provider.EncodeGenesis()
+func (c NetworkConfig) EncodeGenesis(
+	ctx context.Context, cosmosClientCtx cosmosclient.Context, basicManager module.BasicManager,
+) ([]byte, error) {
+	return c.Provider.EncodeGenesis(ctx, cosmosClientCtx, basicManager)
 }
 
 // NetworkConfigByChainID returns predefined NetworkConfig for a ChainID.

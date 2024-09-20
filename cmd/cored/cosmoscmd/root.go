@@ -222,7 +222,7 @@ func initRootCmd(
 	cfg.Seal()
 
 	rootCmd.AddCommand(
-		InitCmd(app.DefaultNodeHome),
+		InitCmd(basicManager, app.DefaultNodeHome),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),
 		pruning.Cmd(newApp, app.DefaultNodeHome),
