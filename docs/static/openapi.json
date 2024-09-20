@@ -1037,6 +1037,43 @@
         ]
       }
     },
+    "/coreum/dex/v1/accounts/{account}/denoms/{denom}/orders-count": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV4XDexTypesAccountDenomOrdersCount",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "denom",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.dex.v1.QueryAccountDenomOrdersCountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "AccountDenomOrdersCount queries account denom orders count.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/coreum/dex/v1/order-books": {
       "get": {
         "operationId": "GithubComCoreumFoundationCoreumV4XDexTypesOrderBooks",
@@ -10125,9 +10162,24 @@
           "type": "integer",
           "format": "int32",
           "title": "price_tick_exponent is the exponent used for the price tick calculation"
+        },
+        "max_orders_per_denom": {
+          "type": "string",
+          "format": "uint64",
+          "title": "max_orders_per_denom is the maximum number of orders per denom the user can have"
         }
       },
       "description": "Params keeps gov manageable parameters."
+    },
+    "coreum.dex.v1.QueryAccountDenomOrdersCountResponse": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "description": "QueryAccountDenomOrdersCountResponse defines the response type for the `AccountDenomOrdersCount` query."
     },
     "coreum.dex.v1.QueryOrderBookOrdersResponse": {
       "type": "object",
