@@ -1,22 +1,16 @@
 package config
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
-	"strings"
-	"text/template"
-	"time"
 
+	cmtjson "github.com/cometbft/cometbft/libs/json"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/btcutil/bech32"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authcosmostypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
@@ -34,38 +28,26 @@ type NetworkConfigProvider interface {
 	GetChainID() constant.ChainID
 	GetDenom() string
 	GetAddressPrefix() string
-	EncodeGenesis() ([]byte, error)
-	AppState() (map[string]json.RawMessage, error)
+	EncodeGenesis(
+		ctx context.Context, cosmosClientCtx cosmosclient.Context, basicManager module.BasicManager,
+	) ([]byte, error)
+	AppState(
+		ctx context.Context, cosmosClientCtx cosmosclient.Context, basicManager module.BasicManager,
+	) (map[string]json.RawMessage, error)
 }
 
 // DynamicConfigProvider provides configuration generated from fields in this structure.
 type DynamicConfigProvider struct {
-	GenesisTemplate    string
-	ChainID            constant.ChainID
-	Denom              string
-	AddressPrefix      string
-	GenesisTime        time.Time
-	BlockTimeIota      time.Duration
-	GovConfig          GovConfig
-	CustomParamsConfig CustomParamsConfig
-	FundedAccounts     []FundedAccount
-	GenTxs             []json.RawMessage
+	GenesisInitConfig
 }
 
 // WithAccount funds address with balances at genesis.
 func (dcp DynamicConfigProvider) WithAccount(accAddress sdk.AccAddress, balances sdk.Coins) DynamicConfigProvider {
 	dcp = dcp.clone()
-	dcp.FundedAccounts = append(dcp.FundedAccounts, FundedAccount{
-		Address:  accAddress.String(),
-		Balances: balances,
+	dcp.BankBalances = append(dcp.BankBalances, banktypes.Balance{
+		Address: accAddress.String(),
+		Coins:   balances,
 	})
-	return dcp
-}
-
-// WithGenesisTx adds transaction to the genesis file.
-func (dcp DynamicConfigProvider) WithGenesisTx(signedTx json.RawMessage) DynamicConfigProvider {
-	dcp = dcp.clone()
-	dcp.GenTxs = append(dcp.GenTxs, signedTx)
 	return dcp
 }
 
@@ -85,172 +67,49 @@ func (dcp DynamicConfigProvider) GetAddressPrefix() string {
 }
 
 // EncodeGenesis returns encoded genesis doc.
-func (dcp DynamicConfigProvider) EncodeGenesis() ([]byte, error) {
-	genesisMap, err := dcp.genesisDoc()
+func (dcp DynamicConfigProvider) EncodeGenesis(
+	ctx context.Context, cosmosClientCtx cosmosclient.Context, basicManager module.BasicManager,
+) ([]byte, error) {
+	if dcp.Denom != "" {
+		sdk.DefaultBondDenom = dcp.Denom
+	}
+	genDoc, err := GenDocFromInput(ctx, dcp.GenesisInitConfig, cosmosClientCtx, basicManager)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to get genesis doc")
 	}
 
-	bs, err := json.MarshalIndent(genesisMap, "", "  ")
+	genDocBytes, err := cmtjson.MarshalIndent(genDoc, "", "  ")
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to marshal genesis doc")
 	}
 
-	return append(bs, '\n'), nil
+	return append(genDocBytes, '\n'), nil
 }
 
 // AppState returns the app state from the genesis doc of the network.
-func (dcp DynamicConfigProvider) AppState() (map[string]json.RawMessage, error) {
-	codec := NewEncodingConfig(
-		auth.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
-		genutil.AppModuleBasic{},
-		bank.AppModuleBasic{},
-	).Codec
-
-	genesisJSON, err := dcp.genesisByTemplate()
-	if err != nil {
-		return nil, errors.Wrap(err, "not able get genesis")
+func (dcp DynamicConfigProvider) AppState(
+	ctx context.Context, cosmosClientCtx cosmosclient.Context, basicManager module.BasicManager,
+) (map[string]json.RawMessage, error) {
+	if dcp.Denom != "" {
+		sdk.DefaultBondDenom = dcp.Denom
 	}
-
-	var genesisMap map[string]json.RawMessage
-	if err := json.Unmarshal(genesisJSON, &genesisMap); err != nil {
-		return nil, errors.Wrap(err, "not able to unmarshal genesis json")
+	genDoc, err := GenDocFromInput(ctx, dcp.GenesisInitConfig, cosmosClientCtx, basicManager)
+	if err != nil {
+		return nil, errors.Wrap(err, "not able to get genesis doc")
 	}
 
 	var appState map[string]json.RawMessage
-	if err := json.Unmarshal(genesisMap["app_state"], &appState); err != nil {
+	if err := json.Unmarshal(genDoc.AppState, &appState); err != nil {
 		return nil, errors.Wrap(err, "not able to parse genesis app state")
 	}
-
-	authState := authcosmostypes.GetGenesisStateFromAppState(codec, appState)
-	accountState, err := authcosmostypes.UnpackAccounts(authState.Accounts)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to unpack auth accounts")
-	}
-
-	genutilState := genutiltypes.GetGenesisStateFromAppState(codec, appState)
-	bankState := banktypes.GetGenesisStateFromAppState(codec, appState)
-
-	if err := validateNoDuplicateFundedAccounts(dcp.FundedAccounts); err != nil {
-		return nil, err
-	}
-
-	for _, fundedAcc := range dcp.FundedAccounts {
-		accountState = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
-	}
-
-	genutilState.GenTxs = append(genutilState.GenTxs, dcp.GenTxs...)
-
-	genutiltypes.SetGenesisStateInAppState(codec, appState, genutilState)
-	authState.Accounts, err = authcosmostypes.PackAccounts(authcosmostypes.SanitizeGenesisAccounts(accountState))
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to sanitize and pack accounts")
-	}
-	appState[authcosmostypes.ModuleName] = codec.MustMarshalJSON(&authState)
-
-	bankState.Balances = banktypes.SanitizeGenesisBalances(bankState.Balances)
-	appState[banktypes.ModuleName] = codec.MustMarshalJSON(bankState)
 
 	return appState, nil
 }
 
-// GenesisDoc returns the genesis doc of the network.
-func (dcp DynamicConfigProvider) genesisDoc() (map[string]interface{}, error) {
-	genesisJSON, err := dcp.genesisByTemplate()
-	if err != nil {
-		return nil, errors.Wrap(err, "not able get genesis")
-	}
-
-	var genesisMap map[string]interface{}
-	if err := json.Unmarshal(genesisJSON, &genesisMap); err != nil {
-		return nil, errors.Wrap(err, "not able to unmarshal genesis json")
-	}
-
-	appState, err := dcp.AppState()
-	if err != nil {
-		return nil, err
-	}
-
-	// Restructure app state from map[string]json.RawMessage to map[string]interface{}.
-	appStateMap := make(map[string]interface{}, len(appState))
-	for k, v := range appState {
-		mp := make(map[string]interface{})
-
-		if err = json.Unmarshal(v, &mp); err != nil {
-			return nil, errors.Wrapf(err, "not able to unmarshal app state: %s", k)
-		}
-		appStateMap[k] = mp
-	}
-
-	genesisMap["app_state"] = appStateMap
-	return genesisMap, nil
-}
-
 func (dcp DynamicConfigProvider) clone() DynamicConfigProvider {
-	dcp.FundedAccounts = append([]FundedAccount{}, dcp.FundedAccounts...)
-	dcp.GenTxs = append([]json.RawMessage{}, dcp.GenTxs...)
+	dcp.BankBalances = append([]banktypes.Balance{}, dcp.BankBalances...)
 
 	return dcp
-}
-
-func (dcp DynamicConfigProvider) genesisByTemplate() ([]byte, error) {
-	funcMap := template.FuncMap{
-		"ToUpper": strings.ToUpper,
-	}
-
-	genesisBuf := new(bytes.Buffer)
-	err := template.Must(template.New("genesis").Funcs(funcMap).Parse(dcp.GenesisTemplate)).Execute(genesisBuf, struct {
-		GenesisTimeUTC     string
-		ChainID            constant.ChainID
-		Denom              string
-		Gov                GovConfig
-		CustomParamsConfig CustomParamsConfig
-		BlockTimeIotaMS    int64
-	}{
-		GenesisTimeUTC:     dcp.GenesisTime.UTC().Format(time.RFC3339),
-		ChainID:            dcp.ChainID,
-		Denom:              dcp.Denom,
-		Gov:                dcp.GovConfig,
-		CustomParamsConfig: dcp.CustomParamsConfig,
-		BlockTimeIotaMS:    dcp.BlockTimeIota.Milliseconds(),
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to template genesis file")
-	}
-
-	return genesisBuf.Bytes(), nil
-}
-
-func validateNoDuplicateFundedAccounts(accounts []FundedAccount) error {
-	accountsIndexMap := map[string]interface{}{}
-	for _, fundEntry := range accounts {
-		fundEntry := fundEntry
-		_, exists := accountsIndexMap[fundEntry.Address]
-		if exists {
-			return errors.New("duplicate funded account is not allowed")
-		}
-		accountsIndexMap[fundEntry.Address] = true
-	}
-
-	return nil
-}
-
-func applyFundedAccountToGenesis(
-	fa FundedAccount,
-	accountState authcosmostypes.GenesisAccounts,
-	bankState *banktypes.GenesisState,
-) authcosmostypes.GenesisAccounts {
-	accountAddress := sdk.MustAccAddressFromBech32(fa.Address)
-	accountState = append(accountState, authcosmostypes.NewBaseAccount(accountAddress, nil, 0, 0))
-	coins := fa.Balances
-	bankState.Balances = append(
-		bankState.Balances,
-		banktypes.Balance{Address: accountAddress.String(), Coins: coins},
-	)
-	bankState.Supply = bankState.Supply.Add(coins...)
-
-	return accountState
 }
 
 // NewStaticConfigProvider creates new StaticConfigProvider.
@@ -309,12 +168,16 @@ func (scp StaticConfigProvider) GetAddressPrefix() string {
 }
 
 // EncodeGenesis returns encoded genesis doc.
-func (scp StaticConfigProvider) EncodeGenesis() ([]byte, error) {
+func (scp StaticConfigProvider) EncodeGenesis(
+	_ context.Context, _ cosmosclient.Context, _ module.BasicManager,
+) ([]byte, error) {
 	return scp.content, nil
 }
 
 // AppState returns the app state from the genesis doc of the network.
-func (scp StaticConfigProvider) AppState() (map[string]json.RawMessage, error) {
+func (scp StaticConfigProvider) AppState(
+	_ context.Context, _ cosmosclient.Context, _ module.BasicManager,
+) (map[string]json.RawMessage, error) {
 	var appState map[string]json.RawMessage
 	if err := json.Unmarshal(scp.genesisDoc.AppState, &appState); err != nil {
 		return nil, errors.Wrap(err, "not able to parse genesis app state")

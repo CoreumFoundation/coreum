@@ -4,6 +4,8 @@ go 1.22.4
 
 replace github.com/CoreumFoundation/coreum/v4 => ../
 
+replace github.com/CoreumFoundation/crust => ../../crust
+
 // CosmosSDK replacements
 replace (
 	// cosmos keyring
