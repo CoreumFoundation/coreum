@@ -16,8 +16,7 @@ var Commands = map[string]types.Command{
 	"build": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
 			coreum.BuildCored,
-			// TODO(fix-cored-ext)
-			// coreum.BuildExtendedCoredInDocker,
+			coreum.BuildExtendedCoredInDocker,
 		)
 		return nil
 	}, Description: "Builds cored binaries"},
@@ -27,8 +26,7 @@ var Commands = map[string]types.Command{
 	"images": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
 			coreum.BuildCoredDockerImage,
-			// TODO(fix-cored-ext)
-			// coreum.BuildExtendedCoredDockerImage,
+			coreum.BuildExtendedCoredDockerImage,
 		)
 		return nil
 	}, Description: "Builds cored docker images"},
