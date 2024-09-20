@@ -34,7 +34,7 @@ message OrderWithSequence {
 
 // AccountDenomOrderCount is a count of orders per account and denom.
 message AccountDenomOrdersCount {
-  uint64 account_number = 2;
-  string denom = 1;
+  uint64 account_number = 1;
+  string denom = 2;
   uint64 orders_count = 3;
 }

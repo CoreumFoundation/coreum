@@ -17,6 +17,7 @@ type MsgKeeper interface {
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 	PlaceOrder(ctx sdk.Context, order types.Order) error
 	CancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string) error
+	CancelOrdersByDenom(ctx sdk.Context, admin, acc sdk.AccAddress, denom string) error
 }
 
 // MsgServer serves grpc tx requests for dex module.
@@ -61,4 +62,21 @@ func (ms MsgServer) CancelOrder(ctx context.Context, msg *types.MsgCancelOrder) 
 	}
 
 	return &types.EmptyResponse{}, ms.keeper.CancelOrder(sdk.UnwrapSDKContext(ctx), sender, msg.ID)
+}
+
+// CancelOrdersByDenom cancels all orders by denom and account.
+func (ms MsgServer) CancelOrdersByDenom(
+	ctx context.Context, msg *types.MsgCancelOrdersByDenom,
+) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender")
+	}
+
+	acc, err := sdk.AccAddressFromBech32(msg.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender")
+	}
+
+	return &types.EmptyResponse{}, ms.keeper.CancelOrdersByDenom(sdk.UnwrapSDKContext(ctx), sender, acc, msg.Denom)
 }

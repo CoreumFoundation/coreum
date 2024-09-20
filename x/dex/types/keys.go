@@ -37,6 +37,8 @@ var (
 	ParamsKey = []byte{0x09}
 	// AccountDenomOrdersCountKeyPrefix defines the key prefix for the account denom orders count.
 	AccountDenomOrdersCountKeyPrefix = []byte{0x10}
+	// AccountDenomOrderSeqKeyPrefix defines the key prefix for the account denom order seq.
+	AccountDenomOrderSeqKeyPrefix = []byte{0x11}
 )
 
 // CreateOrderBookKey creates order book key.
@@ -189,4 +191,36 @@ func DecodeAccountDenomOrdersCountKey(key []byte) (uint64, string, error) {
 	denom := string(decodedDenomWithLength[0])
 
 	return accNumber, denom, nil
+}
+
+// CreateAccountDenomOrderSeqKey creates account denom order seq key.
+func CreateAccountDenomOrderSeqKey(accNumber uint64, denom string, orderSeq uint64) ([]byte, error) {
+	key, err := CreateAccountDenomKeyPrefix(accNumber, denom)
+	if err != nil {
+		return nil, err
+	}
+	key = store.AppendUint64ToOrderedBytes(key, orderSeq)
+
+	return key, nil
+}
+
+// CreateAccountDenomKeyPrefix creates account denom key prefix.
+func CreateAccountDenomKeyPrefix(accNumber uint64, denom string) ([]byte, error) {
+	key := make([]byte, 0)
+	key = store.AppendUint64ToOrderedBytes(key, accNumber)
+	denomKey, err := store.JoinKeysWithLength([]byte(denom))
+	if err != nil {
+		return key, err
+	}
+	return store.JoinKeys(AccountDenomOrderSeqKeyPrefix, key, denomKey), nil
+}
+
+// DecodeAccountDenomKeyOrderSeq decodes the order seq from account denom key.
+func DecodeAccountDenomKeyOrderSeq(key []byte) (uint64, error) {
+	orderSeq, _, err := store.ReadOrderedBytesToUint64(key)
+	if err != nil {
+		return 0, err
+	}
+
+	return orderSeq, nil
 }

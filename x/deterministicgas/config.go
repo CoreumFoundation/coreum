@@ -232,6 +232,7 @@ func DefaultConfig() Config {
 
 			// dex
 			&dextypes.MsgUpdateParams{},
+			&dextypes.MsgCancelOrdersByDenom{},
 
 			// distribution
 			&distributiontypes.MsgUpdateParams{},       // This is non-deterministic because all the gov proposals are non-deterministic anyway

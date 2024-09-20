@@ -41,8 +41,8 @@ message GoodTil {
 message CancelGoodTil {
   // creator is order creator address.
   string creator = 1;
-  // order_id is order ID.
-  string order_id = 2 [(gogoproto.customname) = "OrderID"];
+  // order_seq is order sequence.
+  uint64 order_seq = 2;
 }
 
 // TimeInForce is order time in force.
@@ -96,22 +96,24 @@ message Order {
 
 // OrderData is a order data used for the store.
 message OrderData {
+  // order ID provided by the creator.
+  string order_id = 1 [(gogoproto.customname) = "OrderID"];
   // order_book_id is order book ID.
-  uint32 order_book_id = 1 [(gogoproto.customname) = "OrderBookID"];
+  uint32 order_book_id = 2 [(gogoproto.customname) = "OrderBookID"];
   // price is value of one unit of the base_denom expressed in terms of the quote_denom.
-  string price = 2 [
+  string price = 3 [
     (gogoproto.customtype) = "Price",
     (gogoproto.nullable) = false
   ];
   // quantity is amount of the base base_denom being traded.
-  string quantity = 3 [
+  string quantity = 4 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // side is order side.
-  Side side = 4;
+  Side side = 5;
   // good_til is order good til
-  GoodTil good_til = 9;
+  GoodTil good_til = 6;
 }
 
 // OrderBookData is a order book data used by order for the store.

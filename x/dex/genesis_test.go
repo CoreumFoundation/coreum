@@ -12,14 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v4/x/dex"
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
-)
-
-const (
-	denom1 = "denom1"
-	denom2 = "denom2"
-	denom3 = "denom3"
 )
 
 func TestInitAndExportGenesis(t *testing.T) {
@@ -27,11 +22,25 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	testApp := simapp.New()
 
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 	dexKeeper := testApp.DEXKeeper
 
-	acc1, _ := testApp.GenAccount(ctx)
-	acc2, _ := testApp.GenAccount(ctx)
+	acc1, _ := testApp.GenAccount(sdkCtx)
+	acc2, _ := testApp.GenAccount(sdkCtx)
+	issuer, _ := testApp.GenAccount(sdkCtx)
+
+	const (
+		denom1 = "denom1"
+		denom2 = "denom2"
+	)
+	settings := assetfttypes.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "SMB",
+		Subunit:       "sut",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(100),
+	}
+	denom3, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
 
 	prams := types.DefaultParams()
 	genState := types.GenesisState{
@@ -126,9 +135,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	accountDenomToAccountDenomOrdersCount := make(map[string]types.AccountDenomOrdersCount, 0)
 	for _, orderWithSeq := range genState.Orders {
-		accNum := testApp.AccountKeeper.GetAccount(
-			ctx, sdk.MustAccAddressFromBech32(orderWithSeq.Order.Creator),
-		).GetAccountNumber()
+		creator := sdk.MustAccAddressFromBech32(orderWithSeq.Order.Creator)
+		accNum := testApp.AccountKeeper.GetAccount(sdkCtx, creator).GetAccountNumber()
 		for _, denom := range orderWithSeq.Order.Denoms() {
 			key := fmt.Sprintf("%d%s", accNum, denom)
 			count, ok := accountDenomToAccountDenomOrdersCount[key]
@@ -142,19 +150,24 @@ func TestInitAndExportGenesis(t *testing.T) {
 			count.OrdersCount++
 			accountDenomToAccountDenomOrdersCount[key] = count
 		}
+		// emulate asset FT locking, expecting that the asset FT imports state before the DEX
+		lockedBalance, err := orderWithSeq.Order.ComputeLimitOrderLockedBalance()
+		require.NoError(t, err)
+		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(lockedBalance))
+		require.NoError(t, testApp.AssetFTKeeper.DEXLock(sdkCtx, creator, lockedBalance))
 	}
 	// set the correct state
 	genState.AccountsDenomsOrdersCounts = lo.Values(accountDenomToAccountDenomOrdersCount)
 
 	// init the keeper
-	dex.InitGenesis(ctx, dexKeeper, testApp.AccountKeeper, genState)
+	dex.InitGenesis(sdkCtx, dexKeeper, testApp.AccountKeeper, genState)
 
 	// check imported state
-	params := dexKeeper.GetParams(ctx)
+	params := dexKeeper.GetParams(sdkCtx)
 	requireT.EqualValues(prams, params)
 
 	// check that export is equal import
-	exportedGenState := dex.ExportGenesis(ctx, dexKeeper)
+	exportedGenState := dex.ExportGenesis(sdkCtx, dexKeeper)
 
 	requireT.EqualValues(genState.Params, exportedGenState.Params)
 	requireT.EqualValues(genState.OrderBooks, exportedGenState.OrderBooks)
@@ -162,10 +175,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// check that imported state is valid
 
-	denom2Count, err := dexKeeper.GetAccountDenomOrdersCount(ctx, acc2, denom2)
+	denom2Count, err := dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom2)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), denom2Count)
-	denom3Count, err := dexKeeper.GetAccountDenomOrdersCount(ctx, acc2, denom3)
+	denom3Count, err := dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom3)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), denom3Count)
 
@@ -183,24 +196,24 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 	lockedBalance, err := orderWithExisingOrderBook.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
-	testApp.MintAndSendCoin(t, ctx, acc2, sdk.NewCoins(lockedBalance))
-	require.NoError(t, dexKeeper.PlaceOrder(ctx, orderWithExisingOrderBook))
+	testApp.MintAndSendCoin(t, sdkCtx, acc2, sdk.NewCoins(lockedBalance))
+	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, orderWithExisingOrderBook))
 
 	// set the expected state
 	orderWithExisingOrderBook.RemainingQuantity = sdkmath.NewInt(10000000)
 	orderWithExisingOrderBook.RemainingBalance = sdkmath.NewInt(40000000000)
 
 	// check that denom orders counters are incremented
-	denom2Count, err = dexKeeper.GetAccountDenomOrdersCount(ctx, acc2, denom2)
+	denom2Count, err = dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom2)
 	require.NoError(t, err)
 	require.Equal(t, uint64(3), denom2Count)
-	denom3Count, err = dexKeeper.GetAccountDenomOrdersCount(ctx, acc2, denom3)
+	denom3Count, err = dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom3)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), denom3Count)
 
 	// check that this order sequence is next
-	ordersWithSeq, _, err := dexKeeper.GetPaginatedOrdersWithSequence(
-		ctx, &query.PageRequest{Limit: query.PaginationMaxLimit},
+	ordersWithSeq, _, err := dexKeeper.GetOrdersWithSequence(
+		sdkCtx, &query.PageRequest{Limit: query.PaginationMaxLimit},
 	)
 	require.NoError(t, err)
 
@@ -229,14 +242,25 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 	lockedBalance, err = orderWithNewOrderBook.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
-	testApp.MintAndSendCoin(t, ctx, acc1, sdk.NewCoins(lockedBalance))
-	require.NoError(t, dexKeeper.PlaceOrder(ctx, orderWithNewOrderBook))
+	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(lockedBalance))
+	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, orderWithNewOrderBook))
 
 	// check that order books are generated correctly
-	denom1ToDenom3OrderBookID, err := dexKeeper.GetOrderBookIDByDenoms(ctx, denom1, denom3)
+	denom1ToDenom3OrderBookID, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, denom1, denom3)
 	require.NoError(t, err)
 	require.Equal(t, uint32(4), denom1ToDenom3OrderBookID)
-	denom3ToDenom1OrderBookID, err := dexKeeper.GetOrderBookIDByDenoms(ctx, denom3, denom1)
+	denom3ToDenom1OrderBookID, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, denom3, denom1)
 	require.NoError(t, err)
 	require.Equal(t, uint32(5), denom3ToDenom1OrderBookID)
+
+	// cancel orders by denom to be sure that the acc-denom-orderSeq mapping is saved
+	acc1Orders, _, err := dexKeeper.GetOrders(sdkCtx, acc2, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	require.NoError(t, err)
+	require.Len(t, acc1Orders, 3)
+
+	require.NoError(t, dexKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc2, denom3))
+
+	acc1Orders, _, err = dexKeeper.GetOrders(sdkCtx, acc2, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	require.NoError(t, err)
+	require.Len(t, acc1Orders, 1)
 }
