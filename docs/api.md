@@ -198,6 +198,7 @@
     - [EventGas](#coreum.deterministicgas.v1.EventGas)
   
 - [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
+    - [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount)
     - [GenesisState](#coreum.dex.v1.GenesisState)
     - [OrderBookDataWithID](#coreum.dex.v1.OrderBookDataWithID)
     - [OrderWithSequence](#coreum.dex.v1.OrderWithSequence)
@@ -219,6 +220,8 @@
     - [Params](#coreum.dex.v1.Params)
   
 - [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
+    - [QueryAccountDenomOrdersCountRequest](#coreum.dex.v1.QueryAccountDenomOrdersCountRequest)
+    - [QueryAccountDenomOrdersCountResponse](#coreum.dex.v1.QueryAccountDenomOrdersCountResponse)
     - [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest)
     - [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse)
     - [QueryOrderBooksRequest](#coreum.dex.v1.QueryOrderBooksRequest)
@@ -4508,6 +4511,27 @@ EventGas is emitted by deterministic gas module to report gas information.
 
 
 
+<a name="coreum.dex.v1.AccountDenomOrdersCount"></a>
+
+### AccountDenomOrdersCount
+
+```
+AccountDenomOrderCount is a count of orders per account and denom.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `account_number` | [uint64](#uint64) |  |    |
+| `denom` | [string](#string) |  |    |
+| `orders_count` | [uint64](#uint64) |  |    |
+
+
+
+
+
+
 <a name="coreum.dex.v1.GenesisState"></a>
 
 ### GenesisState
@@ -4523,6 +4547,7 @@ GenesisState defines the module genesis state.
 | `params` | [Params](#coreum.dex.v1.Params) |  |  `params defines all the parameters of the module.`  |
 | `order_books` | [OrderBookDataWithID](#coreum.dex.v1.OrderBookDataWithID) | repeated |    |
 | `orders` | [OrderWithSequence](#coreum.dex.v1.OrderWithSequence) | repeated |    |
+| `accounts_denoms_orders_counts` | [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount) | repeated |    |
 
 
 
@@ -4830,6 +4855,7 @@ Params keeps gov manageable parameters.
 | ----- | ---- | ----- | ----------- |
 | `default_unified_ref_amount` | [string](#string) |  |  `default_unified_ref_amount is the default approximate amount you need to by 1USD, used to for tokens without custom value`  |
 | `price_tick_exponent` | [int32](#int32) |  |  `price_tick_exponent is the exponent used for the price tick calculation`  |
+| `max_orders_per_denom` | [uint64](#uint64) |  |  `max_orders_per_denom is the maximum number of orders per denom the user can have`  |
 
 
 
@@ -4849,6 +4875,45 @@ Params keeps gov manageable parameters.
 <p align="right"><a href="#top">Top</a></p>
 
 ## coreum/dex/v1/query.proto
+
+
+
+<a name="coreum.dex.v1.QueryAccountDenomOrdersCountRequest"></a>
+
+### QueryAccountDenomOrdersCountRequest
+
+```
+QueryAccountDenomOrdersCountRequest defines the request type for the `AccountDenomOrdersCount` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `account` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
+
+
+
+
+
+
+<a name="coreum.dex.v1.QueryAccountDenomOrdersCountResponse"></a>
+
+### QueryAccountDenomOrdersCountResponse
+
+```
+QueryAccountDenomOrdersCountResponse defines the response type for the `AccountDenomOrdersCount` query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `count` | [uint64](#uint64) |  |    |
+
+
+
 
 
 
@@ -5067,6 +5132,7 @@ Query defines the gRPC query service.
 | `Orders` | [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest) | [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse) | `Orders queries creator orders.` | GET|/coreum/dex/v1/orders/{creator} |
 | `OrderBooks` | [QueryOrderBooksRequest](#coreum.dex.v1.QueryOrderBooksRequest) | [QueryOrderBooksResponse](#coreum.dex.v1.QueryOrderBooksResponse) | `OrderBooks queries order books.` | GET|/coreum/dex/v1/order-books |
 | `OrdersBookOrders` | [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest) | [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse) | `OrdersBookOrders queries order book orders.` | GET|/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders |
+| `AccountDenomOrdersCount` | [QueryAccountDenomOrdersCountRequest](#coreum.dex.v1.QueryAccountDenomOrdersCountRequest) | [QueryAccountDenomOrdersCountResponse](#coreum.dex.v1.QueryAccountDenomOrdersCountResponse) | `AccountDenomOrdersCount queries account denom orders count.` | GET|/coreum/dex/v1/accounts/{account}/denoms/{denom}/orders-count |
 
  <!-- end services -->
 

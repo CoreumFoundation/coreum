@@ -113,7 +113,7 @@ func DefaultConfig() Config {
 
 		// dex
 		// TODO (dex): update with new values once we finish the DEX
-		MsgToMsgURL(&dextypes.MsgPlaceOrder{}):  constantGasFunc(10_000),
+		MsgToMsgURL(&dextypes.MsgPlaceOrder{}):  constantGasFunc(120_000),
 		MsgToMsgURL(&dextypes.MsgCancelOrder{}): constantGasFunc(15_000),
 
 		// authz

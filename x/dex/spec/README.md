@@ -206,6 +206,11 @@ deposit that ensures users have a vested interest in their orders, helping to pr
 Once the order is executed that reserve is released.
 The default reserve amount is  `10 CORE` and can be updated by the governance.
 
+### Max orders limit
+
+The number of active orders a user can have for each denom is limited by a value called `max_orders_per_denom`, 
+which is determined by DEX governance. 
+
 ## Asset FT and DEX
 
 ### Unified ref amount
