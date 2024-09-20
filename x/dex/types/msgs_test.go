@@ -67,6 +67,15 @@ func TestMsgUpdateParams_ValidateBasic(t *testing.T) {
 			}(),
 			wantErr: types.ErrInvalidInput,
 		},
+		{
+			name: "invalid_max_orders_per_denom",
+			msg: func() types.MsgUpdateParams {
+				msg := validMsg()
+				msg.Params.MaxOrdersPerDenom = 0
+				return msg
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

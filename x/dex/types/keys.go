@@ -35,6 +35,8 @@ var (
 	OrderBookRecordKeyPrefix = []byte{0x07}
 	// ParamsKey defines the key to store parameters of the module, set via governance.
 	ParamsKey = []byte{0x09}
+	// AccountDenomOrdersCountKeyPrefix defines the key prefix for the account denom orders count.
+	AccountDenomOrdersCountKeyPrefix = []byte{0x10}
 )
 
 // CreateOrderBookKey creates order book key.
@@ -157,4 +159,34 @@ func BuildGoodTilBlockHeightDelayKey(orderSeq uint64) string {
 func BuildGoodTilBlockTimeDelayKey(orderSeq uint64) string {
 	// the string will be store the delay store and must be unique for the app
 	return fmt.Sprintf("%stlt%d", ModuleName, orderSeq)
+}
+
+// CreateAccountDenomOrdersCountKey creates account denom orders count key.
+func CreateAccountDenomOrdersCountKey(accNumber uint64, denom string) ([]byte, error) {
+	key := make([]byte, 0)
+	key = store.AppendUint64ToOrderedBytes(key, accNumber)
+	denomKey, err := store.JoinKeysWithLength([]byte(denom))
+	if err != nil {
+		return key, err
+	}
+
+	return store.JoinKeys(AccountDenomOrdersCountKeyPrefix, key, denomKey), nil
+}
+
+// DecodeAccountDenomOrdersCountKey decodes account denom orders count key and returns the account number and denom.
+func DecodeAccountDenomOrdersCountKey(key []byte) (uint64, string, error) {
+	accNumber, denomWithLength, err := store.ReadOrderedBytesToUint64(key)
+	if err != nil {
+		return 0, "", err
+	}
+	decodedDenomWithLength, err := store.ParseLengthPrefixedKeys(denomWithLength)
+	if err != nil {
+		return 0, "", err
+	}
+	if len(decodedDenomWithLength) != 1 {
+		return 0, "", fmt.Errorf("expected decoded denom keys length is 1  got %d", len(decodedDenomWithLength))
+	}
+	denom := string(decodedDenomWithLength[0])
+
+	return accNumber, denom, nil
 }

@@ -15,4 +15,7 @@ message Params {
   ];
   // price_tick_exponent is the exponent used for the price tick calculation
   int32 price_tick_exponent = 2;
+
+  // max_orders_per_denom is the maximum number of orders per denom the user can have
+  uint64 max_orders_per_denom = 3;
 }

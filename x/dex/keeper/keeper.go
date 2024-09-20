@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/gogoproto/proto"
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -59,7 +58,8 @@ func NewKeeper(
 func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 	k.logger(ctx).Debug("Placing order.", "order", order)
 
-	if err := k.validateOrder(ctx, order); err != nil {
+	params := k.GetParams(ctx)
+	if err := k.validateOrder(ctx, params, order); err != nil {
 		return err
 	}
 
@@ -88,7 +88,7 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 		return err
 	}
 
-	return k.matchOrder(ctx, accNumber, orderBookID, oppositeOrderBookID, order)
+	return k.matchOrder(ctx, params, accNumber, orderBookID, oppositeOrderBookID, order)
 }
 
 // CancelOrder cancels order and unlock locked balance.
@@ -279,12 +279,12 @@ func (k Keeper) SaveOrderBookIDWithData(ctx sdk.Context, orderBookID uint32, dat
 
 // SetOrderSeq sets order sequence.
 func (k Keeper) SetOrderSeq(ctx sdk.Context, seq uint64) error {
-	return k.setUint64Seq(ctx, types.OrderSeqKey, seq)
+	return k.setUint64Value(ctx, types.OrderSeqKey, seq)
 }
 
 // SetOrderBookSeq sets order book sequence.
 func (k Keeper) SetOrderBookSeq(ctx sdk.Context, seq uint32) error {
-	return k.setUint32Seq(ctx, types.OrderBookSeqKey, seq)
+	return k.setUint32Value(ctx, types.OrderBookSeqKey, seq)
 }
 
 // SaveOrderWithOrderBookRecord saves order with order book record.
@@ -296,7 +296,71 @@ func (k Keeper) SaveOrderWithOrderBookRecord(
 	return k.saveOrderWithOrderBookRecord(ctx, order, record)
 }
 
-func (k Keeper) validatePriceTick(ctx sdk.Context, baseDenom, quoteDenom string, price types.Price) error {
+// GetAccountDenomOrdersCount returns account's denom orders count.
+func (k Keeper) GetAccountDenomOrdersCount(
+	ctx sdk.Context,
+	acc sdk.AccAddress,
+	denom string,
+) (uint64, error) {
+	accNumber, err := k.getAccountNumber(ctx, acc)
+	if err != nil {
+		return 0, err
+	}
+
+	return k.getAccountDenomOrdersCounter(ctx, accNumber, denom)
+}
+
+// GetPaginatedAccountsDenomsOrdersCounts returns accounts denoms orders count.
+func (k Keeper) GetPaginatedAccountsDenomsOrdersCounts(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.AccountDenomOrdersCount, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AccountDenomOrdersCountKeyPrefix)
+	counts, pageRes, err := query.GenericFilteredPaginate(
+		k.cdc,
+		store,
+		pagination,
+		// builder
+		func(key []byte, record *gogotypes.UInt64Value) (*types.AccountDenomOrdersCount, error) {
+			accNumber, denom, err := types.DecodeAccountDenomOrdersCountKey(key)
+			if err != nil {
+				return nil, err
+			}
+
+			return &types.AccountDenomOrdersCount{
+				AccountNumber: accNumber,
+				Denom:         denom,
+				OrdersCount:   record.Value,
+			}, nil
+		},
+		// constructor
+		func() *gogotypes.UInt64Value {
+			return &gogotypes.UInt64Value{}
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return lo.Map(counts, func(c *types.AccountDenomOrdersCount, _ int) types.AccountDenomOrdersCount {
+		return *c
+	}), pageRes, nil
+}
+
+// SetAccountDenomOrdersCount sets accounts denoms orders count.
+func (k Keeper) SetAccountDenomOrdersCount(
+	ctx sdk.Context,
+	accountDenomOrdersCount types.AccountDenomOrdersCount,
+) error {
+	return k.setAccountDenomOrdersCount(ctx, accountDenomOrdersCount)
+}
+
+func (k Keeper) validatePriceTick(
+	ctx sdk.Context,
+	params types.Params,
+	baseDenom, quoteDenom string,
+	price types.Price,
+) error {
 	baseDenomRefAmount, buyRefAmountFound, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom)
 	if err != nil {
 		return err
@@ -307,7 +371,6 @@ func (k Keeper) validatePriceTick(ctx sdk.Context, baseDenom, quoteDenom string,
 		return err
 	}
 
-	params := k.GetParams(ctx)
 	if !buyRefAmountFound {
 		baseDenomRefAmount = params.DefaultUnifiedRefAmount
 	}
@@ -328,14 +391,14 @@ func (k Keeper) validatePriceTick(ctx sdk.Context, baseDenom, quoteDenom string,
 	return nil
 }
 
-func (k Keeper) validateOrder(ctx sdk.Context, order types.Order) error {
+func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.Order) error {
 	if err := order.Validate(); err != nil {
 		return err
 	}
 
 	// price
 	if order.Type == types.ORDER_TYPE_LIMIT {
-		if err := k.validatePriceTick(ctx, order.BaseDenom, order.QuoteDenom, *order.Price); err != nil {
+		if err := k.validatePriceTick(ctx, params, order.BaseDenom, order.QuoteDenom, *order.Price); err != nil {
 			return err
 		}
 	}
@@ -496,6 +559,7 @@ func (k Keeper) saveOrderBookIDWithData(
 
 func (k Keeper) createOrder(
 	ctx sdk.Context,
+	params types.Params,
 	order types.Order,
 	record types.OrderBookRecord,
 ) error {
@@ -504,6 +568,15 @@ func (k Keeper) createOrder(
 		"order", order.String(),
 		"record", record.String(),
 	)
+
+	if err := k.incrementAccountDenomsOrdersCounter(
+		ctx,
+		record.AccountNumber,
+		params.MaxOrdersPerDenom,
+		order.Denoms(),
+	); err != nil {
+		return err
+	}
 
 	orderSeq, err := k.genNextOrderSeq(ctx)
 	if err != nil {
@@ -521,10 +594,18 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 ) error {
 	// additional check to prevent in unexpected state
 	if order.Type != types.ORDER_TYPE_LIMIT {
-		return errors.Errorf("it's prohibited to save not limit order types, type: %s", order.Type.String())
+		return sdkerrors.Wrapf(
+			types.ErrInvalidInput,
+			"it's prohibited to save not limit order types, type: %s",
+			order.Type.String(),
+		)
 	}
 	if order.TimeInForce != types.TIME_IN_FORCE_GTC {
-		return errors.Errorf("it's prohibited to save not GTC order types, type: %s", order.TimeInForce.String())
+		return sdkerrors.Wrapf(
+			types.ErrInvalidInput,
+			"it's prohibited to save not GTC order types, type: %s",
+			order.TimeInForce.String(),
+		)
 	}
 
 	if err := k.saveOrderBookRecord(ctx, record); err != nil {
@@ -561,13 +642,15 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 	return k.savaOrderIDToSeq(ctx, record.AccountNumber, record.OrderID, record.OrderSeq)
 }
 
-func (k Keeper) removeOrderByRecord(
+func (k Keeper) removeOrderByRecordAndUsedDenoms(
 	ctx sdk.Context,
 	record types.OrderBookRecord,
+	denoms []string, // any order of used denoms in the order
 ) error {
 	k.logger(ctx).Debug(
 		"Removing order.",
 		"record", record,
+		"denoms", denoms,
 	)
 
 	if err := k.removeOrderBookRecord(ctx, record.OrderBookID, record.Side, record.Price, record.OrderSeq); err != nil {
@@ -585,7 +668,11 @@ func (k Keeper) removeOrderByRecord(
 	}
 	k.removeOrderData(ctx, record.OrderSeq)
 
-	return k.removeOrderIDToSeq(ctx, record.AccountNumber, record.OrderID)
+	if err := k.removeOrderIDToSeq(ctx, record.AccountNumber, record.OrderID); err != nil {
+		return err
+	}
+
+	return k.decrementAccountDenomOrdersCounter(ctx, record.AccountNumber, denoms)
 }
 
 func (k Keeper) saveOrderBookData(ctx sdk.Context, orderBookID uint32, data types.OrderBookData) error {
@@ -598,7 +685,7 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 		return err
 	}
 
-	if err := k.removeOrderByRecord(ctx, record); err != nil {
+	if err := k.removeOrderByRecordAndUsedDenoms(ctx, record, order.Denoms()); err != nil {
 		return err
 	}
 
@@ -946,34 +1033,83 @@ func (k Keeper) getOrderSeqByID(ctx sdk.Context, accNumber uint64, orderID strin
 	return val.GetValue(), nil
 }
 
-func (k Keeper) setDataToStore(
+func (k Keeper) setAccountDenomOrdersCount(
 	ctx sdk.Context,
-	key []byte,
-	val proto.Message,
+	accountDenomOrdersCount types.AccountDenomOrdersCount,
 ) error {
-	bz, err := k.cdc.Marshal(val)
+	key, err := types.CreateAccountDenomOrdersCountKey(
+		accountDenomOrdersCount.AccountNumber, accountDenomOrdersCount.Denom,
+	)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to marshal %T, err: %s", err, val)
+		return err
 	}
-	ctx.KVStore(k.storeKey).Set(key, bz)
+
+	return k.setUint64Value(ctx, key, accountDenomOrdersCount.OrdersCount)
+}
+
+func (k Keeper) incrementAccountDenomsOrdersCounter(
+	ctx sdk.Context,
+	accNumber uint64,
+	maxOrdersPerDenom uint64,
+	denoms []string,
+) error {
+	for _, denom := range denoms {
+		key, err := types.CreateAccountDenomOrdersCountKey(accNumber, denom)
+		if err != nil {
+			return err
+		}
+		orderPerDenomCount, err := k.incrementUint64Counter(ctx, key)
+		if err != nil {
+			return err
+		}
+		if orderPerDenomCount > maxOrdersPerDenom {
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput,
+				"it's prohibited to save more than %d orders per denom",
+				maxOrdersPerDenom,
+			)
+		}
+	}
+
 	return nil
 }
 
-func (k Keeper) getDataFromStore(
+func (k Keeper) decrementAccountDenomOrdersCounter(
 	ctx sdk.Context,
-	key []byte,
-	val proto.Message,
+	accNumber uint64,
+	denoms []string,
 ) error {
-	bz := ctx.KVStore(k.storeKey).Get(key)
-	if bz == nil {
-		return sdkerrors.Wrapf(types.ErrRecordNotFound, "store type %T", val)
-	}
-
-	if err := k.cdc.Unmarshal(bz, val); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to unmarshal %T, err: %s", err, val)
+	for _, denom := range denoms {
+		key, err := types.CreateAccountDenomOrdersCountKey(accNumber, denom)
+		if err != nil {
+			return err
+		}
+		_, err = k.decrementUint64Counter(ctx, key)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func (k Keeper) getAccountDenomOrdersCounter(ctx sdk.Context, accNumber uint64, denom string) (uint64, error) {
+	key, err := types.CreateAccountDenomOrdersCountKey(accNumber, denom)
+	if err != nil {
+		return 0, err
+	}
+
+	var val gogotypes.UInt64Value
+	err = k.getDataFromStore(ctx, key, &val)
+	if err != nil {
+		if !sdkerrors.IsOf(err, types.ErrRecordNotFound) {
+			return 0, err
+		}
+		// record not found so the count is zero
+		return 0, nil
+	}
+
+	return val.Value, nil
 }
 
 // logger returns the Keeper logger.
