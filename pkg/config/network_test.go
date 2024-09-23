@@ -2,9 +2,7 @@ package config_test
 
 import (
 	_ "embed"
-	"reflect"
 	"testing"
-	"unsafe"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -79,19 +77,4 @@ func TestStaticConfigProviders(t *testing.T) {
 			assert.Equal(t, tt.addressPrefix, n.Provider.GetAddressPrefix())
 		})
 	}
-}
-
-func unsealConfig() {
-	sdkConfig := sdk.GetConfig()
-	unsafeSetField(sdkConfig, "sealed", false)
-	unsafeSetField(sdkConfig, "sealedch", make(chan struct{}))
-}
-
-func unsafeSetField(object interface{}, fieldName string, value interface{}) {
-	rs := reflect.ValueOf(object).Elem()
-	field := rs.FieldByName(fieldName)
-	// rf can't be read or set.
-	reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).
-		Elem().
-		Set(reflect.ValueOf(value))
 }
