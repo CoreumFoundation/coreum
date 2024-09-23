@@ -10,6 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -1084,6 +1085,222 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+}
+
+// TestLimitOrdersMatchingWithAssetClawback tests the dex modules ability to place get and match limit orders
+// with asset ft with clawback feature.
+func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgClawback{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgClawback{},
+			&assetfttypes.MsgClawback{},
+		},
+	})
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+			&dextypes.MsgPlaceOrder{},
+			&dextypes.MsgCancelOrder{},
+		},
+	})
+
+	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_clawback)
+	denom2 := "denom2"
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc1.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(150)),
+		),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	// clawback some of the amount
+	clawbackMsg := &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+
+	// place order should fail because of insufficient funds
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.ErrorContains(err, cosmoserrors.ErrInsufficientFunds.Error())
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+
+	// send enough amounts for the order
+	msgSend = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc1.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+		),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+
+	// now placing order should succeed because the needed funds are available
+	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+
+	// try to clawback after placing the order should fail
+	clawbackMsg = &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.ErrorContains(err, cosmoserrors.ErrInsufficientFunds.Error())
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+
+	// the order should be cancelled, in order to do the clawback
+	cancelOrderMsg := &dextypes.MsgCancelOrder{
+		Sender: acc1.String(),
+		ID:     placeSellOrderMsg.ID,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(cancelOrderMsg)),
+		cancelOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+
+	// now clawback should succeed
+	clawbackMsg = &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
 }
 
 func issueFT(
