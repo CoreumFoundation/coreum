@@ -88,6 +88,10 @@ func GenDocFromInput(
 
 	// set gov config
 	govGenesis := govtypesv1.DefaultGenesisState()
+	fourteenDays := 14 * 24 * time.Hour
+	govGenesis.Params.MaxDepositPeriod = &fourteenDays
+	govGenesis.Params.BurnVoteQuorum = true
+	govGenesis.Params.ProposalCancelRatio = "1.0"
 	if len(cfg.GovConfig.MinDeposit) > 0 {
 		govGenesis.Params.MinDeposit = cfg.GovConfig.MinDeposit
 	}
@@ -100,8 +104,6 @@ func GenDocFromInput(
 	if cfg.GovConfig.ExpeditedVotingPeriod > 0 {
 		govGenesis.Params.ExpeditedVotingPeriod = &cfg.GovConfig.ExpeditedVotingPeriod
 	}
-	fourteenDays := 14 * 24 * time.Hour
-	govGenesis.Params.MaxDepositPeriod = &fourteenDays
 	appGenState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenesis)
 
 	// set custom params
