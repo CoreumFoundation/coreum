@@ -76,7 +76,7 @@ type GenesisInitConfig struct {
 }
 
 // GenerateGenesisCmd returns a cobra command that generates the gensis file, given an input config.
-func GenerateGenesisCmd(basiManager module.BasicManager) *cobra.Command {
+func GenerateGenesisCmd(basicManager module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate-genesis",
 		Short: "Generate gensis file",
@@ -105,7 +105,7 @@ func GenerateGenesisCmd(basiManager module.BasicManager) *cobra.Command {
 				sdk.DefaultBondDenom = genCfg.Denom
 			}
 
-			genDoc, err := genDocFromInput(ctx, genCfg, cosmosClientCtx, basiManager)
+			genDoc, err := genDocFromInput(ctx, genCfg, cosmosClientCtx, basicManager)
 			if err != nil {
 				return err
 			}
@@ -138,6 +138,10 @@ func genDocFromInput(
 
 	// set gov config
 	govGenesis := govtypesv1.DefaultGenesisState()
+	fourteenDays := 14 * 24 * time.Hour
+	govGenesis.Params.MaxDepositPeriod = &fourteenDays
+	govGenesis.Params.BurnVoteQuorum = true
+	govGenesis.Params.ProposalCancelRatio = "1.0"
 	if len(cfg.GovConfig.MinDeposit) > 0 {
 		govGenesis.Params.MinDeposit = cfg.GovConfig.MinDeposit
 	}
@@ -150,8 +154,6 @@ func genDocFromInput(
 	if cfg.GovConfig.ExpeditedVotingPeriod > 0 {
 		govGenesis.Params.ExpeditedVotingPeriod = &cfg.GovConfig.ExpeditedVotingPeriod
 	}
-	fourteenDays := 14 * 24 * time.Hour
-	govGenesis.Params.MaxDepositPeriod = &fourteenDays
 	appGenState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenesis)
 
 	// set custom params
