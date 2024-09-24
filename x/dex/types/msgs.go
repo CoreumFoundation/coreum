@@ -19,6 +19,7 @@ var (
 	_ extendedMsg = &MsgUpdateParams{}
 	_ extendedMsg = &MsgPlaceOrder{}
 	_ extendedMsg = &MsgCancelOrder{}
+	_ extendedMsg = &MsgCancelOrdersByDenom{}
 )
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
@@ -26,6 +27,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgPlaceOrder{}, fmt.Sprintf("%s/MsgPlaceOrder", ModuleName))
 	legacy.RegisterAminoMsg(cdc, &MsgCancelOrder{}, fmt.Sprintf("%s/MsgCancelOrder", ModuleName))
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName))
+	legacy.RegisterAminoMsg(cdc, &MsgCancelOrdersByDenom{}, fmt.Sprintf("%s/MsgCancelOrdersByDenom", ModuleName))
 }
 
 // ValidateBasic checks that message fields are valid.
@@ -53,4 +55,21 @@ func (m MsgCancelOrder) ValidateBasic() error {
 	}
 
 	return validateOrderID(m.ID)
+}
+
+// ValidateBasic validates the message.
+func (m MsgCancelOrdersByDenom) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid address: %s", m.Sender)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid address: %s", m.Account)
+	}
+
+	if err := sdk.ValidateDenom(m.Denom); err != nil {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid denom: %s", m.Denom)
+	}
+
+	return nil
 }

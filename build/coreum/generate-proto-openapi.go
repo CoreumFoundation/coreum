@@ -52,6 +52,7 @@ func generateProtoOpenAPI(ctx context.Context, deps types.DepsFunc) error {
 		filepath.Join(coreumPath, "asset", "ft", "v1"),
 		filepath.Join(coreumPath, "asset", "nft", "v1"),
 		filepath.Join(coreumPath, "customparams", "v1"),
+		filepath.Join(coreumPath, "dex", "v1"),
 		filepath.Join(coreumPath, "feemodel", "v1"),
 		filepath.Join(cosmosPath, "base", "node", "v1beta1"),
 		filepath.Join(cosmosPath, "base", "tendermint", "v1beta1"),
@@ -75,6 +76,8 @@ func generateProtoOpenAPI(ctx context.Context, deps types.DepsFunc) error {
 		filepath.Join(ibcPath, "core", "client", "v1"),
 		filepath.Join(ibcPath, "core", "connection", "v1"),
 		filepath.Join(ibcPath, "applications", "transfer", "v1"),
+		filepath.Join(ibcPath, "applications", "interchain_accounts", "controller", "v1"),
+		filepath.Join(ibcPath, "applications", "interchain_accounts", "host", "v1"),
 		filepath.Join(moduleDirs[cosmWASMModule], "proto", "cosmwasm", "wasm", "v1"),
 	}
 

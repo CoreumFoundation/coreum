@@ -36,14 +36,16 @@ func (g *gov) After(t *testing.T) {
 	govParams, err := chain.Governance.QueryGovParams(ctx)
 	requireT.NoError(err)
 
-	requireT.Equal(sdkmath.LegacyMustNewDecFromStr("0.5").String(), govParams.ProposalCancelRatio)
+	requireT.Equal(sdkmath.LegacyMustNewDecFromStr("1.0").String(), govParams.ProposalCancelRatio)
 	requireT.Empty(govParams.ProposalCancelDest)
 	requireT.Equal(lo.ToPtr(24*time.Hour), govParams.ExpeditedVotingPeriod)
 	requireT.Equal(sdkmath.LegacyMustNewDecFromStr("0.667").String(), govParams.ExpeditedThreshold)
 	requireT.Equal(sdk.NewCoins(
-		sdk.NewCoin(chain.ChainSettings.Denom, sdkmath.NewInt(4_000_000_000)),
+		sdk.NewCoin(chain.ChainSettings.Denom, sdkmath.NewInt(20_000_000_000)),
 	).String(), sdk.NewCoins(govParams.ExpeditedMinDeposit...).String())
 	requireT.Equal(sdkmath.LegacyMustNewDecFromStr("0.01").String(), govParams.MinDepositRatio)
+	requireT.True(govParams.BurnVoteQuorum)
+	requireT.True(govParams.BurnVoteQuorum)
 
 	requireT.NotEqual(g.oldParams.ProposalCancelRatio, govParams.ProposalCancelRatio)
 	requireT.NotEqual(g.oldParams.ExpeditedVotingPeriod, govParams.ExpeditedVotingPeriod)

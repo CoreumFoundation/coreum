@@ -100,12 +100,12 @@ func InitGenesis(
 
 // ExportGenesis returns the dex module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	ordersWithSeq, _, err := k.GetPaginatedOrdersWithSequence(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	ordersWithSeq, _, err := k.GetOrdersWithSequence(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(errors.Wrap(err, "failed to get orders with sequence"))
 	}
 
-	orderBooksWithID, _, err := k.GetPaginatedOrderBoosWithID(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	orderBooksWithID, _, err := k.GetOrderBooksWithID(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(errors.Wrap(err, "failed to get order books with ID"))
 	}

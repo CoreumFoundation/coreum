@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -13,6 +14,7 @@ import (
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -109,9 +111,8 @@ func DefaultConfig(t *testing.T) network.Config {
 	}
 	// set to nil the devnet config we don't need
 	provider := devNetwork.Provider.(config.DynamicConfigProvider)
-	provider.FundedAccounts = nil
-	provider.GenTxs = nil
-	provider.CustomParamsConfig.Staking.MinSelfDelegation = sdkmath.NewInt(1)
+	provider.BankBalances = nil
+	provider.CustomParamsConfig.MinSelfDelegation = sdkmath.NewInt(1)
 
 	devNetwork.Provider = provider
 
@@ -121,12 +122,19 @@ func DefaultConfig(t *testing.T) network.Config {
 	setNetworkConfigOnce.Do(func() {
 		devNetwork.SetSDKConfig()
 	})
-	appState, err := devNetwork.Provider.AppState()
+
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
+
+	clientCtx := cosmosclient.Context{}.
+		WithCodec(tempApp.AppCodec()).
+		WithInterfaceRegistry(tempApp.InterfaceRegistry()).
+		WithTxConfig(tempApp.TxConfig())
+
+	appState, err := devNetwork.Provider.AppState(context.Background(), clientCtx, tempApp.BasicModuleManager)
 	if err != nil {
 		panic(errors.Wrap(err, "can't get network's app state"))
 	}
 
-	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tempDir()))
 	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return network.Config{
 		Codec:             tempApp.AppCodec(),
