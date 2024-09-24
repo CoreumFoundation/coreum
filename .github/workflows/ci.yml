@@ -6,6 +6,10 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }} # add concurrency
+  cancel-in-progress: true
+
 jobs:
   ci:
     strategy:
