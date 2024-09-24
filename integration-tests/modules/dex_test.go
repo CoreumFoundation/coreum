@@ -10,6 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -1084,6 +1085,131 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+}
+
+// TestCancelOrdersByDenom tests the dex modules ability to cancel all orders of the account and by denom.
+func TestCancelOrdersByDenom(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	const ordersPerChunk = 10
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+		Amount: sdkmath.NewIntWithDecimal(1, 6), // amount to cover cancellation
+	})
+
+	acc1 := chain.GenAccount()
+	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 10))
+	denom2 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 10))
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
+
+	ordersCount := int(dexParamsRes.Params.MaxOrdersPerDenom)
+
+	amtPerOrder := sdkmath.NewInt(100)
+	placeMsgs := lo.RepeatBy(ordersCount, func(_ int) sdk.Msg {
+		return &dextypes.MsgPlaceOrder{
+			Sender:     acc1.String(),
+			Type:       dextypes.ORDER_TYPE_LIMIT,
+			ID:         uuid.NewString(),
+			BaseDenom:  denom1,
+			QuoteDenom: denom2,
+			Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+			Quantity:   amtPerOrder,
+			Side:       dextypes.SIDE_SELL,
+			GoodTil: lo.ToPtr(dextypes.GoodTil{
+				GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 20_000),
+				GoodTilBlockTime:   lo.ToPtr(blockRes.SdkBlock.Header.Time.Add(time.Hour)),
+			}),
+			TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+		}
+	})
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: placeMsgs,
+	})
+
+	// send required tokens to acc1
+	coinToFundAcc := sdk.NewCoin(denom1, amtPerOrder.MulRaw(int64(ordersCount)))
+	msgBankSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc1.String(),
+		Amount:      sdk.NewCoins(coinToFundAcc),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBankSend)),
+		msgBankSend,
+	)
+	requireT.NoError(err)
+
+	// place all orders
+	for i, chunk := range lo.Chunk(placeMsgs, ordersPerChunk) {
+		t.Logf("Placing orders chunk %d", i)
+		_, err = client.BroadcastTx(
+			ctx,
+			chain.ClientContext.WithFromAddress(acc1),
+			chain.TxFactoryAuto(),
+			chunk...,
+		)
+		requireT.NoError(err)
+	}
+
+	orderRes, err := dexClient.Orders(ctx, &dextypes.QueryOrdersRequest{
+		Creator: acc1.String(),
+		Pagination: &query.PageRequest{
+			Limit: uint64(ordersCount),
+		},
+	})
+	requireT.NoError(err)
+	requireT.Len(orderRes.Orders, ordersCount)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   coinToFundAcc.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(coinToFundAcc.Amount.String(), balanceRes.LockedInDEX.String())
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactoryAuto(),
+		&dextypes.MsgCancelOrdersByDenom{
+			Sender:  issuer.String(),
+			Account: acc1.String(),
+			Denom:   denom2,
+		})
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   coinToFundAcc.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(coinToFundAcc.Amount.String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+
+	orderRes, err = dexClient.Orders(ctx, &dextypes.QueryOrdersRequest{
+		Creator: acc1.String(),
+		Pagination: &query.PageRequest{
+			Limit: uint64(ordersCount),
+		},
+	})
+	requireT.NoError(err)
+	requireT.Empty(orderRes.Orders)
 }
 
 func issueFT(

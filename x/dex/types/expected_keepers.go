@@ -8,7 +8,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	dextypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 )
 
 // AccountKeeper defines the expected account keeper interface.
@@ -29,7 +29,8 @@ type AssetFTKeeper interface {
 	DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
 	DEXUnlockAndSend(ctx sdk.Context, from, to sdk.AccAddress, coin sdk.Coin) error
 	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error)
+	GetDEXSettings(ctx sdk.Context, denom string) (dextypes.DEXSettings, error)
+	GetDefinition(ctx sdk.Context, denom string) (dextypes.Definition, error)
 }
 
 // DelayKeeper defines methods required from the delay keeper.
