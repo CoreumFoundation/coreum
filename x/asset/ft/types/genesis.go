@@ -39,12 +39,6 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
-	for _, settings := range gs.DEXRestrictions {
-		if err := ValidateDEXRestrictions(settings.DEXRestrictions); err != nil {
-			return err
-		}
-	}
-
 	return gs.Params.ValidateBasic()
 }
 

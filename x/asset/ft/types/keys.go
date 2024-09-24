@@ -39,8 +39,6 @@ var (
 	DEXLockedBalancesKeyPrefix = []byte{0x09}
 	// DEXSettingsKeyPrefix defines the key prefix for the DEX settings.
 	DEXSettingsKeyPrefix = []byte{0x10}
-	// DEXRestrictionsKeyPrefix defines the key prefix for the DEX restrictions.
-	DEXRestrictionsKeyPrefix = []byte{0x11}
 )
 
 // StoreTrue keeps a value used by stores to indicate that key is present.
@@ -94,11 +92,6 @@ func CreateDEXLockedBalancesKey(addr []byte) []byte {
 // CreateDEXSettingsKey creates the key for DEX settings.
 func CreateDEXSettingsKey(denom string) []byte {
 	return store.JoinKeys(DEXSettingsKeyPrefix, []byte(denom))
-}
-
-// CreateDEXRestrictionsKey creates the key for DEX restrictions.
-func CreateDEXRestrictionsKey(denom string) []byte {
-	return store.JoinKeys(DEXRestrictionsKeyPrefix, []byte(denom))
 }
 
 // AddressFromBalancesStore returns an account address from a balances prefix

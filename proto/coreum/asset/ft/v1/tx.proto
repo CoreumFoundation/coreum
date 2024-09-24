@@ -59,11 +59,11 @@ service Msg {
   // NOTE: all parameters must be provided.
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
 
-  // UpdateDEXSettings updates token DEX settings.
-  rpc UpdateDEXSettings(MsgUpdateDEXSettings) returns (EmptyResponse);
+  // UpdateDEXUnifiedRefAmount updates DEX unified ref amount.
+  rpc UpdateDEXUnifiedRefAmount(MsgUpdateDEXUnifiedRefAmount) returns (EmptyResponse);
 
-  // UpdateDEXRestrictions updates token DEX restrictions.
-  rpc UpdateDEXRestrictions(MsgUpdateDEXRestrictions) returns (EmptyResponse);
+  // UpdateDEXWhitelistedDenoms updates DEX whitelisted denoms.
+  rpc UpdateDEXWhitelistedDenoms(MsgUpdateDEXWhitelistedDenoms) returns (EmptyResponse);
 }
 
 // MsgIssue defines message to issue new fungible token.
@@ -99,8 +99,6 @@ message MsgIssue {
   ExtensionIssueSettings extension_settings = 12;
   // dex_settings allowed to be customized by issuer
   DEXSettings dex_settings = 13 [(gogoproto.customname) = "DEXSettings"];
-  // dex_restrictions allowed to be customized by issuer if restrict_dex feature is enabled
-  DEXRestrictions dex_restrictions = 14 [(gogoproto.customname) = "DEXRestrictions"];
 }
 
 // ExtensionIssueSettings are settings that will be used to Instantiate the smart contract which contains
@@ -239,28 +237,27 @@ message MsgUpdateParams {
   ];
 }
 
-message MsgUpdateDEXSettings {
+message MsgUpdateDEXUnifiedRefAmount {
   option (cosmos.msg.v1.signer) = "sender";
-  option (amino.name) = "assetft/MsgUpdateDEXSettings";
+  option (amino.name) = "assetft/MsgUpdateDEXUnifiedRefAmount";
 
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string denom = 2;
-  DEXSettings dex_settings = 3 [
-    (gogoproto.customname) = "DEXSettings",
-    (gogoproto.nullable) = false
+  // unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size
+  string unified_ref_amount = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
 }
 
-message MsgUpdateDEXRestrictions {
+message MsgUpdateDEXWhitelistedDenoms {
   option (cosmos.msg.v1.signer) = "sender";
-  option (amino.name) = "assetft/MsgUpdateDEXRestrictions";
+  option (amino.name) = "assetft/MsgUpdateDEXWhitelistedDenoms";
 
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string denom = 2;
-  DEXRestrictions dex_restrictions = 3 [
-    (gogoproto.customname) = "DEXRestrictions",
-    (gogoproto.nullable) = false
-  ];
+  // whitelisted_denoms is the list of denoms to trade with.
+  repeated string whitelisted_denoms = 3 [(gogoproto.nullable) = false];
 }
 
 message EmptyResponse {}

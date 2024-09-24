@@ -439,17 +439,18 @@ func (k Keeper) validateGoodTil(ctx sdk.Context, order types.Order) error {
 }
 
 func (k Keeper) getAssetFTUnifiedRefAmount(ctx sdk.Context, denom string) (sdkmath.LegacyDec, bool, error) {
-	found := false
 	settings, err := k.assetFTKeeper.GetDEXSettings(ctx, denom)
 	if err != nil {
 		if !errors.Is(err, assetfttypes.ErrDEXSettingsNotFound) {
 			return sdkmath.LegacyDec{}, false, err
 		}
-	} else {
-		found = true
+		return sdkmath.LegacyDec{}, false, nil
+	}
+	if settings.UnifiedRefAmount == nil {
+		return sdkmath.LegacyDec{}, false, nil
 	}
 
-	return settings.UnifiedRefAmount, found, nil
+	return *settings.UnifiedRefAmount, true, nil
 }
 
 func (k Keeper) getOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, error) {

@@ -68,7 +68,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "not supported for the tokens with extensions")
 }
 
-func TestKeeper_PlaceOrderWithBlockDEXFeature(t *testing.T) {
+func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
@@ -85,7 +85,7 @@ func TestKeeper_PlaceOrderWithBlockDEXFeature(t *testing.T) {
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_dex,
+			assetfttypes.Feature_dex_block,
 		},
 	}
 	denomWithExtension, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithExtension)
@@ -128,10 +128,10 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_restrict_dex,
+			assetfttypes.Feature_dex_dex_whitelisted_denoms,
 		},
-		DEXRestrictions: &assetfttypes.DEXRestrictions{
-			DenomsToTradeWith: []string{
+		DEXSettings: &assetfttypes.DEXSettings{
+			WhitelistedDenoms: []string{
 				denom3,
 			},
 		},
@@ -157,7 +157,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
 	require.ErrorContains(
-		t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2), "is prohibited for receive denom denom2",
+		t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2), "denom denom2 not whitelisted",
 	)
 
 	orderReceiveDenom3 := types.Order{
@@ -180,8 +180,6 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom3))
 
 	// now update settings to remove all limit and place orderReceiveDenom2
-	require.NoError(t, testApp.AssetFTKeeper.UpdateDEXRestrictions(sdkCtx, issuer, denom, assetfttypes.DEXRestrictions{
-		DenomsToTradeWith: nil,
-	}))
+	require.NoError(t, testApp.AssetFTKeeper.UpdateDEXWhitelistedDenoms(sdkCtx, issuer, denom, nil))
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2))
 }

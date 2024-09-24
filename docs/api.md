@@ -14,7 +14,6 @@
     - [EventAdminTransferred](#coreum.asset.ft.v1.EventAdminTransferred)
     - [EventAmountClawedBack](#coreum.asset.ft.v1.EventAmountClawedBack)
     - [EventDEXLockedAmountChanged](#coreum.asset.ft.v1.EventDEXLockedAmountChanged)
-    - [EventDEXRestrictionsChanged](#coreum.asset.ft.v1.EventDEXRestrictionsChanged)
     - [EventDEXSettingsChanged](#coreum.asset.ft.v1.EventDEXSettingsChanged)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
@@ -22,7 +21,6 @@
   
 - [coreum/asset/ft/v1/genesis.proto](#coreum/asset/ft/v1/genesis.proto)
     - [Balance](#coreum.asset.ft.v1.Balance)
-    - [DEXRestrictionsWithDenom](#coreum.asset.ft.v1.DEXRestrictionsWithDenom)
     - [DEXSettingsWithDenom](#coreum.asset.ft.v1.DEXSettingsWithDenom)
     - [GenesisState](#coreum.asset.ft.v1.GenesisState)
     - [PendingTokenUpgrade](#coreum.asset.ft.v1.PendingTokenUpgrade)
@@ -55,7 +53,6 @@
     - [Query](#coreum.asset.ft.v1.Query)
   
 - [coreum/asset/ft/v1/token.proto](#coreum/asset/ft/v1/token.proto)
-    - [DEXRestrictions](#coreum.asset.ft.v1.DEXRestrictions)
     - [DEXSettings](#coreum.asset.ft.v1.DEXSettings)
     - [Definition](#coreum.asset.ft.v1.Definition)
     - [DelayedTokenUpgradeV1](#coreum.asset.ft.v1.DelayedTokenUpgradeV1)
@@ -80,8 +77,8 @@
     - [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit)
     - [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin)
     - [MsgUnfreeze](#coreum.asset.ft.v1.MsgUnfreeze)
-    - [MsgUpdateDEXRestrictions](#coreum.asset.ft.v1.MsgUpdateDEXRestrictions)
-    - [MsgUpdateDEXSettings](#coreum.asset.ft.v1.MsgUpdateDEXSettings)
+    - [MsgUpdateDEXUnifiedRefAmount](#coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount)
+    - [MsgUpdateDEXWhitelistedDenoms](#coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms)
     - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
     - [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1)
   
@@ -1740,22 +1737,6 @@ the granter's account.
 
 
 
-<a name="coreum.asset.ft.v1.EventDEXRestrictionsChanged"></a>
-
-### EventDEXRestrictionsChanged
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `previous_restrictions` | [DEXRestrictions](#coreum.asset.ft.v1.DEXRestrictions) |  |    |
-| `new_restrictions` | [DEXRestrictions](#coreum.asset.ft.v1.DEXRestrictions) |  |    |
-
-
-
-
-
-
 <a name="coreum.asset.ft.v1.EventDEXSettingsChanged"></a>
 
 ### EventDEXSettingsChanged
@@ -1816,7 +1797,6 @@ EventIssued is emitted on MsgIssue.
 | `uri_hash` | [string](#string) |  |    |
 | `admin` | [string](#string) |  |    |
 | `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
-| `dex_restrictions` | [DEXRestrictions](#coreum.asset.ft.v1.DEXRestrictions) |  |    |
 
 
 
@@ -1877,22 +1857,6 @@ Balance defines an account address and balance pair used module genesis genesis 
 
 
 
-<a name="coreum.asset.ft.v1.DEXRestrictionsWithDenom"></a>
-
-### DEXRestrictionsWithDenom
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `denom` | [string](#string) |  |    |
-| `dex_restrictions` | [DEXRestrictions](#coreum.asset.ft.v1.DEXRestrictions) |  |    |
-
-
-
-
-
-
 <a name="coreum.asset.ft.v1.DEXSettingsWithDenom"></a>
 
 ### DEXSettingsWithDenom
@@ -1928,7 +1892,6 @@ GenesisState defines the module genesis state.
 | `pending_token_upgrades` | [PendingTokenUpgrade](#coreum.asset.ft.v1.PendingTokenUpgrade) | repeated |  `pending_token_upgrades contains pending token upgrades.`  |
 | `dex_locked_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |  `dex_locked_balances contains the DEX locked balances on all of the accounts`  |
 | `dex_settings` | [DEXSettingsWithDenom](#coreum.asset.ft.v1.DEXSettingsWithDenom) | repeated |    |
-| `dex_restrictions` | [DEXRestrictionsWithDenom](#coreum.asset.ft.v1.DEXRestrictionsWithDenom) | repeated |    |
 
 
 
@@ -2364,25 +2327,6 @@ Query defines the gRPC querier service.
 
 
 
-<a name="coreum.asset.ft.v1.DEXRestrictions"></a>
-
-### DEXRestrictions
-
-```
-DEXRestrictions defines the DEX restrictions.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `denoms_to_trade_with` | [string](#string) | repeated |  `denoms_to_trade_with is the list of denoms to trade with.`  |
-
-
-
-
-
-
 <a name="coreum.asset.ft.v1.DEXSettings"></a>
 
 ### DEXSettings
@@ -2396,6 +2340,7 @@ DEXSettings defines the token settings of the dex.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `unified_ref_amount` | [string](#string) |  |  `unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size`  |
+| `whitelisted_denoms` | [string](#string) | repeated |  `whitelisted_denoms is the list of denoms to trade with.`  |
 
 
 
@@ -2477,7 +2422,6 @@ Token is a full representation of the fungible token.
 | `extension_cw_address` | [string](#string) |  |    |
 | `admin` | [string](#string) |  |    |
 | `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
-| `dex_restrictions` | [DEXRestrictions](#coreum.asset.ft.v1.DEXRestrictions) |  |    |
 
 
 
@@ -2546,8 +2490,8 @@ Feature defines possible features of fungible token.
 | block_smart_contracts | 5 |  |
 | clawback | 6 |  |
 | extension | 7 |  |
-| block_dex | 8 |  |
-| restrict_dex | 9 |  |
+| dex_block | 8 |  |
+| dex_dex_whitelisted_denoms | 9 |  |
 
 
  <!-- end enums -->
@@ -2721,7 +2665,6 @@ MsgIssue defines message to issue new fungible token.
 | `uri_hash` | [string](#string) |  |    |
 | `extension_settings` | [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings) |  |  `extension_settings must be provided in case wasm extensions are enabled.`  |
 | `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |  `dex_settings allowed to be customized by issuer`  |
-| `dex_restrictions` | [DEXRestrictions](#coreum.asset.ft.v1.DEXRestrictions) |  |  `dex_restrictions allowed to be customized by issuer if restrict_dex feature is enabled`  |
 
 
 
@@ -2813,26 +2756,9 @@ MsgIssue defines message to issue new fungible token.
 
 
 
-<a name="coreum.asset.ft.v1.MsgUpdateDEXRestrictions"></a>
+<a name="coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount"></a>
 
-### MsgUpdateDEXRestrictions
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  |    |
-| `denom` | [string](#string) |  |    |
-| `dex_restrictions` | [DEXRestrictions](#coreum.asset.ft.v1.DEXRestrictions) |  |    |
-
-
-
-
-
-
-<a name="coreum.asset.ft.v1.MsgUpdateDEXSettings"></a>
-
-### MsgUpdateDEXSettings
+### MsgUpdateDEXUnifiedRefAmount
 
 
 
@@ -2840,7 +2766,24 @@ MsgIssue defines message to issue new fungible token.
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  |    |
 | `denom` | [string](#string) |  |    |
-| `dex_settings` | [DEXSettings](#coreum.asset.ft.v1.DEXSettings) |  |    |
+| `unified_ref_amount` | [string](#string) |  |  `unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size`  |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms"></a>
+
+### MsgUpdateDEXWhitelistedDenoms
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
+| `whitelisted_denoms` | [string](#string) | repeated |  `whitelisted_denoms is the list of denoms to trade with.`  |
 
 
 
@@ -2915,8 +2858,8 @@ Msg defines the Msg service.
 | `ClearAdmin` | [MsgClearAdmin](#coreum.asset.ft.v1.MsgClearAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `ClearAdmin removes admin of a fungible token.` |  |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
-| `UpdateDEXSettings` | [MsgUpdateDEXSettings](#coreum.asset.ft.v1.MsgUpdateDEXSettings) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXSettings updates token DEX settings.` |  |
-| `UpdateDEXRestrictions` | [MsgUpdateDEXRestrictions](#coreum.asset.ft.v1.MsgUpdateDEXRestrictions) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXRestrictions updates token DEX restrictions.` |  |
+| `UpdateDEXUnifiedRefAmount` | [MsgUpdateDEXUnifiedRefAmount](#coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXUnifiedRefAmount updates DEX unified ref amount.` |  |
+| `UpdateDEXWhitelistedDenoms` | [MsgUpdateDEXWhitelistedDenoms](#coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXWhitelistedDenoms updates DEX whitelisted denoms.` |  |
 
  <!-- end services -->
 

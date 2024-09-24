@@ -22,6 +22,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,6 +33,13 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v4/x/wbank/keeper"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
+)
+
+const (
+	denom1 = "denom1"
+	denom2 = "denom2"
+	denom3 = "denom3"
+	denom4 = "denom4"
 )
 
 func TestKeeper_Issue(t *testing.T) {
@@ -452,7 +460,12 @@ func TestKeeper_Issue_WithDEXSettings(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		DEXSettings: &types.DEXSettings{
-			UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("0.01"),
+			UnifiedRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
+			WhitelistedDenoms: []string{denom1, denom2},
+		},
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_dex_dex_whitelisted_denoms,
 		},
 	}
 
@@ -473,65 +486,6 @@ func TestKeeper_Issue_WithDEXSettings(t *testing.T) {
 		Version:            types.CurrentTokenVersion,
 		Admin:              settings.Issuer.String(),
 		DEXSettings:        settings.DEXSettings,
-	}, gotToken)
-}
-
-func TestKeeper_Issue_WithDEXRestrictions(t *testing.T) {
-	requireT := require.New(t)
-
-	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
-
-	ftKeeper := testApp.AssetFTKeeper
-
-	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	settings := types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "ABC",
-		Subunit:       "abc",
-		Precision:     8,
-		InitialAmount: sdkmath.NewInt(777),
-		DEXRestrictions: &types.DEXRestrictions{
-			DenomsToTradeWith: []string{"denom1", "denom2"},
-		},
-	}
-
-	// try to issue without the restrict_dex feature
-	_, err := ftKeeper.Issue(ctx, settings)
-	requireT.ErrorIs(err, types.ErrFeatureDisabled)
-
-	// use the correct feature
-	settings = types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "ABC2",
-		Subunit:       "abc2",
-		Precision:     8,
-		InitialAmount: sdkmath.NewInt(777),
-		DEXRestrictions: &types.DEXRestrictions{
-			DenomsToTradeWith: []string{"denom1", "denom2"},
-		},
-		Features: []types.Feature{
-			types.Feature_restrict_dex,
-		},
-	}
-
-	denom, err := ftKeeper.Issue(ctx, settings)
-	requireT.NoError(err)
-
-	gotToken, err := ftKeeper.GetToken(ctx, denom)
-	requireT.NoError(err)
-	requireT.Equal(types.Token{
-		Denom:              denom,
-		Issuer:             settings.Issuer.String(),
-		Symbol:             settings.Symbol,
-		Description:        settings.Description,
-		Subunit:            strings.ToLower(settings.Subunit),
-		Precision:          settings.Precision,
-		BurnRate:           sdkmath.LegacyNewDec(0),
-		SendCommissionRate: sdkmath.LegacyNewDec(0),
-		Version:            types.CurrentTokenVersion,
-		Admin:              settings.Issuer.String(),
-		DEXRestrictions:    settings.DEXRestrictions,
 		Features:           settings.Features,
 	}, gotToken)
 }
@@ -1868,7 +1822,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, extensionCoin, ""), "not supported for the tokens with extensions")
 }
 
-func TestKeeper_BlockDEXFeature(t *testing.T) {
+func TestKeeper_DEXSettings_BlockDEX(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -1878,12 +1832,11 @@ func TestKeeper_BlockDEXFeature(t *testing.T) {
 	})
 
 	ftKeeper := testApp.AssetFTKeeper
-	bankKeeper := testApp.BankKeeper
 
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	settings := types.IssueSettings{
+	ft1Settings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
@@ -1891,18 +1844,29 @@ func TestKeeper_BlockDEXFeature(t *testing.T) {
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
 		Features: []types.Feature{
 			types.Feature_freezing,
-			types.Feature_block_dex,
+			types.Feature_dex_block,
 		},
 	}
-	denom, err := ftKeeper.Issue(ctx, settings)
+
+	invalidFT1Settings := ft1Settings
+	invalidFT1Settings.DEXSettings = &types.DEXSettings{
+		WhitelistedDenoms: []string{denom1},
+	}
+	trialCtx := simapp.CopyContextWithMultiStore(ctx)
+	_, err := ftKeeper.Issue(trialCtx, invalidFT1Settings)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	ft1Denom, err := ftKeeper.Issue(ctx, ft1Settings)
 	requireT.NoError(err)
 
-	coinToLock := sdk.NewInt64Coin(denom, 50)
-	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinToLock)))
-	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, coinToLock, ""), "locking coins for DEX disabled for")
+	ft1CoinToLock := sdk.NewInt64Coin(ft1Denom, 50)
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, ft1CoinToLock, denom1), "locking coins for DEX disabled")
+
+	denom1CoinToLock := sdk.NewInt64Coin(denom1, 50)
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, denom1CoinToLock, ft1Denom), "locking coins for DEX disabled")
 }
 
-func TestKeeper_RestrictDEXFeature(t *testing.T) {
+func TestKeeper_DEXSettings_WhitelistedDenom(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -1917,28 +1881,68 @@ func TestKeeper_RestrictDEXFeature(t *testing.T) {
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	settings := types.IssueSettings{
+	ft1Settings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
 		Features: []types.Feature{
-			types.Feature_restrict_dex,
+			types.Feature_dex_dex_whitelisted_denoms,
 		},
-		DEXRestrictions: &types.DEXRestrictions{
-			DenomsToTradeWith: []string{
-				"denom1",
+		DEXSettings: &types.DEXSettings{
+			WhitelistedDenoms: []string{
+				denom1,
 			},
 		},
 	}
-	denom, err := ftKeeper.Issue(ctx, settings)
+	ft1Denom, err := ftKeeper.Issue(ctx, ft1Settings)
 	requireT.NoError(err)
 
-	coinToLock := sdk.NewInt64Coin(denom, 50)
-	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinToLock)))
-	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, coinToLock, "denom2"), "is prohibited for receive denom denom2")
-	requireT.NoError(ftKeeper.DEXLock(ctx, acc, coinToLock, "denom1"))
+	ft2Settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF2",
+		Subunit:       "def2",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []types.Feature{
+			types.Feature_dex_dex_whitelisted_denoms,
+		},
+		DEXSettings: &types.DEXSettings{
+			WhitelistedDenoms: []string{
+				ft1Denom,
+			},
+		},
+	}
+	ft2Denom, err := ftKeeper.Issue(ctx, ft2Settings)
+	requireT.NoError(err)
+
+	ft1CoinToLock := sdk.NewInt64Coin(ft1Denom, 10)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(ft1CoinToLock)))
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, ft1CoinToLock, denom2), "not whitelisted")
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, ft1CoinToLock, denom1))
+
+	denom2CoinToLock := sdk.NewInt64Coin(denom2, 10)
+	testApp.MintAndSendCoin(t, ctx, acc, sdk.NewCoins(denom2CoinToLock))
+	// can't lock the receive denom
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, denom2CoinToLock, ft1Denom), "not whitelisted")
+
+	// both not ft
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, denom2CoinToLock, denom1))
+
+	// try to lock both not ft coins
+	ft2CoinToLock := sdk.NewInt64Coin(ft2Denom, 10)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(ft2CoinToLock)))
+	requireT.ErrorContains(ftKeeper.DEXLock(ctx, acc, ft2CoinToLock, ft1Denom), "not whitelisted")
+	// update the settings of ft1 to allow whitelist ft2
+	requireT.NoError(ftKeeper.UpdateDEXWhitelistedDenoms(ctx, issuer, ft1Denom, []string{ft2Denom}))
+	// now we can lock
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, ft2CoinToLock, ft1Denom))
+
+	// lock not ft denoms without settings
+	denom3CoinToLock := sdk.NewInt64Coin(denom3, 10)
+	testApp.MintAndSendCoin(t, ctx, acc, sdk.NewCoins(denom3CoinToLock))
+	requireT.NoError(ftKeeper.DEXLock(ctx, acc, denom3CoinToLock, denom4))
 }
 
 func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
@@ -1952,11 +1956,10 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 
 	faucet := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	denom := "denom1"
-	requireT.NoError(testApp.FundAccount(ctx, faucet, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewIntWithDecimal(1, 10)))))
+	requireT.NoError(testApp.FundAccount(ctx, faucet, sdk.NewCoins(sdk.NewCoin(denom1, sdkmath.NewIntWithDecimal(1, 10)))))
 
 	// create acc with permanently locked coins (native)
-	vestingCoin := sdk.NewInt64Coin(denom, 50)
+	vestingCoin := sdk.NewInt64Coin(denom1, 50)
 	baseVestingAccount, err := vestingtypes.NewDelayedVestingAccount(
 		authtypes.NewBaseAccountWithAddress(acc),
 		sdk.NewCoins(vestingCoin),
@@ -1967,9 +1970,9 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 	testApp.AccountKeeper.SetAccount(ctx, account)
 	requireT.NoError(bankKeeper.SendCoins(ctx, faucet, acc, sdk.NewCoins(vestingCoin)))
 	// check bank locked amount
-	requireT.Equal(vestingCoin.Amount.String(), bankKeeper.LockedCoins(ctx, acc).AmountOf(denom).String())
+	requireT.Equal(vestingCoin.Amount.String(), bankKeeper.LockedCoins(ctx, acc).AmountOf(denom1).String())
 
-	coinToSend := sdk.NewInt64Coin(denom, 1000)
+	coinToSend := sdk.NewInt64Coin(denom1, 1000)
 	// try to lock more than balance
 	requireT.ErrorIs(ftKeeper.DEXLock(ctx, acc, coinToSend, ""), cosmoserrors.ErrInsufficientFunds)
 	requireT.NoError(bankKeeper.SendCoins(ctx, faucet, acc, sdk.NewCoins(coinToSend)))
@@ -1985,11 +1988,11 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 
 	// try to send at least one coin
 	requireT.ErrorIs(
-		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom, 1))),
+		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom1, 1))),
 		cosmoserrors.ErrInsufficientFunds,
 	)
 
-	balance := bankKeeper.GetBalance(ctx, acc, denom)
+	balance := bankKeeper.GetBalance(ctx, acc, denom1)
 	requireT.Equal(coinToSend.Add(vestingCoin).String(), balance.String())
 
 	// try lock coins which are locked by the vesting
@@ -1999,8 +2002,8 @@ func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 	requireT.ErrorIs(ftKeeper.DEXUnlock(ctx, acc, balance), cosmoserrors.ErrInsufficientFunds)
 
 	// unlock part
-	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, sdk.NewInt64Coin(denom, 400)))
-	requireT.Equal(sdk.NewInt64Coin(denom, 600).String(), ftKeeper.GetDEXLockedBalance(ctx, acc, denom).String())
+	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, sdk.NewInt64Coin(denom1, 400)))
+	requireT.Equal(sdk.NewInt64Coin(denom1, 600).String(), ftKeeper.GetDEXLockedBalance(ctx, acc, denom1).String())
 }
 
 func TestKeeper_IBC(t *testing.T) {
@@ -3178,7 +3181,7 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 	requireT.NoError(err)
 }
 
-func TestKeeper_UpdateDEXSettings(t *testing.T) {
+func TestKeeper_UpdateDEXUnifiedRefAmount(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -3187,69 +3190,108 @@ func TestKeeper_UpdateDEXSettings(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	settings := types.IssueSettings{
+	ft1Settings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
-		Description:   "ABC Desc",
 		Subunit:       "abc",
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
+		Features: []types.Feature{
+			types.Feature_dex_dex_whitelisted_denoms,
+		},
 	}
 
-	denom, err := ftKeeper.Issue(ctx, settings)
+	ft1Denom, err := ftKeeper.Issue(ctx, ft1Settings)
 	requireT.NoError(err)
 
-	gotToken, err := ftKeeper.GetToken(ctx, denom)
+	gotToken, err := ftKeeper.GetToken(ctx, ft1Denom)
 	requireT.NoError(err)
 	expectToken := types.Token{
-		Denom:              denom,
-		Issuer:             settings.Issuer.String(),
-		Symbol:             settings.Symbol,
-		Description:        settings.Description,
-		Subunit:            strings.ToLower(settings.Subunit),
-		Precision:          settings.Precision,
+		Denom:              ft1Denom,
+		Issuer:             ft1Settings.Issuer.String(),
+		Symbol:             ft1Settings.Symbol,
+		Subunit:            strings.ToLower(ft1Settings.Subunit),
+		Precision:          ft1Settings.Precision,
 		BurnRate:           sdkmath.LegacyNewDec(0),
 		SendCommissionRate: sdkmath.LegacyNewDec(0),
 		Version:            types.CurrentTokenVersion,
-		Admin:              settings.Issuer.String(),
-		DEXSettings:        settings.DEXSettings,
+		Admin:              ft1Settings.Issuer.String(),
+		Features:           ft1Settings.Features,
 	}
 	requireT.Equal(expectToken, gotToken)
 
 	// try to update with the invalid settings
-	dexSettings := types.DEXSettings{
-		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("-0.01"),
-	}
-	requireT.ErrorIs(ftKeeper.UpdateDEXSettings(ctx, issuer, denom, dexSettings), types.ErrInvalidInput)
+	unifiedRefAmount := sdkmath.LegacyMustNewDecFromStr("-0.01")
+	requireT.ErrorIs(
+		ftKeeper.UpdateDEXUnifiedRefAmount(ctx, issuer, ft1Denom, unifiedRefAmount), types.ErrInvalidInput,
+	)
 
 	// try to update from not issuer
-	dexSettings = types.DEXSettings{
-		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("0.01"),
-	}
+	unifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("0.01")
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	requireT.ErrorIs(ftKeeper.UpdateDEXSettings(ctx, randomAddr, denom, dexSettings), cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(ftKeeper.UpdateDEXUnifiedRefAmount(
+		ctx, randomAddr, ft1Denom, unifiedRefAmount), cosmoserrors.ErrUnauthorized,
+	)
 
 	// update the settings
-	requireT.NoError(ftKeeper.UpdateDEXSettings(ctx, issuer, denom, dexSettings))
+	requireT.NoError(ftKeeper.UpdateDEXUnifiedRefAmount(ctx, issuer, ft1Denom, unifiedRefAmount))
 
-	gotToken, err = ftKeeper.GetToken(ctx, denom)
+	gotToken, err = ftKeeper.GetToken(ctx, ft1Denom)
 	requireT.NoError(err)
-	expectToken.DEXSettings = &dexSettings
+	expectToken.DEXSettings = &types.DEXSettings{
+		UnifiedRefAmount: &unifiedRefAmount,
+	}
 	requireT.Equal(expectToken, gotToken)
 
 	// update the settings one more time but with the gov acc
-	dexSettings = types.DEXSettings{
-		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("999"),
-	}
-	requireT.NoError(ftKeeper.UpdateDEXSettings(ctx, authtypes.NewModuleAddress(govtypes.ModuleName), denom, dexSettings))
+	unifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("999")
+	requireT.NoError(ftKeeper.UpdateDEXUnifiedRefAmount(
+		ctx, authtypes.NewModuleAddress(govtypes.ModuleName), ft1Denom, unifiedRefAmount),
+	)
 
-	gotToken, err = ftKeeper.GetToken(ctx, denom)
+	gotToken, err = ftKeeper.GetToken(ctx, ft1Denom)
 	requireT.NoError(err)
-	expectToken.DEXSettings = &dexSettings
+	expectToken.DEXSettings = &types.DEXSettings{
+		UnifiedRefAmount: &unifiedRefAmount,
+	}
 	requireT.Equal(expectToken, gotToken)
+
+	// update the different setting to check that we don't affect other
+	whitelistedDenoms := []string{denom1}
+	requireT.NoError(ftKeeper.UpdateDEXWhitelistedDenoms(
+		ctx, authtypes.NewModuleAddress(govtypes.ModuleName), ft1Denom, whitelistedDenoms,
+	))
+	unifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("777")
+	requireT.NoError(ftKeeper.UpdateDEXUnifiedRefAmount(
+		ctx, authtypes.NewModuleAddress(govtypes.ModuleName), ft1Denom, unifiedRefAmount),
+	)
+	gotToken, err = ftKeeper.GetToken(ctx, ft1Denom)
+	requireT.NoError(err)
+	expectToken.DEXSettings = &types.DEXSettings{
+		UnifiedRefAmount:  &unifiedRefAmount,
+		WhitelistedDenoms: whitelistedDenoms,
+	}
+	requireT.Equal(expectToken, gotToken)
+
+	// try to update settings for the not FT denom from not gov
+	requireT.ErrorIs(
+		ftKeeper.UpdateDEXUnifiedRefAmount(ctx, issuer, denom1, unifiedRefAmount), cosmoserrors.ErrUnauthorized,
+	)
+	requireT.NoError(
+		ftKeeper.UpdateDEXUnifiedRefAmount(
+			ctx, authtypes.NewModuleAddress(govtypes.ModuleName), denom1, unifiedRefAmount,
+		),
+	)
+
+	dexSettings, err := ftKeeper.GetDEXSettings(ctx, denom1)
+	requireT.NoError(err)
+
+	requireT.Equal(types.DEXSettings{
+		UnifiedRefAmount: &unifiedRefAmount,
+	}, dexSettings)
 }
 
-func TestKeeper_UpdateDEXRestrictions(t *testing.T) {
+func TestKeeper_UpdateDEXWhitelistedDenoms(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -3258,71 +3300,119 @@ func TestKeeper_UpdateDEXRestrictions(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	settings := types.IssueSettings{
+	ft1Settings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
-		Description:   "ABC Desc",
 		Subunit:       "abc",
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		Features: []types.Feature{
-			types.Feature_restrict_dex,
+			types.Feature_dex_dex_whitelisted_denoms,
 		},
 	}
 
-	denom, err := ftKeeper.Issue(ctx, settings)
+	ft1Denom, err := ftKeeper.Issue(ctx, ft1Settings)
 	requireT.NoError(err)
 
-	gotToken, err := ftKeeper.GetToken(ctx, denom)
+	gotToken, err := ftKeeper.GetToken(ctx, ft1Denom)
 	requireT.NoError(err)
 	expectToken := types.Token{
-		Denom:              denom,
-		Issuer:             settings.Issuer.String(),
-		Symbol:             settings.Symbol,
-		Description:        settings.Description,
-		Subunit:            strings.ToLower(settings.Subunit),
-		Precision:          settings.Precision,
+		Denom:              ft1Denom,
+		Issuer:             ft1Settings.Issuer.String(),
+		Symbol:             ft1Settings.Symbol,
+		Subunit:            strings.ToLower(ft1Settings.Subunit),
+		Precision:          ft1Settings.Precision,
 		BurnRate:           sdkmath.LegacyNewDec(0),
 		SendCommissionRate: sdkmath.LegacyNewDec(0),
 		Version:            types.CurrentTokenVersion,
-		Admin:              settings.Issuer.String(),
-		DEXRestrictions:    settings.DEXRestrictions,
+		Admin:              ft1Settings.Issuer.String(),
+		DEXSettings:        ft1Settings.DEXSettings,
 		Features: []types.Feature{
-			types.Feature_restrict_dex,
+			types.Feature_dex_dex_whitelisted_denoms,
 		},
 	}
 	requireT.Equal(expectToken, gotToken)
 
-	// try to update with the invalid restrictions
-	dexRestrictions := types.DEXRestrictions{
-		DenomsToTradeWith: []string{"1denom1"},
-	}
-	requireT.ErrorIs(ftKeeper.UpdateDEXRestrictions(ctx, issuer, denom, dexRestrictions), types.ErrInvalidInput)
+	// try to update with the invalid whitelisted denoms
+	whitelistedDenoms := []string{"1denom1"}
+	requireT.ErrorIs(ftKeeper.UpdateDEXWhitelistedDenoms(ctx, issuer, ft1Denom, whitelistedDenoms), types.ErrInvalidInput)
 
 	// try to update from not issuer
-	dexRestrictions = types.DEXRestrictions{
-		DenomsToTradeWith: []string{"denom1"},
-	}
+	whitelistedDenoms = []string{denom1}
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	requireT.ErrorIs(ftKeeper.UpdateDEXRestrictions(ctx, randomAddr, denom, dexRestrictions), cosmoserrors.ErrUnauthorized)
+	requireT.ErrorIs(
+		ftKeeper.UpdateDEXWhitelistedDenoms(ctx, randomAddr, ft1Denom, whitelistedDenoms), cosmoserrors.ErrUnauthorized,
+	)
 
-	// update the restrictions
-	requireT.NoError(ftKeeper.UpdateDEXRestrictions(ctx, issuer, denom, dexRestrictions))
+	requireT.NoError(ftKeeper.UpdateDEXWhitelistedDenoms(ctx, issuer, ft1Denom, whitelistedDenoms))
 
-	gotToken, err = ftKeeper.GetToken(ctx, denom)
+	gotToken, err = ftKeeper.GetToken(ctx, ft1Denom)
 	requireT.NoError(err)
-	expectToken.DEXRestrictions = &dexRestrictions
-	requireT.Equal(expectToken, gotToken)
-
-	// update the restriction to empty list to allow all denoms
-	dexRestrictions = types.DEXRestrictions{
-		DenomsToTradeWith: nil,
+	expectToken.DEXSettings = &types.DEXSettings{
+		WhitelistedDenoms: whitelistedDenoms,
 	}
-	// update the restrictions
-	requireT.NoError(ftKeeper.UpdateDEXRestrictions(ctx, issuer, denom, dexRestrictions))
-
-	gotToken, err = ftKeeper.GetToken(ctx, denom)
-	requireT.NoError(err)
-	expectToken.DEXRestrictions = &dexRestrictions
 	requireT.Equal(expectToken, gotToken)
+
+	// update the to empty list to allow all denoms
+	whitelistedDenoms = make([]string, 0)
+	requireT.NoError(ftKeeper.UpdateDEXWhitelistedDenoms(ctx, issuer, ft1Denom, whitelistedDenoms))
+
+	gotToken, err = ftKeeper.GetToken(ctx, ft1Denom)
+	requireT.NoError(err)
+	expectToken.DEXSettings = &types.DEXSettings{
+		WhitelistedDenoms: nil,
+	}
+	requireT.Equal(expectToken, gotToken)
+
+	whitelistedDenoms = []string{denom1}
+
+	// try to update settings for the not FT denom from not gov
+	requireT.ErrorIs(
+		ftKeeper.UpdateDEXWhitelistedDenoms(ctx, issuer, denom1, whitelistedDenoms), cosmoserrors.ErrUnauthorized,
+	)
+	// update from gov
+	requireT.NoError(
+		ftKeeper.UpdateDEXWhitelistedDenoms(
+			ctx, authtypes.NewModuleAddress(govtypes.ModuleName), denom1, whitelistedDenoms,
+		),
+	)
+
+	dexSettings, err := ftKeeper.GetDEXSettings(ctx, denom1)
+	requireT.NoError(err)
+
+	requireT.Equal(types.DEXSettings{
+		WhitelistedDenoms: whitelistedDenoms,
+	}, dexSettings)
+
+	ft2Settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC2",
+		Subunit:       "abc2",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(777),
+		// no features
+	}
+
+	ft2Denom, err := ftKeeper.Issue(ctx, ft2Settings)
+	requireT.NoError(err)
+
+	whitelistedDenoms = []string{denom2}
+
+	// try to update settings from issuer
+	requireT.ErrorIs(
+		ftKeeper.UpdateDEXWhitelistedDenoms(ctx, issuer, ft2Denom, whitelistedDenoms), types.ErrFeatureDisabled,
+	)
+	// update from gov
+	requireT.NoError(
+		ftKeeper.UpdateDEXWhitelistedDenoms(
+			ctx, authtypes.NewModuleAddress(govtypes.ModuleName), ft2Denom, whitelistedDenoms,
+		),
+	)
+
+	dexSettings, err = ftKeeper.GetDEXSettings(ctx, ft2Denom)
+	requireT.NoError(err)
+
+	requireT.Equal(types.DEXSettings{
+		WhitelistedDenoms: whitelistedDenoms,
+	}, dexSettings)
 }

@@ -87,12 +87,14 @@ func main() {
 		FreeSignatures    uint64
 		WriteCostPerByte  uint64
 
-		MsgIssueGasPrice              uint64
-		BankSendPerCoinGas            uint64
-		BankMultiSendPerOperationsGas uint64
-		MsgGrantBaseGas               uint64
-		NFTMsgIssueClassCost          uint64
-		NFTMsgMintCost                uint64
+		MsgIssueGasPrice                 uint64
+		BankSendPerCoinGas               uint64
+		BankMultiSendPerOperationsGas    uint64
+		GrantBaseGas                     uint64
+		NFTMsgIssueClassCost             uint64
+		NFTMsgMintCost                   uint64
+		DEXUpdateWhitelistedDenomBaseGas uint64
+		DEXWhitelistedPerDenomGas        uint64
 
 		DetermMsgsSpecialCases []deterministicgas.MsgURL
 		DetermMsgs             []determMsg
@@ -110,12 +112,14 @@ func main() {
 		FreeSignatures:    cfg.FreeSignatures,
 		WriteCostPerByte:  storeConfig.WriteCostPerByte,
 
-		MsgIssueGasPrice:              msgIssueGasPrice,
-		BankSendPerCoinGas:            deterministicgas.BankSendPerCoinGas,
-		BankMultiSendPerOperationsGas: deterministicgas.BankMultiSendPerOperationsGas,
-		MsgGrantBaseGas:               deterministicgas.MsgGrantBaseGas,
-		NFTMsgIssueClassCost:          deterministicgas.NFTIssueClassBaseGas,
-		NFTMsgMintCost:                deterministicgas.NFTMintBaseGas,
+		MsgIssueGasPrice:                 msgIssueGasPrice,
+		BankSendPerCoinGas:               deterministicgas.BankSendPerCoinGas,
+		BankMultiSendPerOperationsGas:    deterministicgas.BankMultiSendPerOperationsGas,
+		GrantBaseGas:                     deterministicgas.GrantBaseGas,
+		NFTMsgIssueClassCost:             deterministicgas.NFTIssueClassBaseGas,
+		NFTMsgMintCost:                   deterministicgas.NFTMintBaseGas,
+		DEXWhitelistedPerDenomGas:        deterministicgas.DEXWhitelistedPerDenomGas,
+		DEXUpdateWhitelistedDenomBaseGas: deterministicgas.DEXUpdateWhitelistedDenomBaseGas,
 
 		DetermMsgsSpecialCases: determSpeicialCaseMsgURLs,
 		DetermMsgs:             determMsgs,

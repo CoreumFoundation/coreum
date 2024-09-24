@@ -19,8 +19,8 @@ Here is the list of functionalities provided by this module, we will examine eac
 - Block smart contracts
 - Clawback
 - Extension
-- Block Dex
-- Restrict Dex
+- Dex block
+- Dex whitelisted denoms
 
 ## Interaction with bank module, introducing wbank module
 
@@ -94,8 +94,8 @@ token will behave and a detailed description will be provided in the dedicated s
 - block_smart_contracts
 - clawback
 - extension
-- block_dex
-- restrict_dex
+- dex_block
+- dex_whitelisted_denoms
 
 ### Burn Rate
 
@@ -272,14 +272,23 @@ to enable those features at the same time._
 There is a sample implementation of extension in `x/asset/ft/keeper/test-contracts/asset-extension` which can be used to
 take inspiration from, when implementing other extensions.
 
-### Block DEX
+### DEX unified ref amount.
 
-If the `block_dex` is feature enabled, then the token cannot be used for the DEX trading.
+The `unified_ref_amount` DEX setting can be updated by the token admin or gov.
+Check [DEX spec](../../../dex/spec/README.md#Unified-ref-amount) for more details.
 
-#### Restrict dex
+### DEX block
 
-If the `restrict_dex` feature is enabled the token admin can restrict the DEX trading. This means that the token can be
-traded only against a predefined set of denoms, specified in `denoms_to_trade_with`.
+If the `dex_block` feature is enabled, then the token cannot be used for the DEX trading, neither for `sell` nor
+for `buy`
+orders.
+
+#### Dex whitelisted denoms
+
+If the `dex_whitelisted_denoms` feature is enabled the token admin can limit the `whitelisted_denoms` for the DEX
+trading. This means that the token can be traded only against a predefined set of denoms, specified
+in `whitelisted_denoms`. If the list is empty, then any denom can be traded against the token. No matter whether
+the `dex_whitelisted_denoms` feature is not enabled or not the `whitelisted_denoms` can be updated by the chain gov.
 
 ## Feature interoperability table
 

@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
@@ -37,6 +38,10 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(777),
 		URI:           "https://my.invalid",
 		URIHash:       "sha-hash",
+		DEXSettings: &types.DEXSettings{
+			UnifiedRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("1.1")),
+			WhitelistedDenoms: []string{"denom1", "denom2"},
+		},
 	}
 
 	testCases := []struct {
@@ -170,28 +175,24 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			name: "invalid_dex_settings",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
 				msg.DEXSettings = &types.DEXSettings{
-					UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("0"),
+					UnifiedRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0")),
 				}
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid_dex_restrictions_duplicate",
+			name: "invalid_dex_whitelisted_denoms_duplicate",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
-				msg.DEXRestrictions = &types.DEXRestrictions{
-					DenomsToTradeWith: []string{"denom1", "denom1"},
-				}
+				msg.DEXSettings.WhitelistedDenoms = []string{"denom1", "denom1"}
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid_dex_restrictions_invalid_denom",
+			name: "invalid_dex_whitelisted_denoms_invalid_denom",
 			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
-				msg.DEXRestrictions = &types.DEXRestrictions{
-					DenomsToTradeWith: []string{"123!!!!!!!123", "denom2"},
-				}
+				msg.DEXSettings.WhitelistedDenoms = []string{"123!!!!!!!123", "denom2"}
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -673,29 +674,27 @@ func TestMsgClearAdmin_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgUpdateDEXSettings_ValidateBasic(t *testing.T) {
-	validMessage := types.MsgUpdateDEXSettings{
-		Sender: sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String(),
-		Denom:  "dnm",
-		DEXSettings: types.DEXSettings{
-			UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1.3"),
-		},
+func TestMsgUpdateDEXUnifiedRefAmount_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgUpdateDEXUnifiedRefAmount{
+		Sender:           sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String(),
+		Denom:            "dnm",
+		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1.3"),
 	}
 
 	testCases := []struct {
 		name          string
-		messageFunc   func(msg types.MsgUpdateDEXSettings) types.MsgUpdateDEXSettings
+		messageFunc   func(msg types.MsgUpdateDEXUnifiedRefAmount) types.MsgUpdateDEXUnifiedRefAmount
 		expectedError error
 	}{
 		{
 			name: "valid",
-			messageFunc: func(msg types.MsgUpdateDEXSettings) types.MsgUpdateDEXSettings {
+			messageFunc: func(msg types.MsgUpdateDEXUnifiedRefAmount) types.MsgUpdateDEXUnifiedRefAmount {
 				return msg
 			},
 		},
 		{
 			name: "invalid_sender",
-			messageFunc: func(msg types.MsgUpdateDEXSettings) types.MsgUpdateDEXSettings {
+			messageFunc: func(msg types.MsgUpdateDEXUnifiedRefAmount) types.MsgUpdateDEXUnifiedRefAmount {
 				msg.Sender = "invalid"
 				return msg
 			},
@@ -703,8 +702,8 @@ func TestMsgUpdateDEXSettings_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid_unified_ref_amount",
-			messageFunc: func(msg types.MsgUpdateDEXSettings) types.MsgUpdateDEXSettings {
-				msg.DEXSettings.UnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("-1")
+			messageFunc: func(msg types.MsgUpdateDEXUnifiedRefAmount) types.MsgUpdateDEXUnifiedRefAmount {
+				msg.UnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("-1")
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -725,38 +724,36 @@ func TestMsgUpdateDEXSettings_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgUpdateDEXRestrictions_ValidateBasic(t *testing.T) {
-	validMessage := types.MsgUpdateDEXRestrictions{
-		Sender: sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String(),
-		Denom:  "dnm",
-		DEXRestrictions: types.DEXRestrictions{
-			DenomsToTradeWith: []string{"denom1", "denom2"},
-		},
+func TestMsgUpdateDEXWhitelistedDenoms_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgUpdateDEXWhitelistedDenoms{
+		Sender:            sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String(),
+		Denom:             "dnm",
+		WhitelistedDenoms: []string{"denom1", "denom2"},
 	}
 
 	testCases := []struct {
 		name          string
-		messageFunc   func(msg types.MsgUpdateDEXRestrictions) types.MsgUpdateDEXRestrictions
+		messageFunc   func(msg types.MsgUpdateDEXWhitelistedDenoms) types.MsgUpdateDEXWhitelistedDenoms
 		expectedError error
 	}{
 		{
 			name: "valid",
-			messageFunc: func(msg types.MsgUpdateDEXRestrictions) types.MsgUpdateDEXRestrictions {
+			messageFunc: func(msg types.MsgUpdateDEXWhitelistedDenoms) types.MsgUpdateDEXWhitelistedDenoms {
 				return msg
 			},
 		},
 		{
-			name: "invalid_dex_restrictions_duplicate",
-			messageFunc: func(msg types.MsgUpdateDEXRestrictions) types.MsgUpdateDEXRestrictions {
-				msg.DEXRestrictions.DenomsToTradeWith = []string{"denom1", "denom1"}
+			name: "invalid_dex_whitelisted_denoms_duplicate",
+			messageFunc: func(msg types.MsgUpdateDEXWhitelistedDenoms) types.MsgUpdateDEXWhitelistedDenoms {
+				msg.WhitelistedDenoms = []string{"denom1", "denom1"}
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid_dex_restrictions_invalid_denom",
-			messageFunc: func(msg types.MsgUpdateDEXRestrictions) types.MsgUpdateDEXRestrictions {
-				msg.DEXRestrictions.DenomsToTradeWith = []string{"denom1", "1!!!!denom1"}
+			name: "invalid_dex_whitelisted_denoms_invalid_denom",
+			messageFunc: func(msg types.MsgUpdateDEXWhitelistedDenoms) types.MsgUpdateDEXWhitelistedDenoms {
+				msg.WhitelistedDenoms = []string{"denom1", "1!!!!denom1"}
 				return msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -871,26 +868,22 @@ func TestAmino(t *testing.T) {
 			wantAminoJSON: `{"type":"assetft/MsgUpgradeTokenV1","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
-			name: sdk.MsgTypeURL(&types.MsgUpdateDEXSettings{}),
-			msg: &types.MsgUpdateDEXSettings{
-				Sender: address,
-				Denom:  coin.Denom,
-				DEXSettings: types.DEXSettings{
-					UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1.3"),
-				},
+			name: sdk.MsgTypeURL(&types.MsgUpdateDEXUnifiedRefAmount{}),
+			msg: &types.MsgUpdateDEXUnifiedRefAmount{
+				Sender:           address,
+				Denom:            coin.Denom,
+				UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1.3"),
 			},
-			wantAminoJSON: `{"type":"assetft/MsgUpdateDEXSettings","value":{"denom":"my-denom","dex_settings":{"unified_ref_amount":"1.300000000000000000"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+			wantAminoJSON: `{"type":"assetft/MsgUpdateDEXUnifiedRefAmount","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","unified_ref_amount":"1.300000000000000000"}}`,
 		},
 		{
-			name: sdk.MsgTypeURL(&types.MsgUpdateDEXRestrictions{}),
-			msg: &types.MsgUpdateDEXRestrictions{
-				Sender: address,
-				Denom:  coin.Denom,
-				DEXRestrictions: types.DEXRestrictions{
-					DenomsToTradeWith: []string{"denom2", "denom3"},
-				},
+			name: sdk.MsgTypeURL(&types.MsgUpdateDEXWhitelistedDenoms{}),
+			msg: &types.MsgUpdateDEXWhitelistedDenoms{
+				Sender:            address,
+				Denom:             coin.Denom,
+				WhitelistedDenoms: []string{"denom2", "denom3"},
 			},
-			wantAminoJSON: `{"type":"assetft/MsgUpdateDEXRestrictions","value":{"denom":"my-denom","dex_restrictions":{"denoms_to_trade_with":["denom2","denom3"]},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+			wantAminoJSON: `{"type":"assetft/MsgUpdateDEXWhitelistedDenoms","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","whitelisted_denoms":["denom2","denom3"]}}`,
 		},
 	}
 

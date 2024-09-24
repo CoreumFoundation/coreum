@@ -377,13 +377,13 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 
 			if tt.baseDenomRefAmount != nil {
 				testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
-					UnifiedRefAmount: *tt.baseDenomRefAmount,
+					UnifiedRefAmount: tt.baseDenomRefAmount,
 				})
 			}
 
 			if tt.quoteDenomRefAmount != nil {
 				testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
-					UnifiedRefAmount: *tt.quoteDenomRefAmount,
+					UnifiedRefAmount: tt.quoteDenomRefAmount,
 				})
 			}
 

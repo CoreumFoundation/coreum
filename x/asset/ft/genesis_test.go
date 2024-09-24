@@ -9,6 +9,7 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -120,22 +121,16 @@ func TestInitAndExportGenesis(t *testing.T) {
 			types.DEXSettingsWithDenom{
 				Denom: fmt.Sprintf("denom-%d", i),
 				DEXSettings: types.DEXSettings{
-					UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("1.%d", i)),
+					UnifiedRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("1.%d", i))),
+					WhitelistedDenoms: []string{"denom1", "denom2", fmt.Sprintf("denomx1.%d", i)},
 				},
 			})
 	}
-
-	// DEX restrictions
-	var dexRestrictions []types.DEXRestrictionsWithDenom
-	for i := 0; i < 4; i++ {
-		dexRestrictions = append(dexRestrictions,
-			types.DEXRestrictionsWithDenom{
-				Denom: fmt.Sprintf("denom-%d", i),
-				DEXRestrictions: types.DEXRestrictions{
-					DenomsToTradeWith: []string{"denom1", "denom2", fmt.Sprintf("denomx1.%d", i)},
-				},
-			})
-	}
+	dexSettings = append(dexSettings,
+		types.DEXSettingsWithDenom{
+			Denom:       "denom-empty-dex-settings",
+			DEXSettings: types.DEXSettings{},
+		})
 
 	genState := types.GenesisState{
 		Params:               types.DefaultParams(),
@@ -145,7 +140,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 		PendingTokenUpgrades: pendingTokenUpgrades,
 		DEXLockedBalances:    dexLockedBalances,
 		DEXSettings:          dexSettings,
-		DEXRestrictions:      dexRestrictions,
 	}
 
 	// init the keeper
@@ -197,12 +191,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 		storedSettings, err := ftKeeper.GetDEXSettings(ctx, settings.Denom)
 		requireT.NoError(err)
 		assertT.EqualValues(settings.DEXSettings, storedSettings)
-	}
-
-	for _, restrictions := range dexRestrictions {
-		storedSettings, err := ftKeeper.GetDEXRestrictions(ctx, restrictions.Denom)
-		requireT.NoError(err)
-		assertT.EqualValues(restrictions.DEXRestrictions, storedSettings)
 	}
 
 	// check that export is equal import

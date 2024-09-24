@@ -9182,25 +9182,19 @@
     }
   },
   "definitions": {
-    "coreum.asset.ft.v1.DEXRestrictions": {
-      "type": "object",
-      "properties": {
-        "denoms_to_trade_with": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "denoms_to_trade_with is the list of denoms to trade with."
-        }
-      },
-      "description": "DEXRestrictions defines the DEX restrictions."
-    },
     "coreum.asset.ft.v1.DEXSettings": {
       "type": "object",
       "properties": {
         "unified_ref_amount": {
           "type": "string",
           "title": "unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size"
+        },
+        "whitelisted_denoms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "whitelisted_denoms is the list of denoms to trade with."
         }
       },
       "description": "DEXSettings defines the token settings of the dex."
@@ -9216,8 +9210,8 @@
         "block_smart_contracts",
         "clawback",
         "extension",
-        "block_dex",
-        "restrict_dex"
+        "dex_block",
+        "dex_dex_whitelisted_denoms"
       ],
       "default": "minting",
       "description": "Feature defines possible features of fungible token."
@@ -9429,9 +9423,6 @@
         },
         "dex_settings": {
           "$ref": "#/definitions/coreum.asset.ft.v1.DEXSettings"
-        },
-        "dex_restrictions": {
-          "$ref": "#/definitions/coreum.asset.ft.v1.DEXRestrictions"
         }
       },
       "description": "Token is a full representation of the fungible token."

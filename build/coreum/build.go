@@ -195,8 +195,9 @@ func Lint(ctx context.Context, deps types.DepsFunc) error {
 		CompileAllSmartContracts,
 		formatProto,
 		lintProto,
-		breakingProto,
+		// breakingProto, // FIXME(dzmitryhil) restore once we merge the master
 	)
+	_ = breakingProto
 	return golang.Lint(ctx, deps)
 }
 

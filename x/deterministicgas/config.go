@@ -41,12 +41,14 @@ import (
 
 // These constants define gas for messages which have custom calculation logic.
 const (
-	BankSendPerCoinGas            = 50000
-	BankMultiSendPerOperationsGas = 35000
-	NFTIssueClassBaseGas          = 16_000
-	NFTMintBaseGas                = 39_000
-	NFTUpdateBaseGas              = 40_000
-	MsgGrantBaseGas               = 25000
+	BankSendPerCoinGas               = 50000
+	BankMultiSendPerOperationsGas    = 35000
+	NFTIssueClassBaseGas             = 16_000
+	NFTMintBaseGas                   = 39_000
+	NFTUpdateBaseGas                 = 40_000
+	GrantBaseGas                     = 25000
+	DEXUpdateWhitelistedDenomBaseGas = 50_000
+	DEXWhitelistedPerDenomGas        = 10_000
 )
 
 type (
@@ -93,9 +95,11 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgTransferAdmin{}):       constantGasFunc(10_000),
 		MsgToMsgURL(&assetfttypes.MsgClearAdmin{}):          constantGasFunc(8_500),
 		// TODO(v5): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
-		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):        constantGasFunc(25_000),
-		MsgToMsgURL(&assetfttypes.MsgUpdateDEXSettings{}):     constantGasFunc(10_000),
-		MsgToMsgURL(&assetfttypes.MsgUpdateDEXRestrictions{}): constantGasFunc(15_000),
+		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):            constantGasFunc(25_000),
+		MsgToMsgURL(&assetfttypes.MsgUpdateDEXUnifiedRefAmount{}): constantGasFunc(10_000),
+		MsgToMsgURL(&assetfttypes.MsgUpdateDEXWhitelistedDenoms{}): bankUpdateDEXWhitelistedDenomsGasFunc(
+			DEXUpdateWhitelistedDenomBaseGas, DEXWhitelistedPerDenomGas,
+		),
 
 		// asset/nft
 		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                     constantGasFunc(26_000),
@@ -117,7 +121,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&dextypes.MsgCancelOrder{}): constantGasFunc(15_000),
 
 		// authz
-		MsgToMsgURL(&authz.MsgGrant{}):  authzMsgGrantGasFunc(MsgGrantBaseGas, storeConfig.WriteCostPerByte),
+		MsgToMsgURL(&authz.MsgGrant{}):  authzMsgGrantGasFunc(GrantBaseGas, storeConfig.WriteCostPerByte),
 		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(8_000),
 
 		// bank
@@ -482,6 +486,20 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 
 		// Minimum 2 operations (1 input & 1 output) should be present inside any multi-send.
 		return uint64(lo.Max([]int{totalOperationsNum, 2})) * bankMultiSendPerOperationGas, true
+	}
+}
+
+func bankUpdateDEXWhitelistedDenomsGasFunc(
+	dexUpdateWhitelistedDenomBaseGas,
+	dexWhitelistedPerDenomGas uint64,
+) gasByMsgFunc {
+	return func(msg sdk.Msg) (uint64, bool) {
+		m, ok := msg.(*assetfttypes.MsgUpdateDEXWhitelistedDenoms)
+		if !ok {
+			return 0, false
+		}
+
+		return dexUpdateWhitelistedDenomBaseGas + dexWhitelistedPerDenomGas*uint64(len(m.WhitelistedDenoms)), true
 	}
 }
 

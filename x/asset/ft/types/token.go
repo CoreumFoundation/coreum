@@ -57,7 +57,6 @@ type IssueSettings struct {
 	SendCommissionRate sdkmath.LegacyDec
 	ExtensionSettings  *ExtensionIssueSettings
 	DEXSettings        *DEXSettings
-	DEXRestrictions    *DEXRestrictions
 }
 
 // BuildDenom builds the denom string from the symbol and issuer address.
@@ -270,22 +269,53 @@ func validateRate(rate sdkmath.LegacyDec) error {
 
 // ValidateDEXSettings checks that provided DEX settings are valid.
 func ValidateDEXSettings(settings DEXSettings) error {
-	if !settings.UnifiedRefAmount.IsPositive() {
+	if settings.UnifiedRefAmount != nil {
+		if err := ValidateUnifiedRefAmount(*settings.UnifiedRefAmount); err != nil {
+			return err
+		}
+	}
+
+	return ValidateWhitelistedDenoms(settings.WhitelistedDenoms)
+}
+
+// ValidateDEXSettingsAccess checks that provided DEX settings are allowed to be accessed.
+func ValidateDEXSettingsAccess(settings DEXSettings, def Definition) error {
+	if def.IsFeatureEnabled(Feature_dex_block) {
+		return sdkerrors.Wrapf(
+			ErrFeatureDisabled,
+			"it's prohibited to providy any DEX setting if the %s feature is enabled",
+			Feature_dex_block.String(),
+		)
+	}
+	if settings.WhitelistedDenoms != nil && !def.IsFeatureEnabled(Feature_dex_dex_whitelisted_denoms) {
+		return sdkerrors.Wrapf(
+			ErrFeatureDisabled,
+			"it's prohibited to providy any DEX whitelisted denoms if the %s feature is disabled",
+			Feature_dex_dex_whitelisted_denoms.String(),
+		)
+	}
+
+	return nil
+}
+
+// ValidateUnifiedRefAmount checks that provided unified ref amount is valid.
+func ValidateUnifiedRefAmount(unifiedRefAmount sdkmath.LegacyDec) error {
+	if !unifiedRefAmount.IsPositive() {
 		return sdkerrors.Wrap(ErrInvalidInput, "unified ref amount must be positive")
 	}
 
 	return nil
 }
 
-// ValidateDEXRestrictions checks that provided DEX restrictions are valid.
-func ValidateDEXRestrictions(restrictions DEXRestrictions) error {
-	duplicates := lo.FindDuplicates(restrictions.DenomsToTradeWith)
+// ValidateWhitelistedDenoms checks that provided whitelisted denoms are valid.
+func ValidateWhitelistedDenoms(whitelistedDenoms []string) error {
+	duplicates := lo.FindDuplicates(whitelistedDenoms)
 	if len(duplicates) != 0 {
 		return sdkerrors.Wrapf(
 			ErrInvalidInput, "duplicated denoms in the denoms to trade with list, duplicates: %v", duplicates,
 		)
 	}
-	for _, denom := range restrictions.DenomsToTradeWith {
+	for _, denom := range whitelistedDenoms {
 		if err := sdk.ValidateDenom(denom); err != nil {
 			return sdkerrors.Wrapf(
 				ErrInvalidInput,
@@ -294,7 +324,6 @@ func ValidateDEXRestrictions(restrictions DEXRestrictions) error {
 			)
 		}
 	}
-
 	return nil
 }
 

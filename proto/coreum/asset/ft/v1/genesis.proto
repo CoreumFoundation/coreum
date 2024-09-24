@@ -29,10 +29,6 @@ message GenesisState {
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "DEXSettings"
   ];
-  repeated DEXRestrictionsWithDenom dex_restrictions = 8 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customname) = "DEXRestrictions"
-  ];
 }
 
 // Balance defines an account address and balance pair used module genesis genesis state.
@@ -58,13 +54,5 @@ message DEXSettingsWithDenom {
   DEXSettings dex_settings = 2 [
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "DEXSettings"
-  ];
-}
-
-message DEXRestrictionsWithDenom {
-  string denom = 1;
-  DEXRestrictions dex_restrictions = 2 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customname) = "DEXRestrictions"
   ];
 }
