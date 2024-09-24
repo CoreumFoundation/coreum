@@ -11,6 +11,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	gogotypes "github.com/cosmos/gogoproto/types"
@@ -94,6 +95,46 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 // CancelOrder cancels order and unlock locked balance.
 func (k Keeper) CancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string) error {
 	return k.cancelOrder(ctx, acc, orderID)
+}
+
+// CancelOrderBySeq cancels order and unlock locked balance by order sequence.
+func (k Keeper) CancelOrderBySeq(ctx sdk.Context, acc sdk.AccAddress, orderSeq uint64) error {
+	return k.cancelOrderBySeq(ctx, acc, orderSeq)
+}
+
+// CancelOrdersByDenom cancels all orders of specified denom.
+func (k Keeper) CancelOrdersByDenom(ctx sdk.Context, admin, acc sdk.AccAddress, denom string) error {
+	def, err := k.assetFTKeeper.GetDefinition(ctx, denom)
+	if err != nil {
+		return err
+	}
+	if !def.HasAdminPrivileges(admin) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "only admin is able to cancel orders by denom %s", denom)
+	}
+
+	accNumber, err := k.getAccountNumber(ctx, acc)
+	if err != nil {
+		return err
+	}
+	accountDenomKeyPrefix, err := types.CreateAccountDenomKeyPrefix(accNumber, denom)
+	if err != nil {
+		return err
+	}
+
+	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), accountDenomKeyPrefix).Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		orderSeq, err := types.DecodeAccountDenomKeyOrderSeq(iterator.Key())
+		if err != nil {
+			return err
+		}
+		if err := k.cancelOrderBySeq(ctx, acc, orderSeq); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // GetOrderBookIDByDenoms returns order book ID by it's denoms.
@@ -181,8 +222,8 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	return nil
 }
 
-// GetPaginatedOrdersWithSequence returns orders with sequence.
-func (k Keeper) GetPaginatedOrdersWithSequence(
+// GetOrdersWithSequence returns orders with sequence.
+func (k Keeper) GetOrdersWithSequence(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.OrderWithSequence, *query.PageResponse, error) {
@@ -264,8 +305,8 @@ func (k Keeper) GetPaginatedOrdersWithSequence(
 	}), pageRes, nil
 }
 
-// GetPaginatedOrderBoosWithID returns order books with IDs.
-func (k Keeper) GetPaginatedOrderBoosWithID(
+// GetOrderBooksWithID returns order books with IDs.
+func (k Keeper) GetOrderBooksWithID(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.OrderBookDataWithID, *query.PageResponse, error) {
@@ -623,13 +664,13 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 			*order.GoodTil,
 			record.OrderSeq,
 			creator,
-			order.ID,
 		); err != nil {
 			return err
 		}
 	}
 
-	if err := k.savaOrderData(ctx, record.OrderSeq, types.OrderData{
+	if err := k.saveOrderData(ctx, record.OrderSeq, types.OrderData{
+		OrderID:     order.ID,
 		OrderBookID: record.OrderBookID,
 		Price:       *order.Price,
 		Quantity:    order.Quantity,
@@ -639,7 +680,11 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 		return err
 	}
 
-	return k.savaOrderIDToSeq(ctx, record.AccountNumber, record.OrderID, record.OrderSeq)
+	if err := k.saveOrderIDToSeq(ctx, record.AccountNumber, record.OrderID, record.OrderSeq); err != nil {
+		return err
+	}
+
+	return k.saveAccountDenomOrderSeq(ctx, record.AccountNumber, order.Denoms(), record.OrderSeq)
 }
 
 func (k Keeper) removeOrderByRecordAndUsedDenoms(
@@ -672,11 +717,23 @@ func (k Keeper) removeOrderByRecordAndUsedDenoms(
 		return err
 	}
 
-	return k.decrementAccountDenomOrdersCounter(ctx, record.AccountNumber, denoms)
+	if err := k.decrementAccountDenomOrdersCounter(ctx, record.AccountNumber, denoms); err != nil {
+		return err
+	}
+
+	return k.removeAccountDenomOrderSeq(ctx, record.AccountNumber, denoms, record.OrderSeq)
 }
 
 func (k Keeper) saveOrderBookData(ctx sdk.Context, orderBookID uint32, data types.OrderBookData) error {
 	return k.setDataToStore(ctx, types.CreateOrderBookDataKey(orderBookID), &data)
+}
+
+func (k Keeper) cancelOrderBySeq(ctx sdk.Context, acc sdk.AccAddress, orderSeq uint64) error {
+	orderData, err := k.getOrderData(ctx, orderSeq)
+	if err != nil {
+		return err
+	}
+	return k.cancelOrder(ctx, acc, orderData.OrderID)
 }
 
 func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string) error {
@@ -998,7 +1055,7 @@ func (k Keeper) removeOrderBookRecord(
 	return nil
 }
 
-func (k Keeper) savaOrderData(ctx sdk.Context, orderSeq uint64, data types.OrderData) error {
+func (k Keeper) saveOrderData(ctx sdk.Context, orderSeq uint64, data types.OrderData) error {
 	return k.setDataToStore(ctx, types.CreateOrderKey(orderSeq), &data)
 }
 
@@ -1014,7 +1071,7 @@ func (k Keeper) getOrderData(ctx sdk.Context, orderSeq uint64) (types.OrderData,
 	return val, nil
 }
 
-func (k Keeper) savaOrderIDToSeq(ctx sdk.Context, accNumber uint64, orderID string, orderSeq uint64) error {
+func (k Keeper) saveOrderIDToSeq(ctx sdk.Context, accNumber uint64, orderID string, orderSeq uint64) error {
 	key := types.CreateOrderIDToSeqKey(accNumber, orderID)
 	return k.setDataToStore(ctx, key, &gogotypes.UInt64Value{Value: orderSeq})
 }
@@ -1088,6 +1145,32 @@ func (k Keeper) decrementAccountDenomOrdersCounter(
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (k Keeper) saveAccountDenomOrderSeq(ctx sdk.Context, accNumber uint64, denoms []string, orderSeq uint64) error {
+	for _, denom := range denoms {
+		key, err := types.CreateAccountDenomOrderSeqKey(accNumber, denom, orderSeq)
+		if err != nil {
+			return err
+		}
+		// save empty slice
+		ctx.KVStore(k.storeKey).Set(key, make([]byte, 0))
+	}
+
+	return nil
+}
+
+func (k Keeper) removeAccountDenomOrderSeq(ctx sdk.Context, accNumber uint64, denoms []string, orderSeq uint64) error {
+	for _, denom := range denoms {
+		key, err := types.CreateAccountDenomOrderSeqKey(accNumber, denom, orderSeq)
+		if err != nil {
+			return err
+		}
+		// remove all
+		ctx.KVStore(k.storeKey).Delete(key)
 	}
 
 	return nil

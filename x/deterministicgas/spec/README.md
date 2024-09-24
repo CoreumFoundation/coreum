@@ -208,6 +208,7 @@ and the formula for them is
 | `/coreum.asset.ft.v1.MsgUpdateParams`                                  |
 | `/coreum.asset.nft.v1.MsgUpdateParams`                                 |
 | `/coreum.customparams.v1.MsgUpdateStakingParams`                       |
+| `/coreum.dex.v1.MsgCancelOrdersByDenom`                                |
 | `/coreum.dex.v1.MsgUpdateParams`                                       |
 | `/coreum.feemodel.v1.MsgUpdateParams`                                  |
 | `/cosmos.auth.v1beta1.MsgUpdateParams`                                 |

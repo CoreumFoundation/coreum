@@ -14,13 +14,12 @@ func (k Keeper) delayGoodTilCancellation(
 	goodTil types.GoodTil,
 	orderSeq uint64,
 	creator sdk.AccAddress,
-	orderID string,
 ) error {
 	if goodTil.GoodTilBlockHeight > 0 {
-		return k.delayGoodTilBlockHeightCancellation(ctx, goodTil.GoodTilBlockHeight, orderSeq, creator, orderID)
+		return k.delayGoodTilBlockHeightCancellation(ctx, goodTil.GoodTilBlockHeight, orderSeq, creator)
 	}
 	if goodTil.GoodTilBlockTime != nil {
-		return k.delayGoodTilBlockTimeCancellation(ctx, *goodTil.GoodTilBlockTime, orderSeq, creator, orderID)
+		return k.delayGoodTilBlockTimeCancellation(ctx, *goodTil.GoodTilBlockTime, orderSeq, creator)
 	}
 
 	return nil
@@ -31,21 +30,19 @@ func (k Keeper) delayGoodTilBlockHeightCancellation(
 	height uint64,
 	orderSeq uint64,
 	creator sdk.AccAddress,
-	orderID string,
 ) error {
 	k.logger(ctx).Debug(
 		"Delaying good til height cancellation.",
 		"orderSeq", orderSeq,
 		"height", height,
 		"creator", creator.String(),
-		"orderID", orderID,
 	)
 	if err := k.delayKeeper.ExecuteAfterBlock(
 		ctx,
 		types.BuildGoodTilBlockHeightDelayKey(orderSeq),
 		&types.CancelGoodTil{
-			Creator: creator.String(),
-			OrderID: orderID,
+			Creator:  creator.String(),
+			OrderSeq: orderSeq,
 		},
 		height,
 	); err != nil {
@@ -60,21 +57,19 @@ func (k Keeper) delayGoodTilBlockTimeCancellation(
 	time time.Time,
 	orderSeq uint64,
 	creator sdk.AccAddress,
-	orderID string,
 ) error {
 	k.logger(ctx).Debug(
 		"Delaying good til time cancellation.",
 		"orderSeq", orderSeq,
 		"time", time,
 		"creator", creator.String(),
-		"orderID", orderID,
 	)
 	if err := k.delayKeeper.ExecuteAfter(
 		ctx,
 		types.BuildGoodTilBlockTimeDelayKey(orderSeq),
 		&types.CancelGoodTil{
-			Creator: creator.String(),
-			OrderID: orderID,
+			Creator:  creator.String(),
+			OrderSeq: orderSeq,
 		},
 		time,
 	); err != nil {
