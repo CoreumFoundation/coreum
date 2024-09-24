@@ -235,6 +235,7 @@
 - [coreum/dex/v1/tx.proto](#coreum/dex/v1/tx.proto)
     - [EmptyResponse](#coreum.dex.v1.EmptyResponse)
     - [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder)
+    - [MsgCancelOrdersByDenom](#coreum.dex.v1.MsgCancelOrdersByDenom)
     - [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder)
     - [MsgUpdateParams](#coreum.dex.v1.MsgUpdateParams)
   
@@ -4566,7 +4567,7 @@ CancelGoodTil is a cancel good til message for the delay router.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `creator` | [string](#string) |  |  `creator is order creator address.`  |
-| `order_id` | [string](#string) |  |  `order_id is order ID.`  |
+| `order_seq` | [uint64](#uint64) |  |  `order_seq is order sequence.`  |
 
 
 
@@ -4703,6 +4704,7 @@ OrderData is a order data used for the store.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| `order_id` | [string](#string) |  |  `order ID provided by the creator.`  |
 | `order_book_id` | [uint32](#uint32) |  |  `order_book_id is order book ID.`  |
 | `price` | [string](#string) |  |  `price is value of one unit of the base_denom expressed in terms of the quote_denom.`  |
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
@@ -5118,6 +5120,27 @@ MsgCancelOrder defines message to cancel the order in the orderbook.
 
 
 
+<a name="coreum.dex.v1.MsgCancelOrdersByDenom"></a>
+
+### MsgCancelOrdersByDenom
+
+```
+MsgCancelOrdersByDenom defines message to cancel all orders by denom and account.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  `sender is order creator address.`  |
+| `account` | [string](#string) |  |  `account is order creator address.`  |
+| `denom` | [string](#string) |  |  `denom is orders denom.`  |
+
+
+
+
+
+
 <a name="coreum.dex.v1.MsgPlaceOrder"></a>
 
 ### MsgPlaceOrder
@@ -5182,6 +5205,7 @@ Msg defines the Msg service.
 | `UpdateParams` | [MsgUpdateParams](#coreum.dex.v1.MsgUpdateParams) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
 | `PlaceOrder` | [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `PlaceOrder place an order on orderbook.` |  |
 | `CancelOrder` | [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `CancelOrder cancels an order in the orderbook.` |  |
+| `CancelOrdersByDenom` | [MsgCancelOrdersByDenom](#coreum.dex.v1.MsgCancelOrdersByDenom) | [EmptyResponse](#coreum.dex.v1.EmptyResponse) | `CancelOrdersByDenom cancels all orders by denom and account.` |  |
 
  <!-- end services -->
 

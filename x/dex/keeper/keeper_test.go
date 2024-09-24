@@ -11,6 +11,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -674,10 +675,7 @@ func TestKeeper_ComputePriceTick(t *testing.T) {
 
 func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
-		Height: 100,
-		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
-	})
+	sdkCtx := testApp.BaseApp.NewContext(false)
 
 	params := testApp.DEXKeeper.GetParams(sdkCtx)
 	params.MaxOrdersPerDenom = 2
@@ -821,6 +819,148 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		},
 		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
 	))
+}
+
+func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContext(false)
+
+	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
+
+	acc1, _ := testApp.GenAccount(sdkCtx)
+	issuer, _ := testApp.GenAccount(sdkCtx)
+
+	denoms := make([]string, 0)
+	for i := 0; i < 3; i++ {
+		settings := assetfttypes.IssueSettings{
+			Issuer:        issuer,
+			Symbol:        fmt.Sprintf("SMB%d", i),
+			Subunit:       fmt.Sprintf("sut%d", i),
+			Precision:     1,
+			InitialAmount: sdkmath.NewInt(100),
+		}
+		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
+		require.NoError(t, err)
+		denoms = append(denoms, denom)
+	}
+
+	// place 5 limit orders to denom0/denom1
+	for i := 0; i < 5; i++ {
+		order := types.Order{
+			Creator:     acc1.String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          uuid.Generate().String(),
+			BaseDenom:   denoms[0],
+			QuoteDenom:  denoms[1],
+			Price:       lo.ToPtr(types.MustNewPriceFromString("1e-1")),
+			Quantity:    sdkmath.NewInt(1_000),
+			Side:        types.SIDE_SELL,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
+		}
+		sellLockedBalance, err := order.ComputeLimitOrderLockedBalance()
+		require.NoError(t, err)
+		testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
+	}
+	// place 5 limit orders to denom1/denom0
+	for i := 0; i < 5; i++ {
+		order := types.Order{
+			Creator:     acc1.String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          uuid.Generate().String(),
+			BaseDenom:   denoms[1],
+			QuoteDenom:  denoms[0],
+			Price:       lo.ToPtr(types.MustNewPriceFromString("11e1")),
+			Quantity:    sdkmath.NewInt(1_000),
+			Side:        types.SIDE_SELL,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
+		}
+		sellLockedBalance, err := order.ComputeLimitOrderLockedBalance()
+		require.NoError(t, err)
+		testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
+	}
+	// place 5 limit orders to denom1/denom2
+	for i := 0; i < 5; i++ {
+		order := types.Order{
+			Creator:     acc1.String(),
+			Type:        types.ORDER_TYPE_LIMIT,
+			ID:          uuid.Generate().String(),
+			BaseDenom:   denoms[0],
+			QuoteDenom:  denoms[2],
+			Price:       lo.ToPtr(types.MustNewPriceFromString("12e1")),
+			Quantity:    sdkmath.NewInt(1_000),
+			Side:        types.SIDE_SELL,
+			TimeInForce: types.TIME_IN_FORCE_GTC,
+		}
+		sellLockedBalance, err := order.ComputeLimitOrderLockedBalance()
+		require.NoError(t, err)
+		testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
+	}
+
+	require.True(t, reflect.DeepEqual(
+		map[string]uint64{
+			denoms[0]: 15,
+			denoms[1]: 10,
+			denoms[2]: 5,
+		},
+		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
+	))
+
+	orders, _, err := testApp.DEXKeeper.GetOrders(sdkCtx, acc1, &query.PageRequest{
+		Limit: query.PaginationMaxLimit,
+	})
+	require.NoError(t, err)
+	require.Len(t, orders, 15)
+
+	// try to cancel from not admin
+	require.ErrorIs(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, acc1, acc1, denoms[1]), cosmoserrors.ErrUnauthorized)
+
+	// cancel orders fro admin
+	require.NoError(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc1, denoms[1]))
+
+	require.True(t, reflect.DeepEqual(
+		map[string]uint64{
+			denoms[0]: 5,
+			denoms[1]: 0,
+			denoms[2]: 5,
+		},
+		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
+	))
+
+	orders, _, err = testApp.DEXKeeper.GetOrders(sdkCtx, acc1, &query.PageRequest{
+		Limit: query.PaginationMaxLimit,
+	})
+	require.NoError(t, err)
+	require.Len(t, orders, 5)
+	// check that there are not orders with the denom2
+	for _, order := range orders {
+		for _, denom := range order.Denoms() {
+			require.NotEqual(t, denom2, denom)
+		}
+	}
+
+	// cancel remaining
+	require.NoError(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc1, denoms[0]))
+
+	require.True(t, reflect.DeepEqual(
+		map[string]uint64{
+			denoms[0]: 0,
+			denoms[1]: 0,
+			denoms[2]: 0,
+		},
+		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
+	))
+	orders, _, err = testApp.DEXKeeper.GetOrders(sdkCtx, acc1, &query.PageRequest{
+		Limit: query.PaginationMaxLimit,
+	})
+	require.NoError(t, err)
+	require.Empty(t, orders)
+
+	// cancel empty list, should not fail
+	require.NoError(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc1, denoms[0]))
 }
 
 func getSorterOrderBookOrders(

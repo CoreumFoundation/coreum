@@ -22,6 +22,8 @@ service Msg {
   rpc PlaceOrder(MsgPlaceOrder) returns (EmptyResponse);
   // CancelOrder cancels an order in the orderbook.
   rpc CancelOrder(MsgCancelOrder) returns (EmptyResponse);
+  // CancelOrdersByDenom cancels all orders by denom and account.
+  rpc CancelOrdersByDenom(MsgCancelOrdersByDenom) returns (EmptyResponse);
 }
 
 message MsgUpdateParams {
@@ -74,6 +76,19 @@ message MsgCancelOrder {
   string sender = 1;
   // id is unique order ID.
   string id = 2 [(gogoproto.customname) = "ID"];
+}
+
+// MsgCancelOrdersByDenom defines message to cancel all orders by denom and account.
+message MsgCancelOrdersByDenom {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "dex/MsgCancelOrdersByDenom";
+
+  // sender is order creator address.
+  string sender = 1;
+  // account is order creator address.
+  string account = 2;
+  // denom is orders denom.
+  string denom = 3;
 }
 
 message EmptyResponse {}
