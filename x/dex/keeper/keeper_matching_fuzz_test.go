@@ -12,6 +12,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/docker/distribution/uuid"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -28,6 +29,7 @@ type FuzzApp struct {
 	accounts   []sdk.AccAddress
 	orderTypes []types.OrderType
 	denoms     []string
+	ftDenoms   []string
 	sides      []types.Side
 
 	initialBlockHeight        uint64
@@ -75,7 +77,8 @@ func NewFuzzApp(
 		return denom
 	})
 
-	denoms = append(denoms, lo.RepeatBy(assetFTDenomsCount, func(i int) string {
+	ftDenoms := make([]string, 0)
+	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTDenomsCount, func(i int) string {
 		settings := assetfttypes.IssueSettings{
 			Issuer:        issuer,
 			Symbol:        fmt.Sprintf("SMB%d", i),
@@ -87,6 +90,7 @@ func NewFuzzApp(
 		require.NoError(t, err)
 		return denom
 	})...)
+	denoms = append(denoms, ftDenoms...)
 
 	sides := []types.Side{
 		types.SIDE_BUY,
@@ -102,6 +106,7 @@ func NewFuzzApp(
 		accounts:   accounts,
 		orderTypes: orderTypes,
 		denoms:     denoms,
+		ftDenoms:   ftDenoms,
 		sides:      sides,
 
 		initialBlockHeight:        initialBlockHeight,
@@ -206,32 +211,70 @@ func (fa *FuzzApp) FundAccount(t *testing.T, sdkCtx sdk.Context, recipient sdk.A
 func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Order) {
 	t.Helper()
 
-	spendableBalancesBefore := getSpendableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
-	err := fa.testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
-	if err != nil {
+	trialCtx := simapp.CopyContextWithMultiStore(sdkCtx) // copy to dry run and don't change state if error
+	if err := fa.testApp.DEXKeeper.PlaceOrder(trialCtx, order); err != nil {
 		t.Logf("Placement failed, err: %s", err.Error())
 		// expected fail
-		if errors.Is(err, types.ErrFailedToLockCoin) || strings.Contains(err.Error(), "good til") {
+		if errors.Is(err, types.ErrFailedToLockCoin) ||
+			strings.Contains(err.Error(), "good til") ||
+			strings.Contains(err.Error(), "it's prohibited to save more than") {
 			return
 		}
 		require.NoError(t, err)
 	}
-	require.NoError(t, err)
+
+	spendableBalancesBefore := getSpendableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
+	require.NoError(t, fa.testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
+
+	// check if order is placed
 	t.Log("Placement passed")
 	assertOrderPlacementResult(t, sdkCtx, fa.testApp, spendableBalancesBefore, order)
 }
 
-func (fa *FuzzApp) CancelOrder(t *testing.T, sdkCtx sdk.Context, order types.Order) {
+func (fa *FuzzApp) CancelFirstOrder(t *testing.T, sdkCtx sdk.Context, creator sdk.AccAddress) {
 	t.Helper()
 
-	_, err := fa.testApp.DEXKeeper.GetOrderByAddressAndID(sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.ID)
-	if err != nil {
-		require.ErrorIs(t, err, types.ErrRecordNotFound)
-		t.Logf("Order to cancel not found.")
+	orders, _, err := fa.testApp.DEXKeeper.GetOrders(
+		sdkCtx,
+		creator,
+		&query.PageRequest{Limit: 1},
+	)
+	require.NoError(t, err)
+	if len(orders) == 0 {
 		return
 	}
+
 	t.Logf("Cancelling order.")
-	require.NoError(t, fa.testApp.DEXKeeper.CancelOrder(sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.ID))
+	require.NoError(t, fa.testApp.DEXKeeper.CancelOrder(sdkCtx, creator, orders[0].ID))
+}
+
+func (fa *FuzzApp) CancelOrdersByDenom(t *testing.T, sdkCtx sdk.Context, account sdk.AccAddress, denom string) {
+	t.Helper()
+
+	// if not ft skip
+	if !lo.Contains(fa.ftDenoms, denom) {
+		return
+	}
+
+	count, err := fa.testApp.DEXKeeper.GetAccountDenomOrdersCount(sdkCtx, account, denom)
+	require.NoError(t, err)
+	if count == 0 {
+		return
+	}
+
+	require.LessOrEqual(t, count, fa.testApp.DEXKeeper.GetParams(sdkCtx).MaxOrdersPerDenom)
+
+	require.NoError(t, fa.testApp.DEXKeeper.CancelOrdersByDenom(
+		sdkCtx,
+		fa.issuer,
+		account,
+		denom,
+	))
+
+	t.Logf("Cancelling orders by denom, count: %d", count)
+	count, err = fa.testApp.DEXKeeper.GetAccountDenomOrdersCount(sdkCtx, account, denom)
+	require.NoError(t, err)
+	require.Equal(t, uint64(0), count)
 }
 
 func FuzzPlaceCancelOrder(f *testing.F) {
@@ -245,15 +288,16 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			rootSeed uint32,
 		) {
 			const (
-				accountsCount             = 10
-				assetFTDenomsCount        = 3
-				nativeDenomCount          = 3
-				ordersCount               = 500
-				cancellationPercent       = 5 // cancel 5% of limit orders
-				initialBlockHeight        = 1
-				goodTilBlockHeightPercent = 10
-				goodTilBlockTimePercent   = 10
-				blockTime                 = time.Second
+				accountsCount              = 10
+				assetFTDenomsCount         = 3
+				nativeDenomCount           = 3
+				ordersCount                = 100_000_000
+				cancelOrdersPercent        = 5 // cancel 5% of limit orders
+				initialBlockHeight         = 1
+				goodTilBlockHeightPercent  = 10
+				goodTilBlockTimePercent    = 10
+				blockTime                  = time.Second
+				cancelOrdersByDenomPercent = 2 // cancel 2% of limit orders to cancel from admin by denom
 			)
 			initialBlockTime := time.Date(2023, 1, 2, 3, 4, 5, 6, time.UTC)
 
@@ -305,11 +349,12 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				t.Logf("Placing order, i:%d, seed:%d, order: %s", i, orderSeed, order.String())
 				fuzzApp.PlaceOrder(t, sdkCtx, order)
 
-				if order.Type == types.ORDER_TYPE_LIMIT {
-					// simulate percent based cancellation
-					if randBoolWithPercent(orderRnd, cancellationPercent) {
-						fuzzApp.CancelOrder(t, sdkCtx, order)
-					}
+				if randBoolWithPercent(orderRnd, cancelOrdersPercent) {
+					fuzzApp.CancelFirstOrder(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
+				}
+
+				if randBoolWithPercent(orderRnd, cancelOrdersByDenomPercent) {
+					fuzzApp.CancelOrdersByDenom(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.BaseDenom)
 				}
 
 				_, err = fuzzApp.testApp.EndBlocker(sdkCtx)

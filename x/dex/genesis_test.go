@@ -41,7 +41,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		InitialAmount: sdkmath.NewInt(100),
 	}
 	denom3, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
-	requireT.NoError(err)
+	require.NoError(t, err)
 
 	prams := types.DefaultParams()
 	genState := types.GenesisState{
