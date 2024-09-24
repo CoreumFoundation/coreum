@@ -113,17 +113,30 @@ func (k BaseKeeperWrapper) SendCoins(goCtx context.Context, fromAddr, toAddr sdk
 	return k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt)
 }
 
+// DelegateCoinsFromAccountToModule is a BaseKeeper DelegateCoinsFromAccountToModule wrapped method.
+//
+//nolint:contextcheck // this is correct context passing.
 func (k BaseKeeperWrapper) DelegateCoinsFromAccountToModule(
-	ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
+	goCtx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
 ) error {
-	// check amt is not locked
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	for _, coin := range amt {
+		res, err := k.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+			Address: senderAddr.String(),
+			Denom:   coin.Denom,
+		})
+		if err != nil {
+			return err
+		}
+
+		if res.Balance.IsLT(coin) {
+			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
+				"account %s does not have enough %s tokens to delegate", senderAddr.String(), coin.Denom,
+			)
+		}
+	}
+
 	return k.BaseKeeper.DelegateCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
-}
-
-func (k BaseKeeperWrapper) DelegateCoins(ctx context.Context, delegatorAddr, moduleAccAddr sdk.AccAddress, amt sdk.Coins) error {
-	// check amt is not locked
-
-	return k.BaseKeeper.DelegateCoins(ctx, delegatorAddr, moduleAccAddr, amt)
 }
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.

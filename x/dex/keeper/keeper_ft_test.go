@@ -10,6 +10,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -174,6 +175,8 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 
 	require.NoError(t, testApp.FundAccount(sdkCtx, validatorOwner, sdk.NewCoins(sdk.NewInt64Coin(denomToStake, 10))))
 	addValidator(t, sdkCtx, testApp.StakingKeeper, validatorOwner, sdk.NewInt64Coin(denomToStake, 10))
+	val, err := testApp.StakingKeeper.GetValidators(sdkCtx, 1)
+	require.NoError(t, err)
 
 	order := types.Order{
 		Creator:    acc.String(),
@@ -192,25 +195,42 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 	orderLockedBalance, err := order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.FundAccount(sdkCtx, acc, sdk.NewCoins(orderLockedBalance)))
+
+	_, err = testApp.StakingKeeper.Delegate(sdkCtx, acc, orderLockedBalance.Amount, stakingtypes.Unbonded, val[0], true)
+	require.NoError(t, err)
+
+	res, err := testApp.BankKeeper.Balance(sdkCtx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewInt64Coin(denomToStake, 0).String(), res.Balance.String())
+
+	lockedBalance := testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, denomToStake)
+	require.Equal(t, sdk.NewInt64Coin(denomToStake, 0).String(), lockedBalance.String())
+
+	require.Error(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), cosmoserrors.ErrInsufficientFunds)
+
+	require.NoError(t, testApp.FundAccount(sdkCtx, acc, sdk.NewCoins(orderLockedBalance)))
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 
-	val, err := testApp.StakingKeeper.GetValidators(sdkCtx, 1)
-	require.NoError(t, err)
-	res, err := testApp.BankKeeper.Balance(sdkCtx, &banktypes.QueryBalanceRequest{
+	res, err = testApp.BankKeeper.Balance(sdkCtx, &banktypes.QueryBalanceRequest{
 		Address: acc.String(),
 		Denom:   denomToStake,
 	})
 	require.NoError(t, err)
 	require.Equal(t, orderLockedBalance.String(), res.Balance.String())
 
-	lockedBalance := testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, denomToStake)
+	lockedBalance = testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, denomToStake)
 	require.Equal(t, orderLockedBalance.String(), lockedBalance.String())
 
 	_, err = testApp.StakingKeeper.Delegate(sdkCtx, acc, orderLockedBalance.Amount, stakingtypes.Unbonded, val[0], true)
-	require.NoError(t, err)
+	require.Error(t, err, cosmoserrors.ErrInsufficientFunds)
 }
 
-func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, owner sdk.AccAddress, value sdk.Coin) sdk.ValAddress {
+func addValidator(
+	t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, owner sdk.AccAddress, value sdk.Coin,
+) sdk.ValAddress {
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()
 	valAddr := sdk.ValAddress(owner)
