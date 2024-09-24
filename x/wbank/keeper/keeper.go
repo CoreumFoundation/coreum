@@ -187,12 +187,9 @@ func (k BaseKeeperWrapper) SpendableBalances(
 		return nil, err
 	}
 
-	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
-
 	balances := balancesRes.Balances
 	for i := range balances {
-		bankLockedCoin := sdk.NewCoin(balances[i].Denom, bankLockedCoins.AmountOf(balances[i].Denom))
-		balances[i] = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, balances[i], bankLockedCoin)
+		balances[i] = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, balances[i])
 	}
 
 	return &banktypes.QuerySpendableBalancesResponse{
@@ -223,22 +220,14 @@ func (k BaseKeeperWrapper) SpendableBalanceByDenom(
 		return &banktypes.QuerySpendableBalanceByDenomResponse{}, nil
 	}
 
-	bankLockedCoins := sdk.NewCoins() //k.BaseKeeper.LockedCoins(ctx, addr)
-	bankLockedCoin := sdk.NewCoin(req.Denom, bankLockedCoins.AmountOf(req.Denom))
-
 	return &banktypes.QuerySpendableBalanceByDenomResponse{
-		Balance: lo.ToPtr(k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, *balanceRes.Balance, bankLockedCoin)),
+		Balance: lo.ToPtr(k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, *balanceRes.Balance)),
 	}, nil
 }
 
-func (k BaseKeeperWrapper) getSpendableCoin(
-	ctx sdk.Context,
-	addr sdk.AccAddress,
-	balance, bankLocked sdk.Coin,
-) sdk.Coin {
+func (k BaseKeeperWrapper) getSpendableCoin(ctx sdk.Context, addr sdk.AccAddress, balance sdk.Coin) sdk.Coin {
 	denom := balance.Denom
 	notLockedAmt := balance.Amount.
-		Sub(bankLocked.Amount).
 		Sub(k.ftProvider.GetDEXLockedBalance(ctx, addr, denom).Amount)
 
 	notFrozenAmt := balance.Amount.Sub(k.ftProvider.GetFrozenBalance(ctx, addr, denom).Amount)
