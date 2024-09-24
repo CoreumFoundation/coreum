@@ -155,7 +155,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 		lockedBalance, err := orderWithSeq.Order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(lockedBalance))
-		require.NoError(t, testApp.AssetFTKeeper.DEXLock(sdkCtx, creator, lockedBalance))
+		require.NoError(t, testApp.AssetFTKeeper.DEXLock(
+			sdkCtx, creator, lockedBalance, orderWithSeq.Order.GetReceiveDenom(),
+		))
 	}
 	// set the correct state
 	genState.AccountsDenomsOrdersCounts = lo.Values(accountDenomToAccountDenomOrdersCount)
