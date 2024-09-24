@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/cosmos/go-bip39"
@@ -63,7 +64,7 @@ func displayInfo(info printInfo) error {
 
 // InitCmd returns a command that initializes all files needed for Tendermint
 // and the respective application.
-func InitCmd(defaultNodeHome string) *cobra.Command {
+func InitCmd(basicManager module.BasicManager, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [moniker]",
 		Short: "Initialize private validator, p2p, genesis, and application configuration files",
@@ -71,7 +72,7 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			network := app.ChosenNetwork
-
+			ctx := cmd.Context()
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			cfg := server.GetServerContextFromCmd(cmd).Config
@@ -112,7 +113,7 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 				return errors.Errorf("genesis.json file already exists: %v", genFile)
 			}
 
-			genDocBytes, err := network.EncodeGenesis()
+			genDocBytes, err := network.EncodeGenesis(ctx, clientCtx, basicManager)
 			if err != nil {
 				return err
 			}

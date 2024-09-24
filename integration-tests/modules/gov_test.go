@@ -391,8 +391,8 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	requireT.Equal(govtypesv1.StatusRejected, finalStatus)
 }
 
-// TestGovCancelProposalWithDepositAndWeightedVotes tests cancelling proposals.
-func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
+// TestGovCancelProposal tests cancelling proposals.
+func TestGovCancelProposal(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -420,7 +420,7 @@ func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
 	})
 
 	// Create proposal with deposit less than min deposit.
-	textProposal := govtypesv1beta1.NewTextProposal("Test proposal with weighted votes",
+	textProposal := govtypesv1beta1.NewTextProposal("Test cancel proposal",
 		strings.Repeat("Description", 20))
 
 	msgExecLegacy, err := govtypesv1.NewLegacyContent(textProposal,
@@ -503,13 +503,15 @@ func TestGovCancelProposalWithDepositAndWeightedVotes(t *testing.T) {
 	params, err := gov.QueryGovParams(ctx)
 	requireT.NoError(err)
 
-	depositorCancelFee := sdkmath.LegacyMustNewDecFromStr(params.ProposalCancelRatio).
-		Mul(sdkmath.LegacyNewDecFromInt(missingDepositAmount.Amount)).TruncateInt()
+	depositorRefundAfterCancelFee := sdkmath.LegacyOneDec().
+		Sub(sdkmath.LegacyMustNewDecFromStr(params.ProposalCancelRatio)).
+		Mul(sdkmath.LegacyNewDecFromInt(missingDepositAmount.Amount)).
+		TruncateInt()
 
 	// Assert that depositor deposits were credited back after applying cancel ratio.
 	depositorBalanceAfterCancelling := accBalanceFunc(depositor)
 	requireT.Equal(
 		depositorBalanceAfterCancelling.Amount.Sub(depositorBalanceBeforeCancelling.Amount).String(),
-		depositorCancelFee.String(),
+		depositorRefundAfterCancelFee.String(),
 	)
 }
