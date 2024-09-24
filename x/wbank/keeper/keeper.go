@@ -113,6 +113,19 @@ func (k BaseKeeperWrapper) SendCoins(goCtx context.Context, fromAddr, toAddr sdk
 	return k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt)
 }
 
+func (k BaseKeeperWrapper) DelegateCoinsFromAccountToModule(
+	ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
+) error {
+	// check amt is not locked
+	return k.BaseKeeper.DelegateCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
+}
+
+func (k BaseKeeperWrapper) DelegateCoins(ctx context.Context, delegatorAddr, moduleAccAddr sdk.AccAddress, amt sdk.Coins) error {
+	// check amt is not locked
+
+	return k.BaseKeeper.DelegateCoins(ctx, delegatorAddr, moduleAccAddr, amt)
+}
+
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
 //
 //nolint:contextcheck // this is correct context passing.

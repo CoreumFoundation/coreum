@@ -173,6 +173,7 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 	denomToStake := sdk.DefaultBondDenom
 
 	require.NoError(t, testApp.FundAccount(sdkCtx, validatorOwner, sdk.NewCoins(sdk.NewInt64Coin(denomToStake, 10))))
+	addValidator(t, sdkCtx, testApp.StakingKeeper, validatorOwner, sdk.NewInt64Coin(denomToStake, 10))
 
 	order := types.Order{
 		Creator:    acc.String(),
@@ -188,12 +189,10 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 		},
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
-	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
+	orderLockedBalance, err := order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
-	require.NoError(t, testApp.FundAccount(sdkCtx, acc, sdk.NewCoins(lockedBalance)))
+	require.NoError(t, testApp.FundAccount(sdkCtx, acc, sdk.NewCoins(orderLockedBalance)))
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
-
-	addValidator(t, sdkCtx, testApp.StakingKeeper, validatorOwner, sdk.NewInt64Coin(denomToStake, 10))
 
 	val, err := testApp.StakingKeeper.GetValidators(sdkCtx, 1)
 	require.NoError(t, err)
@@ -202,12 +201,12 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 		Denom:   denomToStake,
 	})
 	require.NoError(t, err)
-	require.Equal(t, sdk.NewCoin(denomToStake, sdkmath.NewInt(10)).String(), res.Balance.String())
+	require.Equal(t, orderLockedBalance.String(), res.Balance.String())
 
-	lockedBalance = testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, denomToStake)
-	require.Equal(t, sdk.NewCoin(denomToStake, sdkmath.NewInt(10)).String(), lockedBalance.String())
+	lockedBalance := testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, denomToStake)
+	require.Equal(t, orderLockedBalance.String(), lockedBalance.String())
 
-	_, err = testApp.StakingKeeper.Delegate(sdkCtx, acc, sdkmath.NewInt(10), stakingtypes.Unbonded, val[0], true)
+	_, err = testApp.StakingKeeper.Delegate(sdkCtx, acc, orderLockedBalance.Amount, stakingtypes.Unbonded, val[0], true)
 	require.NoError(t, err)
 }
 
