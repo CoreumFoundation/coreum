@@ -223,7 +223,7 @@ func (k BaseKeeperWrapper) SpendableBalanceByDenom(
 		return &banktypes.QuerySpendableBalanceByDenomResponse{}, nil
 	}
 
-	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
+	bankLockedCoins := sdk.NewCoins() //k.BaseKeeper.LockedCoins(ctx, addr)
 	bankLockedCoin := sdk.NewCoin(req.Denom, bankLockedCoins.AmountOf(req.Denom))
 
 	return &banktypes.QuerySpendableBalanceByDenomResponse{
