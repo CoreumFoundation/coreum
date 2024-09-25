@@ -131,8 +131,11 @@ func (k BaseKeeperWrapper) beforeDelegateCoins(ctx sdk.Context, senderAddr sdk.A
 		balance := k.BaseKeeper.GetBalance(ctx, senderAddr, coin.Denom)
 
 		spendableBalance, err := balance.SafeSub(k.ftProvider.GetDEXLockedBalance(ctx, senderAddr, coin.Denom))
+		if err != nil {
+			return err
+		}
 
-		if err != nil || spendableBalance.IsLT(coin) {
+		if spendableBalance.IsLT(coin) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
 				"account %s does not have enough %s tokens to delegate", senderAddr.String(), coin.Denom,
 			)
