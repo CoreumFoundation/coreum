@@ -16,6 +16,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -26,6 +27,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
 	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
@@ -1302,6 +1304,132 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
 	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+}
+
+// TestLimitOrdersMatchingWithStaking tests the dex modules ability to place get and match limit orders  with staking.
+func TestLimitOrdersMatchingWithStaking(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
+
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	require.NoError(t, err)
+	// we stake the minimum possible staking amount
+	// we multiply not to conflict with the tests which increases the min amount
+	delegateAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2))
+
+	acc := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&stakingtypes.MsgDelegate{},
+			&dextypes.MsgPlaceOrder{},
+			&dextypes.MsgPlaceOrder{},
+		},
+		Amount: delegateAmount,
+	})
+
+	denomToStake := chain.ChainSettings.Denom
+	denom2 := issueFT(ctx, t, chain, acc, sdkmath.NewIntWithDecimal(1, 6))
+
+	// Setup validator
+	validator1AccAddress, validator1Address, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, delegateAmount, delegateAmount,
+	)
+	require.NoError(t, err)
+	defer deactivateValidator()
+
+	chain.FundAccountWithOptions(ctx, t, validator1AccAddress, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&stakingtypes.MsgDelegate{},
+		},
+	})
+
+	acc1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.True(acc1BalanceRes.Balance.Amount.GTE(delegateAmount))
+
+	// stake all the amounts
+	delegateMsg := &stakingtypes.MsgDelegate{
+		DelegatorAddress: acc.String(),
+		ValidatorAddress: validator1Address.String(),
+		Amount:           sdk.NewCoin(denomToStake, delegateAmount),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
+		delegateMsg,
+	)
+	requireT.NoError(err)
+
+	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.True(acc1BalanceRes.Balance.Amount.LT(delegateAmount))
+
+	// place order should fail because all the funds are stacked
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denomToStake,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    delegateAmount,
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.ErrorContains(err, dextypes.ErrFailedToLockCoin.Error())
+
+	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
+		Amount: delegateAmount,
+	})
+
+	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.True(acc1BalanceRes.Balance.Amount.GTE(delegateAmount))
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.Equal(delegateAmount.String(), acc1BalanceRes.Balance.Amount.String())
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 }
 
 // TestCancelOrdersByDenom tests the dex modules ability to cancel all orders of the account and by denom.
