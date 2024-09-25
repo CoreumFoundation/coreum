@@ -120,8 +120,16 @@ func (k BaseKeeperWrapper) DelegateCoinsFromAccountToModule(
 	goCtx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
 ) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	err := k.beforeDelegateCoins(ctx, senderAddr, amt)
+	if err != nil {
+		return err
+	}
+	return k.BaseKeeper.DelegateCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
+}
+
+func (k BaseKeeperWrapper) beforeDelegateCoins(ctx sdk.Context, senderAddr sdk.AccAddress, amt sdk.Coins) error {
 	for _, coin := range amt {
-		res, err := k.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
+		res, err := k.BaseKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: senderAddr.String(),
 			Denom:   coin.Denom,
 		})
@@ -129,14 +137,15 @@ func (k BaseKeeperWrapper) DelegateCoinsFromAccountToModule(
 			return err
 		}
 
-		if res.Balance.IsLT(coin) {
+		spendableBalance := res.Balance.Sub(k.ftProvider.GetDEXLockedBalance(ctx, senderAddr, coin.Denom))
+
+		if spendableBalance.IsLT(coin) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
 				"account %s does not have enough %s tokens to delegate", senderAddr.String(), coin.Denom,
 			)
 		}
 	}
-
-	return k.BaseKeeper.DelegateCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
+	return nil
 }
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
@@ -187,9 +196,12 @@ func (k BaseKeeperWrapper) SpendableBalances(
 		return nil, err
 	}
 
+	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
+
 	balances := balancesRes.Balances
 	for i := range balances {
-		balances[i] = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, balances[i])
+		bankLockedCoin := sdk.NewCoin(balances[i].Denom, bankLockedCoins.AmountOf(balances[i].Denom))
+		balances[i] = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, balances[i], bankLockedCoin)
 	}
 
 	return &banktypes.QuerySpendableBalancesResponse{
@@ -220,14 +232,22 @@ func (k BaseKeeperWrapper) SpendableBalanceByDenom(
 		return &banktypes.QuerySpendableBalanceByDenomResponse{}, nil
 	}
 
+	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
+	bankLockedCoin := sdk.NewCoin(req.Denom, bankLockedCoins.AmountOf(req.Denom))
+
 	return &banktypes.QuerySpendableBalanceByDenomResponse{
-		Balance: lo.ToPtr(k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, *balanceRes.Balance)),
+		Balance: lo.ToPtr(k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, *balanceRes.Balance, bankLockedCoin)),
 	}, nil
 }
 
-func (k BaseKeeperWrapper) getSpendableCoin(ctx sdk.Context, addr sdk.AccAddress, balance sdk.Coin) sdk.Coin {
+func (k BaseKeeperWrapper) getSpendableCoin(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	balance, bankLocked sdk.Coin,
+) sdk.Coin {
 	denom := balance.Denom
 	notLockedAmt := balance.Amount.
+		Sub(bankLocked.Amount).
 		Sub(k.ftProvider.GetDEXLockedBalance(ctx, addr, denom).Amount)
 
 	notFrozenAmt := balance.Amount.Sub(k.ftProvider.GetFrozenBalance(ctx, addr, denom).Amount)

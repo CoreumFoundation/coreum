@@ -117,7 +117,7 @@ func TestKeeper_PlaceOrderWithBlockDEXFeature(t *testing.T) {
 	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "locking coins for DEX disabled for")
 }
 
-func TestKeeper_PlaceOrderWithBurnFeature(t *testing.T) {
+func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
@@ -170,11 +170,13 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 
 	acc, _ := testApp.GenAccount(sdkCtx)
 	validatorOwner, _ := testApp.GenAccount(sdkCtx)
+	validatorOwner2, _ := testApp.GenAccount(sdkCtx)
 
 	denomToStake := sdk.DefaultBondDenom
 
 	require.NoError(t, testApp.FundAccount(sdkCtx, validatorOwner, sdk.NewCoins(sdk.NewInt64Coin(denomToStake, 10))))
-	addValidator(t, sdkCtx, testApp.StakingKeeper, validatorOwner, sdk.NewInt64Coin(denomToStake, 10))
+	err := addValidator(sdkCtx, testApp.StakingKeeper, validatorOwner, sdk.NewInt64Coin(denomToStake, 10))
+	require.NoError(t, err)
 	val, err := testApp.StakingKeeper.GetValidators(sdkCtx, 1)
 	require.NoError(t, err)
 
@@ -226,17 +228,38 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 
 	_, err = testApp.StakingKeeper.Delegate(sdkCtx, acc, orderLockedBalance.Amount, stakingtypes.Unbonded, val[0], true)
 	require.Error(t, err, cosmoserrors.ErrInsufficientFunds)
+
+	order = types.Order{
+		Creator:    validatorOwner2.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denomToStake,
+		QuoteDenom: denom2,
+		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:   sdkmath.NewInt(10),
+		Side:       types.SIDE_SELL,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 390,
+		},
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	orderLockedBalance, err = order.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	require.NoError(t, testApp.FundAccount(sdkCtx, validatorOwner2, sdk.NewCoins(orderLockedBalance)))
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
+	err = addValidator(sdkCtx, testApp.StakingKeeper, validatorOwner2, orderLockedBalance)
+	require.ErrorContains(t, err, "does not have enough stake tokens to delegate")
 }
 
-func addValidator(
-	t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, owner sdk.AccAddress, value sdk.Coin,
-) sdk.ValAddress {
+func addValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, owner sdk.AccAddress, value sdk.Coin) error {
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()
 	valAddr := sdk.ValAddress(owner)
 
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
-	require.NoError(t, err)
+	if err != nil {
+		return err
+	}
 	msg := &stakingtypes.MsgCreateValidator{
 		Description: stakingtypes.Description{
 			Moniker: "Validator power",
@@ -253,6 +276,5 @@ func addValidator(
 		Value:             value,
 	}
 	_, err = stakingkeeper.NewMsgServerImpl(stakingKeeper).CreateValidator(ctx, msg)
-	require.NoError(t, err)
-	return valAddr
+	return err
 }
