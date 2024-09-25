@@ -120,8 +120,7 @@ func (k BaseKeeperWrapper) DelegateCoinsFromAccountToModule(
 	goCtx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
 ) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	err := k.beforeDelegateCoins(ctx, senderAddr, amt)
-	if err != nil {
+	if err := k.beforeDelegateCoins(ctx, senderAddr, amt); err != nil {
 		return err
 	}
 	return k.BaseKeeper.DelegateCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
@@ -129,17 +128,11 @@ func (k BaseKeeperWrapper) DelegateCoinsFromAccountToModule(
 
 func (k BaseKeeperWrapper) beforeDelegateCoins(ctx sdk.Context, senderAddr sdk.AccAddress, amt sdk.Coins) error {
 	for _, coin := range amt {
-		res, err := k.BaseKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
-			Address: senderAddr.String(),
-			Denom:   coin.Denom,
-		})
-		if err != nil {
-			return err
-		}
+		balance := k.BaseKeeper.GetBalance(ctx, senderAddr, coin.Denom)
 
-		spendableBalance := res.Balance.Sub(k.ftProvider.GetDEXLockedBalance(ctx, senderAddr, coin.Denom))
+		spendableBalance, err := balance.SafeSub(k.ftProvider.GetDEXLockedBalance(ctx, senderAddr, coin.Denom))
 
-		if spendableBalance.IsLT(coin) {
+		if err != nil || spendableBalance.IsLT(coin) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
 				"account %s does not have enough %s tokens to delegate", senderAddr.String(), coin.Denom,
 			)
