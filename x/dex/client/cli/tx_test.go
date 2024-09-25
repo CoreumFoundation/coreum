@@ -2,8 +2,10 @@ package cli_test
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -44,6 +46,10 @@ func TestCmdPlaceOrder(t *testing.T) {
 		Quantity:    sdkmath.NewInt(100),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 123,
+			GoodTilBlockTime:   lo.ToPtr(time.Now().Add(time.Minute)),
+		},
 	})
 }
 
@@ -95,16 +101,28 @@ func placeOrder(
 		requireT.Fail(fmt.Sprintf("unknown type '%s'", order.Type))
 	}
 
-	args := append(
-		[]string{
-			orderType,
-			order.ID,
-			order.BaseDenom,
-			order.QuoteDenom,
-			order.Quantity.String(),
-			order.Side.String(),
-			"--" + cli.PriceFlag, order.Price.String(),
-		}, txValidator1Args(testNetwork)...)
+	args := []string{
+		orderType,
+		order.ID,
+		order.BaseDenom,
+		order.QuoteDenom,
+		order.Quantity.String(),
+		order.Side.String(),
+		"--" + cli.PriceFlag, order.Price.String(),
+	}
+	if order.GoodTil != nil {
+		if order.GoodTil.GoodTilBlockHeight > 0 {
+			args = append(args,
+				"--"+cli.GoodTilBlockHeightFlag, strconv.FormatUint(order.GoodTil.GoodTilBlockHeight, 10),
+			)
+		}
+		if order.GoodTil.GoodTilBlockTime != nil {
+			args = append(args,
+				"--"+cli.GoodTilBlockTimeFlag, strconv.FormatInt(order.GoodTil.GoodTilBlockTime.Unix(), 10),
+			)
+		}
+	}
+	args = append(args, txValidator1Args(testNetwork)...)
 	_, err := coreumclitestutil.ExecTxCmd(
 		ctx,
 		testNetwork,
