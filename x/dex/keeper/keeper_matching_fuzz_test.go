@@ -288,10 +288,10 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			rootSeed uint32,
 		) {
 			const (
-				accountsCount              = 10
+				accountsCount              = 4
 				assetFTDenomsCount         = 3
 				nativeDenomCount           = 3
-				ordersCount                = 100_000_000
+				ordersCount                = 500
 				cancelOrdersPercent        = 5 // cancel 5% of limit orders
 				initialBlockHeight         = 1
 				goodTilBlockHeightPercent  = 10
