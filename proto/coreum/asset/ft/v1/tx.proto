@@ -59,8 +59,11 @@ service Msg {
   // NOTE: all parameters must be provided.
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
 
-  // UpdateDEXSettings upgrades token DEX settings.
-  rpc UpdateDEXSettings(MsgUpdateDEXSettings) returns (EmptyResponse);
+  // UpdateDEXUnifiedRefAmount updates DEX unified ref amount.
+  rpc UpdateDEXUnifiedRefAmount(MsgUpdateDEXUnifiedRefAmount) returns (EmptyResponse);
+
+  // UpdateDEXWhitelistedDenoms updates DEX whitelisted denoms.
+  rpc UpdateDEXWhitelistedDenoms(MsgUpdateDEXWhitelistedDenoms) returns (EmptyResponse);
 }
 
 // MsgIssue defines message to issue new fungible token.
@@ -94,6 +97,7 @@ message MsgIssue {
   string uri_hash = 11 [(gogoproto.customname) = "URIHash"];
   // extension_settings must be provided in case wasm extensions are enabled.
   ExtensionIssueSettings extension_settings = 12;
+  // dex_settings allowed to be customized by issuer
   DEXSettings dex_settings = 13 [(gogoproto.customname) = "DEXSettings"];
 }
 
@@ -233,16 +237,27 @@ message MsgUpdateParams {
   ];
 }
 
-message MsgUpdateDEXSettings {
+message MsgUpdateDEXUnifiedRefAmount {
   option (cosmos.msg.v1.signer) = "sender";
-  option (amino.name) = "assetft/MsgUpdateDEXSettings";
+  option (amino.name) = "assetft/MsgUpdateDEXUnifiedRefAmount";
 
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string denom = 2;
-  DEXSettings dex_settings = 3 [
-    (gogoproto.customname) = "DEXSettings",
-    (gogoproto.nullable) = false
+  // unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size
+  string unified_ref_amount = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
+}
+
+message MsgUpdateDEXWhitelistedDenoms {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "assetft/MsgUpdateDEXWhitelistedDenoms";
+
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string denom = 2;
+  // whitelisted_denoms is the list of denoms to trade with.
+  repeated string whitelisted_denoms = 3 [(gogoproto.nullable) = false];
 }
 
 message EmptyResponse {}

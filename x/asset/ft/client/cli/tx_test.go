@@ -20,6 +20,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v4/app"
@@ -147,7 +148,7 @@ func TestIssueWithDEXSetting(t *testing.T) {
 		Precision:   8,
 		Description: "description",
 		DEXSettings: &types.DEXSettings{
-			UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("0.9"),
+			UnifiedRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.9")),
 		},
 	}
 
@@ -156,7 +157,10 @@ func TestIssueWithDEXSetting(t *testing.T) {
 
 	var resp types.QueryTokenResponse
 	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryToken(), []string{denom}, &resp)
-	requireT.Equal(*token.DEXSettings, *resp.Token.DEXSettings)
+	requireT.Equal(types.DEXSettings{
+		UnifiedRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.9")),
+		WhitelistedDenoms: make([]string, 0),
+	}, *resp.Token.DEXSettings)
 }
 
 func TestMintBurn(t *testing.T) {
@@ -627,7 +631,7 @@ func TestUpgradeV1(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
-func TestUpdateDEXSettings(t *testing.T) {
+func TestUpdateDEXUnifiedRefAmount(t *testing.T) {
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
@@ -654,13 +658,14 @@ func TestUpdateDEXSettings(t *testing.T) {
 		denom,
 		newUnifiedRefAmount.String(),
 	}, txValidator1Args(testNetwork)...)
-	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdUpdateDEXSettings(), args)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdUpdateDEXUnifiedRefAmount(), args)
 	requireT.NoError(err)
 
 	var resp types.QueryDEXSettingsResponse
 	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryDEXSettings(), []string{denom}, &resp)
 	requireT.Equal(types.DEXSettings{
-		UnifiedRefAmount: newUnifiedRefAmount,
+		UnifiedRefAmount:  lo.ToPtr(newUnifiedRefAmount),
+		WhitelistedDenoms: make([]string, 0),
 	}, resp.DEXSettings)
 }
 

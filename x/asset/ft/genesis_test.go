@@ -9,6 +9,7 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -120,10 +121,16 @@ func TestInitAndExportGenesis(t *testing.T) {
 			types.DEXSettingsWithDenom{
 				Denom: fmt.Sprintf("denom-%d", i),
 				DEXSettings: types.DEXSettings{
-					UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("1.%d", i)),
+					UnifiedRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("1.%d", i))),
+					WhitelistedDenoms: []string{"denom1", "denom2", fmt.Sprintf("denomx1.%d", i)},
 				},
 			})
 	}
+	dexSettings = append(dexSettings,
+		types.DEXSettingsWithDenom{
+			Denom:       "denom-empty-dex-settings",
+			DEXSettings: types.DEXSettings{},
+		})
 
 	genState := types.GenesisState{
 		Params:               types.DefaultParams(),

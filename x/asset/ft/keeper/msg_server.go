@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -30,7 +31,18 @@ type MsgKeeper interface {
 	ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
-	UpdateDEXSettings(ctx sdk.Context, sender sdk.AccAddress, denom string, settings types.DEXSettings) error
+	UpdateDEXUnifiedRefAmount(
+		ctx sdk.Context,
+		sender sdk.AccAddress,
+		denom string,
+		unifiedRefAmount sdkmath.LegacyDec,
+	) error
+	UpdateDEXWhitelistedDenoms(
+		ctx sdk.Context,
+		sender sdk.AccAddress,
+		denom string,
+		whitelistedDenoms []string,
+	) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -316,10 +328,10 @@ func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	return &types.EmptyResponse{}, nil
 }
 
-// UpdateDEXSettings upgrades token DEX settings.
-func (ms MsgServer) UpdateDEXSettings(
+// UpdateDEXUnifiedRefAmount updates token DEX unified ref amount.
+func (ms MsgServer) UpdateDEXUnifiedRefAmount(
 	goCtx context.Context,
-	req *types.MsgUpdateDEXSettings,
+	req *types.MsgUpdateDEXUnifiedRefAmount,
 ) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
@@ -327,7 +339,26 @@ func (ms MsgServer) UpdateDEXSettings(
 		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	err = ms.keeper.UpdateDEXSettings(ctx, sender, req.Denom, req.DEXSettings)
+	err = ms.keeper.UpdateDEXUnifiedRefAmount(ctx, sender, req.Denom, req.UnifiedRefAmount)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// UpdateDEXWhitelistedDenoms updates token DEX whitelisted denom.
+func (ms MsgServer) UpdateDEXWhitelistedDenoms(
+	goCtx context.Context,
+	req *types.MsgUpdateDEXWhitelistedDenoms,
+) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	err = ms.keeper.UpdateDEXWhitelistedDenoms(ctx, sender, req.Denom, req.WhitelistedDenoms)
 	if err != nil {
 		return nil, err
 	}

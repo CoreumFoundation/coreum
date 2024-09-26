@@ -75,8 +75,11 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			return sdkerrors.Wrapf(err, "invalid address %s", input.Address)
 		}
 		for _, coin := range output.Coins {
-			def, err := k.GetDefinition(ctx, coin.Denom)
-			if sdkerrors.IsOf(err, types.ErrInvalidDenom, types.ErrTokenNotFound) {
+			def, err := k.getDefinitionOrNil(ctx, coin.Denom)
+			if err != nil {
+				return err
+			}
+			if def == nil {
 				// if the token doesn't have the definition we validate DEX locking rule only.
 				balance := k.bankKeeper.GetBalance(ctx, sender, coin.Denom)
 				if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, balance, coin); err != nil {
@@ -87,8 +90,6 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 					return err
 				}
 				continue
-			} else if err != nil {
-				return err
 			}
 
 			// This check is effective when IBC transfer is acknowledged by the peer chain or timed out.
@@ -117,7 +118,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 					return err
 				}
 
-				if err := k.invokeAssetExtension(ctx, sender, recipient, def, coin, commissionAmount, burnAmount); err != nil {
+				if err := k.invokeAssetExtension(ctx, sender, recipient, *def, coin, commissionAmount, burnAmount); err != nil {
 					return err
 				}
 				// We will not enforce any policies(e.g whitelisting, burn rate), apart from DEX locking, or perform bank
@@ -137,16 +138,16 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			}
 
 			if !senderOrReceiverIsAdmin && burnAmount.IsPositive() {
-				if err := k.burnIfSpendable(ctx, sender, def, burnAmount); err != nil {
+				if err := k.burnIfSpendable(ctx, sender, *def, burnAmount); err != nil {
 					return err
 				}
 			}
 
-			if err := k.validateCoinSpendable(ctx, sender, def, coin.Amount); err != nil {
+			if err := k.validateCoinSpendable(ctx, sender, *def, coin.Amount); err != nil {
 				return err
 			}
 
-			if err := k.validateCoinReceivable(ctx, recipient, def, coin.Amount); err != nil {
+			if err := k.validateCoinReceivable(ctx, recipient, *def, coin.Amount); err != nil {
 				return err
 			}
 

@@ -74,7 +74,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "not supported for the tokens with extensions")
 }
 
-func TestKeeper_PlaceOrderWithBlockDEXFeature(t *testing.T) {
+func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
@@ -91,7 +91,7 @@ func TestKeeper_PlaceOrderWithBlockDEXFeature(t *testing.T) {
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_block_dex,
+			assetfttypes.Feature_dex_block,
 		},
 	}
 	denomWithExtension, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithExtension)
@@ -115,6 +115,79 @@ func TestKeeper_PlaceOrderWithBlockDEXFeature(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
 	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "locking coins for DEX disabled for")
+}
+
+func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	acc, _ := testApp.GenAccount(sdkCtx)
+	issuer, _ := testApp.GenAccount(sdkCtx)
+
+	issuanceSettings := assetfttypes.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFEXT",
+		Subunit:       "defext",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_dex_whitelisted_denoms,
+		},
+		DEXSettings: &assetfttypes.DEXSettings{
+			WhitelistedDenoms: []string{
+				denom3,
+			},
+		},
+	}
+	denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, issuanceSettings)
+	require.NoError(t, err)
+
+	orderReceiveDenom2 := types.Order{
+		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denom,
+		QuoteDenom: denom2, // the denom2 is not allowed
+		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:   sdkmath.NewInt(10),
+		Side:       types.SIDE_SELL,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 390,
+		},
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	lockedBalance, err := orderReceiveDenom2.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	require.ErrorContains(
+		t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2), "denom denom2 not whitelisted",
+	)
+
+	orderReceiveDenom3 := types.Order{
+		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denom,
+		QuoteDenom: denom3, // the denom3 is allowed
+		Price:      lo.ToPtr(types.MustNewPriceFromString("7e-4")),
+		Quantity:   sdkmath.NewInt(10),
+		Side:       types.SIDE_SELL,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 390,
+		},
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	lockedBalance, err = orderReceiveDenom2.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom3))
+
+	// now update settings to remove all limit and place orderReceiveDenom2
+	require.NoError(t, testApp.AssetFTKeeper.UpdateDEXWhitelistedDenoms(sdkCtx, issuer, denom, nil))
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2))
 }
 
 func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
