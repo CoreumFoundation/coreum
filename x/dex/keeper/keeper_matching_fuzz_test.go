@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/docker/distribution/uuid"
-	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
@@ -206,17 +206,41 @@ func (fa *FuzzApp) FundAccount(t *testing.T, sdkCtx sdk.Context, recipient sdk.A
 func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Order) {
 	t.Helper()
 
-	spendableBalancesBefore := getSpendableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
-	err := fa.testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
-	if err != nil {
+	trialCtx := simapp.CopyContextWithMultiStore(sdkCtx) // copy to dry run and don't change state if error
+	if err := fa.testApp.DEXKeeper.PlaceOrder(trialCtx, order); err != nil {
 		t.Logf("Placement failed, err: %s", err.Error())
-		// expected fail
-		if errors.Is(err, types.ErrFailedToLockCoin) || strings.Contains(err.Error(), "good til") {
+		// expected fails
+		if sdkerrors.IsOf(
+			err,
+			types.ErrFailedToLockCoin,
+			types.ErrFailedToSendCoinWithLockCheck,
+		) {
+			// check that the order can't be placed because of the lack of balance
+			creatorAddr := sdk.MustAccAddressFromBech32(order.Creator)
+			spendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(
+				sdkCtx, creatorAddr, order.GetSpendDenom(),
+			)
+			orderLockedBalance, err := order.ComputeLimitOrderLockedBalance()
+			require.NoError(t, err)
+			require.True(
+				t,
+				spendableBalance.IsLT(orderLockedBalance),
+				fmt.Sprintf("availableBalance: %s, orderLockedBalance: %s", spendableBalance.String(), orderLockedBalance.String()),
+			)
+			return
+		}
+
+		if strings.Contains(err.Error(), "good til") ||
+			strings.Contains(err.Error(), "it's prohibited to save more than") {
 			return
 		}
 		require.NoError(t, err)
 	}
-	require.NoError(t, err)
+
+	spendableBalancesBefore := getSpendableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
+	require.NoError(t, fa.testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
+
+	// check if order is placed
 	t.Log("Placement passed")
 	assertOrderPlacementResult(t, sdkCtx, fa.testApp, spendableBalancesBefore, order)
 }

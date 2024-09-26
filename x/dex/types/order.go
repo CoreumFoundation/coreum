@@ -212,6 +212,16 @@ func (o Order) Denoms() []string {
 	return []string{o.BaseDenom, o.QuoteDenom}
 }
 
+// IsTaker returns true if record is taker record (based on sequence).
+func (r OrderBookRecord) IsTaker() bool {
+	return r.OrderSeq == 0
+}
+
+// IsMaker returns true if record is maker record (based on sequence).
+func (r OrderBookRecord) IsMaker() bool {
+	return r.OrderSeq > 0
+}
+
 func validateOrderID(id string) error {
 	if !orderIDRegex.MatchString(id) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "order ID must match regex format '%s'", orderIDRegex)

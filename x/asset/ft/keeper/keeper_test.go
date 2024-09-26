@@ -656,7 +656,14 @@ func TestKeeper_Burn(t *testing.T) {
 	// DEX lock coins and try to burn
 	err = ftKeeper.DEXLock(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)), "")
 	requireT.NoError(err)
+	err = ftKeeper.DEXUnlockAndSend(ctx, recipient, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	requireT.NoError(err)
+	err = ftKeeper.DEXLock(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)), "")
+	requireT.NoError(err)
+
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
+	err = ftKeeper.DEXSendWithLockCheck(ctx, recipient, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)), "")
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 }
 
@@ -1732,6 +1739,10 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(coinToSend.Add(vestingCoin))),
 		cosmoserrors.ErrInsufficientFunds,
 	)
+	requireT.ErrorIs(
+		ftKeeper.DEXSendWithLockCheck(ctx, acc, acc, coinToSend.Add(vestingCoin), ""),
+		cosmoserrors.ErrInsufficientFunds,
+	)
 	// send max allowed amount
 	requireT.NoError(bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(coinToSend)))
 
@@ -1740,6 +1751,10 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	// try to send at least one coin
 	requireT.ErrorIs(
 		bankKeeper.SendCoins(ctx, acc, acc, sdk.NewCoins(sdk.NewInt64Coin(denom, 1))),
+		cosmoserrors.ErrInsufficientFunds,
+	)
+	requireT.ErrorIs(
+		ftKeeper.DEXSendWithLockCheck(ctx, acc, acc, sdk.NewInt64Coin(denom, 1), ""),
 		cosmoserrors.ErrInsufficientFunds,
 	)
 	// DEX unlock full balance
@@ -1755,6 +1770,10 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 
 	// try lock unlock full balance
 	requireT.ErrorIs(ftKeeper.DEXUnlock(ctx, acc, balance), cosmoserrors.ErrInsufficientFunds)
+	requireT.ErrorIs(
+		ftKeeper.DEXUnlockAndSend(ctx, acc, acc, balance),
+		cosmoserrors.ErrInsufficientFunds,
+	)
 
 	// unlock part
 	requireT.NoError(ftKeeper.DEXUnlock(ctx, acc, sdk.NewInt64Coin(denom, 400)))

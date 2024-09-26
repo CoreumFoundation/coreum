@@ -15,4 +15,6 @@ var (
 	ErrRecordNotFound = sdkerrors.Register(ModuleName, 4, "record not found")
 	// ErrFailedToLockCoin is returned when the coin for the order locking is failed.
 	ErrFailedToLockCoin = sdkerrors.Register(ModuleName, 5, "failed to lock coin")
+	// ErrFailedToSendCoinWithLockCheck is returned when the DEX sending of coin with lock check is failed.
+	ErrFailedToSendCoinWithLockCheck = sdkerrors.Register(ModuleName, 6, "failed to send DEX coin with lock check")
 )

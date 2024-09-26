@@ -266,6 +266,64 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
+			name: "match_limit_self_maker_sell_taker_buy_close_maker_same_account",
+			balances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 3761)),
+				}
+			},
+			orders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     accSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id1",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:    sdkmath.NewInt(1000),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+					{
+						Creator:     accSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id2",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:    sdkmath.NewInt(10001),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     accSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id2",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:    sdkmath.NewInt(10001),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+						// 10000 - 1000
+						RemainingQuantity: sdkmath.NewInt(9001),
+						// floor(376e-3 * 10001) + 1 - 375e-3 * 1000 = 3386
+						RemainingBalance: sdkmath.NewInt(3386),
+					},
+				}
+			},
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 375)),
+				}
+			},
+		},
+		{
 			name: "try_to_match_limit_self_maker_sell_taker_buy_insufficient_funds",
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
@@ -299,7 +357,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "3760denom2 is not available, available 3759denom2",
+			// we fill the id1 first, so the remaining balance will be 3759 - 1000 * 375e-3 = 3384,
+			// but we need to lock (10000 * 376e-3) - (1000 * 375e-3) = 3385
+			wantErrorContains: "3385denom2 is not available, available 3384denom2",
 		},
 		{
 			name: "match_limit_self_maker_sell_taker_buy_close_maker_with_partial_filling",
@@ -577,7 +637,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "10000denom1 is not available, available 9999denom1",
+			wantErrorContains: "9000denom1 is not available, available 8999denom1",
 		},
 		{
 			name: "match_limit_self_maker_buy_taker_sell_close_taker",
@@ -1212,10 +1272,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
-			name: "match_market_self_maker_sell_taker_buy_close_with_zero_maker_balance",
+			name: "try_to_match_market_self_maker_sell_taker_buy_close_with_no_change_zero_balance",
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1001)),
 				}
 			},
 			orders: func(accSet AccSet) []types.Order {
@@ -1231,6 +1291,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
+					// the order will be placed but, since it cannot be matched, it will be executed with no state change
 					{
 						Creator:    accSet.acc2.String(),
 						Type:       types.ORDER_TYPE_MARKET,
@@ -1242,7 +1303,28 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "DEX locking amount must be positive",
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:           accSet.acc1.String(),
+						Type:              types.ORDER_TYPE_LIMIT,
+						ID:                "id1",
+						BaseDenom:         denom1,
+						QuoteDenom:        denom2,
+						Price:             lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:          sdkmath.NewInt(1000),
+						Side:              types.SIDE_SELL,
+						TimeInForce:       types.TIME_IN_FORCE_GTC,
+						RemainingQuantity: sdkmath.NewInt(1000),
+						RemainingBalance:  sdkmath.NewInt(1000),
+					},
+				}
+			},
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1)), // 1000 locked by the order
+				}
+			},
 		},
 		{
 			name: "match_market_self_maker_sell_taker_buy_with_partially_filling",
@@ -1355,7 +1437,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
-			name: "try_to_match_market_self_maker_buy_taker_sell_insufficient_funds",
+			name: "match_market_self_maker_buy_taker_sell_close_both_with_taker_partial_filling_lack_of_balance",
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 376)),
@@ -1386,14 +1468,22 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "10000denom1 is not available, available 9999denom1",
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{}
+			},
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 8999), sdk.NewInt64Coin(denom2, 376)),
+				}
+			},
 		},
 		{
 			name: "match_market_self_maker_sell_taker_buy_close_taker",
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 10000)),
-					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375+999)), // 999 should be filled
 				}
 			},
 			orders: func(accSet AccSet) []types.Order {
@@ -1442,7 +1532,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375)),
-					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 999)),
 				}
 			},
 		},
@@ -1541,7 +1631,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "10000denom2 is not available, available 9999denom2",
+			wantErrorContains: "9625denom2 is not available, available 9624denom2",
 		},
 		{
 			name: "match_limit_opposite_maker_sell_taker_sell_close_maker_with_partial_filling",
@@ -1810,7 +1900,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "26500denom1 is not available, available 26499denom1",
+			wantErrorContains: "25500denom1 is not available, available 25499denom1",
 		},
 		{
 			name: "match_limit_opposite_maker_buy_taker_buy_close_taker_with_partial_filling",
@@ -2292,7 +2382,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
-			name: "try_to_match_market_opposite_maker_sell_taker_sell_insufficient_funds",
+			name: "match_market_opposite_maker_sell_taker_sell_partial_filling",
 			balances: func(accSet AccSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
@@ -2323,7 +2413,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "10000denom2 is not available, available 9999denom2",
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{}
+			},
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 375)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 9624)),
+				}
+			},
 		},
 		{
 			name: "match_market_opposite_maker_buy_taker_buy_close_both",

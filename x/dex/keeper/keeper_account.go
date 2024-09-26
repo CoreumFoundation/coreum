@@ -36,7 +36,6 @@ func (k Keeper) getAccountAddress(ctx sdk.Context, accNumber uint64) (sdk.AccAdd
 
 func (k Keeper) getAccountAddressWithCache(ctx sdk.Context, accNumber uint64, cache map[uint64]sdk.AccAddress) (
 	sdk.AccAddress,
-	map[uint64]sdk.AccAddress,
 	error,
 ) {
 	addr, ok := cache[accNumber]
@@ -44,10 +43,10 @@ func (k Keeper) getAccountAddressWithCache(ctx sdk.Context, accNumber uint64, ca
 		var err error
 		addr, err = k.getAccountAddress(ctx, accNumber)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		cache[accNumber] = addr
 	}
 
-	return addr, cache, nil
+	return addr, nil
 }

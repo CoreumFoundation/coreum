@@ -242,7 +242,7 @@ func (k Keeper) GetOrdersWithSequence(
 			}
 
 			var acc sdk.AccAddress
-			acc, accNumberToAddCache, err = k.getAccountAddressWithCache(ctx, accNumber, accNumberToAddCache)
+			acc, err = k.getAccountAddressWithCache(ctx, accNumber, accNumberToAddCache)
 			if err != nil {
 				return nil, err
 			}
@@ -1002,7 +1002,7 @@ func (k Keeper) getPaginatedOrderBookOrders(
 			}
 
 			var acc sdk.AccAddress
-			acc, accNumberToAddCache, err = k.getAccountAddressWithCache(ctx, record.AccountNumber, accNumberToAddCache)
+			acc, err = k.getAccountAddressWithCache(ctx, record.AccountNumber, accNumberToAddCache)
 			if err != nil {
 				return nil, err
 			}
