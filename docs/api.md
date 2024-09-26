@@ -2492,7 +2492,7 @@ Feature defines possible features of fungible token.
 | clawback | 6 |  |
 | extension | 7 |  |
 | dex_block | 8 |  |
-| dex_dex_whitelisted_denoms | 9 |  |
+| dex_whitelisted_denoms | 9 |  |
 
 
  <!-- end enums -->

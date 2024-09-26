@@ -9616,7 +9616,7 @@
         "clawback",
         "extension",
         "dex_block",
-        "dex_dex_whitelisted_denoms"
+        "dex_whitelisted_denoms"
       ],
       "default": "minting",
       "description": "Feature defines possible features of fungible token."

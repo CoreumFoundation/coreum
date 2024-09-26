@@ -465,7 +465,7 @@ func TestKeeper_Issue_WithDEXSettings(t *testing.T) {
 		},
 		Features: []types.Feature{
 			types.Feature_freezing,
-			types.Feature_dex_dex_whitelisted_denoms,
+			types.Feature_dex_whitelisted_denoms,
 		},
 	}
 
@@ -1888,7 +1888,7 @@ func TestKeeper_DEXSettings_WhitelistedDenom(t *testing.T) {
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
 		Features: []types.Feature{
-			types.Feature_dex_dex_whitelisted_denoms,
+			types.Feature_dex_whitelisted_denoms,
 		},
 		DEXSettings: &types.DEXSettings{
 			WhitelistedDenoms: []string{
@@ -1906,7 +1906,7 @@ func TestKeeper_DEXSettings_WhitelistedDenom(t *testing.T) {
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
 		Features: []types.Feature{
-			types.Feature_dex_dex_whitelisted_denoms,
+			types.Feature_dex_whitelisted_denoms,
 		},
 		DEXSettings: &types.DEXSettings{
 			WhitelistedDenoms: []string{
@@ -3197,7 +3197,7 @@ func TestKeeper_UpdateDEXUnifiedRefAmount(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		Features: []types.Feature{
-			types.Feature_dex_dex_whitelisted_denoms,
+			types.Feature_dex_whitelisted_denoms,
 		},
 	}
 
@@ -3307,7 +3307,7 @@ func TestKeeper_UpdateDEXWhitelistedDenoms(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
 		Features: []types.Feature{
-			types.Feature_dex_dex_whitelisted_denoms,
+			types.Feature_dex_whitelisted_denoms,
 		},
 	}
 
@@ -3328,7 +3328,7 @@ func TestKeeper_UpdateDEXWhitelistedDenoms(t *testing.T) {
 		Admin:              ft1Settings.Issuer.String(),
 		DEXSettings:        ft1Settings.DEXSettings,
 		Features: []types.Feature{
-			types.Feature_dex_dex_whitelisted_denoms,
+			types.Feature_dex_whitelisted_denoms,
 		},
 	}
 	requireT.Equal(expectToken, gotToken)

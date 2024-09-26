@@ -287,11 +287,11 @@ func ValidateDEXSettingsAccess(settings DEXSettings, def Definition) error {
 			Feature_dex_block.String(),
 		)
 	}
-	if settings.WhitelistedDenoms != nil && !def.IsFeatureEnabled(Feature_dex_dex_whitelisted_denoms) {
+	if settings.WhitelistedDenoms != nil && !def.IsFeatureEnabled(Feature_dex_whitelisted_denoms) {
 		return sdkerrors.Wrapf(
 			ErrFeatureDisabled,
 			"it's prohibited to providy any DEX whitelisted denoms if the %s feature is disabled",
-			Feature_dex_dex_whitelisted_denoms.String(),
+			Feature_dex_whitelisted_denoms.String(),
 		)
 	}
 

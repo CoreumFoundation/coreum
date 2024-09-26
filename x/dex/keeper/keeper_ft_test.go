@@ -134,7 +134,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_dex_dex_whitelisted_denoms,
+			assetfttypes.Feature_dex_whitelisted_denoms,
 		},
 		DEXSettings: &assetfttypes.DEXSettings{
 			WhitelistedDenoms: []string{

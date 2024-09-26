@@ -301,7 +301,7 @@ func TestAssetFTDEXSettingsCreationAndUpdate(t *testing.T) {
 			},
 		},
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_dex_dex_whitelisted_denoms,
+			assetfttypes.Feature_dex_whitelisted_denoms,
 		},
 	}
 
