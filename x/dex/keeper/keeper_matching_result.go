@@ -80,9 +80,9 @@ func (mr *MatchingResult) RegisterMakerUpdateRecord(record types.OrderBookRecord
 }
 
 func appendOrAddCoinToAccNumber(coins []CoinToAccNumber, coin CoinToAccNumber) []CoinToAccNumber {
-	for _, c := range coins {
-		if c.AccNumber == coin.AccNumber {
-			c.Coin = c.Coin.Add(coin.Coin)
+	for i := range coins {
+		if coins[i].AccNumber == coin.AccNumber {
+			coins[i].Coin = coins[i].Coin.Add(coin.Coin)
 			return coins
 		}
 	}
