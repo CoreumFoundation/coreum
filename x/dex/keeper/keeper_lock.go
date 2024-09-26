@@ -38,7 +38,7 @@ func (k Keeper) lockOrderBalance(
 		)
 	}
 
-	if err := k.lockCoin(ctx, creatorAddr, lockedBalance); err != nil {
+	if err := k.lockCoin(ctx, creatorAddr, lockedBalance, order.GetReceiveDenom()); err != nil {
 		return sdkmath.Int{}, err
 	}
 
@@ -47,15 +47,16 @@ func (k Keeper) lockOrderBalance(
 	return lockedBalance.Amount, nil
 }
 
-func (k Keeper) lockCoin(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) lockCoin(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error {
 	// don't check for empty coin because we don't expect the coin here
 	k.logger(ctx).Debug(
 		"Locking DEX coin.",
 		"addr", addr,
 		"coin", coin.String(),
+		"receiveDenom", receiveDenom,
 	)
 
-	err := k.assetFTKeeper.DEXLock(ctx, addr, coin)
+	err := k.assetFTKeeper.DEXLock(ctx, addr, coin, receiveDenom)
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrFailedToLockCoin, "failed to lock order coins: %s", err)
 	}

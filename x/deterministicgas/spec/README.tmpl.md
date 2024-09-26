@@ -112,7 +112,7 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 `bankMultiSendPerOperationGas` is currently equal to `{{ .BankMultiSendPerOperationsGas }}`.
 
 ##### `/cosmos.authz.v1beta1.MsgGrant`
-MsgGrant is deterministic with gas value of `{{ .MsgGrantBaseGas}}`, but if the authorization type is
+MsgGrant is deterministic with gas value of `{{ .GrantBaseGas}}`, but if the authorization type is
 one of the following, then it gets an overhead for every byte of the authorization.
 The authorization types with overhead are:
 - `/coreum.assert.nft.SendAuthorization`
@@ -120,7 +120,7 @@ The authorization types with overhead are:
 - `/coreum.assert.ft.BurnAuthorization`
 
 and the formula for them is
-`DeterministicGas = MsgGrantBaseGas + Size(Authorization) * WriteCostPerByte `
+`DeterministicGas = GrantBaseGas + Size(Authorization) * WriteCostPerByte `
 
 
 ##### `/coreum.asset.nft.v1.MsgIssueClass`
@@ -134,6 +134,14 @@ and the formula for them is
 `DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte`
 
 `msgGas` is currently equal to `{{ .NFTMsgMintCost }}`.
+
+
+##### `/coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms`
+
+`DeterministicGasForMsg = DEXUpdateWhitelistedDenomBaseGas + DEXWhitelistedPerDenomGas * NumberOfDenom`
+
+`DEXWhitelistedPerDenomGas` is currently equal to `{{ .DEXWhitelistedPerDenomGas }}`.
+`DEXUpdateWhitelistedDenomBaseGas` is currently equal to `{{ .DEXUpdateWhitelistedDenomBaseGas }}`.
 
 ### Nondeterministic messages
 

@@ -148,7 +148,7 @@ func TestBaseKeeperWrapper_SpendableBalanceByDenom(t *testing.T) {
 
 	// check that after the locking the spendable balance is different
 	coinToLock := sdk.NewCoin(denom, sdkmath.NewInt(10))
-	err = ftKeeper.DEXLock(ctx, recipient, coinToLock)
+	err = ftKeeper.DEXLock(ctx, recipient, coinToLock, "")
 	requireT.NoError(err)
 	spendableBalanceRes, err = bankKeeper.SpendableBalanceByDenom(ctx, &banktypes.QuerySpendableBalanceByDenomRequest{
 		Address: recipient.String(),

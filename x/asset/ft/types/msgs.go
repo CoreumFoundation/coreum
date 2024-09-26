@@ -40,7 +40,8 @@ var (
 	_ extendedMsg = &MsgTransferAdmin{}
 	_ extendedMsg = &MsgUpgradeTokenV1{}
 	_ extendedMsg = &MsgUpdateParams{}
-	_ extendedMsg = &MsgUpdateDEXSettings{}
+	_ extendedMsg = &MsgUpdateDEXUnifiedRefAmount{}
+	_ extendedMsg = &MsgUpdateDEXWhitelistedDenoms{}
 )
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
@@ -56,7 +57,12 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgSetWhitelistedLimit{}, fmt.Sprintf("%s/MsgSetWhitelistedLimit", ModuleName))
 	legacy.RegisterAminoMsg(cdc, &MsgUpgradeTokenV1{}, fmt.Sprintf("%s/MsgUpgradeTokenV1", ModuleName))
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateDEXSettings{}, fmt.Sprintf("%s/MsgUpdateDEXSettings", ModuleName))
+	legacy.RegisterAminoMsg(
+		cdc, &MsgUpdateDEXUnifiedRefAmount{}, fmt.Sprintf("%s/MsgUpdateDEXUnifiedRefAmount", ModuleName),
+	)
+	legacy.RegisterAminoMsg(
+		cdc, &MsgUpdateDEXWhitelistedDenoms{}, fmt.Sprintf("%s/MsgUpdateDEXWhitelistedDenoms", ModuleName),
+	)
 }
 
 // ValidateBasic validates the message.
@@ -336,10 +342,19 @@ func (m MsgUpdateParams) ValidateBasic() error {
 }
 
 // ValidateBasic checks that message fields are valid.
-func (m MsgUpdateDEXSettings) ValidateBasic() error {
+func (m MsgUpdateDEXUnifiedRefAmount) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return cosmoserrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", err)
 	}
 
-	return ValidateDEXSettings(m.DEXSettings)
+	return ValidateUnifiedRefAmount(m.UnifiedRefAmount)
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m MsgUpdateDEXWhitelistedDenoms) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return cosmoserrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", err)
+	}
+
+	return ValidateWhitelistedDenoms(m.WhitelistedDenoms)
 }
