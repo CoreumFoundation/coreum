@@ -10,11 +10,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -25,6 +27,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
 	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
 )
 
@@ -1085,6 +1088,348 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+}
+
+// TestLimitOrdersMatchingWithAssetClawback tests the dex modules ability to place get and match limit orders
+// with asset ft with clawback feature.
+func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgClawback{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgClawback{},
+			&assetfttypes.MsgClawback{},
+		},
+	})
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+			&dextypes.MsgPlaceOrder{},
+			&dextypes.MsgCancelOrder{},
+		},
+	})
+
+	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_clawback)
+	denom2 := "denom2"
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc1.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(150)),
+		),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	// clawback some of the amount
+	clawbackMsg := &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+
+	// place order should fail because of insufficient funds
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.ErrorContains(err, cosmoserrors.ErrInsufficientFunds.Error())
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+
+	// send enough amounts for the order
+	msgSend = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc1.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+		),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+
+	// now placing order should succeed because the needed funds are available
+	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+
+	// try to clawback after placing the order should fail
+	clawbackMsg = &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.ErrorContains(err, cosmoserrors.ErrInsufficientFunds.Error())
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+
+	// the order should be cancelled, in order to do the clawback
+	cancelOrderMsg := &dextypes.MsgCancelOrder{
+		Sender: acc1.String(),
+		ID:     placeSellOrderMsg.ID,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(cancelOrderMsg)),
+		cancelOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+
+	// now clawback should succeed
+	clawbackMsg = &assetfttypes.MsgClawback{
+		Sender:  issuer.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(clawbackMsg)),
+		clawbackMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+}
+
+// TestLimitOrdersMatchingWithStaking tests the dex modules ability to place get and match limit orders  with staking.
+func TestLimitOrdersMatchingWithStaking(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
+
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	require.NoError(t, err)
+	// we stake the minimum possible staking amount
+	// we multiply not to conflict with the tests which increases the min amount
+	delegateAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2))
+
+	acc := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&stakingtypes.MsgDelegate{},
+			&dextypes.MsgPlaceOrder{},
+			&dextypes.MsgPlaceOrder{},
+		},
+		Amount: delegateAmount,
+	})
+
+	denomToStake := chain.ChainSettings.Denom
+	denom2 := issueFT(ctx, t, chain, acc, sdkmath.NewIntWithDecimal(1, 6))
+
+	// Setup validator
+	validator1AccAddress, validator1Address, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, delegateAmount, delegateAmount,
+	)
+	require.NoError(t, err)
+	defer deactivateValidator()
+
+	chain.FundAccountWithOptions(ctx, t, validator1AccAddress, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&stakingtypes.MsgDelegate{},
+		},
+	})
+
+	acc1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.True(acc1BalanceRes.Balance.Amount.GTE(delegateAmount))
+
+	// stake all the amounts
+	delegateMsg := &stakingtypes.MsgDelegate{
+		DelegatorAddress: acc.String(),
+		ValidatorAddress: validator1Address.String(),
+		Amount:           sdk.NewCoin(denomToStake, delegateAmount),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
+		delegateMsg,
+	)
+	requireT.NoError(err)
+
+	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.True(acc1BalanceRes.Balance.Amount.LT(delegateAmount))
+
+	// place order should fail because all the funds are stacked
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denomToStake,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    delegateAmount,
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.ErrorContains(err, dextypes.ErrFailedToLockCoin.Error())
+
+	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
+		Amount: delegateAmount,
+	})
+
+	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.True(acc1BalanceRes.Balance.Amount.GTE(delegateAmount))
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.Equal(delegateAmount.String(), acc1BalanceRes.Balance.Amount.String())
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc.String(),
+		Denom:   denomToStake,
+	})
+	requireT.NoError(err)
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 }
 
 // TestCancelOrdersByDenom tests the dex modules ability to cancel all orders of the account and by denom.

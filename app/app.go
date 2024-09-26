@@ -1447,23 +1447,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName).WithKeyTable(ibctransfertypes.ParamKeyTable())
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName).WithKeyTable(icacontrollertypes.ParamKeyTable())
 	paramsKeeper.Subspace(icahosttypes.SubModuleName).WithKeyTable(icahosttypes.ParamKeyTable())
-
-	// TODO(v5): Remove once all of modules migrate to the new param management mechanism.
-	// For now we keep for legacy proposals to work properly.
-	paramsKeeper.Subspace(authtypes.ModuleName)
-	paramsKeeper.Subspace(banktypes.ModuleName)
-	paramsKeeper.Subspace(stakingtypes.ModuleName)
-	paramsKeeper.Subspace(minttypes.ModuleName)
-	paramsKeeper.Subspace(distrtypes.ModuleName)
-	paramsKeeper.Subspace(slashingtypes.ModuleName)
-	paramsKeeper.Subspace(govtypes.ModuleName)
-	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
-	paramsKeeper.Subspace(wasmtypes.ModuleName)
-	paramsKeeper.Subspace(feemodeltypes.ModuleName)
-	paramsKeeper.Subspace(customparamstypes.CustomParamsStaking)
-	paramsKeeper.Subspace(assetfttypes.ModuleName)
-	paramsKeeper.Subspace(assetnfttypes.ModuleName)
 
 	return paramsKeeper
 }
