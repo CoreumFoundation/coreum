@@ -19,6 +19,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v4/x/wasm"
@@ -304,6 +305,11 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		if err := types.ValidateDEXSettings(*settings.DEXSettings); err != nil {
 			return "", err
 		}
+
+		if err := types.ValidateDEXSettingsAccess(*settings.DEXSettings, definition); err != nil {
+			return "", err
+		}
+
 		k.SetDEXSettings(ctx, denom, *settings.DEXSettings)
 	}
 
@@ -699,14 +705,14 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 }
 
 // DEXLock locks specified token from the specified account.
-func (k Keeper) DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error {
 	// in the final implementation the `DEXLock` will accept lock reason struct from dex, to let assetft decide
 	// whether the locking is allowed. The same struct will be passed to the extensions smart contract.
 	if !coin.IsPositive() {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "DEX locking amount must be positive")
 	}
 
-	if err := k.dexLockingChecks(ctx, addr, coin); err != nil {
+	if err := k.dexLockingChecks(ctx, addr, coin, receiveDenom); err != nil {
 		return err
 	}
 
@@ -898,43 +904,6 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 	return nil
 }
 
-// UpdateDEXSettings updates the DEX settings of a specified denom.
-func (k Keeper) UpdateDEXSettings(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	denom string,
-	settings types.DEXSettings,
-) error {
-	if err := types.ValidateDEXSettings(settings); err != nil {
-		return err
-	}
-
-	if k.authority != sender.String() {
-		def, err := k.GetDefinition(ctx, denom)
-		if err != nil {
-			return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
-		}
-		if !def.IsAdmin(sender) {
-			return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin and gov can update DEX settings")
-		}
-	}
-
-	prevSettings, err := k.getDEXSettingsOrNil(ctx, denom)
-	if err != nil {
-		return err
-	}
-	k.SetDEXSettings(ctx, denom, settings)
-
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXSettingsChanged{
-		PreviousSettings: prevSettings,
-		NewSettings:      settings,
-	}); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventDEXSettingsChanged event: %s", err)
-	}
-
-	return nil
-}
-
 // SetDEXSettings sets the DEX settings of a specified denom.
 func (k Keeper) SetDEXSettings(ctx sdk.Context, denom string, settings types.DEXSettings) {
 	ctx.KVStore(k.storeKey).Set(types.CreateDEXSettingsKey(denom), k.cdc.MustMarshal(&settings))
@@ -976,6 +945,87 @@ func (k Keeper) GetDEXSettingsWithDenoms(
 	})
 
 	return dexSettings, pageRes, err
+}
+
+// UpdateDEXUnifiedRefAmount updates the DEX unified ref amount .
+func (k Keeper) UpdateDEXUnifiedRefAmount(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	denom string,
+	unifiedRefAmount sdkmath.LegacyDec,
+) error {
+	return k.updateDEXSettings(ctx, sender, denom, types.DEXSettings{UnifiedRefAmount: &unifiedRefAmount})
+}
+
+// UpdateDEXWhitelistedDenoms updates the DEX whitelisted of a specified denoms.
+func (k Keeper) UpdateDEXWhitelistedDenoms(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	denom string,
+	whitelistedDenoms []string,
+) error {
+	if whitelistedDenoms == nil {
+		// check to prevent mistakes using the `updateDEXSettings` method, set to empty slice if the input is nil
+		whitelistedDenoms = make([]string, 0)
+	}
+	return k.updateDEXSettings(ctx, sender, denom, types.DEXSettings{WhitelistedDenoms: whitelistedDenoms})
+}
+
+func (k Keeper) updateDEXSettings(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	denom string,
+	settings types.DEXSettings,
+) error {
+	prevSettings, err := k.getDEXSettingsOrNil(ctx, denom)
+	if err != nil {
+		return err
+	}
+	if prevSettings == nil {
+		prevSettings = &types.DEXSettings{}
+	}
+
+	newSettings := *prevSettings
+	// update not nil settings
+	if settings.WhitelistedDenoms != nil {
+		newSettings.WhitelistedDenoms = settings.WhitelistedDenoms
+	}
+	if settings.UnifiedRefAmount != nil {
+		newSettings.UnifiedRefAmount = settings.UnifiedRefAmount
+	}
+
+	if err := types.ValidateDEXSettings(settings); err != nil {
+		return err
+	}
+
+	def, err := k.getDefinitionOrNil(ctx, denom)
+	if err != nil {
+		return err
+	}
+	// the gov can update any DEX setting even if the features are disabled
+	if k.authority != sender.String() { //nolint:nestif // the ifs are for the error checks mostly
+		if def != nil {
+			if !def.IsAdmin(sender) {
+				return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin and gov can update DEX settings")
+			}
+			if err := types.ValidateDEXSettingsAccess(newSettings, *def); err != nil {
+				return err
+			}
+		} else {
+			return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only admin or gov can update DEX settings")
+		}
+	}
+
+	k.SetDEXSettings(ctx, denom, newSettings)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXSettingsChanged{
+		PreviousSettings: prevSettings,
+		NewSettings:      newSettings,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventDEXSettingsChanged event: %s", err)
+	}
+
+	return nil
 }
 
 func (k Keeper) mintIfReceivable(
@@ -1176,6 +1226,19 @@ func (k Keeper) getDefinitions(
 	return k.getDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix), pagination)
 }
 
+func (k Keeper) getDefinitionOrNil(ctx sdk.Context, denom string) (*types.Definition, error) {
+	def, err := k.GetDefinition(ctx, denom)
+	if err != nil {
+		if sdkerrors.IsOf(err, types.ErrInvalidDenom, types.ErrTokenNotFound) {
+			return nil, nil //nolint:nilnil //returns nil if data not found
+		}
+
+		return nil, sdkerrors.Wrapf(types.ErrInvalidState, "failed to get definton for denom: %s", denom)
+	}
+
+	return &def, nil
+}
+
 func (k Keeper) getIssuerDefinitions(
 	ctx sdk.Context,
 	issuer sdk.AccAddress,
@@ -1342,28 +1405,9 @@ func (k Keeper) dexLockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddres
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateDEXLockedBalancesKey(addr))
 }
 
-func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
-	def, err := k.GetDefinition(ctx, coin.Denom)
-	if err != nil {
-		// check if the token is assetft
-		if !sdkerrors.IsOf(err, types.ErrInvalidDenom, types.ErrTokenNotFound) {
-			return err
-		}
-	} else {
-		if def.ExtensionCWAddress != "" {
-			return sdkerrors.Wrapf(
-				types.ErrInvalidInput,
-				"failed to DEX lock %s, not supported for the tokens with extensions",
-				coin.String(),
-			)
-		}
-		if def.IsFeatureEnabled(types.Feature_block_dex) {
-			return sdkerrors.Wrapf(
-				cosmoserrors.ErrUnauthorized,
-				"locking coins for DEX disabled for %s",
-				def.Denom,
-			)
-		}
+func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error {
+	if err := k.dexLockingChecksForDenoms(ctx, []string{coin.Denom, receiveDenom}); err != nil {
+		return err
 	}
 
 	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
@@ -1381,6 +1425,56 @@ func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.
 			notFrozenTotalAmt,
 			coin.Denom,
 		)
+	}
+
+	return nil
+}
+
+func (k Keeper) dexLockingChecksForDenoms(ctx sdk.Context, denoms []string) error {
+	for _, denom := range denoms {
+		def, err := k.getDefinitionOrNil(ctx, denom)
+		if err != nil {
+			return err
+		}
+
+		if def != nil {
+			if def.ExtensionCWAddress != "" {
+				return sdkerrors.Wrapf(
+					types.ErrInvalidInput,
+					"failed to DEX lock %s, not supported for the tokens with extensions",
+					def.Denom,
+				)
+			}
+			if def.IsFeatureEnabled(types.Feature_dex_block) {
+				return sdkerrors.Wrapf(
+					cosmoserrors.ErrUnauthorized,
+					"locking coins for DEX disabled for %s",
+					def.Denom,
+				)
+			}
+		}
+
+		// settings specific validation
+		settings, err := k.getDEXSettingsOrNil(ctx, denom)
+		if err != nil {
+			return err
+		}
+
+		if settings != nil {
+			// validate whitelisted denoms
+			for _, tradeDenom := range denoms {
+				if denom == tradeDenom || len(settings.WhitelistedDenoms) == 0 {
+					continue
+				}
+				if !lo.Contains(settings.WhitelistedDenoms, tradeDenom) {
+					return sdkerrors.Wrapf(
+						cosmoserrors.ErrUnauthorized,
+						"locking coins for DEX of is prohibited, denom %s not whitelisted for %s",
+						tradeDenom, denom,
+					)
+				}
+			}
+		}
 	}
 
 	return nil

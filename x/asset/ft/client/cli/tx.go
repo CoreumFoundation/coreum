@@ -66,7 +66,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxClearAdmin(),
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
-		CmdUpdateDEXSettings(),
+		CmdUpdateDEXUnifiedRefAmount(),
 	)
 
 	return cmd
@@ -212,7 +212,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 					return errors.Wrapf(err, "invalid %s value", DEXUnifiedRefAmountFlag)
 				}
 				dexSettings = &types.DEXSettings{
-					UnifiedRefAmount: unifiedRefAmount,
+					UnifiedRefAmount: &unifiedRefAmount,
 				}
 			}
 
@@ -853,16 +853,16 @@ $ %s tx grant <grantee_addr> burn --burn-limit 100ucore --expiration 1667979596
 	return cmd
 }
 
-// CmdUpdateDEXSettings returns UpdateDEXSettings cobra command.
-func CmdUpdateDEXSettings() *cobra.Command {
+// CmdUpdateDEXUnifiedRefAmount returns UpdateDEXUnifiedRefAmount cobra command.
+func CmdUpdateDEXUnifiedRefAmount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-dex-settings [denom] [unified_ref_price] --from [sender]",
+		Use:   "update-dex-unified-ref-amount [denom] [unified-ref-amount] --from [sender]",
 		Args:  cobra.ExactArgs(2),
-		Short: "Update DEX settings",
+		Short: "Update DEX unified ref amount",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Update DEX settings.
+			fmt.Sprintf(`Update DEX unified ref amount.
 Example:
-$ %s tx %s update-dex-settings ABC-%s 1000.5 --from [sender]
+$ %s tx %s update-dex-unified-ref-amount ABC-%s 1000.5 --from [sender]
 `,
 				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
@@ -883,12 +883,10 @@ $ %s tx %s update-dex-settings ABC-%s 1000.5 --from [sender]
 				return errors.Wrapf(err, "invalid %s value", DEXUnifiedRefAmountFlag)
 			}
 
-			msg := &types.MsgUpdateDEXSettings{
-				Sender: sender.String(),
-				Denom:  denom,
-				DEXSettings: types.DEXSettings{
-					UnifiedRefAmount: unifiedRefAmount,
-				},
+			msg := &types.MsgUpdateDEXUnifiedRefAmount{
+				Sender:           sender.String(),
+				Denom:            denom,
+				UnifiedRefAmount: unifiedRefAmount,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

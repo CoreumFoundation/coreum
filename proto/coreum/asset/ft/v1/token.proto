@@ -16,7 +16,8 @@ enum Feature {
   block_smart_contracts = 5;
   clawback = 6;
   extension = 7;
-  block_dex = 8;
+  dex_block = 8;
+  dex_whitelisted_denoms = 9;
 }
 
 // Definition defines the fungible token settings to store.
@@ -103,8 +104,7 @@ message TokenUpgradeStatuses {
 // DEXSettings defines the token settings of the dex.
 message DEXSettings {
   // unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size
-  string unified_ref_amount = 1 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
-  ];
+  string unified_ref_amount = 1 [(gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"];
+  // whitelisted_denoms is the list of denoms to trade with.
+  repeated string whitelisted_denoms = 2;
 }

@@ -88,6 +88,7 @@ It should also be mentioned that this rule applies for all the messages inside `
 
 | Message Type | Gas |
 |--------------|-----|
+| `/coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms`                    | [special case](#special-cases) |
 | `/coreum.asset.nft.v1.MsgIssueClass`                                   | [special case](#special-cases) |
 | `/coreum.asset.nft.v1.MsgMint`                                         | [special case](#special-cases) |
 | `/coreum.asset.nft.v1.MsgUpdateData`                                   | [special case](#special-cases) |
@@ -106,7 +107,7 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/coreum.asset.ft.v1.MsgSetWhitelistedLimit`                           | 9000                           |
 | `/coreum.asset.ft.v1.MsgTransferAdmin`                                 | 10000                          |
 | `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 8500                           |
-| `/coreum.asset.ft.v1.MsgUpdateDEXSettings`                             | 10000                          |
+| `/coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount`                     | 10000                          |
 | `/coreum.asset.ft.v1.MsgUpgradeTokenV1`                                | 25000                          |
 | `/coreum.asset.nft.v1.MsgAddToClassWhitelist`                          | 7000                           |
 | `/coreum.asset.nft.v1.MsgAddToWhitelist`                               | 7000                           |
@@ -186,7 +187,7 @@ The authorization types with overhead are:
 - `/coreum.assert.ft.BurnAuthorization`
 
 and the formula for them is
-`DeterministicGas = MsgGrantBaseGas + Size(Authorization) * WriteCostPerByte `
+`DeterministicGas = GrantBaseGas + Size(Authorization) * WriteCostPerByte `
 
 
 ##### `/coreum.asset.nft.v1.MsgIssueClass`
@@ -200,6 +201,14 @@ and the formula for them is
 `DeterministicGasForMsg = msgGas + Len(msg.Data) * WriteCostPerByte`
 
 `msgGas` is currently equal to `39000`.
+
+
+##### `/coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms`
+
+`DeterministicGasForMsg = DEXUpdateWhitelistedDenomBaseGas + DEXWhitelistedPerDenomGas * NumberOfDenom`
+
+`DEXWhitelistedPerDenomGas` is currently equal to `10000`.
+`DEXUpdateWhitelistedDenomBaseGas` is currently equal to `50000`.
 
 ### Nondeterministic messages
 

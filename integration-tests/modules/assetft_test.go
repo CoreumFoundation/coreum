@@ -283,7 +283,8 @@ func TestAssetFTDEXSettingsCreationAndUpdate(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
-			&assetfttypes.MsgUpdateDEXSettings{},
+			&assetfttypes.MsgUpdateDEXUnifiedRefAmount{},
+			&assetfttypes.MsgUpdateDEXWhitelistedDenoms{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
@@ -294,7 +295,13 @@ func TestAssetFTDEXSettingsCreationAndUpdate(t *testing.T) {
 		Subunit:   "uabc",
 		Precision: 6,
 		DEXSettings: &assetfttypes.DEXSettings{
-			UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("3.3"),
+			UnifiedRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("3.3")),
+			WhitelistedDenoms: []string{
+				"denom1",
+			},
+		},
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_dex_whitelisted_denoms,
 		},
 	}
 
@@ -325,49 +332,91 @@ func TestAssetFTDEXSettingsCreationAndUpdate(t *testing.T) {
 		Version:            assetfttypes.CurrentTokenVersion,
 		Admin:              issueMsg.Issuer,
 		DEXSettings:        issueMsg.DEXSettings,
+		Features:           issueMsg.Features,
 	}
 	requireT.Equal(expectToken, gotTokenRes.Token)
 
-	newDEXSettings := assetfttypes.DEXSettings{
-		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("3.4"),
-	}
-	updateDEXSettingsMsg := &assetfttypes.MsgUpdateDEXSettings{
-		Sender:      issuer.String(),
-		Denom:       denom,
-		DEXSettings: newDEXSettings,
+	// unified ref amount
+
+	unifiedRefAmount := sdkmath.LegacyMustNewDecFromStr("3.4")
+	msgUpdateDEXUnifiedRefAmount := &assetfttypes.MsgUpdateDEXUnifiedRefAmount{
+		Sender:           issuer.String(),
+		Denom:            denom,
+		UnifiedRefAmount: unifiedRefAmount,
 	}
 
 	txRes, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(updateDEXSettingsMsg)),
-		updateDEXSettingsMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateDEXUnifiedRefAmount)),
+		msgUpdateDEXUnifiedRefAmount,
 	)
 	requireT.NoError(err)
-	requireT.Equal(chain.GasLimitByMsgs(updateDEXSettingsMsg), uint64(txRes.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(msgUpdateDEXUnifiedRefAmount), uint64(txRes.GasUsed))
+
+	expectedPrevDEXSettings := *issueMsg.DEXSettings
+	expectedDEXSettings := expectedPrevDEXSettings // copy
+	expectedDEXSettings.UnifiedRefAmount = &unifiedRefAmount
 
 	dEXSettingsChangedEvts, err := event.FindTypedEvents[*assetfttypes.EventDEXSettingsChanged](txRes.Events)
 	requireT.NoError(err)
 	evt := dEXSettingsChangedEvts[0]
 	requireT.NotNil(evt.PreviousSettings)
-	requireT.Equal(*issueMsg.DEXSettings, *evt.PreviousSettings)
-	requireT.Equal(newDEXSettings, evt.NewSettings)
+	requireT.Equal(expectedPrevDEXSettings, *evt.PreviousSettings)
+	requireT.Equal(expectedDEXSettings, evt.NewSettings)
 
 	// query the DEX settings independently of token
 	dexSettingsRes, err := ftClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
 		Denom: denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(newDEXSettings, dexSettingsRes.DEXSettings)
+	requireT.Equal(expectedDEXSettings, dexSettingsRes.DEXSettings)
+
+	// whitelisted denom
+
+	whitelistedDenoms := make([]string, 0)
+	msgUpdateDEXWhitelistedDenoms := &assetfttypes.MsgUpdateDEXWhitelistedDenoms{
+		Sender:            issuer.String(),
+		Denom:             denom,
+		WhitelistedDenoms: whitelistedDenoms,
+	}
+
+	txRes, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateDEXWhitelistedDenoms)),
+		msgUpdateDEXWhitelistedDenoms,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(msgUpdateDEXWhitelistedDenoms), uint64(txRes.GasUsed))
+
+	expectedPrevDEXSettings = dexSettingsRes.DEXSettings
+	expectedDEXSettings = expectedPrevDEXSettings // copy
+	expectedDEXSettings.WhitelistedDenoms = whitelistedDenoms
+
+	dEXSettingsChangedEvts, err = event.FindTypedEvents[*assetfttypes.EventDEXSettingsChanged](txRes.Events)
+	requireT.NoError(err)
+	evt = dEXSettingsChangedEvts[0]
+	requireT.NotNil(evt.PreviousSettings)
+	requireT.Equal(expectedPrevDEXSettings, *evt.PreviousSettings)
+	requireT.Equal(expectedDEXSettings, evt.NewSettings)
 }
 
-func TestAssetFTDEXSettingsCreationAndUpdateVIAGov(t *testing.T) {
+func TestAssetFTDEXUnifiedRefAmountCreationAndUpdateVIAGov(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -376,51 +425,197 @@ func TestAssetFTDEXSettingsCreationAndUpdateVIAGov(t *testing.T) {
 	// fund twice for 2 proposals
 	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance.Add(proposerBalance)))
 
-	denom := "denom" + uuid.NewString()[:4]
+	randomDenom := "denom" + uuid.NewString()[:4]
 	_, err = assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
-		Denom: denom,
+		Denom: randomDenom,
 	})
 	requireT.ErrorContains(err, assetfttypes.ErrDEXSettingsNotFound.Error())
 
 	// create DEX settings VIA gov
-	newDEXSettings := assetfttypes.DEXSettings{
-		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("3.4"),
-	}
+	unifiedRefAmount := sdkmath.LegacyMustNewDecFromStr("3.4")
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
 		"-", "-", "-", govtypesv1.OptionYes,
-		&assetfttypes.MsgUpdateDEXSettings{
-			Sender:      authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-			Denom:       denom,
-			DEXSettings: newDEXSettings,
+		&assetfttypes.MsgUpdateDEXUnifiedRefAmount{
+			Sender:           authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Denom:            randomDenom,
+			UnifiedRefAmount: unifiedRefAmount,
 		},
 	)
 
 	dexSettingsRes, err := assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
-		Denom: denom,
+		Denom: randomDenom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(newDEXSettings, dexSettingsRes.DEXSettings)
+	requireT.Equal(assetfttypes.DEXSettings{
+		UnifiedRefAmount: &unifiedRefAmount,
+	}, dexSettingsRes.DEXSettings)
 
 	// update DEX settings VIA gov
-	updatedDEXSettings := assetfttypes.DEXSettings{
-		UnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("2.2"),
-	}
+	unifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("2.2")
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
 		"-", "-", "-", govtypesv1.OptionYes,
-		&assetfttypes.MsgUpdateDEXSettings{
-			Sender:      authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-			Denom:       denom,
-			DEXSettings: updatedDEXSettings,
+		&assetfttypes.MsgUpdateDEXUnifiedRefAmount{
+			Sender:           authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Denom:            randomDenom,
+			UnifiedRefAmount: unifiedRefAmount,
 		},
 	)
 
 	dexSettingsRes, err = assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
-		Denom: denom,
+		Denom: randomDenom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(updatedDEXSettings, dexSettingsRes.DEXSettings)
+	requireT.Equal(assetfttypes.DEXSettings{
+		UnifiedRefAmount: &unifiedRefAmount,
+	}, dexSettingsRes.DEXSettings)
+
+	// update asset FT settings via gov
+
+	msgIssue := &assetfttypes.MsgIssue{
+		Issuer:    issuer.String(),
+		Symbol:    "ABC",
+		Subunit:   "uabc",
+		Precision: 6,
+		DEXSettings: &assetfttypes.DEXSettings{
+			UnifiedRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("3.3")),
+		},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
+		msgIssue,
+	)
+	requireT.NoError(err)
+
+	ft1Denom := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+
+	unifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("7.77")
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateDEXUnifiedRefAmount{
+			Sender:           authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Denom:            ft1Denom,
+			UnifiedRefAmount: unifiedRefAmount,
+		},
+	)
+
+	dexSettingsRes, err = assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
+		Denom: ft1Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(assetfttypes.DEXSettings{
+		UnifiedRefAmount: &unifiedRefAmount,
+	}, dexSettingsRes.DEXSettings)
+}
+
+func TestAssetFTDEXWhitelistedDenomsCreationAndUpdateVIAGov(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+
+	issuer := chain.GenAccount()
+
+	whitelistedDenoms := []string{"denom1", "denom2"}
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgUpdateDEXWhitelistedDenoms{
+				WhitelistedDenoms: whitelistedDenoms, // pass to compute the gas correctly
+			},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// Create new proposer.
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx, false)
+	requireT.NoError(err)
+	// fund twice for 2 proposals
+	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(proposer, proposerBalance.Add(proposerBalance)))
+
+	randomDenom := "denom" + uuid.NewString()[:4]
+	_, err = assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
+		Denom: randomDenom,
+	})
+	requireT.ErrorContains(err, assetfttypes.ErrDEXSettingsNotFound.Error())
+
+	// create DEX settings VIA gov
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateDEXWhitelistedDenoms{
+			Sender:            authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Denom:             randomDenom,
+			WhitelistedDenoms: whitelistedDenoms,
+		},
+	)
+
+	dexSettingsRes, err := assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
+		Denom: randomDenom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(assetfttypes.DEXSettings{
+		WhitelistedDenoms: whitelistedDenoms,
+	}, dexSettingsRes.DEXSettings)
+
+	// update asset FT settings via gov
+
+	msgIssuer := &assetfttypes.MsgIssue{
+		Issuer:    issuer.String(),
+		Symbol:    "ABC",
+		Subunit:   "uabc",
+		Precision: 6,
+		// no features to check that gov can update
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssuer)),
+		msgIssuer,
+	)
+	requireT.NoError(err)
+	ft1Denom := assetfttypes.BuildDenom(msgIssuer.Subunit, issuer)
+
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateDEXWhitelistedDenoms{
+			Sender:            authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Denom:             ft1Denom,
+			WhitelistedDenoms: whitelistedDenoms,
+		},
+	)
+
+	dexSettingsRes, err = assetFTClient.DEXSettings(ctx, &assetfttypes.QueryDEXSettingsRequest{
+		Denom: ft1Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(assetfttypes.DEXSettings{
+		WhitelistedDenoms: whitelistedDenoms,
+	}, dexSettingsRes.DEXSettings)
+
+	// try to update from the issuer
+	msgUpdateDEXWhitelistedDenoms := &assetfttypes.MsgUpdateDEXWhitelistedDenoms{
+		Sender:            issuer.String(),
+		Denom:             ft1Denom,
+		WhitelistedDenoms: whitelistedDenoms,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUpdateDEXWhitelistedDenoms)),
+		msgUpdateDEXWhitelistedDenoms,
+	)
+	requireT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 }
 
 // TestAssetIssueAndQueryTokens checks that tokens query works as expected.
