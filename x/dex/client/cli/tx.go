@@ -128,19 +128,22 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-heigh
 			}
 
 			msg := &types.MsgPlaceOrder{
-				Sender:     sender.String(),
-				Type:       orderType,
-				ID:         id,
-				BaseDenom:  baseDenom,
-				QuoteDenom: quoteDenom,
-				Price:      price,
-				Quantity:   quantity,
-				Side:       types.Side(side),
-				GoodTil: &types.GoodTil{
+				Sender:      sender.String(),
+				Type:        orderType,
+				ID:          id,
+				BaseDenom:   baseDenom,
+				QuoteDenom:  quoteDenom,
+				Price:       price,
+				Quantity:    quantity,
+				Side:        types.Side(side),
+				TimeInForce: timeInForce, // TODO(dzmitryhil) allow to modify
+			}
+
+			if goodTilBlockHeight != 0 || goodTilBlockTime != nil {
+				msg.GoodTil = &types.GoodTil{
 					GoodTilBlockHeight: goodTilBlockHeight,
 					GoodTilBlockTime:   goodTilBlockTime,
-				},
-				TimeInForce: timeInForce, // TODO(dzmitryhil) allow to modify
+				}
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
