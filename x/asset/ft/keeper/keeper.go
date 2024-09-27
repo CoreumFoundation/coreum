@@ -706,12 +706,6 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 
 // DEXLock locks specified token from the specified account.
 func (k Keeper) DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error {
-	// in the final implementation the `DEXLock` will accept lock reason struct from dex, to let assetft decide
-	// whether the locking is allowed. The same struct will be passed to the extensions smart contract.
-	if !coin.IsPositive() {
-		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "DEX locking amount must be positive")
-	}
-
 	if err := k.dexLockingChecks(ctx, addr, coin, receiveDenom); err != nil {
 		return err
 	}
@@ -776,6 +770,20 @@ func (k Keeper) DEXUnlockAndSend(ctx sdk.Context, fromAddr, toAddr sdk.AccAddres
 	return nil
 }
 
+// DEXSendWithLockCheck checks that it's allowed to lock the `fromAddr` coin and if allowed sends it to the `toAddr`.
+func (k Keeper) DEXSendWithLockCheck(
+	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, coin sdk.Coin, receiveDenom string,
+) error {
+	if err := k.dexLockingChecks(ctx, fromAddr, coin, receiveDenom); err != nil {
+		return err
+	}
+	if err := k.bankKeeper.SendCoins(ctx, fromAddr, toAddr, sdk.NewCoins(coin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to send DEX coins")
+	}
+
+	return nil
+}
+
 // GetDEXLockedBalance returns the DEX locked balance.
 func (k Keeper) GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 	return k.dexLockedAccountBalanceStore(ctx, addr).Balance(denom)
@@ -808,7 +816,7 @@ func (k Keeper) SetDEXLockedBalances(ctx sdk.Context, addr sdk.AccAddress, coins
 	}
 }
 
-// GetSpendableBalance returns balance allowed to be spendable.
+// GetSpendableBalance returns balance allowed to be spent.
 func (k Keeper) GetSpendableBalance(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
@@ -1406,6 +1414,10 @@ func (k Keeper) dexLockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddres
 }
 
 func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "DEX locking amount must be positive")
+	}
+
 	if err := k.dexLockingChecksForDenoms(ctx, []string{coin.Denom, receiveDenom}); err != nil {
 		return err
 	}
