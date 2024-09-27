@@ -46,6 +46,69 @@ func TestCmdPlaceOrder(t *testing.T) {
 		Quantity:    sdkmath.NewInt(100),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
+	})
+}
+
+func TestCmdPlaceOrderWithGoodTilBlockHeight(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+
+	placeOrder(ctx, requireT, testNetwork, types.Order{
+		ID:          "id1",
+		Type:        types.ORDER_TYPE_LIMIT,
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 123,
+		},
+	})
+}
+
+func TestCmdPlaceOrderWithGoodTilBlockTime(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+
+	placeOrder(ctx, requireT, testNetwork, types.Order{
+		ID:          "id1",
+		Type:        types.ORDER_TYPE_LIMIT,
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockTime: lo.ToPtr(time.Now().Add(time.Minute)),
+		},
+	})
+}
+
+func TestCmdPlaceOrderWithGoodTilBlockHeightAndGoodTilBlockTime(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+
+	placeOrder(ctx, requireT, testNetwork, types.Order{
+		ID:          "id1",
+		Type:        types.ORDER_TYPE_LIMIT,
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 123,
 			GoodTilBlockTime:   lo.ToPtr(time.Now().Add(time.Minute)),
