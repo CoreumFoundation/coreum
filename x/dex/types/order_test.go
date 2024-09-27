@@ -275,6 +275,14 @@ func TestOrder_Validate(t *testing.T) {
 				return order
 			}(),
 		},
+		{
+			name: "valid_limit_order_with_unspecified_time_in_force_fok",
+			order: func() types.Order {
+				order := validOrder()
+				order.TimeInForce = types.TIME_IN_FORCE_FOK
+				return order
+			}(),
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

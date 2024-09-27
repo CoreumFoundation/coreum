@@ -72,6 +72,12 @@ func (k Keeper) matchOrder(
 			return nil
 		case types.TIME_IN_FORCE_IOC:
 			return k.applyMatchingResult(ctx, mr, order)
+		case types.TIME_IN_FORCE_FOK:
+			// if the order is not fill fully don't apply the matching result
+			if takerRecord.RemainingQuantity.IsPositive() {
+				return nil
+			}
+			return k.applyMatchingResult(ctx, mr, order)
 		default:
 			return sdkerrors.Wrapf(types.ErrInvalidInput, "unsupported time in force: %s", order.TimeInForce.String())
 		}

@@ -10270,10 +10270,11 @@
       "enum": [
         "TIME_IN_FORCE_UNSPECIFIED",
         "TIME_IN_FORCE_GTC",
-        "TIME_IN_FORCE_IOC"
+        "TIME_IN_FORCE_IOC",
+        "TIME_IN_FORCE_FOK"
       ],
       "default": "TIME_IN_FORCE_UNSPECIFIED",
-      "description": "TimeInForce is order time in force.\n\n - TIME_IN_FORCE_UNSPECIFIED: time_in_force_unspecified reserves the default value, to protect against unexpected settings.\n - TIME_IN_FORCE_GTC: time_in_force_gtc means that the order remains active until it is fully executed or manually canceled.\n - TIME_IN_FORCE_IOC: time_in_force_ioc  means that order must be executed immediately, either in full or partially. Any portion of the\n order that cannot be filled immediately is canceled."
+      "description": "TimeInForce is order time in force.\n\n - TIME_IN_FORCE_UNSPECIFIED: time_in_force_unspecified reserves the default value, to protect against unexpected settings.\n - TIME_IN_FORCE_GTC: time_in_force_gtc means that the order remains active until it is fully executed or manually canceled.\n - TIME_IN_FORCE_IOC: time_in_force_ioc  means that order must be executed immediately, either in full or partially. Any portion of the\n order that cannot be filled immediately is canceled.\n - TIME_IN_FORCE_FOK: time_in_force_fok means that order must be fully executed or canceled."
     },
     "coreum.feemodel.v1.ModelParams": {
       "type": "object",

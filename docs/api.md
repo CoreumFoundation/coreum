@@ -4769,6 +4769,7 @@ TimeInForce is order time in force.
 | TIME_IN_FORCE_UNSPECIFIED | 0 | `time_in_force_unspecified reserves the default value, to protect against unexpected settings.` |
 | TIME_IN_FORCE_GTC | 1 | `time_in_force_gtc means that the order remains active until it is fully executed or manually canceled.` |
 | TIME_IN_FORCE_IOC | 2 | `time_in_force_ioc  means that order must be executed immediately, either in full or partially. Any portion of the  order that cannot be filled immediately is canceled.` |
+| TIME_IN_FORCE_FOK | 3 | `time_in_force_fok means that order must be fully executed or canceled.` |
 
 
  <!-- end enums -->
