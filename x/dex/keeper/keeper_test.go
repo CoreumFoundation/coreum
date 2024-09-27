@@ -70,36 +70,36 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 		{
 			baseDenom:                   denom1,
 			quoteDenom:                  denom2,
-			expectedSelfOrderBookID:     uint32(0),
-			expectedOppositeOrderBookID: uint32(1),
+			expectedSelfOrderBookID:     uint32(1),
+			expectedOppositeOrderBookID: uint32(2),
 		},
 		// save one more time to check that returns the same
 		{
 			baseDenom:                   denom1,
 			quoteDenom:                  denom2,
-			expectedSelfOrderBookID:     uint32(0),
-			expectedOppositeOrderBookID: uint32(1),
-		},
-		// inverse denom
-		{
-			baseDenom:                   denom2,
-			quoteDenom:                  denom1,
 			expectedSelfOrderBookID:     uint32(1),
-			expectedOppositeOrderBookID: uint32(0),
-		},
-		// save with desc denoms ordering
-		{
-			baseDenom:                   denom3,
-			quoteDenom:                  denom2,
-			expectedSelfOrderBookID:     uint32(3),
 			expectedOppositeOrderBookID: uint32(2),
 		},
 		// inverse denom
 		{
 			baseDenom:                   denom2,
-			quoteDenom:                  denom3,
+			quoteDenom:                  denom1,
 			expectedSelfOrderBookID:     uint32(2),
+			expectedOppositeOrderBookID: uint32(1),
+		},
+		// save with desc denoms ordering
+		{
+			baseDenom:                   denom3,
+			quoteDenom:                  denom2,
+			expectedSelfOrderBookID:     uint32(4),
 			expectedOppositeOrderBookID: uint32(3),
+		},
+		// inverse denom
+		{
+			baseDenom:                   denom2,
+			quoteDenom:                  denom3,
+			expectedSelfOrderBookID:     uint32(3),
+			expectedOppositeOrderBookID: uint32(4),
 		},
 	} {
 		price := types.MustNewPriceFromString("1")
@@ -282,7 +282,6 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
 	require.Equal(t, buyLockedBalance.String(), dexLockedBalance.String())
-
 	// check unlocking
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, buyOrder.ID))
 	// check unlocking
