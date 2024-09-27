@@ -235,8 +235,7 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			return
 		}
 
-		if
-			strings.Contains(err.Error(), "good til") ||
+		if strings.Contains(err.Error(), "good til") ||
 			strings.Contains(err.Error(), "it's prohibited to save more than") {
 			return
 		}
