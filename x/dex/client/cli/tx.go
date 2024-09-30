@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -11,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
@@ -19,6 +21,10 @@ import (
 const (
 	// PriceFlag is price flag.
 	PriceFlag = "price"
+	// GoodTilBlockHeightFlag is good til block height flag.
+	GoodTilBlockHeightFlag = "good-til-block-height"
+	// GoodTilBlockTimeFlag is good til block time flag.
+	GoodTilBlockTimeFlag = "good-til-block-time"
 	// OrderTypeLimit is limit order type.
 	OrderTypeLimit = "limit"
 	// OrderTypeMarket is limit order market.
@@ -44,16 +50,18 @@ func GetTxCmd() *cobra.Command {
 }
 
 // CmdPlaceOrder returns PlaceOrder cobra command.
+//
+//nolint:funlen // Despite the length function is still manageable
 func CmdPlaceOrder() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --from [sender]", //nolint:lll // string example
+		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --good-til-block-height 123 --good-til-block-time 1727124446 --from [sender]", //nolint:lll // string example
 		Args:  cobra.ExactArgs(6),
 		Short: "Place new order",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Place new order.
 
 Example:
-$ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
+$ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-height 123 --from [sender]
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -105,6 +113,20 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 				price = &priceV
 			}
 
+			goodTilBlockHeight, err := cmd.Flags().GetUint64(GoodTilBlockHeightFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			goodTilBlockTimeNum, err := cmd.Flags().GetInt64(GoodTilBlockTimeFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			var goodTilBlockTime *time.Time
+			if goodTilBlockTimeNum > 0 {
+				goodTilBlockTime = lo.ToPtr(time.Unix(goodTilBlockTimeNum, 0))
+			}
+
 			msg := &types.MsgPlaceOrder{
 				Sender:      sender.String(),
 				Type:        orderType,
@@ -117,11 +139,20 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 				TimeInForce: timeInForce, // TODO(dzmitryhil) allow to modify
 			}
 
+			if goodTilBlockHeight != 0 || goodTilBlockTime != nil {
+				msg.GoodTil = &types.GoodTil{
+					GoodTilBlockHeight: goodTilBlockHeight,
+					GoodTilBlockTime:   goodTilBlockTime,
+				}
+			}
+
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
 	cmd.Flags().String(PriceFlag, "", "Order price.")
+	cmd.Flags().Uint64(GoodTilBlockHeightFlag, 0, "Good til block height.")
+	cmd.Flags().Int64(GoodTilBlockTimeFlag, 0, "Good til block time.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
