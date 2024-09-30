@@ -96,11 +96,11 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/cosmos.bank.v1beta1.MsgMultiSend`                                    | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgSend`                                         | [special case](#special-cases) |
 | `/coreum.asset.ft.v1.MsgBurn`                                          | 35000                          |
-| `/coreum.asset.ft.v1.MsgClawback`                                      | 15500                          |
+| `/coreum.asset.ft.v1.MsgClawback`                                      | 28500                          |
 | `/coreum.asset.ft.v1.MsgClearAdmin`                                    | 8500                           |
 | `/coreum.asset.ft.v1.MsgFreeze`                                        | 8500                           |
 | `/coreum.asset.ft.v1.MsgGloballyFreeze`                                | 5000                           |
-| `/coreum.asset.ft.v1.MsgGloballyUnfreeze`                              | 5000                           |
+| `/coreum.asset.ft.v1.MsgGloballyUnfreeze`                              | 3000                           |
 | `/coreum.asset.ft.v1.MsgIssue`                                         | 70000                          |
 | `/coreum.asset.ft.v1.MsgMint`                                          | 31000                          |
 | `/coreum.asset.ft.v1.MsgSetFrozen`                                     | 8500                           |
@@ -126,7 +126,6 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/cosmos.distribution.v1beta1.MsgSetWithdrawAddress`                   | 5000                           |
 | `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward`              | 79000                          |
 | `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission`          | 22000                          |
-| `/cosmos.feegrant.v1beta1.MsgGrantAllowance`                           | 11000                          |
 | `/cosmos.feegrant.v1beta1.MsgRevokeAllowance`                          | 2500                           |
 | `/cosmos.gov.v1.MsgDeposit`                                            | 65000                          |
 | `/cosmos.gov.v1.MsgVote`                                               | 6000                           |
@@ -230,6 +229,7 @@ and the formula for them is
 | `/cosmos.distribution.v1beta1.MsgCommunityPoolSpend`                   |
 | `/cosmos.distribution.v1beta1.MsgUpdateParams`                         |
 | `/cosmos.evidence.v1beta1.MsgSubmitEvidence`                           |
+| `/cosmos.feegrant.v1beta1.MsgGrantAllowance`                           |
 | `/cosmos.feegrant.v1beta1.MsgPruneAllowances`                          |
 | `/cosmos.gov.v1.MsgCancelProposal`                                     |
 | `/cosmos.gov.v1.MsgExecLegacyContent`                                  |
