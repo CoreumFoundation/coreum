@@ -139,6 +139,7 @@ func NewRootCmd() *cobra.Command {
 	for _, cmd := range rootCmd.Commands() {
 		if cmd.Use == "tx" {
 			installAwaitBroadcastModeWrapper(cmd)
+			addQueryGasPriceToAllLeafs(cmd)
 			break
 		}
 	}
@@ -313,8 +314,6 @@ func txCommand() *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-
-	addQueryGasPriceToAllLeafs(cmd)
 
 	cmd.AddCommand(
 		authcmd.GetSignCommand(),
