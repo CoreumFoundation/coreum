@@ -32,11 +32,15 @@ type FuzzApp struct {
 	ftDenoms   []string
 	sides      []types.Side
 
-	initialBlockHeight        uint64
-	initialBlockTime          time.Time
 	goodTilBlockHeightPercent int
 	goodTilBlockTimePercent   int
-	blockTime                 time.Duration
+
+	timeInForceIOCPercent int
+	timeInForceFOKPercent int
+
+	initialBlockTime   time.Time
+	initialBlockHeight uint64
+	blockTime          time.Duration
 }
 
 func NewFuzzApp(
@@ -44,10 +48,15 @@ func NewFuzzApp(
 	accountsCount,
 	assetFTDenomsCount,
 	nativeDenomCount int,
-	initialBlockHeight uint64,
-	initialBlockTime time.Time,
+
+	timeInForceIOCPercent int,
+	timeInForceFOKPercent int,
+
 	goodTilBlockHeightPercent int,
 	goodTilBlockTimePercent int,
+
+	initialBlockHeight uint64,
+	initialBlockTime time.Time,
 	blockTime time.Duration,
 ) FuzzApp {
 	testApp := simapp.New()
@@ -109,11 +118,15 @@ func NewFuzzApp(
 		ftDenoms:   ftDenoms,
 		sides:      sides,
 
-		initialBlockHeight:        initialBlockHeight,
-		initialBlockTime:          initialBlockTime,
+		timeInForceIOCPercent: timeInForceIOCPercent,
+		timeInForceFOKPercent: timeInForceFOKPercent,
+
 		goodTilBlockHeightPercent: goodTilBlockHeightPercent,
 		goodTilBlockTimePercent:   goodTilBlockTimePercent,
-		blockTime:                 blockTime,
+
+		initialBlockHeight: initialBlockHeight,
+		initialBlockTime:   initialBlockTime,
+		blockTime:          blockTime,
 	}
 }
 
@@ -150,7 +163,7 @@ func (fa *FuzzApp) GenOrder(
 		timeInForce = types.TIME_IN_FORCE_UNSPECIFIED
 	)
 
-	if orderType == types.ORDER_TYPE_LIMIT {
+	if orderType == types.ORDER_TYPE_LIMIT { //nolint:nestif  // the ifs are simple to check the percents mostly
 		v, ok := buildNumExpPrice(uint64(priceNum), priceExp)
 		// since we use Uint32 as num it never exceed the max num length
 		require.True(t, ok)
@@ -172,6 +185,13 @@ func (fa *FuzzApp) GenOrder(
 		}
 
 		timeInForce = types.TIME_IN_FORCE_GTC
+
+		if randBoolWithPercent(rnd, fa.timeInForceIOCPercent) {
+			timeInForce = types.TIME_IN_FORCE_IOC
+		}
+		if randBoolWithPercent(rnd, fa.timeInForceFOKPercent) {
+			timeInForce = types.TIME_IN_FORCE_FOK
+		}
 	}
 
 	// the quantity can't be zero
@@ -307,16 +327,22 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			rootSeed uint32,
 		) {
 			const (
-				accountsCount              = 4
-				assetFTDenomsCount         = 3
-				nativeDenomCount           = 3
-				ordersCount                = 500
-				cancelOrdersPercent        = 5 // cancel 5% of limit orders
-				initialBlockHeight         = 1
-				goodTilBlockHeightPercent  = 10
-				goodTilBlockTimePercent    = 10
-				blockTime                  = time.Second
-				cancelOrdersByDenomPercent = 2 // cancel 2% of limit orders to cancel from admin by denom
+				accountsCount      = 4
+				assetFTDenomsCount = 2
+				nativeDenomCount   = 2
+				ordersCount        = 500
+
+				goodTilBlockHeightPercent = 10
+				goodTilBlockTimePercent   = 10
+
+				timeInForceIOCPercent = 4
+				timeInForceFOKPercent = 4
+
+				cancelOrdersPercent        = 5
+				cancelOrdersByDenomPercent = 2
+
+				initialBlockHeight = 1
+				blockTime          = time.Second
 			)
 			initialBlockTime := time.Date(2023, 1, 2, 3, 4, 5, 6, time.UTC)
 
@@ -325,10 +351,15 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				accountsCount,
 				assetFTDenomsCount,
 				nativeDenomCount,
-				initialBlockHeight,
-				initialBlockTime,
+
+				timeInForceIOCPercent,
+				timeInForceFOKPercent,
+
 				goodTilBlockHeightPercent,
 				goodTilBlockTimePercent,
+
+				initialBlockHeight,
+				initialBlockTime,
 				blockTime,
 			)
 			rootRnd := rand.New(rand.NewSource(int64(rootSeed)))
@@ -388,6 +419,9 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 }
 
 func randBoolWithPercent(orderRnd *rand.Rand, cancellationPercent int) bool {
+	if cancellationPercent == 0 {
+		return false
+	}
 	shouldCancelOrder := randIntInRange(orderRnd, 1, 100) < cancellationPercent
 	return shouldCancelOrder
 }
