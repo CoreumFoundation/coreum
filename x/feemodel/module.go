@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"cosmossdk.io/core/appmodule"
-	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -14,6 +13,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/hashicorp/go-metrics"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
