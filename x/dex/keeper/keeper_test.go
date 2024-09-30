@@ -296,7 +296,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrRecordNotFound)
 	buyOrder, err = dexKeeper.GetOrderByAddressAndID(sdkCtx, acc, buyOrder.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdkmath.NewInt(5300).String(), buyOrder.RemainingBalance.String())
+	require.Equal(t, sdkmath.NewInt(5200).String(), buyOrder.RemainingBalance.String())
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, buyOrder.ID))
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
