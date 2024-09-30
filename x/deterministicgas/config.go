@@ -89,8 +89,8 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(8_500),
 		MsgToMsgURL(&assetfttypes.MsgSetFrozen{}):           constantGasFunc(8_500),
 		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5_000),
-		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5_000),
-		MsgToMsgURL(&assetfttypes.MsgClawback{}):            constantGasFunc(15_500),
+		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(3_000),
+		MsgToMsgURL(&assetfttypes.MsgClawback{}):            constantGasFunc(28_500),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9_000),
 		MsgToMsgURL(&assetfttypes.MsgTransferAdmin{}):       constantGasFunc(10_000),
 		MsgToMsgURL(&assetfttypes.MsgClearAdmin{}):          constantGasFunc(8_500),
@@ -136,7 +136,6 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&distributiontypes.MsgDepositValidatorRewardsPool{}): constantGasFunc(39_000),
 
 		// feegrant
-		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(11_000),
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2_500),
 
 		// gov
@@ -233,6 +232,7 @@ func DefaultConfig() Config {
 			&crisistypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
 
 			// feegrant
+			&feegranttypes.MsgGrantAllowance{},
 			&feegranttypes.MsgPruneAllowances{},
 
 			// dex

@@ -36,11 +36,9 @@ func TestFeeGrant(t *testing.T) {
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
-			&feegrant.MsgGrantAllowance{},
-			&feegrant.MsgGrantAllowance{},
 			&feegrant.MsgRevokeAllowance{},
 		},
-		Amount: sdkmath.NewInt(200_000),
+		Amount: sdkmath.NewInt(500_000),
 	})
 	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(1),
@@ -58,14 +56,13 @@ func TestFeeGrant(t *testing.T) {
 		Allowance: basicAllowance,
 	}
 
-	res, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		chain.TxFactoryAuto(),
 		grantMsg,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(grantMsg), res.GasUsed)
 
 	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
@@ -82,14 +79,13 @@ func TestFeeGrant(t *testing.T) {
 		Allowance: expiringAllowance,
 	}
 
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(expiringGrantMsg)),
+		chain.TxFactoryAuto(),
 		expiringGrantMsg,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(expiringGrantMsg), res.GasUsed)
 
 	allowancesRes, err := feegrantClient.AllowancesByGranter(ctx, &feegrant.QueryAllowancesByGranterRequest{
 		Granter: granter.String(),
@@ -137,7 +133,7 @@ func TestFeeGrant(t *testing.T) {
 		Grantee: grantee.String(),
 	}
 
-	res, err = client.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(revokeMsg)),
