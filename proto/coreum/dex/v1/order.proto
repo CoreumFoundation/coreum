@@ -55,6 +55,8 @@ enum TimeInForce {
   // time_in_force_ioc  means that order must be executed immediately, either in full or partially. Any portion of the
   //  order that cannot be filled immediately is canceled.
   TIME_IN_FORCE_IOC = 2;
+  // time_in_force_fok means that order must be fully executed or canceled.
+  TIME_IN_FORCE_FOK = 3;
 }
 
 // Order is a DEX order.

@@ -3579,6 +3579,218 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				}
 			},
 		},
+
+		// ******************** FOK matching ********************
+
+		{
+			name: "no_match_limit_sell_time_in_force_fok",
+			balances: func(accSet AccSet) map[string]sdk.Coins {
+				// lock required balance for the full order
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
+				}
+			},
+			orders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     accSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id1",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
+						Quantity:    sdkmath.NewInt(1000),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_FOK,
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{}
+			},
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000)),
+				}
+			},
+		},
+		{
+			name: "match_limit_self_maker_sell_taker_buy_close_taker_not_enough_market_time_in_force_fok",
+			balances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1005+7)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 3760)),
+				}
+			},
+			orders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     accSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id1",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:    sdkmath.NewInt(1005),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+					{
+						Creator:     accSet.acc2.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id2",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:    sdkmath.NewInt(10000),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_FOK,
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:           accSet.acc1.String(),
+						Type:              types.ORDER_TYPE_LIMIT,
+						ID:                "id1",
+						BaseDenom:         denom1,
+						QuoteDenom:        denom2,
+						Price:             lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:          sdkmath.NewInt(1005),
+						Side:              types.SIDE_SELL,
+						TimeInForce:       types.TIME_IN_FORCE_GTC,
+						RemainingQuantity: sdkmath.NewInt(1005),
+						RemainingBalance:  sdkmath.NewInt(1005),
+					},
+				}
+			},
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 7)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 3760)),
+				}
+			},
+		},
+		{
+			name: "match_limit_self_maker_sell_taker_buy_close_taker_with_partial_filling_time_in_force_fok",
+			balances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 10000+3)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 1005)),
+				}
+			},
+			orders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     accSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id1",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:    sdkmath.NewInt(10000),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+					{
+						Creator:    accSet.acc2.String(),
+						Type:       types.ORDER_TYPE_LIMIT,
+						ID:         "id2",
+						BaseDenom:  denom1,
+						QuoteDenom: denom2,
+						Price:      lo.ToPtr(types.MustNewPriceFromString("1")),
+						// only 1000 will be filled, but the order will be executed fully, that's why we cancel the FOK
+						Quantity:    sdkmath.NewInt(1005),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_FOK,
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:           accSet.acc1.String(),
+						Type:              types.ORDER_TYPE_LIMIT,
+						ID:                "id1",
+						BaseDenom:         denom1,
+						QuoteDenom:        denom2,
+						Price:             lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:          sdkmath.NewInt(10000),
+						Side:              types.SIDE_SELL,
+						TimeInForce:       types.TIME_IN_FORCE_GTC,
+						RemainingQuantity: sdkmath.NewInt(10000),
+						RemainingBalance:  sdkmath.NewInt(10000),
+					},
+				}
+			},
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 3)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 1005)),
+				}
+			},
+		},
+		{
+			name: "match_limit_self_maker_sell_taker_buy_close_taker_with_full_filling_time_in_force_fok",
+			balances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 10000+3)),
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom2, 1005)),
+				}
+			},
+			orders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     accSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id1",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:    sdkmath.NewInt(10000),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+					{
+						Creator:    accSet.acc2.String(),
+						Type:       types.ORDER_TYPE_LIMIT,
+						ID:         "id2",
+						BaseDenom:  denom1,
+						QuoteDenom: denom2,
+						Price:      lo.ToPtr(types.MustNewPriceFromString("1")),
+						// only 1000 will be filled fully with the better price
+						Quantity:    sdkmath.NewInt(1000),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_FOK,
+					},
+				}
+			},
+			wantOrders: func(accSet AccSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:           accSet.acc1.String(),
+						Type:              types.ORDER_TYPE_LIMIT,
+						ID:                "id1",
+						BaseDenom:         denom1,
+						QuoteDenom:        denom2,
+						Price:             lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:          sdkmath.NewInt(10000),
+						Side:              types.SIDE_SELL,
+						TimeInForce:       types.TIME_IN_FORCE_GTC,
+						RemainingQuantity: sdkmath.NewInt(9000),
+						RemainingBalance:  sdkmath.NewInt(9000),
+					},
+				}
+			},
+			wantAvailableBalances: func(accSet AccSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					accSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 3), sdk.NewInt64Coin(denom2, 375)),
+					// expected result + not used amount
+					accSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 1000), sdk.NewInt64Coin(denom2, 630)),
+				}
+			},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -3710,28 +3922,29 @@ func assertOrderPlacementResult(
 	if err != nil {
 		require.ErrorIs(t, err, types.ErrRecordNotFound)
 		t.Logf("Order not found in the order book.")
-		// order not on the store
-		switch order.Type {
-		case types.ORDER_TYPE_LIMIT:
+
+		spentAmt := spBalanceAmtBefore.Sub(spBalanceAmtAfter)
+		require.False(t, spentAmt.IsNegative())
+		receivedAmt := recvBalanceAmtAfter.Sub(recvBalanceAmtBefore)
+		require.False(t, receivedAmt.IsNegative())
+
+		// assertSpentAndReceivedAmounts(t, spentAmt, receivedAmt)
+		if order.Type == types.ORDER_TYPE_LIMIT {
 			// limit order is matched partially or fully and closed, so the remaining balance is refunded
-			spendAmt := spBalanceAmtBefore.Sub(spBalanceAmtAfter)
-			receiveAmt := recvBalanceAmtAfter.Sub(recvBalanceAmtBefore)
-			require.False(t, receiveAmt.IsNegative())
-			assertExecutionPrice(t, order, spendAmt, receiveAmt)
-		case types.ORDER_TYPE_MARKET:
-			// if market is executed since we don't now the exact price we check the increase
-			require.True(t, spBalanceAmtBefore.GTE(spBalanceAmtAfter))
-			require.True(t, recvBalanceAmtBefore.LTE(recvBalanceAmtAfter))
-		default:
-			t.Fatalf("unexpect order type : %s", order.Type.String())
+			assertExecutionPrice(t, order, spentAmt, receivedAmt)
 		}
+		assertFilledQuantity(t, order, spentAmt, receivedAmt)
+
 		return
 	}
 
 	t.Logf("Order found in the order book.")
 
 	if order.Type != types.ORDER_TYPE_LIMIT {
-		t.Fatalf("Save not market order, type: %s", order.Type.String())
+		t.Fatalf("Saved not market order, type: %s", order.Type.String())
+	}
+	if order.TimeInForce != types.TIME_IN_FORCE_GTC {
+		t.Fatalf("Saved not GTC order, time in force: %s", order.TimeInForce.String())
 	}
 
 	// limit order is matched partially but the remaining balance is not refunded
@@ -3776,6 +3989,26 @@ func assertExecutionPrice(t *testing.T, order types.Order, spendAmt, receiveAmt 
 		"Execution prices, side:%s, order: %s, execution: %s, ",
 		order.Side.String(), orderPriceRat.String(), executionPriceRat.String(),
 	)
+}
+
+func assertFilledQuantity(t *testing.T, order types.Order, spendAmt, receiveAmt sdkmath.Int) {
+	var filledQuantity sdkmath.Int
+	if order.Side == types.SIDE_BUY {
+		filledQuantity = receiveAmt
+	} else {
+		filledQuantity = spendAmt
+	}
+	t.Logf(
+		"Filled qunitities, side:%s, orderTimeInForce: %s, orderQuantity: %s, filledQuantity: %s",
+		order.Side.String(), order.TimeInForce.String(), order.Quantity.String(), filledQuantity.String(),
+	)
+	if order.Type == types.ORDER_TYPE_MARKET {
+		if order.TimeInForce == types.TIME_IN_FORCE_FOK {
+			// it's possible that order is machined with the order of the same account, so the filled quantity
+			// includes multiple increased that's why we use GTE, but not EQ
+			require.True(t, order.Quantity.GTE(filledQuantity))
+		}
+	}
 }
 
 func getSpendableBalances(sdkCtx sdk.Context, testApp *simapp.App, acc sdk.AccAddress) sdk.Coins {
