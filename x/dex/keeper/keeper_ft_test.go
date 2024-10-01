@@ -324,6 +324,97 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 	require.ErrorContains(t, err, "does not have enough stake tokens to delegate")
 }
 
+func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	acc, _ := testApp.GenAccount(sdkCtx)
+	issuer, _ := testApp.GenAccount(sdkCtx)
+
+	settingsWithExtension := assetfttypes.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFEXT",
+		Subunit:       "defext",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_burning,
+		},
+		BurnRate: sdkmath.LegacyMustNewDecFromStr("0.5"),
+	}
+	denomWithBurnRate, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithExtension)
+	require.NoError(t, err)
+
+	order := types.Order{
+		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denomWithBurnRate,
+		QuoteDenom: denom2,
+		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:   sdkmath.NewInt(10),
+		Side:       types.SIDE_SELL,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 390,
+		},
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	balanceBeforePlaceOrder := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomWithBurnRate)
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
+	balanceAfterPlaceOrder := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomWithBurnRate)
+	require.Equal(t, balanceBeforePlaceOrder, balanceAfterPlaceOrder)
+}
+
+func TestKeeper_PlaceOrderWithCommissionRate(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	acc, _ := testApp.GenAccount(sdkCtx)
+	issuer, _ := testApp.GenAccount(sdkCtx)
+
+	settingsWithExtension := assetfttypes.IssueSettings{
+		Issuer:             issuer,
+		Symbol:             "DEFEXT",
+		Subunit:            "defext",
+		Precision:          6,
+		InitialAmount:      sdkmath.NewIntWithDecimal(1, 10),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.5"),
+	}
+	denomWithCommissionRate, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithExtension)
+	require.NoError(t, err)
+
+	order := types.Order{
+		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denomWithCommissionRate,
+		QuoteDenom: denom2,
+		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:   sdkmath.NewInt(10),
+		Side:       types.SIDE_SELL,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 390,
+		},
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	balanceBeforePlaceOrder := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomWithCommissionRate)
+	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
+	balanceAfterPlaceOrder := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomWithCommissionRate)
+	require.Equal(t, balanceBeforePlaceOrder, balanceAfterPlaceOrder)
+}
+
 func addValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, owner sdk.AccAddress, value sdk.Coin) error {
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()
