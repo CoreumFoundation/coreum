@@ -39,6 +39,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 		Subunit:       "sut",
 		Precision:     1,
 		InitialAmount: sdkmath.NewInt(100),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_dex_order_cancellation,
+		},
 	}
 	denom3, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
 	requireT.NoError(err)

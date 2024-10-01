@@ -18,6 +18,7 @@ enum Feature {
   extension = 7;
   dex_block = 8;
   dex_whitelisted_denoms = 9;
+  dex_order_cancellation = 10;
 }
 
 // Definition defines the fungible token settings to store.

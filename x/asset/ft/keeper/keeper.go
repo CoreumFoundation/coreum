@@ -816,6 +816,27 @@ func (k Keeper) SetDEXLockedBalances(ctx sdk.Context, addr sdk.AccAddress, coins
 	}
 }
 
+// ValidateDEXCancelOrdersByDenomIsAllowed validates whether the cancellation of  orders by denom is allowed.
+func (k Keeper) ValidateDEXCancelOrdersByDenomIsAllowed(ctx sdk.Context, addr sdk.AccAddress, denom string) error {
+	def, err := k.GetDefinition(ctx, denom)
+	if err != nil {
+		return err
+	}
+
+	if !def.HasAdminPrivileges(addr) {
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "only admin is able to cancel orders by denom %s", denom)
+	}
+	if !def.IsFeatureEnabled(types.Feature_dex_order_cancellation) {
+		return sdkerrors.Wrapf(
+			cosmoserrors.ErrUnauthorized,
+			"order cancellation is not allowed by denom %s, feature %s is disabled",
+			denom, types.Feature_dex_order_cancellation,
+		)
+	}
+
+	return nil
+}
+
 // GetSpendableBalance returns balance allowed to be spent.
 func (k Keeper) GetSpendableBalance(
 	ctx sdk.Context,

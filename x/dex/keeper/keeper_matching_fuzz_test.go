@@ -94,6 +94,9 @@ func NewFuzzApp(
 			Subunit:       fmt.Sprintf("sut%d", i),
 			Precision:     1,
 			InitialAmount: mintedAmount,
+			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_dex_order_cancellation,
+			},
 		}
 		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
 		require.NoError(t, err)
