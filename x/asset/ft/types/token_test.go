@@ -225,14 +225,14 @@ func TestValidateFeatures(t *testing.T) {
 			Ok: true,
 		},
 		{
-			Name: "ibc only",
+			Name: "ibc_only",
 			Features: []types.Feature{
 				types.Feature_ibc,
 			},
 			Ok: true,
 		},
 		{
-			Name: "extension and block_smart_contract",
+			Name: "extension_and_block_smart_contract",
 			Features: []types.Feature{
 				types.Feature_block_smart_contracts,
 				types.Feature_extension,
@@ -240,7 +240,7 @@ func TestValidateFeatures(t *testing.T) {
 			Ok: false,
 		},
 		{
-			Name: "extension and ibc",
+			Name: "extension_and_ibc",
 			Features: []types.Feature{
 				types.Feature_ibc,
 				types.Feature_extension,
@@ -255,12 +255,12 @@ func TestValidateFeatures(t *testing.T) {
 
 		// invalid cases
 		{
-			Name:     "single out of scope",
+			Name:     "single_out_of_scope",
 			Features: []types.Feature{1000},
 			Ok:       false,
 		},
 		{
-			Name: "one normal + out of scope at the end",
+			Name: "one_normal_out_of_scope_at_the_end",
 			Features: []types.Feature{
 				types.Feature_minting,
 				2000,
@@ -268,7 +268,7 @@ func TestValidateFeatures(t *testing.T) {
 			Ok: false,
 		},
 		{
-			Name: "one normal + out of scope at the beginning",
+			Name: "one_normal_out_of_scope_at_the_beginning",
 			Features: []types.Feature{
 				3000,
 				types.Feature_minting,
@@ -276,7 +276,7 @@ func TestValidateFeatures(t *testing.T) {
 			Ok: false,
 		},
 		{
-			Name: "two normal + out of scope in the middle",
+			Name: "two_normal_out_of_scope_in_the_middle",
 			Features: []types.Feature{
 				types.Feature_burning,
 				4000,
@@ -285,7 +285,7 @@ func TestValidateFeatures(t *testing.T) {
 			Ok: false,
 		},
 		{
-			Name:     "all normal + out of scope in the middle",
+			Name:     "all_normal_out_of_scope_in_the_middle",
 			Features: append([]types.Feature{5000}, allFeatures...),
 			Ok:       false,
 		},
@@ -293,6 +293,37 @@ func TestValidateFeatures(t *testing.T) {
 			Name:     "duplicated",
 			Features: append([]types.Feature{allFeatures[0]}, allFeatures...),
 			Ok:       false,
+		},
+		{
+			Name: "dex_block",
+			Features: []types.Feature{
+				types.Feature_dex_block,
+			},
+			Ok: true,
+		},
+		{
+			Name: "dex_block_with_whitelisted_denoms",
+			Features: []types.Feature{
+				types.Feature_dex_block,
+				types.Feature_dex_whitelisted_denoms,
+			},
+			Ok: false,
+		},
+		{
+			Name: "dex_block_order_cancellation",
+			Features: []types.Feature{
+				types.Feature_dex_block,
+				types.Feature_dex_order_cancellation,
+			},
+			Ok: false,
+		},
+		{
+			Name: "all_dex_features_except_block",
+			Features: []types.Feature{
+				types.Feature_dex_whitelisted_denoms,
+				types.Feature_dex_order_cancellation,
+			},
+			Ok: true,
 		},
 	}
 

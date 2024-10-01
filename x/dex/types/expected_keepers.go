@@ -31,7 +31,7 @@ type AssetFTKeeper interface {
 	DEXSendWithLockCheck(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error
 	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXSettings(ctx sdk.Context, denom string) (dextypes.DEXSettings, error)
-	GetDefinition(ctx sdk.Context, denom string) (dextypes.Definition, error)
+	ValidateDEXCancelOrdersByDenomIsAllowed(ctx sdk.Context, addr sdk.AccAddress, denom string) error
 }
 
 // DelayKeeper defines methods required from the delay keeper.

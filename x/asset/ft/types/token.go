@@ -210,6 +210,7 @@ func (def Definition) HasAdminPrivileges(addr sdk.Address) bool {
 func ValidateFeatures(features []Feature) error {
 	present := map[Feature]struct{}{}
 	hasExtension := false
+	hasDEXBlock := false
 	for _, f := range features {
 		name, exists := Feature_name[int32(f)]
 		if !exists {
@@ -221,15 +222,20 @@ func ValidateFeatures(features []Feature) error {
 		if f == Feature_extension {
 			hasExtension = true
 		}
+		if f == Feature_dex_block {
+			hasDEXBlock = true
+		}
 		present[f] = struct{}{}
 	}
-	if hasExtension {
-		for _, item := range features {
-			if item == Feature_ibc || item == Feature_block_smart_contracts {
-				return sdkerrors.Wrapf(ErrInvalidInput, "extension is not allowed in combination with %s", item.String())
-			}
+	for _, feature := range features {
+		if hasExtension && (feature == Feature_ibc || feature == Feature_block_smart_contracts) {
+			return sdkerrors.Wrapf(ErrInvalidInput, "extension is not allowed in combination with %s", feature.String())
+		}
+		if hasDEXBlock && (feature == Feature_dex_whitelisted_denoms || feature == Feature_dex_order_cancellation) {
+			return sdkerrors.Wrapf(ErrInvalidInput, "DEX block is not allowed in combination with %s", feature.String())
 		}
 	}
+
 	return nil
 }
 

@@ -830,6 +830,24 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	acc1, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
+	settings := assetfttypes.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "INVD",
+		Subunit:       "invd",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(100),
+	}
+	denomWithProhibitedCancellation, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
+	require.NoError(t, err)
+	// check access for not FT denom
+	require.ErrorIs(t, testApp.DEXKeeper.CancelOrdersByDenom(
+		sdkCtx, issuer, acc1, "nativedenom"), assetfttypes.ErrInvalidDenom,
+	)
+	// check access with disabled feature
+	require.ErrorIs(t, testApp.DEXKeeper.CancelOrdersByDenom(
+		sdkCtx, issuer, acc1, denomWithProhibitedCancellation), cosmoserrors.ErrUnauthorized,
+	)
+
 	denoms := make([]string, 0)
 	for i := 0; i < 3; i++ {
 		settings := assetfttypes.IssueSettings{
@@ -838,6 +856,9 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 			Subunit:       fmt.Sprintf("sut%d", i),
 			Precision:     1,
 			InitialAmount: sdkmath.NewInt(100),
+			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_dex_order_cancellation,
+			},
 		}
 		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
 		require.NoError(t, err)
