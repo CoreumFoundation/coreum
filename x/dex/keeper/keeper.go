@@ -11,7 +11,6 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	gogotypes "github.com/cosmos/gogoproto/types"
@@ -104,12 +103,8 @@ func (k Keeper) CancelOrderBySeq(ctx sdk.Context, acc sdk.AccAddress, orderSeq u
 
 // CancelOrdersByDenom cancels all orders of specified denom.
 func (k Keeper) CancelOrdersByDenom(ctx sdk.Context, admin, acc sdk.AccAddress, denom string) error {
-	def, err := k.assetFTKeeper.GetDefinition(ctx, denom)
-	if err != nil {
+	if err := k.assetFTKeeper.ValidateDEXCancelOrdersByDenomIsAllowed(ctx, admin, denom); err != nil {
 		return err
-	}
-	if !def.HasAdminPrivileges(admin) {
-		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "only admin is able to cancel orders by denom %s", denom)
 	}
 
 	accNumber, err := k.getAccountNumber(ctx, acc)

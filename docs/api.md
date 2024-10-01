@@ -2493,6 +2493,7 @@ Feature defines possible features of fungible token.
 | extension | 7 |  |
 | dex_block | 8 |  |
 | dex_whitelisted_denoms | 9 |  |
+| dex_order_cancellation | 10 |  |
 
 
  <!-- end enums -->
