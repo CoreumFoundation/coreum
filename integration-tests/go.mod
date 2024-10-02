@@ -25,7 +25,7 @@ require (
 	cosmossdk.io/x/nft v0.1.1
 	cosmossdk.io/x/upgrade v0.1.4
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v5 v5.0.0-00010101000000-000000000000
+	github.com/CoreumFoundation/coreum/v5 v5.0.0-20241002100003-2dcad94c2fbc
 	github.com/CosmWasm/wasmd v0.53.0
 	github.com/cometbft/cometbft v0.38.11
 	github.com/cosmos/cosmos-sdk v0.50.9

@@ -247,4 +247,3 @@ require (
 	pgregory.net/rapid v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-replace github.com/cometbft/cometbft => github.com/CoreumFoundation/cometbft 099b4104e5b00b3cedd2c06ca3b1270baad2f4e9
