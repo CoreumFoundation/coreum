@@ -11,8 +11,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v4/genesis"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v5/genesis"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 )
 
 var networkConfigs map[constant.ChainID]NetworkConfig

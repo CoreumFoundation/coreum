@@ -12,8 +12,8 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
+	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
 )
 
 //go:generate go run . ./README.md

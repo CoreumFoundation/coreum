@@ -2,7 +2,7 @@ module github.com/CoreumFoundation/coreum/build
 
 go 1.22.4
 
-replace github.com/CoreumFoundation/coreum/v4 => ../
+replace github.com/CoreumFoundation/coreum/v5 => ../
 
 // CosmosSDK replacements
 replace (
@@ -27,7 +27,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68
-	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240912071617-43930506e0a3
+	github.com/CoreumFoundation/coreum/v5 v5.0.0-20240912071617-43930506e0a3
 	github.com/CoreumFoundation/crust v0.0.0-20240923081732-203a61afadde
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
@@ -54,6 +54,7 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
+	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240912071617-43930506e0a3 // indirect
 	github.com/CosmWasm/wasmd v0.53.0 // indirect
 	github.com/CosmWasm/wasmvm/v2 v2.1.2 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect

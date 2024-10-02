@@ -21,9 +21,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
-	ibcwasm "github.com/CoreumFoundation/coreum/v4/integration-tests/contracts/ibc"
-	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	ibcwasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/ibc"
+	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 )
 
 type ibcTimeoutBlock struct {

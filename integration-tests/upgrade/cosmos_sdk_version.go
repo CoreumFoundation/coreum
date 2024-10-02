@@ -10,8 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
-	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	"github.com/CoreumFoundation/coreum/v5/pkg/client"
 )
 
 type cosmosSDKVersion struct{}

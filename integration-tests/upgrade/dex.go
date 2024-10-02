@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
-	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 type dex struct{}

@@ -28,9 +28,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
-	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
-	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
 )
 
 // GenesisInitConfig is used to pass genesis creating paramers to cored.

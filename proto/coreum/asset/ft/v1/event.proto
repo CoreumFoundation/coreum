@@ -4,7 +4,7 @@ package coreum.asset.ft.v1;
 import "coreum/asset/ft/v1/token.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types";
 
 // EventIssued is emitted on MsgIssue.
 message EventIssued {

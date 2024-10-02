@@ -15,9 +15,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v4/app"
-	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
-	"github.com/CoreumFoundation/coreum/v4/testutil/network"
+	"github.com/CoreumFoundation/coreum/v5/app"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v5/testutil/cli"
+	"github.com/CoreumFoundation/coreum/v5/testutil/network"
 )
 
 func TestAutoGasPrices(t *testing.T) {

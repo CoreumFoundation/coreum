@@ -9,7 +9,7 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.

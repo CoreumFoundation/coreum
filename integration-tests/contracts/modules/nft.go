@@ -3,7 +3,7 @@ package modules
 import (
 	sdkmath "cosmossdk.io/math"
 
-	assetnfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
 )
 
 // IssueNFTRequest is used to issue NFTs.

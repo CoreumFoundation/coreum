@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/config"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
 )
 
 func Benchmark100KDenomBankSend(b *testing.B) {

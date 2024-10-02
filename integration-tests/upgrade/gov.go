@@ -12,7 +12,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
 )
 
 type gov struct {

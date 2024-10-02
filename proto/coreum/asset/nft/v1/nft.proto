@@ -4,7 +4,7 @@ package coreum.asset.nft.v1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v4/x/asset/nft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types";
 
 // ClassFeature defines possible features of non-fungible token class.
 enum ClassFeature {

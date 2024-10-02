@@ -9,7 +9,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
 )
 
 // TestMintQueryInflation tests that querying inflation works.
