@@ -14,9 +14,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
-	"github.com/CoreumFoundation/coreum/v4/pkg/client"
-	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	"github.com/CoreumFoundation/coreum/v5/pkg/client"
+	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 )
 
 // TestAuthzDirectTransferFails if grantee sends message directly, without using authz.

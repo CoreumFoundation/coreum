@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	testutilconstant "github.com/CoreumFoundation/coreum/v4/testutil/constant"
+	testutilconstant "github.com/CoreumFoundation/coreum/v5/testutil/constant"
 )
 
 // Keeper interface exposes methods required by ante handler decorator of fee model.

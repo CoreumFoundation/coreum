@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
 )
 
 var _ types.QueryServer = QueryService{}

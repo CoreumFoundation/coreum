@@ -11,10 +11,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v4/x/dex"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 func TestInitAndExportGenesis(t *testing.T) {

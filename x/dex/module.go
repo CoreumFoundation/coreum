@@ -16,9 +16,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v4/x/dex/client/cli"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/keeper"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/client/cli"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/keeper"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 var (

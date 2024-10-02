@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 func (k Keeper) getAccountNumber(ctx sdk.Context, addr sdk.AccAddress) (uint64, error) {

@@ -8,7 +8,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	dextypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 )
 
 // AccountKeeper defines the expected account keeper interface.

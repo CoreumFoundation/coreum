@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	cbig "github.com/CoreumFoundation/coreum/v4/pkg/math/big"
-	"github.com/CoreumFoundation/coreum/v4/pkg/store"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v5/pkg/store"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 func TestNewPriceFromString(t *testing.T) {

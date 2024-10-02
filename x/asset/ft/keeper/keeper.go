@@ -21,10 +21,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v4/x/wasm"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v4/x/wasm/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v4/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v5/x/wasm"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v5/x/wibctransfer/types"
 )
 
 // ExtensionInstantiateMsg is the message passed to the extension cosmwasm contract.

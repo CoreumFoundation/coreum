@@ -7,10 +7,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
-	"github.com/CoreumFoundation/coreum/v4/testutil/network"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/client/cli"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v5/testutil/cli"
+	"github.com/CoreumFoundation/coreum/v5/testutil/network"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/client/cli"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 func TestQueryParams(t *testing.T) {

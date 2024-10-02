@@ -41,10 +41,10 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/CoreumFoundation/coreum/v4/app"
-	"github.com/CoreumFoundation/coreum/v4/pkg/client"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config"
-	coreumkeyring "github.com/CoreumFoundation/coreum/v4/pkg/keyring"
+	"github.com/CoreumFoundation/coreum/v5/app"
+	"github.com/CoreumFoundation/coreum/v5/pkg/client"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	coreumkeyring "github.com/CoreumFoundation/coreum/v5/pkg/keyring"
 )
 
 // defaultGasAdjustment is gas adjustment used for the nondeterministic gas messages.

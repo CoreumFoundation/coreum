@@ -6,7 +6,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 // CancelOrderKeeper is keeper interface required for CancelGoodTil.

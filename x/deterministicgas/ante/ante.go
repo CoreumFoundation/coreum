@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
-	"github.com/CoreumFoundation/coreum/v4/x/deterministicgas"
+	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
 )
 
 // SetInfiniteGasMeterDecorator sets the infinite gas limit for ante handler

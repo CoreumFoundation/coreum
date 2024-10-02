@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 var _ types.QueryServer = QueryService{}

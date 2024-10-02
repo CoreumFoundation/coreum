@@ -16,10 +16,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
-	"github.com/CoreumFoundation/coreum/v4/pkg/client"
-	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
-	customparamstypes "github.com/CoreumFoundation/coreum/v4/x/customparams/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	"github.com/CoreumFoundation/coreum/v5/pkg/client"
+	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
+	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
 )
 
 // TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal

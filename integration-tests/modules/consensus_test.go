@@ -13,8 +13,8 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
-	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 )
 
 func TestUpdatingMaxBlockSize(t *testing.T) {

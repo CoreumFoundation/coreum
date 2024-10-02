@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 // GetQueryCmd returns the cli query commands for the module.
