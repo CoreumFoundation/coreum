@@ -58,13 +58,8 @@ func (k Keeper) matchOrder(
 				return err
 			}
 			if takerRecord.RemainingBalance.IsPositive() {
-				takerAddr, err := sdk.AccAddressFromBech32(order.Creator)
+				takerRecord, err = k.lockMinRequiredRecordBalance(ctx, order, takerRecord)
 				if err != nil {
-					return sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
-				}
-				// lock the remaining balance
-				coinToLock := sdk.NewCoin(order.GetSpendDenom(), takerRecord.RemainingBalance)
-				if err := k.lockCoin(ctx, takerAddr, coinToLock, order.GetReceiveDenom()); err != nil {
 					return err
 				}
 				return k.createOrder(ctx, params, order, takerRecord)
@@ -247,6 +242,28 @@ func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRec
 	}
 
 	return recordToClose, recordToReduce
+}
+
+func (k Keeper) lockMinRequiredRecordBalance(
+	ctx sdk.Context, order types.Order, takerRecord types.OrderBookRecord,
+) (types.OrderBookRecord, error) {
+	creatorAddr, err := sdk.AccAddressFromBech32(order.Creator)
+	if err != nil {
+		return types.OrderBookRecord{}, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
+	}
+	// recompute the min required balance to be locked based on record remaining quantity
+	coinToLock, err := types.ComputeLimitOrderLockedBalance(
+		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, order.Price,
+	)
+	if err != nil {
+		return types.OrderBookRecord{}, err
+	}
+	if err := k.lockCoin(ctx, creatorAddr, coinToLock, order.GetReceiveDenom()); err != nil {
+		return types.OrderBookRecord{}, err
+	}
+	takerRecord.RemainingBalance = coinToLock.Amount
+
+	return takerRecord, nil
 }
 
 func getRecordsReceiveCoins(

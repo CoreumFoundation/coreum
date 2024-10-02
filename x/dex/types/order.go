@@ -173,21 +173,7 @@ func (o Order) Validate() error {
 
 // ComputeLimitOrderLockedBalance computes the order locked balance.
 func (o Order) ComputeLimitOrderLockedBalance() (sdk.Coin, error) {
-	if o.Side == SIDE_BUY {
-		balance, remainder := cbig.IntMulRatWithRemainder(o.Quantity.BigInt(), o.Price.Rat())
-		if !cbig.IntEqZero(remainder) {
-			balance = cbig.IntAdd(balance, big.NewInt(1))
-		}
-		if isBigIntOverflowsSDKInt(balance) {
-			return sdk.Coin{}, sdkerrors.Wrapf(
-				ErrInvalidInput,
-				"invalid order quantity and price, order balance is out of supported sdkmath.Int range",
-			)
-		}
-		return sdk.NewCoin(o.QuoteDenom, sdkmath.NewIntFromBigInt(balance)), nil
-	}
-
-	return sdk.NewCoin(o.BaseDenom, o.Quantity), nil
+	return ComputeLimitOrderLockedBalance(o.Side, o.BaseDenom, o.QuoteDenom, o.Quantity, o.Price)
 }
 
 // GetSpendDenom returns order spending denom.
@@ -220,6 +206,27 @@ func (r OrderBookRecord) IsTaker() bool {
 // IsMaker returns true if record is maker record (based on sequence).
 func (r OrderBookRecord) IsMaker() bool {
 	return r.OrderSeq > 0
+}
+
+// ComputeLimitOrderLockedBalance computes the limit order locked balance.
+func ComputeLimitOrderLockedBalance(
+	side Side, baseDenom, quoteDenom string, quantity sdkmath.Int, price *Price,
+) (sdk.Coin, error) {
+	if side == SIDE_BUY {
+		balance, remainder := cbig.IntMulRatWithRemainder(quantity.BigInt(), price.Rat())
+		if !cbig.IntEqZero(remainder) {
+			balance = cbig.IntAdd(balance, big.NewInt(1))
+		}
+		if isBigIntOverflowsSDKInt(balance) {
+			return sdk.Coin{}, sdkerrors.Wrapf(
+				ErrInvalidInput,
+				"invalid order quantity and price, order balance is out of supported sdkmath.Int range",
+			)
+		}
+		return sdk.NewCoin(quoteDenom, sdkmath.NewIntFromBigInt(balance)), nil
+	}
+
+	return sdk.NewCoin(baseDenom, quantity), nil
 }
 
 func validateOrderID(id string) error {

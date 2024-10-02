@@ -146,7 +146,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		Side:              dextypes.SIDE_BUY,
 		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(200),
-		RemainingBalance:  sdkmath.NewInt(23),
+		RemainingBalance:  sdkmath.NewInt(22),
 	}, buyOrderRes.Order)
 
 	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
