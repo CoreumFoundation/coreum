@@ -18,8 +18,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
 )
 
 // Flags defined on transactions.

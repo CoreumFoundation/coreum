@@ -10,7 +10,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 )
 
 func newBalanceStore(cdc codec.BinaryCodec, store storetypes.KVStore, pref []byte) balanceStore {

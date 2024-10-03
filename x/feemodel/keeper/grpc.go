@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
 )
 
 // QueryKeeper defines subscope of keeper methods required by query service.

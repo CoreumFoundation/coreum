@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	gogotypes "github.com/cosmos/gogoproto/types"
 
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 func (k Keeper) incrementUint64Counter(ctx sdk.Context, key []byte) (uint64, error) {

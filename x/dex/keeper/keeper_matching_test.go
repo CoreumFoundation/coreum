@@ -12,9 +12,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	cbig "github.com/CoreumFoundation/coreum/v4/pkg/math/big"
-	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 type AccSet struct {

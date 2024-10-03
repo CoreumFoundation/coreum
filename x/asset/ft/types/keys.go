@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/store"
+	"github.com/CoreumFoundation/coreum/v5/pkg/store"
 )
 
 const (

@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
-	coreumclitestutil "github.com/CoreumFoundation/coreum/v4/testutil/cli"
-	"github.com/CoreumFoundation/coreum/v4/testutil/network"
-	"github.com/CoreumFoundation/coreum/v4/x/feemodel/client/cli"
-	"github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v5/testutil/cli"
+	"github.com/CoreumFoundation/coreum/v5/testutil/network"
+	"github.com/CoreumFoundation/coreum/v5/x/feemodel/client/cli"
+	"github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
 )
 
 func TestMinGasPrice(t *testing.T) {

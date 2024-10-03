@@ -12,9 +12,9 @@ import (
 	govparamkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v4/app/upgrade"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config"
-	dextypes "github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/app/upgrade"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 // Name defines the upgrade name.

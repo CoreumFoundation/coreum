@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/CoreumFoundation/coreum/v4/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v5/x/delay/types"
 )
 
 // Keeper is delay module Keeper.

@@ -19,9 +19,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev5 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v5"
-	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
-	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
+	appupgradev5 "github.com/CoreumFoundation/coreum/v5/app/upgrade/v5"
+	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 )
 
 // Proper value for upgradeDelayInBlocks depends on block time and gov voting period.

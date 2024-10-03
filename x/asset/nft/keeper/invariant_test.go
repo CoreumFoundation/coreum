@@ -9,9 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v4/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/keeper"
-	"github.com/CoreumFoundation/coreum/v4/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v5/x/asset/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
 )
 
 func TestOriginalClassExistsInvariant(t *testing.T) {

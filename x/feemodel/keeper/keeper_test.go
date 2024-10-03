@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config"
-	"github.com/CoreumFoundation/coreum/v4/x/feemodel"
-	"github.com/CoreumFoundation/coreum/v4/x/feemodel/keeper"
-	"github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	"github.com/CoreumFoundation/coreum/v5/x/feemodel"
+	"github.com/CoreumFoundation/coreum/v5/x/feemodel/keeper"
+	"github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
 )
 
 func setup() (sdk.Context, keeper.Keeper) {

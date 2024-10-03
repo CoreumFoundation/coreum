@@ -6,7 +6,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types";
 
 // MintAuthorization allows the grantee to mint up to mint_limit coin from
 // the granter's account.

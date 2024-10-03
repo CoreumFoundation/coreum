@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/CoreumFoundation/coreum/v4/app"
-	"github.com/CoreumFoundation/coreum/v4/cmd/cored/cosmoscmd"
+	"github.com/CoreumFoundation/coreum/v5/app"
+	"github.com/CoreumFoundation/coreum/v5/cmd/cored/cosmoscmd"
 )
 
 const coreumEnvPrefix = "CORED"

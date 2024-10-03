@@ -6,8 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v4/x/dex/keeper"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/keeper"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 // InitGenesis initializes the dex module's state from a provided genesis state.

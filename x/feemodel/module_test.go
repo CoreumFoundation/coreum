@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/config"
-	"github.com/CoreumFoundation/coreum/v4/x/feemodel"
-	"github.com/CoreumFoundation/coreum/v4/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	"github.com/CoreumFoundation/coreum/v5/x/feemodel"
+	"github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
 )
 
 func newKeeperMock(genesisState types.GenesisState) *keeperMock {

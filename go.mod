@@ -1,4 +1,4 @@
-module github.com/CoreumFoundation/coreum/v4
+module github.com/CoreumFoundation/coreum/v5
 
 go 1.22.4
 

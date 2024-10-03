@@ -17,9 +17,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
-	cbig "github.com/CoreumFoundation/coreum/v4/pkg/math/big"
-	assetfttypes "github.com/CoreumFoundation/coreum/v4/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v4/x/dex/types"
+	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
+	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 // Keeper is the dex module keeper.
