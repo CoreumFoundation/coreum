@@ -2,7 +2,7 @@ use coreum_wasm_sdk::core::CoreumResult;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, CosmosMsg, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{AnyMsg, Binary, CosmosMsg, DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
@@ -38,7 +38,7 @@ pub fn execute(
 }
 
 fn execute_stargate_message(type_url: String, value: Binary) -> CoreumResult<ContractError> {
-    let msg = CosmosMsg::Stargate { type_url, value };
+    let msg = CosmosMsg::Any(AnyMsg { type_url, value });
 
     Ok(Response::new()
         .add_attribute("method", "execute_authz_stargate")

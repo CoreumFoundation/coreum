@@ -716,6 +716,7 @@ github.com/CloudyKit/jet/v6 v6.2.0 h1:EpcZ6SR9n28BUGtNJSvlBqf90IpjeFr36Tizxhn/oM
 github.com/CloudyKit/jet/v6 v6.2.0/go.mod h1:d3ypHeIRNo2+XyqnGA8s+aphtcVpjP5hPwP/Lzo7Ro4=
 github.com/CoreumFoundation/cometbft v0.38.8-0.20240918091905-099b4104e5b0 h1:PIFuYXb4nHkYKbu7FkPa4HxTF891YdmDY3pixfTQ8RA=
 github.com/CoreumFoundation/cometbft v0.38.8-0.20240918091905-099b4104e5b0/go.mod h1:jHPx9vQpWzPHEAiYI/7EDKaB1NXhK6o3SArrrY8ExKc=
+github.com/CoreumFoundation/coreum/v4 v4.0.0-20240912071617-43930506e0a3/go.mod h1:3xSyRVosHkpO90zIot807kqxN59/XyU7qNuR/AIJPsc=
 github.com/CoreumFoundation/crust v0.0.0-20240802131508-4a7584e019a8 h1:sCshAF6Gxal9XIvKda57AoKVvzh0GZ4UBFjM+SLjYA8=
 github.com/CoreumFoundation/crust v0.0.0-20240802131508-4a7584e019a8/go.mod h1:xCz+IXPyIDIIY+bg9rHy6wsoQ5dh82GusgUKZlIkD9s=
 github.com/CoreumFoundation/crust v0.0.0-20240806081012-2bce4a5dee4b h1:E5CnqYbWu2ex5iBqza21i8BWPiwaCYSCMVnZsyzVDt0=

@@ -17,8 +17,6 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [features]
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
 
@@ -30,14 +28,13 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-schema = "1.5.0"
-cosmwasm-std = "1.5.4"
-cosmwasm-storage = "1.1.3"
-cw-storage-plus = "0.16.0"
-cw2 = "0.16.0"
+cosmwasm-schema = "2.1.4"
+cosmwasm-std = { version = "2.1.4", features = ["cosmwasm_2_0"] }
+cw-storage-plus = "2.0.0"
+cw2 = "2.0.0"
 schemars = "0.8.10"
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.31" }
+thiserror = "1.0.59"
 
 [dev-dependencies]
-cw-multi-test = "0.16.0"
+cw-multi-test = "2.1.1"
