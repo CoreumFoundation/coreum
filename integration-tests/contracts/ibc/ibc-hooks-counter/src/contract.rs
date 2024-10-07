@@ -175,34 +175,42 @@ pub fn naive_add_coins(lhs: &Vec<Coin>, rhs: &Vec<Coin>) -> Vec<Coin> {
             .and_modify(|e| *e += coin.amount)
             .or_insert(coin.amount);
     }
-    coins.iter().map(|(d, &a)| Coin::new(a.into(), d)).collect()
+    coins.iter().map(|(d, &a)| Coin::new(a, d)).collect()
 }
 
 #[test]
 fn coin_addition() {
-    let c1 = vec![Coin::new(1, "a"), Coin::new(2, "b")];
-    let c2 = vec![Coin::new(7, "a"), Coin::new(2, "c")];
+    let c1 = vec![Coin::new(1u128, "a"), Coin::new(2u128, "b")];
+    let c2 = vec![Coin::new(7u128, "a"), Coin::new(2u128, "c")];
 
     let mut sum = naive_add_coins(&c1, &c1);
     sum.sort_by(|a, b| a.denom.cmp(&b.denom));
-    assert_eq!(sum, vec![Coin::new(2, "a"), Coin::new(4, "b")]);
+    assert_eq!(sum, vec![Coin::new(2u128, "a"), Coin::new(4u128, "b")]);
 
     let mut sum = naive_add_coins(&c1, &c2);
     sum.sort_by(|a, b| a.denom.cmp(&b.denom));
     assert_eq!(
         sum,
-        vec![Coin::new(8, "a"), Coin::new(2, "b"), Coin::new(2, "c"),]
+        vec![
+            Coin::new(8u128, "a"),
+            Coin::new(2u128, "b"),
+            Coin::new(2u128, "c"),
+        ]
     );
 
     let mut sum = naive_add_coins(&c2, &c2);
     sum.sort_by(|a, b| a.denom.cmp(&b.denom));
-    assert_eq!(sum, vec![Coin::new(14, "a"), Coin::new(4, "c"),]);
+    assert_eq!(sum, vec![Coin::new(14u128, "a"), Coin::new(4u128, "c"),]);
 
     let mut sum = naive_add_coins(&c2, &c1);
     sum.sort_by(|a, b| a.denom.cmp(&b.denom));
     assert_eq!(
         sum,
-        vec![Coin::new(8, "a"), Coin::new(2, "b"), Coin::new(2, "c"),]
+        vec![
+            Coin::new(8u128, "a"),
+            Coin::new(2u128, "b"),
+            Coin::new(2u128, "c"),
+        ]
     );
 
     let mut sum = naive_add_coins(&vec![], &c2);
@@ -243,16 +251,15 @@ pub mod query {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::Addr;
-    use cosmwasm_std::{coins, from_binary};
+    use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
+    use cosmwasm_std::{coins, from_json, Addr};
 
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
 
         let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = message_info(&deps.api.addr_make("creator"), &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -263,11 +270,11 @@ mod tests {
             deps.as_ref(),
             mock_env(),
             QueryMsg::GetCount {
-                addr: Addr::unchecked("creator"),
+                addr: deps.api.addr_make("creator"),
             },
         )
         .unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
+        let value: GetCountResponse = from_json(&res).unwrap();
         assert_eq!(17, value.count);
     }
 
@@ -276,14 +283,14 @@ mod tests {
         let mut deps = mock_dependencies();
 
         let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&deps.api.addr_make("creator"), &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("someone-else", &coins(2, "token"));
+        let info = message_info(&deps.api.addr_make("someone-else"), &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&deps.api.addr_make("creator"), &coins(2, "token"));
         let msg = ExecuteMsg::Increment {};
         let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -292,11 +299,11 @@ mod tests {
             deps.as_ref(),
             mock_env(),
             QueryMsg::GetCount {
-                addr: Addr::unchecked("creator"),
+                addr: deps.api.addr_make("creator"),
             },
         )
         .unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
+        let value: GetCountResponse = from_json(&res).unwrap();
         assert_eq!(18, value.count);
 
         // Counter for someone else is not incremented
@@ -304,11 +311,11 @@ mod tests {
             deps.as_ref(),
             mock_env(),
             QueryMsg::GetCount {
-                addr: Addr::unchecked("someone-else"),
+                addr: deps.api.addr_make("someone-else"),
             },
         )
         .unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
+        let value: GetCountResponse = from_json(&res).unwrap();
         assert_eq!(17, value.count);
     }
 
@@ -317,11 +324,11 @@ mod tests {
         let mut deps = mock_dependencies();
 
         let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&deps.api.addr_make("creator"), &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // beneficiary can release it
-        let unauth_info = mock_info("anyone", &coins(2, "token"));
+        let unauth_info = message_info(&deps.api.addr_make("anyone"), &coins(2, "token"));
         let msg = ExecuteMsg::Reset { count: 7 };
         let _res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
 
@@ -330,15 +337,15 @@ mod tests {
             deps.as_ref(),
             mock_env(),
             QueryMsg::GetCount {
-                addr: Addr::unchecked("anyone"),
+                addr: deps.api.addr_make("anyone"),
             },
         )
         .unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
+        let value: GetCountResponse = from_json(&res).unwrap();
         assert_eq!(7, value.count);
 
         // only the original creator can reset the counter
-        let auth_info = mock_info("creator", &coins(2, "token"));
+        let auth_info = message_info(&deps.api.addr_make("creator"), &coins(2, "token"));
         let msg = ExecuteMsg::Reset { count: 5 };
         let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
 
@@ -347,11 +354,11 @@ mod tests {
             deps.as_ref(),
             mock_env(),
             QueryMsg::GetCount {
-                addr: Addr::unchecked("creator"),
+                addr: deps.api.addr_make("creator"),
             },
         )
         .unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
+        let value: GetCountResponse = from_json(&res).unwrap();
         assert_eq!(5, value.count);
     }
 
@@ -366,30 +373,30 @@ mod tests {
         // No acks
         query(deps.as_ref(), env.clone(), get_msg.clone()).unwrap_err();
 
-        let msg = SudoMsg::ReceiveAck {
-            channel: format!("channel-0"),
+        let msg = SudoMsg::IBCLifecycleComplete(IBCLifecycleComplete::IBCAck {
+            channel: "channel-0".to_string(),
             sequence: 1,
             ack: String::new(),
             success: true,
-        };
+        });
         let _res = sudo(deps.as_mut(), env.clone(), msg).unwrap();
 
         // should increase counter by 1
         let res = query(deps.as_ref(), env.clone(), get_msg.clone()).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
+        let value: GetCountResponse = from_json(&res).unwrap();
         assert_eq!(1, value.count);
 
-        let msg = SudoMsg::ReceiveAck {
-            channel: format!("channel-0"),
+        let msg = SudoMsg::IBCLifecycleComplete(IBCLifecycleComplete::IBCAck {
+            channel: "channel-0".to_string(),
             sequence: 1,
             ack: String::new(),
             success: true,
-        };
+        });
         let _res = sudo(deps.as_mut(), env.clone(), msg).unwrap();
 
         // should increase counter by 1
         let res = query(deps.as_ref(), env, get_msg).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
+        let value: GetCountResponse = from_json(&res).unwrap();
         assert_eq!(2, value.count);
     }
 }
