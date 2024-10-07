@@ -116,6 +116,63 @@ func TestCmdPlaceOrderWithGoodTilBlockHeightAndGoodTilBlockTime(t *testing.T) {
 	})
 }
 
+func TestCmdPlaceOrderWithTimeInForceGTC(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+
+	placeOrder(ctx, requireT, testNetwork, types.Order{
+		ID:          "id1",
+		Type:        types.ORDER_TYPE_LIMIT,
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	})
+}
+
+func TestCmdPlaceOrderWithTimeInForceIOC(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+
+	placeOrder(ctx, requireT, testNetwork, types.Order{
+		ID:          "id1",
+		Type:        types.ORDER_TYPE_LIMIT,
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_IOC,
+	})
+}
+
+func TestCmdPlaceOrderWithTimeInForceFOK(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+
+	placeOrder(ctx, requireT, testNetwork, types.Order{
+		ID:          "id1",
+		Type:        types.ORDER_TYPE_LIMIT,
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_FOK,
+	})
+}
+
 func TestCmdCancelOrder(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
