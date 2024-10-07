@@ -30,7 +30,7 @@ const (
 	RoyaltyRateFlag = "royalty-rate"
 	RecipientFlag   = "recipient"
 	URIFlag         = "uri"
-	URIHashFlag     = "uri_hash"
+	URIHashFlag     = "uri-hash"
 	DataFileFlag    = "data-file"
 	DataTypeFlag    = "data-type"
 	// data types.
@@ -77,7 +77,7 @@ func CmdTxIssueClass() *cobra.Command {
 
 	cmd := &cobra.Command{
 		//nolint:lll // breaking this down will make it look worse when printed to user screen.
-		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] --from [issuer] --%s=%s --uri https://my-token-meta.invalid/1 --uri_hash e000624 --data-file [path]", FeaturesFlag, allowedFeaturesString),
+		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] --from [issuer] --%s=%s --uri https://my-token-meta.invalid/1 --uri-hash e000624 --data-file [path]", FeaturesFlag, allowedFeaturesString),
 		Args:  cobra.ExactArgs(3),
 		Short: "Issue new non-fungible token class",
 		Long: strings.TrimSpace(
