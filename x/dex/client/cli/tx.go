@@ -29,6 +29,8 @@ const (
 	OrderTypeLimit = "limit"
 	// OrderTypeMarket is limit order market.
 	OrderTypeMarket = "market"
+	// TimeInForce is time-in-force flag.
+	TimeInForce = "time-in-force"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -53,15 +55,22 @@ func GetTxCmd() *cobra.Command {
 //
 //nolint:funlen // Despite the length function is still manageable
 func CmdPlaceOrder() *cobra.Command {
+	var availableTimeInForces []string
+	for i, n := range types.TimeInForce_name {
+		if i == 0 {
+			continue
+		}
+		availableTimeInForces = append(availableTimeInForces, n)
+	}
 	cmd := &cobra.Command{
-		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --good-til-block-height 123 --good-til-block-time 1727124446 --from [sender]", //nolint:lll // string example
+		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --time-in-force=" + strings.Join(availableTimeInForces, ",") + " --good-til-block-height=123 --good-til-block-time=1727124446 --from [sender]", //nolint:lll // string example
 		Args:  cobra.ExactArgs(6),
 		Short: "Place new order",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Place new order.
 
 Example:
-$ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-height 123 --from [sender]
+$ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --time-in-force=TIME_IN_FORCE_GTC --good-til-block-height=123 --from [sender]
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -75,11 +84,21 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-heigh
 			sender := clientCtx.GetFromAddress()
 
 			var orderType types.OrderType
-			timeInForce := types.TIME_IN_FORCE_UNSPECIFIED
+			timeInForceString, err := cmd.Flags().GetString(TimeInForce)
+			timeInForceInt, ok := types.TimeInForce_value[timeInForceString]
+			if !ok {
+				return errors.Errorf("unknown TimeInForce '%s',available TimeInForces: %s", timeInForceString, strings.Join(availableTimeInForces, ","))
+			}
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			timeInForce := types.TimeInForce(timeInForceInt)
 			switch args[0] {
 			case OrderTypeLimit:
 				orderType = types.ORDER_TYPE_LIMIT
-				timeInForce = types.TIME_IN_FORCE_GTC
+				if timeInForce != types.TIME_IN_FORCE_GTC {
+					return errors.Errorf("unknown TimeInForce '%s',available TimeInForces: %s", timeInForceString, strings.Join(availableTimeInForces, ","))
+				}
 			case OrderTypeMarket:
 				orderType = types.ORDER_TYPE_MARKET
 			default:
@@ -136,7 +155,7 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-heigh
 				Price:       price,
 				Quantity:    quantity,
 				Side:        types.Side(side),
-				TimeInForce: timeInForce, // TODO(dzmitryhil) allow to modify
+				TimeInForce: timeInForce,
 			}
 
 			if goodTilBlockHeight != 0 || goodTilBlockTime != nil {
@@ -153,6 +172,7 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-heigh
 	cmd.Flags().String(PriceFlag, "", "Order price.")
 	cmd.Flags().Uint64(GoodTilBlockHeightFlag, 0, "Good til block height.")
 	cmd.Flags().Int64(GoodTilBlockTimeFlag, 0, "Good til block time.")
+	cmd.Flags().String(TimeInForce, types.TIME_IN_FORCE_UNSPECIFIED.String(), "Time in force.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
