@@ -25,7 +25,11 @@ message GenesisState {
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "DEXLockedBalances"
   ];
-  repeated DEXSettingsWithDenom dex_settings = 7 [
+  repeated Balance dex_whitelisting_reserved_balances = 7 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "DEXWhitelistingReservedBalances"
+  ];
+  repeated DEXSettingsWithDenom dex_settings = 8 [
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "DEXSettings"
   ];

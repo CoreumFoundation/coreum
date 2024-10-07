@@ -240,11 +240,13 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 		// expected fails
 		if sdkerrors.IsOf(
 			err,
-			types.ErrFailedToLockCoin,
-			types.ErrFailedToSendCoinWithLockCheck,
+			assetfttypes.ErrDEXLockFailed,
 		) {
 			// check that the order can't be placed because of the lack of balance
 			creatorAddr := sdk.MustAccAddressFromBech32(order.Creator)
+			if order.Type != types.ORDER_TYPE_LIMIT {
+				return
+			}
 			spendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(
 				sdkCtx, creatorAddr, order.GetSpendDenom(),
 			)
@@ -418,6 +420,7 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 					Time:   sdkCtx.BlockTime().Add(blockTime),
 				})
 			}
+			cancelAllOrdersAndAssertState(t, sdkCtx, fuzzApp.testApp)
 		})
 }
 

@@ -114,6 +114,20 @@ func TestInitAndExportGenesis(t *testing.T) {
 			})
 	}
 
+	// DEX whitelisting reserved balances
+	var dexWhitelistingReservedBalances []types.Balance
+	for i := 0; i < 3; i++ {
+		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		dexWhitelistingReservedBalances = append(dexWhitelistingReservedBalances,
+			types.Balance{
+				Address: addr.String(),
+				Coins: sdk.NewCoins(
+					sdk.NewCoin(tokens[0].Denom, sdkmath.NewInt(rand.Int63())),
+					sdk.NewCoin(tokens[1].Denom, sdkmath.NewInt(rand.Int63())),
+				),
+			})
+	}
+
 	// DEX settings
 	var dexSettings []types.DEXSettingsWithDenom
 	for i := 0; i < 4; i++ {
@@ -133,13 +147,14 @@ func TestInitAndExportGenesis(t *testing.T) {
 		})
 
 	genState := types.GenesisState{
-		Params:               types.DefaultParams(),
-		Tokens:               tokens,
-		FrozenBalances:       frozenBalances,
-		WhitelistedBalances:  whitelistedBalances,
-		PendingTokenUpgrades: pendingTokenUpgrades,
-		DEXLockedBalances:    dexLockedBalances,
-		DEXSettings:          dexSettings,
+		Params:                          types.DefaultParams(),
+		Tokens:                          tokens,
+		FrozenBalances:                  frozenBalances,
+		WhitelistedBalances:             whitelistedBalances,
+		PendingTokenUpgrades:            pendingTokenUpgrades,
+		DEXLockedBalances:               dexLockedBalances,
+		DEXWhitelistingReservedBalances: dexWhitelistingReservedBalances,
+		DEXSettings:                     dexSettings,
 	}
 
 	// init the keeper
@@ -186,6 +201,15 @@ func TestInitAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
+	// DEX whitelisting reserved balances
+	for _, balance := range dexWhitelistingReservedBalances {
+		address, err := sdk.AccAddressFromBech32(balance.Address)
+		requireT.NoError(err)
+		coins, _, err := ftKeeper.GetDEXWhitelistingReservedBalances(ctx, address, nil)
+		requireT.NoError(err)
+		assertT.EqualValues(balance.Coins.String(), coins.String())
+	}
+
 	// DEX locked balances
 	for _, settings := range dexSettings {
 		storedSettings, err := ftKeeper.GetDEXSettings(ctx, settings.Denom)
@@ -201,5 +225,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	assertT.ElementsMatch(genState.PendingTokenUpgrades, exportedGenState.PendingTokenUpgrades)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)
+	assertT.ElementsMatch(genState.DEXWhitelistingReservedBalances, exportedGenState.DEXWhitelistingReservedBalances)
 	assertT.ElementsMatch(genState.DEXLockedBalances, exportedGenState.DEXLockedBalances)
+	assertT.ElementsMatch(genState.DEXSettings, exportedGenState.DEXSettings)
 }

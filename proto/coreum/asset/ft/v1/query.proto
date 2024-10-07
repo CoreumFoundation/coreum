@@ -140,6 +140,11 @@ message QueryBalanceResponse {
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "LockedInDEX"
   ];
+  string whitelisting_reserved_in_dex = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "WhitelistingReservedInDex"
+  ];
 }
 
 message QueryFrozenBalancesRequest {

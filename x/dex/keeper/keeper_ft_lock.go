@@ -7,54 +7,85 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-func (k Keeper) lockCoin(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error {
+func (k Keeper) increaseFTLimits(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	lockCoin, reserveWhitelistingCoinCoin sdk.Coin,
+) error {
 	k.logger(ctx).Debug(
-		"Locking DEX coin.",
+		"Increasing DEX FT limits.",
 		"addr", addr,
-		"coin", coin.String(),
-		"receiveDenom", receiveDenom,
+		"lockCoin", lockCoin.String(),
+		"reserveWhitelistingCoinCoin", reserveWhitelistingCoinCoin.String(),
 	)
 
-	if err := k.assetFTKeeper.DEXLock(ctx, addr, coin, receiveDenom); err != nil {
-		return sdkerrors.Wrapf(types.ErrFailedToLockCoin, "failed to lock order coins: %s", err)
+	if err := k.assetFTKeeper.DEXIncreaseLimits(ctx, addr, lockCoin, reserveWhitelistingCoinCoin); err != nil {
+		return sdkerrors.Wrap(err, "failed to increase DEX FT limits")
 	}
 
 	return nil
 }
 
-func (k Keeper) unlockCoin(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
-	k.logger(ctx).Debug(
-		"Unlocking DEX coin.",
-		"addr", addr,
-		"coin", coin.String(),
-	)
-
-	return k.assetFTKeeper.DEXUnlock(ctx, addr, coin)
-}
-
-func (k Keeper) unlockAndSendCoin(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, coin sdk.Coin) error {
-	k.logger(ctx).Debug(
-		"Unlocking and sending DEX coin.",
-		"fromAddr", fromAddr,
-		"toAddr", toAddr,
-		"coin", coin.String(),
-	)
-
-	return k.assetFTKeeper.DEXUnlockAndSend(ctx, fromAddr, toAddr, coin)
-}
-
-func (k Keeper) sendCoinWithLockCheck(
-	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, coin sdk.Coin, receiveDenom string,
+func (k Keeper) decreaseFTLimits(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	unlockCoin, releaseWhitelistingCoin sdk.Coin,
 ) error {
 	k.logger(ctx).Debug(
-		"Sending DEX coin with lock check.",
-		"fromAddr", fromAddr,
-		"toAddr", toAddr,
-		"coin", coin.String(),
+		"Decreasing DEX FT limits.",
+		"addr", addr,
+		"unlockCoin", unlockCoin.String(),
+		"releaseWhitelistingCoin", releaseWhitelistingCoin.String(),
 	)
 
-	if err := k.assetFTKeeper.DEXSendWithLockCheck(ctx, fromAddr, toAddr, coin, receiveDenom); err != nil {
-		return sdkerrors.Wrapf(types.ErrFailedToSendCoinWithLockCheck, "failed to send coins with lock check: %s", err)
+	if err := k.assetFTKeeper.DEXDecreaseLimits(ctx, addr, unlockCoin, releaseWhitelistingCoin); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to decrease DEX FT limits, err: %s", err)
+	}
+
+	return nil
+}
+
+func (k Keeper) decreaseFTLimitsAndSend(
+	ctx sdk.Context,
+	fromAddr, toAddr sdk.AccAddress,
+	unlockAndSendCoin, releaseWhitelistingCoin sdk.Coin,
+) error {
+	k.logger(ctx).Debug(
+		"Decreasing DEX FT limits and sending.",
+		"fromAddr", fromAddr,
+		"toAddr", toAddr,
+		"unlockAndSendCoin", unlockAndSendCoin.String(),
+		"releaseWhitelistingCoin", releaseWhitelistingCoin.String(),
+	)
+
+	if err := k.assetFTKeeper.DEXDecreaseLimitsAndSend(
+		ctx, fromAddr, toAddr, unlockAndSendCoin, releaseWhitelistingCoin,
+	); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to decrease DEX FT limits and send, err: %s", err)
+	}
+
+	return nil
+}
+
+func (k Keeper) checksFTLimitsAndSend(
+	ctx sdk.Context,
+	fromAddr, toAddr sdk.AccAddress,
+	sendCoin, checkReserveWhitelistingCoin sdk.Coin,
+) error {
+	k.logger(ctx).Debug(
+		"Checking DEX FT limits and sending.",
+		"fromAddr", fromAddr,
+		"toAddr", toAddr,
+		"sendCoin", sendCoin.String(),
+		"checkReserveWhitelistingCoin", checkReserveWhitelistingCoin.String(),
+	)
+
+	if err := k.assetFTKeeper.DEXChecksLimitsAndSend(
+		ctx,
+		fromAddr, toAddr,
+		sendCoin, checkReserveWhitelistingCoin,
+	); err != nil {
+		return sdkerrors.Wrap(err, "failed to check DEX FT limits and send")
 	}
 
 	return nil

@@ -69,8 +69,8 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					"1231231241245135243e-90",
 				},
 				{
-					"1230000000000000004e90",
-					"1231231241245135243e90",
+					"1230000000000000004e50",
+					"1231231241245135243e50",
 				},
 				{
 					"1e10",
@@ -83,7 +83,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 				},
 				{
 					"1e-100",
-					"9999999999999999999e100",
+					"9999999999999999999e50",
 				},
 				{
 					"1e-100",

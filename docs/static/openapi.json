@@ -9667,6 +9667,9 @@
         "locked_in_dex": {
           "type": "string",
           "description": "locked_in_dex is the balance locked in DEX."
+        },
+        "whitelisting_reserved_in_dex": {
+          "type": "string"
         }
       }
     },

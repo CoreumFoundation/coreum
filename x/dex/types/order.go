@@ -114,11 +114,6 @@ func (o Order) Validate() error {
 
 	switch o.Type {
 	case ORDER_TYPE_LIMIT:
-		if o.Price == nil {
-			return sdkerrors.Wrap(
-				ErrInvalidInput, "price must be not nil for the limit order",
-			)
-		}
 		if o.GoodTil != nil {
 			// if the good til provided at least one setting should be set
 			if o.GoodTil.GoodTilBlockHeight == 0 && o.GoodTil.GoodTilBlockTime == nil {
@@ -135,6 +130,11 @@ func (o Order) Validate() error {
 			)
 		}
 		if _, err := o.ComputeLimitOrderLockedBalance(); err != nil {
+			return err
+		}
+		if _, err := ComputeLimitOrderWhitelistingReservedBalance(
+			o.Side, o.BaseDenom, o.QuoteDenom, o.Quantity, *o.Price,
+		); err != nil {
 			return err
 		}
 	case ORDER_TYPE_MARKET:
@@ -173,7 +173,17 @@ func (o Order) Validate() error {
 
 // ComputeLimitOrderLockedBalance computes the order locked balance.
 func (o Order) ComputeLimitOrderLockedBalance() (sdk.Coin, error) {
-	return ComputeLimitOrderLockedBalance(o.Side, o.BaseDenom, o.QuoteDenom, o.Quantity, o.Price)
+	if o.Price == nil {
+		return sdk.Coin{}, sdkerrors.Wrap(
+			ErrInvalidInput, "price must be not nil for the limit order",
+		)
+	}
+	locked, err := ComputeLimitOrderLockedBalance(o.Side, o.BaseDenom, o.QuoteDenom, o.Quantity, *o.Price)
+	if err != nil {
+		return sdk.Coin{}, err
+	}
+
+	return locked, nil
 }
 
 // GetSpendDenom returns order spending denom.
@@ -210,23 +220,49 @@ func (r OrderBookRecord) IsMaker() bool {
 
 // ComputeLimitOrderLockedBalance computes the limit order locked balance.
 func ComputeLimitOrderLockedBalance(
-	side Side, baseDenom, quoteDenom string, quantity sdkmath.Int, price *Price,
+	side Side, baseDenom, quoteDenom string, quantity sdkmath.Int, price Price,
 ) (sdk.Coin, error) {
 	if side == SIDE_BUY {
-		balance, remainder := cbig.IntMulRatWithRemainder(quantity.BigInt(), price.Rat())
-		if !cbig.IntEqZero(remainder) {
-			balance = cbig.IntAdd(balance, big.NewInt(1))
+		balance, err := mulCeil(quantity, price)
+		if err != nil {
+			return sdk.Coin{}, err
 		}
-		if isBigIntOverflowsSDKInt(balance) {
-			return sdk.Coin{}, sdkerrors.Wrapf(
-				ErrInvalidInput,
-				"invalid order quantity and price, order balance is out of supported sdkmath.Int range",
-			)
-		}
-		return sdk.NewCoin(quoteDenom, sdkmath.NewIntFromBigInt(balance)), nil
+		return sdk.NewCoin(quoteDenom, balance), nil
 	}
 
 	return sdk.NewCoin(baseDenom, quantity), nil
+}
+
+// ComputeLimitOrderWhitelistingReservedBalance computes the limit order whitelisting reserved balance.
+func ComputeLimitOrderWhitelistingReservedBalance(
+	side Side, baseDenom, quoteDenom string, quantity sdkmath.Int, price Price,
+) (sdk.Coin, error) {
+	amt, err := ComputeLimitOrderWhitelistingReservedAmount(side, quantity, price)
+	if err != nil {
+		return sdk.Coin{}, err
+	}
+
+	if side == SIDE_BUY {
+		return sdk.NewCoin(baseDenom, amt), nil
+	}
+
+	return sdk.NewCoin(quoteDenom, amt), nil
+}
+
+// ComputeLimitOrderWhitelistingReservedAmount computes the limit order whitelisting reserved amount.
+func ComputeLimitOrderWhitelistingReservedAmount(
+	side Side, quantity sdkmath.Int, price Price,
+) (sdkmath.Int, error) {
+	if side == SIDE_BUY {
+		return quantity, nil
+	}
+
+	amt, err := mulCeil(quantity, price)
+	if err != nil {
+		return sdkmath.Int{}, err
+	}
+
+	return amt, nil
 }
 
 func validateOrderID(id string) error {
@@ -234,6 +270,21 @@ func validateOrderID(id string) error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "order ID must match regex format '%s'", orderIDRegex)
 	}
 	return nil
+}
+
+func mulCeil(quantity sdkmath.Int, price Price) (sdkmath.Int, error) {
+	balance, remainder := cbig.IntMulRatWithRemainder(quantity.BigInt(), price.Rat())
+	if !cbig.IntEqZero(remainder) {
+		balance = cbig.IntAdd(balance, big.NewInt(1))
+	}
+	if isBigIntOverflowsSDKInt(balance) {
+		return sdkmath.Int{}, sdkerrors.Wrapf(
+			ErrInvalidInput,
+			"invalid order quantity and price, out of supported sdkmath.Int range",
+		)
+	}
+
+	return sdkmath.NewIntFromBigInt(balance), nil
 }
 
 // isBigIntOverflowsSDKInt checks if the big int overflows the sdkmath.Int.
