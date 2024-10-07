@@ -1,8 +1,10 @@
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{Coin, CosmosMsg, Uint128};
+use cosmwasm_std::{entry_point, AnyMsg};
+use cosmwasm_std::{CosmosMsg, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use cw_ownable::{assert_owner, initialize_owner};
+use coreum_wasm_sdk::types::cosmos::bank::v1beta1::MsgSend;
+use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
@@ -13,7 +15,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
@@ -27,6 +29,7 @@ pub fn instantiate(
         Some(_) => {
             let msg_res = prepare_withdraw(
                 deps,
+                env,
                 info.clone(),
                 msg.denom.unwrap(),
                 msg.amount.unwrap(),
@@ -38,7 +41,7 @@ pub fn instantiate(
                 Ok(msg) => Ok(Response::new()
                     .add_attribute("method", "instantiate")
                     .add_attribute("owner", info.sender)
-                    .add_message(msg))
+                    .add_message(CosmosMsg::Any(msg)))
             }
         }
     }
@@ -47,7 +50,7 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
@@ -56,12 +59,13 @@ pub fn execute(
             denom,
             amount,
             recipient,
-        } => try_withdraw(deps, info, denom, amount, recipient),
+        } => try_withdraw(deps, env, info, denom, amount, recipient),
     }
 }
 
 pub fn try_withdraw(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     denom: String,
     amount: Uint128,
@@ -71,6 +75,7 @@ pub fn try_withdraw(
 
     let msg_res = prepare_withdraw(
         deps,
+        env,
         info,
         denom,
         amount,
@@ -84,18 +89,19 @@ pub fn try_withdraw(
                 .add_attribute("method", "try_withdraw")
                 .add_attribute("to", recipient_addr)
                 .add_attribute("amount", amount)
-                .add_message(msg))
+                .add_message(CosmosMsg::Any(msg)))
         }
     }
 }
 
 fn prepare_withdraw(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     denom: String,
     amount: Uint128,
     recipient: String,
-) -> Result<CosmosMsg, ContractError> {
+) -> Result<AnyMsg, ContractError> {
     let recipient_addr = deps.api.addr_validate(&recipient)?;
 
     assert_owner(deps.storage, &info.sender)?;
@@ -103,13 +109,14 @@ fn prepare_withdraw(
         return Err(ContractError::InvalidZeroAmount {});
     }
 
-    let transfer_bank_msg = cosmwasm_std::BankMsg::Send {
+    let transfer_bank_msg = MsgSend {
+        from_address: env.contract.address.to_string(),
         to_address: recipient_addr.to_string(),
         amount: vec![Coin {
-            amount: amount,
-            denom: denom,
+            amount: amount.to_string(),
+            denom,
         }],
     };
 
-    Ok(transfer_bank_msg.into())
+    Ok(transfer_bank_msg.to_any())
 }
