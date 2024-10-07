@@ -1,8 +1,15 @@
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
-    MsgBurn, MsgClawback, MsgClearAdmin, MsgFreeze, MsgGloballyFreeze, MsgGloballyUnfreeze, MsgIssue, MsgMint, MsgSetFrozen, MsgSetWhitelistedLimit, MsgTransferAdmin, MsgUnfreeze, MsgUpgradeTokenV1
+    MsgBurn, MsgClawback, MsgClearAdmin, MsgFreeze, MsgGloballyFreeze, MsgGloballyUnfreeze,
+    MsgIssue, MsgMint, MsgSetFrozen, MsgSetWhitelistedLimit, MsgTransferAdmin, MsgUnfreeze,
+    MsgUpgradeTokenV1, QueryBalanceRequest, QueryBalanceResponse, QueryFrozenBalanceRequest,
+    QueryFrozenBalanceResponse, QueryFrozenBalancesRequest, QueryFrozenBalancesResponse,
+    QueryParamsRequest, QueryParamsResponse, QueryTokenRequest, QueryTokenResponse,
+    QueryTokensRequest, QueryTokensResponse, QueryWhitelistedBalanceRequest,
+    QueryWhitelistedBalanceResponse, QueryWhitelistedBalancesRequest,
+    QueryWhitelistedBalancesResponse,
 };
-use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
-use cosmwasm_std::{entry_point, Binary, CosmosMsg, Deps, StdResult};
+use coreum_wasm_sdk::types::cosmos::base::{query::v1beta1::PageRequest, v1beta1::Coin};
+use cosmwasm_std::{entry_point, to_json_binary, Binary, CosmosMsg, Deps, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use cw_ownable::{assert_owner, initialize_owner};
@@ -42,13 +49,6 @@ pub fn instantiate(
         extension_settings: msg.extension_settings,
     };
 
-    let issue_bytes = issue.to_proto_bytes();
-
-    let issue_msg = CosmosMsg::Stargate {
-        type_url: issue.to_any().type_url,
-        value: Binary::from(issue_bytes),
-    };
-
     let denom = format!("{}-{}", msg.subunit, env.contract.address).to_lowercase();
 
     DENOM.save(deps.storage, &denom)?;
@@ -56,7 +56,7 @@ pub fn instantiate(
     Ok(Response::new()
         .add_attribute("owner", info.sender)
         .add_attribute("denom", denom)
-        .add_message(issue_msg))
+        .add_message(CosmosMsg::Any(issue.to_any())))
 }
 
 // ********** Execute **********
@@ -94,7 +94,7 @@ fn mint(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    amount: u128,
+    amount: Uint128,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
     assert_owner(deps.storage, &info.sender)?;
@@ -109,25 +109,18 @@ fn mint(
         recipient: recipient.unwrap_or_default(),
     };
 
-    let mint_bytes = mint.to_proto_bytes();
-
-    let mint_msg = CosmosMsg::Stargate {
-        type_url: mint.to_any().type_url,
-        value: Binary::from(mint_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "mint")
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
-        .add_message(mint_msg))
+        .add_message(CosmosMsg::Any(mint.to_any())))
 }
 
 fn burn(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    amount: u128,
+    amount: Uint128,
 ) -> Result<Response, ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
@@ -140,18 +133,11 @@ fn burn(
         }),
     };
 
-    let burn_bytes = burn.to_proto_bytes();
-
-    let burn_msg = CosmosMsg::Stargate {
-        type_url: burn.to_any().type_url,
-        value: Binary::from(burn_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "burn")
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
-        .add_message(burn_msg))
+        .add_message(CosmosMsg::Any(burn.to_any())))
 }
 
 fn freeze(
@@ -159,7 +145,7 @@ fn freeze(
     env: Env,
     info: MessageInfo,
     account: String,
-    amount: u128,
+    amount: Uint128,
 ) -> Result<Response, ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
@@ -173,18 +159,11 @@ fn freeze(
         }),
     };
 
-    let freeze_bytes = freeze.to_proto_bytes();
-
-    let freeze_msg = CosmosMsg::Stargate {
-        type_url: freeze.to_any().type_url,
-        value: Binary::from(freeze_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "freeze")
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
-        .add_message(freeze_msg))
+        .add_message(CosmosMsg::Any(freeze.to_any())))
 }
 
 fn unfreeze(
@@ -192,7 +171,7 @@ fn unfreeze(
     env: Env,
     info: MessageInfo,
     account: String,
-    amount: u128,
+    amount: Uint128,
 ) -> Result<Response, ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
@@ -206,18 +185,11 @@ fn unfreeze(
         }),
     };
 
-    let unfreeze_bytes = unfreeze.to_proto_bytes();
-
-    let unfreeze_msg = CosmosMsg::Stargate {
-        type_url: unfreeze.to_any().type_url,
-        value: Binary::from(unfreeze_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "unfreeze")
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
-        .add_message(unfreeze_msg))
+        .add_message(CosmosMsg::Any(unfreeze.to_any())))
 }
 
 fn set_frozen(
@@ -225,7 +197,7 @@ fn set_frozen(
     env: Env,
     info: MessageInfo,
     account: String,
-    amount: u128,
+    amount: Uint128,
 ) -> Result<Response, ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
@@ -239,18 +211,11 @@ fn set_frozen(
         }),
     };
 
-    let set_frozen_bytes = set_frozen.to_proto_bytes();
-
-    let set_frozen_msg = CosmosMsg::Stargate {
-        type_url: set_frozen.to_any().type_url,
-        value: Binary::from(set_frozen_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "set_frozen")
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
-        .add_message(set_frozen_msg))
+        .add_message(CosmosMsg::Any(set_frozen.to_any())))
 }
 
 fn globally_freeze(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
@@ -262,17 +227,10 @@ fn globally_freeze(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respons
         denom: denom.clone(),
     };
 
-    let globally_freeze_bytes = globally_freeze.to_proto_bytes();
-
-    let globally_freeze_msg = CosmosMsg::Stargate {
-        type_url: globally_freeze.to_any().type_url,
-        value: Binary::from(globally_freeze_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "globally_freeze")
         .add_attribute("denom", denom)
-        .add_message(globally_freeze_msg))
+        .add_message(CosmosMsg::Any(globally_freeze.to_any())))
 }
 
 fn globally_unfreeze(
@@ -288,17 +246,10 @@ fn globally_unfreeze(
         denom: denom.clone(),
     };
 
-    let globally_unfreeze_bytes = globally_unfreeze.to_proto_bytes();
-
-    let globally_unfreeze_msg = CosmosMsg::Stargate {
-        type_url: globally_unfreeze.to_any().type_url,
-        value: Binary::from(globally_unfreeze_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "globally_unfreeze")
         .add_attribute("denom", denom)
-        .add_message(globally_unfreeze_msg))
+        .add_message(CosmosMsg::Any(globally_unfreeze.to_any())))
 }
 
 fn clawback(
@@ -306,7 +257,7 @@ fn clawback(
     env: Env,
     info: MessageInfo,
     account: String,
-    amount: u128,
+    amount: Uint128,
 ) -> Result<Response, ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
@@ -320,17 +271,10 @@ fn clawback(
         }),
     };
 
-    let clawback_bytes = clawback.to_proto_bytes();
-
-    let clawback_msg = CosmosMsg::Stargate {
-        type_url: clawback.to_any().type_url,
-        value: Binary::from(clawback_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "clawback")
         .add_attribute("denom", denom)
-        .add_message(clawback_msg))
+        .add_message(CosmosMsg::Any(clawback.to_any())))
 }
 
 fn set_whitelisted_limit(
@@ -338,7 +282,7 @@ fn set_whitelisted_limit(
     env: Env,
     info: MessageInfo,
     account: String,
-    amount: u128,
+    amount: Uint128,
 ) -> Result<Response, ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
@@ -352,18 +296,11 @@ fn set_whitelisted_limit(
         }),
     };
 
-    let set_whitelisted_limit_bytes = set_whitelisted_limit.to_proto_bytes();
-
-    let set_whitelisted_limit_msg = CosmosMsg::Stargate {
-        type_url: set_whitelisted_limit.to_any().type_url,
-        value: Binary::from(set_whitelisted_limit_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "set_whitelisted_limit")
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
-        .add_message(set_whitelisted_limit_msg))
+        .add_message(CosmosMsg::Any(set_whitelisted_limit.to_any())))
 }
 
 fn transfer_admin(
@@ -381,17 +318,10 @@ fn transfer_admin(
         denom: denom.clone(),
     };
 
-    let transfer_admin_bytes = transfer_admin.to_proto_bytes();
-
-    let transfer_admin_msg = CosmosMsg::Stargate {
-        type_url: transfer_admin.to_any().type_url,
-        value: Binary::from(transfer_admin_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "transfer_admin")
         .add_attribute("denom", denom)
-        .add_message(transfer_admin_msg))
+        .add_message(CosmosMsg::Any(transfer_admin.to_any())))
 }
 
 fn clear_admin(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
@@ -403,17 +333,10 @@ fn clear_admin(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, C
         denom: denom.clone(),
     };
 
-    let clear_admin_bytes = clear_admin.to_proto_bytes();
-
-    let clear_admin_msg = CosmosMsg::Stargate {
-        type_url: clear_admin.to_any().type_url,
-        value: Binary::from(clear_admin_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "clear_admin")
         .add_attribute("denom", denom)
-        .add_message(clear_admin_msg))
+        .add_message(CosmosMsg::Any(clear_admin.to_any())))
 }
 
 fn upgrate_token_v1(
@@ -431,22 +354,160 @@ fn upgrate_token_v1(
         ibc_enabled,
     };
 
-    let upgrade_token_v1_bytes = upgrade_token_v1.to_proto_bytes();
-
-    let upgrade_token_v1_msg = CosmosMsg::Stargate {
-        type_url: upgrade_token_v1.to_any().type_url,
-        value: Binary::from(upgrade_token_v1_bytes),
-    };
-
     Ok(Response::new()
         .add_attribute("method", "upgrade_token_v1")
         .add_attribute("denom", denom)
         .add_attribute("ibc_enabled", ibc_enabled.to_string())
-        .add_message(upgrade_token_v1_msg))
+        .add_message(CosmosMsg::Any(upgrade_token_v1.to_any())))
 }
 
 // ********** Queries **********
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-    Ok(Binary::default())
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
+        QueryMsg::Token {} => to_json_binary(&query_token(deps)?),
+        QueryMsg::Tokens { issuer } => to_json_binary(&query_tokens(deps, issuer)?),
+        QueryMsg::FrozenBalance { account } => {
+            to_json_binary(&query_frozen_balance(deps, account)?)
+        }
+        QueryMsg::WhitelistedBalance { account } => {
+            to_json_binary(&query_whitelisted_balance(deps, account)?)
+        }
+        QueryMsg::Balance { account } => to_json_binary(&query_balance(deps, account)?),
+        QueryMsg::FrozenBalances { account } => {
+            to_json_binary(&query_frozen_balances(deps, account)?)
+        }
+        QueryMsg::WhitelistedBalances { account } => {
+            to_json_binary(&query_whitelisted_balances(deps, account)?)
+        }
+    }
+}
+
+fn query_params(deps: Deps) -> StdResult<QueryParamsResponse> {
+    let request = QueryParamsRequest {};
+    request.query(&deps.querier)
+}
+
+fn query_token(deps: Deps) -> StdResult<QueryTokenResponse> {
+    let denom = DENOM.load(deps.storage)?;
+    let request = QueryTokenRequest { denom };
+    request.query(&deps.querier)
+}
+
+fn query_tokens(deps: Deps, issuer: String) -> StdResult<QueryTokensResponse> {
+    let mut pagination = None;
+    let mut tokens = vec![];
+    let mut res: QueryTokensResponse;
+    loop {
+        let request = QueryTokensRequest {
+            pagination,
+            issuer: issuer.clone(),
+        };
+        res = request.query(&deps.querier)?;
+        tokens.append(&mut res.tokens);
+        let next_key = res.pagination.clone().and_then(|p| p.next_key);
+        if next_key.is_none() {
+            break;
+        } else {
+            pagination = Some(PageRequest {
+                key: next_key.unwrap(),
+                offset: 0,
+                limit: 0,
+                count_total: false,
+                reverse: false,
+            })
+        }
+    }
+    let res = QueryTokensResponse {
+        pagination: res.pagination,
+        tokens,
+    };
+    Ok(res)
+}
+
+fn query_balance(deps: Deps, account: String) -> StdResult<QueryBalanceResponse> {
+    let denom = DENOM.load(deps.storage)?;
+    let request = QueryBalanceRequest { account, denom };
+    request.query(&deps.querier)
+}
+
+fn query_frozen_balance(deps: Deps, account: String) -> StdResult<QueryFrozenBalanceResponse> {
+    let denom = DENOM.load(deps.storage)?;
+    let request = QueryFrozenBalanceRequest { denom, account };
+    request.query(&deps.querier)
+}
+
+fn query_frozen_balances(deps: Deps, account: String) -> StdResult<QueryFrozenBalancesResponse> {
+    let mut pagination = None;
+    let mut balances = vec![];
+    let mut res: QueryFrozenBalancesResponse;
+    loop {
+        let request = QueryFrozenBalancesRequest {
+            pagination,
+            account: account.clone(),
+        };
+        res = request.query(&deps.querier)?;
+        balances.append(&mut res.balances);
+        let next_key = res.pagination.clone().and_then(|p| p.next_key);
+        if next_key.is_none() {
+            break;
+        } else {
+            pagination = Some(PageRequest {
+                key: next_key.unwrap(),
+                offset: 0,
+                limit: 0,
+                count_total: false,
+                reverse: false,
+            })
+        }
+    }
+    let res = QueryFrozenBalancesResponse {
+        pagination: res.pagination,
+        balances,
+    };
+    Ok(res)
+}
+
+fn query_whitelisted_balance(
+    deps: Deps,
+    account: String,
+) -> StdResult<QueryWhitelistedBalanceResponse> {
+    let denom = DENOM.load(deps.storage)?;
+    let request = QueryWhitelistedBalanceRequest { denom, account };
+    request.query(&deps.querier)
+}
+
+fn query_whitelisted_balances(
+    deps: Deps,
+    account: String,
+) -> StdResult<QueryWhitelistedBalancesResponse> {
+    let mut pagination = None;
+    let mut balances = vec![];
+    let mut res: QueryWhitelistedBalancesResponse;
+    loop {
+        let request = QueryWhitelistedBalancesRequest {
+            pagination,
+            account: account.clone(),
+        };
+        res = request.query(&deps.querier)?;
+        balances.append(&mut res.balances);
+        let next_key = res.pagination.clone().and_then(|p| p.next_key);
+        if next_key.is_none() {
+            break;
+        } else {
+            pagination = Some(PageRequest {
+                key: next_key.unwrap(),
+                offset: 0,
+                limit: 0,
+                count_total: false,
+                reverse: false,
+            })
+        }
+    }
+    let res = QueryWhitelistedBalancesResponse {
+        pagination: res.pagination,
+        balances,
+    };
+    Ok(res)
 }
