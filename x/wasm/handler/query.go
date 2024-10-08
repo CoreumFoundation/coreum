@@ -157,7 +157,10 @@ type coreumQuery struct {
 // NewCoreumQueryHandler returns the coreum handler which handles queries from smart contracts.
 //
 //nolint:funlen // access list is long
-func NewCoreumQueryHandler(assetFTQueryServer assetfttypes.QueryServer, assetNFTQueryServer assetnfttypes.QueryServer, nftQueryServer nfttypes.QueryServer, gRPCQueryRouter *baseapp.GRPCQueryRouter, codec *codec.ProtoCodec) *wasmkeeper.QueryPlugins {
+func NewCoreumQueryHandler(
+	assetFTQueryServer assetfttypes.QueryServer, assetNFTQueryServer assetnfttypes.QueryServer,
+	nftQueryServer nfttypes.QueryServer, gRPCQueryRouter *baseapp.GRPCQueryRouter, codec *codec.ProtoCodec,
+) *wasmkeeper.QueryPlugins {
 	acceptList := wasmkeeper.AcceptedQueries{
 		"/coreum.asset.ft.v1.Query/Token":              &assetfttypes.QueryTokenResponse{},
 		"/coreum.asset.ft.v1.Query/FrozenBalance":      &assetfttypes.QueryFrozenBalanceResponse{},
