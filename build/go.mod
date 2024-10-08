@@ -4,8 +4,6 @@ go 1.22.4
 
 replace github.com/CoreumFoundation/coreum/v5 => ../
 
-replace github.com/CoreumFoundation/crust => ../../crust
-
 // CosmosSDK replacements
 replace (
 	// cosmos keyring
@@ -29,8 +27,8 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68
-	github.com/CoreumFoundation/coreum/v5 v5.0.0-20241002100003-2dcad94c2fbc
-	github.com/CoreumFoundation/crust v0.0.0-20241002130855-2995a404360e
+	github.com/CoreumFoundation/coreum/v5 v5.0.0-20241002130843-58ae1cd1de0c
+	github.com/CoreumFoundation/crust v0.0.0-20241004073701-8df0a326fd07
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.39.0
