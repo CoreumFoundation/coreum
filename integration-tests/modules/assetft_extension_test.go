@@ -1348,7 +1348,7 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 	// This operation should fail due to coins being attached to it
 	_, _, err = chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithGas(2_000_000),
+		chain.TxFactory().WithGas(3_000_000),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
