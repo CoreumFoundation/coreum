@@ -24,19 +24,20 @@ import (
 )
 
 type FuzzApp struct {
-	testApp    *simapp.App
-	issuer     sdk.AccAddress
-	accounts   []sdk.AccAddress
-	orderTypes []types.OrderType
-	denoms     []string
-	ftDenoms   []string
-	sides      []types.Side
+	testApp  *simapp.App
+	issuer   sdk.AccAddress
+	accounts []sdk.AccAddress
+	denoms   []string
+	ftDenoms []string
+	sides    []types.Side
 
-	goodTilBlockHeightPercent int
-	goodTilBlockTimePercent   int
+	marketOrdersPercent int
 
 	timeInForceIOCPercent int
 	timeInForceFOKPercent int
+
+	goodTilBlockHeightPercent int
+	goodTilBlockTimePercent   int
 
 	initialBlockTime   time.Time
 	initialBlockHeight uint64
@@ -46,8 +47,13 @@ type FuzzApp struct {
 func NewFuzzApp(
 	t *testing.T,
 	accountsCount,
-	assetFTDenomsCount,
+	assetFTDefaultDenomsCount,
+	assetFTWhitelistingCount,
+	assetFTFreezingDenomsCount,
+	assetFTAllFeaturesDenomsCount,
 	nativeDenomCount int,
+
+	marketOrdersPercent int,
 
 	timeInForceIOCPercent int,
 	timeInForceFOKPercent int,
@@ -72,11 +78,6 @@ func NewFuzzApp(
 		return acc
 	})
 
-	orderTypes := []types.OrderType{
-		types.ORDER_TYPE_LIMIT,
-		types.ORDER_TYPE_MARKET,
-	}
-
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
 	mintedAmount := sdkmath.NewIntWithDecimal(1, 77)
@@ -87,17 +88,47 @@ func NewFuzzApp(
 	})
 
 	ftDenoms := make([]string, 0)
-	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTDenomsCount, func(i int) string {
-		settings := assetfttypes.IssueSettings{
-			Issuer:        issuer,
-			Symbol:        fmt.Sprintf("SMB%d", i),
-			Subunit:       fmt.Sprintf("sut%d", i),
-			Precision:     1,
-			InitialAmount: mintedAmount,
-			Features: []assetfttypes.Feature{
-				assetfttypes.Feature_dex_order_cancellation,
-			},
-		}
+
+	defaultFTSettings := assetfttypes.IssueSettings{
+		Issuer:        issuer,
+		Precision:     1,
+		InitialAmount: mintedAmount,
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_dex_order_cancellation,
+		},
+	}
+	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTDefaultDenomsCount, func(i int) string {
+		settings := defaultFTSettings
+		settings.Symbol = fmt.Sprintf("DEF%d", i)
+		settings.Subunit = fmt.Sprintf("def%d", i)
+		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
+		require.NoError(t, err)
+		return denom
+	})...)
+	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTWhitelistingCount, func(i int) string {
+		settings := defaultFTSettings
+		settings.Symbol = fmt.Sprintf("WLS%d", i)
+		settings.Subunit = fmt.Sprintf("wls%d", i)
+		settings.Features = append(settings.Features, assetfttypes.Feature_whitelisting)
+		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
+		require.NoError(t, err)
+		return denom
+	})...)
+	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTFreezingDenomsCount, func(i int) string {
+		settings := defaultFTSettings
+		settings.Symbol = fmt.Sprintf("FRZ%d", i)
+		settings.Subunit = fmt.Sprintf("frz%d", i)
+		settings.Features = append(settings.Features, assetfttypes.Feature_freezing)
+		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
+		require.NoError(t, err)
+		return denom
+	})...)
+	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTAllFeaturesDenomsCount, func(i int) string {
+		settings := defaultFTSettings
+		settings.Symbol = fmt.Sprintf("ALL%d", i)
+		settings.Subunit = fmt.Sprintf("all%d", i)
+		settings.Features = append(settings.Features, assetfttypes.Feature_whitelisting)
+		settings.Features = append(settings.Features, assetfttypes.Feature_freezing)
 		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
 		require.NoError(t, err)
 		return denom
@@ -113,13 +144,14 @@ func NewFuzzApp(
 	require.NoError(t, err)
 
 	return FuzzApp{
-		testApp:    testApp,
-		issuer:     issuer,
-		accounts:   accounts,
-		orderTypes: orderTypes,
-		denoms:     denoms,
-		ftDenoms:   ftDenoms,
-		sides:      sides,
+		testApp:  testApp,
+		issuer:   issuer,
+		accounts: accounts,
+		denoms:   denoms,
+		ftDenoms: ftDenoms,
+		sides:    sides,
+
+		marketOrdersPercent: marketOrdersPercent,
 
 		timeInForceIOCPercent: timeInForceIOCPercent,
 		timeInForceFOKPercent: timeInForceFOKPercent,
@@ -140,7 +172,11 @@ func (fa *FuzzApp) GenOrder(
 	t.Helper()
 
 	creator := genAnyItemByIndex(fa.accounts, uint8(rnd.Uint32()))
-	orderType := genAnyItemByIndex(fa.orderTypes, uint8(rnd.Uint32()))
+	orderType := types.ORDER_TYPE_LIMIT
+	if randBoolWithPercent(rnd, fa.marketOrdersPercent) {
+		orderType = types.ORDER_TYPE_MARKET
+	}
+
 	// take next if same
 	var baseDenom, quoteDenom string
 	baseDenomInd := uint8(rnd.Uint32())
@@ -217,18 +253,57 @@ func (fa *FuzzApp) GenOrder(
 	}
 }
 
-func (fa *FuzzApp) FundAccount(t *testing.T, sdkCtx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) {
+func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
+	t *testing.T,
+	sdkCtx sdk.Context,
+	order types.Order,
+	orderRnd *rand.Rand,
+) {
 	t.Helper()
 
-	issuerBalance := fa.testApp.BankKeeper.GetBalance(sdkCtx, fa.issuer, coin.Denom)
-	if issuerBalance.IsLT(coin) {
+	creator := sdk.MustAccAddressFromBech32(order.Creator)
+
+	spendDef, err := fa.testApp.AssetFTKeeper.GetDefinition(sdkCtx, order.GetSpendDenom())
+	if err != nil {
+		require.True(t, sdkerrors.IsOf(err, assetfttypes.ErrInvalidDenom, assetfttypes.ErrTokenNotFound))
+	}
+	receiveDef, err := fa.testApp.AssetFTKeeper.GetDefinition(sdkCtx, order.GetReceiveDenom())
+	if err != nil {
+		require.True(t, sdkerrors.IsOf(err, assetfttypes.ErrInvalidDenom, assetfttypes.ErrTokenNotFound))
+	}
+
+	fundCoin := sdk.NewCoin(order.GetSpendDenom(), sdkmath.NewIntFromUint64(orderRnd.Uint64()))
+	issuerBalance := fa.testApp.BankKeeper.GetBalance(sdkCtx, fa.issuer, fundCoin.Denom)
+	if issuerBalance.IsLT(fundCoin) {
 		t.Logf(
 			"Failed to fund, insufficient issuer balance, balance:%s, recipient:%s,  coin:%s",
-			issuerBalance.String(), recipient.String(), coin.String(),
+			issuerBalance.String(), creator.String(), fundCoin.String(),
 		)
-		return
+	} else {
+		if spendDef.IsFeatureEnabled(assetfttypes.Feature_whitelisting) {
+			dexWhitelistingReservedBalance := fa.testApp.AssetFTKeeper.GetDEXWhitelistingReservedBalance(
+				sdkCtx, creator, fundCoin.Denom,
+			)
+			balance := fa.testApp.BankKeeper.GetBalance(sdkCtx, creator, fundCoin.Denom)
+			whitelistBalance := fundCoin.Add(balance).Add(dexWhitelistingReservedBalance)
+			t.Logf("Whitelisting initial account's balance: %s, %s", creator.String(), whitelistBalance.String())
+			require.NoError(t, fa.testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, fa.issuer, creator, whitelistBalance))
+		}
+		t.Logf("Funding account: %s, %s", creator.String(), fundCoin.String())
+		require.NoError(t, fa.testApp.BankKeeper.SendCoins(sdkCtx, fa.issuer, creator, sdk.NewCoins(fundCoin)))
 	}
-	require.NoError(t, fa.testApp.BankKeeper.SendCoins(sdkCtx, fa.issuer, recipient, sdk.NewCoins(coin)))
+
+	if spendDef.IsFeatureEnabled(assetfttypes.Feature_freezing) {
+		freezeCoin := sdk.NewCoin(order.GetSpendDenom(), sdkmath.NewIntFromUint64(orderRnd.Uint64()))
+		t.Logf("Freezing account's coin: %s, %s", creator.String(), freezeCoin.String())
+		require.NoError(t, fa.testApp.AssetFTKeeper.SetFrozen(sdkCtx, fa.issuer, creator, freezeCoin))
+	}
+
+	if receiveDef.IsFeatureEnabled(assetfttypes.Feature_whitelisting) {
+		whitelistBalance := sdk.NewCoin(order.GetReceiveDenom(), sdkmath.NewIntFromUint64(orderRnd.Uint64()))
+		t.Logf("Whitelisting account's coin: %s, %s", creator.String(), whitelistBalance.String())
+		require.NoError(t, fa.testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, fa.issuer, creator, whitelistBalance))
+	}
 }
 
 func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Order) {
@@ -237,18 +312,15 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 	trialCtx := simapp.CopyContextWithMultiStore(sdkCtx) // copy to dry run and don't change state if error
 	if err := fa.testApp.DEXKeeper.PlaceOrder(trialCtx, order); err != nil {
 		t.Logf("Placement failed, err: %s", err.Error())
-		// expected fails
-		if sdkerrors.IsOf(
-			err,
-			assetfttypes.ErrDEXLockFailed,
-		) {
+		creator := sdk.MustAccAddressFromBech32(order.Creator)
+		switch {
+		case sdkerrors.IsOf(err, assetfttypes.ErrDEXLockFailed):
 			// check that the order can't be placed because of the lack of balance
-			creatorAddr := sdk.MustAccAddressFromBech32(order.Creator)
 			if order.Type != types.ORDER_TYPE_LIMIT {
 				return
 			}
 			spendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(
-				sdkCtx, creatorAddr, order.GetSpendDenom(),
+				sdkCtx, creator, order.GetSpendDenom(),
 			)
 			orderLockedBalance, err := order.ComputeLimitOrderLockedBalance()
 			require.NoError(t, err)
@@ -258,13 +330,50 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 				fmt.Sprintf("availableBalance: %s, orderLockedBalance: %s", spendableBalance.String(), orderLockedBalance.String()),
 			)
 			return
-		}
+		case sdkerrors.IsOf(err, assetfttypes.ErrWhitelistedLimitExceeded):
+			if order.Side != types.SIDE_BUY {
+				// check for the buy side only, since we don't know what was the execution quantity for the SELL
+				return
+			}
 
-		if strings.Contains(err.Error(), "good til") ||
-			strings.Contains(err.Error(), "it's prohibited to save more than") {
+			var requiredWhitelistedBalance sdk.Coin
+
+			switch order.Type {
+			case types.ORDER_TYPE_LIMIT:
+				requiredWhitelistedBalance, err = types.ComputeLimitOrderWhitelistingReservedBalance(
+					order.Side, order.BaseDenom, order.QuoteDenom, order.Quantity, *order.Price,
+				)
+				require.NoError(t, err)
+			case types.ORDER_TYPE_MARKET:
+				requiredWhitelistedBalance = sdk.NewCoin(order.GetReceiveDenom(), order.Quantity)
+			default:
+				t.Fatalf("Unexpected order type: %s", order.Type.String())
+			}
+
+			requiredWhitelistedAmt := requiredWhitelistedBalance.Amount
+
+			balance := fa.testApp.BankKeeper.GetBalance(sdkCtx, creator, requiredWhitelistedBalance.Denom)
+			whitelistedBalance := fa.testApp.AssetFTKeeper.GetWhitelistedBalance(
+				sdkCtx, creator, requiredWhitelistedBalance.Denom,
+			)
+			dexWhitelistingReservedBalance := fa.testApp.AssetFTKeeper.GetDEXWhitelistingReservedBalance(
+				sdkCtx, creator, requiredWhitelistedBalance.Denom,
+			)
+			receivableAmt := whitelistedBalance.Amount.Sub(balance.Amount).Sub(dexWhitelistingReservedBalance.Amount)
+			require.True(
+				t,
+				receivableAmt.LT(requiredWhitelistedAmt),
+				fmt.Sprintf(
+					"receivableAmt: %s, requiredWhitelistedAmt: %s",
+					receivableAmt.String(), requiredWhitelistedAmt.String()),
+			)
 			return
+		case strings.Contains(err.Error(), "good til"),
+			strings.Contains(err.Error(), "it's prohibited to save more than"):
+			return
+		default:
+			require.NoError(t, err)
 		}
-		require.NoError(t, err)
 	}
 
 	spendableBalancesBefore := getSpendableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
@@ -332,16 +441,21 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			rootSeed uint32,
 		) {
 			const (
-				accountsCount      = 4
-				assetFTDenomsCount = 2
-				nativeDenomCount   = 2
-				ordersCount        = 500
+				accountsCount                 = 4
+				assetFTDefaultDenomsCount     = 2
+				assetFTWhitelistingCount      = 2
+				assetFTFreezingDenomsCount    = 2
+				assetFTAllFeaturesDenomsCount = 2
+				nativeDenomCount              = 2
+				ordersCount                   = 500
 
-				goodTilBlockHeightPercent = 10
-				goodTilBlockTimePercent   = 10
+				marketOrdersPercent = 8
 
 				timeInForceIOCPercent = 4
 				timeInForceFOKPercent = 4
+
+				goodTilBlockHeightPercent = 10
+				goodTilBlockTimePercent   = 10
 
 				cancelOrdersPercent        = 5
 				cancelOrdersByDenomPercent = 2
@@ -354,8 +468,13 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			fuzzApp := NewFuzzApp(
 				t,
 				accountsCount,
-				assetFTDenomsCount,
+				assetFTDefaultDenomsCount,
+				assetFTWhitelistingCount,
+				assetFTFreezingDenomsCount,
+				assetFTAllFeaturesDenomsCount,
 				nativeDenomCount,
+
+				marketOrdersPercent,
 
 				timeInForceIOCPercent,
 				timeInForceFOKPercent,
@@ -384,24 +503,8 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 
 				order := fuzzApp.GenOrder(t, orderRnd)
 
-				var fundDenom string
-				switch order.Side {
-				case types.SIDE_BUY:
-					fundDenom = order.QuoteDenom
-				case types.SIDE_SELL:
-					fundDenom = order.BaseDenom
-				default:
-					t.Fatalf("Unsupported order side: %s", order.Side.String())
-				}
-
-				// fund creator with random quantity,
-				creator := sdk.MustAccAddressFromBech32(order.Creator)
-
-				balance := orderRnd.Uint64()
-				coin := sdk.NewCoin(fundDenom, sdkmath.NewIntFromUint64(balance))
-				t.Logf("Funding account for the order placement, addr:%s, coin:%s", order.Creator, coin.String())
-				fuzzApp.FundAccount(t, sdkCtx, creator, coin)
 				t.Logf("Placing order, i:%d, seed:%d, order: %s", i, orderSeed, order.String())
+				fuzzApp.FundAccountAndApplyFTFeatures(t, sdkCtx, order, orderRnd)
 				fuzzApp.PlaceOrder(t, sdkCtx, order)
 
 				if randBoolWithPercent(orderRnd, cancelOrdersPercent) {
