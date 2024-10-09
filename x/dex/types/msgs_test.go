@@ -233,7 +233,7 @@ func TestAmino(t *testing.T) {
 				Authority: address,
 				Params:    types.DefaultParams(),
 			},
-			wantAminoJSON: `{"type":"dex/MsgUpdateParams","value":{"authority":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","params":{"default_unified_ref_amount":"1000000.000000000000000000","max_orders_per_denom":"100","price_tick_exponent":-5}}}`,
+			wantAminoJSON: `{"type":"dex/MsgUpdateParams","value":{"authority":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","params":{"default_unified_ref_amount":"1000000.000000000000000000","max_orders_per_denom":"100","order_reserve":{"amount":"0","denom":"stake"},"price_tick_exponent":-5}}}`,
 		},
 		{
 			name: sdk.MsgTypeURL(&types.MsgPlaceOrder{}),

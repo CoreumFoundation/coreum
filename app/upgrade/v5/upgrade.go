@@ -62,6 +62,9 @@ func New(mm *module.Manager, configurator module.Configurator,
 			dexParams := dexKeeper.GetParams(sdkCtx)
 			// 10core
 			dexParams.OrderReserve = sdk.NewInt64Coin(chosenNetwork.Denom(), 10_000_000)
+			if err = dexKeeper.SetParams(sdkCtx, dexParams); err != nil {
+				return nil, err
+			}
 
 			return vmap, nil
 		},
