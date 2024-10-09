@@ -3,6 +3,7 @@ package types
 import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -15,6 +16,9 @@ var (
 
 	// KeyMaxOrdersPerDenom represents the max orders per denom param key.
 	KeyMaxOrdersPerDenom = []byte("MaxOrdersPerDenom")
+
+	// KeyOrderReserve represents the order reserve param key.
+	KeyOrderReserve = []byte("OrderReserve")
 )
 
 // DefaultParams returns params with default values.
@@ -23,6 +27,7 @@ func DefaultParams() Params {
 		DefaultUnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1000000"),
 		PriceTickExponent:       -5,
 		MaxOrdersPerDenom:       100,
+		OrderReserve:            sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
 	}
 }
 
@@ -45,6 +50,11 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&m.MaxOrdersPerDenom,
 			validateMaxOrdersPerDenom,
 		),
+		paramtypes.NewParamSetPair(
+			KeyOrderReserve,
+			&m.OrderReserve,
+			validateOrderReserve,
+		),
 	}
 }
 
@@ -58,7 +68,11 @@ func (m Params) ValidateBasic() error {
 		return err
 	}
 
-	return validateMaxOrdersPerDenom(m.MaxOrdersPerDenom)
+	if err := validateMaxOrdersPerDenom(m.MaxOrdersPerDenom); err != nil {
+		return err
+	}
+
+	return validateOrderReserve(m.OrderReserve)
 }
 
 func validateDefaultUnifiedRefAmount(i interface{}) error {
@@ -96,6 +110,21 @@ func validateMaxOrdersPerDenom(i interface{}) error {
 		return sdkerrors.Wrap(
 			ErrInvalidInput,
 			"max orders per denom must be positive",
+		)
+	}
+
+	return nil
+}
+
+func validateOrderReserve(i interface{}) error {
+	orderReserve, ok := i.(sdk.Coin)
+	if !ok {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T", i)
+	}
+	if !orderReserve.IsValid() {
+		return sdkerrors.Wrap(
+			ErrInvalidInput,
+			"invalid order reserve",
 		)
 	}
 

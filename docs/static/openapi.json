@@ -10179,6 +10179,10 @@
           "type": "string",
           "format": "uint64",
           "title": "max_orders_per_denom is the maximum number of orders per denom the user can have"
+        },
+        "order_reserve": {
+          "$ref": "#/definitions/cosmos.base.v1beta1.Coin",
+          "title": "order_reserve is the reserve required to save the order in the order book"
         }
       },
       "description": "Params keeps gov manageable parameters."

@@ -5,6 +5,7 @@ package upgrade
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
@@ -29,5 +30,9 @@ func (d *dex) After(t *testing.T) {
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
 	paramsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	requireT.Equal(dextypes.DefaultParams(), paramsRes.Params)
+	t.Logf("DEX params after upgrade: %v", paramsRes.Params)
+
+	expectedParams := dextypes.DefaultParams()
+	expectedParams.OrderReserve = sdk.NewInt64Coin(chain.ChainSettings.Denom, 10_000_000)
+	requireT.Equal(expectedParams, paramsRes.Params)
 }

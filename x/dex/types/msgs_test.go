@@ -78,6 +78,15 @@ func TestMsgUpdateParams_ValidateBasic(t *testing.T) {
 			}(),
 			wantErr: types.ErrInvalidInput,
 		},
+		{
+			name: "invalid_order_reserve",
+			msg: func() types.MsgUpdateParams {
+				msg := validMsg()
+				msg.Params.OrderReserve = sdk.Coin{Denom: "101"}
+				return msg
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

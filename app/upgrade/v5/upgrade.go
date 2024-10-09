@@ -14,6 +14,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/v5/app/upgrade"
 	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	dexkeeper "github.com/CoreumFoundation/coreum/v5/x/dex/keeper"
 	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -22,7 +23,7 @@ const Name = "v5"
 
 // New makes an upgrade handler for v5 upgrade.
 func New(mm *module.Manager, configurator module.Configurator,
-	chosenNetwork config.NetworkConfig, govParamKeeper govparamkeeper.Keeper,
+	chosenNetwork config.NetworkConfig, govParamKeeper govparamkeeper.Keeper, dexKeeper dexkeeper.Keeper,
 ) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
@@ -56,6 +57,11 @@ func New(mm *module.Manager, configurator module.Configurator,
 			if err != nil {
 				return nil, err
 			}
+
+			sdkCtx := sdk.UnwrapSDKContext(ctx)
+			dexParams := dexKeeper.GetParams(sdkCtx)
+			// 10core
+			dexParams.OrderReserve = sdk.NewInt64Coin(chosenNetwork.Denom(), 10_000_000)
 
 			return vmap, nil
 		},
