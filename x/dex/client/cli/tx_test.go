@@ -205,6 +205,39 @@ func TestCmdCancelOrder(t *testing.T) {
 	requireT.NoError(err)
 }
 
+func TestCmdCancelOrdersByDenom(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	order := types.Order{
+		ID:          "id1",
+		Type:        types.ORDER_TYPE_LIMIT,
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        types.SIDE_SELL,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+
+	placeOrder(ctx, requireT, testNetwork, order)
+
+	args := append(
+		[]string{
+			validator1Address(testNetwork).String(),
+			denom1,
+		}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(
+		ctx,
+		testNetwork,
+		cli.CmdCancelOrdersByDenom(),
+		args,
+	)
+	requireT.NoError(err)
+}
+
 func placeOrder(
 	ctx client.Context,
 	requireT *require.Assertions,
@@ -269,6 +302,7 @@ func issueFT(
 	}
 	features := []string{
 		assetfttypes.Feature_minting.String(),
+		assetfttypes.Feature_dex_order_cancellation.String(),
 	}
 
 	args = append(args, fmt.Sprintf("--%s=%s", assetftcli.FeaturesFlag, strings.Join(features, ",")))
