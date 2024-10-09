@@ -39,6 +39,7 @@ const (
 	ExtensionFundsFlag       = "extension-funds"
 	ExtensionIssuanceMsgFlag = "extension-issuance-msg"
 	DEXUnifiedRefAmountFlag  = "dex-unified-ref-amount"
+	DEXWhitelistedDenomsFlag = "dex-whitelisted-denoms"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -67,6 +68,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
 		CmdUpdateDEXUnifiedRefAmount(),
+		CmdUpdateDEXWhitelistedDenoms(),
 	)
 
 	return cmd
@@ -891,6 +893,60 @@ $ %s tx %s update-dex-unified-ref-amount ABC-%s 1000.5 --from [sender]
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdUpdateDEXWhitelistedDenoms returns UpdateDEXWhitelistedDenoms cobra command.
+func CmdUpdateDEXWhitelistedDenoms() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-dex-whitelisted-denoms [denom] --dex-whitelisted-denoms [dex-whitelisted-denoms] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Update DEX whitelisted denoms",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Update DEX whitelisted denoms.
+Example:
+$ %s tx %s update-dex-whitelisted-denoms denom1 --dex-whitelisted-denoms denom2,denom3 --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			denom := args[0]
+			if err = sdk.ValidateDenom(denom); err != nil {
+				return sdkerrors.Wrap(err, "invalid denom")
+			}
+
+			whitelistedDenoms, err := cmd.Flags().GetStringSlice(DEXWhitelistedDenomsFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			for _, whitelistedDenom := range whitelistedDenoms {
+				if err = sdk.ValidateDenom(whitelistedDenom); err != nil {
+					return sdkerrors.Wrapf(err, "invalid denom %s", whitelistedDenom)
+				}
+			}
+
+			msg := &types.MsgUpdateDEXWhitelistedDenoms{
+				Sender:            sender.String(),
+				Denom:             denom,
+				WhitelistedDenoms: whitelistedDenoms,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
+	cmd.Flags().StringSlice(DEXWhitelistedDenomsFlag, []string{}, "Denoms to add to be whitelisted to be traded with in DEX.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
