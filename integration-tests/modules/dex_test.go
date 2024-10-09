@@ -262,6 +262,14 @@ func TestOrderCancellation(t *testing.T) {
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
 
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+	})
+
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -270,22 +278,50 @@ func TestOrderCancellation(t *testing.T) {
 		},
 	})
 
-	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
-	denom2 := "denom2"
+	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6))
+	denom2 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_whitelisting)
+
+	// fund acc1
+	bankSendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc1.String(),
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom1, 100)),
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
+		bankSendMsg,
+	)
+	requireT.NoError(err)
+
+	// whitelisting acc1 to receive denom2
+	setWhitelistedLimitMsg := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewInt64Coin(denom2, 10),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(setWhitelistedLimitMsg)),
+		setWhitelistedLimitMsg,
+	)
+	requireT.NoError(err)
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc1.String(),
 		Type:        dextypes.ORDER_TYPE_LIMIT,
 		ID:          "id1",
 		BaseDenom:   denom1,
-		QuoteDenom:  "denom2",
+		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
 		Quantity:    sdkmath.NewInt(100),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
@@ -293,12 +329,29 @@ func TestOrderCancellation(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+	balanceDenom1Res, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceDenom1Res.LockedInDEX.String())
+	requireT.True(balanceDenom1Res.WhitelistingReservedInDex.IsZero())
+
+	balanceDenom2Res, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	requireT.True(balanceDenom2Res.LockedInDEX.IsZero())
+	whitelistingReservedInDex, err := dextypes.ComputeLimitOrderWhitelistingReservedBalance(
+		placeSellOrderMsg.Side,
+		placeSellOrderMsg.BaseDenom,
+		placeSellOrderMsg.QuoteDenom,
+		placeSellOrderMsg.Quantity,
+		*placeSellOrderMsg.Price,
+	)
+	requireT.NoError(err)
+	requireT.Equal(whitelistingReservedInDex.Amount.String(), balanceDenom2Res.WhitelistingReservedInDex.String())
 
 	countRes, err := dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
 		Account: acc1.String(),
@@ -329,13 +382,23 @@ func TestOrderCancellation(t *testing.T) {
 	// validate the deterministic gas
 	requireT.Equal(chain.GasLimitByMsgs(cancelOrderMsg), uint64(txResult.GasUsed))
 
-	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+	balanceDenom1Res, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
 	// check that nothing is locked
-	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
+	requireT.True(balanceDenom1Res.LockedInDEX.IsZero())
+	requireT.True(balanceDenom1Res.WhitelistingReservedInDex.IsZero())
+
+	balanceDenom2Res, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	// check that nothing is locked
+	requireT.True(balanceDenom2Res.LockedInDEX.IsZero())
+	requireT.True(balanceDenom2Res.WhitelistingReservedInDex.IsZero())
 
 	countRes, err = dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
 		Account: acc1.String(),
@@ -761,7 +824,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
 		placeSellOrderMsg,
 	)
-	requireT.ErrorContains(err, dextypes.ErrFailedToLockCoin.Error())
+	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
 
 	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
@@ -973,7 +1036,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
 		placeSellOrderMsg,
 	)
-	requireT.ErrorContains(err, dextypes.ErrFailedToLockCoin.Error())
+	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
 
 	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
@@ -1396,7 +1459,7 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
 		placeSellOrderMsg,
 	)
-	requireT.ErrorContains(err, dextypes.ErrFailedToLockCoin.Error())
+	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
 
 	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
 		Amount: delegateAmount,

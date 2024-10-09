@@ -81,6 +81,19 @@ message EventDEXLockedAmountChanged {
   ];
 }
 
+message EventDEXWhitelistingReservedAmountChanged {
+  string account = 1;
+  string denom = 2;
+  string previous_amount = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string current_amount = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 message EventAdminTransferred {
   string denom = 1;
   string previous_admin = 2;

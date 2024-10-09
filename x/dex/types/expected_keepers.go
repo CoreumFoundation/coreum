@@ -25,10 +25,18 @@ type AccountQueryServer interface {
 
 // AssetFTKeeper represents required methods of asset ft keeper.
 type AssetFTKeeper interface {
-	DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error
-	DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
-	DEXUnlockAndSend(ctx sdk.Context, from, to sdk.AccAddress, coin sdk.Coin) error
-	DEXSendWithLockCheck(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error
+	DEXIncreaseLimits(ctx sdk.Context, addr sdk.AccAddress, lockCoin, reserveWhitelistingCoin sdk.Coin) error
+	DEXDecreaseLimits(ctx sdk.Context, addr sdk.AccAddress, unlockCoin, releaseWhitelistingCoin sdk.Coin) error
+	DEXDecreaseLimitsAndSend(
+		ctx sdk.Context,
+		fromAddr, toAddr sdk.AccAddress,
+		unlockAndSendCoin, releaseWhitelistingCoin sdk.Coin,
+	) error
+	DEXChecksLimitsAndSend(
+		ctx sdk.Context,
+		fromAddr, toAddr sdk.AccAddress,
+		sendCoin, checkReserveWhitelistingCoin sdk.Coin,
+	) error
 	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXSettings(ctx sdk.Context, denom string) (dextypes.DEXSettings, error)
 	ValidateDEXCancelOrdersByDenomIsAllowed(ctx sdk.Context, addr sdk.AccAddress, denom string) error

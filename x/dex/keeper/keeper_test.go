@@ -213,13 +213,27 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	assetFTKeeper := testApp.AssetFTKeeper
 
 	acc, _ := testApp.GenAccount(sdkCtx)
+	issuer, _ := testApp.GenAccount(sdkCtx)
+
+	issuanceSettings := assetfttypes.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFEXT",
+		Subunit:       "defext",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+	ft1Whitelisting, err := testApp.AssetFTKeeper.Issue(sdkCtx, issuanceSettings)
+	require.NoError(t, err)
 
 	sellOrder := types.Order{
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          uuid.Generate().String(),
 		BaseDenom:   denom1,
-		QuoteDenom:  denom2,
+		QuoteDenom:  ft1Whitelisting,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:    sdkmath.NewInt(1_000),
 		Side:        types.SIDE_SELL,
@@ -228,22 +242,34 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	sellLockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(sellLockedBalance))
-
+	sellLWhitelistedBalance, err := types.ComputeLimitOrderWhitelistingReservedBalance(
+		sellOrder.Side, sellOrder.BaseDenom, sellOrder.QuoteDenom, sellOrder.Quantity, *sellOrder.Price,
+	)
+	require.NoError(t, err)
+	require.NoError(t, testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, issuer, acc, sellLWhitelistedBalance))
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
 	dexLockedBalance := assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, sellLockedBalance.Denom)
 	require.Equal(t, sellLockedBalance.String(), dexLockedBalance.String())
+	dexWhitelistingReservedBalance := assetFTKeeper.GetDEXWhitelistingReservedBalance(
+		sdkCtx, acc, sellLWhitelistedBalance.Denom,
+	)
+	require.Equal(t, sellLWhitelistedBalance.String(), dexWhitelistingReservedBalance.String())
 
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, sellOrder.ID))
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, sellLockedBalance.Denom)
 	require.True(t, dexLockedBalance.IsZero())
+	dexWhitelistingReservedBalance = assetFTKeeper.GetDEXWhitelistingReservedBalance(
+		sdkCtx, acc, sellLWhitelistedBalance.Denom,
+	)
+	require.True(t, dexWhitelistingReservedBalance.IsZero())
 
 	buyOrder := types.Order{
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom1,
-		QuoteDenom: denom2,
+		QuoteDenom: ft1Whitelisting,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 		Quantity:   sdkmath.NewInt(5_000),
 		Side:       types.SIDE_BUY,
@@ -255,6 +281,9 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	}
 	buyLockedBalance, err := buyOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
+	// whitelist for both orders
+	whitelistedBalance := sellLWhitelistedBalance.Add(buyLockedBalance)
+	require.NoError(t, testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, issuer, acc, whitelistedBalance))
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(buyLockedBalance))
 
 	// try to place order with the invalid GoodTilBlockHeight
@@ -264,7 +293,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	}
 	require.ErrorContains(
 		t,
-		dexKeeper.PlaceOrder(sdkCtx, buyOrderWithGoodTilHeight),
+		dexKeeper.PlaceOrder(simapp.CopyContextWithMultiStore(sdkCtx), buyOrderWithGoodTilHeight),
 		"good til block height 99 must be greater than current block height 100: invalid input",
 	)
 
@@ -275,7 +304,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	}
 	require.ErrorContains(
 		t,
-		dexKeeper.PlaceOrder(sdkCtx, buyOrderWithGoodTilTime),
+		dexKeeper.PlaceOrder(simapp.CopyContextWithMultiStore(sdkCtx), buyOrderWithGoodTilTime),
 		"good til block height 2023-03-02 01:11:12.000000013 +0000 UTC must be greater than current block height",
 	)
 
@@ -287,6 +316,8 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
 	require.True(t, dexLockedBalance.IsZero())
+	dexWhitelistingReservedBalance = assetFTKeeper.GetDEXWhitelistingReservedBalance(sdkCtx, acc, buyLockedBalance.Denom)
+	require.True(t, dexWhitelistingReservedBalance.IsZero())
 
 	// now place both orders to let them match partially
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
@@ -301,6 +332,8 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
 	require.True(t, dexLockedBalance.IsZero())
+	dexWhitelistingReservedBalance = assetFTKeeper.GetDEXWhitelistingReservedBalance(sdkCtx, acc, buyLockedBalance.Denom)
+	require.True(t, dexWhitelistingReservedBalance.IsZero())
 }
 
 func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
@@ -1038,7 +1071,7 @@ func getAccountDenomsOrdersCount(
 	acc sdk.AccAddress,
 ) map[string]uint64 {
 	denomToCount := make(map[string]uint64)
-	accountsDenomsOrdersCount, _, err := testApp.DEXKeeper.GetPaginatedAccountsDenomsOrdersCounts(
+	accountsDenomsOrdersCount, _, err := testApp.DEXKeeper.GetAccountsDenomsOrdersCounts(
 		sdkCtx,
 		&query.PageRequest{
 			Limit: query.PaginationMaxLimit,

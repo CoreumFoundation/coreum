@@ -15,6 +15,7 @@
     - [EventAmountClawedBack](#coreum.asset.ft.v1.EventAmountClawedBack)
     - [EventDEXLockedAmountChanged](#coreum.asset.ft.v1.EventDEXLockedAmountChanged)
     - [EventDEXSettingsChanged](#coreum.asset.ft.v1.EventDEXSettingsChanged)
+    - [EventDEXWhitelistingReservedAmountChanged](#coreum.asset.ft.v1.EventDEXWhitelistingReservedAmountChanged)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
     - [EventWhitelistedAmountChanged](#coreum.asset.ft.v1.EventWhitelistedAmountChanged)
@@ -1754,6 +1755,24 @@ the granter's account.
 
 
 
+<a name="coreum.asset.ft.v1.EventDEXWhitelistingReservedAmountChanged"></a>
+
+### EventDEXWhitelistingReservedAmountChanged
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `account` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
+| `previous_amount` | [string](#string) |  |    |
+| `current_amount` | [string](#string) |  |    |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.EventFrozenAmountChanged"></a>
 
 ### EventFrozenAmountChanged
@@ -1892,6 +1911,7 @@ GenesisState defines the module genesis state.
 | `whitelisted_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |  `whitelisted_balances contains the whitelisted balances on all of the accounts`  |
 | `pending_token_upgrades` | [PendingTokenUpgrade](#coreum.asset.ft.v1.PendingTokenUpgrade) | repeated |  `pending_token_upgrades contains pending token upgrades.`  |
 | `dex_locked_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |  `dex_locked_balances contains the DEX locked balances on all of the accounts`  |
+| `dex_whitelisting_reserved_balances` | [Balance](#coreum.asset.ft.v1.Balance) | repeated |    |
 | `dex_settings` | [DEXSettingsWithDenom](#coreum.asset.ft.v1.DEXSettingsWithDenom) | repeated |    |
 
 
@@ -2002,6 +2022,7 @@ Params store gov manageable parameters.
 | `locked` | [string](#string) |  |  `locked is the balance locked in vesting and DEX.`  |
 | `locked_in_vesting` | [string](#string) |  |  `locked_in_vesting is the balance locked in bank vesting.`  |
 | `locked_in_dex` | [string](#string) |  |  `locked_in_dex is the balance locked in DEX.`  |
+| `whitelisting_reserved_in_dex` | [string](#string) |  |    |
 
 
 

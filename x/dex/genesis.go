@@ -110,7 +110,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(errors.Wrap(err, "failed to get order books with ID"))
 	}
 
-	accountsDenomsOrdersCounts, _, err := k.GetPaginatedAccountsDenomsOrdersCounts(
+	accountsDenomsOrdersCounts, _, err := k.GetAccountsDenomsOrdersCounts(
 		ctx, &query.PageRequest{Limit: query.PaginationMaxLimit},
 	)
 	if err != nil {

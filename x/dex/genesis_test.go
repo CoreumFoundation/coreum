@@ -159,7 +159,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(lockedBalance))
 		require.NoError(t, testApp.AssetFTKeeper.DEXLock(
-			sdkCtx, creator, lockedBalance, orderWithSeq.Order.GetReceiveDenom(),
+			sdkCtx, creator, lockedBalance,
 		))
 	}
 	// set the correct state

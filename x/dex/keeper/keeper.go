@@ -346,8 +346,8 @@ func (k Keeper) GetAccountDenomOrdersCount(
 	return k.getAccountDenomOrdersCounter(ctx, accNumber, denom)
 }
 
-// GetPaginatedAccountsDenomsOrdersCounts returns accounts denoms orders count.
-func (k Keeper) GetPaginatedAccountsDenomsOrdersCounts(
+// GetAccountsDenomsOrdersCounts returns accounts denoms orders count.
+func (k Keeper) GetAccountsDenomsOrdersCounts(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.AccountDenomOrdersCount, *query.PageResponse, error) {
@@ -742,7 +742,17 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 		return err
 	}
 
-	return k.assetFTKeeper.DEXUnlock(ctx, acc, sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance))
+	unlockCoin := sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance)
+	releaseWhitelistingCoin, err := types.ComputeLimitOrderWhitelistingReservedBalance(
+		order.Side, order.BaseDenom, order.QuoteDenom, record.RemainingQuantity, *order.Price,
+	)
+	if err != nil {
+		return err
+	}
+
+	return k.decreaseFTLimits(
+		ctx, acc, unlockCoin, releaseWhitelistingCoin,
+	)
 }
 
 func (k Keeper) getOrderBookData(ctx sdk.Context, orderBookID uint32) (types.OrderBookData, error) {

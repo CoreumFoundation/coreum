@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -114,7 +115,28 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
-	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "locking coins for DEX disabled for")
+	errStr := fmt.Sprintf("locking coins for DEX disabled for %s", denomWithExtension)
+	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), errStr)
+
+	// use the denomWithExtension as quote
+	order = types.Order{
+		Creator:    acc.String(),
+		Type:       types.ORDER_TYPE_LIMIT,
+		ID:         uuid.Generate().String(),
+		BaseDenom:  denom2,
+		QuoteDenom: denomWithExtension,
+		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
+		Quantity:   sdkmath.NewInt(10),
+		Side:       types.SIDE_SELL,
+		GoodTil: &types.GoodTil{
+			GoodTilBlockHeight: 390,
+		},
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	lockedBalance, err = order.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
+	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), errStr)
 }
 
 func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {

@@ -21,18 +21,18 @@ func TestKeeper_GoodTil(t *testing.T) {
 	tests := []struct {
 		name string
 		// height to orders
-		orders      func(accSet AccSet) map[uint64][]types.Order
-		wantOrders  func(accSet AccSet) []types.Order
+		orders      func(testSet TestSet) map[uint64][]types.Order
+		wantOrders  func(testSet TestSet) []types.Order
 		startHeight uint64
 		endHeight   uint64
 	}{
 		{
 			name: "no_match_no_good_til",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					2: {
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id1",
 							BaseDenom:   denom1,
@@ -47,10 +47,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 			},
 			startHeight: 1,
 			endHeight:   10,
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:           accSet.acc1.String(),
+						Creator:           testSet.acc1.String(),
 						Type:              types.ORDER_TYPE_LIMIT,
 						ID:                "id1",
 						BaseDenom:         denom1,
@@ -67,11 +67,11 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "no_match_with_good_til_block_height",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					301: {
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id1",
 							BaseDenom:   denom1,
@@ -85,10 +85,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:           accSet.acc1.String(),
+						Creator:           testSet.acc1.String(),
 						Type:              types.ORDER_TYPE_LIMIT,
 						ID:                "id1",
 						BaseDenom:         denom1,
@@ -108,11 +108,11 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "no_match_with_good_til_block_time",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					301: {
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id1",
 							BaseDenom:   denom1,
@@ -126,10 +126,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:           accSet.acc1.String(),
+						Creator:           testSet.acc1.String(),
 						Type:              types.ORDER_TYPE_LIMIT,
 						ID:                "id1",
 						BaseDenom:         denom1,
@@ -149,11 +149,11 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "no_match_with_good_til_block_high_and_time",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					301: {
 						{
-							Creator:    accSet.acc1.String(),
+							Creator:    testSet.acc1.String(),
 							Type:       types.ORDER_TYPE_LIMIT,
 							ID:         "id1",
 							BaseDenom:  denom1,
@@ -170,10 +170,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:    accSet.acc1.String(),
+						Creator:    testSet.acc1.String(),
 						Type:       types.ORDER_TYPE_LIMIT,
 						ID:         "id1",
 						BaseDenom:  denom1,
@@ -196,11 +196,11 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "partial_taker_match_with_good_til_block_height",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					101: {
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id1",
 							BaseDenom:   denom1,
@@ -214,7 +214,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 					102: {
 						{
-							Creator:     accSet.acc2.String(),
+							Creator:     testSet.acc2.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id2",
 							BaseDenom:   denom1,
@@ -228,10 +228,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:           accSet.acc2.String(),
+						Creator:           testSet.acc2.String(),
 						Type:              types.ORDER_TYPE_LIMIT,
 						ID:                "id2",
 						BaseDenom:         denom1,
@@ -251,11 +251,11 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "full_taker_match_with_good_til_block_height",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					105: {
 						{
-							Creator:     accSet.acc2.String(),
+							Creator:     testSet.acc2.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id1",
 							BaseDenom:   denom1,
@@ -267,7 +267,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 							TimeInForce: types.TIME_IN_FORCE_GTC,
 						},
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id2",
 							BaseDenom:   denom1,
@@ -281,10 +281,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:           accSet.acc2.String(),
+						Creator:           testSet.acc2.String(),
 						Type:              types.ORDER_TYPE_LIMIT,
 						ID:                "id1",
 						BaseDenom:         denom1,
@@ -304,11 +304,11 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "no_match_with_good_til_block_height_keep_to_max_height",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					310: {
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id1",
 							BaseDenom:   denom1,
@@ -322,10 +322,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:           accSet.acc1.String(),
+						Creator:           testSet.acc1.String(),
 						Type:              types.ORDER_TYPE_LIMIT,
 						ID:                "id1",
 						BaseDenom:         denom1,
@@ -345,12 +345,12 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "no_match_with_good_til_block_height_remove_from_max_height",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					310: {
 						// this order will be cancelled by good til
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id1",
 							BaseDenom:   denom1,
@@ -365,7 +365,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 					// this order will be cancelled by good til
 					311: {
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id2",
 							BaseDenom:   denom2,
@@ -380,7 +380,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 					// this order will remain in the order book
 					314: {
 						{
-							Creator:     accSet.acc1.String(),
+							Creator:     testSet.acc1.String(),
 							Type:        types.ORDER_TYPE_LIMIT,
 							ID:          "id3",
 							BaseDenom:   denom1,
@@ -394,10 +394,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:           accSet.acc1.String(),
+						Creator:           testSet.acc1.String(),
 						Type:              types.ORDER_TYPE_LIMIT,
 						ID:                "id3",
 						BaseDenom:         denom1,
@@ -417,12 +417,12 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "no_match_with_good_til_block_time_remove_from_max_time",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					101: {
 						// this order will be cancelled by good til
 						{
-							Creator:    accSet.acc1.String(),
+							Creator:    testSet.acc1.String(),
 							Type:       types.ORDER_TYPE_LIMIT,
 							ID:         "id1",
 							BaseDenom:  denom1,
@@ -439,7 +439,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 					// this order will be cancelled by good til
 					102: {
 						{
-							Creator:    accSet.acc1.String(),
+							Creator:    testSet.acc1.String(),
 							Type:       types.ORDER_TYPE_LIMIT,
 							ID:         "id2",
 							BaseDenom:  denom2,
@@ -456,7 +456,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 					// this order will remain in the order book
 					108: {
 						{
-							Creator:    accSet.acc1.String(),
+							Creator:    testSet.acc1.String(),
 							Type:       types.ORDER_TYPE_LIMIT,
 							ID:         "id3",
 							BaseDenom:  denom1,
@@ -472,10 +472,10 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:    accSet.acc1.String(),
+						Creator:    testSet.acc1.String(),
 						Type:       types.ORDER_TYPE_LIMIT,
 						ID:         "id3",
 						BaseDenom:  denom1,
@@ -497,12 +497,12 @@ func TestKeeper_GoodTil(t *testing.T) {
 		},
 		{
 			name: "no_match_with_good_til_block_time_and_height_remove_both",
-			orders: func(accSet AccSet) map[uint64][]types.Order {
+			orders: func(testSet TestSet) map[uint64][]types.Order {
 				return map[uint64][]types.Order{
 					101: {
 						// this order will be cancelled by good til
 						{
-							Creator:    accSet.acc1.String(),
+							Creator:    testSet.acc1.String(),
 							Type:       types.ORDER_TYPE_LIMIT,
 							ID:         "id1",
 							BaseDenom:  denom1,
@@ -519,7 +519,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 					},
 				}
 			},
-			wantOrders: func(accSet AccSet) []types.Order {
+			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{}
 			},
 			startHeight: 100,
@@ -540,11 +540,11 @@ func TestKeeper_GoodTil(t *testing.T) {
 				Time:   initialBlockTime,
 				Height: int64(tt.startHeight),
 			})
-			accSet := getAccSet(sdkCtx, testApp)
+			testSet := genTestSet(t, sdkCtx, testApp)
 			orderBooksIDs := make(map[uint32]struct{})
 
 			// validate height
-			heightToOrders := tt.orders(accSet)
+			heightToOrders := tt.orders(testSet)
 			for height := range heightToOrders {
 				if height < tt.startHeight || height > tt.endHeight {
 					t.Fatalf("Order height must be in the range [%d, %d]", tt.startHeight, tt.endHeight)
@@ -583,7 +583,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 				gotOrders = append(gotOrders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_BUY)...)
 				gotOrders = append(gotOrders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_SELL)...)
 			}
-			require.ElementsMatch(t, tt.wantOrders(accSet), gotOrders)
+			require.ElementsMatch(t, tt.wantOrders(testSet), gotOrders)
 		})
 	}
 }

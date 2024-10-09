@@ -98,6 +98,30 @@ func (s balanceStore) SetBalance(coin sdk.Coin) {
 	}
 }
 
+func (s balanceStore) AddBalance(coin sdk.Coin) (sdk.Coin, sdk.Coin) {
+	balance := s.Balance(coin.Denom)
+	newBalance := balance.Add(coin)
+	s.SetBalance(newBalance)
+
+	return balance, newBalance
+}
+
+func (s balanceStore) SubBalance(coin sdk.Coin) (sdk.Coin, sdk.Coin, error) {
+	balance := s.Balance(coin.Denom)
+	if !balance.IsGTE(coin) {
+		return sdk.Coin{}, sdk.Coin{}, sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
+			"balance %s is lower than amount to subtract %s",
+			balance.String(),
+			coin.String(),
+		)
+	}
+
+	newBalance := balance.Sub(coin)
+	s.SetBalance(newBalance)
+
+	return balance, newBalance, nil
+}
+
 func collectBalances(
 	cdc codec.BinaryCodec,
 	store storetypes.KVStore,

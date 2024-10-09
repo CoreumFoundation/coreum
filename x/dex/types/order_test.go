@@ -168,6 +168,17 @@ func TestOrder_Validate(t *testing.T) {
 			wantErr: types.ErrInvalidInput,
 		},
 		{
+			name: "invalid_whitelisting_reserve_balance_out_or_range",
+			order: func() types.Order {
+				order := validOrder()
+				order.Side = types.SIDE_SELL
+				order.Quantity = sdkmath.NewInt(1_000_000)
+				order.Price = lo.ToPtr(types.MustNewPriceFromString(fmt.Sprintf("9999999999999999999e%d", types.MaxExp)))
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
 			name: "invalid_limit_with_nil_price",
 			order: func() types.Order {
 				order := validOrder()

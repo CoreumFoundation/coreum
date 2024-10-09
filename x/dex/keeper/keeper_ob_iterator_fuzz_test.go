@@ -14,11 +14,10 @@ import (
 )
 
 func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
-	f.Add(uint64(0), int8(0))
-	f.Add(uint64(123), types.MaxExp)
-	f.Add(uint64(4123123123), types.MinExt)
-	f.Add(uint64(9999999999999999999), types.MaxExp)
-	f.Add(uint64(1), types.MinExt)
+	f.Add(uint64(1), int8(0))
+	f.Add(uint64(123), int8(-5))
+	f.Add(uint64(123456789), int8(5))
+	f.Add(uint64(9999999999999999999), int8(10))
 
 	testApp := simapp.New()
 	lock := sync.Mutex{}
@@ -34,6 +33,11 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 	require.NoError(f, err)
 
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
+		// to prevent fast fail, because of out of sdkmath.Int range in the bank keeper at the time of the funding
+		// we limit the exponent.
+		if exp < -10 || exp > 10 {
+			t.Skip()
+		}
 		lock.Lock()
 		defer lock.Unlock()
 		placeRandomOrderAndAssertOrdering(t, testApp, num, exp, types.SIDE_SELL)
@@ -41,9 +45,9 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 }
 
 func FuzzSaveBuyOrderAndReadWithSorting(f *testing.F) {
-	f.Add(uint64(123), int8(-3))
-	f.Add(uint64(0), int8(0))
-	f.Add(uint64(1), int8(-10))
+	f.Add(uint64(1), int8(0))
+	f.Add(uint64(123), int8(-5))
+	f.Add(uint64(123456789), int8(5))
 	f.Add(uint64(9999999999999999999), int8(10))
 
 	testApp := simapp.New()

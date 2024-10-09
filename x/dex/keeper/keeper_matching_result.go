@@ -8,8 +8,9 @@ import (
 
 // CoinToAccNumber is a coin to account number struct.
 type CoinToAccNumber struct {
-	AccNumber uint64
-	Coin      sdk.Coin
+	AccNumber        uint64
+	LockingCoin      sdk.Coin
+	WhitelistingCoin sdk.Coin
 }
 
 // MatchingResult is the result of a matching operation.
@@ -35,37 +36,41 @@ func NewMatchingResult(takerAccNumber uint64) *MatchingResult {
 }
 
 // RegisterTakerSend sets the coin to send.
-func (mr *MatchingResult) RegisterTakerSend(makerAccNumber uint64, coin sdk.Coin) {
-	if coin.IsZero() {
+func (mr *MatchingResult) RegisterTakerSend(makerAccNumber uint64, spendCoin, whitelistingCoin sdk.Coin) {
+	if spendCoin.IsZero() {
 		return
 	}
+
 	mr.TakerSend = appendOrAddCoinToAccNumber(mr.TakerSend, CoinToAccNumber{
-		AccNumber: makerAccNumber,
-		Coin:      coin,
+		AccNumber:        makerAccNumber,
+		LockingCoin:      spendCoin,
+		WhitelistingCoin: whitelistingCoin,
 	})
 }
 
 // RegisterMakerUnlockAndSend sets the coin to unlock and send.
-func (mr *MatchingResult) RegisterMakerUnlockAndSend(makerAccNumber uint64, coin sdk.Coin) {
-	if coin.IsZero() {
+func (mr *MatchingResult) RegisterMakerUnlockAndSend(makerAccNumber uint64, spendCoin, whitelistingCoin sdk.Coin) {
+	if spendCoin.IsZero() {
 		return
 	}
 
 	mr.MakerUnlockAndSend = appendOrAddCoinToAccNumber(mr.MakerUnlockAndSend, CoinToAccNumber{
-		AccNumber: makerAccNumber,
-		Coin:      coin,
+		AccNumber:        makerAccNumber,
+		LockingCoin:      spendCoin,
+		WhitelistingCoin: whitelistingCoin,
 	})
 }
 
 // RegisterMakerUnlock sets the coin to unlock.
-func (mr *MatchingResult) RegisterMakerUnlock(makerAccNumber uint64, coin sdk.Coin) {
-	if coin.IsZero() {
+func (mr *MatchingResult) RegisterMakerUnlock(makerAccNumber uint64, spendCoin, whitelistingCoin sdk.Coin) {
+	if spendCoin.IsZero() {
 		return
 	}
 
 	mr.MakerUnlock = appendOrAddCoinToAccNumber(mr.MakerUnlock, CoinToAccNumber{
-		AccNumber: makerAccNumber,
-		Coin:      coin,
+		AccNumber:        makerAccNumber,
+		LockingCoin:      spendCoin,
+		WhitelistingCoin: whitelistingCoin,
 	})
 }
 
@@ -82,7 +87,8 @@ func (mr *MatchingResult) RegisterMakerUpdateRecord(record types.OrderBookRecord
 func appendOrAddCoinToAccNumber(coins []CoinToAccNumber, coin CoinToAccNumber) []CoinToAccNumber {
 	for i := range coins {
 		if coins[i].AccNumber == coin.AccNumber {
-			coins[i].Coin = coins[i].Coin.Add(coin.Coin)
+			coins[i].LockingCoin = coins[i].LockingCoin.Add(coin.LockingCoin)
+			coins[i].WhitelistingCoin = coins[i].WhitelistingCoin.Add(coin.WhitelistingCoin)
 			return coins
 		}
 	}
@@ -90,7 +96,7 @@ func appendOrAddCoinToAccNumber(coins []CoinToAccNumber, coin CoinToAccNumber) [
 	return append(coins, coin)
 }
 
-func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult, order types.Order) error {
+func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult, usedDenoms []string) error {
 	accCache := make(map[uint64]sdk.AccAddress)
 	takerAddr, err := k.getAccountAddressWithCache(ctx, mr.TakerAccNumber, accCache)
 	if err != nil {
@@ -102,7 +108,7 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult, order t
 		if err != nil {
 			return err
 		}
-		if err := k.sendCoinWithLockCheck(ctx, takerAddr, makerAddr, s.Coin, order.GetReceiveDenom()); err != nil {
+		if err := k.checksFTLimitsAndSend(ctx, takerAddr, makerAddr, s.LockingCoin, s.WhitelistingCoin); err != nil {
 			return err
 		}
 	}
@@ -112,7 +118,7 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult, order t
 		if err != nil {
 			return err
 		}
-		if err := k.unlockAndSendCoin(ctx, makerAddr, takerAddr, us.Coin); err != nil {
+		if err := k.decreaseFTLimitsAndSend(ctx, makerAddr, takerAddr, us.LockingCoin, us.WhitelistingCoin); err != nil {
 			return err
 		}
 	}
@@ -122,12 +128,12 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult, order t
 		if err != nil {
 			return err
 		}
-		if err := k.unlockCoin(ctx, makerAddr, u.Coin); err != nil {
+		if err := k.decreaseFTLimits(ctx, makerAddr, u.LockingCoin, u.WhitelistingCoin); err != nil {
 			return err
 		}
 	}
 	for _, record := range mr.MakerRemoveRecords {
-		if err := k.removeOrderByRecordAndUsedDenoms(ctx, record, order.Denoms()); err != nil {
+		if err := k.removeOrderByRecordAndUsedDenoms(ctx, record, usedDenoms); err != nil {
 			return err
 		}
 	}

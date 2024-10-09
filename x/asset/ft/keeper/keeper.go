@@ -704,22 +704,206 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 	}
 }
 
-// DEXLock locks specified token from the specified account.
-func (k Keeper) DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error {
-	if err := k.dexLockingChecks(ctx, addr, coin, receiveDenom); err != nil {
+// DEXIncreaseLimits increases the DEX limits.
+func (k Keeper) DEXIncreaseLimits(
+	ctx sdk.Context, addr sdk.AccAddress, lockCoin, reserveWhitelistingCoin sdk.Coin,
+) error {
+	if err := k.dexChecksForDenoms(ctx, []string{lockCoin.Denom, reserveWhitelistingCoin.Denom}); err != nil {
+		return err
+	}
+
+	if err := k.DEXLock(ctx, addr, lockCoin); err != nil {
+		return err
+	}
+
+	return k.DEXReserveWhitelisting(ctx, addr, reserveWhitelistingCoin)
+}
+
+// DEXDecreaseLimits decreases the DEX limits.
+func (k Keeper) DEXDecreaseLimits(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	unlockCoin, releaseWhitelistingCoin sdk.Coin,
+) error {
+	if err := k.DEXUnlock(ctx, addr, unlockCoin); err != nil {
+		return err
+	}
+
+	return k.DEXReleaseWhitelisting(ctx, addr, releaseWhitelistingCoin)
+}
+
+// DEXDecreaseLimitsAndSend decreases the DEX limits and sends the coin.
+func (k Keeper) DEXDecreaseLimitsAndSend(
+	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, unlockAndSendCoin, releaseWhitelistingCoin sdk.Coin,
+) error {
+	if err := k.DEXUnlock(ctx, fromAddr, unlockAndSendCoin); err != nil {
+		return err
+	}
+	if err := k.DEXReleaseWhitelisting(ctx, fromAddr, releaseWhitelistingCoin); err != nil {
+		return err
+	}
+	// send using the native bank
+	if err := k.bankKeeper.SendCoins(ctx, fromAddr, toAddr, sdk.NewCoins(unlockAndSendCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to send DEX coins")
+	}
+
+	return nil
+}
+
+// DEXChecksLimitsAndSend checks DEX limits and sends the coin.
+func (k Keeper) DEXChecksLimitsAndSend(
+	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, sendCoin, checkReserveWhitelistingCoin sdk.Coin,
+) error {
+	if err := k.dexChecksForDenoms(ctx, []string{sendCoin.Denom, checkReserveWhitelistingCoin.Denom}); err != nil {
+		return err
+	}
+
+	if err := k.dexLockingChecks(ctx, fromAddr, sendCoin); err != nil {
+		return err
+	}
+
+	def, err := k.getDefinitionOrNil(ctx, checkReserveWhitelistingCoin.Denom)
+	if err != nil {
+		return err
+	}
+	// check whitelisting for FT with whitelisting enabled
+	if def != nil &&
+		def.IsFeatureEnabled(types.Feature_whitelisting) &&
+		// it's prohibited to whitelist the admin that's why we don't check the whitelisting as well
+		!def.IsAdmin(fromAddr) {
+		if err := k.validateWhitelistedBalance(ctx, fromAddr, checkReserveWhitelistingCoin); err != nil {
+			return err
+		}
+	}
+
+	if err := k.bankKeeper.SendCoins(ctx, fromAddr, toAddr, sdk.NewCoins(sendCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to DEX send coins")
+	}
+
+	return nil
+}
+
+// DEXReserveWhitelisting reserves the whitelisting tokens for the specified account.
+func (k Keeper) DEXReserveWhitelisting(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	def, err := k.getDefinitionOrNil(ctx, coin.Denom)
+	if err != nil {
+		return err
+	}
+	// reserve for FT with the whitelisting enabled
+	if def == nil ||
+		!def.IsFeatureEnabled(types.Feature_whitelisting) ||
+		// it's prohibited to whitelist the admin
+		def.IsAdmin(addr) {
+		return nil
+	}
+
+	if err := k.validateWhitelistedBalance(ctx, addr, coin); err != nil {
+		return err
+	}
+
+	dexWhitelistingReservedStore := k.dexWhitelistingReservedAccountBalanceStore(ctx, addr)
+	prevWhitelistingReservedBalance, newWhitelistingReservedBalance := dexWhitelistingReservedStore.AddBalance(coin)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXWhitelistingReservedAmountChanged{
+		Account:        addr.String(),
+		Denom:          coin.Denom,
+		PreviousAmount: prevWhitelistingReservedBalance.Amount,
+		CurrentAmount:  newWhitelistingReservedBalance.Amount,
+	}); err != nil {
+		return sdkerrors.Wrapf(
+			types.ErrInvalidState, "failed to emit EventDEXWhitelistingReservedAmountChanged event: %s", err,
+		)
+	}
+
+	return nil
+}
+
+// DEXReleaseWhitelisting releases the reserved whitelisting tokens from the specified account.
+func (k Keeper) DEXReleaseWhitelisting(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(
+			cosmoserrors.ErrInvalidCoins, "amount to release DEX whitelisting reserved token must be positive",
+		)
+	}
+
+	def, err := k.getDefinitionOrNil(ctx, coin.Denom)
+	if err != nil {
+		return err
+	}
+	// release only for FT with the whitelisting enabled
+	if def == nil ||
+		!def.IsFeatureEnabled(types.Feature_whitelisting) ||
+		// it's prohibited to whitelist the admin
+		def.IsAdmin(addr) {
+		return nil
+	}
+
+	dexWhitelistingReservedStore := k.dexWhitelistingReservedAccountBalanceStore(ctx, addr)
+	prevWhitelistingReservedBalance, newWhitelistingReservedBalance, err := dexWhitelistingReservedStore.SubBalance(coin)
+	if err != nil {
+		return sdkerrors.Wrap(err, "failed to cancel DEX whitelisted")
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXWhitelistingReservedAmountChanged{
+		Account:        addr.String(),
+		Denom:          coin.Denom,
+		PreviousAmount: prevWhitelistingReservedBalance.Amount,
+		CurrentAmount:  newWhitelistingReservedBalance.Amount,
+	}); err != nil {
+		return sdkerrors.Wrapf(
+			types.ErrInvalidState, "failed to emit EventDEXWhitelistingReservedAmountChanged event: %s", err,
+		)
+	}
+
+	return nil
+}
+
+// GetDEXWhitelistingReservedBalance returns the DEX whitelisting reserved balance.
+func (k Keeper) GetDEXWhitelistingReservedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+	return k.dexWhitelistingReservedAccountBalanceStore(ctx, addr).Balance(denom)
+}
+
+// GetDEXWhitelistingReservedBalances returns the DEX whitelisting reserved balances of an account.
+func (k Keeper) GetDEXWhitelistingReservedBalances(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	pagination *query.PageRequest,
+) (sdk.Coins, *query.PageResponse, error) {
+	return k.dexWhitelistingReservedAccountBalanceStore(ctx, addr).Balances(pagination)
+}
+
+// GetAccountsDEXWhitelistingReservedBalances returns the DEX whitelisting reserved balance on all the account.
+func (k Keeper) GetAccountsDEXWhitelistingReservedBalances(
+	ctx sdk.Context,
+	pagination *query.PageRequest,
+) ([]types.Balance, *query.PageResponse, error) {
+	return collectBalances(k.cdc, k.dexWhitelistingReservedBalancesStore(ctx), pagination)
+}
+
+// SetDEXWhitelistingReservedBalances sets the DEX whitelisting reserved balances of a specified account.
+// Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you
+// need set zero amount use the slice []sdk.Coins.
+func (k Keeper) SetDEXWhitelistingReservedBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
+	dexWhitelistingReservedStore := k.dexWhitelistingReservedAccountBalanceStore(ctx, addr)
+	for _, coin := range coins {
+		dexWhitelistingReservedStore.SetBalance(coin)
+	}
+}
+
+// DEXLock locks specified token for the specified account.
+func (k Keeper) DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	if err := k.dexLockingChecks(ctx, addr, coin); err != nil {
 		return err
 	}
 
 	dexLockedStore := k.dexLockedAccountBalanceStore(ctx, addr)
-	dexLockedBalance := dexLockedStore.Balance(coin.Denom)
-	newDEXLockedBalance := dexLockedBalance.Add(coin)
-	dexLockedStore.SetBalance(newDEXLockedBalance)
+	prevLockedBalance, newLockedBalance := dexLockedStore.AddBalance(coin)
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXLockedAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
-		PreviousAmount: dexLockedBalance.Amount,
-		CurrentAmount:  newDEXLockedBalance.Amount,
+		PreviousAmount: prevLockedBalance.Amount,
+		CurrentAmount:  newLockedBalance.Amount,
 	}); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventDEXLockedAmountChanged event: %s", err)
 	}
@@ -730,55 +914,22 @@ func (k Keeper) DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, rec
 // DEXUnlock unlocks specified tokens from the specified account.
 func (k Keeper) DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
-		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "DEX unlock amount should be positive")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "amount to unlock DEX tokens must be positive")
 	}
 
 	dexLockedStore := k.dexLockedAccountBalanceStore(ctx, addr)
-	dexLockedBalance := dexLockedStore.Balance(coin.Denom)
-	if !dexLockedBalance.IsGTE(coin) {
-		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
-			"DEX unlock request %s is greater than the available locked balance %s",
-			coin.String(),
-			dexLockedBalance.String(),
-		)
+	prevLockedBalance, newLockedBalance, err := dexLockedStore.SubBalance(coin)
+	if err != nil {
+		return sdkerrors.Wrap(err, "failed to unlock DEX")
 	}
-
-	newDEXLockedBalance := dexLockedBalance.Sub(coin)
-	dexLockedStore.SetBalance(newDEXLockedBalance)
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXLockedAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
-		PreviousAmount: dexLockedBalance.Amount,
-		CurrentAmount:  newDEXLockedBalance.Amount,
+		PreviousAmount: prevLockedBalance.Amount,
+		CurrentAmount:  newLockedBalance.Amount,
 	}); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventDEXLockedAmountChanged event: %s", err)
-	}
-
-	return nil
-}
-
-// DEXUnlockAndSend unlock the coin on the `fromAddr` balance and send to the `toAddr`.
-func (k Keeper) DEXUnlockAndSend(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, coin sdk.Coin) error {
-	if err := k.DEXUnlock(ctx, fromAddr, coin); err != nil {
-		return err
-	}
-	if err := k.bankKeeper.SendCoins(ctx, fromAddr, toAddr, sdk.NewCoins(coin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to send DEX unlocked coins")
-	}
-
-	return nil
-}
-
-// DEXSendWithLockCheck checks that it's allowed to lock the `fromAddr` coin and if allowed sends it to the `toAddr`.
-func (k Keeper) DEXSendWithLockCheck(
-	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, coin sdk.Coin, receiveDenom string,
-) error {
-	if err := k.dexLockingChecks(ctx, fromAddr, coin, receiveDenom); err != nil {
-		return err
-	}
-	if err := k.bankKeeper.SendCoins(ctx, fromAddr, toAddr, sdk.NewCoins(coin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to send DEX coins")
 	}
 
 	return nil
@@ -1221,15 +1372,8 @@ func (k Keeper) validateCoinReceivable(
 	}
 
 	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.HasAdminPrivileges(addr) {
-		balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
-		whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
-
-		finalBalance := balance.Amount.Add(amount)
-		if finalBalance.GT(whitelistedBalance.Amount) {
-			return sdkerrors.Wrapf(
-				types.ErrWhitelistedLimitExceeded,
-				"balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
-				addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
+		if err := k.validateWhitelistedBalance(ctx, addr, sdk.NewCoin(def.Denom, amount)); err != nil {
+			return err
 		}
 	}
 
@@ -1424,6 +1568,34 @@ func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddr
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateWhitelistedBalancesKey(addr))
 }
 
+// dexWhitelistingReservedBalancesStore get the store for the DEX whitelisting reserved balances of all accounts.
+func (k Keeper) dexWhitelistingReservedBalancesStore(ctx sdk.Context) prefix.Store {
+	return prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXWhitelistingReservedBalancesKeyPrefix)
+}
+
+// dexWhitelistingReservedAccountBalanceStore gets the store for the DEX whitelisting reserved balances of an account.
+func (k Keeper) dexWhitelistingReservedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
+	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateDEXWhitelistingReservedBalancesKey(addr))
+}
+
+func (k Keeper) validateWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
+	whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, coin.Denom)
+	dexWhitelistingReservedBalance := k.GetDEXWhitelistingReservedBalance(ctx, addr, coin.Denom)
+	availableToReceiveAmount := whitelistedBalance.Amount.
+		Sub(balance.Amount).
+		Sub(dexWhitelistingReservedBalance.Amount)
+
+	if availableToReceiveAmount.LT(coin.Amount) {
+		return sdkerrors.Wrapf(
+			types.ErrWhitelistedLimitExceeded,
+			"balance whitelisted for %s is not enough to receive %s, available to receive balance: %s%s",
+			addr, coin, availableToReceiveAmount.String(), coin.Denom)
+	}
+
+	return nil
+}
+
 // dexLockedBalancesStore get the store for the DEX locked balances of all accounts.
 func (k Keeper) dexLockedBalancesStore(ctx sdk.Context) prefix.Store {
 	return prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXLockedBalancesKeyPrefix)
@@ -1434,25 +1606,21 @@ func (k Keeper) dexLockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddres
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateDEXLockedBalancesKey(addr))
 }
 
-func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin, receiveDenom string) error {
+func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
-		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "DEX locking amount must be positive")
-	}
-
-	if err := k.dexLockingChecksForDenoms(ctx, []string{coin.Denom, receiveDenom}); err != nil {
-		return err
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "amount to lock DEX tokens must be positive")
 	}
 
 	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
 	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, coin); err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrDEXLockFailed, "%s", err)
 	}
 
 	frozenAmt := k.GetFrozenBalance(ctx, addr, coin.Denom).Amount
 	notFrozenTotalAmt := balance.Amount.Sub(frozenAmt)
 	if notFrozenTotalAmt.LT(coin.Amount) {
 		return sdkerrors.Wrapf(
-			cosmoserrors.ErrInsufficientFunds,
+			types.ErrDEXLockFailed,
 			"failed to DEX lock %s available %s%s",
 			coin.String(),
 			notFrozenTotalAmt,
@@ -1463,7 +1631,7 @@ func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.
 	return nil
 }
 
-func (k Keeper) dexLockingChecksForDenoms(ctx sdk.Context, denoms []string) error {
+func (k Keeper) dexChecksForDenoms(ctx sdk.Context, denoms []string) error {
 	for _, denom := range denoms {
 		def, err := k.getDefinitionOrNil(ctx, denom)
 		if err != nil {
@@ -1502,7 +1670,7 @@ func (k Keeper) dexLockingChecksForDenoms(ctx sdk.Context, denoms []string) erro
 				if !lo.Contains(settings.WhitelistedDenoms, tradeDenom) {
 					return sdkerrors.Wrapf(
 						cosmoserrors.ErrUnauthorized,
-						"locking coins for DEX of is prohibited, denom %s not whitelisted for %s",
+						"locking coins for DEX is prohibited, denom %s not whitelisted for %s",
 						tradeDenom, denom,
 					)
 				}

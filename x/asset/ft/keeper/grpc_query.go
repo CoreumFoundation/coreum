@@ -14,6 +14,8 @@ import (
 var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
+//
+//nolint:interfacebloat // breaking down this interface is not beneficial.
 type QueryKeeper interface {
 	GetParams(ctx sdk.Context) types.Params
 	GetIssuerTokens(
@@ -36,6 +38,7 @@ type QueryKeeper interface {
 	) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetDEXWhitelistingReservedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error)
 }
 
@@ -120,15 +123,19 @@ func (qs QueryService) Balance(
 	denom := req.GetDenom()
 	vestingLocked := qs.bankKeeper.LockedCoins(ctx, account).AmountOf(denom)
 	dexLocked := qs.keeper.GetDEXLockedBalance(sdk.UnwrapSDKContext(ctx), account, denom).Amount
+	whitelistingReservedInDex := qs.keeper.GetDEXWhitelistingReservedBalance(
+		sdk.UnwrapSDKContext(ctx), account, denom,
+	).Amount
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	return &types.QueryBalanceResponse{
-		Balance:         qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
-		Whitelisted:     qs.keeper.GetWhitelistedBalance(sdkCtx, account, denom).Amount,
-		Frozen:          qs.keeper.GetFrozenBalance(sdkCtx, account, denom).Amount,
-		Locked:          vestingLocked.Add(dexLocked),
-		LockedInVesting: vestingLocked,
-		LockedInDEX:     dexLocked,
+		Balance:                   qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
+		Whitelisted:               qs.keeper.GetWhitelistedBalance(sdkCtx, account, denom).Amount,
+		Frozen:                    qs.keeper.GetFrozenBalance(sdkCtx, account, denom).Amount,
+		Locked:                    vestingLocked.Add(dexLocked),
+		LockedInVesting:           vestingLocked,
+		LockedInDEX:               dexLocked,
+		WhitelistingReservedInDex: whitelistingReservedInDex,
 	}, nil
 }
 
