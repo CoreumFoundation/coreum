@@ -20,33 +20,33 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     Mint {
-        amount: u128,
+        amount: Uint128,
         recipient: Option<String>,
     },
     Burn {
-        amount: u128,
+        amount: Uint128,
     },
     Freeze {
         account: String,
-        amount: u128,
+        amount: Uint128,
     },
     Unfreeze {
         account: String,
-        amount: u128,
+        amount: Uint128,
     },
     SetFrozen {
         account: String,
-        amount: u128,
+        amount: Uint128,
     },
     GloballyFreeze {},
     GloballyUnfreeze {},
     SetWhitelistedLimit {
         account: String,
-        amount: u128,
+        amount: Uint128,
     },
     Clawback {
         account: String,
-        amount: u128,
+        amount: Uint128,
     },
     TransferAdmin {
         account: String,
@@ -58,4 +58,13 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
-pub enum QueryMsg {}
+pub enum QueryMsg {
+    Params {},
+    Token {},
+    Tokens { issuer: String },
+    Balance { account: String },
+    FrozenBalances { account: String },
+    FrozenBalance { account: String },
+    WhitelistedBalances { account: String },
+    WhitelistedBalance { account: String },
+}

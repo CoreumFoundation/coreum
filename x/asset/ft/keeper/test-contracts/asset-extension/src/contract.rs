@@ -1,20 +1,23 @@
-use cosmwasm_std::{entry_point, to_json_binary, StdError};
-use cosmwasm_std::{BalanceResponse, BankQuery};
-use cosmwasm_std::{Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
-use cw2::set_contract_version;
-use std::ops::Div;
-
 use crate::error::ContractError;
-use coreum_wasm_sdk::assetft::{
-    self, FrozenBalanceResponse, Query, Token, TokenResponse, WhitelistedBalanceResponse,
-};
-use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
-
 use crate::msg::{
     ExecuteMsg, IBCPurpose, InstantiateMsg, QueryIssuanceMsgResponse, QueryMsg, SudoMsg,
     TransferContext,
 };
 use crate::state::{DENOM, EXTRA_DATA};
+use coreum_wasm_sdk::assetft::{FREEZING, WHITELISTING};
+use coreum_wasm_sdk::core::{CoreumMsg, CoreumResult};
+use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
+    MsgBurn, MsgMint, QueryFrozenBalanceRequest, QueryFrozenBalanceResponse, QueryTokenRequest,
+    QueryTokenResponse, QueryWhitelistedBalanceRequest, QueryWhitelistedBalanceResponse, Token,
+};
+use coreum_wasm_sdk::types::cosmos::bank::v1beta1::{
+    MsgSend, QueryBalanceRequest, QueryBalanceResponse,
+};
+use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
+use cosmwasm_std::{entry_point, to_json_binary, CosmosMsg, StdError};
+use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
+use cw2::set_contract_version;
+use std::ops::Div;
 
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -52,7 +55,7 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    _deps: DepsMut<CoreumQueries>,
+    _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     msg: ExecuteMsg,
@@ -61,7 +64,7 @@ pub fn execute(
 }
 
 #[entry_point]
-pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResult<ContractError> {
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> CoreumResult<ContractError> {
     match msg {
         SudoMsg::ExtensionTransfer {
             sender,
@@ -84,7 +87,7 @@ pub fn sudo(deps: DepsMut<CoreumQueries>, env: Env, msg: SudoMsg) -> CoreumResul
 }
 
 pub fn sudo_extension_transfer(
-    deps: DepsMut<CoreumQueries>,
+    deps: DepsMut,
     env: Env,
     amount: Uint128,
     sender: String,
@@ -98,7 +101,7 @@ pub fn sudo_extension_transfer(
     }
 
     let rsp = Response::new().add_attribute("method", "execute_transfer");
-    if recipient == env.contract.address {
+    if recipient == env.contract.address.as_str() {
         return Ok(rsp.add_attribute("skip_checks", "self_recipient"));
     }
 
@@ -112,12 +115,12 @@ pub fn sudo_extension_transfer(
 
     let token = query_token(deps.as_ref(), &denom)?;
 
-    if let Some(features) = &token.features {
-        if features.contains(&assetft::FREEZING) {
+    if !&token.features.is_empty() {
+        if token.features.contains(&(FREEZING as i32)) {
             assert_freezing(&context, deps.as_ref(), sender.as_ref(), &token, amount)?;
         }
 
-        if features.contains(&assetft::WHITELISTING) {
+        if token.features.contains(&(WHITELISTING as i32)) {
             assert_whitelisting(&context, deps.as_ref(), &recipient, &token, amount)?;
         }
 
@@ -126,23 +129,35 @@ pub fn sudo_extension_transfer(
         assert_ibc(&context, &recipient, &token, amount)?;
 
         if amount == AMOUNT_BURNING_TRIGGER {
-            return assert_burning(amount, &token);
+            return assert_burning(env.contract.address.as_str(), amount, &token);
         }
 
         if amount == AMOUNT_MINTING_TRIGGER {
-            return assert_minting(sender.as_ref(), &recipient, amount, &token);
+            return assert_minting(
+                env.contract.address.as_str(),
+                sender.as_ref(),
+                &recipient,
+                amount,
+                &token,
+            );
         }
     }
 
-    let transfer_msg = cosmwasm_std::BankMsg::Send {
+    let transfer_msg = MsgSend {
+        from_address: env.contract.address.to_string(),
         to_address: recipient.to_string(),
-        amount: vec![Coin { amount, denom }],
+        amount: [Coin {
+            denom: token.denom.to_string(),
+            amount: amount.to_string(),
+        }]
+        .to_vec(),
     };
 
-    let mut response = rsp.add_message(transfer_msg);
+    let mut response = rsp.add_message(CosmosMsg::Any(transfer_msg.to_any()));
 
     if !commission_amount.is_zero() {
         response = assert_send_commission_rate(
+            env.contract.address.as_str(),
             response,
             sender.as_ref(),
             amount,
@@ -152,7 +167,14 @@ pub fn sudo_extension_transfer(
     }
 
     if !burn_amount.is_zero() {
-        response = assert_burn_rate(response, sender.as_ref(), amount, &token, burn_amount)?;
+        response = assert_burn_rate(
+            env.contract.address.as_str(),
+            response,
+            sender.as_ref(),
+            amount,
+            &token,
+            burn_amount,
+        )?;
     }
 
     Ok(response)
@@ -173,13 +195,13 @@ fn query_issuance_msg(deps: Deps) -> StdResult<Binary> {
 
 fn assert_freezing(
     context: &TransferContext,
-    deps: Deps<CoreumQueries>,
+    deps: Deps,
     account: &str,
     token: &Token,
     amount: Uint128,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
-    if token.admin == Some(account.to_string()) {
+    if token.admin == account {
         return Ok(());
     }
 
@@ -194,7 +216,7 @@ fn assert_freezing(
         return Ok(());
     }
 
-    if token.globally_frozen == Some(true) {
+    if token.globally_frozen {
         return Err(ContractError::FreezingError {});
     }
 
@@ -202,7 +224,8 @@ fn assert_freezing(
     let frozen_balance = query_frozen_balance(deps, account, &token.denom)?;
 
     // the amount is already deducted from the balance, so you can omit it from both sides
-    if frozen_balance.amount > bank_balance.amount {
+    if frozen_balance.amount.parse::<u128>().unwrap() > bank_balance.amount.parse::<u128>().unwrap()
+    {
         return Err(ContractError::FreezingError {});
     }
 
@@ -211,13 +234,13 @@ fn assert_freezing(
 
 fn assert_whitelisting(
     context: &TransferContext,
-    deps: Deps<CoreumQueries>,
+    deps: Deps,
     account: &str,
     token: &Token,
     amount: Uint128,
 ) -> Result<(), ContractError> {
     // Allow any amount if recipient is admin
-    if token.admin == Some(account.to_string()) {
+    if token.admin == account {
         return Ok(());
     }
 
@@ -235,46 +258,59 @@ fn assert_whitelisting(
     let bank_balance = query_bank_balance(deps, account, &token.denom)?;
     let whitelisted_balance = query_whitelisted_balance(deps, account, &token.denom)?;
 
-    if amount + bank_balance.amount > whitelisted_balance.amount {
+    if amount + Uint128::from(bank_balance.amount.parse::<u128>().unwrap())
+        > Uint128::from(whitelisted_balance.amount.parse::<u128>().unwrap())
+    {
         return Err(ContractError::WhitelistingError {});
     }
 
     Ok(())
 }
 
-fn assert_burning(amount: Uint128, token: &Token) -> CoreumResult<ContractError> {
-    let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
-        coin: cosmwasm_std::coin(amount.u128(), &token.denom),
-    });
+fn assert_burning(contract: &str, amount: Uint128, token: &Token) -> CoreumResult<ContractError> {
+    let burn_message = MsgBurn {
+        sender: contract.to_string(),
+        coin: Some(Coin {
+            denom: token.denom.to_string(),
+            amount: amount.to_string(),
+        }),
+    };
 
-    return Ok(Response::new()
+    Ok(Response::new()
         .add_attribute("method", "burn")
-        .add_message(burn_message));
+        .add_message(CosmosMsg::Any(burn_message.to_any())))
 }
 
 fn assert_minting(
+    contract: &str,
     sender: &str,
     recipient: &str,
     amount: Uint128,
     token: &Token,
 ) -> CoreumResult<ContractError> {
-    let mint_message = CoreumMsg::AssetFT(assetft::Msg::Mint {
-        coin: cosmwasm_std::coin(amount.u128(), &token.denom),
-        recipient: Some(recipient.to_string()),
-    });
-
-    let return_fund_msg = cosmwasm_std::BankMsg::Send {
-        to_address: sender.to_string(),
-        amount: vec![Coin {
-            amount,
-            denom: token.denom.clone(),
-        }],
+    let mint_message = MsgMint {
+        sender: contract.to_string(),
+        coin: Some(Coin {
+            denom: token.denom.to_string(),
+            amount: amount.to_string(),
+        }),
+        recipient: recipient.to_string(),
     };
 
-    return Ok(Response::new()
+    let return_fund_msg = MsgSend {
+        from_address: contract.to_string(),
+        to_address: sender.to_string(),
+        amount: [Coin {
+            denom: token.denom.to_string(),
+            amount: amount.to_string(),
+        }]
+        .to_vec(),
+    };
+
+    Ok(Response::new()
         .add_attribute("method", "mint")
-        .add_message(mint_message)
-        .add_message(return_fund_msg));
+        .add_message(CosmosMsg::Any(mint_message.to_any()))
+        .add_message(CosmosMsg::Any(return_fund_msg.to_any())))
 }
 
 fn assert_block_smart_contracts(
@@ -283,9 +319,7 @@ fn assert_block_smart_contracts(
     token: &Token,
     amount: Uint128,
 ) -> Result<(), ContractError> {
-    if recipient.to_string() == token.issuer
-        || Some(recipient.to_string()) == token.extension_cw_address
-    {
+    if recipient.to_string() == token.issuer || recipient == token.extension_cw_address {
         return Ok(());
     }
 
@@ -293,7 +327,7 @@ fn assert_block_smart_contracts(
         return Err(ContractError::SmartContractBlocked {});
     }
 
-    return Ok(());
+    Ok(())
 }
 
 fn assert_ibc(
@@ -302,9 +336,7 @@ fn assert_ibc(
     token: &Token,
     amount: Uint128,
 ) -> Result<(), ContractError> {
-    if Some(recipient.to_string()) == token.admin
-        || Some(recipient.to_string()) == token.extension_cw_address
-    {
+    if recipient == token.admin || recipient == token.extension_cw_address {
         return Ok(());
     }
 
@@ -312,10 +344,11 @@ fn assert_ibc(
         return Err(ContractError::IBCDisabled {});
     }
 
-    return Ok(());
+    Ok(())
 }
 
 fn assert_send_commission_rate(
+    contract: &str,
     response: Response<CoreumMsg>,
     sender: &str,
     amount: Uint128,
@@ -323,40 +356,45 @@ fn assert_send_commission_rate(
     commission_amount: Uint128,
 ) -> CoreumResult<ContractError> {
     if amount == AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER {
-        let refund_commission_msg = cosmwasm_std::BankMsg::Send {
+        let refund_commission_msg = MsgSend {
+            from_address: contract.to_string(),
             to_address: sender.to_string(),
-            amount: vec![Coin {
-                amount: commission_amount,
+            amount: [Coin {
                 denom: token.denom.to_string(),
-            }],
+                amount: commission_amount.to_string(),
+            }]
+            .to_vec(),
         };
 
         return Ok(response
             .add_attribute("send_commission_rate_refund", commission_amount.to_string())
-            .add_message(refund_commission_msg));
+            .add_message(CosmosMsg::Any(refund_commission_msg.to_any())));
     }
 
     // if token has an admin, send half of the commission to the admin and let the extension keep
     // the rest of the commission
-    if let Some(admin) = &token.admin {
+    if !token.admin.is_empty() {
         let admin_commission_amount = commission_amount.div(Uint128::new(2));
         if admin_commission_amount.is_zero() {
             return Ok(response);
         }
 
-        let admin_commission_msg = cosmwasm_std::BankMsg::Send {
-            to_address: admin.to_string(),
-            amount: vec![Coin {
-                amount: admin_commission_amount,
+        let admin_commission_msg = MsgSend {
+            from_address: contract.to_string(),
+            to_address: token.admin.to_string(),
+            amount: [Coin {
                 denom: token.denom.to_string(),
-            }],
+                amount: admin_commission_amount.to_string(),
+            }]
+            .to_vec(),
         };
+
         return Ok(response
             .add_attribute(
                 "admin_send_commission_amount",
                 admin_commission_amount.to_string(),
             )
-            .add_message(admin_commission_msg));
+            .add_message(CosmosMsg::Any(admin_commission_msg.to_any())));
     }
 
     // else, let the extension keep all the commission
@@ -364,6 +402,7 @@ fn assert_send_commission_rate(
 }
 
 fn assert_burn_rate(
+    contract: &str,
     response: Response<CoreumMsg>,
     sender: &str,
     amount: Uint128,
@@ -371,73 +410,65 @@ fn assert_burn_rate(
     burn_amount: Uint128,
 ) -> CoreumResult<ContractError> {
     if amount == AMOUNT_IGNORE_BURN_RATE_TRIGGER {
-        let refund_burn_rate_msg = cosmwasm_std::BankMsg::Send {
+        let refund_burn_rate_msg = MsgSend {
+            from_address: contract.to_string(),
             to_address: sender.to_string(),
-            amount: vec![Coin {
-                amount: burn_amount,
+            amount: [Coin {
                 denom: token.denom.to_string(),
-            }],
+                amount: burn_amount.to_string(),
+            }]
+            .to_vec(),
         };
 
         return Ok(response
             .add_attribute("burn_rate_refund", burn_amount.to_string())
-            .add_message(refund_burn_rate_msg));
+            .add_message(CosmosMsg::Any(refund_burn_rate_msg.to_any())));
     }
 
-    let burn_message = CoreumMsg::AssetFT(assetft::Msg::Burn {
-        coin: cosmwasm_std::coin(burn_amount.u128(), &token.denom),
-    });
+    let burn_message = MsgBurn {
+        sender: contract.to_string(),
+        coin: Some(Coin {
+            denom: token.denom.to_string(),
+            amount: burn_amount.to_string(),
+        }),
+    };
 
     Ok(response
         .add_attribute("burn_amount", burn_amount)
-        .add_message(burn_message))
+        .add_message(CosmosMsg::Any(burn_message.to_any())))
 }
 
-fn query_frozen_balance(deps: Deps<CoreumQueries>, account: &str, denom: &str) -> StdResult<Coin> {
-    let frozen_balance: FrozenBalanceResponse = deps.querier.query(
-        &CoreumQueries::AssetFT(Query::FrozenBalance {
-            account: account.to_string(),
-            denom: denom.to_string(),
-        })
-        .into(),
-    )?;
-    Ok(frozen_balance.balance)
+fn query_frozen_balance(deps: Deps, account: &str, denom: &str) -> StdResult<Coin> {
+    let request = QueryFrozenBalanceRequest {
+        account: account.to_string(),
+        denom: denom.to_string(),
+    };
+    let frozen_balance: QueryFrozenBalanceResponse = request.query(&deps.querier)?;
+    Ok(frozen_balance.balance.unwrap_or_default())
 }
 
-fn query_whitelisted_balance(
-    deps: Deps<CoreumQueries>,
-    account: &str,
-    denom: &str,
-) -> StdResult<Coin> {
-    let whitelisted_balance: WhitelistedBalanceResponse = deps.querier.query(
-        &CoreumQueries::AssetFT(Query::WhitelistedBalance {
-            account: account.to_string(),
-            denom: denom.to_string(),
-        })
-        .into(),
-    )?;
-    Ok(whitelisted_balance.balance)
+fn query_whitelisted_balance(deps: Deps, account: &str, denom: &str) -> StdResult<Coin> {
+    let request = QueryWhitelistedBalanceRequest {
+        account: account.to_string(),
+        denom: denom.to_string(),
+    };
+    let whitelisted_balance: QueryWhitelistedBalanceResponse = request.query(&deps.querier)?;
+    Ok(whitelisted_balance.balance.unwrap_or_default())
 }
 
-fn query_bank_balance(deps: Deps<CoreumQueries>, account: &str, denom: &str) -> StdResult<Coin> {
-    let bank_balance: BalanceResponse = deps.querier.query(
-        &BankQuery::Balance {
-            address: account.to_string(),
-            denom: denom.to_string(),
-        }
-        .into(),
-    )?;
-
-    Ok(bank_balance.amount)
+fn query_bank_balance(deps: Deps, account: &str, denom: &str) -> StdResult<Coin> {
+    let request = QueryBalanceRequest {
+        address: account.to_string(),
+        denom: denom.to_string(),
+    };
+    let bank_balance: QueryBalanceResponse = request.query(&deps.querier)?;
+    Ok(bank_balance.balance.unwrap_or_default())
 }
 
-fn query_token(deps: Deps<CoreumQueries>, denom: &str) -> StdResult<Token> {
-    let token: TokenResponse = deps.querier.query(
-        &CoreumQueries::AssetFT(Query::Token {
-            denom: denom.to_string(),
-        })
-        .into(),
-    )?;
-
-    Ok(token.token)
+fn query_token(deps: Deps, denom: &str) -> StdResult<Token> {
+    let request = QueryTokenRequest {
+        denom: denom.to_string(),
+    };
+    let token: QueryTokenResponse = request.query(&deps.querier)?;
+    Ok(token.token.unwrap_or_default())
 }

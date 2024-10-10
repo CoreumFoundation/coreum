@@ -17,7 +17,6 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [features]
-# for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
@@ -37,7 +36,7 @@ cw-storage-plus = "0.16.0"
 cw2 = "0.16.0"
 schemars = "0.8.10"
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.31" }
+thiserror = "1.0.31"
 
 [dev-dependencies]
 cw-multi-test = "0.16.0"

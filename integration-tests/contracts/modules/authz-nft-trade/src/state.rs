@@ -1,5 +1,6 @@
+use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Coin};
+use cosmwasm_std::Addr;
 use cw_storage_plus::Map;
 
 // We keep NFT offers here, key is (class_id, id)

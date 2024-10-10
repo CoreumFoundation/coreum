@@ -745,7 +745,7 @@ func New(
 		wasmkeeper.WithQueryPlugins(wasmcustomhandler.NewCoreumQueryHandler(
 			assetftkeeper.NewQueryService(app.AssetFTKeeper, app.BankKeeper),
 			assetnftkeeper.NewQueryService(app.AssetNFTKeeper),
-			app.NFTKeeper,
+			app.NFTKeeper, app.GRPCQueryRouter(), appCodec,
 		)),
 	}
 

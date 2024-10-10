@@ -716,6 +716,7 @@ github.com/CloudyKit/jet/v6 v6.2.0 h1:EpcZ6SR9n28BUGtNJSvlBqf90IpjeFr36Tizxhn/oM
 github.com/CloudyKit/jet/v6 v6.2.0/go.mod h1:d3ypHeIRNo2+XyqnGA8s+aphtcVpjP5hPwP/Lzo7Ro4=
 github.com/CoreumFoundation/cometbft v0.38.8-0.20240918091905-099b4104e5b0 h1:PIFuYXb4nHkYKbu7FkPa4HxTF891YdmDY3pixfTQ8RA=
 github.com/CoreumFoundation/cometbft v0.38.8-0.20240918091905-099b4104e5b0/go.mod h1:jHPx9vQpWzPHEAiYI/7EDKaB1NXhK6o3SArrrY8ExKc=
+github.com/CoreumFoundation/coreum/v4 v4.0.0-20240912071617-43930506e0a3/go.mod h1:3xSyRVosHkpO90zIot807kqxN59/XyU7qNuR/AIJPsc=
 github.com/CoreumFoundation/crust v0.0.0-20240802131508-4a7584e019a8 h1:sCshAF6Gxal9XIvKda57AoKVvzh0GZ4UBFjM+SLjYA8=
 github.com/CoreumFoundation/crust v0.0.0-20240802131508-4a7584e019a8/go.mod h1:xCz+IXPyIDIIY+bg9rHy6wsoQ5dh82GusgUKZlIkD9s=
 github.com/CoreumFoundation/crust v0.0.0-20240806081012-2bce4a5dee4b h1:E5CnqYbWu2ex5iBqza21i8BWPiwaCYSCMVnZsyzVDt0=
@@ -724,6 +725,7 @@ github.com/CoreumFoundation/crust v0.0.0-20240829115043-b19e0fee4b1f h1:K4DkBg15
 github.com/CoreumFoundation/crust v0.0.0-20240829115043-b19e0fee4b1f/go.mod h1:aI6UNF22pqpkR468z/yVq0iaynH7O8fLvJXvOAiW/FE=
 github.com/CoreumFoundation/crust v0.0.0-20240910084945-51add516ee39/go.mod h1:jl7aUqRGQj20pctlDXGs64EZJa8g1jtxDiQOCkxx9Gs=
 github.com/CoreumFoundation/crust v0.0.0-20240913053503-d54f466836c9/go.mod h1:E9Gyav98jDtWqIr+gAHu9onNQOFf/SGFsYhwbWtO87M=
+github.com/CoreumFoundation/crust v0.0.0-20241008134118-a7bc074eff93/go.mod h1:rRKCkQ1UpqmKUCsL6XCFQZCo0OXLRVNWCL9h4gt+pq4=
 github.com/CosmWasm/wasmvm/v2 v2.0.0/go.mod h1:su9lg5qLr7adV95eOfzjZWkGiky8WNaNIHDr7Fpu7Ck=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/zstd v1.4.5/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=

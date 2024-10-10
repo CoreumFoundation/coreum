@@ -1,11 +1,12 @@
 use coreum_wasm_sdk::core::CoreumResult;
+use coreum_wasm_sdk::shim;
 use coreum_wasm_sdk::types::cosmos::authz::v1beta1::MsgExec;
 use coreum_wasm_sdk::types::cosmos::bank::v1beta1::MsgSend;
 use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
@@ -65,20 +66,18 @@ fn execute_transfer(
             denom,
             amount: amount.to_string(),
         }],
-    };
+    }
+    .to_any();
 
     let exec = MsgExec {
         grantee: env.contract.address.to_string(),
-        msgs: vec![send.to_any()],
-    };
-    let exec_bytes: Vec<u8> = exec.to_proto_bytes();
-
-    let msg = CosmosMsg::Stargate {
-        type_url: "/cosmos.authz.v1beta1.MsgExec".to_string(),
-        value: Binary::from(exec_bytes),
+        msgs: vec![shim::Any {
+            type_url: send.type_url,
+            value: send.value.to_vec(),
+        }],
     };
 
     Ok(Response::new()
         .add_attribute("method", "execute_authz_transfer")
-        .add_message(msg))
+        .add_message(CosmosMsg::Any(exec.to_any())))
 }
