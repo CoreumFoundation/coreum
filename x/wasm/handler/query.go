@@ -164,6 +164,9 @@ func NewCoreumQueryHandler(
 		"/coreum.asset.ft.v1.Query/FrozenBalance":      &assetfttypes.QueryFrozenBalanceResponse{},
 		"/coreum.asset.ft.v1.Query/WhitelistedBalance": &assetfttypes.QueryWhitelistedBalanceResponse{},
 		"/cosmos.bank.v1beta1.Query/Balance":           &banktypes.QueryBalanceResponse{},
+		"/coreum.asset.nft.v1.Query/Class":             &assetnfttypes.QueryClassResponse{},
+		"/coreum.asset.nft.v1.Query/Classes":           &assetnfttypes.QueryClassesResponse{},
+		"/cosmos.nft.v1beta1.Query/Owner":              &nfttypes.QueryOwnerResponse{},
 	}
 	return &wasmkeeper.QueryPlugins{
 		Grpc: wasmkeeper.AcceptListGrpcQuerier(acceptList, gRPCQueryRouter, codec),
