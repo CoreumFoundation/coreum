@@ -236,6 +236,13 @@ func TestCmdCancelOrdersByDenom(t *testing.T) {
 		args,
 	)
 	requireT.NoError(err)
+
+	// check orders
+	var ordersRes types.QueryAccountDenomOrdersCountResponse
+	coreumclitestutil.ExecQueryCmd(
+		t, ctx, cli.CmdQueryAccountDenomOrdersCount(), []string{validator1Address(testNetwork).String(), denom1}, &ordersRes,
+	)
+	requireT.Zero(ordersRes.Count)
 }
 
 func placeOrder(
