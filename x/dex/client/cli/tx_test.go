@@ -229,6 +229,7 @@ func placeOrder(
 		order.Quantity.String(),
 		order.Side.String(),
 		"--" + cli.PriceFlag, order.Price.String(),
+		"--" + cli.TimeInForce, order.TimeInForce.String(),
 	}
 	if order.GoodTil != nil {
 		if order.GoodTil.GoodTilBlockHeight > 0 {
