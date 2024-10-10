@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -29,6 +31,8 @@ const (
 	OrderTypeLimit = "limit"
 	// OrderTypeMarket is limit order market.
 	OrderTypeMarket = "market"
+	// TimeInForce is time-in-force flag.
+	TimeInForce = "time-in-force"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -44,6 +48,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdPlaceOrder(),
 		CmdCancelOrder(),
+		CmdCancelOrdersByDenom(),
 	)
 
 	return cmd
@@ -53,15 +58,17 @@ func GetTxCmd() *cobra.Command {
 //
 //nolint:funlen // Despite the length function is still manageable
 func CmdPlaceOrder() *cobra.Command {
+	availableTimeInForces := lo.Values(types.TimeInForce_name)
+	sort.Strings(availableTimeInForces)
 	cmd := &cobra.Command{
-		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --good-til-block-height 123 --good-til-block-time 1727124446 --from [sender]", //nolint:lll // string example
+		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --time-in-force=" + strings.Join(availableTimeInForces, ",") + " --good-til-block-height=123 --good-til-block-time=1727124446 --from [sender]", //nolint:lll // string example
 		Args:  cobra.ExactArgs(6),
 		Short: "Place new order",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Place new order.
 
 Example:
-$ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-height 123 --from [sender]
+$ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -75,11 +82,21 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-heigh
 			sender := clientCtx.GetFromAddress()
 
 			var orderType types.OrderType
-			timeInForce := types.TIME_IN_FORCE_UNSPECIFIED
+			timeInForceString, err := cmd.Flags().GetString(TimeInForce)
+			timeInForceInt, ok := types.TimeInForce_value[timeInForceString]
+			if !ok {
+				return errors.Errorf(
+					"unknown TimeInForce '%s',available TimeInForces: %s",
+					timeInForceString, strings.Join(availableTimeInForces, ","),
+				)
+			}
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			timeInForce := types.TimeInForce(timeInForceInt)
 			switch args[0] {
 			case OrderTypeLimit:
 				orderType = types.ORDER_TYPE_LIMIT
-				timeInForce = types.TIME_IN_FORCE_GTC
 			case OrderTypeMarket:
 				orderType = types.ORDER_TYPE_MARKET
 			default:
@@ -136,7 +153,7 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-heigh
 				Price:       price,
 				Quantity:    quantity,
 				Side:        types.Side(side),
-				TimeInForce: timeInForce, // TODO(dzmitryhil) allow to modify
+				TimeInForce: timeInForce,
 			}
 
 			if goodTilBlockHeight != 0 || goodTilBlockTime != nil {
@@ -153,6 +170,7 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --good-til-block-heigh
 	cmd.Flags().String(PriceFlag, "", "Order price.")
 	cmd.Flags().Uint64(GoodTilBlockHeightFlag, 0, "Good til block height.")
 	cmd.Flags().Int64(GoodTilBlockTimeFlag, 0, "Good til block time.")
+	cmd.Flags().String(TimeInForce, types.TIME_IN_FORCE_UNSPECIFIED.String(), "Time in force.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -186,6 +204,46 @@ $ %s tx %s cancel-order id1 --from [sender]
 			msg := &types.MsgCancelOrder{
 				Sender: sender.String(),
 				ID:     id,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdCancelOrdersByDenom returns CancelOrdersByDenom cobra command.
+func CmdCancelOrdersByDenom() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cancel-orders-by-denom [account] [denom] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Cancel orders by denom",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Cancel orders by denom.
+
+Example:
+$ %s tx %s cancel-orders-by-denom %s denom1 --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			account := args[0]
+			denom := args[1]
+
+			msg := &types.MsgCancelOrdersByDenom{
+				Sender:  sender.String(),
+				Account: account,
+				Denom:   denom,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

@@ -33,12 +33,13 @@ const (
 	ExpirationFlag           = "expiration"
 	RecipientFlag            = "recipient"
 	URIFlag                  = "uri"
-	URIHashFlag              = "uri_hash"
-	ExtensionCodeIDFlag      = "extension_code_id"
-	ExtensionLabelFlag       = "extension_label"
-	ExtensionFundsFlag       = "extension_funds"
-	ExtensionIssuanceMsgFlag = "extension_issuance_msg"
+	URIHashFlag              = "uri-hash"
+	ExtensionCodeIDFlag      = "extension-code-id"
+	ExtensionLabelFlag       = "extension-label"
+	ExtensionFundsFlag       = "extension-funds"
+	ExtensionIssuanceMsgFlag = "extension-issuance-msg"
 	DEXUnifiedRefAmountFlag  = "dex-unified-ref-amount"
+	DEXWhitelistedDenomsFlag = "dex-whitelisted-denoms"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -67,6 +68,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
 		CmdUpdateDEXUnifiedRefAmount(),
+		CmdUpdateDEXWhitelistedDenoms(),
 	)
 
 	return cmd
@@ -83,7 +85,7 @@ func CmdTxIssue() *cobra.Command {
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
 		//nolint:lll // breaking this down will make it look worse when printed to user screen.
-		Use:   fmt.Sprintf("issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features="+strings.Join(allowedFeatures, ",")+" --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624 --extension_code_id=1 --extension_label=my-extension --extension_funds=100000ABC-%s --extension_instantiation_msg={}", constant.AddressSampleTest),
+		Use:   fmt.Sprintf("issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features="+strings.Join(allowedFeatures, ",")+" --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624 --extension-code-id=1 --extension-label=my-extension --extension-funds=100000ABC-%s --extension-instantiation-msg={}", constant.AddressSampleTest),
 		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -891,6 +893,60 @@ $ %s tx %s update-dex-unified-ref-amount ABC-%s 1000.5 --from [sender]
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdUpdateDEXWhitelistedDenoms returns UpdateDEXWhitelistedDenoms cobra command.
+func CmdUpdateDEXWhitelistedDenoms() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-dex-whitelisted-denoms [denom] --dex-whitelisted-denoms [dex-whitelisted-denoms] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Update DEX whitelisted denoms",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Update DEX whitelisted denoms.
+Example:
+$ %s tx %s update-dex-whitelisted-denoms denom1 --dex-whitelisted-denoms denom2,denom3 --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			denom := args[0]
+			if err = sdk.ValidateDenom(denom); err != nil {
+				return sdkerrors.Wrap(err, "invalid denom")
+			}
+
+			whitelistedDenoms, err := cmd.Flags().GetStringSlice(DEXWhitelistedDenomsFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			for _, whitelistedDenom := range whitelistedDenoms {
+				if err = sdk.ValidateDenom(whitelistedDenom); err != nil {
+					return sdkerrors.Wrapf(err, "invalid denom %s", whitelistedDenom)
+				}
+			}
+
+			msg := &types.MsgUpdateDEXWhitelistedDenoms{
+				Sender:            sender.String(),
+				Denom:             denom,
+				WhitelistedDenoms: whitelistedDenoms,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	//nolint:lll // breaking this down will make it look worse when printed to user screen.
+	cmd.Flags().StringSlice(DEXWhitelistedDenomsFlag, []string{}, "Denoms to add to be whitelisted to be traded with in DEX.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
