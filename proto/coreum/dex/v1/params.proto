@@ -22,6 +22,6 @@ message Params {
   // order_reserve is the reserve required to save the order in the order book
   cosmos.base.v1beta1.Coin order_reserve = 4 [
     (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 }
