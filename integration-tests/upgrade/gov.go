@@ -45,7 +45,6 @@ func (g *gov) After(t *testing.T) {
 	).String(), sdk.NewCoins(govParams.ExpeditedMinDeposit...).String())
 	requireT.Equal(sdkmath.LegacyMustNewDecFromStr("0.01").String(), govParams.MinDepositRatio)
 	requireT.True(govParams.BurnVoteQuorum)
-	requireT.True(govParams.BurnVoteQuorum)
 
 	requireT.NotEqual(g.oldParams.ProposalCancelRatio, govParams.ProposalCancelRatio)
 	requireT.NotEqual(g.oldParams.ExpeditedVotingPeriod, govParams.ExpeditedVotingPeriod)

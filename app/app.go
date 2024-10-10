@@ -1183,7 +1183,7 @@ func New(
 
 	/**** Upgrades ****/
 	upgrades := []appupgrade.Upgrade{
-		appupgradev5.New(app.ModuleManager, app.configurator, ChosenNetwork, app.GovKeeper),
+		appupgradev5.New(app.ModuleManager, app.configurator, ChosenNetwork, app.GovKeeper, app.DEXKeeper),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()

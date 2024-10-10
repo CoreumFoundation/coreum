@@ -163,8 +163,10 @@ func (k Keeper) matchRecords(
 		"recordToReduce", recordToReduce.String(),
 	)
 
-	recordToCloseReceiveCoin, recordToReduceReceiveCoin, recordToCloseReducedQuantity, recordToReduceReducedQuantity :=
-		getRecordsReceiveCoins(makerRecord, recordToClose, recordToReduce, order)
+	recordToCloseReceiveCoin,
+		recordToReduceReceiveCoin,
+		recordToCloseReducedQuantity,
+		recordToReduceReducedQuantity := getRecordsReceiveCoins(makerRecord, recordToClose, recordToReduce, order)
 
 	// stop if any record receives more than opposite record balance
 	// that situation is possible with the marker order with quantity which doesn't correspond the order balance

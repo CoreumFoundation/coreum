@@ -1307,9 +1307,6 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 	requireT.NoError(err)
 	attachedFund := chain.NewCoin(sdkmath.NewInt(10))
 
-	// txf := chain.TxFactory().
-	// 	WithSimulateAndExecute(true)
-
 	// Issue a fungible token which cannot be sent to the smart contract
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
@@ -1348,7 +1345,7 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 	// This operation should fail due to coins being attached to it
 	_, _, err = chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory().WithGas(2_000_000),
+		chain.TxFactory().WithGas(3_000_000),
 		issuer,
 		moduleswasm.SimpleStateWASM,
 		integration.InstantiateConfig{
