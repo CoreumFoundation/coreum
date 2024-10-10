@@ -695,7 +695,7 @@ func TestUpdateDEXWhitelistedDenoms(t *testing.T) {
 	newWhitelistedDenoms := []string{"denom1", "denom2"}
 	args := append([]string{
 		denom,
-		"--dex-whitelisted-denoms=" + strings.Join(newWhitelistedDenoms, ","),
+		fmt.Sprintf("--%s=%s", cli.DEXWhitelistedDenomsFlag, strings.Join(newWhitelistedDenoms, ",")),
 	}, txValidator1Args(testNetwork)...)
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdUpdateDEXWhitelistedDenoms(), args)
 	requireT.NoError(err)
@@ -732,7 +732,7 @@ func TestUpdateDEXWhitelistedDenomsWithoutEnablingFeature(t *testing.T) {
 	newWhitelistedDenoms := []string{"denom1", "denom2"}
 	args := append([]string{
 		denom,
-		"--dex-whitelisted-denoms=" + strings.Join(newWhitelistedDenoms, ","),
+		fmt.Sprintf("--%s=%s", cli.DEXWhitelistedDenomsFlag, strings.Join(newWhitelistedDenoms, ",")),
 	}, txValidator1Args(testNetwork)...)
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdUpdateDEXWhitelistedDenoms(), args)
 	requireT.ErrorIs(err, types.ErrFeatureDisabled)
@@ -764,7 +764,7 @@ func TestUpdateDEXWhitelistedDenomsWithWrongDenoms(t *testing.T) {
 	newWhitelistedDenoms := []string{"a", "b"}
 	args := append([]string{
 		denom,
-		"--dex-whitelisted-denoms=" + strings.Join(newWhitelistedDenoms, ","),
+		fmt.Sprintf("--%s=%s", cli.DEXWhitelistedDenomsFlag, strings.Join(newWhitelistedDenoms, ",")),
 	}, txValidator1Args(testNetwork)...)
 	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdUpdateDEXWhitelistedDenoms(), args)
 	requireT.ErrorContains(err, "invalid denom")
