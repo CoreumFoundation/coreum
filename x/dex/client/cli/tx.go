@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -55,13 +56,8 @@ func GetTxCmd() *cobra.Command {
 //
 //nolint:funlen // Despite the length function is still manageable
 func CmdPlaceOrder() *cobra.Command {
-	var availableTimeInForces []string
-	for i, n := range types.TimeInForce_name {
-		if i == 0 {
-			continue
-		}
-		availableTimeInForces = append(availableTimeInForces, n)
-	}
+	availableTimeInForces := lo.Values(types.TimeInForce_name)
+	sort.Strings(availableTimeInForces)
 	cmd := &cobra.Command{
 		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --time-in-force=" + strings.Join(availableTimeInForces, ",") + " --good-til-block-height=123 --good-til-block-time=1727124446 --from [sender]", //nolint:lll // string example
 		Args:  cobra.ExactArgs(6),
@@ -71,7 +67,7 @@ func CmdPlaceOrder() *cobra.Command {
 
 Example:
 $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --time-in-force=TIME_IN_FORCE_GTC --good-til-block-height=123 --from [sender]
-`,
+`, //nolint:lll // string example
 				version.AppName, types.ModuleName,
 			),
 		),
@@ -87,7 +83,10 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --time-in-force=TIME_I
 			timeInForceString, err := cmd.Flags().GetString(TimeInForce)
 			timeInForceInt, ok := types.TimeInForce_value[timeInForceString]
 			if !ok {
-				return errors.Errorf("unknown TimeInForce '%s',available TimeInForces: %s", timeInForceString, strings.Join(availableTimeInForces, ","))
+				return errors.Errorf(
+					"unknown TimeInForce '%s',available TimeInForces: %s",
+					timeInForceString, strings.Join(availableTimeInForces, ","),
+				)
 			}
 			if err != nil {
 				return errors.WithStack(err)
@@ -96,9 +95,6 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --time-in-force=TIME_I
 			switch args[0] {
 			case OrderTypeLimit:
 				orderType = types.ORDER_TYPE_LIMIT
-				if timeInForce != types.TIME_IN_FORCE_GTC {
-					return errors.Errorf("unknown TimeInForce '%s',available TimeInForces: %s", timeInForceString, strings.Join(availableTimeInForces, ","))
-				}
 			case OrderTypeMarket:
 				orderType = types.ORDER_TYPE_MARKET
 			default:
