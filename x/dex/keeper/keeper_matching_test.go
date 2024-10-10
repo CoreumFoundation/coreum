@@ -5386,22 +5386,33 @@ func assertOrderPlacementResult(
 	t *testing.T,
 	sdkCtx sdk.Context,
 	testApp *simapp.App,
-	spendableBalancesBefore sdk.Coins,
+	spendableBalancesBefore map[string]sdkmath.Int,
 	order types.Order,
 ) {
-	spendableBalancesAfter := getSpendableBalances(sdkCtx, testApp, sdk.MustAccAddressFromBech32(order.Creator))
+	creator := sdk.MustAccAddressFromBech32(order.Creator)
+	spendableBalancesAfter := getSpendableBalances(sdkCtx, testApp, creator)
 
 	spDenom := order.GetSpendDenom()
-	spBalanceAmtBefore := spendableBalancesBefore.AmountOf(spDenom)
-	spBalanceAmtAfter := spendableBalancesAfter.AmountOf(spDenom)
+	spBalanceAmtBefore, ok := spendableBalancesBefore[spDenom]
+	if !ok {
+		spBalanceAmtBefore = sdkmath.ZeroInt()
+	}
+	spBalanceAmtAfter, ok := spendableBalancesAfter[spDenom]
+	if !ok {
+		spBalanceAmtAfter = sdkmath.ZeroInt()
+	}
 
 	recvDenom := order.GetReceiveDenom()
-	recvBalanceAmtBefore := spendableBalancesBefore.AmountOf(recvDenom)
-	recvBalanceAmtAfter := spendableBalancesAfter.AmountOf(recvDenom)
+	recvBalanceAmtBefore, ok := spendableBalancesBefore[recvDenom]
+	if !ok {
+		recvBalanceAmtBefore = sdkmath.ZeroInt()
+	}
+	recvBalanceAmtAfter, ok := spendableBalancesAfter[recvDenom]
+	if !ok {
+		recvBalanceAmtAfter = sdkmath.ZeroInt()
+	}
 
-	storedOrder, err := testApp.DEXKeeper.GetOrderByAddressAndID(
-		sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.ID,
-	)
+	storedOrder, err := testApp.DEXKeeper.GetOrderByAddressAndID(sdkCtx, creator, order.ID)
 	if err != nil {
 		require.ErrorIs(t, err, types.ErrRecordNotFound)
 		t.Logf("Order not found in the order book.")
@@ -5431,16 +5442,16 @@ func assertOrderPlacementResult(
 	}
 
 	// limit order is matched partially but the remaining balance is not refunded
-	spendAmt := spBalanceAmtBefore.Sub(spBalanceAmtAfter).Sub(storedOrder.RemainingBalance)
-	receiveAmt := recvBalanceAmtAfter.Sub(recvBalanceAmtBefore)
+	spentAmt := spBalanceAmtBefore.Sub(spBalanceAmtAfter).Sub(storedOrder.RemainingBalance)
+	receivedAmt := recvBalanceAmtAfter.Sub(recvBalanceAmtBefore)
 
 	// order is in the store and executed partially
 	if !order.Quantity.Equal(storedOrder.RemainingQuantity) {
-		require.False(t, receiveAmt.IsNegative())
-		assertExecutionPrice(t, order, spendAmt, receiveAmt)
+		require.False(t, receivedAmt.IsNegative())
+		assertExecutionPrice(t, order, spentAmt, receivedAmt)
 	} else {
 		// if quantity is not filled, nothing is spent
-		require.True(t, spendAmt.IsZero())
+		require.True(t, spentAmt.IsZero())
 	}
 }
 
@@ -5494,10 +5505,17 @@ func assertFilledQuantity(t *testing.T, order types.Order, spendAmt, receiveAmt 
 	}
 }
 
-func getSpendableBalances(sdkCtx sdk.Context, testApp *simapp.App, acc sdk.AccAddress) sdk.Coins {
-	return lo.Map(testApp.BankKeeper.GetAllBalances(sdkCtx, acc), func(coin sdk.Coin, _ int) sdk.Coin {
-		return testApp.AssetFTKeeper.GetSpendableBalance(sdkCtx, acc, coin.Denom)
-	})
+func getSpendableBalances(sdkCtx sdk.Context, testApp *simapp.App, acc sdk.AccAddress) map[string]sdkmath.Int {
+	balances := testApp.BankKeeper.GetAllBalances(sdkCtx, acc)
+	spendableBalances := make(map[string]sdkmath.Int)
+	for _, balance := range balances {
+		frozenAmt := testApp.AssetFTKeeper.GetFrozenBalance(sdkCtx, acc, balance.Denom).Amount
+		dexLockedAmt := testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, balance.Denom).Amount
+		// can be negative
+		spendableBalances[balance.Denom] = balance.Amount.Sub(frozenAmt).Sub(dexLockedAmt)
+	}
+
+	return spendableBalances
 }
 
 func cancelAllOrdersAndAssertState(
