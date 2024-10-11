@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/docker/distribution/uuid"
@@ -71,6 +70,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 
 	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "not supported for the tokens with extensions")
 }
@@ -115,6 +115,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	errStr := fmt.Sprintf("locking coins for DEX disabled for %s", denomWithExtension)
 	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), errStr)
 
@@ -136,6 +137,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 	lockedBalance, err = order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), errStr)
 }
 
@@ -184,6 +186,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 	lockedBalance, err := orderReceiveDenom2.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	require.ErrorContains(
 		t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2), "denom denom2 not whitelisted",
 	)
@@ -205,10 +208,12 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 	lockedBalance, err = orderReceiveDenom2.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom3))
 
 	// now update settings to remove all limit and place orderReceiveDenom2
 	require.NoError(t, testApp.AssetFTKeeper.UpdateDEXWhitelistedDenoms(sdkCtx, issuer, denom, nil))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2))
 }
 
@@ -252,6 +257,7 @@ func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	require.ErrorContains(t, testApp.AssetFTKeeper.Burn(sdkCtx, acc, lockedBalance), "coins are not spendable")
 }
@@ -296,32 +302,36 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 	_, err = testApp.StakingKeeper.Delegate(sdkCtx, acc, orderLockedBalance.Amount, stakingtypes.Unbonded, val[0], true)
 	require.NoError(t, err)
 
-	res, err := testApp.BankKeeper.Balance(sdkCtx, &banktypes.QueryBalanceRequest{
-		Address: acc.String(),
-		Denom:   denomToStake,
-	})
-	require.NoError(t, err)
-	require.Equal(t, sdk.NewInt64Coin(denomToStake, 0).String(), res.Balance.String())
+	balance := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomToStake)
+	require.Equal(t, sdk.NewInt64Coin(denomToStake, 0).String(), balance.String())
 
 	lockedBalance := testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, denomToStake)
 	require.Equal(t, sdk.NewInt64Coin(denomToStake, 0).String(), lockedBalance.String())
 
-	require.Error(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), cosmoserrors.ErrInsufficientFunds)
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 
+	require.Error(t, testApp.DEXKeeper.PlaceOrder(
+		simapp.CopyContextWithMultiStore(sdkCtx), order), cosmoserrors.ErrInsufficientFunds,
+	)
 	require.NoError(t, testApp.FundAccount(sdkCtx, acc, sdk.NewCoins(orderLockedBalance)))
+
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 
-	res, err = testApp.BankKeeper.Balance(sdkCtx, &banktypes.QueryBalanceRequest{
-		Address: acc.String(),
-		Denom:   denomToStake,
-	})
-	require.NoError(t, err)
-	require.Equal(t, orderLockedBalance.String(), res.Balance.String())
+	balance = testApp.BankKeeper.GetBalance(sdkCtx, acc, denomToStake)
+	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	require.Equal(t, orderLockedBalance.Add(orderReserve).String(), balance.String())
 
 	lockedBalance = testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, denomToStake)
-	require.Equal(t, orderLockedBalance.String(), lockedBalance.String())
+	require.Equal(t, orderLockedBalance.Add(orderReserve).String(), lockedBalance.String())
 
-	_, err = testApp.StakingKeeper.Delegate(sdkCtx, acc, orderLockedBalance.Amount, stakingtypes.Unbonded, val[0], true)
+	_, err = testApp.StakingKeeper.Delegate(
+		simapp.CopyContextWithMultiStore(sdkCtx),
+		acc,
+		orderLockedBalance.Amount,
+		stakingtypes.Unbonded,
+		val[0],
+		true,
+	)
 	require.Error(t, err, cosmoserrors.ErrInsufficientFunds)
 
 	order = types.Order{
@@ -341,6 +351,7 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 	orderLockedBalance, err = order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.FundAccount(sdkCtx, validatorOwner2, sdk.NewCoins(orderLockedBalance)))
+	fundOrderReserve(t, testApp, sdkCtx, validatorOwner2)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	err = addValidator(sdkCtx, testApp.StakingKeeper, validatorOwner2, orderLockedBalance)
 	require.ErrorContains(t, err, "does not have enough stake tokens to delegate")
@@ -387,6 +398,7 @@ func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
 	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	balanceBeforePlaceOrder := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomWithBurnRate)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	balanceAfterPlaceOrder := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomWithBurnRate)
@@ -432,6 +444,7 @@ func TestKeeper_PlaceOrderWithCommissionRate(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
 	balanceBeforePlaceOrder := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomWithCommissionRate)
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	balanceAfterPlaceOrder := testApp.BankKeeper.GetBalance(sdkCtx, acc, denomWithCommissionRate)
 	require.Equal(t, balanceBeforePlaceOrder, balanceAfterPlaceOrder)

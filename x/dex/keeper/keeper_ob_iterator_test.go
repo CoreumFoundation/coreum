@@ -275,6 +275,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 					require.NoError(t, err)
 					testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
+					fundOrderReserve(t, testApp, sdkCtx, acc)
 					require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 
 					orderBookID, err = testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, baseDenom, quoteDenom)

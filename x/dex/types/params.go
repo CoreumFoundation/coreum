@@ -27,7 +27,7 @@ func DefaultParams() Params {
 		DefaultUnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1000000"),
 		PriceTickExponent:       -5,
 		MaxOrdersPerDenom:       100,
-		OrderReserve:            sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
+		OrderReserve:            sdk.NewInt64Coin(sdk.DefaultBondDenom, 10_000_000),
 	}
 }
 

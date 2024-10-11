@@ -71,6 +71,8 @@ func NewFuzzApp(
 
 	params := testApp.DEXKeeper.GetParams(sdkCtx)
 	params.PriceTickExponent = int32(types.MinExt)
+	params.OrderReserve = sdk.NewCoin(params.OrderReserve.Denom, sdkmath.ZeroInt())
+
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
 	accounts := lo.RepeatBy(accountsCount, func(_ int) sdk.AccAddress {

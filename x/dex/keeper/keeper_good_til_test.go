@@ -568,6 +568,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 					balance, err := order.ComputeLimitOrderLockedBalance()
 					require.NoError(t, err)
 					testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), sdk.NewCoins(balance))
+					fundOrderReserve(t, testApp, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
 					require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 					orderBooksID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, order.BaseDenom, order.QuoteDenom)
 					require.NoError(t, err)
@@ -583,7 +584,12 @@ func TestKeeper_GoodTil(t *testing.T) {
 				gotOrders = append(gotOrders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_BUY)...)
 				gotOrders = append(gotOrders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_SELL)...)
 			}
-			require.ElementsMatch(t, tt.wantOrders(testSet), gotOrders)
+			wantOrders := tt.wantOrders(testSet)
+			// set order reserve for all orders
+			for i := range wantOrders {
+				wantOrders[i].Reserve = testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+			}
+			require.ElementsMatch(t, wantOrders, gotOrders)
 		})
 	}
 }

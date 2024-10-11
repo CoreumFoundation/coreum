@@ -133,7 +133,12 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult, usedDen
 		}
 	}
 	for _, record := range mr.MakerRemoveRecords {
-		if err := k.removeOrderByRecordAndUsedDenoms(ctx, record, usedDenoms); err != nil {
+		var makerAddr sdk.AccAddress
+		makerAddr, err = k.getAccountAddressWithCache(ctx, record.AccountNumber, accCache)
+		if err != nil {
+			return err
+		}
+		if err := k.removeOrderByRecordAndUsedDenoms(ctx, makerAddr, record, usedDenoms); err != nil {
 			return err
 		}
 	}
