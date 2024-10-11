@@ -6170,7 +6170,6 @@ func assertOrderPlacementResult(
 		receivedAmt := recvBalanceAmtAfter.Sub(recvBalanceAmtBefore)
 		require.False(t, receivedAmt.IsNegative())
 
-		// assertSpentAndReceivedAmounts(t, spentAmt, receivedAmt)
 		if order.Type == types.ORDER_TYPE_LIMIT {
 			// limit order is matched partially or fully and closed, so the remaining balance is refunded
 			assertExecutionPrice(t, order, spentAmt, receivedAmt)

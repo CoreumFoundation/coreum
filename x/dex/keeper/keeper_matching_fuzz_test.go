@@ -14,7 +14,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/docker/distribution/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
@@ -23,47 +22,44 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
+type FuzzAppConfig struct {
+	AccountsCount                 int
+	AssetFTDefaultDenomsCount     int
+	AssetFTWhitelistingCount      int
+	AssetFTFreezingDenomsCount    int
+	AssetFTAllFeaturesDenomsCount int
+	NativeDenomCount              int
+
+	OrdersCount                int
+	CancelOrdersPercent        int
+	CancelOrdersByDenomPercent int
+
+	MarketOrdersPercent       int
+	TimeInForceIOCPercent     int
+	TimeInForceFOKPercent     int
+	GoodTilBlockHeightPercent int
+	GoodTilBlockTimePercent   int
+	FundOrderReservePercent   int
+
+	InitialBlockHeight uint64
+	InitialBlockTime   time.Time
+	BlockTime          time.Duration
+}
+
 type FuzzApp struct {
+	cfg FuzzAppConfig
+
 	testApp  *simapp.App
 	issuer   sdk.AccAddress
 	accounts []sdk.AccAddress
 	denoms   []string
 	ftDenoms []string
 	sides    []types.Side
-
-	marketOrdersPercent int
-
-	timeInForceIOCPercent int
-	timeInForceFOKPercent int
-
-	goodTilBlockHeightPercent int
-	goodTilBlockTimePercent   int
-
-	initialBlockTime   time.Time
-	initialBlockHeight uint64
-	blockTime          time.Duration
 }
 
 func NewFuzzApp(
 	t *testing.T,
-	accountsCount,
-	assetFTDefaultDenomsCount,
-	assetFTWhitelistingCount,
-	assetFTFreezingDenomsCount,
-	assetFTAllFeaturesDenomsCount,
-	nativeDenomCount int,
-
-	marketOrdersPercent int,
-
-	timeInForceIOCPercent int,
-	timeInForceFOKPercent int,
-
-	goodTilBlockHeightPercent int,
-	goodTilBlockTimePercent int,
-
-	initialBlockHeight uint64,
-	initialBlockTime time.Time,
-	blockTime time.Duration,
+	cfg FuzzAppConfig,
 ) FuzzApp {
 	testApp := simapp.New()
 
@@ -71,11 +67,10 @@ func NewFuzzApp(
 
 	params := testApp.DEXKeeper.GetParams(sdkCtx)
 	params.PriceTickExponent = int32(types.MinExt)
-	params.OrderReserve = sdk.NewCoin(params.OrderReserve.Denom, sdkmath.ZeroInt())
 
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
-	accounts := lo.RepeatBy(accountsCount, func(_ int) sdk.AccAddress {
+	accounts := lo.RepeatBy(cfg.AccountsCount, func(_ int) sdk.AccAddress {
 		acc, _ := testApp.GenAccount(sdkCtx)
 		return acc
 	})
@@ -83,7 +78,7 @@ func NewFuzzApp(
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
 	mintedAmount := sdkmath.NewIntWithDecimal(1, 77)
-	denoms := lo.RepeatBy(nativeDenomCount, func(i int) string {
+	denoms := lo.RepeatBy(cfg.NativeDenomCount, func(i int) string {
 		denom := fmt.Sprintf("native-denom-%d", i)
 		testApp.MintAndSendCoin(t, sdkCtx, issuer, sdk.NewCoins(sdk.NewCoin(denom, mintedAmount)))
 		return denom
@@ -99,7 +94,7 @@ func NewFuzzApp(
 			assetfttypes.Feature_dex_order_cancellation,
 		},
 	}
-	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTDefaultDenomsCount, func(i int) string {
+	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTDefaultDenomsCount, func(i int) string {
 		settings := defaultFTSettings
 		settings.Symbol = fmt.Sprintf("DEF%d", i)
 		settings.Subunit = fmt.Sprintf("def%d", i)
@@ -107,7 +102,7 @@ func NewFuzzApp(
 		require.NoError(t, err)
 		return denom
 	})...)
-	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTWhitelistingCount, func(i int) string {
+	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTWhitelistingCount, func(i int) string {
 		settings := defaultFTSettings
 		settings.Symbol = fmt.Sprintf("WLS%d", i)
 		settings.Subunit = fmt.Sprintf("wls%d", i)
@@ -116,7 +111,7 @@ func NewFuzzApp(
 		require.NoError(t, err)
 		return denom
 	})...)
-	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTFreezingDenomsCount, func(i int) string {
+	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTFreezingDenomsCount, func(i int) string {
 		settings := defaultFTSettings
 		settings.Symbol = fmt.Sprintf("FRZ%d", i)
 		settings.Subunit = fmt.Sprintf("frz%d", i)
@@ -125,7 +120,7 @@ func NewFuzzApp(
 		require.NoError(t, err)
 		return denom
 	})...)
-	ftDenoms = append(ftDenoms, lo.RepeatBy(assetFTAllFeaturesDenomsCount, func(i int) string {
+	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTAllFeaturesDenomsCount, func(i int) string {
 		settings := defaultFTSettings
 		settings.Symbol = fmt.Sprintf("ALL%d", i)
 		settings.Subunit = fmt.Sprintf("all%d", i)
@@ -146,25 +141,55 @@ func NewFuzzApp(
 	require.NoError(t, err)
 
 	return FuzzApp{
+		cfg:      cfg,
 		testApp:  testApp,
 		issuer:   issuer,
 		accounts: accounts,
 		denoms:   denoms,
 		ftDenoms: ftDenoms,
 		sides:    sides,
-
-		marketOrdersPercent: marketOrdersPercent,
-
-		timeInForceIOCPercent: timeInForceIOCPercent,
-		timeInForceFOKPercent: timeInForceFOKPercent,
-
-		goodTilBlockHeightPercent: goodTilBlockHeightPercent,
-		goodTilBlockTimePercent:   goodTilBlockTimePercent,
-
-		initialBlockHeight: initialBlockHeight,
-		initialBlockTime:   initialBlockTime,
-		blockTime:          blockTime,
 	}
+}
+
+func (fa *FuzzApp) PlaceOrdersAndAssertFinalState(
+	t *testing.T,
+	rootRnd *rand.Rand,
+) {
+	sdkCtx := fa.testApp.NewContextLegacy(false, tmproto.Header{
+		Height: int64(fa.cfg.InitialBlockHeight),
+		Time:   fa.cfg.InitialBlockTime,
+	})
+
+	for i := 0; i < fa.cfg.OrdersCount; i++ {
+		_, err := fa.testApp.BeginBlocker(sdkCtx)
+		require.NoError(t, err)
+
+		orderSeed := rootRnd.Int63()
+		orderRnd := rand.New(rand.NewSource(orderSeed))
+
+		order := fa.GenOrder(t, orderRnd)
+
+		t.Logf("Placing order, i:%d, seed:%d, order: %s", i, orderSeed, order.String())
+		fa.FundAccountAndApplyFTFeatures(t, sdkCtx, order, orderRnd)
+		fa.PlaceOrder(t, sdkCtx, order)
+
+		if randBoolWithPercent(orderRnd, fa.cfg.CancelOrdersPercent) {
+			fa.CancelFirstOrder(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
+		}
+
+		if randBoolWithPercent(orderRnd, fa.cfg.CancelOrdersByDenomPercent) {
+			fa.CancelOrdersByDenom(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.BaseDenom)
+		}
+
+		_, err = fa.testApp.EndBlocker(sdkCtx)
+		require.NoError(t, err)
+
+		sdkCtx = fa.testApp.NewContextLegacy(false, tmproto.Header{
+			Height: sdkCtx.BlockHeight() + 1,
+			Time:   sdkCtx.BlockTime().Add(fa.cfg.BlockTime),
+		})
+	}
+	cancelAllOrdersAndAssertState(t, sdkCtx, fa.testApp)
 }
 
 func (fa *FuzzApp) GenOrder(
@@ -175,7 +200,7 @@ func (fa *FuzzApp) GenOrder(
 
 	creator := genAnyItemByIndex(fa.accounts, uint8(rnd.Uint32()))
 	orderType := types.ORDER_TYPE_LIMIT
-	if randBoolWithPercent(rnd, fa.marketOrdersPercent) {
+	if randBoolWithPercent(rnd, fa.cfg.MarketOrdersPercent) {
 		orderType = types.ORDER_TYPE_MARKET
 	}
 
@@ -210,27 +235,27 @@ func (fa *FuzzApp) GenOrder(
 		require.True(t, ok)
 		price = &v
 
-		if randBoolWithPercent(rnd, fa.goodTilBlockHeightPercent) {
+		if randBoolWithPercent(rnd, fa.cfg.GoodTilBlockHeightPercent) {
 			goodTil = &types.GoodTil{
-				GoodTilBlockHeight: fa.initialBlockHeight + uint64(randIntInRange(rnd, 0, 2000)),
+				GoodTilBlockHeight: fa.cfg.InitialBlockHeight + uint64(randIntInRange(rnd, 0, 2000)),
 			}
 		}
 
-		if randBoolWithPercent(rnd, fa.goodTilBlockTimePercent) {
+		if randBoolWithPercent(rnd, fa.cfg.GoodTilBlockTimePercent) {
 			if goodTil == nil {
 				goodTil = &types.GoodTil{}
 			}
 			goodTil.GoodTilBlockTime = lo.ToPtr(
-				fa.initialBlockTime.Add(time.Duration(randIntInRange(rnd, 0, 2000)) * fa.blockTime),
+				fa.cfg.InitialBlockTime.Add(time.Duration(randIntInRange(rnd, 0, 2000)) * fa.cfg.BlockTime),
 			)
 		}
 
 		timeInForce = types.TIME_IN_FORCE_GTC
 
-		if randBoolWithPercent(rnd, fa.timeInForceIOCPercent) {
+		if randBoolWithPercent(rnd, fa.cfg.TimeInForceIOCPercent) {
 			timeInForce = types.TIME_IN_FORCE_IOC
 		}
-		if randBoolWithPercent(rnd, fa.timeInForceFOKPercent) {
+		if randBoolWithPercent(rnd, fa.cfg.TimeInForceFOKPercent) {
 			timeInForce = types.TIME_IN_FORCE_FOK
 		}
 	}
@@ -244,7 +269,7 @@ func (fa *FuzzApp) GenOrder(
 	return types.Order{
 		Creator:     creator.String(),
 		Type:        orderType,
-		ID:          uuid.Generate().String(),
+		ID:          genString(20, rnd),
 		BaseDenom:   baseDenom,
 		QuoteDenom:  quoteDenom,
 		Price:       price,
@@ -306,6 +331,17 @@ func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
 		t.Logf("Whitelisting account's coin: %s, %s", creator.String(), whitelistBalance.String())
 		require.NoError(t, fa.testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, fa.issuer, creator, whitelistBalance))
 	}
+
+	if order.Type == types.ORDER_TYPE_LIMIT &&
+		order.TimeInForce == types.TIME_IN_FORCE_GTC &&
+		randBoolWithPercent(orderRnd, fa.cfg.FundOrderReservePercent) {
+		reserve := fa.testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+		spendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(sdkCtx, creator, reserve.Denom)
+		if spendableBalance.IsLT(reserve) {
+			t.Logf("Funding order reserve, account: %s coin: %s", creator.String(), reserve.String())
+			fa.testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(reserve))
+		}
+	}
 }
 
 func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Order) {
@@ -321,6 +357,18 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			if order.Type != types.ORDER_TYPE_LIMIT {
 				return
 			}
+			// check failed because of reserve
+			reserve := fa.testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+			reserveDenomSpendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(
+				sdkCtx, creator, reserve.Denom,
+			)
+			if reserveDenomSpendableBalance.Amount.LT(reserve.Amount) {
+				t.Logf("Placement is failed due to insufficient reserve, reserve: %s, reserveDenomSpendableBalance: %s",
+					reserve.String(), reserveDenomSpendableBalance.String())
+				return
+			}
+
+			// check spendable balance
 			spendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(
 				sdkCtx, creator, order.GetSpendDenom(),
 			)
@@ -331,6 +379,8 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 				spendableBalance.IsLT(orderLockedBalance),
 				fmt.Sprintf("availableBalance: %s, orderLockedBalance: %s", spendableBalance.String(), orderLockedBalance.String()),
 			)
+			t.Logf("Placement is failed due to lack of spendable balance, spendableBalance: %s, orderLockedBalance: %s",
+				spendableBalance.String(), orderLockedBalance.String())
 			return
 		case sdkerrors.IsOf(err, assetfttypes.ErrWhitelistedLimitExceeded):
 			if order.Side != types.SIDE_BUY {
@@ -442,90 +492,37 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			t *testing.T,
 			rootSeed uint32,
 		) {
-			const (
-				accountsCount                 = 4
-				assetFTDefaultDenomsCount     = 2
-				assetFTWhitelistingCount      = 2
-				assetFTFreezingDenomsCount    = 2
-				assetFTAllFeaturesDenomsCount = 2
-				nativeDenomCount              = 2
-				ordersCount                   = 500
+			fuzzAppConfig := FuzzAppConfig{
+				AccountsCount:                 4,
+				AssetFTDefaultDenomsCount:     2,
+				AssetFTWhitelistingCount:      2,
+				AssetFTFreezingDenomsCount:    2,
+				AssetFTAllFeaturesDenomsCount: 2,
+				NativeDenomCount:              2,
 
-				marketOrdersPercent = 8
+				OrdersCount:                500,
+				CancelOrdersPercent:        5,
+				CancelOrdersByDenomPercent: 2,
 
-				timeInForceIOCPercent = 4
-				timeInForceFOKPercent = 4
+				MarketOrdersPercent:       8,
+				TimeInForceIOCPercent:     4,
+				TimeInForceFOKPercent:     4,
+				GoodTilBlockHeightPercent: 10,
+				GoodTilBlockTimePercent:   10,
+				FundOrderReservePercent:   80,
 
-				goodTilBlockHeightPercent = 10
-				goodTilBlockTimePercent   = 10
-
-				cancelOrdersPercent        = 5
-				cancelOrdersByDenomPercent = 2
-
-				initialBlockHeight = 1
-				blockTime          = time.Second
-			)
-			initialBlockTime := time.Date(2023, 1, 2, 3, 4, 5, 6, time.UTC)
+				InitialBlockHeight: 1,
+				InitialBlockTime:   time.Date(2023, 1, 2, 3, 4, 5, 6, time.UTC),
+				BlockTime:          time.Second,
+			}
 
 			fuzzApp := NewFuzzApp(
 				t,
-				accountsCount,
-				assetFTDefaultDenomsCount,
-				assetFTWhitelistingCount,
-				assetFTFreezingDenomsCount,
-				assetFTAllFeaturesDenomsCount,
-				nativeDenomCount,
-
-				marketOrdersPercent,
-
-				timeInForceIOCPercent,
-				timeInForceFOKPercent,
-
-				goodTilBlockHeightPercent,
-				goodTilBlockTimePercent,
-
-				initialBlockHeight,
-				initialBlockTime,
-				blockTime,
+				fuzzAppConfig,
 			)
 			rootRnd := rand.New(rand.NewSource(int64(rootSeed)))
-
-			sdkCtx := fuzzApp.testApp.NewContextLegacy(false, tmproto.Header{
-				Height: initialBlockHeight,
-				Time:   initialBlockTime,
-			})
-
-			t.Logf("Generating orders with rootSeed: %d", rootSeed)
-			for i := 0; i < ordersCount; i++ {
-				_, err := fuzzApp.testApp.BeginBlocker(sdkCtx)
-				require.NoError(t, err)
-
-				orderSeed := rootRnd.Int63()
-				orderRnd := rand.New(rand.NewSource(orderSeed))
-
-				order := fuzzApp.GenOrder(t, orderRnd)
-
-				t.Logf("Placing order, i:%d, seed:%d, order: %s", i, orderSeed, order.String())
-				fuzzApp.FundAccountAndApplyFTFeatures(t, sdkCtx, order, orderRnd)
-				fuzzApp.PlaceOrder(t, sdkCtx, order)
-
-				if randBoolWithPercent(orderRnd, cancelOrdersPercent) {
-					fuzzApp.CancelFirstOrder(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
-				}
-
-				if randBoolWithPercent(orderRnd, cancelOrdersByDenomPercent) {
-					fuzzApp.CancelOrdersByDenom(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.BaseDenom)
-				}
-
-				_, err = fuzzApp.testApp.EndBlocker(sdkCtx)
-				require.NoError(t, err)
-
-				sdkCtx = fuzzApp.testApp.NewContextLegacy(false, tmproto.Header{
-					Height: sdkCtx.BlockHeight() + 1,
-					Time:   sdkCtx.BlockTime().Add(blockTime),
-				})
-			}
-			cancelAllOrdersAndAssertState(t, sdkCtx, fuzzApp.testApp)
+			t.Logf("Placing orders and assert final state, rootSeed: %d", rootSeed)
+			fuzzApp.PlaceOrdersAndAssertFinalState(t, rootRnd)
 		})
 }
 
@@ -578,4 +575,13 @@ func buildNumExpPrice(
 
 func genAnyItemByIndex[T any](slice []T, ind uint8) T {
 	return slice[int(ind)%len(slice)]
+}
+
+func genString(length int, rnd *rand.Rand) string {
+	const charset = "abcdefghijklmnopqrstuvwxyz1234567890"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rnd.Intn(len(charset))]
+	}
+	return string(b)
 }
