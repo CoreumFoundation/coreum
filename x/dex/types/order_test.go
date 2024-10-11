@@ -294,6 +294,15 @@ func TestOrder_Validate(t *testing.T) {
 				return order
 			}(),
 		},
+		{
+			name: "invalid_not_nil_reserve",
+			order: func() types.Order {
+				order := validOrder()
+				order.Reserve = sdk.NewInt64Coin("denom1", 1)
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

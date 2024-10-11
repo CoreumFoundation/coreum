@@ -4640,6 +4640,7 @@ Order is a DEX order.
 | `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
 | `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
 | `time_in_force` | [TimeInForce](#coreum.dex.v1.TimeInForce) |  |  `time_in_force is order time in force`  |
+| `reserve` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  `reserve is the reserve required to save the order in the order book`  |
 
 
 
@@ -4732,6 +4733,7 @@ OrderData is a order data used for the store.
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
+| `reserve` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  `reserve is the reserve required to save the order in the order book`  |
 
 
 

@@ -1,6 +1,7 @@
 syntax = "proto3";
 package coreum.dex.v1;
 
+import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -94,6 +95,11 @@ message Order {
   GoodTil good_til = 11;
   // time_in_force is order time in force
   TimeInForce time_in_force = 12;
+  // reserve is the reserve required to save the order in the order book
+  cosmos.base.v1beta1.Coin reserve = 13 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
 }
 
 // OrderData is a order data used for the store.
@@ -116,6 +122,11 @@ message OrderData {
   Side side = 5;
   // good_til is order good til
   GoodTil good_til = 6;
+  // reserve is the reserve required to save the order in the order book
+  cosmos.base.v1beta1.Coin reserve = 7 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
 }
 
 // OrderBookData is a order book data used by order for the store.

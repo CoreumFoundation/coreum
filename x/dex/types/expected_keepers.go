@@ -37,6 +37,8 @@ type AssetFTKeeper interface {
 		fromAddr, toAddr sdk.AccAddress,
 		sendCoin, checkReserveWhitelistingCoin sdk.Coin,
 	) error
+	DEXLock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
+	DEXUnlock(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error
 	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXSettings(ctx sdk.Context, denom string) (dextypes.DEXSettings, error)
 	ValidateDEXCancelOrdersByDenomIsAllowed(ctx sdk.Context, addr sdk.AccAddress, denom string) error

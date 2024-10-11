@@ -168,6 +168,10 @@ func (o Order) Validate() error {
 		return sdkerrors.Wrap(ErrInvalidInput, "initial remaining balance must be nil")
 	}
 
+	if !o.Reserve.IsNil() {
+		return sdkerrors.Wrap(ErrInvalidInput, "initial reserve balance must be nil")
+	}
+
 	return nil
 }
 

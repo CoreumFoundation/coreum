@@ -119,6 +119,7 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 		lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), sdk.NewCoins(lockedBalance))
+		fundOrderReserve(t, testApp, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
 
 		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 		selfOrderBookID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, item.baseDenom, item.quoteDenom)
@@ -156,6 +157,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	lockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
 
@@ -172,6 +174,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	// set expected values
 	sellOrder.RemainingQuantity = sdkmath.NewInt(10)
 	sellOrder.RemainingBalance = sdkmath.NewInt(10)
+	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	sellOrder.Reserve = orderReserve
 	require.Equal(t, sellOrder, gotOrder)
 
 	// check same buy with the buy order
@@ -190,6 +194,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	lockedBalance, err = buyOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
 
@@ -201,6 +206,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	// set expected values
 	buyOrder.RemainingQuantity = sdkmath.NewInt(100)
 	buyOrder.RemainingBalance = sdkmath.NewInt(120)
+	buyOrder.Reserve = orderReserve
 	require.Equal(t, buyOrder, gotOrder)
 }
 
@@ -243,6 +249,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	sellLockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(sellLockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 	sellLWhitelistedBalance, err := types.ComputeLimitOrderWhitelistingReservedBalance(
 		sellOrder.Side, sellOrder.BaseDenom, sellOrder.QuoteDenom, sellOrder.Quantity, *sellOrder.Price,
 	)
@@ -286,6 +293,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	whitelistedBalance := sellLWhitelistedBalance.Add(buyLockedBalance)
 	require.NoError(t, testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, issuer, acc, whitelistedBalance))
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(buyLockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
 
 	// try to place order with the invalid GoodTilBlockHeight
 	buyOrderWithGoodTilHeight := buyOrder
@@ -436,6 +444,7 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 			require.NoError(t, err)
 			testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
+			fundOrderReserve(t, testApp, sdkCtx, acc)
 			err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
 			if tt.wantTickError {
 				require.ErrorContains(t, err, "the price must be multiple of")
@@ -511,10 +520,12 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 		lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), sdk.NewCoins(lockedBalance))
+		fundOrderReserve(t, testApp, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
 		require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))
 		// fill order with the remaining quantity for assertions
 		order.RemainingQuantity = order.Quantity
 		order.RemainingBalance = lockedBalance.Amount
+		order.Reserve = testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
 		orders[i] = order
 	}
 
@@ -605,6 +616,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 		lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), sdk.NewCoins(lockedBalance))
+		fundOrderReserve(t, testApp, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
 		require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))
 	}
 
@@ -731,6 +743,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 	sellLockedBalance, err := order1.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc1)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order1))
 
 	require.True(t, reflect.DeepEqual(
@@ -755,6 +768,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 	sellLockedBalance, err = order2.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc1)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order2))
 
 	require.True(t, reflect.DeepEqual(
@@ -781,6 +795,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 	sellLockedBalance, err = order3.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc1)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order3))
 
 	require.True(t, reflect.DeepEqual(
@@ -809,6 +824,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 	sellLockedBalance, err = order4.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, trialCtx, acc1, sdk.NewCoins(sellLockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc1)
 	require.ErrorContains(t,
 		testApp.DEXKeeper.PlaceOrder(trialCtx, order4),
 		"it's prohibited to save more than 2 orders per denom",
@@ -829,7 +845,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 	sellLockedBalance, err = order5.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc2, sdk.NewCoins(sellLockedBalance))
-
+	fundOrderReserve(t, testApp, sdkCtx, acc2)
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order5))
 
 	require.True(t, reflect.DeepEqual(
@@ -915,6 +931,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 		sellLockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+		fundOrderReserve(t, testApp, sdkCtx, acc1)
 		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	}
 	// place 5 limit orders to denom1/denom0
@@ -933,6 +950,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 		sellLockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+		fundOrderReserve(t, testApp, sdkCtx, acc1)
 		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	}
 	// place 5 limit orders to denom1/denom2
@@ -951,6 +969,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 		sellLockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(sellLockedBalance))
+		fundOrderReserve(t, testApp, sdkCtx, acc1)
 		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	}
 
@@ -1102,4 +1121,17 @@ func assertTickCalculations(t *testing.T, base, quote float64) {
 	quoteRefAmount := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%.15f", quote))
 	keeperPriceTick := keeper.ComputePriceTick(baseDenomRefAmount, quoteRefAmount, int32(tickExponent))
 	require.Equal(t, fmt.Sprintf("%.15f", finalTick), keeperPriceTick.FloatString(15))
+}
+
+func fundOrderReserve(
+	t *testing.T,
+	testApp *simapp.App,
+	sdkCtx sdk.Context,
+	acc sdk.AccAddress,
+) {
+	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	if !orderReserve.IsPositive() {
+		return
+	}
+	require.NoError(t, testApp.FundAccount(sdkCtx, acc, sdk.NewCoins(orderReserve)))
 }

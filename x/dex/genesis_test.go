@@ -97,6 +97,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 					TimeInForce:       types.TIME_IN_FORCE_GTC,
 					RemainingQuantity: sdkmath.NewInt(90),
 					RemainingBalance:  sdkmath.NewInt(90),
+					Reserve:           prams.OrderReserve,
 				},
 			},
 			{
@@ -113,6 +114,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 					TimeInForce:       types.TIME_IN_FORCE_GTC,
 					RemainingQuantity: sdkmath.NewInt(90),
 					RemainingBalance:  sdkmath.NewInt(90),
+					Reserve:           prams.OrderReserve,
 				},
 			},
 			{
@@ -132,6 +134,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 					TimeInForce:       types.TIME_IN_FORCE_GTC,
 					RemainingQuantity: sdkmath.NewInt(70000),
 					RemainingBalance:  sdkmath.NewInt(50),
+					Reserve:           prams.OrderReserve,
 				},
 			},
 		},
@@ -160,6 +163,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(lockedBalance))
 		require.NoError(t, testApp.AssetFTKeeper.DEXLock(
 			sdkCtx, creator, lockedBalance,
+		))
+		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(prams.OrderReserve))
+		require.NoError(t, testApp.AssetFTKeeper.DEXLock(
+			sdkCtx, creator, orderWithSeq.Order.Reserve,
 		))
 	}
 	// set the correct state
@@ -203,11 +210,13 @@ func TestInitAndExportGenesis(t *testing.T) {
 	lockedBalance, err := orderWithExisingOrderBook.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc2, sdk.NewCoins(lockedBalance))
+	testApp.MintAndSendCoin(t, sdkCtx, acc2, sdk.NewCoins(params.OrderReserve))
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, orderWithExisingOrderBook))
 
 	// set the expected state
 	orderWithExisingOrderBook.RemainingQuantity = sdkmath.NewInt(10000000)
 	orderWithExisingOrderBook.RemainingBalance = sdkmath.NewInt(40000000000)
+	orderWithExisingOrderBook.Reserve = params.OrderReserve
 
 	// check that denom orders counters are incremented
 	denom2Count, err = dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom2)
@@ -249,6 +258,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	lockedBalance, err = orderWithNewOrderBook.ComputeLimitOrderLockedBalance()
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(lockedBalance))
+	testApp.MintAndSendCoin(t, sdkCtx, acc1, sdk.NewCoins(params.OrderReserve))
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, orderWithNewOrderBook))
 
 	// check that order books are generated correctly
