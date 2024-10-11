@@ -284,6 +284,7 @@ func (k Keeper) GetOrdersWithSequence(
 					TimeInForce:       types.TIME_IN_FORCE_GTC,
 					RemainingQuantity: orderBookRecord.RemainingQuantity,
 					RemainingBalance:  orderBookRecord.RemainingBalance,
+					Reserve:           orderData.Reserve,
 				},
 			}, nil
 		},
@@ -621,6 +622,10 @@ func (k Keeper) createOrder(
 	}
 	record.OrderSeq = orderSeq
 
+	if params.OrderReserve.IsPositive() {
+		order.Reserve = params.OrderReserve
+	}
+
 	return k.saveOrderWithOrderBookRecord(ctx, order, record)
 }
 
@@ -672,6 +677,7 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 		Quantity:    order.Quantity,
 		Side:        order.Side,
 		GoodTil:     order.GoodTil,
+		Reserve:     order.Reserve,
 	}); err != nil {
 		return err
 	}
@@ -685,6 +691,7 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 
 func (k Keeper) removeOrderByRecordAndUsedDenoms(
 	ctx sdk.Context,
+	acc sdk.AccAddress,
 	record types.OrderBookRecord,
 	denoms []string, // any order of used denoms in the order
 ) error {
@@ -708,6 +715,13 @@ func (k Keeper) removeOrderByRecordAndUsedDenoms(
 		}
 	}
 	k.removeOrderData(ctx, record.OrderSeq)
+
+	// unlock the reserve is present
+	if orderData.Reserve.IsPositive() {
+		if err := k.unlockFT(ctx, acc, orderData.Reserve); err != nil {
+			return err
+		}
+	}
 
 	if err := k.removeOrderIDToSeq(ctx, record.AccountNumber, record.OrderID); err != nil {
 		return err
@@ -738,7 +752,7 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 		return err
 	}
 
-	if err := k.removeOrderByRecordAndUsedDenoms(ctx, record, order.Denoms()); err != nil {
+	if err := k.removeOrderByRecordAndUsedDenoms(ctx, acc, record, order.Denoms()); err != nil {
 		return err
 	}
 
@@ -836,6 +850,7 @@ func (k Keeper) getOrderWithRecordByAddressAndID(
 			TimeInForce:       types.TIME_IN_FORCE_GTC,
 			RemainingQuantity: orderBookRecord.RemainingQuantity,
 			RemainingBalance:  orderBookRecord.RemainingBalance,
+			Reserve:           orderData.Reserve,
 		},
 		orderBookRecord,
 		nil
@@ -931,6 +946,7 @@ func (k Keeper) getPaginatedOrders(
 				TimeInForce:       types.TIME_IN_FORCE_GTC,
 				RemainingQuantity: orderBookRecord.RemainingQuantity,
 				RemainingBalance:  orderBookRecord.RemainingBalance,
+				Reserve:           orderData.Reserve,
 			}, nil
 		},
 		// constructor
@@ -1030,6 +1046,7 @@ func (k Keeper) getPaginatedOrderBookOrders(
 				TimeInForce:       types.TIME_IN_FORCE_GTC,
 				RemainingQuantity: record.RemainingQuantity,
 				RemainingBalance:  record.RemainingBalance,
+				Reserve:           orderData.Reserve,
 			}, nil
 		},
 		// constructor

@@ -40,11 +40,15 @@ func TestLimitOrdersMatching(t *testing.T) {
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	acc2 := chain.GenAccount()
@@ -52,6 +56,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -97,6 +102,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
+		Reserve:           dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
 	// place buy order to match the sell
@@ -147,6 +153,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(200),
 		RemainingBalance:  sdkmath.NewInt(22),
+		Reserve:           dexParamsRes.Params.OrderReserve,
 	}, buyOrderRes.Order)
 
 	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
@@ -171,12 +178,17 @@ func TestMarketOrdersMatching(t *testing.T) {
 
 	requireT := require.New(t)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	acc2 := chain.GenAccount()
@@ -184,6 +196,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -201,7 +214,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
@@ -236,6 +249,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 		sdk.NewCoins(
 			sdk.NewCoin(denom1, sdkmath.NewInt(999900)),
 			sdk.NewCoin(denom2, sdkmath.NewInt(10)),
+			dexParamsRes.Params.OrderReserve,
 		).String(),
 		acc1BalancesRes.Balances.String(),
 	)
@@ -248,6 +262,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 		sdk.NewCoins(
 			sdk.NewCoin(denom1, sdkmath.NewInt(100)),
 			sdk.NewCoin(denom2, sdkmath.NewInt(999990)),
+			dexParamsRes.Params.OrderReserve,
 		).String(),
 		acc2BalancesRes.Balances.String(),
 	)
@@ -261,6 +276,9 @@ func TestOrderCancellation(t *testing.T) {
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
@@ -276,6 +294,7 @@ func TestOrderCancellation(t *testing.T) {
 			&dextypes.MsgPlaceOrder{},
 			&dextypes.MsgCancelOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6))
@@ -287,7 +306,7 @@ func TestOrderCancellation(t *testing.T) {
 		ToAddress:   acc1.String(),
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom1, 100)),
 	}
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
@@ -423,12 +442,17 @@ func TestOrderTilBlockHeight(t *testing.T) {
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -491,12 +515,17 @@ func TestOrderTilBlockTime(t *testing.T) {
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -569,6 +598,10 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	// create acc1 orders
 	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
 	acc1Orders := []dextypes.Order{
 		{
 			Creator:    acc1.String(),
@@ -585,11 +618,13 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 			RemainingQuantity: sdkmath.NewInt(100),
 			RemainingBalance:  sdkmath.NewInt(100),
+			Reserve:           dexParamsRes.Params.OrderReserve,
 		},
 	}
 	acc1OrderPlaceMsgs := ordersToPlaceMsgs(acc1Orders)
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: acc1OrderPlaceMsgs,
+		Amount:   dexParamsRes.Params.OrderReserve.Amount,
 	})
 	_, err = client.BroadcastTx(
 		ctx,
@@ -616,6 +651,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 			RemainingQuantity: sdkmath.NewInt(10),
 			RemainingBalance:  sdkmath.NewInt(9960),
+			Reserve:           dexParamsRes.Params.OrderReserve,
 		},
 		{
 			Creator:           acc2.String(),
@@ -629,11 +665,13 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 			RemainingQuantity: sdkmath.NewInt(10),
 			RemainingBalance:  sdkmath.NewInt(9970),
+			Reserve:           dexParamsRes.Params.OrderReserve,
 		},
 	}
 	acc2OrderPlaceMsgs := ordersToPlaceMsgs(acc2Orders)
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
 		Messages: acc2OrderPlaceMsgs,
+		Amount:   dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(len(acc2OrderPlaceMsgs))),
 	})
 	_, err = client.BroadcastTx(
 		ctx,
@@ -740,6 +778,10 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	requireT := require.New(t)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
@@ -757,6 +799,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 			&dextypes.MsgPlaceOrder{},
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
 	})
 
 	acc2 := chain.GenAccount()
@@ -764,6 +807,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
@@ -777,7 +821,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		),
 	}
 
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -953,6 +997,10 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	requireT := require.New(t)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
@@ -970,6 +1018,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 			&dextypes.MsgPlaceOrder{},
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
 	})
 
 	acc2 := chain.GenAccount()
@@ -977,6 +1026,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
@@ -990,7 +1040,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		),
 	}
 
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -1162,6 +1212,10 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
@@ -1181,6 +1235,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 			&dextypes.MsgPlaceOrder{},
 			&dextypes.MsgCancelOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_clawback)
@@ -1194,7 +1249,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		),
 	}
 
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -1376,56 +1431,49 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
-	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
-	// we stake the minimum possible staking amount
-	// we multiply not to conflict with the tests which increases the min amount
-	delegateAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2))
+
+	delegateAmount := sdkmath.NewInt(1000)
 
 	acc := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&dextypes.MsgPlaceOrder{},
-			&dextypes.MsgPlaceOrder{},
 		},
-		Amount: delegateAmount,
+		Amount: delegateAmount.Add(dexParamsRes.Params.OrderReserve.Amount),
 	})
 
 	denomToStake := chain.ChainSettings.Denom
 	denom2 := issueFT(ctx, t, chain, acc, sdkmath.NewIntWithDecimal(1, 6))
 
-	// Setup validator
-	validator1AccAddress, validator1Address, deactivateValidator, err := chain.CreateValidator(
-		ctx, t, delegateAmount, delegateAmount,
+	// setup validator
+	_, validator1Address, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, customStakingParams.Params.MinSelfDelegation, customStakingParams.Params.MinSelfDelegation,
 	)
 	require.NoError(t, err)
 	defer deactivateValidator()
 
-	chain.FundAccountWithOptions(ctx, t, validator1AccAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&stakingtypes.MsgDelegate{},
-		},
-	})
-
-	acc1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: acc.String(),
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc.String(),
 		Denom:   denomToStake,
 	})
 	requireT.NoError(err)
-	requireT.True(acc1BalanceRes.Balance.Amount.GTE(delegateAmount))
+	requireT.True(balanceRes.Balance.GTE(delegateAmount))
 
-	// stake all the amounts
 	delegateMsg := &stakingtypes.MsgDelegate{
 		DelegatorAddress: acc.String(),
 		ValidatorAddress: validator1Address.String(),
 		Amount:           sdk.NewCoin(denomToStake, delegateAmount),
 	}
-
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc),
@@ -1434,14 +1482,7 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: acc.String(),
-		Denom:   denomToStake,
-	})
-	requireT.NoError(err)
-	requireT.True(acc1BalanceRes.Balance.Amount.LT(delegateAmount))
-
-	// place order should fail because all the funds are stacked
+	// place order should fail because all the funds are staked
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc.String(),
 		Type:        dextypes.ORDER_TYPE_LIMIT,
@@ -1453,7 +1494,6 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
-
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc),
@@ -1463,15 +1503,11 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
 
 	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{}, // fund one more time since we paid for the failed message
+		},
 		Amount: delegateAmount,
 	})
-
-	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: acc.String(),
-		Denom:   denomToStake,
-	})
-	requireT.NoError(err)
-	requireT.True(acc1BalanceRes.Balance.Amount.GTE(delegateAmount))
 
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1481,19 +1517,19 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	acc1BalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: acc.String(),
-		Denom:   denomToStake,
-	})
-	requireT.NoError(err)
-	requireT.Equal(delegateAmount.String(), acc1BalanceRes.Balance.Amount.String())
-
-	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc.String(),
 		Denom:   denomToStake,
 	})
 	requireT.NoError(err)
-	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
+	requireT.Equal(
+		delegateAmount.Add(dexParamsRes.Params.OrderReserve.Amount).String(),
+		balanceRes.Balance.String(),
+	)
+	requireT.Equal(
+		delegateAmount.Add(dexParamsRes.Params.OrderReserve.Amount).String(),
+		balanceRes.LockedInDEX.String(),
+	)
 }
 
 // TestLimitOrdersMatchingWithBurnRate tests the dex modules ability to place get and match limit orders with burn rate.
@@ -1506,11 +1542,15 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	acc2 := chain.GenAccount()
@@ -1518,6 +1558,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
@@ -1535,7 +1576,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		Features:      []assetfttypes.Feature{assetfttypes.Feature_burning},
 		BurnRate:      sdkmath.LegacyMustNewDecFromStr("0.5"),
 	}
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -1598,6 +1639,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
+		Reserve:           dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
 	// place buy order to match the sell
@@ -1655,11 +1697,15 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	acc2 := chain.GenAccount()
@@ -1667,6 +1713,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		Messages: []sdk.Msg{
 			&dextypes.MsgPlaceOrder{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
 	})
 
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
@@ -1684,7 +1731,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning},
 		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.5"),
 	}
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -1747,6 +1794,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
+		Reserve:           dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
 	// place buy order to match the sell
@@ -1844,6 +1892,7 @@ func TestCancelOrdersByDenom(t *testing.T) {
 	})
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: placeMsgs,
+		Amount:   dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(len(placeMsgs))),
 	})
 
 	// send required tokens to acc1

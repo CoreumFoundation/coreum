@@ -32,6 +32,9 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1000))
 
+	var resp types.QueryParamsResponse
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryParams(), []string{}, &resp)
+
 	creator := validator1Address(testNetwork)
 	order1 := types.Order{
 		Creator:           creator.String(),
@@ -45,6 +48,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 		TimeInForce:       types.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
+		Reserve:           resp.Params.OrderReserve,
 	}
 	placeOrder(ctx, requireT, testNetwork, order1)
 
@@ -81,6 +85,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 		TimeInForce:       types.TIME_IN_FORCE_GTC,
 		RemainingQuantity: sdkmath.NewInt(100),
 		RemainingBalance:  sdkmath.NewInt(100),
+		Reserve:           resp.Params.OrderReserve,
 	}
 	placeOrder(ctx, requireT, testNetwork, order2)
 

@@ -10135,6 +10135,10 @@
         "time_in_force": {
           "$ref": "#/definitions/coreum.dex.v1.TimeInForce",
           "title": "time_in_force is order time in force"
+        },
+        "reserve": {
+          "$ref": "#/definitions/cosmos.base.v1beta1.Coin",
+          "title": "reserve is the reserve required to save the order in the order book"
         }
       },
       "description": "Order is a DEX order."

@@ -62,7 +62,7 @@ func (k Keeper) matchOrder(
 				return err
 			}
 			if takerRecord.RemainingBalance.IsPositive() {
-				takerRecord, err = k.lockMinRequiredRecordBalance(ctx, order, takerRecord)
+				takerRecord, err = k.lockRequiredBalances(ctx, params, order, takerRecord)
 				if err != nil {
 					return err
 				}
@@ -250,8 +250,8 @@ func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRec
 	return recordToClose, recordToReduce
 }
 
-func (k Keeper) lockMinRequiredRecordBalance(
-	ctx sdk.Context, order types.Order, takerRecord types.OrderBookRecord,
+func (k Keeper) lockRequiredBalances(
+	ctx sdk.Context, params types.Params, order types.Order, takerRecord types.OrderBookRecord,
 ) (types.OrderBookRecord, error) {
 	creatorAddr, err := sdk.AccAddressFromBech32(order.Creator)
 	if err != nil {
@@ -269,6 +269,15 @@ func (k Keeper) lockMinRequiredRecordBalance(
 	)
 	if err != nil {
 		return types.OrderBookRecord{}, err
+	}
+
+	// lock reserve if positive
+	if params.OrderReserve.IsPositive() {
+		// don't check for the DEX FT limits since it's independent of the trading limits
+		if err := k.lockFT(ctx, creatorAddr, params.OrderReserve); err != nil {
+			return types.OrderBookRecord{},
+				sdkerrors.Wrapf(err, "failed to lock order reserve: %s", params.OrderReserve.String())
+		}
 	}
 
 	if err := k.increaseFTLimits(

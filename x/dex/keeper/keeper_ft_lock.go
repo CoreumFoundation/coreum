@@ -90,3 +90,39 @@ func (k Keeper) checksFTLimitsAndSend(
 
 	return nil
 }
+
+func (k Keeper) lockFT(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	lockCoin sdk.Coin,
+) error {
+	k.logger(ctx).Debug(
+		"Locking FT coin.",
+		"addr", addr,
+		"lockCoin", lockCoin.String(),
+	)
+
+	if err := k.assetFTKeeper.DEXLock(ctx, addr, lockCoin); err != nil {
+		return sdkerrors.Wrap(err, "failed to lock DEX FT coin")
+	}
+
+	return nil
+}
+
+func (k Keeper) unlockFT(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	unlockCoin sdk.Coin,
+) error {
+	k.logger(ctx).Debug(
+		"Unlocking FT coin.",
+		"addr", addr,
+		"unlockCoin", unlockCoin.String(),
+	)
+
+	if err := k.assetFTKeeper.DEXUnlock(ctx, addr, unlockCoin); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to unlock DEX FT coin, err: %s", err)
+	}
+
+	return nil
+}
