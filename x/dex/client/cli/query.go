@@ -29,6 +29,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(CmdQueryOrders())
 	cmd.AddCommand(CmdQueryOrderBooks())
 	cmd.AddCommand(CmdQueryOrderBookOrders())
+	cmd.AddCommand(CmdQueryAccountDenomOrdersCount())
 
 	return cmd
 }
@@ -234,6 +235,42 @@ $ %[1]s query %s order-book-orders denom1 denom2 buy
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "orders")
+
+	return cmd
+}
+
+// CmdQueryAccountDenomOrdersCount returns the QueryAccountDenomOrdersCount cobra command.
+func CmdQueryAccountDenomOrdersCount() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "account-denom-orders-count [account] [denom]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query account denom orders count",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query account denom orders count.
+
+Example:
+$ %[1]s query %s account-denom-orders-count %s denom1
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.AccountDenomOrdersCount(cmd.Context(), &types.QueryAccountDenomOrdersCountRequest{
+				Account: args[0],
+				Denom:   args[1],
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }

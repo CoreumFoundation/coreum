@@ -16,6 +16,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -47,6 +48,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdPlaceOrder(),
 		CmdCancelOrder(),
+		CmdCancelOrdersByDenom(),
 	)
 
 	return cmd
@@ -202,6 +204,46 @@ $ %s tx %s cancel-order id1 --from [sender]
 			msg := &types.MsgCancelOrder{
 				Sender: sender.String(),
 				ID:     id,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdCancelOrdersByDenom returns CancelOrdersByDenom cobra command.
+func CmdCancelOrdersByDenom() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cancel-orders-by-denom [account] [denom] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Cancel orders by denom",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Cancel orders by denom.
+
+Example:
+$ %s tx %s cancel-orders-by-denom %s denom1 --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			account := args[0]
+			denom := args[1]
+
+			msg := &types.MsgCancelOrdersByDenom{
+				Sender:  sender.String(),
+				Account: account,
+				Denom:   denom,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

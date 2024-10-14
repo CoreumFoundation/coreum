@@ -673,6 +673,82 @@ func TestUpdateDEXUnifiedRefAmount(t *testing.T) {
 	}, resp.DEXSettings)
 }
 
+func TestUpdateDEXWhitelistedDenoms(t *testing.T) {
+	requireT := require.New(t)
+	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+	requireT.NoError(err)
+	app.ChosenNetwork = networkCfg
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_ibc,
+			types.Feature_dex_whitelisted_denoms,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdkmath.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
+
+	newWhitelistedDenoms := []string{"denom1", "denom2"}
+	args := append([]string{
+		denom,
+		fmt.Sprintf("--%s=%s", cli.DEXWhitelistedDenomsFlag, strings.Join(newWhitelistedDenoms, ",")),
+	}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdUpdateDEXWhitelistedDenoms(), args)
+	requireT.NoError(err)
+
+	var resp types.QueryDEXSettingsResponse
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryDEXSettings(), []string{denom}, &resp)
+	requireT.Equal(types.DEXSettings{
+		WhitelistedDenoms: newWhitelistedDenoms,
+	}, resp.DEXSettings)
+}
+
+func TestUpdateDEXWhitelistedDenomsToEmptyList(t *testing.T) {
+	requireT := require.New(t)
+	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+	requireT.NoError(err)
+	app.ChosenNetwork = networkCfg
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_ibc,
+			types.Feature_dex_whitelisted_denoms,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdkmath.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
+
+	newWhitelistedDenoms := []string{}
+	args := append([]string{
+		denom,
+		fmt.Sprintf("--%s=%s", cli.DEXWhitelistedDenomsFlag, ""),
+	}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdUpdateDEXWhitelistedDenoms(), args)
+	requireT.NoError(err)
+
+	var resp types.QueryDEXSettingsResponse
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryDEXSettings(), []string{denom}, &resp)
+	requireT.Equal(types.DEXSettings{
+		WhitelistedDenoms: newWhitelistedDenoms,
+	}, resp.DEXSettings)
+}
+
 func issue(
 	requireT *require.Assertions,
 	ctx client.Context,
