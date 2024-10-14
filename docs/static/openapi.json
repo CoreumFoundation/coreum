@@ -9617,7 +9617,8 @@
         "extension",
         "dex_block",
         "dex_whitelisted_denoms",
-        "dex_order_cancellation"
+        "dex_order_cancellation",
+        "dex_unified_ref_amount_change"
       ],
       "default": "minting",
       "description": "Feature defines possible features of fungible token."

@@ -466,6 +466,7 @@ func TestKeeper_Issue_WithDEXSettings(t *testing.T) {
 		Features: []types.Feature{
 			types.Feature_freezing,
 			types.Feature_dex_whitelisted_denoms,
+			types.Feature_dex_unified_ref_amount_change,
 		},
 	}
 
@@ -3341,9 +3342,17 @@ func TestKeeper_UpdateDEXUnifiedRefAmount(t *testing.T) {
 		Subunit:       "abc",
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(777),
-		Features: []types.Feature{
-			types.Feature_dex_whitelisted_denoms,
+		DEXSettings: &types.DEXSettings{
+			UnifiedRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
 		},
+	}
+
+	// try to issue without the feature enabled, but with the settings
+	_, err := ftKeeper.Issue(simapp.CopyContextWithMultiStore(ctx), ft1Settings)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+
+	ft1Settings.Features = []types.Feature{
+		types.Feature_dex_unified_ref_amount_change,
 	}
 
 	ft1Denom, err := ftKeeper.Issue(ctx, ft1Settings)
@@ -3362,6 +3371,7 @@ func TestKeeper_UpdateDEXUnifiedRefAmount(t *testing.T) {
 		Version:            types.CurrentTokenVersion,
 		Admin:              ft1Settings.Issuer.String(),
 		Features:           ft1Settings.Features,
+		DEXSettings:        ft1Settings.DEXSettings,
 	}
 	requireT.Equal(expectToken, gotToken)
 

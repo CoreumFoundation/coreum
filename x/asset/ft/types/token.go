@@ -300,6 +300,13 @@ func ValidateDEXSettingsAccess(settings DEXSettings, def Definition) error {
 			Feature_dex_whitelisted_denoms.String(),
 		)
 	}
+	if settings.UnifiedRefAmount != nil && !def.IsFeatureEnabled(Feature_dex_unified_ref_amount_change) {
+		return sdkerrors.Wrapf(
+			ErrFeatureDisabled,
+			"it's prohibited to providy unified ref amount if the %s feature is disabled",
+			Feature_dex_unified_ref_amount_change.String(),
+		)
+	}
 
 	return nil
 }
