@@ -30,6 +30,10 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 	assetFTClient := assetfttypes.NewQueryClient(coreumChain.ClientContext)
+	dexClient := dextypes.NewQueryClient(coreumChain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(
 		ctx, t, ibctransfertypes.PortID, coreumChain.ChainContext,
@@ -60,6 +64,7 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 			&dextypes.MsgPlaceOrder{},
 			&ibctransfertypes.MsgTransfer{},
 		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
 	})
 
 	denom1 := issueFT(ctx, t, coreumChain, coreumIssuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_ibc)
@@ -72,7 +77,7 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 		ToAddress:   coreumSender.String(),
 		Amount:      sdk.NewCoins(sendCoin),
 	}
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
 		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(msgSend)),
