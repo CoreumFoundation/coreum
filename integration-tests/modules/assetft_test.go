@@ -302,6 +302,7 @@ func TestAssetFTDEXSettingsCreationAndUpdate(t *testing.T) {
 		},
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_dex_whitelisted_denoms,
+			assetfttypes.Feature_dex_unified_ref_amount_change,
 		},
 	}
 
@@ -478,6 +479,9 @@ func TestAssetFTDEXUnifiedRefAmountCreationAndUpdateVIAGov(t *testing.T) {
 		Symbol:    "ABC",
 		Subunit:   "uabc",
 		Precision: 6,
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_dex_unified_ref_amount_change,
+		},
 		DEXSettings: &assetfttypes.DEXSettings{
 			UnifiedRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("3.3")),
 		},

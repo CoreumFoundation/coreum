@@ -147,6 +147,9 @@ func TestIssueWithDEXSetting(t *testing.T) {
 		Subunit:     "satoshi" + uuid.NewString()[:4],
 		Precision:   8,
 		Description: "description",
+		Features: []types.Feature{
+			types.Feature_dex_unified_ref_amount_change,
+		},
 		DEXSettings: &types.DEXSettings{
 			UnifiedRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.9")),
 		},
@@ -646,6 +649,7 @@ func TestUpdateDEXUnifiedRefAmount(t *testing.T) {
 		Features: []types.Feature{
 			types.Feature_freezing,
 			types.Feature_ibc,
+			types.Feature_dex_unified_ref_amount_change,
 		},
 	}
 

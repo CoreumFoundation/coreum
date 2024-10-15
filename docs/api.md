@@ -2515,6 +2515,7 @@ Feature defines possible features of fungible token.
 | dex_block | 8 |  |
 | dex_whitelisted_denoms | 9 |  |
 | dex_order_cancellation | 10 |  |
+| dex_unified_ref_amount_change | 11 |  |
 
 
  <!-- end enums -->
