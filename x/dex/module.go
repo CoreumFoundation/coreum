@@ -141,9 +141,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // RegisterInvariants registers the module's invariants.
-func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
-	// TODO(dex): implement
-}
+func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
 // InitGenesis performs the module's genesis initialization It returns
 // no validator updates.

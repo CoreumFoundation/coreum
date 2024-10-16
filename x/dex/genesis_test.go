@@ -181,6 +181,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// check that export is equal import
 	exportedGenState := dex.ExportGenesis(sdkCtx, dexKeeper)
+	require.NoError(t, exportedGenState.Validate())
 
 	requireT.EqualValues(genState.Params, exportedGenState.Params)
 	requireT.EqualValues(genState.OrderBooks, exportedGenState.OrderBooks)
