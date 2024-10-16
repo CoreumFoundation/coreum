@@ -244,8 +244,7 @@ pub mod query {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::Addr;
-    use cosmwasm_std::{coins, from_binary};
+    use cosmwasm_std::{coins, from_binary, Addr};
 
     #[test]
     fn proper_initialization() {
@@ -366,12 +365,12 @@ mod tests {
         // No acks
         query(deps.as_ref(), env.clone(), get_msg.clone()).unwrap_err();
 
-        let msg = SudoMsg::ReceiveAck {
-            channel: format!("channel-0"),
+        let msg = SudoMsg::IBCLifecycleComplete(IBCLifecycleComplete::IBCAck {
+            channel: "channel-0".to_string(),
             sequence: 1,
             ack: String::new(),
             success: true,
-        };
+        });
         let _res = sudo(deps.as_mut(), env.clone(), msg).unwrap();
 
         // should increase counter by 1
@@ -379,12 +378,12 @@ mod tests {
         let value: GetCountResponse = from_binary(&res).unwrap();
         assert_eq!(1, value.count);
 
-        let msg = SudoMsg::ReceiveAck {
-            channel: format!("channel-0"),
+        let msg = SudoMsg::IBCLifecycleComplete(IBCLifecycleComplete::IBCAck {
+            channel: "channel-0".to_string(),
             sequence: 1,
             ack: String::new(),
             success: true,
-        };
+        });
         let _res = sudo(deps.as_mut(), env.clone(), msg).unwrap();
 
         // should increase counter by 1
