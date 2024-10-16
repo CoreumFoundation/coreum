@@ -35,7 +35,10 @@ func (k Keeper) matchOrder(
 		return err
 	}
 
-	mr := NewMatchingResult(accNumber)
+	mr, err := NewMatchingResult(order)
+	if err != nil {
+		return err
+	}
 	for {
 		makerRecord, matches, err := mf.Next()
 		if err != nil {
@@ -58,30 +61,26 @@ func (k Keeper) matchOrder(
 		switch order.TimeInForce {
 		case types.TIME_IN_FORCE_GTC:
 			// create new order with the updated record
-			if err := k.applyMatchingResult(ctx, mr, order.Denoms()); err != nil {
+			if err := k.applyMatchingResult(ctx, mr); err != nil {
 				return err
 			}
 			if takerRecord.RemainingBalance.IsPositive() {
-				takerRecord, err = k.lockRequiredBalances(ctx, params, order, takerRecord)
-				if err != nil {
-					return err
-				}
 				return k.createOrder(ctx, params, order, takerRecord)
 			}
 			return nil
 		case types.TIME_IN_FORCE_IOC:
-			return k.applyMatchingResult(ctx, mr, order.Denoms())
+			return k.applyMatchingResult(ctx, mr)
 		case types.TIME_IN_FORCE_FOK:
 			// if the order is not fill fully don't apply the matching result
 			if takerRecord.RemainingQuantity.IsPositive() {
 				return nil
 			}
-			return k.applyMatchingResult(ctx, mr, order.Denoms())
+			return k.applyMatchingResult(ctx, mr)
 		default:
 			return sdkerrors.Wrapf(types.ErrInvalidInput, "unsupported time in force: %s", order.TimeInForce.String())
 		}
 	case types.ORDER_TYPE_MARKET:
-		return k.applyMatchingResult(ctx, mr, order.Denoms())
+		return k.applyMatchingResult(ctx, mr)
 	default:
 		return sdkerrors.Wrapf(
 			types.ErrInvalidInput, "unexpect order type : %s", order.Type.String(),
@@ -178,8 +177,12 @@ func (k Keeper) matchRecords(
 
 	recordToCloseRemainingQuantity := recordToClose.RemainingQuantity.Sub(recordToCloseReducedQuantity)
 	if recordToClose.IsMaker() {
-		mr.RegisterTakerSend(recordToClose.AccountNumber, recordToCloseReceiveCoin, recordToReduceReceiveCoin)
-		mr.RegisterMakerUnlockAndSend(recordToClose.AccountNumber, recordToReduceReceiveCoin, recordToCloseReceiveCoin)
+		mr.RegisterTakerCheckLimitsAndSendCoin(
+			recordToClose.AccountNumber, recordToClose.OrderID, recordToCloseReceiveCoin, recordToReduceReceiveCoin,
+		)
+		mr.RegisterMakerUnlockAndSend(
+			recordToClose.AccountNumber, recordToClose.OrderID, recordToReduceReceiveCoin, recordToCloseReceiveCoin,
+		)
 		unlockCoin := sdk.NewCoin(
 			recordToReduceReceiveCoin.Denom, recordToClose.RemainingBalance.Sub(recordToReduceReceiveCoin.Amount),
 		)
@@ -192,10 +195,14 @@ func (k Keeper) matchRecords(
 		mr.RegisterMakerUnlock(
 			recordToClose.AccountNumber, unlockCoin, sdk.NewCoin(recordToCloseReceiveCoin.Denom, reserveWhitelistingAmt),
 		)
-		mr.RegisterMakerRemoveRecord(*recordToClose)
+		mr.RegisterMakerRemoveRecord(recordToClose)
 	} else {
-		mr.RegisterTakerSend(recordToReduce.AccountNumber, recordToReduceReceiveCoin, recordToCloseReceiveCoin)
-		mr.RegisterMakerUnlockAndSend(recordToReduce.AccountNumber, recordToCloseReceiveCoin, recordToReduceReceiveCoin)
+		mr.RegisterTakerCheckLimitsAndSendCoin(
+			recordToReduce.AccountNumber, recordToReduce.OrderID, recordToReduceReceiveCoin, recordToCloseReceiveCoin,
+		)
+		mr.RegisterMakerUnlockAndSend(
+			recordToReduce.AccountNumber, recordToReduce.OrderID, recordToCloseReceiveCoin, recordToReduceReceiveCoin,
+		)
 	}
 
 	recordToClose.RemainingQuantity = recordToCloseRemainingQuantity

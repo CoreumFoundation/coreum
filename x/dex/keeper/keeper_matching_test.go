@@ -5972,7 +5972,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			for _, order := range initialOrders {
 				ordersDenoms[order.BaseDenom] = struct{}{}
 				ordersDenoms[order.QuoteDenom] = struct{}{}
-				spendableBalancesBefore := getSpendableBalances(sdkCtx, testApp, sdk.MustAccAddressFromBech32(order.Creator))
+				availableBalancesBefore := getAvailableBalances(sdkCtx, testApp, sdk.MustAccAddressFromBech32(order.Creator))
+
+				// use new event manager for each order
+				sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 				err := testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
 				if err != nil && tt.wantErrorContains != "" {
 					require.True(t, sdkerrors.IsOf(err, assetfttypes.ErrDEXLockFailed, assetfttypes.ErrWhitelistedLimitExceeded))
@@ -5980,7 +5983,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					return
 				}
 				require.NoError(t, err)
-				assertOrderPlacementResult(t, sdkCtx, testApp, spendableBalancesBefore, order)
+				assertOrderPlacementResult(t, sdkCtx, testApp, availableBalancesBefore, order)
 				orderBooksID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, order.BaseDenom, order.QuoteDenom)
 				require.NoError(t, err)
 				orderBooksIDs[orderBooksID] = struct{}{}
@@ -6134,52 +6137,27 @@ func assertOrderPlacementResult(
 	t *testing.T,
 	sdkCtx sdk.Context,
 	testApp *simapp.App,
-	spendableBalancesBefore map[string]sdkmath.Int,
+	availableBalancesBefore map[string]sdkmath.Int,
 	order types.Order,
 ) {
-	creator := sdk.MustAccAddressFromBech32(order.Creator)
-	spendableBalancesAfter := getSpendableBalances(sdkCtx, testApp, creator)
+	events := readOrderEvents(t, sdkCtx, testApp)
 
-	spDenom := order.GetSpendDenom()
-	spBalanceAmtBefore, ok := spendableBalancesBefore[spDenom]
-	if !ok {
-		spBalanceAmtBefore = sdkmath.ZeroInt()
-	}
-	spBalanceAmtAfter, ok := spendableBalancesAfter[spDenom]
-	if !ok {
-		spBalanceAmtAfter = sdkmath.ZeroInt()
-	}
-
-	recvDenom := order.GetReceiveDenom()
-	recvBalanceAmtBefore, ok := spendableBalancesBefore[recvDenom]
-	if !ok {
-		recvBalanceAmtBefore = sdkmath.ZeroInt()
-	}
-	recvBalanceAmtAfter, ok := spendableBalancesAfter[recvDenom]
-	if !ok {
-		recvBalanceAmtAfter = sdkmath.ZeroInt()
-	}
-
-	storedOrder, err := testApp.DEXKeeper.GetOrderByAddressAndID(sdkCtx, creator, order.ID)
+	sentAmt, receivedAmt := assetOrderSentReceivedAmounts(
+		t, sdkCtx, testApp, availableBalancesBefore, order, events,
+	)
+	storedOrder, err := testApp.DEXKeeper.GetOrderByAddressAndID(
+		sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.ID,
+	)
 	if err != nil {
 		require.ErrorIs(t, err, types.ErrRecordNotFound)
 		t.Logf("Order not found in the order book.")
-
-		spentAmt := spBalanceAmtBefore.Sub(spBalanceAmtAfter)
-		require.False(t, spentAmt.IsNegative())
-		receivedAmt := recvBalanceAmtAfter.Sub(recvBalanceAmtBefore)
-		require.False(t, receivedAmt.IsNegative())
-
-		if order.Type == types.ORDER_TYPE_LIMIT {
-			// limit order is matched partially or fully and closed, so the remaining balance is refunded
-			assertExecutionPrice(t, order, spentAmt, receivedAmt)
-		}
-		assertFilledQuantity(t, order, spentAmt, receivedAmt)
-
+		assertFilledQuantity(t, order, sentAmt, receivedAmt)
 		return
 	}
 
 	t.Logf("Order found in the order book.")
+	require.NotNil(t, events.OrderCreated)
+	require.Equal(t, events.OrderCreated.Order, storedOrder)
 
 	if order.Type != types.ORDER_TYPE_LIMIT {
 		t.Fatalf("Saved not market order, type: %s", order.Type.String())
@@ -6187,19 +6165,90 @@ func assertOrderPlacementResult(
 	if order.TimeInForce != types.TIME_IN_FORCE_GTC {
 		t.Fatalf("Saved not GTC order, time in force: %s", order.TimeInForce.String())
 	}
+}
 
-	// limit order is matched partially but the remaining balance is not refunded
-	spentAmt := spBalanceAmtBefore.Sub(spBalanceAmtAfter).Sub(storedOrder.RemainingBalance)
-	receivedAmt := recvBalanceAmtAfter.Sub(recvBalanceAmtBefore)
+func assetOrderSentReceivedAmounts(
+	t *testing.T,
+	sdkCtx sdk.Context,
+	testApp *simapp.App,
+	availableBalancesBefore map[string]sdkmath.Int,
+	order types.Order,
+	events OrderPlacementEvents,
+) (sdkmath.Int, sdkmath.Int) {
+	var (
+		orderSentAmt     = sdkmath.ZeroInt()
+		orderReceivedAmt = sdkmath.ZeroInt()
+	)
+	if len(events.OrdersReduced) > 0 {
+		require.GreaterOrEqual(t, len(events.OrdersReduced), 2)
+		currentOrderReducedEvent, ok := events.getOrderReduced(order.Creator, order.ID)
+		require.True(t, ok)
+		matchedSent := sdk.NewCoin(currentOrderReducedEvent.ReceivedCoin.Denom, sdkmath.ZeroInt())
+		matchedReceived := sdk.NewCoin(currentOrderReducedEvent.SentCoin.Denom, sdkmath.ZeroInt())
+		for _, evt := range events.OrdersReduced {
+			if evt.Creator == order.Creator && evt.ID == order.ID {
+				continue
+			}
+			matchedSent = matchedSent.Add(evt.SentCoin)
+			matchedReceived = matchedReceived.Add(evt.ReceivedCoin)
+		}
+		require.Equal(t, currentOrderReducedEvent.SentCoin.String(), matchedReceived.String())
+		require.Equal(t, currentOrderReducedEvent.ReceivedCoin.String(), matchedSent.String())
 
-	// order is in the store and executed partially
-	if !order.Quantity.Equal(storedOrder.RemainingQuantity) {
-		require.False(t, receivedAmt.IsNegative())
-		assertExecutionPrice(t, order, spentAmt, receivedAmt)
-	} else {
-		// if quantity is not filled, nothing is spent
-		require.True(t, spentAmt.IsZero())
+		orderSentAmt = currentOrderReducedEvent.SentCoin.Amount
+		orderReceivedAmt = currentOrderReducedEvent.ReceivedCoin.Amount
+
+		if order.Type == types.ORDER_TYPE_LIMIT {
+			assertExecutionPrice(
+				t,
+				order,
+				orderSentAmt,
+				orderReceivedAmt,
+			)
+		}
 	}
+
+	// check that balance used amount either sent or locked in the order
+	orderUsedAmt := orderSentAmt
+	if events.OrderCreated != nil {
+		// locked balance
+		orderUsedAmt = orderUsedAmt.Add(events.OrderCreated.Order.RemainingBalance)
+	}
+
+	creator := sdk.MustAccAddressFromBech32(order.Creator)
+	// check the balances updated
+	availableAmtBefore, ok := availableBalancesBefore[order.GetSpendDenom()]
+	if !ok {
+		availableAmtBefore = sdkmath.ZeroInt()
+	}
+	availableBalancesAfter := getAvailableBalances(sdkCtx, testApp, creator)
+	availableBalanceAmtAfter, ok := availableBalancesAfter[order.GetSpendDenom()]
+	if !ok {
+		availableBalanceAmtAfter = sdkmath.ZeroInt()
+	}
+	// balanceUsedAmt includes locked and frozen balances
+	balanceUsedAmt := availableAmtBefore.Sub(availableBalanceAmtAfter)
+	require.False(t, balanceUsedAmt.IsNegative())
+
+	// adjust with the self matched orders
+	for _, evt := range events.OrdersReduced {
+		if evt.Creator != order.Creator {
+			continue
+		}
+		if evt.ID == order.ID {
+			continue
+		}
+		if evt.SentCoin.Denom != order.GetSpendDenom() {
+			balanceUsedAmt = balanceUsedAmt.Add(evt.ReceivedCoin.Amount)
+		} else {
+			// we can't same coin as `order.GetSpendDenom()` with the self match
+			t.Fatalf("Unexpected to sent coin: %s", evt.SentCoin)
+		}
+	}
+
+	require.Equal(t, balanceUsedAmt.String(), orderUsedAmt.String())
+
+	return orderSentAmt, orderReceivedAmt
 }
 
 func assertExecutionPrice(t *testing.T, order types.Order, spendAmt, receiveAmt sdkmath.Int) {
@@ -6232,27 +6281,22 @@ func assertExecutionPrice(t *testing.T, order types.Order, spendAmt, receiveAmt 
 	)
 }
 
-func assertFilledQuantity(t *testing.T, order types.Order, spendAmt, receiveAmt sdkmath.Int) {
+func assertFilledQuantity(t *testing.T, order types.Order, sent, receiveAmt sdkmath.Int) {
 	var filledQuantity sdkmath.Int
 	if order.Side == types.SIDE_BUY {
 		filledQuantity = receiveAmt
 	} else {
-		filledQuantity = spendAmt
+		filledQuantity = sent
 	}
 	t.Logf(
 		"Filled qunitities, side:%s, orderTimeInForce: %s, orderQuantity: %s, filledQuantity: %s",
 		order.Side.String(), order.TimeInForce.String(), order.Quantity.String(), filledQuantity.String(),
 	)
-	if order.Type == types.ORDER_TYPE_MARKET {
-		if order.TimeInForce == types.TIME_IN_FORCE_FOK {
-			// it's possible that order is machined with the order of the same account, so the filled quantity
-			// includes multiple increased that's why we use GTE, but not EQ
-			require.True(t, order.Quantity.GTE(filledQuantity))
-		}
-	}
+	// check that we never exceed the order's quantity
+	require.True(t, order.Quantity.GTE(filledQuantity))
 }
 
-func getSpendableBalances(sdkCtx sdk.Context, testApp *simapp.App, acc sdk.AccAddress) map[string]sdkmath.Int {
+func getAvailableBalances(sdkCtx sdk.Context, testApp *simapp.App, acc sdk.AccAddress) map[string]sdkmath.Int {
 	balances := testApp.BankKeeper.GetAllBalances(sdkCtx, acc)
 	spendableBalances := make(map[string]sdkmath.Int)
 	for _, balance := range balances {
