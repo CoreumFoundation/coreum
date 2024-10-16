@@ -1,11 +1,13 @@
-use coreum_wasm_sdk::core::{CoreumMsg, CoreumResult};
-use coreum_wasm_sdk::nft;
+use coreum_wasm_sdk::core::CoreumResult;
+use coreum_wasm_sdk::shim;
 use coreum_wasm_sdk::types::cosmos::authz::v1beta1::MsgExec;
-use coreum_wasm_sdk::types::cosmos::nft::v1beta1::MsgSend as MsgSendNft;
+use coreum_wasm_sdk::types::cosmos::bank::v1beta1::MsgSend as BankMsg;
+use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
+use coreum_wasm_sdk::types::cosmos::nft::v1beta1::MsgSend;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{BankMsg, Binary, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{CosmosMsg, DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use cw_utils::one_coin;
 
@@ -42,8 +44,18 @@ pub fn execute(
             class_id,
             id,
             price,
-        } => offer_nft(deps, env, info, class_id, id, price),
-        ExecuteMsg::AcceptNftOffer { class_id, id } => accept_offer(deps, info, class_id, id),
+        } => offer_nft(
+            deps,
+            env,
+            info,
+            class_id,
+            id,
+            Coin {
+                denom: price.denom.to_string(),
+                amount: price.amount.to_string(),
+            },
+        ),
+        ExecuteMsg::AcceptNftOffer { class_id, id } => accept_offer(deps, env, info, class_id, id),
     }
 }
 
@@ -57,22 +69,20 @@ fn offer_nft(
     id: String,
     price: Coin,
 ) -> CoreumResult<ContractError> {
-    let nft_send = MsgSendNft {
+    let nft_send = MsgSend {
         class_id: class_id.clone(),
         id: id.clone(),
         sender: info.sender.to_string(),
         receiver: env.contract.address.to_string(),
-    };
+    }
+    .to_any();
 
     let exec = MsgExec {
         grantee: env.contract.address.to_string(),
-        msgs: vec![nft_send.to_any()],
-    };
-    let exec_bytes: Vec<u8> = exec.to_proto_bytes();
-
-    let msg = CosmosMsg::Stargate {
-        type_url: "/cosmos.authz.v1beta1.MsgExec".to_string(),
-        value: Binary::from(exec_bytes),
+        msgs: vec![shim::Any {
+            type_url: nft_send.type_url,
+            value: nft_send.value.to_vec(),
+        }],
     };
 
     NFT_OFFERS.save(
@@ -86,33 +96,51 @@ fn offer_nft(
 
     Ok(Response::new()
         .add_attribute("method", "execute_offer_nft_authz")
-        .add_message(msg))
+        .add_message(CosmosMsg::Any(exec.to_any())))
 }
 
 fn accept_offer(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     class_id: String,
     id: String,
 ) -> CoreumResult<ContractError> {
     let offer = NFT_OFFERS.load(deps.storage, (class_id.clone(), id.clone()))?;
 
-    if one_coin(&info)? != offer.price {
+    let coin = one_coin(&info)?;
+    let coin = Coin {
+        denom: coin.denom.to_string(),
+        amount: coin.amount.to_string(),
+    };
+    if coin != offer.price {
         return Err(ContractError::InvalidFundsAmount {});
     }
 
-    let nft_send_msg = CosmosMsg::from(CoreumMsg::NFT(nft::Msg::Send {
+    let nft_send = MsgSend {
         class_id,
         id,
+        sender: env.contract.address.to_string(),
         receiver: info.sender.to_string(),
-    }));
+    };
 
-    let send_funds_msg = CosmosMsg::Bank(BankMsg::Send {
+    let send_funds = BankMsg {
+        from_address: env.contract.address.to_string(),
         to_address: offer.address.to_string(),
-        amount: info.funds,
-    });
+        amount: info
+            .funds
+            .iter()
+            .map(|coin| Coin {
+                denom: coin.denom.clone(),
+                amount: coin.amount.to_string(),
+            })
+            .collect::<Vec<Coin>>(),
+    };
 
     Ok(Response::new()
         .add_attribute("method", "execute_accept_nft_offer")
-        .add_messages([nft_send_msg, send_funds_msg]))
+        .add_messages([
+            CosmosMsg::Any(nft_send.to_any()),
+            CosmosMsg::Any(send_funds.to_any()),
+        ]))
 }

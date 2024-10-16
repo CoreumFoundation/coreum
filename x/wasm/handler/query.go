@@ -8,8 +8,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	nfttypes "cosmossdk.io/x/nft"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
@@ -153,11 +156,20 @@ type coreumQuery struct {
 
 // NewCoreumQueryHandler returns the coreum handler which handles queries from smart contracts.
 func NewCoreumQueryHandler(
-	assetFTQueryServer assetfttypes.QueryServer,
-	assetNFTQueryServer assetnfttypes.QueryServer,
-	nftQueryServer nfttypes.QueryServer,
+	assetFTQueryServer assetfttypes.QueryServer, assetNFTQueryServer assetnfttypes.QueryServer,
+	nftQueryServer nfttypes.QueryServer, gRPCQueryRouter *baseapp.GRPCQueryRouter, codec *codec.ProtoCodec,
 ) *wasmkeeper.QueryPlugins {
+	acceptList := wasmkeeper.AcceptedQueries{
+		"/coreum.asset.ft.v1.Query/Token":              &assetfttypes.QueryTokenResponse{},
+		"/coreum.asset.ft.v1.Query/FrozenBalance":      &assetfttypes.QueryFrozenBalanceResponse{},
+		"/coreum.asset.ft.v1.Query/WhitelistedBalance": &assetfttypes.QueryWhitelistedBalanceResponse{},
+		"/cosmos.bank.v1beta1.Query/Balance":           &banktypes.QueryBalanceResponse{},
+		"/coreum.asset.nft.v1.Query/Class":             &assetnfttypes.QueryClassResponse{},
+		"/coreum.asset.nft.v1.Query/Classes":           &assetnfttypes.QueryClassesResponse{},
+		"/cosmos.nft.v1beta1.Query/Owner":              &nfttypes.QueryOwnerResponse{},
+	}
 	return &wasmkeeper.QueryPlugins{
+		Grpc: wasmkeeper.AcceptListGrpcQuerier(acceptList, gRPCQueryRouter, codec),
 		Custom: func(ctx sdk.Context, query json.RawMessage) ([]byte, error) {
 			var coreumQuery coreumQuery
 			if err := json.Unmarshal(query, &coreumQuery); err != nil {

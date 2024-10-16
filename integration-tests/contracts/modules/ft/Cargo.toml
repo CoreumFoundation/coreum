@@ -24,15 +24,13 @@ incremental = false
 overflow-checks = true
 
 [features]
-backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = "1.5.4"
-cosmwasm-storage = "1.5.0"
-cw-storage-plus = "1.1.0"
-cw2 = "1.1.1"
+cosmwasm-std = { version = "2.1.4", features = ["cosmwasm_2_0"] }
+cw-storage-plus = "2.0.0"
+cw2 = "2.0.0"
 thiserror = "1.0.59"
-coreum-wasm-sdk = "1.0.0"
-cosmwasm-schema = "1.5.4"
-cw-ownable = "0.5.1"
+coreum-wasm-sdk = {git = "https://github.com/CoreumFoundation/coreum-wasm-sdk.git", branch = "upgrade-cosmwasm-std"}
+cosmwasm-schema = "2.1.4"
+cw-ownable = "2.1.0"
