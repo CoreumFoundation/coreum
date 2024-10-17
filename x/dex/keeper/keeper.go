@@ -607,6 +607,12 @@ func (k Keeper) createOrder(
 		"record", record.String(),
 	)
 
+	var err error
+	record, err = k.lockRequiredBalances(ctx, params, order, record)
+	if err != nil {
+		return err
+	}
+
 	if err := k.incrementAccountDenomsOrdersCounter(
 		ctx,
 		record.AccountNumber,
@@ -626,7 +632,20 @@ func (k Keeper) createOrder(
 		order.Reserve = params.OrderReserve
 	}
 
-	return k.saveOrderWithOrderBookRecord(ctx, order, record)
+	order.RemainingQuantity = record.RemainingQuantity
+	order.RemainingBalance = record.RemainingBalance
+
+	if err := k.saveOrderWithOrderBookRecord(ctx, order, record); err != nil {
+		return err
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventOrderCreated{
+		Order: order,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderCreated: %s", err)
+	}
+
+	return nil
 }
 
 func (k Keeper) saveOrderWithOrderBookRecord(
@@ -689,16 +708,14 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 	return k.saveAccountDenomOrderSeq(ctx, record.AccountNumber, order.Denoms(), record.OrderSeq)
 }
 
-func (k Keeper) removeOrderByRecordAndUsedDenoms(
+func (k Keeper) removeOrderByRecord(
 	ctx sdk.Context,
 	acc sdk.AccAddress,
 	record types.OrderBookRecord,
-	denoms []string, // any order of used denoms in the order
 ) error {
 	k.logger(ctx).Debug(
-		"Removing order.",
+		"Removing order by record.",
 		"record", record,
-		"denoms", denoms,
 	)
 
 	if err := k.removeOrderBookRecord(ctx, record.OrderBookID, record.Side, record.Price, record.OrderSeq); err != nil {
@@ -727,11 +744,40 @@ func (k Keeper) removeOrderByRecordAndUsedDenoms(
 		return err
 	}
 
-	if err := k.decrementAccountDenomOrdersCounter(ctx, record.AccountNumber, denoms); err != nil {
+	orderBookData, err := k.getOrderBookData(ctx, record.OrderBookID)
+	if err != nil {
 		return err
 	}
 
-	return k.removeAccountDenomOrderSeq(ctx, record.AccountNumber, denoms, record.OrderSeq)
+	denoms := []string{orderBookData.BaseDenom, orderBookData.QuoteDenom}
+	if err := k.decrementAccountDenomOrdersCounter(ctx, record.AccountNumber, denoms); err != nil {
+		return err
+	}
+	if err := k.removeAccountDenomOrderSeq(ctx, record.AccountNumber, denoms, record.OrderSeq); err != nil {
+		return err
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventOrderClosed{
+		Order: types.Order{
+			Creator:           acc.String(),
+			Type:              types.ORDER_TYPE_LIMIT,
+			ID:                record.OrderID,
+			BaseDenom:         orderBookData.BaseDenom,
+			QuoteDenom:        orderBookData.QuoteDenom,
+			Price:             &orderData.Price,
+			Quantity:          orderData.Quantity,
+			Side:              orderData.Side,
+			GoodTil:           orderData.GoodTil,
+			TimeInForce:       types.TIME_IN_FORCE_GTC,
+			RemainingQuantity: record.RemainingQuantity,
+			RemainingBalance:  record.RemainingBalance,
+			Reserve:           orderData.Reserve,
+		},
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderCreated: %s", err)
+	}
+
+	return nil
 }
 
 func (k Keeper) saveOrderBookData(ctx sdk.Context, orderBookID uint32, data types.OrderBookData) error {
@@ -752,7 +798,7 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 		return err
 	}
 
-	if err := k.removeOrderByRecordAndUsedDenoms(ctx, acc, record, order.Denoms()); err != nil {
+	if err := k.removeOrderByRecord(ctx, acc, record); err != nil {
 		return err
 	}
 
