@@ -152,7 +152,7 @@ price_tick(base_denom/quote_denom) = 10^(floor(log10((unified_ref_amount(quote_d
 ```
 
 The `price_tick_exponent` is the coefficient used to give better price precision for the token orders. The default
-`price_tick_exponent` is `-5`, and can be updated by the governance.
+`price_tick_exponent` is `-8`, and can be updated by the governance.
 
 Tick size example:
 
