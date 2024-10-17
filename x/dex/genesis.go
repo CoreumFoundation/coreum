@@ -17,6 +17,10 @@ func InitGenesis(
 	accountKeeper types.AccountKeeper,
 	genState types.GenesisState,
 ) {
+	if err := genState.Validate(); err != nil {
+		panic(err)
+	}
+
 	if err := dexKeeper.SetParams(ctx, genState.Params); err != nil {
 		panic(err)
 	}
