@@ -428,12 +428,15 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 		}
 	}
 
-	spendableBalancesBefore := getSpendableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
+	availableBalancesBefore := getAvailableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
+
+	// use empty event manager for each order placement to check events properly
+	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 	require.NoError(t, fa.testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 
 	// check if order is placed
 	t.Log("Placement passed")
-	assertOrderPlacementResult(t, sdkCtx, fa.testApp, spendableBalancesBefore, order)
+	assertOrderPlacementResult(t, sdkCtx, fa.testApp, availableBalancesBefore, order)
 }
 
 func (fa *FuzzApp) CancelFirstOrder(t *testing.T, sdkCtx sdk.Context, creator sdk.AccAddress) {

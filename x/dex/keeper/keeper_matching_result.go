@@ -1,81 +1,123 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-// CoinToAccNumber is a coin to account number struct.
-type CoinToAccNumber struct {
-	AccNumber        uint64
-	LockingCoin      sdk.Coin
-	WhitelistingCoin sdk.Coin
+// TakerCheckLimitsAndSendCoin is the taker coin to check limits send.
+type TakerCheckLimitsAndSendCoin struct {
+	MakerAccNumber               uint64
+	MakerOrderID                 string
+	SendCoin                     sdk.Coin
+	CheckReserveWhitelistingCoin sdk.Coin
+}
+
+// MakerUnlockAndSendCoin is the maker coin to unlock and send.
+type MakerUnlockAndSendCoin struct {
+	MakerAccNumber          uint64
+	MakerOrderID            string
+	UnlockAndSendCoin       sdk.Coin
+	ReleaseWhitelistingCoin sdk.Coin
+}
+
+// MakerUnlockCoin is the maker coin to unlock.
+type MakerUnlockCoin struct {
+	MakerAccNumber          uint64
+	UnlockCoin              sdk.Coin
+	ReleaseWhitelistingCoin sdk.Coin
 }
 
 // MatchingResult is the result of a matching operation.
 type MatchingResult struct {
-	TakerAccNumber     uint64
-	TakerSend          []CoinToAccNumber
-	MakerUnlockAndSend []CoinToAccNumber
-	MakerUnlock        []CoinToAccNumber
-	MakerRemoveRecords []types.OrderBookRecord
-	MakerUpdateRecord  *types.OrderBookRecord
+	TakerAddress            sdk.AccAddress
+	TakerOrderReducedEvent  types.EventOrderReduced
+	TakerCheckLimitsAndSend []TakerCheckLimitsAndSendCoin
+	MakerUnlockAndSend      []MakerUnlockAndSendCoin
+	MakerUnlock             []MakerUnlockCoin
+	MakerRemoveRecords      []*types.OrderBookRecord
+	MakerOrderReducedEvents []types.EventOrderReduced
+	MakerUpdateRecord       *types.OrderBookRecord
 }
 
 // NewMatchingResult creates a new MatchingResult.
-func NewMatchingResult(takerAccNumber uint64) *MatchingResult {
+func NewMatchingResult(order types.Order) (*MatchingResult, error) {
+	takerAddress, err := sdk.AccAddressFromBech32(order.Creator)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
+	}
+
 	return &MatchingResult{
-		TakerAccNumber:     takerAccNumber,
-		TakerSend:          make([]CoinToAccNumber, 0),
-		MakerUnlockAndSend: make([]CoinToAccNumber, 0),
-		MakerUnlock:        make([]CoinToAccNumber, 0),
-		MakerRemoveRecords: make([]types.OrderBookRecord, 0),
-		MakerUpdateRecord:  nil,
-	}
+		TakerAddress: takerAddress,
+		TakerOrderReducedEvent: types.EventOrderReduced{
+			Creator:      order.Creator,
+			ID:           order.ID,
+			SentCoin:     sdk.NewCoin(order.GetSpendDenom(), sdkmath.ZeroInt()),
+			ReceivedCoin: sdk.NewCoin(order.GetReceiveDenom(), sdkmath.ZeroInt()),
+		},
+		TakerCheckLimitsAndSend: make([]TakerCheckLimitsAndSendCoin, 0),
+		MakerUnlockAndSend:      make([]MakerUnlockAndSendCoin, 0),
+		MakerUnlock:             make([]MakerUnlockCoin, 0),
+		MakerRemoveRecords:      make([]*types.OrderBookRecord, 0),
+		MakerOrderReducedEvents: make([]types.EventOrderReduced, 0),
+		MakerUpdateRecord:       nil,
+	}, nil
 }
 
-// RegisterTakerSend sets the coin to send.
-func (mr *MatchingResult) RegisterTakerSend(makerAccNumber uint64, spendCoin, whitelistingCoin sdk.Coin) {
-	if spendCoin.IsZero() {
+// RegisterTakerCheckLimitsAndSendCoin sets the taker coin to check limits and send.
+func (mr *MatchingResult) RegisterTakerCheckLimitsAndSendCoin(
+	makerAccNumber uint64,
+	makerOrderID string,
+	sendCoin, checkReserveWhitelistingCoin sdk.Coin,
+) {
+	if sendCoin.IsZero() {
 		return
 	}
 
-	mr.TakerSend = appendOrAddCoinToAccNumber(mr.TakerSend, CoinToAccNumber{
-		AccNumber:        makerAccNumber,
-		LockingCoin:      spendCoin,
-		WhitelistingCoin: whitelistingCoin,
+	mr.TakerCheckLimitsAndSend = append(mr.TakerCheckLimitsAndSend, TakerCheckLimitsAndSendCoin{
+		MakerAccNumber:               makerAccNumber,
+		MakerOrderID:                 makerOrderID,
+		SendCoin:                     sendCoin,
+		CheckReserveWhitelistingCoin: checkReserveWhitelistingCoin,
 	})
 }
 
-// RegisterMakerUnlockAndSend sets the coin to unlock and send.
-func (mr *MatchingResult) RegisterMakerUnlockAndSend(makerAccNumber uint64, spendCoin, whitelistingCoin sdk.Coin) {
-	if spendCoin.IsZero() {
+// RegisterMakerUnlockAndSend sets the maker coin to unlock and send.
+func (mr *MatchingResult) RegisterMakerUnlockAndSend(
+	makerAccNumber uint64,
+	makerOrderID string,
+	unlockAndSendCoin, releaseWhitelistingCoin sdk.Coin,
+) {
+	if unlockAndSendCoin.IsZero() {
 		return
 	}
 
-	mr.MakerUnlockAndSend = appendOrAddCoinToAccNumber(mr.MakerUnlockAndSend, CoinToAccNumber{
-		AccNumber:        makerAccNumber,
-		LockingCoin:      spendCoin,
-		WhitelistingCoin: whitelistingCoin,
+	mr.MakerUnlockAndSend = append(mr.MakerUnlockAndSend, MakerUnlockAndSendCoin{
+		MakerOrderID:            makerOrderID,
+		MakerAccNumber:          makerAccNumber,
+		UnlockAndSendCoin:       unlockAndSendCoin,
+		ReleaseWhitelistingCoin: releaseWhitelistingCoin,
 	})
 }
 
-// RegisterMakerUnlock sets the coin to unlock.
-func (mr *MatchingResult) RegisterMakerUnlock(makerAccNumber uint64, spendCoin, whitelistingCoin sdk.Coin) {
-	if spendCoin.IsZero() {
+// RegisterMakerUnlock sets the maker coin to unlock.
+func (mr *MatchingResult) RegisterMakerUnlock(makerAccNumber uint64, unlockCoin, releaseWhitelistingCoin sdk.Coin) {
+	if unlockCoin.IsZero() {
 		return
 	}
 
-	mr.MakerUnlock = appendOrAddCoinToAccNumber(mr.MakerUnlock, CoinToAccNumber{
-		AccNumber:        makerAccNumber,
-		LockingCoin:      spendCoin,
-		WhitelistingCoin: whitelistingCoin,
+	mr.MakerUnlock = append(mr.MakerUnlock, MakerUnlockCoin{
+		MakerAccNumber:          makerAccNumber,
+		UnlockCoin:              unlockCoin,
+		ReleaseWhitelistingCoin: releaseWhitelistingCoin,
 	})
 }
 
 // RegisterMakerRemoveRecord sets the record to remove.
-func (mr *MatchingResult) RegisterMakerRemoveRecord(record types.OrderBookRecord) {
+func (mr *MatchingResult) RegisterMakerRemoveRecord(record *types.OrderBookRecord) {
 	mr.MakerRemoveRecords = append(mr.MakerRemoveRecords, record)
 }
 
@@ -84,67 +126,187 @@ func (mr *MatchingResult) RegisterMakerUpdateRecord(record types.OrderBookRecord
 	mr.MakerUpdateRecord = &record
 }
 
-func appendOrAddCoinToAccNumber(coins []CoinToAccNumber, coin CoinToAccNumber) []CoinToAccNumber {
-	for i := range coins {
-		if coins[i].AccNumber == coin.AccNumber {
-			coins[i].LockingCoin = coins[i].LockingCoin.Add(coin.LockingCoin)
-			coins[i].WhitelistingCoin = coins[i].WhitelistingCoin.Add(coin.WhitelistingCoin)
-			return coins
-		}
-	}
-
-	return append(coins, coin)
+type accountToCoinsMapping struct {
+	AccAddress sdk.AccAddress
+	Coin1      sdk.Coin
+	Coin2      sdk.Coin
 }
 
-func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult, usedDenoms []string) error {
+type accountsToCoins struct {
+	mapping []accountToCoinsMapping
+}
+
+func newAccountsToCoins() *accountsToCoins {
+	return &accountsToCoins{
+		mapping: make([]accountToCoinsMapping, 0),
+	}
+}
+
+func (a *accountsToCoins) Add(acc sdk.AccAddress, coin1, coin2 sdk.Coin) {
+	for i := range a.mapping {
+		if a.mapping[i].AccAddress.String() == acc.String() {
+			a.mapping[i].Coin1 = a.mapping[i].Coin1.Add(coin1)
+			a.mapping[i].Coin2 = a.mapping[i].Coin2.Add(coin2)
+			return
+		}
+	}
+	a.mapping = append(a.mapping, accountToCoinsMapping{
+		AccAddress: acc,
+		Coin1:      coin1,
+		Coin2:      coin2,
+	})
+}
+
+func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
 	accCache := make(map[uint64]sdk.AccAddress)
-	takerAddr, err := k.getAccountAddressWithCache(ctx, mr.TakerAccNumber, accCache)
-	if err != nil {
+
+	if err := k.applyMatchingResultTakerCheckLimitsAndSend(ctx, mr, accCache); err != nil {
 		return err
 	}
-	for _, s := range mr.TakerSend {
-		var makerAddr sdk.AccAddress
-		makerAddr, err = k.getAccountAddressWithCache(ctx, s.AccNumber, accCache)
-		if err != nil {
-			return err
-		}
-		if err := k.checksFTLimitsAndSend(ctx, takerAddr, makerAddr, s.LockingCoin, s.WhitelistingCoin); err != nil {
-			return err
-		}
+
+	if err := k.applyMatchingResultMakerUnlockAndSend(ctx, mr, accCache); err != nil {
+		return err
 	}
-	for _, us := range mr.MakerUnlockAndSend {
-		var makerAddr sdk.AccAddress
-		makerAddr, err = k.getAccountAddressWithCache(ctx, us.AccNumber, accCache)
-		if err != nil {
-			return err
-		}
-		if err := k.decreaseFTLimitsAndSend(ctx, makerAddr, takerAddr, us.LockingCoin, us.WhitelistingCoin); err != nil {
-			return err
-		}
+
+	if err := k.applyMatchingResultMakerUnlock(ctx, mr, accCache); err != nil {
+		return err
 	}
-	for _, u := range mr.MakerUnlock {
-		var makerAddr sdk.AccAddress
-		makerAddr, err = k.getAccountAddressWithCache(ctx, u.AccNumber, accCache)
-		if err != nil {
-			return err
-		}
-		if err := k.decreaseFTLimits(ctx, makerAddr, u.LockingCoin, u.WhitelistingCoin); err != nil {
-			return err
-		}
+
+	if err := k.applyMatchingResultMakerRemoveRecords(ctx, mr, accCache); err != nil {
+		return err
 	}
-	for _, record := range mr.MakerRemoveRecords {
-		var makerAddr sdk.AccAddress
-		makerAddr, err = k.getAccountAddressWithCache(ctx, record.AccountNumber, accCache)
-		if err != nil {
-			return err
-		}
-		if err := k.removeOrderByRecordAndUsedDenoms(ctx, makerAddr, record, usedDenoms); err != nil {
-			return err
-		}
-	}
+
 	if mr.MakerUpdateRecord != nil {
 		if err := k.saveOrderBookRecord(ctx, *mr.MakerUpdateRecord); err != nil {
 			return err
+		}
+	}
+
+	return k.publishMatchingEvents(ctx, mr)
+}
+
+func (k Keeper) applyMatchingResultTakerCheckLimitsAndSend(
+	ctx sdk.Context,
+	mr *MatchingResult,
+	accCache map[uint64]sdk.AccAddress,
+) error {
+	accsToCoins := newAccountsToCoins()
+	for _, item := range mr.TakerCheckLimitsAndSend {
+		makerAddr, err := k.getAccountAddressWithCache(ctx, item.MakerAccNumber, accCache)
+		if err != nil {
+			return err
+		}
+		accsToCoins.Add(makerAddr, item.SendCoin, item.CheckReserveWhitelistingCoin)
+
+		// init event
+		mr.MakerOrderReducedEvents = append(mr.MakerOrderReducedEvents, types.EventOrderReduced{
+			Creator:      makerAddr.String(),
+			ID:           item.MakerOrderID,
+			ReceivedCoin: item.SendCoin,
+		})
+		mr.TakerOrderReducedEvent.SentCoin = mr.TakerOrderReducedEvent.SentCoin.Add(item.SendCoin)
+	}
+	for _, accToCoins := range accsToCoins.mapping {
+		if err := k.checksFTLimitsAndSend(
+			ctx, mr.TakerAddress, accToCoins.AccAddress, accToCoins.Coin1, accToCoins.Coin2,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) applyMatchingResultMakerUnlockAndSend(
+	ctx sdk.Context,
+	mr *MatchingResult,
+	accCache map[uint64]sdk.AccAddress,
+) error {
+	accsToCoins := newAccountsToCoins()
+	for _, item := range mr.MakerUnlockAndSend {
+		makerAddr, err := k.getAccountAddressWithCache(ctx, item.MakerAccNumber, accCache)
+		if err != nil {
+			return err
+		}
+		accsToCoins.Add(makerAddr, item.UnlockAndSendCoin, item.ReleaseWhitelistingCoin)
+
+		// add sent part
+		for i := range mr.MakerOrderReducedEvents {
+			if mr.MakerOrderReducedEvents[i].Creator == makerAddr.String() &&
+				mr.MakerOrderReducedEvents[i].ID == item.MakerOrderID {
+				mr.MakerOrderReducedEvents[i].SentCoin = item.UnlockAndSendCoin
+			}
+		}
+
+		mr.TakerOrderReducedEvent.ReceivedCoin = mr.TakerOrderReducedEvent.ReceivedCoin.Add(item.UnlockAndSendCoin)
+	}
+
+	for _, accToCoins := range accsToCoins.mapping {
+		if err := k.decreaseFTLimitsAndSend(
+			ctx, accToCoins.AccAddress, mr.TakerAddress, accToCoins.Coin1, accToCoins.Coin2,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) applyMatchingResultMakerUnlock(
+	ctx sdk.Context,
+	mr *MatchingResult,
+	accCache map[uint64]sdk.AccAddress,
+) error {
+	accsToCoins := newAccountsToCoins()
+	for _, item := range mr.MakerUnlock {
+		makerAddr, err := k.getAccountAddressWithCache(ctx, item.MakerAccNumber, accCache)
+		if err != nil {
+			return err
+		}
+		accsToCoins.Add(makerAddr, item.UnlockCoin, item.ReleaseWhitelistingCoin)
+	}
+
+	for _, accToCoins := range accsToCoins.mapping {
+		if err := k.decreaseFTLimits(
+			ctx, accToCoins.AccAddress, accToCoins.Coin1, accToCoins.Coin2,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) applyMatchingResultMakerRemoveRecords(
+	ctx sdk.Context,
+	mr *MatchingResult,
+	accCache map[uint64]sdk.AccAddress,
+) error {
+	for _, item := range mr.MakerRemoveRecords {
+		makerAddr, err := k.getAccountAddressWithCache(ctx, item.AccountNumber, accCache)
+		if err != nil {
+			return err
+		}
+		if err := k.removeOrderByRecord(ctx, makerAddr, *item); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (k Keeper) publishMatchingEvents(
+	ctx sdk.Context,
+	mr *MatchingResult,
+) error {
+	events := mr.MakerOrderReducedEvents
+	if !mr.TakerOrderReducedEvent.SentCoin.IsZero() {
+		events = append(events, mr.TakerOrderReducedEvent)
+	}
+
+	for _, evt := range events {
+		evt := evt
+		if err := ctx.EventManager().EmitTypedEvent(&evt); err != nil {
+			return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderReduced: %s", err)
 		}
 	}
 
