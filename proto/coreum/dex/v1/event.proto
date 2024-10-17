@@ -1,0 +1,35 @@
+syntax = "proto3";
+package coreum.dex.v1;
+
+import "coreum/dex/v1/order.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/v5/x/dex/types";
+
+// EventOrderCreated is emitted when the limit order is saved to the order book.
+message EventOrderCreated {
+  Order order = 1 [(gogoproto.nullable) = false];
+}
+
+// EventOrderReduced is emitted when the order is reduced during the matching.
+message EventOrderReduced {
+  // creator is order creator address.
+  string creator = 1;
+  // id is unique order ID.
+  string id = 2 [(gogoproto.customname) = "ID"];
+  // sent_coin is coin sent during matching.
+  string sent_coin = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
+  ];
+  // received_coin is coin received during matching.
+  string received_coin = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// EventOrderClosed is emitted when the order is closed during matching or manually.
+message EventOrderClosed {
+  Order order = 1 [(gogoproto.nullable) = false];
+}
