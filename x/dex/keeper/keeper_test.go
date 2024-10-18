@@ -496,12 +496,12 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 	}{
 		{
 			name:          "valid_default_price",
-			price:         types.MustNewPriceFromString("1e-5"),
+			price:         types.MustNewPriceFromString("1e-8"),
 			wantTickError: false,
 		},
 		{
 			name:          "invalid_default_price",
-			price:         types.MustNewPriceFromString("1e-6"),
+			price:         types.MustNewPriceFromString("1e-9"),
 			wantTickError: true,
 		},
 		{
@@ -533,7 +533,7 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 		{
 			name:                "invalid_both_custom_tick_greater_than_one",
 			price:               types.MustNewPriceFromString("14"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
+			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.00001")),
 			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
 			wantTickError:       true,
 		},
@@ -548,7 +548,7 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			name:                "invalid_both_custom_base_less_than_one",
 			price:               types.MustNewPriceFromString("3e32"),
 			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000")),
+			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000000")),
 			wantTickError:       true,
 		},
 	}
