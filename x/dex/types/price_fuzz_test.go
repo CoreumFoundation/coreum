@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"math/big"
 	"strconv"
 	"strings"
 	"testing"
@@ -34,11 +35,11 @@ func FuzzPriceFromRandomString(f *testing.F) {
 }
 
 func FuzzPriceFromValidParts(f *testing.F) {
-	f.Add(uint64(0), int8(0))
+	f.Add(uint64(1), int8(0))
 	f.Add(uint64(123), types.MaxExp)
-	f.Add(uint64(4123123123), types.MinExt)
+	f.Add(uint64(4123123123), types.MinExp)
 	f.Add(uint64(9999999999999999999), types.MaxExp)
-	f.Add(uint64(1), types.MinExt)
+	f.Add(uint64(1), types.MinExp)
 
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
 		var expPart string
@@ -49,7 +50,7 @@ func FuzzPriceFromValidParts(f *testing.F) {
 		if strings.HasSuffix(numPart, "0") || len(numPart) > types.MaxNumLen {
 			t.Skip()
 		}
-		if exp > types.MaxExp || exp < types.MinExt {
+		if exp > types.MaxExp || exp < types.MinExp {
 			t.Skip()
 		}
 		priceStr := strconv.FormatUint(num, 10) + expPart
@@ -65,6 +66,11 @@ func assertPriceConversation(t *testing.T, priceStr string, allowStringToPriceEr
 	assetPriceMarshalAndUnmarshal(t, price)
 	assetPriceMarshalAndUnmarshalAmino(t, price)
 	assetPriceMarshalAndUnmarshalJSON(t, price)
+
+	// check that rat from string is same as we generate
+	wantRat, ok := big.NewRat(1, 1).SetString(priceStr)
+	require.True(t, ok)
+	require.Equal(t, wantRat.String(), price.Rat().String())
 }
 
 func assetPriceFromStringAndBack(t *testing.T, priceStr string, allowStringToPriceError bool) types.Price {

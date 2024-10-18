@@ -166,6 +166,30 @@ Tick size example:
 
 The update of the `unified_ref_amount` doesn't affect the created orders.
 
+#### Price type
+
+The `price` is custom type for the DEX module used to represent the price supporting extremely large or low values.
+The `price` uses `{number}e{exponent}` format as a string representation of the price type. The min exponent is -100,
+and the max exponent is 100. The max number of digits in number part 19. Zero price is prohibited.
+
+Examples:
+
+* A price like 45000000000000 can be represented as 45e12.
+* A price like 0.000123 can be represented as 123e-6.
+* A price like 70001 can be represented as is. 
+* Min value: 1e-100
+* Max value: 9999999999999999999e100
+
+The `price` string must be normalized, so you can't provide the same value using different strings. That's why the
+`price` must match the regex: `^(([1-9])|([1-9]\d*[1-9]))(e-?[1-9]\d*)?$`.
+
+Examples:
+
+* 10 is invalid, must be 1e1
+* 01 is invalid, must be 1
+* 1e01 is invalid, must be 1e1
+* 1e+1 is invalid, must be 1e1
+
 ### Balance locking
 
 When a user places an order we lock the coins in the assetft (similar to freezing), both assetft and native coins.
@@ -208,8 +232,8 @@ The default reserve amount is  `10 CORE` and can be updated by the governance.
 
 ### Max orders limit
 
-The number of active orders a user can have for each denom is limited by a value called `max_orders_per_denom`, 
-which is determined by DEX governance. 
+The number of active orders a user can have for each denom is limited by a value called `max_orders_per_denom`,
+which is determined by DEX governance.
 
 ## Asset FT and DEX
 

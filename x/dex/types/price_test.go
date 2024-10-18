@@ -28,6 +28,16 @@ func TestNewPriceFromString(t *testing.T) {
 		},
 		{
 			// normal price
+			strPrice: "423e3 ", // extra space at the end
+			wantErr:  true,
+		},
+		{
+			// normal price
+			strPrice: " 423e3", // extra space at the start
+			wantErr:  true,
+		},
+		{
+			// normal price
 			strPrice: "323141245",
 			wantErr:  false,
 		},
