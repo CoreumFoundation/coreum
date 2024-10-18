@@ -1,0 +1,36 @@
+[package]
+name = "dex"
+version = "0.1.0"
+authors = ["Coreum"]
+edition = "2021"
+
+exclude = [
+    "dex.wasm",
+    "checksums.txt",
+]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+library = []
+
+[dependencies]
+cosmwasm-std = { version = "2.1.4", features = ["cosmwasm_2_0"] }
+cw-storage-plus = "2.0.0"
+cw2 = "2.0.0"
+thiserror = "1.0.59"
+coreum-wasm-sdk = {git = "https://github.com/CoreumFoundation/coreum-wasm-sdk.git", branch = "update-types"}
+cosmwasm-schema = "2.1.4"
+cw-ownable = "2.1.0"
