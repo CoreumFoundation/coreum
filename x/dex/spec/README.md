@@ -1,4 +1,4 @@
-~~# Coreum DEX Specification
+# Coreum DEX Specification
 
 ## Overview
 
@@ -184,9 +184,8 @@ validate it.
 
 Rules:
 
-* The `price` must match the regex: `^([1-9]\.\d+)(e[-+]\d+)`.
+* The `price` must match the regex: `^([1-9]\.\d+)(e\+0|e[-+][1-9]\d*)$`.
 * The decimal part of the `price` can't end with zero if it's length greater than 2.
-* The exponent is required for all values and sign (+-) is always required. For zero exponent use `e+0``.
 
 Examples:
 

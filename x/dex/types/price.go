@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	priceRegex = regexp.MustCompile(`^([1-9]\.\d+)(e[-+]\d+)`)
+	priceRegex = regexp.MustCompile(`^([1-9]\.\d+)(e\+0|e[-+][1-9]\d*)$`)
 )
 
 // Price is the price type.
@@ -74,19 +74,8 @@ func NewPriceFromString(str string) (Price, error) {
 	}
 
 	expPart := parts[1]
-	if strings.HasPrefix(expPart, "-0") {
-		return Price{}, errors.Errorf("exponent part %s, can't start with -0", expPart)
-	}
-	if strings.HasPrefix(expPart, "+0") && len(expPart) > 2 {
-		return Price{}, errors.Errorf("exponent part %s, can start with +0 only for +0 exponent", expPart)
-	}
-
-	var (
-		exp    int8 = 0
-		num    uint64
-		numStr string
-		err    error
-	)
+	exp := int8(0)
+	var numStr string
 
 	// find the number and exponent offset depending on the decimal part
 	if numDecimalPart != "0" { // allowed for "1.0"..."9.0" type values
@@ -96,7 +85,7 @@ func NewPriceFromString(str string) (Price, error) {
 	} else {
 		numStr = numIntPart
 	}
-	num, err = strconv.ParseUint(numStr, 10, 64)
+	num, err := strconv.ParseUint(numStr, 10, 64)
 	if err != nil {
 		return Price{}, errors.Errorf("invalid price num part %s", numPart)
 	}
