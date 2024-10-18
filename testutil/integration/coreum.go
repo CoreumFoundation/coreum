@@ -17,6 +17,7 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 // CoreumChain is configured coreum chain.
@@ -223,6 +224,17 @@ func (c CoreumChain) QueryAssetNFTParams(ctx context.Context, t *testing.T) asse
 
 	queryClient := assetnfttypes.NewQueryClient(c.ClientContext)
 	resp, err := queryClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	return resp.Params
+}
+
+// QueryDEXParams queries for dex module params and returns them.
+func (c CoreumChain) QueryDEXParams(ctx context.Context, t *testing.T) dextypes.Params {
+	t.Helper()
+
+	queryClient := dextypes.NewQueryClient(c.ClientContext)
+	resp, err := queryClient.Params(ctx, &dextypes.QueryParamsRequest{})
 	require.NoError(t, err)
 
 	return resp.Params

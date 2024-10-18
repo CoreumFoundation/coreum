@@ -27,8 +27,8 @@ service Query {
   rpc OrderBooks(QueryOrderBooksRequest) returns (QueryOrderBooksResponse) {
     option (google.api.http).get = "/coreum/dex/v1/order-books";
   }
-  // OrdersBookOrders queries order book orders.
-  rpc OrdersBookOrders(QueryOrderBookOrdersRequest) returns (QueryOrderBookOrdersResponse) {
+  // OrderBookOrders queries order book orders.
+  rpc OrderBookOrders(QueryOrderBookOrdersRequest) returns (QueryOrderBookOrdersResponse) {
     option (google.api.http).get = "/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders";
   }
   // AccountDenomOrdersCount queries account denom orders count.

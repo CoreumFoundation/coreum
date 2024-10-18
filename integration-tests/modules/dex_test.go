@@ -694,7 +694,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	})
 
 	// check order book orders query
-	orderBookOrdersRes, err := dexClient.OrdersBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
+	orderBookOrdersRes, err := dexClient.OrderBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
 		Side:       dextypes.SIDE_SELL,

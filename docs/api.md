@@ -5184,7 +5184,7 @@ Query defines the gRPC query service.
 | `Order` | [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest) | [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse) | `Order queries order by creator and ID.` | GET|/coreum/dex/v1/orders/{creator}/{id} |
 | `Orders` | [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest) | [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse) | `Orders queries creator orders.` | GET|/coreum/dex/v1/orders/{creator} |
 | `OrderBooks` | [QueryOrderBooksRequest](#coreum.dex.v1.QueryOrderBooksRequest) | [QueryOrderBooksResponse](#coreum.dex.v1.QueryOrderBooksResponse) | `OrderBooks queries order books.` | GET|/coreum/dex/v1/order-books |
-| `OrdersBookOrders` | [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest) | [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse) | `OrdersBookOrders queries order book orders.` | GET|/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders |
+| `OrderBookOrders` | [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest) | [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse) | `OrderBookOrders queries order book orders.` | GET|/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders |
 | `AccountDenomOrdersCount` | [QueryAccountDenomOrdersCountRequest](#coreum.dex.v1.QueryAccountDenomOrdersCountRequest) | [QueryAccountDenomOrdersCountResponse](#coreum.dex.v1.QueryAccountDenomOrdersCountResponse) | `AccountDenomOrdersCount queries account denom orders count.` | GET|/coreum/dex/v1/accounts/{account}/denoms/{denom}/orders-count |
 
  <!-- end services -->
