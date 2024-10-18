@@ -24,7 +24,7 @@ func TestOrder_Validate(t *testing.T) {
 			ID:          "aA09+:._-",
 			BaseDenom:   "denom1",
 			QuoteDenom:  "denom2",
-			Price:       lo.ToPtr(types.MustNewPriceFromString("1e-1")),
+			Price:       lo.ToPtr(types.MustNewPriceFromString("1.0e-1")),
 			Quantity:    sdkmath.NewInt(100),
 			Side:        types.SIDE_BUY,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
@@ -162,7 +162,7 @@ func TestOrder_Validate(t *testing.T) {
 			order: func() types.Order {
 				order := validOrder()
 				order.Quantity = sdkmath.NewInt(1_000_000)
-				order.Price = lo.ToPtr(types.MustNewPriceFromString(fmt.Sprintf("9999999999999999999e%d", types.MaxExp)))
+				order.Price = lo.ToPtr(types.MustNewPriceFromString(fmt.Sprintf("9.999999999999999999e+%d", types.MaxExp)))
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,
@@ -173,7 +173,7 @@ func TestOrder_Validate(t *testing.T) {
 				order := validOrder()
 				order.Side = types.SIDE_SELL
 				order.Quantity = sdkmath.NewInt(1_000_000)
-				order.Price = lo.ToPtr(types.MustNewPriceFromString(fmt.Sprintf("9999999999999999999e%d", types.MaxExp)))
+				order.Price = lo.ToPtr(types.MustNewPriceFromString(fmt.Sprintf("9.999999999999999999e+%d", types.MaxExp)))
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,

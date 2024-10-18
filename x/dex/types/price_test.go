@@ -17,103 +17,151 @@ func TestNewPriceFromString(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			// normal price
-			strPrice: "1231e-3",
+			strPrice: "1.0e+0",
 			wantErr:  false,
 		},
 		{
-			// normal price
-			strPrice: "423e3",
+			strPrice: "11.0e+0",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.0e-0",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.0e+00",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.0e+01",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.0e-00",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.0e-01",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.0e+0+0",
+			wantErr:  true,
+		},
+		{
+			strPrice: "0.1e+1",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.10e+1",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.00e+1",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.0e1",
+			wantErr:  true,
+		},
+		{
+			strPrice: "0.2",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.00001e+0",
 			wantErr:  false,
 		},
 		{
-			// normal price
-			strPrice: "323141245",
+			strPrice: "1.23e+0",
 			wantErr:  false,
 		},
 		{
-			// zero price
-			strPrice: "0",
-			wantErr:  true,
-		},
-		{
-			// invalid zero price with exponent
-			strPrice: "0e1",
-			wantErr:  true,
-		},
-		{
-			// invalid price with leading
-			strPrice: "01e1",
-			wantErr:  true,
-		},
-		{
-			// max uint64 num
-			strPrice: "9999999999999999999",
+			strPrice: "1.0e+1",
 			wantErr:  false,
 		},
 		{
-			// invalid max uint64 + 1 num
-			strPrice: "18446744073709551616",
-			wantErr:  true,
-		},
-		{
-			// max exp
-			strPrice: "9999999999999999999e100",
+			strPrice: "1.0e-1",
 			wantErr:  false,
 		},
 		{
-			// invalid max exp + 1
-			strPrice: "9999999999999999999e101",
+			strPrice: "0.0e+1",
 			wantErr:  true,
 		},
 		{
-			// min exp
-			strPrice: "9999999999999999999e-100",
+			strPrice: "0.0e+0",
+			wantErr:  true,
+		},
+		{
+			strPrice: "0.0e0",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.0e0",
+			wantErr:  true,
+		},
+		{
+			strPrice: "1.1e0",
+			wantErr:  true,
+		},
+		{
+			strPrice: "0.23e+1",
+			wantErr:  true,
+		},
+		{
+			strPrice: "0.03e-1",
+			wantErr:  true,
+		},
+		{
+			strPrice: "4.23e+3",
 			wantErr:  false,
 		},
 		{
-			// invalid min exp - 1
-			strPrice: "9999999999999999999e-101",
+			strPrice: ".1e+1",
 			wantErr:  true,
 		},
 		{
-			// invalid structure
-			strPrice: "1e1e1",
+			strPrice: "0e+1",
 			wantErr:  true,
 		},
 		{
-			// invalid (empty) num part
-			strPrice: "e1",
+			strPrice: "01e+1",
 			wantErr:  true,
 		},
 		{
-			// invalid num part
-			strPrice: "xe1",
+			strPrice: "9.999999999999999999e+100",
+			wantErr:  false,
+		},
+		{
+			strPrice: "9.99999999999999999999e+100",
 			wantErr:  true,
 		},
 		{
-			// invalid empty exp part
-			strPrice: "1e",
+			strPrice: "9.999999999999999999e+101",
 			wantErr:  true,
 		},
 		{
-			// invalid exp part
-			strPrice: "1ex",
+			strPrice: "1.0e-100",
+			wantErr:  false,
+		},
+		{
+			strPrice: "0.99999999999999999e-100",
 			wantErr:  true,
 		},
 		{
-			// invalid negative num part
-			strPrice: "-1",
+			strPrice: "1.0e-101",
 			wantErr:  true,
 		},
 		{
-			// invalid zero exp
-			strPrice: "1e0",
+			strPrice: "e+1",
 			wantErr:  true,
 		},
 		{
-			// invalid +e exp
-			strPrice: "e+0",
+			strPrice: "-1.0",
+			wantErr:  true,
+		},
+		{
+			strPrice: "-1.0e+0",
 			wantErr:  true,
 		},
 	}
@@ -127,6 +175,10 @@ func TestNewPriceFromString(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tt.strPrice, got.String())
+
+			wantRat, ok := big.NewRat(1, 1).SetString(tt.strPrice)
+			require.True(t, ok)
+			require.Equal(t, wantRat.String(), got.Rat().String())
 		})
 	}
 }
@@ -137,7 +189,7 @@ func TestPrice_OrderedBytesMarshalling(t *testing.T) {
 		wantBytes []byte
 	}{
 		{
-			priceStr: "111",
+			priceStr: "1.11e+2",
 			wantBytes: func() []byte {
 				bytes := make([]byte, 0)
 				bytes = store.AppendInt8ToOrderedBytes(bytes, -16)
@@ -146,7 +198,7 @@ func TestPrice_OrderedBytesMarshalling(t *testing.T) {
 			}(),
 		},
 		{
-			priceStr: "1e2",
+			priceStr: "1.0e+2",
 			wantBytes: func() []byte {
 				bytes := make([]byte, 0)
 				bytes = store.AppendInt8ToOrderedBytes(bytes, -16)
@@ -155,7 +207,7 @@ func TestPrice_OrderedBytesMarshalling(t *testing.T) {
 			}(),
 		},
 		{
-			priceStr: "13124151231234e-18",
+			priceStr: "1.3124151231234e-5",
 			wantBytes: func() []byte {
 				bytes := make([]byte, 0)
 				bytes = store.AppendInt8ToOrderedBytes(bytes, -23)
@@ -164,25 +216,7 @@ func TestPrice_OrderedBytesMarshalling(t *testing.T) {
 			}(),
 		},
 		{
-			priceStr: "9999999999999999999e-100",
-			wantBytes: func() []byte {
-				bytes := make([]byte, 0)
-				bytes = store.AppendInt8ToOrderedBytes(bytes, -100)
-				bytes = store.AppendUint64ToOrderedBytes(bytes, 9999999999999999999)
-				return bytes
-			}(),
-		},
-		{
-			priceStr: "9999999999999999999e100",
-			wantBytes: func() []byte {
-				bytes := make([]byte, 0)
-				bytes = store.AppendInt8ToOrderedBytes(bytes, 100)
-				bytes = store.AppendUint64ToOrderedBytes(bytes, 9999999999999999999)
-				return bytes
-			}(),
-		},
-		{
-			priceStr: "1e-100",
+			priceStr: "1.0e-100",
 			wantBytes: func() []byte {
 				bytes := make([]byte, 0)
 				bytes = store.AppendInt8ToOrderedBytes(bytes, -118)
@@ -191,7 +225,16 @@ func TestPrice_OrderedBytesMarshalling(t *testing.T) {
 			}(),
 		},
 		{
-			priceStr: "1e100",
+			priceStr: "9.999999999999999999e+100",
+			wantBytes: func() []byte {
+				bytes := make([]byte, 0)
+				bytes = store.AppendInt8ToOrderedBytes(bytes, 82)
+				bytes = store.AppendUint64ToOrderedBytes(bytes, 9999999999999999999)
+				return bytes
+			}(),
+		},
+		{
+			priceStr: "1.0e+100",
 			wantBytes: func() []byte {
 				bytes := make([]byte, 0)
 				bytes = store.AppendInt8ToOrderedBytes(bytes, 82)
@@ -223,29 +266,29 @@ func TestPrice_Rat(t *testing.T) {
 		want     *big.Rat
 	}{
 		{
-			priceStr: "13e-18",
+			priceStr: "1.3e-17",
 			want: cbig.NewRatFromBigInts(
 				big.NewInt(13), cbig.IntTenToThePower(big.NewInt(int64(18))),
 			),
 		},
 		{
-			priceStr: "111e100",
+			priceStr: "1.11e+100",
 			want: cbig.NewRatFromBigInts(
-				cbig.IntMul(big.NewInt(111), cbig.IntTenToThePower(big.NewInt(int64(100)))), big.NewInt(1),
+				cbig.IntMul(big.NewInt(111), cbig.IntTenToThePower(big.NewInt(int64(98)))), big.NewInt(1),
 			),
 		},
 		{
-			priceStr: "1e-100",
+			priceStr: "1.0e-100",
 			want: cbig.NewRatFromBigInts(
 				big.NewInt(1), cbig.IntTenToThePower(big.NewInt(int64(100))),
 			),
 		},
 		{
-			priceStr: "9999999999999999999e100",
+			priceStr: "9.999999999999999999e+100",
 			want: cbig.NewRatFromBigInts(
 				cbig.IntMul(
 					cbig.NewBigIntFromUint64(9999999999999999999),
-					cbig.IntTenToThePower(big.NewInt(int64(100))),
+					cbig.IntTenToThePower(big.NewInt(int64(82))),
 				), big.NewInt(1),
 			),
 		},
@@ -264,12 +307,12 @@ func TestPrice_Marshalling(t *testing.T) {
 	t.Parallel()
 
 	priceStrings := []string{
-		"1",
-		"23",
-		"111e100",
-		"31241241231241233e-23",
-		"1e-100",
-		"9999999999999999999e100",
+		"1.0e+0",
+		"2.3e+1",
+		"1.11e+100",
+		"3.1241241231241233e-23",
+		"1.0e-100",
+		"9.999999999999999999e+100",
 	}
 
 	for _, priceStr := range priceStrings {

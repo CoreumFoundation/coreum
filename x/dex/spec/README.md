@@ -1,4 +1,4 @@
-# Coreum DEX Specification
+~~# Coreum DEX Specification
 
 ## Overview
 
@@ -152,7 +152,7 @@ price_tick(base_denom/quote_denom) = 10^(floor(log10((unified_ref_amount(quote_d
 ```
 
 The `price_tick_exponent` is the coefficient used to give better price precision for the token orders. The default
-`price_tick_exponent` is `-5`, and can be updated by the governance.
+`price_tick_exponent` is `-8`, and can be updated by the governance.
 
 Tick size example:
 
@@ -165,6 +165,37 @@ Tick size example:
 | 0.000001                | 10000000                | 10^8                | 10^-18              |
 
 The update of the `unified_ref_amount` doesn't affect the created orders.
+
+#### Price type
+
+The `price` is custom type for the DEX module used to represent the price supporting extremely large or low values.
+The `price` uses `scientific notation` as a default string representation of the price type. The min exponent is -100,
+and the max exponent is 100. The max number of digits in number part 19. Zero price is prohibited.
+
+Examples:
+
+* A price like 450000000000 can be represented as 4.5e+11.
+* A price like 0.00000000123 can be represented as 1.23e-9.
+* Min value: 1.0e-100
+* Max value: 9.999999999999999999e+100
+
+The `price` string must be normalized, so you can't provide the same value using different strings. That's why we
+validate it.
+
+Rules:
+
+* The `price` must match the regex: `^([1-9]\.\d+)(e[-+]\d+)`.
+* The decimal part of the `price` can't end with zero if it's length greater than 2.
+* The exponent is required for all values and sign (+-) is always required. For zero exponent use `e+0``.
+
+Examples:
+
+* 9.990e+0 is invalid, must be 9.99e+0
+* 9.99e-0 is invalid, must be 9.99e+0
+* 0.23e+1 is invalid, must be 2.3e+0
+* 0.03e-1 is invalid, must be 3.0e-3
+* 0.2 is invalid, must be 2.0e-1
+* 2.0e-01 is invalid, must be 2.0e-1
 
 ### Balance locking
 
@@ -208,8 +239,8 @@ The default reserve amount is  `10 CORE` and can be updated by the governance.
 
 ### Max orders limit
 
-The number of active orders a user can have for each denom is limited by a value called `max_orders_per_denom`, 
-which is determined by DEX governance. 
+The number of active orders a user can have for each denom is limited by a value called `max_orders_per_denom`,
+which is determined by DEX governance.
 
 ## Asset FT and DEX
 
@@ -241,4 +272,4 @@ denoms/currencies or assets, as specified by the admin.
 ## Extensions
 
 The current version of the DEX doesn't support the extensions. It means if a user places an order with the asset FT
-extension token, such an order will be rejected.
+extension token, such an order will be rejected.~~

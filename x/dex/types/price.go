@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -22,16 +23,22 @@ var (
 const (
 	// MaxNumLen is max allowed num part length.
 	MaxNumLen = 19
-	// MinExt is the max allowed exponent. Technically it's limited by MinInt8 (-128) + `MaxNumLen` (required for
+	// MinExp is the max allowed exponent. Technically it's limited by MinInt8 (-128) + `MaxNumLen` (required for
 	//	normalization). But to make the range value easier for understanding and still keeping enough precision we set
 	//	it to -100.
-	MinExt = int8(-100)
+	MinExp = int8(-100)
 	// MaxExp is the max allowed exponent. Technically it's limited by MaxInt8 (127) but to make it similar to
 	// mixExp we set it to 100.
 	MaxExp = int8(100)
 	// ExponentSymbol is symbol used to represent the exponent in the string price.
-	ExponentSymbol        = "e"
+	ExponentSymbol = "e"
+	// DotSymbol is symbol used to split integer and decimals part in the number.
+	DotSymbol             = "."
 	orderedBytesPriceSize = store.Int8OrderedBytesSize + store.Uint64OrderedBytesSize
+)
+
+var (
+	priceRegex = regexp.MustCompile(`^([1-9]\.\d+)(e[-+]\d+)`)
 )
 
 // Price is the price type.
@@ -42,58 +49,70 @@ type Price struct {
 
 // NewPriceFromString returns new instance of the Price from string.
 func NewPriceFromString(str string) (Price, error) {
-	if len(str) == 0 {
-		return Price{}, errors.New("price can't be empty")
+	if !priceRegex.MatchString(str) {
+		return Price{}, errors.Errorf("invalid price %s, must match %s", str, priceRegex.String())
 	}
+
 	parts := strings.Split(str, ExponentSymbol)
-	numPart := parts[0]
-	// the num should be deterministic
-	if strings.HasPrefix(numPart, "0") ||
-		strings.HasSuffix(numPart, "0") ||
-		strings.HasPrefix(numPart, "+") {
-		return Price{}, errors.Errorf("invalid price num part %s", numPart)
+	if len(parts) != 2 {
+		return Price{}, errors.Errorf("invalid price %s, must expenent (%s)", str, ExponentSymbol)
 	}
-	if len(numPart) > MaxNumLen {
-		return Price{}, errors.Errorf("invalid price num part length, max %d", MaxNumLen)
+
+	numPart := parts[0]
+	if len(numPart) > MaxNumLen+1 { // +1 to include dot
+		return Price{}, errors.Errorf("invalid price num part length, max %d", MaxNumLen+1)
+	}
+	numParts := strings.Split(numPart, DotSymbol)
+	if len(numParts) != 2 {
+		return Price{}, errors.Errorf("invalid price %s, unexpected num part", str)
+	}
+
+	numIntPart := numParts[0]
+	numDecimalPart := numParts[1]
+	if len(numDecimalPart) > 1 && strings.HasSuffix(numDecimalPart, "0") {
+		return Price{}, errors.Errorf("num decimal part %s, can't end with zero if it's length is greater than 1", numPart)
+	}
+
+	expPart := parts[1]
+	if strings.HasPrefix(expPart, "-0") {
+		return Price{}, errors.Errorf("exponent part %s, can't start with -0", expPart)
+	}
+	if strings.HasPrefix(expPart, "+0") && len(expPart) > 2 {
+		return Price{}, errors.Errorf("exponent part %s, can start with +0 only for +0 exponent", expPart)
 	}
 
 	var (
-		exp int8
-		num uint64
-		err error
+		exp    int8 = 0
+		num    uint64
+		numStr string
+		err    error
 	)
-	num, err = strconv.ParseUint(numPart, 10, 64)
+
+	// find the number and exponent offset depending on the decimal part
+	if numDecimalPart != "0" { // allowed for "1.0"..."9.0" type values
+		numStr = numIntPart + numDecimalPart
+		// move the offset of the decimal part
+		exp -= int8(len(numDecimalPart)) // safe casting because of `MaxNumLen+1` validation
+	} else {
+		numStr = numIntPart
+	}
+	num, err = strconv.ParseUint(numStr, 10, 64)
 	if err != nil {
 		return Price{}, errors.Errorf("invalid price num part %s", numPart)
 	}
 
-	switch len(parts) {
-	case 1:
-		exp = 0
-	case 2:
-		expPart := parts[1]
-		// the exponent should be deterministic
-		if strings.HasPrefix(expPart, "0") ||
-			strings.HasPrefix(expPart, "+") ||
-			strings.HasPrefix(expPart, "-0") {
-			return Price{}, errors.Errorf("invalid exponent %s", expPart)
-		}
-		var intExp int64
-		intExp, err = strconv.ParseInt(expPart, 10, 8)
-		if err != nil {
-			return Price{}, errors.Errorf("invalid price exp part %s", expPart)
-		}
-		if intExp == 0 {
-			return Price{}, errors.New("zero exponent is prohibited")
-		}
-		// the range check is required for the normalization
-		if int8(intExp) < MinExt || int8(intExp) > MaxExp {
-			return Price{}, errors.Errorf("invalid exp %d, must be in the rage %d:%d", intExp, MinExt, MaxExp)
-		}
-		exp = int8(intExp)
-	default:
-		return Price{}, errors.Errorf("invalid price string %s", str)
+	var intExp int64
+	intExp, err = strconv.ParseInt(expPart, 10, 8)
+	if err != nil {
+		return Price{}, errors.Errorf("invalid price exponent part %s", expPart)
 	}
+	// the range check is required for the marshalling, to not exceed the max size of the int8
+	if int8(intExp) < MinExp || int8(intExp) > MaxExp {
+		return Price{}, errors.Errorf("invalid exponent %d, must be in the rage %d:%d", intExp, MinExp, MaxExp)
+	}
+	// we didn't include the initial exp offset to the rage validation since it's already counted in the num part
+	// validation, so the int8 casting is safe
+	exp += int8(intExp)
 
 	return Price{
 		exp: exp,
@@ -163,11 +182,28 @@ func (p *Price) UnmarshallFromOrderedBytes(bytes []byte) ([]byte, error) {
 
 // String returns string representation of the Price.
 func (p Price) String() string {
+	exp := p.exp
+	rawNumPart := strconv.FormatUint(p.num, 10)
+
+	// adjust the exponent with the length of the num part to compensate the offset
+	exp += int8(len(rawNumPart) - 1)
+
 	var expPart string
-	if p.exp != 0 {
-		expPart = ExponentSymbol + strconv.Itoa(int(p.exp))
+	if exp < 0 {
+		expPart = ExponentSymbol + strconv.Itoa(int(exp))
+	} else {
+		expPart = ExponentSymbol + "+" + strconv.Itoa(int(exp))
 	}
-	return strconv.FormatUint(p.num, 10) + expPart
+
+	var numPart string
+	if len(rawNumPart) > 1 {
+		numPart = string(rawNumPart[0]) + DotSymbol + rawNumPart[1:]
+
+	} else {
+		numPart = rawNumPart + DotSymbol + "0"
+	}
+
+	return numPart + expPart
 }
 
 // MarshalTo implements the gogo proto custom type interface.

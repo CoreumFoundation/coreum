@@ -66,7 +66,7 @@ func NewFuzzApp(
 	sdkCtx, _, _ := testApp.BeginNextBlock()
 
 	params := testApp.DEXKeeper.GetParams(sdkCtx)
-	params.PriceTickExponent = int32(types.MinExt)
+	params.PriceTickExponent = int32(types.MinExp)
 
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
@@ -560,7 +560,7 @@ func buildNumExpPrice(
 	if len(numPart) > types.MaxNumLen {
 		return types.Price{}, false
 	}
-	if exp > types.MaxExp || exp < types.MinExt {
+	if exp > types.MaxExp || exp < types.MinExp {
 		return types.Price{}, false
 	}
 	// prepare valid price
