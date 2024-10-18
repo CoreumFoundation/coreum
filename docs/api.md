@@ -195,6 +195,11 @@
 - [coreum/deterministicgas/v1/event.proto](#coreum/deterministicgas/v1/event.proto)
     - [EventGas](#coreum.deterministicgas.v1.EventGas)
   
+- [coreum/dex/v1/event.proto](#coreum/dex/v1/event.proto)
+    - [EventOrderClosed](#coreum.dex.v1.EventOrderClosed)
+    - [EventOrderCreated](#coreum.dex.v1.EventOrderCreated)
+    - [EventOrderReduced](#coreum.dex.v1.EventOrderReduced)
+  
 - [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
     - [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount)
     - [GenesisState](#coreum.dex.v1.GenesisState)
@@ -4456,6 +4461,82 @@ EventGas is emitted by deterministic gas module to report gas information.
 | `msgURL` | [string](#string) |  |    |
 | `realGas` | [uint64](#uint64) |  |    |
 | `deterministicGas` | [uint64](#uint64) |  |    |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/dex/v1/event.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/dex/v1/event.proto
+
+
+
+<a name="coreum.dex.v1.EventOrderClosed"></a>
+
+### EventOrderClosed
+
+```
+EventOrderClosed is emitted when the order is closed during matching or manually.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `order` | [Order](#coreum.dex.v1.Order) |  |    |
+
+
+
+
+
+
+<a name="coreum.dex.v1.EventOrderCreated"></a>
+
+### EventOrderCreated
+
+```
+EventOrderCreated is emitted when the limit order is saved to the order book.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `order` | [Order](#coreum.dex.v1.Order) |  |    |
+
+
+
+
+
+
+<a name="coreum.dex.v1.EventOrderReduced"></a>
+
+### EventOrderReduced
+
+```
+EventOrderReduced is emitted when the order is reduced during the matching.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sent_coin` | [string](#string) |  |  `sent_coin is coin sent during matching.`  |
+| `received_coin` | [string](#string) |  |  `received_coin is coin received during matching.`  |
 
 
 

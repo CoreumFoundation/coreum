@@ -16,6 +16,7 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/docker/distribution/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -31,6 +32,90 @@ const (
 	denom2 = "denom2"
 	denom3 = "denom3"
 )
+
+type OrderPlacementEvents struct {
+	OrderCreated  *types.EventOrderCreated
+	OrdersReduced []types.EventOrderReduced
+	OrdersClosed  []types.EventOrderClosed
+}
+
+func (o OrderPlacementEvents) getOrderReduced(acc, id string) (types.EventOrderReduced, bool) {
+	for _, evt := range o.OrdersReduced {
+		if evt.Creator == acc && evt.ID == id {
+			return evt, true
+		}
+	}
+
+	return types.EventOrderReduced{}, false
+}
+
+func readOrderEvents(
+	t *testing.T,
+	sdkCtx sdk.Context,
+	testApp *simapp.App,
+) OrderPlacementEvents {
+	const (
+		attrKeyOrder        = "order"
+		attrKeyCreator      = "creator"
+		attrKeyID           = "id"
+		attrKeySentCoin     = "sent_coin"
+		attrKeyReceivedCoin = "received_coin"
+	)
+	events := OrderPlacementEvents{
+		OrderCreated:  nil,
+		OrdersReduced: make([]types.EventOrderReduced, 0),
+		OrdersClosed:  make([]types.EventOrderClosed, 0),
+	}
+
+	for _, evt := range sdkCtx.EventManager().Events() {
+		switch evt.Type {
+		case proto.MessageName(&types.EventOrderCreated{}):
+			require.Nil(t, events.OrderCreated, "Only one types.EventOrderCreated is expected.")
+			orderAttr, ok := evt.GetAttribute(attrKeyOrder)
+			require.True(t, ok)
+			order := types.Order{}
+			require.NoError(t, testApp.AppCodec().UnmarshalJSON([]byte(orderAttr.Value), &order))
+			events.OrderCreated = &types.EventOrderCreated{
+				Order: order,
+			}
+		case proto.MessageName(&types.EventOrderReduced{}):
+			creatorAttr, ok := evt.GetAttribute(attrKeyCreator)
+			require.True(t, ok)
+			creator := creatorAttr.Value[1 : len(creatorAttr.Value)-1] // unwrap quotes
+
+			idAttr, ok := evt.GetAttribute(attrKeyID)
+			require.True(t, ok)
+			id := idAttr.Value[1 : len(idAttr.Value)-1] // unwrap quotes
+
+			sentCoinAttr, ok := evt.GetAttribute(attrKeySentCoin)
+			require.True(t, ok)
+			spentCoin := sdk.Coin{}
+			require.NoError(t, testApp.AppCodec().UnmarshalJSON([]byte(sentCoinAttr.Value), &spentCoin))
+
+			receivedCoinAttr, ok := evt.GetAttribute(attrKeyReceivedCoin)
+			require.True(t, ok)
+			receivedCoin := sdk.Coin{}
+			require.NoError(t, testApp.AppCodec().UnmarshalJSON([]byte(receivedCoinAttr.Value), &receivedCoin))
+
+			events.OrdersReduced = append(events.OrdersReduced, types.EventOrderReduced{
+				Creator:      creator,
+				ID:           id,
+				SentCoin:     spentCoin,
+				ReceivedCoin: receivedCoin,
+			})
+		case proto.MessageName(&types.EventOrderClosed{}):
+			orderAttr, ok := evt.GetAttribute(attrKeyOrder)
+			require.True(t, ok)
+			order := types.Order{}
+			require.NoError(t, testApp.AppCodec().UnmarshalJSON([]byte(orderAttr.Value), &order))
+			events.OrdersClosed = append(events.OrdersClosed, types.EventOrderClosed{
+				Order: order,
+			})
+		}
+	}
+
+	return events
+}
 
 func TestKeeper_UpdateParams(t *testing.T) {
 	testApp := simapp.New()
@@ -238,7 +323,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	sellOrder := types.Order{
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
-		ID:          uuid.Generate().String(),
+		ID:          "id1",
 		BaseDenom:   denom1,
 		QuoteDenom:  ft1Whitelisting,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
@@ -255,7 +340,20 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.NoError(t, testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, issuer, acc, sellLWhitelistedBalance))
+
+	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
+	events := readOrderEvents(t, sdkCtx, testApp)
+	require.NotNil(t, events.OrderCreated)
+	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	expectedOrder := sellOrder
+	expectedOrder.RemainingBalance = sellLockedBalance.Amount
+	expectedOrder.RemainingQuantity = sellOrder.Quantity
+	expectedOrder.Reserve = orderReserve
+	require.Equal(t, expectedOrder, events.OrderCreated.Order)
+	require.Empty(t, events.OrdersClosed)
+	require.Empty(t, events.OrdersReduced)
+
 	dexLockedBalance := assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, sellLockedBalance.Denom)
 	require.Equal(t, sellLockedBalance.String(), dexLockedBalance.String())
 	dexWhitelistingReservedBalance := assetFTKeeper.GetDEXWhitelistingReservedBalance(
@@ -263,7 +361,17 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	)
 	require.Equal(t, sellLWhitelistedBalance.String(), dexWhitelistingReservedBalance.String())
 
+	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, sellOrder.ID))
+	events = readOrderEvents(t, sdkCtx, testApp)
+	require.Nil(t, events.OrderCreated)
+	require.EqualValues(t, []types.EventOrderClosed{
+		{
+			Order: expectedOrder,
+		},
+	}, events.OrdersClosed)
+	require.Empty(t, events.OrdersReduced)
+
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, sellLockedBalance.Denom)
 	require.True(t, dexLockedBalance.IsZero())
@@ -275,7 +383,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	buyOrder := types.Order{
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
-		ID:         uuid.Generate().String(),
+		ID:         "id2",
 		BaseDenom:  denom1,
 		QuoteDenom: ft1Whitelisting,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
@@ -330,7 +438,40 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 
 	// now place both orders to let them match partially
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
+
+	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
+	events = readOrderEvents(t, sdkCtx, testApp)
+	expectedOrder = buyOrder
+	expectedOrder.RemainingQuantity = sdkmath.NewInt(4000) // filled partially
+	expectedOrder.RemainingBalance = sdkmath.NewInt(5200)
+	expectedOrder.Reserve = orderReserve
+	require.Equal(t, expectedOrder, events.OrderCreated.Order)
+
+	require.EqualValues(t, []types.EventOrderReduced{
+		{
+			Creator:      sellOrder.Creator,
+			ID:           sellOrder.ID,
+			SentCoin:     sdk.NewCoin(sellOrder.BaseDenom, sdkmath.NewIntFromUint64(1000)),
+			ReceivedCoin: sdk.NewCoin(sellOrder.QuoteDenom, sdkmath.NewIntFromUint64(1200)),
+		},
+		{
+			Creator:      buyOrder.Creator,
+			ID:           buyOrder.ID,
+			SentCoin:     sdk.NewCoin(buyOrder.QuoteDenom, sdkmath.NewIntFromUint64(1200)),
+			ReceivedCoin: sdk.NewCoin(buyOrder.BaseDenom, sdkmath.NewIntFromUint64(1000)),
+		},
+	}, events.OrdersReduced)
+
+	expectedOrder = sellOrder
+	expectedOrder.Reserve = orderReserve
+	expectedOrder.RemainingBalance = sdkmath.ZeroInt()
+	expectedOrder.RemainingQuantity = sdkmath.ZeroInt()
+	require.EqualValues(t, []types.EventOrderClosed{
+		{
+			Order: expectedOrder,
+		},
+	}, events.OrdersClosed)
 
 	_, err = dexKeeper.GetOrderByAddressAndID(sdkCtx, acc, sellOrder.ID)
 	require.ErrorIs(t, err, types.ErrRecordNotFound)
@@ -355,12 +496,12 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 	}{
 		{
 			name:          "valid_default_price",
-			price:         types.MustNewPriceFromString("1e-5"),
+			price:         types.MustNewPriceFromString("1e-8"),
 			wantTickError: false,
 		},
 		{
 			name:          "invalid_default_price",
-			price:         types.MustNewPriceFromString("1e-6"),
+			price:         types.MustNewPriceFromString("1e-9"),
 			wantTickError: true,
 		},
 		{
@@ -392,7 +533,7 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 		{
 			name:                "invalid_both_custom_tick_greater_than_one",
 			price:               types.MustNewPriceFromString("14"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
+			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.00001")),
 			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
 			wantTickError:       true,
 		},
@@ -407,7 +548,7 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			name:                "invalid_both_custom_base_less_than_one",
 			price:               types.MustNewPriceFromString("3e32"),
 			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000")),
+			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000000")),
 			wantTickError:       true,
 		},
 	}
