@@ -7,6 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/query/v1/query.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types";
 
@@ -24,6 +25,7 @@ service Query {
 
   // Token queries the fungible token of the module.
   rpc Token(QueryTokenRequest) returns (QueryTokenResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}";
   }
 
@@ -44,6 +46,7 @@ service Query {
 
   // FrozenBalance returns frozen balance of the denom for the account.
   rpc FrozenBalance(QueryFrozenBalanceRequest) returns (QueryFrozenBalanceResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/frozen/{denom}";
   }
 
@@ -54,6 +57,7 @@ service Query {
 
   // WhitelistedBalance returns whitelisted balance of the denom for the account.
   rpc WhitelistedBalance(QueryWhitelistedBalanceRequest) returns (QueryWhitelistedBalanceResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted/{denom}";
   }
 

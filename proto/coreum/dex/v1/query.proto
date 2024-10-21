@@ -6,6 +6,7 @@ import "coreum/dex/v1/params.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/query/v1/query.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v5/x/dex/types";
 
@@ -13,26 +14,32 @@ option go_package = "github.com/CoreumFoundation/coreum/v5/x/dex/types";
 service Query {
   // Params queries the parameters of x/dex module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/dex/v1/params";
   }
   // Order queries order by creator and ID.
   rpc Order(QueryOrderRequest) returns (QueryOrderResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/dex/v1/orders/{creator}/{id}";
   }
   // Orders queries creator orders.
   rpc Orders(QueryOrdersRequest) returns (QueryOrdersResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/dex/v1/orders/{creator}";
   }
   // OrderBooks queries order books.
   rpc OrderBooks(QueryOrderBooksRequest) returns (QueryOrderBooksResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/dex/v1/order-books";
   }
   // OrderBookOrders queries order book orders.
   rpc OrderBookOrders(QueryOrderBookOrdersRequest) returns (QueryOrderBookOrdersResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders";
   }
   // AccountDenomOrdersCount queries account denom orders count.
   rpc AccountDenomOrdersCount(QueryAccountDenomOrdersCountRequest) returns (QueryAccountDenomOrdersCountResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/dex/v1/accounts/{account}/denoms/{denom}/orders-count";
   }
 }
