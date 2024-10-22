@@ -46,6 +46,7 @@ type GenesisInitConfig struct {
 	CustomParamsConfig GenesisInitCustomParamsConfig `json:"custom_params_config"`
 	BankBalances       []banktypes.Balance           `json:"bank_balances"`
 	Validators         []GenesisInitValidator        `json:"validators"`
+	GenTxs             []json.RawMessage             `json:"gen_txs"`
 }
 
 // GenesisInitGovConfig is the gov config of the GenesisInitConfig.
@@ -185,6 +186,10 @@ func GenDocFromInput(
 		}
 		genutilState.GenTxs = append(genutilState.GenTxs, genTx)
 	}
+
+	// append provided txs from template
+	genutilState.GenTxs = append(genutilState.GenTxs, cfg.GenTxs...)
+
 	genutiltypes.SetGenesisStateInAppState(cosmosClientCtx.Codec, appGenState, genutilState)
 
 	// marshal the app state
