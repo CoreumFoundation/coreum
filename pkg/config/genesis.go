@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"encoding/json"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -46,6 +47,7 @@ type GenesisInitConfig struct {
 	CustomParamsConfig GenesisInitCustomParamsConfig `json:"custom_params_config"`
 	BankBalances       []banktypes.Balance           `json:"bank_balances"`
 	Validators         []GenesisInitValidator        `json:"validators"`
+	DEXConfig          GenesisDEXConfig              `json:"dex_config"`
 	GenTxs             []json.RawMessage             `json:"gen_txs"`
 }
 
@@ -73,6 +75,13 @@ type GenesisInitValidator struct {
 	DelegatorMnemonic string                `json:"delegator_mnemonic"`
 	Pubkey            cometbftcrypto.PubKey `json:"pub_key"`
 	ValidatorName     string                `json:"validator_name"`
+}
+
+// GenesisDEXConfig is the dex config of the GenesisInitConfig.
+//
+//nolint:tagliatelle
+type GenesisDEXConfig struct {
+	MaxOrdersPerDenom uint64 `json:"max_orders_per_denom"`
 }
 
 // GenDocFromInput generates genesis doc from genesis init config.
@@ -164,6 +173,13 @@ func GenDocFromInput(
 	stakingGenesis.Params.UnbondingTime = 168 * time.Hour
 
 	appGenState[stakingtypes.ModuleName] = cdc.MustMarshalJSON(stakingGenesis)
+
+	// dex params
+	dexGenesis := dextypes.DefaultGenesis()
+	if cfg.DEXConfig.MaxOrdersPerDenom > 0 {
+		dexGenesis.Params.MaxOrdersPerDenom = cfg.DEXConfig.MaxOrdersPerDenom
+	}
+	appGenState[dextypes.ModuleName] = cdc.MustMarshalJSON(dexGenesis)
 
 	// genutil state
 	genutilState := genutiltypes.DefaultGenesisState()

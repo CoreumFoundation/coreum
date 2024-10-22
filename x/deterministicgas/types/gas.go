@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"fmt"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,10 +27,11 @@ import (
 )
 
 const (
-	fuseGasMultiplier         = 10
-	simFuseGasMultiplier      = 1000
-	expectedMaxGasFactor      = 5
-	untrackedMaxGasForQueries = uint64(5_000)
+	defaultFuseGasMultiplier           = uint64(10)
+	dexOrderPlacementFuseGasMultiplier = uint64(5_000)
+	simFuseGasMultiplier               = 1000
+	expectedMaxGasFactor               = 5
+	untrackedMaxGasForQueries          = uint64(5_000)
 )
 
 // NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for
@@ -167,7 +169,15 @@ func (s deterministicMsgServer) ctxForDeterministicGas(
 
 		// We pass much higher amount of gas to handler to be sure that it succeeds.
 		// We want to avoid passing infinite gas meter to always have a limit in case of mistake.
-		gasMultiplier := uint64(fuseGasMultiplier)
+		var gasMultiplier uint64
+		// use custom fuse gas multiplier for some messages
+		switch msg.(type) {
+		case *dextypes.MsgPlaceOrder:
+			gasMultiplier = dexOrderPlacementFuseGasMultiplier
+		default:
+			gasMultiplier = defaultFuseGasMultiplier
+		}
+
 		if ctx.ChainID() == testutilconstant.SimAppChainID {
 			// simulation fuse gas multiplier is different since during the simulation the modules uses the assetft denom
 			// for the cases which are possible for the simulation only and require more gas
@@ -244,7 +254,7 @@ func hasExtensionCall(ctx sdk.Context, msg sdk.Msg, assetFTKeeper AssetFTKeeper)
 	for _, coin := range coins {
 		// we should not count the used for this query, otherwise it will mess up the gas
 		// requirements of the message with deterministic gas.
-		ctxWithUntrackedGas := ctx.WithGasMeter(storetypes.NewGasMeter(fuseGasMultiplier * untrackedMaxGasForQueries))
+		ctxWithUntrackedGas := ctx.WithGasMeter(storetypes.NewGasMeter(defaultFuseGasMultiplier * untrackedMaxGasForQueries))
 		def, err := assetFTKeeper.GetDefinition(ctxWithUntrackedGas, coin.Denom)
 		if assetfttypes.ErrInvalidDenom.Is(err) || assetfttypes.ErrTokenNotFound.Is(err) {
 			// if the token is not defined in asset ft module, we assume this is different
