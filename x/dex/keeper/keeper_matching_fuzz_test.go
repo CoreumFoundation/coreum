@@ -30,6 +30,9 @@ type FuzzAppConfig struct {
 	AssetFTAllFeaturesDenomsCount int
 	NativeDenomCount              int
 
+	// used for both default and asset ft
+	UnifiedRefAmountChangePercent int
+
 	OrdersCount                int
 	CancelOrdersPercent        int
 	CancelOrdersByDenomPercent int
@@ -66,7 +69,7 @@ func NewFuzzApp(
 	sdkCtx, _, _ := testApp.BeginNextBlock()
 
 	params := testApp.DEXKeeper.GetParams(sdkCtx)
-	params.PriceTickExponent = int32(types.MinExt)
+	params.PriceTickExponent = int32(-10) // use low but not too much
 
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
@@ -92,6 +95,7 @@ func NewFuzzApp(
 		InitialAmount: mintedAmount,
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_dex_order_cancellation,
+			assetfttypes.Feature_dex_unified_ref_amount_change,
 		},
 	}
 	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTDefaultDenomsCount, func(i int) string {
@@ -166,6 +170,9 @@ func (fa *FuzzApp) PlaceOrdersAndAssertFinalState(
 
 		orderSeed := rootRnd.Int63()
 		orderRnd := rand.New(rand.NewSource(orderSeed))
+
+		// every iteration we might change some app/denoms params
+		fa.AdjustAppState(t, sdkCtx, orderRnd)
 
 		order := fa.GenOrder(t, orderRnd)
 
@@ -344,6 +351,33 @@ func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
 	}
 }
 
+func (fa *FuzzApp) AdjustAppState(t *testing.T, sdkCtx sdk.Context, rnd *rand.Rand) {
+	// change unified ref amount
+	if randBoolWithPercent(rnd, fa.cfg.UnifiedRefAmountChangePercent) {
+		// change globally
+		if randBool(rnd) {
+			params := fa.testApp.DEXKeeper.GetParams(sdkCtx)
+
+			params.DefaultUnifiedRefAmount = randPositiveSDKDec(rnd)
+			t.Logf("Updating new default unified ref amount: %s", params.DefaultUnifiedRefAmount.String())
+			require.NoError(t, fa.testApp.DEXKeeper.SetParams(
+				sdkCtx,
+				params,
+			))
+		} else {
+			denom := genAnyItemByIndex(fa.ftDenoms, uint8(rnd.Uint32()))
+			unifiedRefAmount := randPositiveSDKDec(rnd)
+			t.Logf("Updating new denom %s unified ref amount: %s", denom, unifiedRefAmount.String())
+			require.NoError(t, fa.testApp.AssetFTKeeper.UpdateDEXUnifiedRefAmount(
+				sdkCtx,
+				fa.issuer,
+				denom,
+				unifiedRefAmount,
+			))
+		}
+	}
+}
+
 func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Order) {
 	t.Helper()
 
@@ -420,7 +454,8 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 					receivableAmt.String(), requiredWhitelistedAmt.String()),
 			)
 			return
-		case strings.Contains(err.Error(), "good til"),
+		case strings.Contains(err.Error(), "the price must be multiple of"), // price tick
+			strings.Contains(err.Error(), "good til"),
 			strings.Contains(err.Error(), "it's prohibited to save more than"):
 			return
 		default:
@@ -503,6 +538,8 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				AssetFTAllFeaturesDenomsCount: 2,
 				NativeDenomCount:              2,
 
+				UnifiedRefAmountChangePercent: 10,
+
 				OrdersCount:                500,
 				CancelOrdersPercent:        5,
 				CancelOrdersByDenomPercent: 2,
@@ -537,8 +574,27 @@ func randBoolWithPercent(orderRnd *rand.Rand, cancellationPercent int) bool {
 	return shouldCancelOrder
 }
 
+func randBool(orderRnd *rand.Rand) bool {
+	return randIntInRange(orderRnd, 1, 100)%2 == 0
+}
+
 func randIntInRange(rnd *rand.Rand, minRange, maxRange int) int {
 	return rnd.Intn(maxRange-minRange+1) + minRange
+}
+
+func randPositiveSDKDec(rnd *rand.Rand) sdkmath.LegacyDec {
+	v := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%.18f", rnd.NormFloat64()))
+	multiplier := sdkmath.NewIntWithDecimal(1, randIntInRange(rnd, 1, 20))
+	if v.IsNegative() {
+		v = v.QuoInt(multiplier).Neg()
+	} else {
+		v = v.MulInt(multiplier)
+	}
+	if v.IsZero() {
+		v = sdkmath.LegacyOneDec()
+	}
+
+	return v
 }
 
 func buildNumExpPrice(
