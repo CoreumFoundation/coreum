@@ -56,6 +56,10 @@ release-images:
 integration-tests-modules:
 	$(BUILDER) integration-tests-unsafe/modules
 
+.PHONY: integration-tests-stress
+integration-tests-stress:
+	$(BUILDER) integration-tests-unsafe/stress
+
 .PHONY: integration-tests-ibc
 integration-tests-ibc:
 	$(BUILDER) integration-tests-unsafe/ibc

@@ -1,20 +1,22 @@
 package stress
 
 import (
+	"testing"
+	"time"
+
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
+	"github.com/stretchr/testify/require"
+
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
 	"github.com/CoreumFoundation/coreum/v5/testutil/event"
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/v5/x/deterministicgas/types"
 	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/samber/lo"
-	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 // TestLimitOrdersStressMatching tests the dex modules ability to match a lot of orders.

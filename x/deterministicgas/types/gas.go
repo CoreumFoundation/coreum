@@ -3,7 +3,6 @@ package types
 import (
 	"context"
 	"fmt"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,6 +23,7 @@ import (
 	testutilconstant "github.com/CoreumFoundation/coreum/v5/testutil/constant"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 const (

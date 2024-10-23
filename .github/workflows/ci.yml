@@ -20,6 +20,7 @@ jobs:
           "test",
           "test-fuzz",
           "integration tests coreum-modules",
+          "integration tests coreum-stress",
           "integration tests coreum-ibc",
           "integration tests coreum-upgrade-v4.0.0",
         ]
@@ -38,6 +39,9 @@ jobs:
             command: make integration-tests-modules
             codecov: true
             codecov-name: coreum-integration-tests-modules
+          - ci_step: "integration tests coreum-stress"
+            command: make integration-tests-stress
+            codecov: false
           - ci_step: "integration tests coreum-ibc"
             command: make integration-tests-ibc
             codecov: false
