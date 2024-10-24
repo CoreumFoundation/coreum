@@ -2564,7 +2564,7 @@ the source code for the extension.
 | `code_id` | [uint64](#uint64) |  |  `code_id is the reference to the stored WASM code`  |
 | `label` | [string](#string) |  |  `label is optional metadata to be stored with a contract instance.`  |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `funds coins that are transferred to the contract on instantiation`  |
-| `issuanceMsg` | [bytes](#bytes) |  |  `optional json encoded data to pass to WASM on instantiation by the ft issuer`  |
+| `issuance_msg` | [bytes](#bytes) |  |  `optional json encoded data to pass to WASM on instantiation by the ft issuer`  |
 
 
 
