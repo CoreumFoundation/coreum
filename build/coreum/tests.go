@@ -25,6 +25,7 @@ const (
 	TestIBC     = "ibc"
 	TestModules = "modules"
 	TestUpgrade = "upgrade"
+	TestStress  = "stress"
 )
 
 // Test run unit tests in coreum repo.
@@ -57,6 +58,19 @@ func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-modules"
 
 		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestModules)
+	}
+}
+
+// RunIntegrationTestsStress returns function running stress integration tests.
+func RunIntegrationTestsStress(runUnsafe bool) types.CommandFunc {
+	return func(ctx context.Context, deps types.DepsFunc) error {
+		deps(BuildCoredLocally, BuildCoredDockerImage)
+
+		znetConfig := defaultZNetConfig()
+		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileDEX}
+		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-stress"
+
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestStress)
 	}
 }
 

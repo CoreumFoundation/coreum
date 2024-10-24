@@ -972,7 +972,6 @@ func New(
 		banktypes.ModuleName,
 		govtypes.ModuleName,
 		crisistypes.ModuleName,
-		genutiltypes.ModuleName,
 		feegrant.ModuleName,
 		group.ModuleName,
 		paramstypes.ModuleName,
@@ -987,6 +986,8 @@ func New(
 		nft.ModuleName,
 		delaytypes.ModuleName,
 		dextypes.ModuleName,
+		// should be last
+		genutiltypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -1002,7 +1003,6 @@ func New(
 		slashingtypes.ModuleName,
 		vestingtypes.ModuleName,
 		minttypes.ModuleName,
-		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		feegrant.ModuleName,
 		group.ModuleName,
@@ -1021,6 +1021,8 @@ func New(
 		nft.ModuleName,
 		delaytypes.ModuleName,
 		dextypes.ModuleName,
+		// should be last
+		genutiltypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1043,7 +1045,6 @@ func New(
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
 		ibcexported.ModuleName,
-		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
@@ -1062,6 +1063,8 @@ func New(
 		delaytypes.ModuleName,
 		// dex depends on auth(account) module
 		dextypes.ModuleName,
+		// should be last
+		genutiltypes.ModuleName,
 	}
 
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)

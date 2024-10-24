@@ -31,6 +31,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 // GenesisInitConfig is used to pass genesis creating paramers to cored.
@@ -46,6 +47,8 @@ type GenesisInitConfig struct {
 	CustomParamsConfig GenesisInitCustomParamsConfig `json:"custom_params_config"`
 	BankBalances       []banktypes.Balance           `json:"bank_balances"`
 	Validators         []GenesisInitValidator        `json:"validators"`
+	DEXConfig          GenesisDEXConfig              `json:"dex_config"`
+	GenTxs             []json.RawMessage             `json:"gen_txs"`
 }
 
 // GenesisInitGovConfig is the gov config of the GenesisInitConfig.
@@ -72,6 +75,13 @@ type GenesisInitValidator struct {
 	DelegatorMnemonic string                `json:"delegator_mnemonic"`
 	Pubkey            cometbftcrypto.PubKey `json:"pub_key"`
 	ValidatorName     string                `json:"validator_name"`
+}
+
+// GenesisDEXConfig is the dex config of the GenesisInitConfig.
+//
+//nolint:tagliatelle
+type GenesisDEXConfig struct {
+	MaxOrdersPerDenom uint64 `json:"max_orders_per_denom"`
 }
 
 // GenDocFromInput generates genesis doc from genesis init config.
@@ -164,6 +174,13 @@ func GenDocFromInput(
 
 	appGenState[stakingtypes.ModuleName] = cdc.MustMarshalJSON(stakingGenesis)
 
+	// dex params
+	dexGenesis := dextypes.DefaultGenesis()
+	if cfg.DEXConfig.MaxOrdersPerDenom > 0 {
+		dexGenesis.Params.MaxOrdersPerDenom = cfg.DEXConfig.MaxOrdersPerDenom
+	}
+	appGenState[dextypes.ModuleName] = cdc.MustMarshalJSON(dexGenesis)
+
 	// genutil state
 	genutilState := genutiltypes.DefaultGenesisState()
 	for _, validatorInfo := range cfg.Validators {
@@ -185,6 +202,10 @@ func GenDocFromInput(
 		}
 		genutilState.GenTxs = append(genutilState.GenTxs, genTx)
 	}
+
+	// append provided txs from template
+	genutilState.GenTxs = append(genutilState.GenTxs, cfg.GenTxs...)
+
 	genutiltypes.SetGenesisStateInAppState(cosmosClientCtx.Codec, appGenState, genutilState)
 
 	// marshal the app state

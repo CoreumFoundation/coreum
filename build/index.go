@@ -56,6 +56,10 @@ var Commands = map[string]types.Command{
 		Fn:          coreum.RunIntegrationTestsModules(true),
 		Description: "Runs all modules integration tests including unsafe",
 	},
+	"integration-tests-unsafe/stress": {
+		Fn:          coreum.RunIntegrationTestsStress(true),
+		Description: "Runs unsafe stress integration tests",
+	},
 	"integration-tests/upgrade": {
 		Fn:          coreum.RunIntegrationTestsUpgrade(false),
 		Description: "Runs safe upgrade integration tests",

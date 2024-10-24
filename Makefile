@@ -8,6 +8,10 @@ znet:
 znet-start:
 	$(BUILDER) znet start --profiles=3cored
 
+.PHONY: znet-start-stress
+znet-start-stress:
+	$(BUILDER) znet start --profiles=3cored,dex
+
 .PHONY: znet-remove
 znet-remove:
 	$(BUILDER) znet remove
@@ -51,6 +55,10 @@ release-images:
 .PHONY: integration-tests-modules
 integration-tests-modules:
 	$(BUILDER) integration-tests-unsafe/modules
+
+.PHONY: integration-tests-stress
+integration-tests-stress:
+	$(BUILDER) integration-tests-unsafe/stress
 
 .PHONY: integration-tests-ibc
 integration-tests-ibc:

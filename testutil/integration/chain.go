@@ -440,8 +440,12 @@ func DialGRPCClient(grpcURL string) (*grpc.ClientConn, error) {
 	// http - insecure
 	grpcClient, err := grpc.NewClient(
 		host,
-		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+		grpc.WithDefaultCallOptions(
+			grpc.ForceCodec(pc.GRPCCodec()),
+			grpc.MaxCallRecvMsgSize(1e+8),
+		),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial grpc")
 	}
