@@ -627,7 +627,7 @@ func buildNumExpPrice(
 	if len(numPart) > types.MaxNumLen {
 		return types.Price{}, false
 	}
-	if exp > types.MaxExp || exp < types.MinExt {
+	if exp > types.MaxExp || exp < types.MinExp {
 		return types.Price{}, false
 	}
 	// prepare valid price

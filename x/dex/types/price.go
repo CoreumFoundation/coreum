@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -22,16 +23,20 @@ var (
 const (
 	// MaxNumLen is max allowed num part length.
 	MaxNumLen = 19
-	// MinExt is the max allowed exponent. Technically it's limited by MinInt8 (-128) + `MaxNumLen` (required for
+	// MinExp is the max allowed exponent. Technically it's limited by MinInt8 (-128) + `MaxNumLen` (required for
 	//	normalization). But to make the range value easier for understanding and still keeping enough precision we set
 	//	it to -100.
-	MinExt = int8(-100)
+	MinExp = int8(-100)
 	// MaxExp is the max allowed exponent. Technically it's limited by MaxInt8 (127) but to make it similar to
 	// mixExp we set it to 100.
 	MaxExp = int8(100)
 	// ExponentSymbol is symbol used to represent the exponent in the string price.
 	ExponentSymbol        = "e"
 	orderedBytesPriceSize = store.Int8OrderedBytesSize + store.Uint64OrderedBytesSize
+)
+
+var (
+	priceRegex = regexp.MustCompile(`^(([1-9])|([1-9]\d*[1-9]))(e-?[1-9]\d*)?$`)
 )
 
 // Price is the price type.
@@ -42,17 +47,12 @@ type Price struct {
 
 // NewPriceFromString returns new instance of the Price from string.
 func NewPriceFromString(str string) (Price, error) {
-	if len(str) == 0 {
-		return Price{}, errors.New("price can't be empty")
+	if !priceRegex.MatchString(str) {
+		return Price{}, errors.Errorf("invalid price %s, must match %s", str, priceRegex.String())
 	}
+
 	parts := strings.Split(str, ExponentSymbol)
 	numPart := parts[0]
-	// the num should be deterministic
-	if strings.HasPrefix(numPart, "0") ||
-		strings.HasSuffix(numPart, "0") ||
-		strings.HasPrefix(numPart, "+") {
-		return Price{}, errors.Errorf("invalid price num part %s", numPart)
-	}
 	if len(numPart) > MaxNumLen {
 		return Price{}, errors.Errorf("invalid price num part length, max %d", MaxNumLen)
 	}
@@ -72,23 +72,17 @@ func NewPriceFromString(str string) (Price, error) {
 		exp = 0
 	case 2:
 		expPart := parts[1]
-		// the exponent should be deterministic
-		if strings.HasPrefix(expPart, "0") ||
-			strings.HasPrefix(expPart, "+") ||
-			strings.HasPrefix(expPart, "-0") {
-			return Price{}, errors.Errorf("invalid exponent %s", expPart)
-		}
 		var intExp int64
 		intExp, err = strconv.ParseInt(expPart, 10, 8)
 		if err != nil {
-			return Price{}, errors.Errorf("invalid price exp part %s", expPart)
+			return Price{}, errors.Errorf("invalid price exponent part %s", expPart)
 		}
 		if intExp == 0 {
 			return Price{}, errors.New("zero exponent is prohibited")
 		}
 		// the range check is required for the normalization
-		if int8(intExp) < MinExt || int8(intExp) > MaxExp {
-			return Price{}, errors.Errorf("invalid exp %d, must be in the rage %d:%d", intExp, MinExt, MaxExp)
+		if int8(intExp) < MinExp || int8(intExp) > MaxExp {
+			return Price{}, errors.Errorf("invalid exponent %d, must be in the rage %d:%d", intExp, MinExp, MaxExp)
 		}
 		exp = int8(intExp)
 	default:
