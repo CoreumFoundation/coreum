@@ -4,9 +4,9 @@ package coreum.dex.v1;
 import "coreum/dex/v1/order.proto";
 import "coreum/dex/v1/params.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/query/v1/query.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v5/x/dex/types";
 

@@ -1,3 +1,4 @@
+//nolint:unused
 package coreum
 
 import (
@@ -24,7 +25,7 @@ import (
 //nolint:unused // TODO: uncomment in next PR
 var configBreakingTmpl string
 
-//nolint:unused // TODO: uncomment in next PR
+//nolint:deadcode
 func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(golang.Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
 

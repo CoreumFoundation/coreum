@@ -124,6 +124,7 @@ type placeOrderBodyDEXRequest struct {
 	Order dextypes.Order `json:"order"`
 }
 
+//nolint:tagliatelle
 type cancelOrderBodyDEXRequest struct {
 	OrderID string `json:"order_id"`
 }
@@ -133,6 +134,7 @@ type cancelOrdersByDenomBodyDEXRequest struct {
 	Denom   string `json:"denom"`
 }
 
+//nolint:tagliatelle
 type OrderBodyDEXRequest struct {
 	Account string `json:"acc"`
 	OrderID string `json:"order_id"`
@@ -142,6 +144,7 @@ type OrdersBodyDEXRequest struct {
 	Creator string `json:"creator"`
 }
 
+//nolint:tagliatelle
 type OrderBookOrdersBodyDEXRequest struct {
 	BaseDenom  string        `json:"base_denom"`
 	QuoteDenom string        `json:"quote_denom"`
