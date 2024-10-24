@@ -222,11 +222,12 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "coreum-std-derive"
 version = "0.20.1"
-source = "git+https://github.com/CoreumFoundation/osmosis-std-derive.git?branch=cosmwasm_2_0#8f878afd69cf68d9abaff19b82a8206a3b9e4698"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fee3df604ec822e6a66c0279f2d8840da010f8e07503423ba413baac03c830f"
 dependencies = [
  "itertools 0.10.5",
  "proc-macro2",
- "prost-types 0.11.9",
+ "prost",
  "quote",
  "syn 1.0.109",
 ]
@@ -234,14 +235,14 @@ dependencies = [
 [[package]]
 name = "coreum-wasm-sdk"
 version = "1.1.0"
-source = "git+https://github.com/CoreumFoundation/coreum-wasm-sdk.git?branch=update-types#7ead4c74a15d10297e7c894e7bde34bded77e54e"
+source = "git+https://github.com/CoreumFoundation/coreum-wasm-sdk.git#352e54d12300d263ce135579d5d697d3e46c8431"
 dependencies = [
  "chrono",
  "coreum-std-derive",
  "cosmwasm-schema",
  "cosmwasm-std",
- "prost 0.12.6",
- "prost-types 0.12.6",
+ "prost",
+ "prost-types",
  "schemars",
  "serde",
  "serde-cw-value",
@@ -837,35 +838,12 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.11.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b82eaa1d779e9a4bc1c3217db8ffbeabaae1dca241bf70183242128d48681cd"
-dependencies = [
- "bytes",
- "prost-derive 0.11.9",
-]
-
-[[package]]
-name = "prost"
 version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "deb1435c188b76130da55f17a466d252ff7b1418b2ad3e037d127b94e3411f29"
 dependencies = [
  "bytes",
- "prost-derive 0.12.6",
-]
-
-[[package]]
-name = "prost-derive"
-version = "0.11.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5d2d8d10f3c6ded6da8b05b5fb3b8a5082514344d56c9f871412d29b4e075b4"
-dependencies = [
- "anyhow",
- "itertools 0.10.5",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
+ "prost-derive",
 ]
 
 [[package]]
@@ -883,20 +861,11 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.11.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "213622a1460818959ac1181aaeb2dc9c7f63df720db7d788b3e24eacd1983e13"
-dependencies = [
- "prost 0.11.9",
-]
-
-[[package]]
-name = "prost-types"
 version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9091c90b0a32608e984ff2fa4091273cbdd755d54935c51d520887f4a1dbd5b0"
 dependencies = [
- "prost 0.12.6",
+ "prost",
 ]
 
 [[package]]
