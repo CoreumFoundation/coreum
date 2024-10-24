@@ -219,7 +219,7 @@ $ %[1]s query %s order-book-orders denom1 denom2 buy
 				return errors.Errorf("unknown side '%s'", args[2])
 			}
 
-			res, err := queryClient.OrdersBookOrders(cmd.Context(), &types.QueryOrderBookOrdersRequest{
+			res, err := queryClient.OrderBookOrders(cmd.Context(), &types.QueryOrderBookOrdersRequest{
 				BaseDenom:  args[0],
 				QuoteDenom: args[1],
 				Side:       types.Side(side),

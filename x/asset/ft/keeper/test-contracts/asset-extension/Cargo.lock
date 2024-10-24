@@ -152,7 +152,7 @@ name = "asset-extension"
 version = "0.1.0"
 dependencies = [
  "coreum-wasm-sdk",
- "cosmwasm-schema 2.0.1",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw2",
@@ -235,16 +235,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
+name = "coreum-std-derive"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fee3df604ec822e6a66c0279f2d8840da010f8e07503423ba413baac03c830f"
+dependencies = [
+ "itertools 0.10.5",
+ "proc-macro2",
+ "prost 0.12.6",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "coreum-wasm-sdk"
 version = "1.1.0"
-source = "git+https://github.com/CoreumFoundation/coreum-wasm-sdk.git?branch=upgrade-cosmwasm-std#0c2f105969a2ce3711c6da2a9e6b9613d6c787d6"
+source = "git+https://github.com/CoreumFoundation/coreum-wasm-sdk.git#352e54d12300d263ce135579d5d697d3e46c8431"
 dependencies = [
  "chrono",
- "cosmwasm-schema 2.1.4",
+ "coreum-std-derive",
+ "cosmwasm-schema",
  "cosmwasm-std",
- "osmosis-std-derive",
  "prost 0.12.6",
- "prost-types 0.12.6",
+ "prost-types",
  "schemars",
  "serde",
  "serde-cw-value",
@@ -292,37 +305,15 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.0.1"
-source = "git+https://github.com/CosmWasm/cosmwasm?rev=3f8bd842742bc94aa60f587f79dd66b782928b15#3f8bd842742bc94aa60f587f79dd66b782928b15"
-dependencies = [
- "cosmwasm-schema-derive 2.0.1",
- "schemars",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "cosmwasm-schema"
 version = "2.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f86b4d949b6041519c58993a73f4bbfba8083ba14f7001eae704865a09065845"
 dependencies = [
- "cosmwasm-schema-derive 2.1.4",
+ "cosmwasm-schema-derive",
  "schemars",
  "serde",
  "serde_json",
  "thiserror",
-]
-
-[[package]]
-name = "cosmwasm-schema-derive"
-version = "2.0.1"
-source = "git+https://github.com/CosmWasm/cosmwasm?rev=3f8bd842742bc94aa60f587f79dd66b782928b15#3f8bd842742bc94aa60f587f79dd66b782928b15"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.79",
 ]
 
 [[package]]
@@ -459,7 +450,7 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b04852cd38f044c0751259d5f78255d07590d136b8a86d4e09efdd7666bd6d27"
 dependencies = [
- "cosmwasm-schema 2.1.4",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "schemars",
@@ -755,18 +746,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
 
 [[package]]
-name = "osmosis-std-derive"
-version = "0.20.1"
-source = "git+https://github.com/CoreumFoundation/osmosis-std-derive.git?branch=cosmwasm_2_0#7b837aa9fae698f8432003d44d80e19921b615ea"
-dependencies = [
- "itertools 0.10.5",
- "proc-macro2",
- "prost-types 0.11.9",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "p256"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -855,15 +834,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.79",
-]
-
-[[package]]
-name = "prost-types"
-version = "0.11.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "213622a1460818959ac1181aaeb2dc9c7f63df720db7d788b3e24eacd1983e13"
-dependencies = [
- "prost 0.11.9",
 ]
 
 [[package]]

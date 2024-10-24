@@ -87,8 +87,8 @@ func (qs QueryService) OrderBooks(
 	}, nil
 }
 
-// OrdersBookOrders queries order book orders.
-func (qs QueryService) OrdersBookOrders(
+// OrderBookOrders queries order book orders.
+func (qs QueryService) OrderBookOrders(
 	ctx context.Context,
 	req *types.QueryOrderBookOrdersRequest,
 ) (*types.QueryOrderBookOrdersResponse, error) {
