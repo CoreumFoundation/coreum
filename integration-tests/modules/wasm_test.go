@@ -1985,11 +1985,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
 	// we need to do this, otherwise assertion fails because some private fields are set differently
+	requireT.NoError(err)
 	dataToCompare := &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	classID := assetnfttypes.BuildClassID(
 		issueClassReqNoWhitelist.Symbol,
@@ -2101,11 +2101,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Data: []byte("mutable_data"),
 	}}})
 
+	requireT.NoError(err)
 	dataToCompare = &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	requireT.Equal(dataToCompare, nftResp.Nft.Data)
 
@@ -2134,11 +2134,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Data: []byte("edited_data_by_admin"),
 	}}})
 
+	requireT.NoError(err)
 	dataToCompare = &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
 		ClassId: classIDNoWhitelist,
@@ -2183,11 +2183,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Data: []byte("edited_data_by_owner"),
 	}}})
 
+	requireT.NoError(err)
 	dataToCompare = &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
 		ClassId: classIDNoWhitelist,
@@ -2333,11 +2333,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
+	requireT.NoError(err)
 	dataToCompare = &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	expectedNFT1 := &nfttypes.NFT{
 		ClassId: classID,
@@ -2573,11 +2573,11 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 
 	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
 	// we need to do this, otherwise assertion fails because some private fields are set differently
+	requireT.NoError(err)
 	dataToCompare := &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	expectedClass := assetnfttypes.Class{
 		Id:          classID,
