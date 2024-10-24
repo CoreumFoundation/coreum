@@ -47,6 +47,7 @@ pub fn instantiate(
         uri: msg.uri.unwrap_or_default(),
         uri_hash: msg.uri_hash.unwrap_or_default(),
         extension_settings: msg.extension_settings,
+        dex_settings: msg.dex_settings,
     };
 
     let denom = format!("{}-{}", msg.subunit, env.contract.address).to_lowercase();
