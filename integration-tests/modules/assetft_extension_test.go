@@ -248,8 +248,8 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		chain.TxFactoryAuto(),
 		msg,
 	)
-	requireT.NotEqualValues(chain.GasLimitByMsgs(msg), res.GasUsed)
 	requireT.NoError(err)
+	requireT.NotEqualValues(chain.GasLimitByMsgs(msg), res.GasUsed)
 
 	// Issue the new fungible token without extension
 	subunit = "uabe"
