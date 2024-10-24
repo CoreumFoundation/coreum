@@ -27,11 +27,13 @@ type FuzzAppConfig struct {
 	AssetFTDefaultDenomsCount     int
 	AssetFTWhitelistingCount      int
 	AssetFTFreezingDenomsCount    int
+	AssetFTWhitelistedDenomsCount int
 	AssetFTAllFeaturesDenomsCount int
 	NativeDenomCount              int
 
 	// used for both default and asset ft
-	UnifiedRefAmountChangePercent int
+	UnifiedRefAmountChangePercent  int
+	WhitelistedDenomsChangePercent int
 
 	OrdersCount                int
 	CancelOrdersPercent        int
@@ -88,7 +90,6 @@ func NewFuzzApp(
 	})
 
 	ftDenoms := make([]string, 0)
-
 	defaultFTSettings := assetfttypes.IssueSettings{
 		Issuer:        issuer,
 		Precision:     1,
@@ -124,12 +125,25 @@ func NewFuzzApp(
 		require.NoError(t, err)
 		return denom
 	})...)
+	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTFreezingDenomsCount, func(i int) string {
+		settings := defaultFTSettings
+		settings.Symbol = fmt.Sprintf("WHD%d", i)
+		settings.Subunit = fmt.Sprintf("whd%d", i)
+		settings.Features = append(settings.Features, assetfttypes.Feature_dex_whitelisted_denoms)
+		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
+		require.NoError(t, err)
+		return denom
+	})...)
 	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTAllFeaturesDenomsCount, func(i int) string {
 		settings := defaultFTSettings
 		settings.Symbol = fmt.Sprintf("ALL%d", i)
 		settings.Subunit = fmt.Sprintf("all%d", i)
-		settings.Features = append(settings.Features, assetfttypes.Feature_whitelisting)
-		settings.Features = append(settings.Features, assetfttypes.Feature_freezing)
+		settings.Features = append(
+			settings.Features,
+			assetfttypes.Feature_whitelisting,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_dex_whitelisted_denoms,
+		)
 		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
 		require.NoError(t, err)
 		return denom
@@ -205,7 +219,7 @@ func (fa *FuzzApp) GenOrder(
 ) types.Order {
 	t.Helper()
 
-	creator := genAnyItemByIndex(fa.accounts, uint8(rnd.Uint32()))
+	creator := getAnyItemByIndex(fa.accounts, uint8(rnd.Uint32()))
 	orderType := types.ORDER_TYPE_LIMIT
 	if randBoolWithPercent(rnd, fa.cfg.MarketOrdersPercent) {
 		orderType = types.ORDER_TYPE_MARKET
@@ -215,15 +229,15 @@ func (fa *FuzzApp) GenOrder(
 	var baseDenom, quoteDenom string
 	baseDenomInd := uint8(rnd.Uint32())
 	for {
-		baseDenom = genAnyItemByIndex(fa.denoms, uint8(rnd.Uint32()))
-		quoteDenom = genAnyItemByIndex(fa.denoms, baseDenomInd)
+		baseDenom = getAnyItemByIndex(fa.denoms, uint8(rnd.Uint32()))
+		quoteDenom = getAnyItemByIndex(fa.denoms, baseDenomInd)
 		if baseDenom != quoteDenom {
 			break
 		}
 		baseDenomInd++
 	}
 
-	side := genAnyItemByIndex(fa.sides, uint8(rnd.Uint32()))
+	side := getAnyItemByIndex(fa.sides, uint8(rnd.Uint32()))
 
 	priceNum := rnd.Uint32()
 
@@ -276,7 +290,7 @@ func (fa *FuzzApp) GenOrder(
 	return types.Order{
 		Creator:     creator.String(),
 		Type:        orderType,
-		ID:          genString(20, rnd),
+		ID:          randString(20, rnd),
 		BaseDenom:   baseDenom,
 		QuoteDenom:  quoteDenom,
 		Price:       price,
@@ -365,7 +379,7 @@ func (fa *FuzzApp) AdjustAppState(t *testing.T, sdkCtx sdk.Context, rnd *rand.Ra
 				params,
 			))
 		} else {
-			denom := genAnyItemByIndex(fa.ftDenoms, uint8(rnd.Uint32()))
+			denom := getAnyItemByIndex(fa.ftDenoms, uint8(rnd.Uint32()))
 			unifiedRefAmount := randPositiveSDKDec(rnd)
 			t.Logf("Updating new denom %s unified ref amount: %s", denom, unifiedRefAmount.String())
 			require.NoError(t, fa.testApp.AssetFTKeeper.UpdateDEXUnifiedRefAmount(
@@ -373,6 +387,29 @@ func (fa *FuzzApp) AdjustAppState(t *testing.T, sdkCtx sdk.Context, rnd *rand.Ra
 				fa.issuer,
 				denom,
 				unifiedRefAmount,
+			))
+		}
+	}
+
+	for _, denom := range fa.ftDenoms {
+		def, err := fa.testApp.AssetFTKeeper.GetDefinition(sdkCtx, denom)
+		require.NoError(t, err)
+		if !def.IsFeatureEnabled(assetfttypes.Feature_dex_whitelisted_denoms) {
+			continue
+		}
+		if randBoolWithPercent(rnd, fa.cfg.WhitelistedDenomsChangePercent) {
+			var whitelistedDenoms []string
+			if randBool(rnd) {
+				// change whitelisted denoms
+				whitelistedDenoms = randItemsFromSlice(fa.ftDenoms, rnd)
+			} else {
+				// remove whitelisted denoms
+				whitelistedDenoms = make([]string, 0)
+			}
+			t.Logf("Updating %s whitelisted denoms: %v", denom, whitelistedDenoms)
+
+			require.NoError(t, fa.testApp.AssetFTKeeper.UpdateDEXWhitelistedDenoms(
+				sdkCtx, sdk.MustAccAddressFromBech32(def.Admin), denom, whitelistedDenoms,
 			))
 		}
 	}
@@ -456,7 +493,8 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			return
 		case strings.Contains(err.Error(), "the price must be multiple of"), // price tick
 			strings.Contains(err.Error(), "good til"),
-			strings.Contains(err.Error(), "it's prohibited to save more than"):
+			strings.Contains(err.Error(), "it's prohibited to save more than"),
+			strings.Contains(err.Error(), "not whitelisted for"): // whitelisted denoms
 			return
 		default:
 			require.NoError(t, err)
@@ -538,7 +576,8 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				AssetFTAllFeaturesDenomsCount: 2,
 				NativeDenomCount:              2,
 
-				UnifiedRefAmountChangePercent: 10,
+				UnifiedRefAmountChangePercent:  10,
+				WhitelistedDenomsChangePercent: 5,
 
 				OrdersCount:                500,
 				CancelOrdersPercent:        5,
@@ -564,37 +603,6 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 			t.Logf("Placing orders and assert final state, rootSeed: %d", rootSeed)
 			fuzzApp.PlaceOrdersAndAssertFinalState(t, rootRnd)
 		})
-}
-
-func randBoolWithPercent(orderRnd *rand.Rand, cancellationPercent int) bool {
-	if cancellationPercent == 0 {
-		return false
-	}
-	shouldCancelOrder := randIntInRange(orderRnd, 1, 100) < cancellationPercent
-	return shouldCancelOrder
-}
-
-func randBool(orderRnd *rand.Rand) bool {
-	return randIntInRange(orderRnd, 1, 100)%2 == 0
-}
-
-func randIntInRange(rnd *rand.Rand, minRange, maxRange int) int {
-	return rnd.Intn(maxRange-minRange+1) + minRange
-}
-
-func randPositiveSDKDec(rnd *rand.Rand) sdkmath.LegacyDec {
-	v := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%.18f", rnd.NormFloat64()))
-	multiplier := sdkmath.NewIntWithDecimal(1, randIntInRange(rnd, 1, 20))
-	if v.IsNegative() {
-		v = v.QuoInt(multiplier).Neg()
-	} else {
-		v = v.MulInt(multiplier)
-	}
-	if v.IsZero() {
-		v = sdkmath.LegacyOneDec()
-	}
-
-	return v
 }
 
 func buildNumExpPrice(
@@ -632,15 +640,55 @@ func buildNumExpPrice(
 	return types.MustNewPriceFromString(priceStr), true
 }
 
-func genAnyItemByIndex[T any](slice []T, ind uint8) T {
-	return slice[int(ind)%len(slice)]
+func randBoolWithPercent(orderRnd *rand.Rand, cancellationPercent int) bool {
+	if cancellationPercent == 0 {
+		return false
+	}
+	shouldCancelOrder := randIntInRange(orderRnd, 1, 100) < cancellationPercent
+	return shouldCancelOrder
 }
 
-func genString(length int, rnd *rand.Rand) string {
+func randBool(orderRnd *rand.Rand) bool {
+	return randIntInRange(orderRnd, 1, 100)%2 == 0
+}
+
+func randPositiveSDKDec(rnd *rand.Rand) sdkmath.LegacyDec {
+	v := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%.18f", rnd.NormFloat64()))
+	multiplier := sdkmath.NewIntWithDecimal(1, randIntInRange(rnd, 1, 20))
+	if v.IsNegative() {
+		v = v.QuoInt(multiplier).Neg()
+	} else {
+		v = v.MulInt(multiplier)
+	}
+	if v.IsZero() {
+		v = sdkmath.LegacyOneDec()
+	}
+
+	return v
+}
+
+func randString(length int, rnd *rand.Rand) string {
 	const charset = "abcdefghijklmnopqrstuvwxyz1234567890"
 	b := make([]byte, length)
 	for i := range b {
 		b[i] = charset[rnd.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func randItemsFromSlice[T any](slice []T, rnd *rand.Rand) []T {
+	// shuffle the slice
+	rand.Shuffle(len(slice), func(i, j int) {
+		slice[i], slice[j] = slice[j], slice[i]
+	})
+	n := randIntInRange(rnd, 0, len(slice))
+	return slice[:n]
+}
+
+func randIntInRange(rnd *rand.Rand, minRange, maxRange int) int {
+	return rnd.Intn(maxRange-minRange+1) + minRange
+}
+
+func getAnyItemByIndex[T any](slice []T, ind uint8) T {
+	return slice[int(ind)%len(slice)]
 }
