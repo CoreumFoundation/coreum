@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   ci:
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -71,5 +72,4 @@ jobs:
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
-
 
