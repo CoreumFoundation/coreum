@@ -35,9 +35,7 @@ const (
 	orderedBytesPriceSize = store.Int8OrderedBytesSize + store.Uint64OrderedBytesSize
 )
 
-var (
-	priceRegex = regexp.MustCompile(`^(([1-9])|([1-9]\d*[1-9]))(e-?[1-9]\d*)?$`)
-)
+var priceRegex = regexp.MustCompile(`^(([1-9])|([1-9]\d*[1-9]))(e-?[1-9]\d*)?$`)
 
 // Price is the price type.
 type Price struct {

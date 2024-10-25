@@ -72,7 +72,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
 	fundOrderReserve(t, testApp, sdkCtx, acc)
 
-	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "not supported for the tokens with extensions")
+	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "is not supported for DEX, the token has extensions")
 }
 
 func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
@@ -116,7 +116,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
 	fundOrderReserve(t, testApp, sdkCtx, acc)
-	errStr := fmt.Sprintf("locking coins for DEX disabled for %s", denomWithExtension)
+	errStr := fmt.Sprintf("usage of %s is not supported for DEX, the token has dex_block", denomWithExtension)
 	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), errStr)
 
 	// use the denomWithExtension as quote
