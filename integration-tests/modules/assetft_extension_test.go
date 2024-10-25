@@ -1187,7 +1187,6 @@ func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
 // TestAssetFTExtensionIssuingSmartContractIsAllowedToReceive verifies that issuing smart contract is allowed to
 // receive coins even if sending them to smart contract is disabled.
 func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
-	t.SkipNow() // TODO: Fix later
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)

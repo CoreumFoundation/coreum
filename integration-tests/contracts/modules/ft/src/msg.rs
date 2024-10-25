@@ -1,6 +1,6 @@
-use coreum_wasm_sdk::types::coreum::asset::ft::v1::{DexSettings, ExtensionIssueSettings};
+use coreum_wasm_sdk::types::coreum::asset::ft::v1::DexSettings;
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{Coin, Uint128};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -16,6 +16,19 @@ pub struct InstantiateMsg {
     pub uri_hash: Option<String>,
     pub extension_settings: Option<ExtensionIssueSettings>,
     pub dex_settings: Option<DexSettings>,
+}
+
+#[cw_serde]
+pub struct ExtensionIssueSettings {
+    pub code_id: u64,
+    pub label: String,
+    pub funds: Vec<Coin>,
+    pub issuance_msg: IssuanceMsg,
+}
+
+#[cw_serde]
+pub struct IssuanceMsg {
+    pub extra_data: String,
 }
 
 #[cw_serde]
