@@ -118,8 +118,7 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/coreum.asset.nft.v1.MsgRemoveFromClassWhitelist`                     | 3500                           |
 | `/coreum.asset.nft.v1.MsgRemoveFromWhitelist`                          | 3500                           |
 | `/coreum.asset.nft.v1.MsgUnfreeze`                                     | 5000                           |
-| `/coreum.dex.v1.MsgCancelOrder`                                        | 15000                          |
-| `/coreum.dex.v1.MsgPlaceOrder`                                         | 120000                         |
+| `/coreum.dex.v1.MsgCancelOrder`                                        | 35000                          |
 | `/cosmos.authz.v1beta1.MsgRevoke`                                      | 8000                           |
 | `/cosmos.distribution.v1beta1.MsgDepositValidatorRewardsPool`          | 39000                          |
 | `/cosmos.distribution.v1beta1.MsgFundCommunityPool`                    | 17000                          |
@@ -207,7 +206,7 @@ and the formula for them is
 `DeterministicGasForMsg = DEXUpdateWhitelistedDenomBaseGas + DEXWhitelistedPerDenomGas * NumberOfDenom`
 
 `DEXWhitelistedPerDenomGas` is currently equal to `10000`.
-`DEXUpdateWhitelistedDenomBaseGas` is currently equal to `50000`.
+`DEXUpdateWhitelistedDenomBaseGas` is currently equal to `10000`.
 
 ### Nondeterministic messages
 
@@ -217,6 +216,7 @@ and the formula for them is
 | `/coreum.asset.nft.v1.MsgUpdateParams`                                 |
 | `/coreum.customparams.v1.MsgUpdateStakingParams`                       |
 | `/coreum.dex.v1.MsgCancelOrdersByDenom`                                |
+| `/coreum.dex.v1.MsgPlaceOrder`                                         |
 | `/coreum.dex.v1.MsgUpdateParams`                                       |
 | `/coreum.feemodel.v1.MsgUpdateParams`                                  |
 | `/cosmos.auth.v1beta1.MsgUpdateParams`                                 |

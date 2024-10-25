@@ -45,18 +45,12 @@ func TestLimitOrdersMatching(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -74,15 +68,13 @@ func TestLimitOrdersMatching(t *testing.T) {
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
-	txResult, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
-	// validate the deterministic gas
-	requireT.Equal(chain.GasLimitByMsgs(placeSellOrderMsg), uint64(txResult.GasUsed))
 
 	sellOrderRes, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
 		Creator: placeSellOrderMsg.Sender,
@@ -121,7 +113,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
@@ -185,18 +177,12 @@ func TestMarketOrdersMatching(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -217,7 +203,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -236,7 +222,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
@@ -246,12 +232,12 @@ func TestMarketOrdersMatching(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(
-		sdk.NewCoins(
-			sdk.NewCoin(denom1, sdkmath.NewInt(999900)),
-			sdk.NewCoin(denom2, sdkmath.NewInt(10)),
-			dexParamsRes.Params.OrderReserve,
-		).String(),
-		acc1BalancesRes.Balances.String(),
+		sdkmath.NewInt(999900).String(),
+		acc1BalancesRes.Balances.AmountOf(denom1).String(),
+	)
+	requireT.Equal(
+		sdkmath.NewInt(10).String(),
+		acc1BalancesRes.Balances.AmountOf(denom2).String(),
 	)
 
 	acc2BalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
@@ -259,12 +245,12 @@ func TestMarketOrdersMatching(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(
-		sdk.NewCoins(
-			sdk.NewCoin(denom1, sdkmath.NewInt(100)),
-			sdk.NewCoin(denom2, sdkmath.NewInt(999990)),
-			dexParamsRes.Params.OrderReserve,
-		).String(),
-		acc2BalancesRes.Balances.String(),
+		sdkmath.NewInt(100).String(),
+		acc2BalancesRes.Balances.AmountOf(denom1).String(),
+	)
+	requireT.Equal(
+		sdkmath.NewInt(999990).String(),
+		acc2BalancesRes.Balances.AmountOf(denom2).String(),
 	)
 }
 
@@ -291,10 +277,9 @@ func TestOrderCancellation(t *testing.T) {
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
 			&dextypes.MsgCancelOrder{},
 		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6))
@@ -343,7 +328,7 @@ func TestOrderCancellation(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -449,10 +434,7 @@ func TestOrderTilBlockHeight(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -478,7 +460,7 @@ func TestOrderTilBlockHeight(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -522,10 +504,7 @@ func TestOrderTilBlockTime(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -551,7 +530,7 @@ func TestOrderTilBlockTime(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -623,13 +602,12 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	}
 	acc1OrderPlaceMsgs := ordersToPlaceMsgs(acc1Orders)
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: acc1OrderPlaceMsgs,
-		Amount:   dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(acc1OrderPlaceMsgs...)),
+		chain.TxFactoryAuto(),
 		acc1OrderPlaceMsgs...,
 	)
 	requireT.NoError(err)
@@ -670,13 +648,12 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	}
 	acc2OrderPlaceMsgs := ordersToPlaceMsgs(acc2Orders)
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Messages: acc2OrderPlaceMsgs,
-		Amount:   dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(len(acc2OrderPlaceMsgs))),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(len(acc2OrderPlaceMsgs))).AddRaw(100_000),
 	})
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(acc2OrderPlaceMsgs...)),
+		chain.TxFactoryAuto(),
 		acc2OrderPlaceMsgs...,
 	)
 	requireT.NoError(err)
@@ -795,19 +772,12 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
@@ -866,7 +836,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
@@ -916,7 +886,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -968,7 +938,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1014,19 +984,12 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
@@ -1084,7 +1047,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
@@ -1133,7 +1096,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1184,7 +1147,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1231,11 +1194,9 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
 		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-			&dextypes.MsgPlaceOrder{},
 			&dextypes.MsgCancelOrder{},
 		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_clawback)
@@ -1294,7 +1255,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.ErrorContains(err, cosmoserrors.ErrInsufficientFunds.Error())
@@ -1346,7 +1307,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1441,15 +1402,14 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 
-	delegateAmount := sdkmath.NewInt(1000)
+	delegateAmount := sdkmath.NewInt(1_000_000)
 
 	acc := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
-			&dextypes.MsgPlaceOrder{},
 		},
-		Amount: delegateAmount.Add(dexParamsRes.Params.OrderReserve.Amount),
+		Amount: delegateAmount.Add(dexParamsRes.Params.OrderReserve.Amount).Add(sdkmath.NewInt(100_000)),
 	})
 
 	denomToStake := chain.ChainSettings.Denom
@@ -1497,22 +1457,19 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
 
 	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{}, // fund one more time since we paid for the failed message
-		},
-		Amount: delegateAmount,
+		Amount: delegateAmount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1522,9 +1479,8 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 		Denom:   denomToStake,
 	})
 	requireT.NoError(err)
-	requireT.Equal(
-		delegateAmount.Add(dexParamsRes.Params.OrderReserve.Amount).String(),
-		balanceRes.Balance.String(),
+	requireT.True(
+		delegateAmount.Add(dexParamsRes.Params.OrderReserve.Amount).LTE(balanceRes.Balance),
 	)
 	requireT.Equal(
 		delegateAmount.Add(dexParamsRes.Params.OrderReserve.Amount).String(),
@@ -1547,18 +1503,12 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
@@ -1608,7 +1558,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1658,7 +1608,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1702,18 +1652,12 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
@@ -1763,7 +1707,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1813,7 +1757,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1891,8 +1835,7 @@ func TestCancelOrdersByDenom(t *testing.T) {
 		}
 	})
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: placeMsgs,
-		Amount:   dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(len(placeMsgs))),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(len(placeMsgs))).AddRaw(100_000 * int64(ordersCount)),
 	})
 
 	// send required tokens to acc1
