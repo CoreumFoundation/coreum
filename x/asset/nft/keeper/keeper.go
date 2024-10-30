@@ -3,12 +3,14 @@ package keeper
 import (
 	"bytes"
 
+	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/nft"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -16,40 +18,40 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/store"
+	pkgstore "github.com/CoreumFoundation/coreum/v5/pkg/store"
 	"github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
 )
 
 // Keeper is the asset module non-fungible token nftKeeper.
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   storetypes.StoreKey
-	nftKeeper  types.NFTKeeper
-	bankKeeper types.BankKeeper
-	authority  string
+	cdc          codec.BinaryCodec
+	storeService sdkstore.KVStoreService
+	nftKeeper    types.NFTKeeper
+	bankKeeper   types.BankKeeper
+	authority    string
 }
 
 // NewKeeper creates a new instance of the Keeper.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeService sdkstore.KVStoreService,
 	nftKeeper types.NFTKeeper,
 	bankKeeper types.BankKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		nftKeeper:  nftKeeper,
-		bankKeeper: bankKeeper,
-		authority:  authority,
+		cdc:          cdc,
+		storeService: storeService,
+		nftKeeper:    nftKeeper,
+		bankKeeper:   bankKeeper,
+		authority:    authority,
 	}
 }
 
 // GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.ParamsKey)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, _ := store.Get(types.ParamsKey)
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
@@ -57,13 +59,12 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // SetParams sets the parameters of the module.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	store.Set(types.ParamsKey, bz)
-	return nil
+	return store.Set(types.ParamsKey, bz)
 }
 
 // UpdateParams is a governance operation that sets parameters of the module.
@@ -200,7 +201,7 @@ func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.Class
 		return types.ClassDefinition{}, err
 	}
 
-	bz := ctx.KVStore(k.storeKey).Get(classKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(classKey)
 	if bz == nil {
 		return types.ClassDefinition{}, sdkerrors.Wrapf(types.ErrClassNotFound, "classID: %s", classID)
 	}
@@ -213,7 +214,8 @@ func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.Class
 // IterateAllClassDefinitions iterates over all class definitions and applies the provided callback.
 // If true is returned from the callback, iteration is halted.
 func (k Keeper) IterateAllClassDefinitions(ctx sdk.Context, cb func(types.ClassDefinition) (bool, error)) error {
-	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassKeyPrefix).Iterator(nil, nil)
+	store := k.storeService.OpenKVStore(ctx)
+	iterator := storetypes.KVStorePrefixIterator(runtime.KVStoreAdapter(store), types.NFTClassKeyPrefix)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -235,6 +237,7 @@ func (k Keeper) IterateAllClassDefinitions(ctx sdk.Context, cb func(types.ClassD
 func (k Keeper) GetClassDefinitions(
 	ctx sdk.Context, issuer *sdk.AccAddress, pagination *query.PageRequest,
 ) ([]types.ClassDefinition, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	fetchingKey := types.NFTClassKeyPrefix
 	if issuer != nil {
 		var err error
@@ -245,7 +248,7 @@ func (k Keeper) GetClassDefinitions(
 	}
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
-		prefix.NewStore(ctx.KVStore(k.storeKey), fetchingKey),
+		prefix.NewStore(runtime.KVStoreAdapter(store), fetchingKey),
 		pagination,
 		// builder
 		func(key []byte, definition *types.ClassDefinition) (*types.ClassDefinition, error) {
@@ -275,9 +278,7 @@ func (k Keeper) SetClassDefinition(ctx sdk.Context, definition types.ClassDefini
 		return err
 	}
 
-	ctx.KVStore(k.storeKey).Set(classKey, k.cdc.MustMarshal(&definition))
-
-	return nil
+	return k.storeService.OpenKVStore(ctx).Set(classKey, k.cdc.MustMarshal(&definition))
 }
 
 // Mint mints new non-fungible token.
@@ -495,20 +496,22 @@ func (k Keeper) IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error) {
 		return false, err
 	}
 
-	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), types.StoreTrue), nil
+	isBurnt, _ := k.storeService.OpenKVStore(ctx).Get(key)
+	return bytes.Equal(isBurnt, types.StoreTrue), nil
 }
 
 // GetBurntByClass return the list of burnt NFTs in class.
 func (k Keeper) GetBurntByClass(
 	ctx sdk.Context, classID string, q *query.PageRequest,
 ) (*query.PageResponse, []string, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	key, err := types.CreateClassBurningKey(classID)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	nfts := []string{}
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key), q,
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), key), q,
 		func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -549,8 +552,7 @@ func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
 	if err != nil {
 		return err
 	}
-	ctx.KVStore(k.storeKey).Set(key, types.StoreTrue)
-	return nil
+	return k.storeService.OpenKVStore(ctx).Set(key, types.StoreTrue)
 }
 
 // GetBurntNFTs return paginated burnt NFTs.
@@ -559,9 +561,10 @@ func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
 func (k Keeper) GetBurntNFTs(
 	ctx sdk.Context, q *query.PageRequest,
 ) ([]types.BurntNFT, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	burnt := make([]types.BurntNFT, 0)
 	classIDToBurntNFTIdx := make(map[string]int)
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix),
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), types.NFTBurningKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -613,13 +616,11 @@ func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) e
 	if err != nil {
 		return err
 	}
-	s := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	if frozen {
-		s.Set(key, types.StoreTrue)
-	} else {
-		s.Delete(key)
+		return store.Set(key, types.StoreTrue)
 	}
-	return nil
+	return store.Delete(key)
 }
 
 // ClassFreeze freezes a non-fungible token.
@@ -639,17 +640,16 @@ func (k Keeper) SetClassFrozen(ctx sdk.Context, classID string, account sdk.AccA
 	if err != nil {
 		return err
 	}
-	s := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	if frozen {
-		s.Set(key, types.StoreTrue)
-	} else {
-		s.Delete(key)
+		return store.Set(key, types.StoreTrue)
 	}
-	return nil
+	return store.Delete(key)
 }
 
 // IsFrozen return whether a non-fungible token is frozen or not.
 func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
 		return false, err
@@ -668,7 +668,8 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 		return false, err
 	}
 
-	if bytes.Equal(ctx.KVStore(k.storeKey).Get(key), types.StoreTrue) {
+	val, _ := store.Get(key)
+	if bytes.Equal(val, types.StoreTrue) {
 		return true, nil
 	}
 
@@ -678,7 +679,8 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 		return false, err
 	}
 
-	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), types.StoreTrue), nil
+	val, _ = store.Get(key)
+	return bytes.Equal(val, types.StoreTrue), nil
 }
 
 // IsClassFrozen return whether an account is frozen for an NFT class  .
@@ -701,16 +703,18 @@ func (k Keeper) IsClassFrozen(ctx sdk.Context, classID string, account sdk.AccAd
 		return false, err
 	}
 
-	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), types.StoreTrue), nil
+	val, _ := k.storeService.OpenKVStore(ctx).Get(key)
+	return bytes.Equal(val, types.StoreTrue), nil
 }
 
 // GetFrozenNFTs return paginated frozen NFTs.
 //
 //nolint:dupl
 func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.FrozenNFT, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	frozen := make([]types.FrozenNFT, 0)
 	classIDToFrozenNFTIdx := make(map[string]int)
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix),
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), types.NFTFreezingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -751,9 +755,10 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.Fr
 func (k Keeper) GetAllClassFrozenAccounts(
 	ctx sdk.Context, q *query.PageRequest,
 ) ([]types.ClassFrozenAccounts, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	frozen := make([]types.ClassFrozenAccounts, 0)
 	classIDToFrozenIdx := make(map[string]int)
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassFreezingKeyPrefix),
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), types.NFTClassFreezingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -795,13 +800,14 @@ func (k Keeper) GetAllClassFrozenAccounts(
 func (k Keeper) GetClassFrozenAccounts(
 	ctx sdk.Context, classID string, q *query.PageRequest,
 ) ([]string, *query.PageResponse, error) {
-	compositeKey, err := store.JoinKeysWithLength([]byte(classID))
+	store := k.storeService.OpenKVStore(ctx)
+	compositeKey, err := pkgstore.JoinKeysWithLength([]byte(classID))
 	if err != nil {
 		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidKey, "failed to create a composite key for nft, err: %s", err)
 	}
-	key := store.JoinKeys(types.NFTClassFreezingKeyPrefix, compositeKey)
+	key := pkgstore.JoinKeys(types.NFTClassFreezingKeyPrefix, compositeKey)
 	accounts := []string{}
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key),
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), key),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -879,7 +885,8 @@ func (k Keeper) isClassWhitelisted(ctx sdk.Context, classID string, account sdk.
 		return false, err
 	}
 
-	return bytes.Equal(ctx.KVStore(k.storeKey).Get(classKey), types.StoreTrue), nil
+	val, _ := k.storeService.OpenKVStore(ctx).Get(classKey)
+	return bytes.Equal(val, types.StoreTrue), nil
 }
 
 func (k Keeper) isTokenWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error) {
@@ -892,13 +899,15 @@ func (k Keeper) isTokenWhitelisted(ctx sdk.Context, classID, nftID string, accou
 		return false, err
 	}
 
-	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), types.StoreTrue), nil
+	val, _ := k.storeService.OpenKVStore(ctx).Get(key)
+	return bytes.Equal(val, types.StoreTrue), nil
 }
 
 // GetWhitelistedAccountsForNFT returns all whitelisted accounts for all NFTs.
 func (k Keeper) GetWhitelistedAccountsForNFT(
 	ctx sdk.Context, classID, nftID string, q *query.PageRequest,
 ) ([]string, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
 		return nil, nil, sdkerrors.Wrapf(
 			types.ErrNFTNotFound,
@@ -908,7 +917,7 @@ func (k Keeper) GetWhitelistedAccountsForNFT(
 		)
 	}
 
-	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
+	compositeKey, err := pkgstore.JoinKeysWithLength([]byte(classID), []byte(nftID))
 	if err != nil {
 		return nil, nil, sdkerrors.Wrapf(
 			types.ErrInvalidKey,
@@ -916,9 +925,9 @@ func (k Keeper) GetWhitelistedAccountsForNFT(
 			err,
 		)
 	}
-	key := store.JoinKeys(types.NFTWhitelistingKeyPrefix, compositeKey)
+	key := pkgstore.JoinKeys(types.NFTWhitelistingKeyPrefix, compositeKey)
 	accounts := []string{}
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key),
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), key),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -944,13 +953,14 @@ func (k Keeper) GetWhitelistedAccountsForNFT(
 func (k Keeper) GetWhitelistedAccounts(
 	ctx sdk.Context, q *query.PageRequest,
 ) ([]types.WhitelistedNFTAccounts, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	type nftUniqueID struct {
 		classID string
 		nftID   string
 	}
 	whitelisted := make([]types.WhitelistedNFTAccounts, 0)
 	nftUniqueIDToWhitelistIdx := make(map[nftUniqueID]int)
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTWhitelistingKeyPrefix),
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), types.NFTWhitelistingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -1000,9 +1010,10 @@ func (k Keeper) GetWhitelistedAccounts(
 func (k Keeper) GetAllClassWhitelistedAccounts(
 	ctx sdk.Context, q *query.PageRequest,
 ) ([]types.ClassWhitelistedAccounts, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	whitelisted := make([]types.ClassWhitelistedAccounts, 0)
 	classIDToWhitelistedIdx := make(map[string]int)
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassWhitelistingKeyPrefix),
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), types.NFTClassWhitelistingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -1044,15 +1055,16 @@ func (k Keeper) GetAllClassWhitelistedAccounts(
 func (k Keeper) GetClassWhitelistedAccounts(
 	ctx sdk.Context, classID string, q *query.PageRequest,
 ) ([]string, *query.PageResponse, error) {
-	compositeKey, err := store.JoinKeysWithLength([]byte(classID))
+	store := k.storeService.OpenKVStore(ctx)
+	compositeKey, err := pkgstore.JoinKeysWithLength([]byte(classID))
 	if err != nil {
 		return nil, nil, sdkerrors.Wrapf(
 			types.ErrInvalidKey, "failed to create a composite key for nft, err: %s", err,
 		)
 	}
-	key := store.JoinKeys(types.NFTClassWhitelistingKeyPrefix, compositeKey)
+	key := pkgstore.JoinKeys(types.NFTClassWhitelistingKeyPrefix, compositeKey)
 	accounts := []string{}
-	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key),
+	pageRes, err := query.Paginate(prefix.NewStore(runtime.KVStoreAdapter(store), key),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, types.StoreTrue) {
 				return sdkerrors.Wrapf(
@@ -1103,13 +1115,11 @@ func (k Keeper) SetWhitelisting(
 	if err != nil {
 		return err
 	}
-	s := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	if whitelisting {
-		s.Set(key, types.StoreTrue)
-	} else {
-		s.Delete(key)
+		return store.Set(key, types.StoreTrue)
 	}
-	return nil
+	return store.Delete(key)
 }
 
 // SetClassWhitelisting adds an account to the whitelisting of the Class, if whitelisting is true
@@ -1121,13 +1131,11 @@ func (k Keeper) SetClassWhitelisting(
 	if err != nil {
 		return err
 	}
-	s := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	if whitelisting {
-		s.Set(key, types.StoreTrue)
-	} else {
-		s.Delete(key)
+		return store.Set(key, types.StoreTrue)
 	}
-	return nil
+	return store.Delete(key)
 }
 
 func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {

@@ -41,11 +41,11 @@ type Keeper interface {
 	SetParams(ctx sdk.Context, params types.Params) error
 	GetParams(ctx sdk.Context) types.Params
 	GetShortEMAGas(ctx sdk.Context) int64
-	SetShortEMAGas(ctx sdk.Context, emaGas int64)
+	SetShortEMAGas(ctx sdk.Context, emaGas int64) error
 	GetLongEMAGas(ctx sdk.Context) int64
-	SetLongEMAGas(ctx sdk.Context, emaGas int64)
+	SetLongEMAGas(ctx sdk.Context, emaGas int64) error
 	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
-	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin)
+	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) error
 	CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error)
 	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
@@ -144,7 +144,9 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 	if err := am.keeper.SetParams(ctx, genesis.Params); err != nil {
 		panic(err)
 	}
-	am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice)
+	if err := am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the fee
@@ -181,9 +183,18 @@ func (am AppModule) EndBlock(c context.Context) error {
 
 	newMinGasPrice := model.CalculateNextGasPrice(newShortEMA, newLongEMA)
 
-	am.keeper.SetShortEMAGas(ctx, newShortEMA)
-	am.keeper.SetLongEMAGas(ctx, newLongEMA)
-	am.keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec(previousMinGasPrice.Denom, newMinGasPrice))
+	if err := am.keeper.SetShortEMAGas(ctx, newShortEMA); err != nil {
+		return err
+	}
+	if err := am.keeper.SetLongEMAGas(ctx, newLongEMA); err != nil {
+		return err
+	}
+	if err := am.keeper.SetMinGasPrice(
+		ctx,
+		sdk.NewDecCoinFromDec(previousMinGasPrice.Denom, newMinGasPrice),
+	); err != nil {
+		return err
+	}
 	metrics.SetGauge([]string{"min_gas_price"}, float32(newMinGasPrice.MustFloat64()))
 
 	return nil

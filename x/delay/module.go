@@ -124,6 +124,7 @@ func (AppModule) ConsensusVersion() uint64 { return 1 }
 // BeginBlock executes delayed items.
 func (am AppModule) BeginBlock(c context.Context) error {
 	ctx := sdk.UnwrapSDKContext(c)
+	//nolint:contextcheck // we consider this correct context passing.
 	return am.keeper.ExecuteAllItems(ctx)
 }
 

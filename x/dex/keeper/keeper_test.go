@@ -548,15 +548,15 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			sdkCtx := testApp.BaseApp.NewContext(false)
 
 			if tt.baseDenomRefAmount != nil {
-				testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
+				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
 					UnifiedRefAmount: tt.baseDenomRefAmount,
-				})
+				}))
 			}
 
 			if tt.quoteDenomRefAmount != nil {
-				testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
+				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
 					UnifiedRefAmount: tt.quoteDenomRefAmount,
-				})
+				}))
 			}
 
 			acc, _ := testApp.GenAccount(sdkCtx)

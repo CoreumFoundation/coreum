@@ -197,7 +197,7 @@ func TestBankMetadataExistInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	definition.Denom = "invalid"
-	ftKeeper.SetDefinition(ctx, settings1.Issuer, settings1.Subunit, definition)
+	requireT.NoError(ftKeeper.SetDefinition(ctx, settings1.Issuer, settings1.Subunit, definition))
 
 	// check that state is broken now
 	_, isBroken = keeper.BankMetadataExistInvariant(ftKeeper)(ctx)
