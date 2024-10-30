@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/core/store"
+	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
@@ -30,7 +30,7 @@ type BaseKeeperWrapper struct {
 // NewKeeper returns a new BaseKeeperWrapper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeService store.KVStoreService,
+	storeService sdkstore.KVStoreService,
 	ak banktypes.AccountKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
 	blockedAddrs map[string]bool,

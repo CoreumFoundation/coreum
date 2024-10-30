@@ -41,20 +41,25 @@ func (k *keeperMock) GetShortEMAGas(ctx sdk.Context) int64 {
 	return 0
 }
 
-func (k *keeperMock) SetShortEMAGas(ctx sdk.Context, emaGas int64) {}
+func (k *keeperMock) SetShortEMAGas(ctx sdk.Context, emaGas int64) error {
+	return nil
+}
 
 func (k *keeperMock) GetLongEMAGas(ctx sdk.Context) int64 {
 	return 0
 }
 
-func (k *keeperMock) SetLongEMAGas(ctx sdk.Context, emaGas int64) {}
+func (k *keeperMock) SetLongEMAGas(ctx sdk.Context, emaGas int64) error {
+	return nil
+}
 
 func (k *keeperMock) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
 	return k.state.MinGasPrice
 }
 
-func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
+func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) error {
 	k.state.MinGasPrice = minGasPrice
+	return nil
 }
 
 func (k *keeperMock) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {

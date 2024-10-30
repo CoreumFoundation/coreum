@@ -10,6 +10,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +33,11 @@ func setup() (sdk.Context, keeper.Keeper) {
 	must.OK(cms.LoadLatestVersion())
 	ctx := sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())
 	encodingConfig := config.NewEncodingConfig(feemodel.AppModuleBasic{})
-	return ctx, keeper.NewKeeper(key, tKey, encodingConfig.Codec, "")
+	return ctx, keeper.NewKeeper(
+		runtime.NewKVStoreService(key),
+		runtime.NewTransientStoreService(tKey),
+		encodingConfig.Codec, "",
+	)
 }
 
 func TestTrackGas(t *testing.T) {
@@ -40,10 +45,10 @@ func TestTrackGas(t *testing.T) {
 
 	assert.EqualValues(t, 0, keeper.TrackedGas(ctx))
 
-	keeper.TrackGas(ctx, 10)
+	require.NoError(t, keeper.TrackGas(ctx, 10))
 	assert.EqualValues(t, 10, keeper.TrackedGas(ctx))
 
-	keeper.TrackGas(ctx, 5)
+	require.NoError(t, keeper.TrackGas(ctx, 5))
 	assert.EqualValues(t, 15, keeper.TrackedGas(ctx))
 }
 
@@ -52,7 +57,7 @@ func TestShortEMAGas(t *testing.T) {
 
 	assert.EqualValues(t, 0, keeper.GetShortEMAGas(ctx))
 
-	keeper.SetShortEMAGas(ctx, 10)
+	require.NoError(t, keeper.SetShortEMAGas(ctx, 10))
 	assert.EqualValues(t, 10, keeper.GetShortEMAGas(ctx))
 }
 
@@ -61,19 +66,19 @@ func TestLongEMAGas(t *testing.T) {
 
 	assert.EqualValues(t, 0, keeper.GetLongEMAGas(ctx))
 
-	keeper.SetLongEMAGas(ctx, 10)
+	require.NoError(t, keeper.SetLongEMAGas(ctx, 10))
 	assert.EqualValues(t, 10, keeper.GetLongEMAGas(ctx))
 }
 
 func TestMinGasPrice(t *testing.T) {
 	ctx, keeper := setup()
 
-	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(10)))
+	require.NoError(t, keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(10))))
 	minGasPrice := keeper.GetMinGasPrice(ctx)
 	assert.Equal(t, "10.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)
 
-	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(20)))
+	require.NoError(t, keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(20))))
 	minGasPrice = keeper.GetMinGasPrice(ctx)
 	assert.EqualValues(t, "20.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)
@@ -286,9 +291,12 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec("coin", sdkmath.LegacyMustNewDecFromStr("0.0625")))
-			keeper.SetShortEMAGas(ctx, tc.shortEMA)
-			keeper.SetLongEMAGas(ctx, tc.longEMA)
+			require.NoError(t, keeper.SetMinGasPrice(
+				ctx,
+				sdk.NewDecCoinFromDec("coin", sdkmath.LegacyMustNewDecFromStr("0.0625")),
+			))
+			require.NoError(t, keeper.SetShortEMAGas(ctx, tc.shortEMA))
+			require.NoError(t, keeper.SetLongEMAGas(ctx, tc.longEMA))
 			low, high, err := keeper.CalculateEdgeGasPriceAfterBlocks(ctx, tc.afterBlocks)
 			require.NoError(t, err)
 			tc.assertions(t, low, high)

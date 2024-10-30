@@ -1,9 +1,9 @@
 package keeper
 
 import (
+	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -14,33 +14,33 @@ import (
 
 // Keeper is a fee model keeper.
 type Keeper struct {
-	storeKey          storetypes.StoreKey
-	transientStoreKey storetypes.StoreKey
-	cdc               codec.BinaryCodec
-	authority         string
+	storeService          sdkstore.KVStoreService
+	transientStoreService sdkstore.TransientStoreService
+	cdc                   codec.BinaryCodec
+	authority             string
 }
 
 // NewKeeper returns a new keeper object providing storage options required by fee model.
 func NewKeeper(
-	storeKey storetypes.StoreKey,
-	transientStoreKey storetypes.StoreKey,
+	storeService sdkstore.KVStoreService,
+	transientStoreService sdkstore.TransientStoreService,
 	cdc codec.BinaryCodec,
 	authority string,
 ) Keeper {
 	return Keeper{
-		storeKey:          storeKey,
-		transientStoreKey: transientStoreKey,
-		cdc:               cdc,
-		authority:         authority,
+		storeService:          storeService,
+		transientStoreService: transientStoreService,
+		cdc:                   cdc,
+		authority:             authority,
 	}
 }
 
 // TrackedGas returns gas limits declared by transactions executed so far in current block.
 func (k Keeper) TrackedGas(ctx sdk.Context) int64 {
-	tStore := ctx.TransientStore(k.transientStoreKey)
+	tStore := k.transientStoreService.OpenTransientStore(ctx)
 
 	gasUsed := sdkmath.NewInt(0)
-	bz := tStore.Get(gasTrackingKey)
+	bz, _ := tStore.Get(gasTrackingKey)
 
 	if bz != nil {
 		if err := gasUsed.Unmarshal(bz); err != nil {
@@ -52,30 +52,29 @@ func (k Keeper) TrackedGas(ctx sdk.Context) int64 {
 }
 
 // TrackGas increments gas tracked for current block.
-func (k Keeper) TrackGas(ctx sdk.Context, gas int64) {
-	tStore := ctx.TransientStore(k.transientStoreKey)
+func (k Keeper) TrackGas(ctx sdk.Context, gas int64) error {
+	tStore := k.transientStoreService.OpenTransientStore(ctx)
 	bz, err := sdkmath.NewInt(k.TrackedGas(ctx) + gas).Marshal()
 	if err != nil {
 		panic(err)
 	}
-	tStore.Set(gasTrackingKey, bz)
+	return tStore.Set(gasTrackingKey, bz)
 }
 
 // SetParams sets the parameters of the module.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	store.Set(paramsKey, bz)
-	return nil
+	return store.Set(paramsKey, bz)
 }
 
 // GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(paramsKey)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, _ := store.Get(paramsKey)
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
@@ -93,8 +92,8 @@ func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Par
 // GetShortEMAGas retrieves average gas used by previous blocks, used as a representation of
 // smoothed gas used by latest block.
 func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(shortEMAGasKey)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, _ := store.Get(shortEMAGasKey)
 
 	if bz == nil {
 		return 0
@@ -109,22 +108,22 @@ func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
 
 // SetShortEMAGas sets average gas used by previous blocks, used as a representation of smoothed gas
 // used by latest block.
-func (k Keeper) SetShortEMAGas(ctx sdk.Context, emaGas int64) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) SetShortEMAGas(ctx sdk.Context, emaGas int64) error {
+	store := k.storeService.OpenKVStore(ctx)
 
 	bz, err := sdkmath.NewInt(emaGas).Marshal()
 	if err != nil {
 		panic(err)
 	}
 
-	store.Set(shortEMAGasKey, bz)
+	return store.Set(shortEMAGasKey, bz)
 }
 
 // GetLongEMAGas retrieves long average gas used by previous blocks, used for determining average block
 // load where maximum discount is applied.
 func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(longEMAGasKey)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, _ := store.Get(longEMAGasKey)
 
 	if bz == nil {
 		return 0
@@ -139,21 +138,21 @@ func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
 
 // SetLongEMAGas sets long average gas used by previous blocks, used for determining average block load where
 // maximum discount is applied.
-func (k Keeper) SetLongEMAGas(ctx sdk.Context, emaGas int64) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) SetLongEMAGas(ctx sdk.Context, emaGas int64) error {
+	store := k.storeService.OpenKVStore(ctx)
 
 	bz, err := sdkmath.NewInt(emaGas).Marshal()
 	if err != nil {
 		panic(err)
 	}
 
-	store.Set(longEMAGasKey, bz)
+	return store.Set(longEMAGasKey, bz)
 }
 
 // GetMinGasPrice returns current minimum gas price required by the network.
 func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(gasPriceKey)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, _ := store.Get(gasPriceKey)
 	if bz == nil {
 		// This is really a panic condition because it means that genesis initialization was not done correctly
 		panic("min gas price not set")
@@ -166,13 +165,13 @@ func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
 }
 
 // SetMinGasPrice sets minimum gas price required by the network on current block.
-func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) error {
+	store := k.storeService.OpenKVStore(ctx)
 	bz, err := minGasPrice.Marshal()
 	if err != nil {
 		panic(err)
 	}
-	store.Set(gasPriceKey, bz)
+	return store.Set(gasPriceKey, bz)
 }
 
 // CalculateEdgeGasPriceAfterBlocks returns the smallest and highest possible values for min gas price in future blocks.

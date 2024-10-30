@@ -11,7 +11,7 @@ import (
 
 // Keeper interface exposes methods required by ante handler decorator of fee model.
 type Keeper interface {
-	TrackGas(ctx sdk.Context, gas int64)
+	TrackGas(ctx sdk.Context, gas int64) error
 	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
 }
 
@@ -47,7 +47,9 @@ func (fd FeeDecorator) AnteHandle(
 		return ctx, err
 	}
 
-	fd.collectFeeModelInput(ctx, feeTx)
+	if err := fd.collectFeeModelInput(ctx, feeTx); err != nil {
+		return ctx, err
+	}
 
 	return next(ctx, tx, simulate)
 }
@@ -77,6 +79,6 @@ func (fd FeeDecorator) actOnFeeModelOutput(ctx sdk.Context, feeTx sdk.FeeTx) err
 	return nil
 }
 
-func (fd FeeDecorator) collectFeeModelInput(ctx sdk.Context, feeTx sdk.FeeTx) {
-	fd.keeper.TrackGas(ctx, int64(feeTx.GetGas()))
+func (fd FeeDecorator) collectFeeModelInput(ctx sdk.Context, feeTx sdk.FeeTx) error {
+	return fd.keeper.TrackGas(ctx, int64(feeTx.GetGas()))
 }

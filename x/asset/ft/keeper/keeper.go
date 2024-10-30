@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
+	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
@@ -11,6 +12,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -36,7 +38,7 @@ type ExtensionInstantiateMsg struct {
 // Keeper is the asset module keeper.
 type Keeper struct {
 	cdc                    codec.BinaryCodec
-	storeKey               storetypes.StoreKey
+	storeService           sdkstore.KVStoreService
 	bankKeeper             types.BankKeeper
 	delayKeeper            types.DelayKeeper
 	wasmKeeper             cwasmtypes.WasmKeeper
@@ -48,7 +50,7 @@ type Keeper struct {
 // NewKeeper creates a new instance of the Keeper.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeService sdkstore.KVStoreService,
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
@@ -58,7 +60,7 @@ func NewKeeper(
 ) Keeper {
 	return Keeper{
 		cdc:                    cdc,
-		storeKey:               storeKey,
+		storeService:           storeService,
 		bankKeeper:             bankKeeper,
 		delayKeeper:            delayKeeper,
 		wasmKeeper:             wasmKeeper,
@@ -70,8 +72,8 @@ func NewKeeper(
 
 // GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.ParamsKey)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, _ := store.Get(types.ParamsKey)
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
@@ -79,13 +81,12 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // SetParams sets the parameters of the module.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	store.Set(types.ParamsKey, bz)
-	return nil
+	return store.Set(types.ParamsKey, bz)
 }
 
 // UpdateParams is a governance operation that sets parameters of the module.
@@ -134,7 +135,8 @@ func (k Keeper) GetIssuerTokens(
 // IterateAllDefinitions iterates over all token definitions and applies the provided callback.
 // If true is returned from the callback, iteration is halted.
 func (k Keeper) IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition) (bool, error)) error {
-	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix).Iterator(nil, nil)
+	store := k.storeService.OpenKVStore(ctx)
+	iterator := storetypes.KVStorePrefixIterator(runtime.KVStoreAdapter(store), types.TokenKeyPrefix)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -154,11 +156,15 @@ func (k Keeper) IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition)
 
 // GetDefinition returns the Definition by the denom.
 func (k Keeper) GetDefinition(ctx sdk.Context, denom string) (types.Definition, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	subunit, issuer, err := types.DeconstructDenom(denom)
 	if err != nil {
 		return types.Definition{}, err
 	}
-	bz := ctx.KVStore(k.storeKey).Get(types.CreateTokenKey(issuer, subunit))
+	bz, err := store.Get(types.CreateTokenKey(issuer, subunit))
+	if err != nil {
+		return types.Definition{}, err
+	}
 	if bz == nil {
 		return types.Definition{}, sdkerrors.Wrapf(types.ErrTokenNotFound, "denom: %s", denom)
 	}
@@ -296,7 +302,9 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", err
 	}
 
-	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
+	if err := k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition); err != nil {
+		return "", err
+	}
 
 	if settings.DEXSettings != nil {
 		if err := types.ValidateDEXSettings(*settings.DEXSettings); err != nil {
@@ -307,7 +315,9 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 			return "", err
 		}
 
-		k.SetDEXSettings(ctx, denom, *settings.DEXSettings)
+		if err := k.SetDEXSettings(ctx, denom, *settings.DEXSettings); err != nil {
+			return "", err
+		}
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventIssued{
@@ -340,18 +350,21 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 
 // SetSymbol saves the symbol to store.
 func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
+	store := k.storeService.OpenKVStore(ctx)
 	symbol = types.NormalizeSymbolForKey(symbol)
 	if k.isSymbolDuplicated(ctx, symbol, issuer) {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
 
-	ctx.KVStore(k.storeKey).Set(types.CreateSymbolKey(issuer, symbol), types.StoreTrue)
-	return nil
+	return store.Set(types.CreateSymbolKey(issuer, symbol), types.StoreTrue)
 }
 
 // SetDefinition stores the Definition.
-func (k Keeper) SetDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition) {
-	ctx.KVStore(k.storeKey).Set(types.CreateTokenKey(issuer, subunit), k.cdc.MustMarshal(&definition))
+func (k Keeper) SetDefinition(
+	ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition,
+) error {
+	store := k.storeService.OpenKVStore(ctx)
+	return store.Set(types.CreateTokenKey(issuer, subunit), k.cdc.MustMarshal(&definition))
 }
 
 // SetDenomMetadata registers denom metadata on the bank keeper.
@@ -532,8 +545,7 @@ func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom str
 		return err
 	}
 
-	k.SetGlobalFreeze(ctx, denom, true)
-	return nil
+	return k.SetGlobalFreeze(ctx, denom, true)
 }
 
 // GloballyUnfreeze disables global freeze on a fungible token. This function is idempotent.
@@ -547,8 +559,7 @@ func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom s
 		return err
 	}
 
-	k.SetGlobalFreeze(ctx, denom, false)
-	return nil
+	return k.SetGlobalFreeze(ctx, denom, false)
 }
 
 // GetAccountsFrozenBalances returns the frozen balance on all the account.
@@ -593,12 +604,12 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 }
 
 // SetGlobalFreeze enables/disables global freeze on a fungible token depending on frozen arg.
-func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
+func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) error {
+	store := k.storeService.OpenKVStore(ctx)
 	if frozen {
-		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezeKey(denom), types.StoreTrue)
-		return
+		return store.Set(types.CreateGlobalFreezeKey(denom), types.StoreTrue)
 	}
-	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezeKey(denom))
+	return store.Delete(types.CreateGlobalFreezeKey(denom))
 }
 
 // Clawback confiscates specified token from the specified account.
@@ -666,15 +677,17 @@ func (k Keeper) GetAccountsWhitelistedBalances(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.Balance, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	return collectBalances(
-		k.cdc, prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix), pagination)
+		k.cdc, prefix.NewStore(runtime.KVStoreAdapter(store), types.WhitelistedBalancesKeyPrefix), pagination)
 }
 
 // IterateAccountsWhitelistedBalances iterates over all whitelisted balances of all accounts
 // and applies the provided callback.
 // If true is returned from the callback, iteration is halted.
 func (k Keeper) IterateAccountsWhitelistedBalances(ctx sdk.Context, cb func(sdk.AccAddress, sdk.Coin) bool) error {
-	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix).IterateAllBalances(cb)
+	store := k.storeService.OpenKVStore(ctx)
+	return newBalanceStore(k.cdc, runtime.KVStoreAdapter(store), types.WhitelistedBalancesKeyPrefix).IterateAllBalances(cb)
 }
 
 // GetWhitelistedBalances returns the whitelisted balance of an account.
@@ -746,7 +759,9 @@ func (k Keeper) TransferAdmin(ctx sdk.Context, sender, addr sdk.AccAddress, deno
 	}
 
 	def.Admin = addr.String()
-	k.SetDefinition(ctx, issuer, subunit, def)
+	if err := k.SetDefinition(ctx, issuer, subunit, def); err != nil {
+		return err
+	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminTransferred{
 		Denom:         denom,
@@ -784,7 +799,9 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 		def.SendCommissionRate = sdkmath.LegacyZeroDec()
 	}
 
-	k.SetDefinition(ctx, issuer, subunit, def)
+	if err := k.SetDefinition(ctx, issuer, subunit, def); err != nil {
+		return err
+	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventAdminCleared{
 		Denom:         denom,
@@ -975,8 +992,9 @@ func (k Keeper) validateCoinReceivable(
 }
 
 func (k Keeper) isSymbolDuplicated(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
+	store := k.storeService.OpenKVStore(ctx)
 	compositeKey := types.CreateSymbolKey(issuer, symbol)
-	rawBytes := ctx.KVStore(k.storeKey).Get(compositeKey)
+	rawBytes, _ := store.Get(compositeKey)
 	return rawBytes != nil
 }
 
@@ -984,7 +1002,8 @@ func (k Keeper) getDefinitions(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.Definition, *query.PageResponse, error) {
-	return k.getDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix), pagination)
+	store := k.storeService.OpenKVStore(ctx)
+	return k.getDefinitionsFromStore(prefix.NewStore(runtime.KVStoreAdapter(store), types.TokenKeyPrefix), pagination)
 }
 
 func (k Keeper) getDefinitionOrNil(ctx sdk.Context, denom string) (*types.Definition, error) {
@@ -1005,8 +1024,9 @@ func (k Keeper) getIssuerDefinitions(
 	issuer sdk.AccAddress,
 	pagination *query.PageRequest,
 ) ([]types.Definition, *query.PageResponse, error) {
+	store := k.storeService.OpenKVStore(ctx)
 	return k.getDefinitionsFromStore(
-		prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateIssuerTokensPrefix(issuer)),
+		prefix.NewStore(runtime.KVStoreAdapter(store), types.CreateIssuerTokensPrefix(issuer)),
 		pagination,
 	)
 }
@@ -1103,17 +1123,20 @@ func (k Keeper) getTokensByDefinitions(ctx sdk.Context, defs []types.Definition)
 
 // frozenBalancesStore get the store for the frozen balances of all accounts.
 func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
+	store := k.storeService.OpenKVStore(ctx)
+	return prefix.NewStore(runtime.KVStoreAdapter(store), types.FrozenBalancesKeyPrefix)
 }
 
 // frozenAccountBalanceStore gets the store for the frozen balances of an account.
 func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
-	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateFrozenBalancesKey(addr))
+	store := k.storeService.OpenKVStore(ctx)
+	return newBalanceStore(k.cdc, runtime.KVStoreAdapter(store), types.CreateFrozenBalancesKey(addr))
 }
 
 // frozenAccountBalanceStore gets the store for the frozen balances of an account.
 func (k Keeper) frozenAccountsBalanceStore(ctx sdk.Context) balanceStore {
-	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
+	store := k.storeService.OpenKVStore(ctx)
+	return newBalanceStore(k.cdc, runtime.KVStoreAdapter(store), types.FrozenBalancesKeyPrefix)
 }
 
 func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
@@ -1130,7 +1153,9 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
-	return bytes.Equal(ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom)), types.StoreTrue)
+	store := k.storeService.OpenKVStore(ctx)
+	isGloballyFrozen, _ := store.Get(types.CreateGlobalFreezeKey(denom))
+	return bytes.Equal(isGloballyFrozen, types.StoreTrue)
 }
 
 func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
@@ -1153,7 +1178,8 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 
 // whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account.
 func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
-	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateWhitelistedBalancesKey(addr))
+	store := k.storeService.OpenKVStore(ctx)
+	return newBalanceStore(k.cdc, runtime.KVStoreAdapter(store), types.CreateWhitelistedBalancesKey(addr))
 }
 
 func (k Keeper) validateWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {

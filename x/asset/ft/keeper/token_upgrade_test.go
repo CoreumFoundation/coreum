@@ -30,7 +30,7 @@ func TestOneTokenUpgradeAtATimeIsAllowed(t *testing.T) {
 	requireT.NoError(ftKeeper.SetPendingVersion(ctx, "denom2", 1))
 
 	// upgrade happened
-	ftKeeper.ClearPendingVersion(ctx, "denom")
+	requireT.NoError(ftKeeper.ClearPendingVersion(ctx, "denom"))
 
 	// but for second denom it should still fail
 	requireT.Error(ftKeeper.SetPendingVersion(ctx, "denom2", 2))
