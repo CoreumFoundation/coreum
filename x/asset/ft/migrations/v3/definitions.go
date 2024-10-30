@@ -10,7 +10,7 @@ import (
 // FTKeeper represents ft keeper.
 type FTKeeper interface {
 	IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition) (bool, error)) error
-	SetDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition)
+	SetDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition) error
 }
 
 // ParamsKeeper specifies methods of params keeper required by the migration.
@@ -28,7 +28,9 @@ func MigrateDefinitions(ctx sdk.Context, keeper FTKeeper) error {
 		}
 
 		def.Admin = def.Issuer
-		keeper.SetDefinition(ctx, issuer, subunit, def)
+		if err := keeper.SetDefinition(ctx, issuer, subunit, def); err != nil {
+			return false, err
+		}
 		return false, nil
 	})
 }

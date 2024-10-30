@@ -41,7 +41,7 @@ func TestMigrateDefinitions(t *testing.T) {
 	requireT.NoError(err)
 
 	def.Admin = ""
-	keeper.SetDefinition(ctx, issuer, settings.Subunit, def)
+	requireT.NoError(keeper.SetDefinition(ctx, issuer, settings.Subunit, def))
 
 	requireT.NoError(v3.MigrateDefinitions(ctx, keeper))
 

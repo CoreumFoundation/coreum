@@ -3,11 +3,12 @@ package keeper
 import (
 	"time"
 
+	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -18,24 +19,24 @@ import (
 
 // Keeper is delay module Keeper.
 type Keeper struct {
-	cdc      codec.BinaryCodec
-	storeKey storetypes.StoreKey
-	router   types.Router
-	registry codectypes.InterfaceRegistry
+	cdc          codec.BinaryCodec
+	storeService sdkstore.KVStoreService
+	router       types.Router
+	registry     codectypes.InterfaceRegistry
 }
 
 // NewKeeper returns a new Keeper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeService sdkstore.KVStoreService,
 	router types.Router,
 	registry codectypes.InterfaceRegistry,
 ) Keeper {
 	return Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		router:   router,
-		registry: registry,
+		cdc:          cdc,
+		storeService: storeService,
+		router:       router,
+		registry:     registry,
 	}
 }
 
@@ -66,9 +67,8 @@ func (k Keeper) RemoveExecuteAtBlock(ctx sdk.Context, id string, height uint64) 
 		return err
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(key)
-	return nil
+	store := k.storeService.OpenKVStore(ctx)
+	return store.Delete(key)
 }
 
 // RemoveExecuteAfter removes an item to be executed at after specified time.
@@ -78,9 +78,8 @@ func (k Keeper) RemoveExecuteAfter(ctx sdk.Context, id string, time time.Time) e
 		return err
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(key)
-	return nil
+	store := k.storeService.OpenKVStore(ctx)
+	return store.Delete(key)
 }
 
 // StoreDelayedExecution stores delayed execution item using absolute time.
@@ -97,8 +96,8 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Mes
 		return err
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	if store.Has(key) {
+	store := k.storeService.OpenKVStore(ctx)
+	if val, _ := store.Has(key); val {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "delayed item is already stored under the key, id: %s", id)
 	}
 
@@ -111,8 +110,7 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Mes
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidData, "marshaling delayed item failed: %s", err.Error())
 	}
-	store.Set(key, b)
-	return nil
+	return store.Set(key, b)
 }
 
 // StoreBlockExecution stores block execution item using block height.
@@ -130,8 +128,8 @@ func (k Keeper) StoreBlockExecution(ctx sdk.Context, id string, data proto.Messa
 		return err
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	if store.Has(key) {
+	store := k.storeService.OpenKVStore(ctx)
+	if val, _ := store.Has(key); val {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "block item is already stored under the key, id: %s", id)
 	}
 
@@ -144,8 +142,7 @@ func (k Keeper) StoreBlockExecution(ctx sdk.Context, id string, data proto.Messa
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidData, "marshaling block item failed: %s", err.Error())
 	}
-	store.Set(key, b)
-	return nil
+	return store.Set(key, b)
 }
 
 // ExecuteAllItems executes delayed and block items for the current block time and height.
@@ -159,7 +156,8 @@ func (k Keeper) ExecuteAllItems(ctx sdk.Context) error {
 
 // ExecuteDelayedItems executes delayed logic.
 func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelayedItemKeyPrefix)
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.DelayedItemKeyPrefix)
 
 	// messages will be returned from this iterator in the execution time ascending order
 	iter := store.Iterator(nil, nil)
@@ -207,7 +205,8 @@ func (k Keeper) ImportDelayedItems(ctx sdk.Context, items []types.DelayedItem) e
 //
 //nolint:dupl // there is not duplication the code is similar in terms of structure, but different in terms of logic
 func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelayedItemKeyPrefix)
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.DelayedItemKeyPrefix)
 	delayedItems := make([]types.DelayedItem, 0)
 	_, err := query.Paginate(store, &query.PageRequest{Limit: query.PaginationMaxLimit}, func(key, value []byte) error {
 		executionTime, id, err := types.DecodeDelayedItemKey(key)
@@ -237,7 +236,8 @@ func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error)
 
 // ExecuteBlockItems executes block logic.
 func (k Keeper) ExecuteBlockItems(ctx sdk.Context) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlockItemKeyPrefix)
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.BlockItemKeyPrefix)
 
 	// messages will be returned from this iterator in the execution time ascending order
 	iter := store.Iterator(nil, nil)
@@ -284,7 +284,8 @@ func (k Keeper) ImportBlockItems(ctx sdk.Context, items []types.BlockItem) error
 //
 //nolint:dupl // there is not duplication the code is similar in terms of structure, but different in terms of logic
 func (k Keeper) ExportBlockItems(ctx sdk.Context) ([]types.BlockItem, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlockItemKeyPrefix)
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.BlockItemKeyPrefix)
 	blockItems := make([]types.BlockItem, 0)
 	_, err := query.Paginate(store, &query.PageRequest{Limit: query.PaginationMaxLimit}, func(key, value []byte) error {
 		height, id, err := types.DecodeBlockItemKey(key)
