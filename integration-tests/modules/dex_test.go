@@ -1806,26 +1806,18 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 			&assetfttypes.MsgSetWhitelistedLimit{},
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
-			&dextypes.MsgPlaceOrder{},
 		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount,
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-			&dextypes.MsgPlaceOrder{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_whitelisting)
@@ -1885,7 +1877,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.ErrorContains(err, assetfttypes.ErrWhitelistedLimitExceeded.Error())
@@ -1927,7 +1919,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeBuyOrderMsg,
 	)
 	requireT.NoError(err)
@@ -1970,7 +1962,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
@@ -2005,7 +1997,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
