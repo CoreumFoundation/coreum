@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 
+	msgv1 "cosmossdk.io/api/cosmos/msg/v1"
+	queryv1 "cosmossdk.io/api/cosmos/query/v1"
 	sdkmath "cosmossdk.io/math"
 	nfttypes "cosmossdk.io/x/nft"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -12,9 +15,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/gogoproto/proto"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
@@ -154,20 +160,62 @@ type coreumQuery struct {
 	NFT      *nftQuery      `json:"nft"`
 }
 
+// newModuleQuerySafeAllowList returns a map of all query paths labeled with module_query_safe in the proto files to
+// their response proto.
+func newModuleQuerySafeAllowList() wasmkeeper.AcceptedQueries {
+	fds, err := gogoproto.MergedGlobalFileDescriptors()
+	if err != nil {
+		panic(err)
+	}
+	// create the files using 'AllowUnresolvable' to avoid
+	// unnecessary panic: https://github.com/cosmos/ibc-go/issues/6435
+	protoFiles, err := protodesc.FileOptions{
+		AllowUnresolvable: true,
+	}.NewFiles(fds)
+	if err != nil {
+		panic(err)
+	}
+
+	allowList := wasmkeeper.AcceptedQueries{}
+	protoFiles.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
+		for i := 0; i < fd.Services().Len(); i++ {
+			// Get the service descriptor
+			sd := fd.Services().Get(i)
+
+			// Skip services that are annotated with the "cosmos.msg.v1.service" option.
+			if ext := proto.GetExtension(sd.Options(), msgv1.E_Service); ext != nil && ext.(bool) {
+				continue
+			}
+
+			for j := 0; j < sd.Methods().Len(); j++ {
+				// Get the method descriptor
+				md := sd.Methods().Get(j)
+
+				// Skip methods that are not annotated with the "cosmos.query.v1.module_query_safe" option.
+				if ext := proto.GetExtension(md.Options(), queryv1.E_ModuleQuerySafe); ext == nil || !ext.(bool) {
+					continue
+				}
+
+				// Add the method to the whitelist
+				path := fmt.Sprintf("/%s/%s", sd.FullName(), md.Name())
+				allowList[path] = dynamicpb.NewMessage(md.Output())
+			}
+		}
+		return true
+	})
+
+	return allowList
+}
+
 // NewCoreumQueryHandler returns the coreum handler which handles queries from smart contracts.
 func NewCoreumQueryHandler(
 	assetFTQueryServer assetfttypes.QueryServer, assetNFTQueryServer assetnfttypes.QueryServer,
 	nftQueryServer nfttypes.QueryServer, gRPCQueryRouter *baseapp.GRPCQueryRouter, codec *codec.ProtoCodec,
 ) *wasmkeeper.QueryPlugins {
-	acceptList := wasmkeeper.AcceptedQueries{
-		"/coreum.asset.ft.v1.Query/Token":              &assetfttypes.QueryTokenResponse{},
-		"/coreum.asset.ft.v1.Query/FrozenBalance":      &assetfttypes.QueryFrozenBalanceResponse{},
-		"/coreum.asset.ft.v1.Query/WhitelistedBalance": &assetfttypes.QueryWhitelistedBalanceResponse{},
-		"/cosmos.bank.v1beta1.Query/Balance":           &banktypes.QueryBalanceResponse{},
-		"/coreum.asset.nft.v1.Query/Class":             &assetnfttypes.QueryClassResponse{},
-		"/coreum.asset.nft.v1.Query/Classes":           &assetnfttypes.QueryClassesResponse{},
-		"/cosmos.nft.v1beta1.Query/Owner":              &nfttypes.QueryOwnerResponse{},
-	}
+	acceptList := newModuleQuerySafeAllowList()
+	// TODO: "/cosmos.nft.v1beta1.Query/Owner" is not marked as module_query_safe in cosmos, but we need it
+	acceptList["/cosmos.nft.v1beta1.Query/Owner"] = &nfttypes.QueryOwnerResponse{}
+
 	return &wasmkeeper.QueryPlugins{
 		Grpc: wasmkeeper.AcceptListGrpcQuerier(acceptList, gRPCQueryRouter, codec),
 		Custom: func(ctx sdk.Context, query json.RawMessage) ([]byte, error) {
@@ -680,16 +728,16 @@ func executeQuery[T, K any](
 
 func unmarshalData(data *codectypes.Any) (string, error) {
 	switch data.TypeUrl {
-	case "/" + proto.MessageName((*assetnfttypes.DataBytes)(nil)):
+	case "/" + gogoproto.MessageName((*assetnfttypes.DataBytes)(nil)):
 		var datab assetnfttypes.DataBytes
-		err := proto.Unmarshal(data.Value, &datab)
+		err := gogoproto.Unmarshal(data.Value, &datab)
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
 		return base64.StdEncoding.EncodeToString(datab.Data), nil
-	case "/" + proto.MessageName((*assetnfttypes.DataDynamic)(nil)):
+	case "/" + gogoproto.MessageName((*assetnfttypes.DataDynamic)(nil)):
 		var datadynamic assetnfttypes.DataDynamic
-		err := proto.Unmarshal(data.Value, &datadynamic)
+		err := gogoproto.Unmarshal(data.Value, &datadynamic)
 		if err != nil {
 			return "", errors.WithStack(err)
 		}

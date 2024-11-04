@@ -60,11 +60,9 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
-			&dextypes.MsgPlaceOrder{},
-			&dextypes.MsgPlaceOrder{},
 			&ibctransfertypes.MsgTransfer{},
 		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).AddRaw(200_000),
 	})
 
 	denom1 := issueFT(ctx, t, coreumChain, coreumIssuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_ibc)
@@ -115,7 +113,7 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumSender),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(placeSellOrderMsg)),
+		coreumChain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.ErrorContains(err, cosmoserrors.ErrInsufficientFunds.Error())
@@ -157,7 +155,7 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumSender),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(placeSellOrderMsg)),
+		coreumChain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
 	requireT.NoError(err)
