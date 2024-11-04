@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/samber/lo"
@@ -13,9 +12,7 @@ import (
 
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/event"
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	deterministicgastypes "github.com/CoreumFoundation/coreum/v5/x/deterministicgas/types"
 	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -27,6 +24,7 @@ func TestLimitOrdersStressMatching(t *testing.T) {
 	preCreatedOrdersCreator := "devcore1fnrehr95flfgnzjcatv7a8hpernwufpd5zjm2v"
 	baseDenom := "dexsu-" + preCreatedOrdersCreator // created VIA the genesis
 	quoteDenom := chain.ChainSettings.Denom
+	ordersCount := 2_000
 
 	requireT := require.New(t)
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
@@ -41,7 +39,7 @@ func TestLimitOrdersStressMatching(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	requireT.Len(creatorOrdersRes.Orders, 10_000)
+	requireT.Len(creatorOrdersRes.Orders, ordersCount)
 
 	sellTotal := sdkmath.ZeroInt()
 	for _, order := range creatorOrdersRes.Orders {
@@ -59,10 +57,8 @@ func TestLimitOrdersStressMatching(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	buyTotal := sellTotal
+
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgPlaceOrder{},
-		},
 		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(buyTotal),
 	})
 
@@ -84,12 +80,28 @@ func TestLimitOrdersStressMatching(t *testing.T) {
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
-	t.Logf("Placing order to match %d orders", len(creatorOrdersRes.Orders))
-	now := time.Now()
-	txRes, err := client.BroadcastTx(
+
+	_, requiredGas, err := client.CalculateGas(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeOrderMsg)),
+		chain.TxFactory(),
+		placeOrderMsg,
+	)
+	requireT.NoError(err)
+	t.Logf("Estimated gas: %d", requiredGas)
+	usedGas := uint64(float64(requiredGas) * 1.05)
+	t.Logf("Used gas: %d", usedGas)
+
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		NondeterministicMessagesGas: usedGas,
+	})
+
+	t.Logf("Placing order to match %d orders", len(creatorOrdersRes.Orders))
+	now := time.Now()
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(usedGas),
 		placeOrderMsg,
 	)
 	requireT.NoError(err)
@@ -112,10 +124,4 @@ func TestLimitOrdersStressMatching(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(buyTotal.String(), baseDenomBalanceRes.Balance.Amount.String())
-
-	gasEvts, err := event.FindTypedEvents[*deterministicgastypes.EventGas](txRes.Events)
-	requireT.NoError(err)
-	requireT.Len(gasEvts, 1)
-
-	t.Logf("RealGas: %d, deterministicGas: %d", gasEvts[0].RealGas, gasEvts[0].DeterministicGas)
 }

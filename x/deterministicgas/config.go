@@ -47,7 +47,7 @@ const (
 	NFTMintBaseGas                   = 39_000
 	NFTUpdateBaseGas                 = 40_000
 	GrantBaseGas                     = 25000
-	DEXUpdateWhitelistedDenomBaseGas = 50_000
+	DEXUpdateWhitelistedDenomBaseGas = 10_000
 	DEXWhitelistedPerDenomGas        = 10_000
 )
 
@@ -97,7 +97,7 @@ func DefaultConfig() Config {
 		// TODO(v5): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
 		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):            constantGasFunc(25_000),
 		MsgToMsgURL(&assetfttypes.MsgUpdateDEXUnifiedRefAmount{}): constantGasFunc(10_000),
-		MsgToMsgURL(&assetfttypes.MsgUpdateDEXWhitelistedDenoms{}): bankUpdateDEXWhitelistedDenomsGasFunc(
+		MsgToMsgURL(&assetfttypes.MsgUpdateDEXWhitelistedDenoms{}): updateDEXWhitelistedDenomsGasFunc(
 			DEXUpdateWhitelistedDenomBaseGas, DEXWhitelistedPerDenomGas,
 		),
 
@@ -116,9 +116,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetnfttypes.MsgRemoveFromClassWhitelist{}): constantGasFunc(3_500),
 
 		// dex
-		// TODO (dex): update with new values once we finish the DEX
-		MsgToMsgURL(&dextypes.MsgPlaceOrder{}):  constantGasFunc(120_000),
-		MsgToMsgURL(&dextypes.MsgCancelOrder{}): constantGasFunc(15_000),
+		MsgToMsgURL(&dextypes.MsgCancelOrder{}): constantGasFunc(35_000),
 
 		// authz
 		MsgToMsgURL(&authz.MsgGrant{}):  authzMsgGrantGasFunc(GrantBaseGas, storeConfig.WriteCostPerByte),
@@ -237,6 +235,7 @@ func DefaultConfig() Config {
 
 			// dex
 			&dextypes.MsgUpdateParams{},
+			&dextypes.MsgPlaceOrder{},
 			&dextypes.MsgCancelOrdersByDenom{},
 
 			// distribution
@@ -490,7 +489,7 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 	}
 }
 
-func bankUpdateDEXWhitelistedDenomsGasFunc(
+func updateDEXWhitelistedDenomsGasFunc(
 	dexUpdateWhitelistedDenomBaseGas,
 	dexWhitelistedPerDenomGas uint64,
 ) gasByMsgFunc {
