@@ -12,8 +12,11 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
@@ -44,7 +47,9 @@ type FuzzAppConfig struct {
 	TimeInForceFOKPercent     int
 	GoodTilBlockHeightPercent int
 	GoodTilBlockTimePercent   int
-	FundOrderReservePercent   int
+
+	FundOrderReservePercent     int
+	CreateVestingAccountPercent int
 
 	InitialBlockHeight uint64
 	InitialBlockTime   time.Time
@@ -76,8 +81,8 @@ func NewFuzzApp(
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
 	accounts := lo.RepeatBy(cfg.AccountsCount, func(_ int) sdk.AccAddress {
-		acc, _ := testApp.GenAccount(sdkCtx)
-		return acc
+		// gen address but don't register it to allow the test register vesting accounts conditionally
+		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	})
 
 	issuer, _ := testApp.GenAccount(sdkCtx)
@@ -337,6 +342,20 @@ func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
 			t.Logf("Whitelisting initial account's balance: %s, %s", creator.String(), whitelistBalance.String())
 			require.NoError(t, fa.testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, fa.issuer, creator, whitelistBalance))
 		}
+		if randBoolWithPercent(orderRnd, fa.cfg.CreateVestingAccountPercent) &&
+			// acc doesn't exist so we can create vesting account
+			fa.testApp.AccountKeeper.GetAccount(sdkCtx, creator) == nil {
+			t.Logf("Creating vesting account: %s", creator.String())
+			// create acc with permanently vesting locked coins
+			baseVestingAccount, err := vestingtypes.NewDelayedVestingAccount(
+				authtypes.NewBaseAccountWithAddress(creator),
+				sdk.NewCoins(fundCoin),
+				math.MaxInt64,
+			)
+			require.NoError(t, err)
+			account := fa.testApp.App.AccountKeeper.NewAccount(sdkCtx, baseVestingAccount)
+			fa.testApp.AccountKeeper.SetAccount(sdkCtx, account)
+		}
 		t.Logf("Funding account: %s, %s", creator.String(), fundCoin.String())
 		require.NoError(t, fa.testApp.BankKeeper.SendCoins(sdkCtx, fa.issuer, creator, sdk.NewCoins(fundCoin)))
 	}
@@ -588,7 +607,9 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				TimeInForceFOKPercent:     4,
 				GoodTilBlockHeightPercent: 10,
 				GoodTilBlockTimePercent:   10,
-				FundOrderReservePercent:   80,
+
+				FundOrderReservePercent:     80,
+				CreateVestingAccountPercent: 25, // 25% of accounts will be vesting accounts
 
 				InitialBlockHeight: 1,
 				InitialBlockTime:   time.Date(2023, 1, 2, 3, 4, 5, 6, time.UTC),
