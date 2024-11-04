@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
 	"math"
 	"slices"
 	"strings"
@@ -32,6 +31,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
 	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
 	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v5/x/wbank/keeper"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v5/x/wibctransfer/types"
 )
@@ -2012,7 +2012,9 @@ func TestKeeper_DEXBlockSmartContracts(t *testing.T) {
 	// but still allowed to lock by admin
 	testApp.MintAndSendCoin(t, ctxFromSmartContract, issuer, sdk.NewCoins(sdk.NewInt64Coin(denom1, 1)))
 	requireT.NoError(
-		ftKeeper.DEXChecksLimitsAndSend(ctxFromSmartContract, issuer, issuer, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin),
+		ftKeeper.DEXChecksLimitsAndSend(
+			ctxFromSmartContract, issuer, issuer, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin,
+		),
 	)
 	requireT.NoError(
 		ftKeeper.DEXIncreaseLimits(ctxFromSmartContract, issuer, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin),

@@ -72,7 +72,9 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
 	fundOrderReserve(t, testApp, sdkCtx, acc)
 
-	require.ErrorContains(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "is not supported for DEX, the token has extensions")
+	require.ErrorContains(
+		t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "is not supported for DEX, the token has extensions",
+	)
 }
 
 func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {

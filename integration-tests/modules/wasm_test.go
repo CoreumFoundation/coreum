@@ -3694,7 +3694,7 @@ func TestWASMDEXInContract(t *testing.T) {
 		admin,
 		moduleswasm.DEXWASM,
 		integration.InstantiateConfig{
-			Amount:     chain.QueryDEXParams(ctx, t).OrderReserve,
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerFTInstantiatePayload,
 			Label:      "dex",

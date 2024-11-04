@@ -4,10 +4,13 @@ package modules
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -24,6 +27,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
@@ -2158,6 +2162,211 @@ func issueFT(
 	)
 	require.NoError(t, err)
 	return assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+}
+
+// TestAssetFTBlockSmartContractsFeatureWithDEX tests the dex module integration with the asset ft
+// block_smart_contracts features.
+func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
+	})
+
+	acc := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
+		// 2 to place directly and 1 through the smart contract
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(3).
+			Add(sdkmath.NewInt(100_000).MulRaw(3)).
+			Add(chain.QueryDEXParams(ctx, t).OrderReserve.Amount),
+	})
+
+	issue1Msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "BLK" + uuid.NewString()[:4],
+		Subunit:       "blk" + uuid.NewString()[:4],
+		Precision:     5,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features:      []assetfttypes.Feature{assetfttypes.Feature_block_smart_contracts},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issue1Msg)),
+		issue1Msg,
+	)
+	require.NoError(t, err)
+	denom1WithBlockSmartContract := assetfttypes.BuildDenom(issue1Msg.Subunit, issuer)
+
+	// issue 2nd denom without block_smart_contracts
+	denom2 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6))
+
+	sendMsg1 := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom1WithBlockSmartContract, sdkmath.NewInt(100))),
+	}
+	sendMsg2 := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(100))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactoryAuto(),
+		sendMsg1, sendMsg2,
+	)
+
+	// we expect to receive denom with block_smart_contracts feature
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1WithBlockSmartContract,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+	// send it to chain directly
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactoryAuto(),
+		placeBuyOrderMsg,
+	)
+	requireT.NoError(err)
+
+	// we expect to spend denom with block_smart_contracts feature
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id2",
+		BaseDenom:   denom2,
+		QuoteDenom:  denom1WithBlockSmartContract,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+	// send it to chain directly
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactoryAuto(),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	// now same tokens but for the DEX smart contract
+
+	// fund the DEX smart contract
+	issuanceReq := issueFTRequest{
+		Symbol:        "CTR",
+		Subunit:       "ctr",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(100).String(),
+	}
+	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
+	requireT.NoError(err)
+
+	// instantiate new contract from the acc (the contract issues a token, but we don't use it for the test)
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactoryAuto(),
+		acc,
+		moduleswasm.DEXWASM,
+		integration.InstantiateConfig{
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerFTInstantiatePayload,
+			Label:      "dex",
+		},
+	)
+	requireT.NoError(err)
+
+	// it's prohibited to send tokens to the DEX smart contract with the denom with block_smart_contracts feature,
+	// that's why we can't place and order with it
+	sendMsg1 = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom1WithBlockSmartContract, sdkmath.NewInt(100))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg1)),
+		sendMsg1,
+	)
+	requireT.Error(err)
+	requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
+	requireT.ErrorContains(err, "transfers to smart contracts are disabled")
+
+	// send tokens to place and order from the smart contract
+	sendMsg2 = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(100))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg2)),
+		sendMsg2,
+	)
+	requireT.NoError(err)
+
+	placeOrderPayload, err := json.Marshal(map[dexMethod]placeOrderBodyDEXRequest{
+		dexMethodPlaceOrder: {
+			Order: dextypes.Order{
+				Creator:     contractAddr,
+				Type:        dextypes.ORDER_TYPE_LIMIT,
+				ID:          "id1",
+				BaseDenom:   denom1WithBlockSmartContract,
+				QuoteDenom:  denom2,
+				Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+				Quantity:    sdkmath.NewInt(100),
+				Side:        dextypes.SIDE_BUY,
+				TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+				// next attributes are required by smart contract, but not used
+				RemainingQuantity: sdkmath.ZeroInt(),
+				RemainingBalance:  sdkmath.ZeroInt(),
+				GoodTil:           nil,
+				Reserve:           sdk.NewCoin("-", sdkmath.ZeroInt()),
+			},
+		},
+	})
+	requireT.NoError(err)
+
+	// however the contract has the coins to place such and order, the placement is failed because the order expects
+	// to receive the asset ft with block_smart_contracts feature
+	_, err = chain.Wasm.ExecuteWASMContract(
+		ctx,
+		chain.TxFactoryAuto(),
+		acc,
+		contractAddr,
+		placeOrderPayload,
+		chain.NewCoin(chain.QueryDEXParams(ctx, t).OrderReserve.Amount),
+	)
+	requireT.Error(err)
+	requireT.ErrorContains(err, fmt.Sprintf("usage of %s is not supported for DEX in smart contract", denom1WithBlockSmartContract))
 }
 
 func ordersToPlaceMsgs(orders []dextypes.Order) []sdk.Msg {
