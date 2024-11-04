@@ -13,6 +13,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	nfttypes "cosmossdk.io/x/nft"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -34,6 +35,7 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/v5/x/deterministicgas/types"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 // authz models
@@ -77,6 +79,7 @@ type issueFTRequest struct {
 	URI                string                               `json:"uri"`
 	URIHash            string                               `json:"uri_hash"`
 	ExtensionSettings  *assetfttypes.ExtensionIssueSettings `json:"extension_settings"`
+	DexSettings        *assetfttypes.DEXSettings            `json:"dex_settings"`
 }
 
 // fungible token wasm models
@@ -117,6 +120,42 @@ type accountBodyFTRequest struct {
 	Account string `json:"account"`
 }
 
+type placeOrderBodyDEXRequest struct {
+	Order dextypes.Order `json:"order"`
+}
+
+//nolint:tagliatelle
+type cancelOrderBodyDEXRequest struct {
+	OrderID string `json:"order_id"`
+}
+
+type cancelOrdersByDenomBodyDEXRequest struct {
+	Account string `json:"account"`
+	Denom   string `json:"denom"`
+}
+
+//nolint:tagliatelle
+type OrderBodyDEXRequest struct {
+	Account string `json:"acc"`
+	OrderID string `json:"order_id"`
+}
+
+type OrdersBodyDEXRequest struct {
+	Creator string `json:"creator"`
+}
+
+//nolint:tagliatelle
+type OrderBookOrdersBodyDEXRequest struct {
+	BaseDenom  string        `json:"base_denom"`
+	QuoteDenom string        `json:"quote_denom"`
+	Side       dextypes.Side `json:"side"`
+}
+
+type AccountDenomOrdersCountBodyDEXRequest struct {
+	Account string `json:"account"`
+	Denom   string `json:"denom"`
+}
+
 type ftMethod string
 
 const (
@@ -141,6 +180,22 @@ const (
 	ftMethodWhitelistedBalance  ftMethod = "whitelisted_balance"
 	ftMethodFrozenBalances      ftMethod = "frozen_balances"
 	ftMethodWhitelistedBalances ftMethod = "whitelisted_balances"
+)
+
+type dexMethod string
+
+const (
+	// tx.
+	dexMethodPlaceOrder          dexMethod = "place_order"
+	dexMethodCancelOrder         dexMethod = "cancel_order"
+	dexMethodCancelOrdersByDenom dexMethod = "cancel_orders_by_denom"
+	// query.
+	dexMethodParams                  dexMethod = "params"
+	dexMethodOrder                   dexMethod = "order"
+	dexMethodOrders                  dexMethod = "orders"
+	dexMethodOrderBooks              dexMethod = "order_books"
+	dexMethodOrderBookOrders         dexMethod = "order_book_orders"
+	dexMethodAccountDenomOrdersCount dexMethod = "account_denom_orders_count"
 )
 
 // TestContractInstantiation tests contract instantiation using two instantiation methods.
@@ -1930,11 +1985,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
 	// we need to do this, otherwise assertion fails because some private fields are set differently
+	requireT.NoError(err)
 	dataToCompare := &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	classID := assetnfttypes.BuildClassID(
 		issueClassReqNoWhitelist.Symbol,
@@ -2046,11 +2101,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Data: []byte("mutable_data"),
 	}}})
 
+	requireT.NoError(err)
 	dataToCompare = &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	requireT.Equal(dataToCompare, nftResp.Nft.Data)
 
@@ -2079,11 +2134,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Data: []byte("edited_data_by_admin"),
 	}}})
 
+	requireT.NoError(err)
 	dataToCompare = &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
 		ClassId: classIDNoWhitelist,
@@ -2128,11 +2183,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Data: []byte("edited_data_by_owner"),
 	}}})
 
+	requireT.NoError(err)
 	dataToCompare = &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	nftResp, err = nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
 		ClassId: classIDNoWhitelist,
@@ -2278,11 +2333,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	dataBytes, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
+	requireT.NoError(err)
 	dataToCompare = &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	expectedNFT1 := &nfttypes.NFT{
 		ClassId: classID,
@@ -2518,11 +2573,11 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 
 	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
 	// we need to do this, otherwise assertion fails because some private fields are set differently
+	requireT.NoError(err)
 	dataToCompare := &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
 		Value:   dataBytes.Value,
 	}
-	requireT.NoError(err)
 
 	expectedClass := assetnfttypes.Class{
 		Id:          classID,
@@ -3547,6 +3602,335 @@ func TestVestingToWASMContract(t *testing.T) {
 		contractAddr,
 		moduleswasm.BankSendExecuteWithdrawRequest(amount, recipient),
 		sdk.Coin{})
+	requireT.NoError(err)
+}
+
+// TestWASMDEXInContract verifies that smart contract is able to execute all Coreum DEX messages and queries.
+func TestWASMDEXInContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	admin := chain.GenAccount()
+	issuer := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+		Amount: sdkmath.NewInt(5_000_000_000),
+	})
+
+	clientCtx := chain.ClientContext
+	txf := chain.TxFactoryAuto()
+	bankClient := banktypes.NewQueryClient(clientCtx)
+	assetftClient := assetfttypes.NewQueryClient(clientCtx)
+	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// Issue a normal fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC1",
+		Subunit:       "abc1",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(10_000_000),
+		Description:   "ABC1 Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_dex_whitelisted_denoms,
+			assetfttypes.Feature_dex_order_cancellation,
+			assetfttypes.Feature_dex_unified_ref_amount_change,
+		},
+		BurnRate:           sdkmath.LegacyNewDec(0),
+		SendCommissionRate: sdkmath.LegacyNewDec(0),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom1 := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	// Issue another fungible token using smart contract
+	burnRate := "1000000000000000000"           // LegacyDec has 18 decimal positions, so here we are passing 1e19= 100%
+	sendCommissionRate := "1000000000000000000" // LegacyDec has 18 decimal positions, so here we are passing 1e19 = 100%
+
+	issuanceAmount := sdkmath.NewInt(10_000_000)
+	issuanceReq := issueFTRequest{
+		Symbol:        "ABC2",
+		Subunit:       "abc2",
+		Precision:     6,
+		InitialAmount: issuanceAmount.String(),
+		Description:   "ABC2 Description",
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_dex_whitelisted_denoms,
+			assetfttypes.Feature_dex_order_cancellation,
+			assetfttypes.Feature_dex_unified_ref_amount_change,
+		},
+		BurnRate:           burnRate,
+		SendCommissionRate: sendCommissionRate,
+		URI:                "https://example.com",
+		URIHash:            "1234567890abcdef",
+	}
+	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.DEXWASM,
+		integration.InstantiateConfig{
+			Amount:     chain.QueryDEXParams(ctx, t).OrderReserve,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    issuerFTInstantiatePayload,
+			Label:      "dex",
+		},
+	)
+	requireT.NoError(err)
+
+	denom2 := assetfttypes.BuildDenom(issuanceReq.Subunit, sdk.MustAccAddressFromBech32(contractAddr))
+
+	// send some coins to the contract to cover needed fees
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(10_000_000))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// send some denom1 coin to the contract
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom1, sdkmath.NewInt(10_000_000))),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr,
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal("10000000", balanceRes.Balance.Amount.String())
+
+	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: contractAddr,
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	requireT.Equal("10000000", balanceRes.Balance.Amount.String())
+
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
+
+	// ********** Query Params **********
+
+	paramsPayLoad, err := json.Marshal(map[dexMethod]struct{}{
+		dexMethodParams: {},
+	})
+	requireT.NoError(err)
+	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayLoad)
+	requireT.NoError(err)
+	var wasmParamsRes dextypes.QueryParamsResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
+	requireT.Equal(
+		chain.QueryDEXParams(ctx, t).OrderReserve.String(), wasmParamsRes.Params.OrderReserve.String(),
+	)
+	requireT.Equal(
+		chain.QueryDEXParams(ctx, t).MaxOrdersPerDenom, wasmParamsRes.Params.MaxOrdersPerDenom,
+	)
+	requireT.Equal(
+		chain.QueryDEXParams(ctx, t).PriceTickExponent, wasmParamsRes.Params.PriceTickExponent,
+	)
+
+	// ********** Place Order **********
+
+	orderQuantity := sdkmath.NewInt(100)
+	placeOrderPayload, err := json.Marshal(map[dexMethod]placeOrderBodyDEXRequest{
+		dexMethodPlaceOrder: {
+			Order: dextypes.Order{
+				Creator:    contractAddr,
+				Type:       dextypes.ORDER_TYPE_LIMIT,
+				ID:         "id1",
+				BaseDenom:  denom1,
+				QuoteDenom: denom2,
+				Price:      lo.ToPtr(dextypes.MustNewPriceFromString("999")),
+				Quantity:   orderQuantity,
+				Side:       dextypes.SIDE_SELL,
+				GoodTil: &dextypes.GoodTil{
+					GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
+				},
+				TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
+				RemainingQuantity: orderQuantity,
+				RemainingBalance:  orderQuantity,
+				Reserve:           wasmParamsRes.Params.OrderReserve,
+			},
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, placeOrderPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	assetftBalanceRes, err := assetftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: contractAddr,
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(orderQuantity.String(), assetftBalanceRes.LockedInDEX.String())
+
+	// ********** Query Order **********
+
+	expectedOrder := dextypes.Order{
+		Creator:    contractAddr,
+		Type:       dextypes.ORDER_TYPE_LIMIT,
+		ID:         "id1",
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("999")),
+		Quantity:   orderQuantity,
+		Side:       dextypes.SIDE_SELL,
+		GoodTil: &dextypes.GoodTil{
+			GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
+		},
+		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
+		RemainingQuantity: orderQuantity,
+		RemainingBalance:  orderQuantity,
+		Reserve:           chain.QueryDEXParams(ctx, t).OrderReserve,
+	}
+
+	orderPayload, err := json.Marshal(map[dexMethod]OrderBodyDEXRequest{
+		dexMethodOrder: {
+			Account: contractAddr,
+			OrderID: "id1",
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, orderPayload)
+	requireT.NoError(err)
+	var wasmOrderRes dextypes.QueryOrderResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmOrderRes))
+	requireT.Equal(expectedOrder, wasmOrderRes.Order)
+
+	// ********** Query Orders **********
+
+	ordersPayload, err := json.Marshal(map[dexMethod]OrdersBodyDEXRequest{
+		dexMethodOrders: {
+			Creator: contractAddr,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, ordersPayload)
+	requireT.NoError(err)
+	var wasmOrdersRes dextypes.QueryOrdersResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmOrdersRes))
+	requireT.Len(wasmOrdersRes.Orders, 1)
+	requireT.Equal(expectedOrder, wasmOrdersRes.Orders[0])
+
+	// ********** Query Order Books **********
+
+	orderBooksPayload, err := json.Marshal(map[dexMethod]struct{}{
+		dexMethodOrderBooks: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, orderBooksPayload)
+	requireT.NoError(err)
+	var wasmOrderBooksRes dextypes.QueryOrderBooksResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmOrderBooksRes))
+	requireT.Contains(wasmOrderBooksRes.OrderBooks, dextypes.OrderBookData{
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+	})
+	requireT.Contains(wasmOrderBooksRes.OrderBooks, dextypes.OrderBookData{
+		BaseDenom:  denom2,
+		QuoteDenom: denom1,
+	})
+
+	// ********** Query Order Book Orders **********
+
+	orderBookOrdersPayload, err := json.Marshal(map[dexMethod]OrderBookOrdersBodyDEXRequest{
+		dexMethodOrderBookOrders: {
+			BaseDenom:  denom1,
+			QuoteDenom: denom2,
+			Side:       dextypes.SIDE_SELL,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, orderBookOrdersPayload)
+	requireT.NoError(err)
+	var wasmOrderBookOrdersRes dextypes.QueryOrderBookOrdersResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmOrderBookOrdersRes))
+	requireT.Len(wasmOrderBookOrdersRes.Orders, 1)
+	requireT.Equal(
+		expectedOrder, wasmOrderBookOrdersRes.Orders[0],
+	)
+
+	// ********** Query Account Denom Orders Count **********
+
+	accountDenomOrdersCountPayload, err := json.Marshal(map[dexMethod]AccountDenomOrdersCountBodyDEXRequest{
+		dexMethodAccountDenomOrdersCount: {
+			Account: contractAddr,
+			Denom:   denom1,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, accountDenomOrdersCountPayload)
+	requireT.NoError(err)
+	var wasmAccountDenomOrdersCountRes dextypes.QueryAccountDenomOrdersCountResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmAccountDenomOrdersCountRes))
+	requireT.Equal(uint64(1), wasmAccountDenomOrdersCountRes.Count)
+
+	// ********** Cancel Order **********
+
+	cancelOrderPayload, err := json.Marshal(map[dexMethod]cancelOrderBodyDEXRequest{
+		dexMethodCancelOrder: {
+			OrderID: "id1",
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, cancelOrderPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	// ********** Cancel Orders By Denom **********
+
+	cancelOrdersByDenomPayload, err := json.Marshal(map[dexMethod]cancelOrdersByDenomBodyDEXRequest{
+		dexMethodCancelOrdersByDenom: {
+			Account: contractAddr,
+			Denom:   denom2,
+		},
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, cancelOrdersByDenomPayload, sdk.Coin{})
 	requireT.NoError(err)
 }
 

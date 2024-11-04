@@ -1,15 +1,17 @@
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
-    MsgBurn, MsgClawback, MsgClearAdmin, MsgFreeze, MsgGloballyFreeze, MsgGloballyUnfreeze,
-    MsgIssue, MsgMint, MsgSetFrozen, MsgSetWhitelistedLimit, MsgTransferAdmin, MsgUnfreeze,
-    MsgUpgradeTokenV1, QueryBalanceRequest, QueryBalanceResponse, QueryFrozenBalanceRequest,
-    QueryFrozenBalanceResponse, QueryFrozenBalancesRequest, QueryFrozenBalancesResponse,
-    QueryParamsRequest, QueryParamsResponse, QueryTokenRequest, QueryTokenResponse,
-    QueryTokensRequest, QueryTokensResponse, QueryWhitelistedBalanceRequest,
+    ExtensionIssueSettings, MsgBurn, MsgClawback, MsgClearAdmin, MsgFreeze, MsgGloballyFreeze,
+    MsgGloballyUnfreeze, MsgIssue, MsgMint, MsgSetFrozen, MsgSetWhitelistedLimit, MsgTransferAdmin,
+    MsgUnfreeze, MsgUpgradeTokenV1, QueryBalanceRequest, QueryBalanceResponse,
+    QueryFrozenBalanceRequest, QueryFrozenBalanceResponse, QueryFrozenBalancesRequest,
+    QueryFrozenBalancesResponse, QueryParamsRequest, QueryParamsResponse, QueryTokenRequest,
+    QueryTokenResponse, QueryTokensRequest, QueryTokensResponse, QueryWhitelistedBalanceRequest,
     QueryWhitelistedBalanceResponse, QueryWhitelistedBalancesRequest,
     QueryWhitelistedBalancesResponse,
 };
 use coreum_wasm_sdk::types::cosmos::base::{query::v1beta1::PageRequest, v1beta1::Coin};
-use cosmwasm_std::{entry_point, to_json_binary, Binary, CosmosMsg, Deps, StdResult, Uint128};
+use cosmwasm_std::{
+    entry_point, to_json_binary, to_json_vec, Binary, CosmosMsg, Deps, StdResult, Uint128,
+};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use cw_ownable::{assert_owner, initialize_owner};
@@ -46,7 +48,20 @@ pub fn instantiate(
         send_commission_rate: msg.send_commission_rate,
         uri: msg.uri.unwrap_or_default(),
         uri_hash: msg.uri_hash.unwrap_or_default(),
-        extension_settings: msg.extension_settings,
+        extension_settings: msg.extension_settings.map(|s| ExtensionIssueSettings {
+            code_id: s.code_id,
+            label: s.label,
+            funds: s
+                .funds
+                .iter()
+                .map(|f| Coin {
+                    denom: f.denom.to_string(),
+                    amount: f.amount.to_string(),
+                })
+                .collect(),
+            issuance_msg: to_json_vec(&s.issuance_msg).unwrap(),
+        }),
+        dex_settings: msg.dex_settings,
     };
 
     let denom = format!("{}-{}", msg.subunit, env.contract.address).to_lowercase();

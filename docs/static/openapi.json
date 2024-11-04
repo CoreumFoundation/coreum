@@ -1139,7 +1139,7 @@
     },
     "/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrdersBookOrders",
+        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBookOrders",
         "parameters": [
           {
             "name": "base_denom",
@@ -1221,7 +1221,7 @@
             }
           }
         },
-        "summary": "OrdersBookOrders queries order book orders.",
+        "summary": "OrderBookOrders queries order book orders.",
         "tags": [
           "Query"
         ]
