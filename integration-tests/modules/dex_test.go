@@ -694,7 +694,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	})
 
 	// check order book orders query
-	orderBookOrdersRes, err := dexClient.OrdersBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
+	orderBookOrdersRes, err := dexClient.OrderBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
 		Side:       dextypes.SIDE_SELL,
@@ -1839,6 +1839,232 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+}
+
+// TestLimitOrdersMatchingWithAssetFTWhitelist tests the dex modules ability to place get and match limit orders
+// with asset ft with whitelisting.
+func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&dextypes.MsgPlaceOrder{},
+		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
+	})
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount,
+	})
+
+	acc2 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&dextypes.MsgPlaceOrder{},
+			&dextypes.MsgPlaceOrder{},
+		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2),
+	})
+
+	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_whitelisting)
+	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
+
+	// whitelist denom1 for acc1
+	msgSetWhitelistedLimit := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: acc1.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(1000000)),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSetWhitelistedLimit)),
+		msgSetWhitelistedLimit,
+	)
+	requireT.NoError(err)
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc1.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(150)),
+		),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+
+	// place order should fail because acc2 is out of whitelisted coins
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc2.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
+		Quantity:    sdkmath.NewInt(300),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.ErrorContains(err, assetfttypes.ErrWhitelistedLimitExceeded.Error())
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc2.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
+
+	msgSetWhitelistedLimit = &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: acc2.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(300)),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSetWhitelistedLimit)),
+		msgSetWhitelistedLimit,
+	)
+	requireT.NoError(err)
+
+	// now placing order should succeed because the receiving amount is within the whitelist limit
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc2.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
+		Quantity:    sdkmath.NewInt(300),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeBuyOrderMsg)),
+		placeBuyOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc2.String(),
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	requireT.Equal("33", balanceRes.LockedInDEX.String())
+
+	// Reducing the whitelist limit will not interfere with DEX order after order placement
+	msgSetWhitelistedLimit = &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: acc2.String(),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(0)),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSetWhitelistedLimit)),
+		msgSetWhitelistedLimit,
+	)
+	requireT.NoError(err)
+
+	// place sell order to match the buy
+	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1", // same ID allowed for different user
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc1.String(),
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(11).String(), acc1Denom2BalanceRes.Balance.Amount.String())
+
+	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc2.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+
+	// place order should succeed as issuer because admin (issuer) doesn't have whitelist limit
+	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
+		Sender:      issuer.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(100),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(placeSellOrderMsg)),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
 }
 
 // TestCancelOrdersByDenom tests the dex modules ability to cancel all orders of the account and by denom.

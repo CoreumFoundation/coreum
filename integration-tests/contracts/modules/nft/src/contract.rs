@@ -11,7 +11,7 @@ use coreum_wasm_sdk::types::coreum::asset::nft::v1::{
     QueryWhitelistedAccountsForNftRequest, QueryWhitelistedAccountsForNftResponse,
     QueryWhitelistedRequest, QueryWhitelistedResponse,
 };
-use coreum_wasm_sdk::types::coreum::nft::v1beta1::{
+use coreum_wasm_sdk::types::cosmos::nft::v1beta1::{
     self, QueryBalanceRequest, QueryBalanceResponse, QueryNfTsRequest, QueryNfTsResponse,
     QueryNftRequest, QueryNftResponse, QueryOwnerRequest, QueryOwnerResponse, QuerySupplyRequest,
     QuerySupplyResponse,
