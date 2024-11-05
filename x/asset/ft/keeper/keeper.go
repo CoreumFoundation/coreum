@@ -708,7 +708,7 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 func (k Keeper) DEXIncreaseLimits(
 	ctx sdk.Context, addr sdk.AccAddress, lockCoin, reserveWhitelistingCoin sdk.Coin,
 ) error {
-	if err := k.dexChecksForDenoms(ctx, []string{lockCoin.Denom, reserveWhitelistingCoin.Denom}); err != nil {
+	if err := k.dexChecksForDenoms(ctx, addr, lockCoin.Denom, reserveWhitelistingCoin.Denom); err != nil {
 		return err
 	}
 
@@ -754,7 +754,7 @@ func (k Keeper) DEXDecreaseLimitsAndSend(
 func (k Keeper) DEXChecksLimitsAndSend(
 	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, sendCoin, checkReserveWhitelistingCoin sdk.Coin,
 ) error {
-	if err := k.dexChecksForDenoms(ctx, []string{sendCoin.Denom, checkReserveWhitelistingCoin.Denom}); err != nil {
+	if err := k.dexChecksForDenoms(ctx, fromAddr, sendCoin.Denom, checkReserveWhitelistingCoin.Denom); err != nil {
 		return err
 	}
 
@@ -1631,7 +1631,10 @@ func (k Keeper) dexLockingChecks(ctx sdk.Context, addr sdk.AccAddress, coin sdk.
 	return nil
 }
 
-func (k Keeper) dexChecksForDenoms(ctx sdk.Context, denoms []string) error {
+func (k Keeper) dexChecksForDenoms(
+	ctx sdk.Context, acc sdk.AccAddress, spendDenom, receiveDenom string,
+) error {
+	denoms := []string{spendDenom, receiveDenom}
 	for _, denom := range denoms {
 		def, err := k.getDefinitionOrNil(ctx, denom)
 		if err != nil {
@@ -1642,15 +1645,25 @@ func (k Keeper) dexChecksForDenoms(ctx sdk.Context, denoms []string) error {
 			if def.ExtensionCWAddress != "" {
 				return sdkerrors.Wrapf(
 					types.ErrInvalidInput,
-					"failed to DEX lock %s, not supported for the tokens with extensions",
+					"usage of %s is not supported for DEX, the token has extensions",
 					def.Denom,
 				)
 			}
 			if def.IsFeatureEnabled(types.Feature_dex_block) {
 				return sdkerrors.Wrapf(
 					cosmoserrors.ErrUnauthorized,
-					"locking coins for DEX disabled for %s",
-					def.Denom,
+					"usage of %s is not supported for DEX, the token has %s feature enabled",
+					def.Denom, types.Feature_dex_block.String(),
+				)
+			}
+			// don't allow the smart contract to use the denom with Feature_block_smart_contracts if not admin
+			if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
+				!def.HasAdminPrivileges(acc) &&
+				cwasmtypes.IsTriggeredBySmartContract(ctx) {
+				return sdkerrors.Wrapf(
+					cosmoserrors.ErrUnauthorized,
+					"usage of %s is not supported for DEX in smart contract, the token has %s feature enabled",
+					def.Denom, types.Feature_block_smart_contracts.String(),
 				)
 			}
 		}
