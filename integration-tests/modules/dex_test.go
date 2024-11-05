@@ -1404,7 +1404,7 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 	requireT.NoError(err)
 
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
-	require.NoError(t, err)
+	requireT.NoError(err)
 
 	delegateAmount := sdkmath.NewInt(1_000_000)
 
@@ -1423,7 +1423,7 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 	_, validator1Address, deactivateValidator, err := chain.CreateValidator(
 		ctx, t, customStakingParams.Params.MinSelfDelegation, customStakingParams.Params.MinSelfDelegation,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 	defer deactivateValidator()
 
 	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
@@ -1536,7 +1536,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 	denom1 := assetfttypes.BuildDenom(issueMsg.Subunit, acc1)
 	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
 
@@ -1685,7 +1685,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 	denom1 := assetfttypes.BuildDenom(issueMsg.Subunit, acc1)
 	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
 
@@ -2210,7 +2210,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issue1Msg)),
 		issue1Msg,
 	)
-	require.NoError(t, err)
+	requireT.NoError(err)
 	denom1WithBlockSmartContract := assetfttypes.BuildDenom(issue1Msg.Subunit, issuer)
 
 	// issue 2nd denom without block_smart_contracts
@@ -2232,6 +2232,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 		chain.TxFactoryAuto(),
 		sendMsg1, sendMsg2,
 	)
+	requireT.NoError(err)
 
 	// we expect to receive denom with block_smart_contracts feature
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
@@ -2349,7 +2350,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 				RemainingQuantity: sdkmath.ZeroInt(),
 				RemainingBalance:  sdkmath.ZeroInt(),
 				GoodTil:           nil,
-				Reserve:           sdk.NewCoin("-", sdkmath.ZeroInt()),
+				Reserve:           sdk.NewCoin("denom1", sdkmath.ZeroInt()),
 			},
 		},
 	})
@@ -2366,7 +2367,10 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 		chain.NewCoin(chain.QueryDEXParams(ctx, t).OrderReserve.Amount),
 	)
 	requireT.Error(err)
-	requireT.ErrorContains(err, fmt.Sprintf("usage of %s is not supported for DEX in smart contract", denom1WithBlockSmartContract))
+	requireT.ErrorContains(
+		err,
+		fmt.Sprintf("usage of %s is not supported for DEX in smart contract", denom1WithBlockSmartContract),
+	)
 }
 
 func ordersToPlaceMsgs(orders []dextypes.Order) []sdk.Msg {
