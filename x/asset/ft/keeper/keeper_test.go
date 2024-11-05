@@ -31,6 +31,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
 	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
 	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
 	wbankkeeper "github.com/CoreumFoundation/coreum/v5/x/wbank/keeper"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v5/x/wibctransfer/types"
 )
@@ -1952,7 +1953,71 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(extensionCoin)))
 	requireT.ErrorContains(
 		ftKeeper.DEXIncreaseLimits(ctx, acc, extensionCoin, sdk.NewInt64Coin(denom1, 1)),
-		"not supported for the tokens with extensions",
+		"the token has extensions",
+	)
+}
+
+func TestKeeper_DEXBlockSmartContracts(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFBLK",
+		Subunit:       "defblk",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []types.Feature{
+			types.Feature_block_smart_contracts,
+		},
+	}
+	denom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+	blockSmartContractCoin := sdk.NewInt64Coin(denom, 50)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(blockSmartContractCoin)))
+	// triggered from native call
+	requireT.NoError(ftKeeper.DEXIncreaseLimits(ctx, acc, blockSmartContractCoin, sdk.NewInt64Coin(denom1, 1)))
+
+	ctxFromSmartContract := cwasmtypes.WithSmartContractSender(ctx, acc.String())
+	blockingErr := fmt.Sprintf("usage of %s is not supported for DEX in smart contract", denom)
+	requireT.ErrorContains(
+		ftKeeper.DEXIncreaseLimits(ctxFromSmartContract, acc, blockSmartContractCoin, sdk.NewInt64Coin(denom1, 1)),
+		blockingErr,
+	)
+	requireT.ErrorContains(
+		ftKeeper.DEXIncreaseLimits(ctxFromSmartContract, acc, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin),
+		blockingErr,
+	)
+	// same check for DEXChecksLimitsAndSend
+	requireT.ErrorContains(
+		ftKeeper.DEXChecksLimitsAndSend(ctxFromSmartContract, acc, acc, blockSmartContractCoin, sdk.NewInt64Coin(denom1, 1)),
+		blockingErr,
+	)
+	requireT.ErrorContains(
+		ftKeeper.DEXChecksLimitsAndSend(ctxFromSmartContract, acc, acc, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin),
+		blockingErr,
+	)
+
+	// but still allowed to lock by admin
+	testApp.MintAndSendCoin(t, ctxFromSmartContract, issuer, sdk.NewCoins(sdk.NewInt64Coin(denom1, 1)))
+	requireT.NoError(
+		ftKeeper.DEXChecksLimitsAndSend(
+			ctxFromSmartContract, issuer, issuer, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin,
+		),
+	)
+	requireT.NoError(
+		ftKeeper.DEXIncreaseLimits(ctxFromSmartContract, issuer, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin),
 	)
 }
 
@@ -1993,7 +2058,7 @@ func TestKeeper_DEXSettings_BlockDEX(t *testing.T) {
 	ft1Denom, err := ftKeeper.Issue(ctx, ft1Settings)
 	requireT.NoError(err)
 
-	errStr := fmt.Sprintf("locking coins for DEX disabled for %s", ft1Denom)
+	errStr := fmt.Sprintf("usage of %s is not supported for DEX, the token has dex_block", ft1Denom)
 	requireT.ErrorContains(ftKeeper.DEXIncreaseLimits(
 		ctx, acc, sdk.NewInt64Coin(ft1Denom, 50), sdk.NewInt64Coin(denom1, 1),
 	), errStr)
