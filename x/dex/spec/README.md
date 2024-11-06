@@ -176,7 +176,7 @@ Examples:
 
 * A price like 45000000000000 can be represented as 45e12.
 * A price like 0.000123 can be represented as 123e-6.
-* A price like 70001 can be represented as is. 
+* A price like 70001 can be represented as is.
 * Min value: 1e-100
 * Max value: 9999999999999999999e100
 
@@ -190,14 +190,14 @@ Examples:
 * 1e01 is invalid, must be 1e1
 * 1e+1 is invalid, must be 1e1
 
-### Balance locking
+### Balance locking/freezing/whitelisting/clawback.
 
-When a user places an order we lock the coins in the assetft (similar to freezing), both assetft and native coins.
-At the time of the placement we enforce all assetft rules. For extensions, we expect a specific interface to be
-implemented in the extensions smart contract, which let the DEX understand whether an order placement is allowed or not.
-If such an interface is not implemented we don't allow the order placement.
-If, at the time of matching, the assetft rules for the maker orders are changed, the orders will be still executed with
-the amounts in the order book.
+When a user places an order we lock the coins in the assetft (similar to freezing), both assetft and native coins. Also,
+we reserve the expected receiving amount if whitelisting for the token the user expects to receive is enabled.
+At the time of the placement we enforce all assetft rules. If, at the time of matching, the assetft rules for the
+maker orders are changed, the orders will be still executed with the amounts in the order book. That's why to avoid
+unexpected behavior with the `freezing/whitelisting/clawback` the token admin should [cancel](#Order-cancellation) users
+orders before update the rules.
 
 ### Time in force
 
@@ -244,9 +244,10 @@ or the token admin. Check the [price tick and precision](#price-tick-and-precisi
 
 ### Order cancellation
 
-The token admin or gov can cancel user orders within the system. It grants specific administrative or
-governance roles the power to manage and oversee active orders, providing a safeguard against potential issues
-such as erroneous trades, malicious activity, or market manipulation.
+The users can cancel their orders within the DEX. Or The token admin or gov can cancel user orders within the system.
+It grants specific administrative or governance roles the power to manage and oversee active orders, providing a
+safeguard against potential issues such as erroneous trades, malicious activity, or market manipulation. For the token
+admin to cancel the user's orders, the `dex_order_cancellation` feature must be enabled.
 
 ### Restricted trade
 
