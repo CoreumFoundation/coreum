@@ -328,6 +328,8 @@ func New(
 	// relies on localhost client to be registered.
 	ibclocalhost.RegisterInterfaces(interfaceRegistry)
 
+	baseAppOptions = append(baseAppOptions, baseapp.SetOptimisticExecution())
+
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
