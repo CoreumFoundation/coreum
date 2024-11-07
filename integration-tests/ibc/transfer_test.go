@@ -89,8 +89,11 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
+
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
+
+	coreumBankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
 
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(
 		ctx, t, ibctransfertypes.PortID, gaiaChain.ChainContext,
@@ -134,6 +137,13 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	)
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumToCoreumSender, expectedBalanceAtCoreum))
 
+	// check that denom metadata is registered
+	denomMetadataRes, err := coreumBankClient.DenomMetadata(ctx, &banktypes.QueryDenomMetadataRequest{
+		Denom: expectedBalanceAtCoreum.Denom,
+	})
+	requireT.NoError(err)
+	assert.Equal(t, expectedBalanceAtCoreum.Denom, denomMetadataRes.Metadata.Base)
+
 	// Send from coreumToCoreumSender to coreumToGaiaSender
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: coreumToCoreumSender.String(),
@@ -148,8 +158,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
-	queryBalanceResponse, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	queryBalanceResponse, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: coreumToGaiaSender.String(),
 		Denom:   expectedBalanceAtCoreum.Denom,
 	})
