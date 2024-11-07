@@ -206,9 +206,9 @@ func TestContractInstantiation(t *testing.T) {
 	admin := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(2_000_000),
+	})
 
 	txf := chain.TxFactoryAuto()
 
@@ -317,9 +317,9 @@ func TestWASMBankSendContract(t *testing.T) {
 	nativeDenom := chain.ChainSettings.Denom
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(1_000_000),
+	})
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
@@ -430,9 +430,9 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	requireT := require.New(t)
 	admin := chain.GenAccount()
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(1_000_000),
+	})
 
 	// deployWASMContract and init contract with the initial coins amount
 	clientCtx := chain.ClientContext
@@ -497,11 +497,13 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 	proposerBalance.Amount = proposerBalance.Amount.MulRaw(2)
-
 	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 		integration.NewFundedAccount(proposer, proposerBalance),
 	)
+
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(1_000_000),
+	})
 
 	// instantiateWASMContract the contract and set the initial counter state.
 	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
@@ -635,10 +637,12 @@ func TestWASMContractUpgrade(t *testing.T) {
 
 	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000))),
-		integration.NewFundedAccount(noneAdmin, chain.NewCoin(sdkmath.NewInt(5000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(1_000_000),
+	})
+	chain.FundAccountWithOptions(ctx, t, noneAdmin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(500_000),
+	})
 
 	// instantiateWASMContract the contract and set the initial counter state.
 	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
@@ -717,9 +721,9 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	newAdmin := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(1_000_000),
+	})
 	chain.FundAccountWithOptions(ctx, t, newAdmin, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&wasmtypes.MsgClearAdmin{},
@@ -814,9 +818,9 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	totalAmountToSend := sdkmath.NewInt(2_000)
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(granter, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(2_000_000),
+	})
 
 	// deployWASMContract and init contract with the granter.
 	initialPayloadAuthzTransfer, err := json.Marshal(authz{
@@ -994,9 +998,10 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	// Issue an AssetFT that will be used to buy the NFT
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(receiver, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, receiver, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(500_000)),
+	})
 
 	issueAssetFTMsg := &assetfttypes.MsgIssue{
 		Issuer:        receiver.String(),
@@ -1119,9 +1124,10 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	recipient2 := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(4_000_000)),
+	})
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
@@ -1506,9 +1512,10 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 	recipient2 := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
@@ -1929,9 +1936,9 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	mintRecipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(4_000_000),
+	})
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
@@ -2517,9 +2524,9 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 	mintRecipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(4_000_000),
+	})
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
@@ -3370,11 +3377,11 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	fundAmount := chain.NewCoin(sdkmath.NewInt(5000000000))
+
 	adminAccount := chain.GenAccount()
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(adminAccount, fundAmount),
-	)
+	chain.FundAccountWithOptions(ctx, t, adminAccount, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(1_000_000),
+	})
 
 	// Deploy smart contract.
 
@@ -3441,9 +3448,9 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 			requireT := require.New(t)
 
 			adminAccount := chain.GenAccount()
-			chain.Faucet.FundAccounts(ctx, t,
-				integration.NewFundedAccount(adminAccount, fundAmount),
-			)
+			chain.FundAccountWithOptions(ctx, t, adminAccount, integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1_000_000),
+			})
 
 			salt, err := chain.Wasm.GenerateSalt()
 			requireT.NoError(err)
@@ -3491,9 +3498,9 @@ func TestVestingToWASMContract(t *testing.T) {
 	amount := chain.NewCoin(sdkmath.NewInt(500))
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(1_000_000),
+	})
 
 	txf := chain.TxFactoryAuto()
 
@@ -3619,7 +3626,8 @@ func TestWASMDEXInContract(t *testing.T) {
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
-		Amount: sdkmath.NewInt(5_000_000_000),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
 	})
 
 	clientCtx := chain.ClientContext
@@ -3627,6 +3635,8 @@ func TestWASMDEXInContract(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	assetftClient := assetfttypes.NewQueryClient(clientCtx)
 	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
+
+	dexParms := chain.QueryDEXParams(ctx, t)
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -3704,28 +3714,12 @@ func TestWASMDEXInContract(t *testing.T) {
 
 	denom2 := assetfttypes.BuildDenom(issuanceReq.Subunit, sdk.MustAccAddressFromBech32(contractAddr))
 
-	// send some coins to the contract to cover needed fees
-	sendMsg := &banktypes.MsgSend{
-		FromAddress: admin.String(),
-		ToAddress:   contractAddr,
-		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(10_000_000))),
-	}
-
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
-		sendMsg,
-	)
-	requireT.NoError(err)
-
 	// send some denom1 coin to the contract
-	sendMsg = &banktypes.MsgSend{
+	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   contractAddr,
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom1, sdkmath.NewInt(10_000_000))),
 	}
-
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
@@ -3739,14 +3733,11 @@ func TestWASMDEXInContract(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal("10000000", balanceRes.Balance.Amount.String())
+	requireT.Equal(sendMsg.Amount.AmountOf(denom1).String(), balanceRes.Balance.Amount.String())
 
-	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: contractAddr,
-		Denom:   denom2,
+	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(contractAddr), integration.BalancesOptions{
+		Amount: dexParms.OrderReserve.Amount,
 	})
-	requireT.NoError(err)
-	requireT.Equal("10000000", balanceRes.Balance.Amount.String())
 
 	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
@@ -3762,13 +3753,13 @@ func TestWASMDEXInContract(t *testing.T) {
 	var wasmParamsRes dextypes.QueryParamsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
 	requireT.Equal(
-		chain.QueryDEXParams(ctx, t).OrderReserve.String(), wasmParamsRes.Params.OrderReserve.String(),
+		dexParms.OrderReserve.Amount.String(), wasmParamsRes.Params.OrderReserve.Amount.String(),
 	)
 	requireT.Equal(
-		chain.QueryDEXParams(ctx, t).MaxOrdersPerDenom, wasmParamsRes.Params.MaxOrdersPerDenom,
+		dexParms.MaxOrdersPerDenom, wasmParamsRes.Params.MaxOrdersPerDenom,
 	)
 	requireT.Equal(
-		chain.QueryDEXParams(ctx, t).PriceTickExponent, wasmParamsRes.Params.PriceTickExponent,
+		dexParms.PriceTickExponent, wasmParamsRes.Params.PriceTickExponent,
 	)
 
 	// ********** Place Order **********
@@ -3824,7 +3815,7 @@ func TestWASMDEXInContract(t *testing.T) {
 		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: orderQuantity,
 		RemainingBalance:  orderQuantity,
-		Reserve:           chain.QueryDEXParams(ctx, t).OrderReserve,
+		Reserve:           dexParms.OrderReserve,
 	}
 
 	orderPayload, err := json.Marshal(map[dexMethod]OrderBodyDEXRequest{
