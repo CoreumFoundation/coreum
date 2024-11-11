@@ -1146,9 +1146,10 @@ func TestAssetFTMint(t *testing.T) {
 		},
 	})
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	// Issue an unmintable fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -1813,9 +1814,10 @@ func TestAssetFTFeesAreChargedWhenSmartContractExecutesAuthZTransfer(t *testing.
 	granter := chain.GenAccount()
 	receiver := chain.GenAccount()
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
@@ -1991,9 +1993,10 @@ func TestAssetFTFeesAreNotChargedWhenTokensAreTransferredFromSmartContractUsingA
 	grantee := chain.GenAccount()
 	receiver := chain.GenAccount()
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	// Issue a fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -2705,9 +2708,10 @@ func TestAssetFTClawbackSmartContract(t *testing.T) {
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	clientCtx := chain.ClientContext
 
@@ -3795,9 +3799,10 @@ func TestAssetFTSendingToNonWhitelistedSmartContractIsDenied(t *testing.T) {
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	clientCtx := chain.ClientContext
 
@@ -3869,9 +3874,10 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractCallIsDenied(t *testing.T)
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	txf := chain.TxFactoryAuto()
 
@@ -3935,9 +3941,10 @@ func TestAssetFTAttachingToNonWhitelistedSmartContractInstantiationIsDenied(t *t
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	txf := chain.TxFactoryAuto()
 
@@ -5455,11 +5462,16 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	issuer := chain.GenAccount()
 	admin := chain.GenAccount()
 
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
+
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
@@ -5673,7 +5685,10 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContractInstantiation(t *testi
 	recipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t, integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))))
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
@@ -5735,9 +5750,10 @@ func TestAssetFTSendingToSmartContractIsDenied(t *testing.T) {
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	clientCtx := chain.ClientContext
 
@@ -5831,9 +5847,10 @@ func TestAssetFTAttachingToSmartContractCallIsDenied(t *testing.T) {
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	txf := chain.TxFactoryAuto()
 
@@ -5897,9 +5914,10 @@ func TestAssetFTAttachingToSmartContractInstantiationIsDenied(t *testing.T) {
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	txf := chain.TxFactoryAuto()
 
@@ -5960,9 +5978,10 @@ func TestAssetFTIssuingSmartContractIsAllowedToSendAndReceive(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
@@ -6060,9 +6079,10 @@ func TestAssetFTMintingAndSendingOnBehalfOfIssuingSmartContractIsPossibleEvenIfS
 	recipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	// instantiate new contract
 	initialPayload, err := json.Marshal(struct{}{})
@@ -6208,9 +6228,10 @@ func TestAssetFTSendingTokensFromRegularAccountBySmartContractUsingAuthZIsDenied
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	// issue token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -6574,9 +6595,10 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 		},
 	})
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(wasmAdmin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, wasmAdmin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	// Issue an unmintable fungible token
 	issueMsg := &assetfttypes.MsgIssue{

@@ -1,6 +1,6 @@
-//go:build integrationtests && gasestimationtests
+//go:build integrationtests
 
-package modules
+package stress
 
 import (
 	"fmt"
@@ -23,8 +23,12 @@ import (
 // TestBankSendEstimation is used to estimate gas required by each additional token present in bank send message.
 // It executes transactions sending from 1 to 201 tokens in single message and reports gas estimated by each of them.
 // Then you may copy the results to a spreadsheet and calculate the gas required by each transfer.
-// Spreadsheet example might be found here: https://docs.google.com/spreadsheets/d/1qoKa8udTPYdS_-ofJ8xNbnZFDh-gqGb4n0_OgcTHUOA/edit?usp=sharing
-// Keep in mind that to estimate the gas you need to move bank send message to nondeterministic section inside deterministic gas config.
+// Spreadsheet example might be found here:
+//
+//	https://docs.google.com/spreadsheets/d/1qoKa8udTPYdS_-ofJ8xNbnZFDh-gqGb4n0_OgcTHUOA/edit?usp=sharing.
+//
+// Keep in mind that to estimate the gas you need to move bank send message to nondeterministic section inside
+// deterministic gas config.
 func TestBankSendEstimation(t *testing.T) {
 	const (
 		nTokens = 101
@@ -138,11 +142,11 @@ func TestAuthzEstimation(t *testing.T) {
 	chain.Faucet.FundAccounts(ctx, t,
 		integration.FundedAccount{
 			Address: granter,
-			Amount:  chain.NewCoin(sdkmath.NewInt(50000000)),
+			Amount:  chain.NewCoin(sdkmath.NewInt(1_000_000)),
 		},
 		integration.FundedAccount{
 			Address: grantee,
-			Amount:  chain.NewCoin(sdkmath.NewInt(50000000)),
+			Amount:  chain.NewCoin(sdkmath.NewInt(1_000_000)),
 		},
 	)
 
