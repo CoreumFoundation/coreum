@@ -811,9 +811,9 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		Amount: sdkmath.NewInt(1 * 500_000), // add 500k for each message with extenstion transfer
 	})
 
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(1_000_000),
+	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
 		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
@@ -1006,11 +1006,12 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	issuer := chain.GenAccount()
-
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	clientCtx := chain.ClientContext
 
@@ -1046,7 +1047,6 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 		chain.TxFactoryAuto(),
 		issueMsg,
 	)
-
 	requireT.NoError(err)
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 
@@ -1115,9 +1115,10 @@ func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
 		ctx, chain.TxFactoryAuto(), issuer, testcontracts.AssetExtensionWasm,
@@ -1195,9 +1196,10 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 	recipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(50000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(500_000),
 	})
@@ -1308,9 +1310,10 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
 		ctx, chain.TxFactory().WithSimulateAndExecute(true), issuer, testcontracts.AssetExtensionWasm,
@@ -1384,9 +1387,10 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 	recipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.Faucet.FundAccounts(ctx, t,
-		integration.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
-	)
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			Add(sdkmath.NewInt(1_000_000)),
+	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
 		ctx, chain.TxFactoryAuto(), admin, testcontracts.AssetExtensionWasm,
