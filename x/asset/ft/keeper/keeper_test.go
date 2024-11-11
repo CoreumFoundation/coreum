@@ -2156,6 +2156,74 @@ func TestKeeper_DEXSettings_WhitelistedDenom(t *testing.T) {
 	requireT.NoError(ftKeeper.DEXIncreaseLimits(ctx, acc, denom3CoinToLock, sdk.NewInt64Coin(denom4, 1)))
 }
 
+func TestKeeper_DEXLimitsWithGlobalFreeze(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false)
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	ft1Settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFONE",
+		Subunit:       "defone",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []types.Feature{
+			types.Feature_freezing,
+		},
+	}
+	ft1Denom, err := ftKeeper.Issue(ctx, ft1Settings)
+	requireT.NoError(err)
+
+	ft2Settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFTOW",
+		Subunit:       "deftwo",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []types.Feature{
+			types.Feature_freezing,
+		},
+	}
+	ft2Denom, err := ftKeeper.Issue(ctx, ft2Settings)
+	requireT.NoError(err)
+
+	// fund acc
+	ft1CoinToSend := sdk.NewInt64Coin(ft1Denom, 100)
+	ft2CoinToSend := sdk.NewInt64Coin(ft2Denom, 100)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(ft1CoinToSend)))
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(ft2CoinToSend)))
+
+	// check that it's allowed to increase and decrease the limits
+	requireT.NoError(ftKeeper.DEXIncreaseLimits(ctx, acc, ft1CoinToSend, ft2CoinToSend))
+	requireT.NoError(ftKeeper.DEXDecreaseLimits(ctx, acc, ft1CoinToSend, ft2CoinToSend))
+
+	// globally freeze
+	ftKeeper.SetGlobalFreeze(ctx, ft1CoinToSend.Denom, true)
+	requireT.ErrorContains(
+		ftKeeper.DEXIncreaseLimits(simapp.CopyContextWithMultiStore(ctx), acc, ft1CoinToSend, ft2CoinToSend),
+		fmt.Sprintf("usage of %s for DEX is blocked because the token is globally frozen", ft1CoinToSend.Denom),
+	)
+
+	ftKeeper.SetGlobalFreeze(ctx, ft1CoinToSend.Denom, false)
+	ftKeeper.SetGlobalFreeze(ctx, ft2CoinToSend.Denom, true)
+	requireT.ErrorContains(
+		ftKeeper.DEXIncreaseLimits(simapp.CopyContextWithMultiStore(ctx), acc, ft1CoinToSend, ft2CoinToSend),
+		fmt.Sprintf("usage of %s for DEX is blocked because the token is globally frozen", ft2CoinToSend.Denom),
+	)
+
+	// admin still can increase the limits
+	requireT.NoError(
+		ftKeeper.DEXIncreaseLimits(simapp.CopyContextWithMultiStore(ctx), issuer, ft1CoinToSend, ft2CoinToSend),
+	)
+}
+
 func TestKeeper_LockAndUnlockNotFT(t *testing.T) {
 	requireT := require.New(t)
 

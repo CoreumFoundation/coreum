@@ -1641,31 +1641,8 @@ func (k Keeper) dexChecksForDenoms(
 			return err
 		}
 
-		if def != nil {
-			if def.ExtensionCWAddress != "" {
-				return sdkerrors.Wrapf(
-					types.ErrInvalidInput,
-					"usage of %s is not supported for DEX, the token has extensions",
-					def.Denom,
-				)
-			}
-			if def.IsFeatureEnabled(types.Feature_dex_block) {
-				return sdkerrors.Wrapf(
-					cosmoserrors.ErrUnauthorized,
-					"usage of %s is not supported for DEX, the token has %s feature enabled",
-					def.Denom, types.Feature_dex_block.String(),
-				)
-			}
-			// don't allow the smart contract to use the denom with Feature_block_smart_contracts if not admin
-			if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
-				!def.HasAdminPrivileges(acc) &&
-				cwasmtypes.IsTriggeredBySmartContract(ctx) {
-				return sdkerrors.Wrapf(
-					cosmoserrors.ErrUnauthorized,
-					"usage of %s is not supported for DEX in smart contract, the token has %s feature enabled",
-					def.Denom, types.Feature_block_smart_contracts.String(),
-				)
-			}
+		if err := k.dexChecksForDefinition(ctx, acc, def); err != nil {
+			return err
 		}
 
 		// settings specific validation
@@ -1688,6 +1665,53 @@ func (k Keeper) dexChecksForDenoms(
 					)
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) dexChecksForDefinition(ctx sdk.Context, acc sdk.AccAddress, def *types.Definition) error {
+	if def == nil {
+		return nil
+	}
+
+	if def.ExtensionCWAddress != "" {
+		return sdkerrors.Wrapf(
+			types.ErrInvalidInput,
+			"usage of %s is not supported for DEX, the token has extensions",
+			def.Denom,
+		)
+	}
+
+	if def.IsFeatureEnabled(types.Feature_dex_block) {
+		return sdkerrors.Wrapf(
+			cosmoserrors.ErrUnauthorized,
+			"usage of %s is not supported for DEX, the token has %s feature enabled",
+			def.Denom, types.Feature_dex_block.String(),
+		)
+	}
+
+	// don't allow the smart contract to use the denom with Feature_block_smart_contracts if not admin
+	if def.IsFeatureEnabled(types.Feature_block_smart_contracts) &&
+		!def.HasAdminPrivileges(acc) &&
+		cwasmtypes.IsTriggeredBySmartContract(ctx) {
+		return sdkerrors.Wrapf(
+			cosmoserrors.ErrUnauthorized,
+			"usage of %s is not supported for DEX in smart contract, the token has %s feature enabled",
+			def.Denom, types.Feature_block_smart_contracts.String(),
+		)
+	}
+
+	if def.IsFeatureEnabled(types.Feature_freezing) {
+		if k.isGloballyFrozen(ctx, def.Denom) &&
+			// sill allow the admin to do the trade, to follow same logic as we have in the sending
+			!def.HasAdminPrivileges(acc) {
+			return sdkerrors.Wrapf(
+				cosmoserrors.ErrUnauthorized,
+				"usage of %s for DEX is blocked because the token is globally frozen",
+				def.Denom,
+			)
 		}
 	}
 

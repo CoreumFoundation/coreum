@@ -251,19 +251,24 @@ admin to cancel the user's orders, the `dex_order_cancellation` feature must be 
 
 ### Restricted trade
 
-#### Block DEX
+### Block DEX
 
 The asset FT token admin at time of issues can set the `block_dex` feature, which will block the DEX completely for the
 issued denom. So the DEX won't accept the orders with the denom.
 
-#### Denoms to trade with
+### Global freeze
+
+If the `global_freeze` feature is enabled for either the `base_denom` or `quote_denom` of an order, it is prohibited
+to place an order with the corresponding `base_denom` and `quote_denom`.
+
+### Denoms to trade with
 
 This feature introduces an enhancement to the asset FT (`restrict_dex` feature), allowing the asset FT
 (a specific fungible token) to be traded only against a predefined set of denoms specified in `denoms_to_trade_with`.
 This adds a layer of control over trading pairs, ensuring that denom(asset FT) can only be exchanged with certain
 denoms/currencies or assets, as specified by the admin.
 
-## Extensions
+### Extensions
 
 The current version of the DEX doesn't support the extensions. It means if a user places an order with the asset FT
 extension token, such an order will be rejected.

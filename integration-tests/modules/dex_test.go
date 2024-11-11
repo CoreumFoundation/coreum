@@ -983,6 +983,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 			&assetfttypes.MsgGloballyFreeze{},
 			&assetfttypes.MsgGloballyUnfreeze{},
 			&assetfttypes.MsgGloballyFreeze{},
+			&assetfttypes.MsgGloballyUnfreeze{},
 		},
 	})
 
@@ -1054,7 +1055,10 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
-	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
+	requireT.ErrorContains(
+		err,
+		fmt.Sprintf("usage of %s for DEX is blocked because the token is globally frozen", denom1),
+	)
 
 	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
@@ -1139,7 +1143,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc2.String(),
 		Type:        dextypes.ORDER_TYPE_LIMIT,
-		ID:          "id1", // same ID allowed for different user
+		ID:          "id1",
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
@@ -1148,6 +1152,25 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
 
+	// it's because the token the acc receives is globally frozen
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactoryAuto(),
+		placeBuyOrderMsg,
+	)
+	requireT.ErrorContains(err, fmt.Sprintf("usage of %s for DEX is blocked because the token is globally frozen", denom1))
+
+	// globally unfreeze the denom and place order one more time
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.NoError(err)
+
+	// it's because the token the acc receives is globally frozen
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
