@@ -2373,6 +2373,132 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 	)
 }
 
+// TestLimitOrdersMatchingWithAssetBurning tests the dex modules ability to place get and match limit orders
+// with asset ft with burning feature.
+func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	issuer := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgBurn{},
+			&dextypes.MsgCancelOrder{},
+			&assetfttypes.MsgBurn{},
+			&assetfttypes.MsgBurn{},
+		},
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(1).Add(sdkmath.NewInt(100_000)),
+	})
+
+	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_burning)
+	denom2 := "denom2"
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   acc1.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom1, sdkmath.NewInt(200)),
+		),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	requireT.NoError(err)
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(150),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactoryAuto(),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(200).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.LockedInDEX.String())
+
+	// try to burn unburnable token, locked in dex
+	burnMsg := &assetfttypes.MsgBurn{
+		Sender: acc1.String(),
+		Coin: sdk.Coin{
+			Denom: denom1,
+			// it's allowed to burn only 50 not locked in dex
+			Amount: sdkmath.NewInt(100),
+		},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.ErrorContains(err, fmt.Sprintf("100%s is not available, available 50%s", denom1, denom1))
+
+	// cancel to burn
+	cancelOrderMsg := &dextypes.MsgCancelOrder{
+		Sender: acc1.String(),
+		ID:     placeSellOrderMsg.ID,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(cancelOrderMsg)),
+		cancelOrderMsg)
+	requireT.NoError(err)
+
+	// now it's allowed to burn
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	// 100 is burnt 100 remains
+	requireT.Equal(sdkmath.NewInt(100).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
+}
+
 func ordersToPlaceMsgs(orders []dextypes.Order) []sdk.Msg {
 	return lo.Map(orders, func(order dextypes.Order, _ int) sdk.Msg {
 		return &dextypes.MsgPlaceOrder{
