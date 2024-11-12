@@ -112,7 +112,7 @@ func TestGroupCreationAndBankSend(t *testing.T) {
 	groupPolicy := groupPolicies.GroupPolicies[0]
 	t.Logf("created group policy, groupPolicyAddress:%s txHash:%s", groupPolicy.Address, result.TxHash)
 
-	groupSendCoin := chain.NewCoin(sdkmath.NewInt(100_000_000))
+	groupSendCoin := chain.NewCoin(sdkmath.NewInt(1_000_000))
 	chain.FundAccountWithOptions(ctx, t, sdk.MustAccAddressFromBech32(groupPolicy.Address), integration.BalancesOptions{
 		Messages: []sdk.Msg{},
 		Amount:   groupSendCoin.Amount,

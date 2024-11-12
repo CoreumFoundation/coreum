@@ -1,6 +1,6 @@
 //go:build integrationtests
 
-package modules
+package stress
 
 import (
 	"testing"
