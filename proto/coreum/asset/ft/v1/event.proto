@@ -81,7 +81,7 @@ message EventDEXLockedAmountChanged {
   ];
 }
 
-message EventDEXWhitelistingReservedAmountChanged {
+message EventDEXExpectedToReceiveAmountChanged {
   string account = 1;
   string denom = 2;
   string previous_amount = 3 [

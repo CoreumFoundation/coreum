@@ -9669,7 +9669,7 @@
           "type": "string",
           "description": "locked_in_dex is the balance locked in DEX."
         },
-        "whitelisting_reserved_in_dex": {
+        "expected_to_receive_in_dex": {
           "type": "string"
         }
       }
@@ -9898,7 +9898,7 @@
         },
         "royalty_rate": {
           "type": "string",
-          "description": "royalty_rate is a number between 0 and 1,which will be used in coreum native Dex.\nwhenever an NFT this class is traded on the Dex, the traded amount will be multiplied by this value\nthat will be transferred to the issuer of the NFT."
+          "description": "royalty_rate is a number between 0 and 1,which will be used in coreum native DEX.\nwhenever an NFT this class is traded on the DEX, the traded amount will be multiplied by this value\nthat will be transferred to the issuer of the NFT."
         }
       },
       "description": "Class is a full representation of the non-fungible token class."

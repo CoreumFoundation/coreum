@@ -334,11 +334,11 @@ func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
 		)
 	} else {
 		if spendDef.IsFeatureEnabled(assetfttypes.Feature_whitelisting) {
-			dexWhitelistingReservedBalance := fa.testApp.AssetFTKeeper.GetDEXWhitelistingReservedBalance(
+			dexExpectedToReceiveBalance := fa.testApp.AssetFTKeeper.GetDEXExpectedToReceivedBalance(
 				sdkCtx, creator, fundCoin.Denom,
 			)
 			balance := fa.testApp.BankKeeper.GetBalance(sdkCtx, creator, fundCoin.Denom)
-			whitelistBalance := fundCoin.Add(balance).Add(dexWhitelistingReservedBalance)
+			whitelistBalance := fundCoin.Add(balance).Add(dexExpectedToReceiveBalance)
 			t.Logf("Whitelisting initial account's balance: %s, %s", creator.String(), whitelistBalance.String())
 			require.NoError(t, fa.testApp.AssetFTKeeper.SetWhitelistedBalance(sdkCtx, fa.issuer, creator, whitelistBalance))
 		}
@@ -482,7 +482,7 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 
 			switch order.Type {
 			case types.ORDER_TYPE_LIMIT:
-				requiredWhitelistedBalance, err = types.ComputeLimitOrderWhitelistingReservedBalance(
+				requiredWhitelistedBalance, err = types.ComputeLimitOrderExpectedToReceiveBalance(
 					order.Side, order.BaseDenom, order.QuoteDenom, order.Quantity, *order.Price,
 				)
 				require.NoError(t, err)
@@ -498,10 +498,10 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			whitelistedBalance := fa.testApp.AssetFTKeeper.GetWhitelistedBalance(
 				sdkCtx, creator, requiredWhitelistedBalance.Denom,
 			)
-			dexWhitelistingReservedBalance := fa.testApp.AssetFTKeeper.GetDEXWhitelistingReservedBalance(
+			dexExpectedToReceiveBalance := fa.testApp.AssetFTKeeper.GetDEXExpectedToReceivedBalance(
 				sdkCtx, creator, requiredWhitelistedBalance.Denom,
 			)
-			receivableAmt := whitelistedBalance.Amount.Sub(balance.Amount).Sub(dexWhitelistingReservedBalance.Amount)
+			receivableAmt := whitelistedBalance.Amount.Sub(balance.Amount).Sub(dexExpectedToReceiveBalance.Amount)
 			require.True(
 				t,
 				receivableAmt.LT(requiredWhitelistedAmt),

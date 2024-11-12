@@ -706,40 +706,40 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 
 // DEXIncreaseLimits increases the DEX limits.
 func (k Keeper) DEXIncreaseLimits(
-	ctx sdk.Context, addr sdk.AccAddress, lockCoin, reserveWhitelistingCoin sdk.Coin,
+	ctx sdk.Context, addr sdk.AccAddress, lockedCoin, expectedToReceiveCoin sdk.Coin,
 ) error {
-	if err := k.dexChecksForDenoms(ctx, addr, lockCoin.Denom, reserveWhitelistingCoin.Denom); err != nil {
+	if err := k.dexChecksForDenoms(ctx, addr, lockedCoin.Denom, expectedToReceiveCoin.Denom); err != nil {
 		return err
 	}
 
-	if err := k.DEXLock(ctx, addr, lockCoin); err != nil {
+	if err := k.DEXLock(ctx, addr, lockedCoin); err != nil {
 		return err
 	}
 
-	return k.DEXReserveWhitelisting(ctx, addr, reserveWhitelistingCoin)
+	return k.DEXIncreaseExpectedToReceive(ctx, addr, expectedToReceiveCoin)
 }
 
 // DEXDecreaseLimits decreases the DEX limits.
 func (k Keeper) DEXDecreaseLimits(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
-	unlockCoin, releaseWhitelistingCoin sdk.Coin,
+	lockedCoin, expectedToReceiveCoin sdk.Coin,
 ) error {
-	if err := k.DEXUnlock(ctx, addr, unlockCoin); err != nil {
+	if err := k.DEXUnlock(ctx, addr, lockedCoin); err != nil {
 		return err
 	}
 
-	return k.DEXReleaseWhitelisting(ctx, addr, releaseWhitelistingCoin)
+	return k.DEXDecreaseExpectedToReceive(ctx, addr, expectedToReceiveCoin)
 }
 
 // DEXDecreaseLimitsAndSend decreases the DEX limits and sends the coin.
 func (k Keeper) DEXDecreaseLimitsAndSend(
-	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, unlockAndSendCoin, releaseWhitelistingCoin sdk.Coin,
+	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, unlockAndSendCoin, decreaseExpectedToReceiveCoin sdk.Coin,
 ) error {
 	if err := k.DEXUnlock(ctx, fromAddr, unlockAndSendCoin); err != nil {
 		return err
 	}
-	if err := k.DEXReleaseWhitelisting(ctx, fromAddr, releaseWhitelistingCoin); err != nil {
+	if err := k.DEXDecreaseExpectedToReceive(ctx, fromAddr, decreaseExpectedToReceiveCoin); err != nil {
 		return err
 	}
 	// send using the native bank
@@ -750,11 +750,11 @@ func (k Keeper) DEXDecreaseLimitsAndSend(
 	return nil
 }
 
-// DEXChecksLimitsAndSend checks DEX limits and sends the coin.
-func (k Keeper) DEXChecksLimitsAndSend(
-	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, sendCoin, checkReserveWhitelistingCoin sdk.Coin,
+// DEXCheckLimitsAndSend checks DEX limits and sends the coin.
+func (k Keeper) DEXCheckLimitsAndSend(
+	ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, sendCoin, checkExpectedToReceiveCoin sdk.Coin,
 ) error {
-	if err := k.dexChecksForDenoms(ctx, fromAddr, sendCoin.Denom, checkReserveWhitelistingCoin.Denom); err != nil {
+	if err := k.dexChecksForDenoms(ctx, fromAddr, sendCoin.Denom, checkExpectedToReceiveCoin.Denom); err != nil {
 		return err
 	}
 
@@ -762,16 +762,15 @@ func (k Keeper) DEXChecksLimitsAndSend(
 		return err
 	}
 
-	def, err := k.getDefinitionOrNil(ctx, checkReserveWhitelistingCoin.Denom)
+	// check the whitelisted balance only if we record the expected to receive amount
+	shouldCheckWhitelistedBalance, err := k.shouldRecordExpectedToReceiveBalance(
+		ctx, fromAddr, checkExpectedToReceiveCoin.Denom,
+	)
 	if err != nil {
 		return err
 	}
-	// check whitelisting for FT with whitelisting enabled
-	if def != nil &&
-		def.IsFeatureEnabled(types.Feature_whitelisting) &&
-		// it's prohibited to whitelist the admin that's why we don't check the whitelisting as well
-		!def.IsAdmin(fromAddr) {
-		if err := k.validateWhitelistedBalance(ctx, fromAddr, checkReserveWhitelistingCoin); err != nil {
+	if shouldCheckWhitelistedBalance {
+		if err := k.validateWhitelistedBalance(ctx, fromAddr, checkExpectedToReceiveCoin); err != nil {
 			return err
 		}
 	}
@@ -783,17 +782,19 @@ func (k Keeper) DEXChecksLimitsAndSend(
 	return nil
 }
 
-// DEXReserveWhitelisting reserves the whitelisting tokens for the specified account.
-func (k Keeper) DEXReserveWhitelisting(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
-	def, err := k.getDefinitionOrNil(ctx, coin.Denom)
+// DEXIncreaseExpectedToReceive increases the expected to receive amount for the specified account.
+func (k Keeper) DEXIncreaseExpectedToReceive(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(
+			cosmoserrors.ErrInvalidCoins, "amount to increase DEX expected to receive must be positive",
+		)
+	}
+
+	shouldRecord, err := k.shouldRecordExpectedToReceiveBalance(ctx, addr, coin.Denom)
 	if err != nil {
 		return err
 	}
-	// reserve for FT with the whitelisting enabled
-	if def == nil ||
-		!def.IsFeatureEnabled(types.Feature_whitelisting) ||
-		// it's prohibited to whitelist the admin
-		def.IsAdmin(addr) {
+	if !shouldRecord {
 		return nil
 	}
 
@@ -801,92 +802,88 @@ func (k Keeper) DEXReserveWhitelisting(ctx sdk.Context, addr sdk.AccAddress, coi
 		return err
 	}
 
-	dexWhitelistingReservedStore := k.dexWhitelistingReservedAccountBalanceStore(ctx, addr)
-	prevWhitelistingReservedBalance, newWhitelistingReservedBalance := dexWhitelistingReservedStore.AddBalance(coin)
+	dexExpectedToReceiveStore := k.dexExpectedToReceiveAccountBalanceStore(ctx, addr)
+	prevExpectedToReceiveBalance, newExpectedToReceiveBalance := dexExpectedToReceiveStore.AddBalance(coin)
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXWhitelistingReservedAmountChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXExpectedToReceiveAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
-		PreviousAmount: prevWhitelistingReservedBalance.Amount,
-		CurrentAmount:  newWhitelistingReservedBalance.Amount,
+		PreviousAmount: prevExpectedToReceiveBalance.Amount,
+		CurrentAmount:  newExpectedToReceiveBalance.Amount,
 	}); err != nil {
 		return sdkerrors.Wrapf(
-			types.ErrInvalidState, "failed to emit EventDEXWhitelistingReservedAmountChanged event: %s", err,
+			types.ErrInvalidState, "failed to emit EventDEXExpectedToReceiveAmountChanged event: %s", err,
 		)
 	}
 
 	return nil
 }
 
-// DEXReleaseWhitelisting releases the reserved whitelisting tokens from the specified account.
-func (k Keeper) DEXReleaseWhitelisting(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
+// DEXDecreaseExpectedToReceive decreases the expected to receive amount for the specified account.
+func (k Keeper) DEXDecreaseExpectedToReceive(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
 		return sdkerrors.Wrap(
-			cosmoserrors.ErrInvalidCoins, "amount to release DEX whitelisting reserved token must be positive",
+			cosmoserrors.ErrInvalidCoins, "amount to decrease DEX expected to receive must be positive",
 		)
 	}
 
-	def, err := k.getDefinitionOrNil(ctx, coin.Denom)
+	shouldRecord, err := k.shouldRecordExpectedToReceiveBalance(ctx, addr, coin.Denom)
 	if err != nil {
 		return err
 	}
-	// release only for FT with the whitelisting enabled
-	if def == nil ||
-		!def.IsFeatureEnabled(types.Feature_whitelisting) ||
-		// it's prohibited to whitelist the admin
-		def.IsAdmin(addr) {
+	if !shouldRecord {
 		return nil
 	}
 
-	dexWhitelistingReservedStore := k.dexWhitelistingReservedAccountBalanceStore(ctx, addr)
-	prevWhitelistingReservedBalance, newWhitelistingReservedBalance, err := dexWhitelistingReservedStore.SubBalance(coin)
+	dexExpectedToReceiveStore := k.dexExpectedToReceiveAccountBalanceStore(ctx, addr)
+	prevExpectedToReceiveBalance, newExpectedToReceiveBalance, err := dexExpectedToReceiveStore.SubBalance(coin)
 	if err != nil {
 		return sdkerrors.Wrap(err, "failed to cancel DEX whitelisted")
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXWhitelistingReservedAmountChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXExpectedToReceiveAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
-		PreviousAmount: prevWhitelistingReservedBalance.Amount,
-		CurrentAmount:  newWhitelistingReservedBalance.Amount,
+		PreviousAmount: prevExpectedToReceiveBalance.Amount,
+		CurrentAmount:  newExpectedToReceiveBalance.Amount,
 	}); err != nil {
 		return sdkerrors.Wrapf(
-			types.ErrInvalidState, "failed to emit EventDEXWhitelistingReservedAmountChanged event: %s", err,
+			types.ErrInvalidState, "failed to emit EventDEXExpectedToReceiveAmountChanged event: %s", err,
 		)
 	}
 
 	return nil
 }
 
-// GetDEXWhitelistingReservedBalance returns the DEX whitelisting reserved balance.
-func (k Keeper) GetDEXWhitelistingReservedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
-	return k.dexWhitelistingReservedAccountBalanceStore(ctx, addr).Balance(denom)
+// GetDEXExpectedToReceivedBalance returns the DEX expected to receive balance.
+func (k Keeper) GetDEXExpectedToReceivedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+	return k.dexExpectedToReceiveAccountBalanceStore(ctx, addr).Balance(denom)
 }
 
-// GetDEXWhitelistingReservedBalances returns the DEX whitelisting reserved balances of an account.
-func (k Keeper) GetDEXWhitelistingReservedBalances(
+// GetDEXExpectedToReceiveBalances returns the DEX expected to receive balances of an account.
+func (k Keeper) GetDEXExpectedToReceiveBalances(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 	pagination *query.PageRequest,
 ) (sdk.Coins, *query.PageResponse, error) {
-	return k.dexWhitelistingReservedAccountBalanceStore(ctx, addr).Balances(pagination)
+	return k.dexExpectedToReceiveAccountBalanceStore(ctx, addr).Balances(pagination)
 }
 
-// GetAccountsDEXWhitelistingReservedBalances returns the DEX whitelisting reserved balance on all the account.
-func (k Keeper) GetAccountsDEXWhitelistingReservedBalances(
+// GetAccountsDEXExpectedToReceiveBalances returns the DEX expected to receive balance on all the account.
+func (k Keeper) GetAccountsDEXExpectedToReceiveBalances(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.Balance, *query.PageResponse, error) {
-	return collectBalances(k.cdc, k.dexWhitelistingReservedBalancesStore(ctx), pagination)
+	return collectBalances(k.cdc, k.dexExpectedToReceiveBalancesStore(ctx), pagination)
 }
 
-// SetDEXWhitelistingReservedBalances sets the DEX whitelisting reserved balances of a specified account.
+// SetDEXExpectedToReceiveBalances sets the DEX expected to receive balances of a specified account.
 // Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you
 // need set zero amount use the slice []sdk.Coins.
-func (k Keeper) SetDEXWhitelistingReservedBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
-	dexWhitelistingReservedStore := k.dexWhitelistingReservedAccountBalanceStore(ctx, addr)
+func (k Keeper) SetDEXExpectedToReceiveBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
+	dexExpectedToReceiveStore := k.dexExpectedToReceiveAccountBalanceStore(ctx, addr)
 	for _, coin := range coins {
-		dexWhitelistingReservedStore.SetBalance(coin)
+		dexExpectedToReceiveStore.SetBalance(coin)
 	}
 }
 
@@ -1568,23 +1565,39 @@ func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddr
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateWhitelistedBalancesKey(addr))
 }
 
-// dexWhitelistingReservedBalancesStore get the store for the DEX whitelisting reserved balances of all accounts.
-func (k Keeper) dexWhitelistingReservedBalancesStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXWhitelistingReservedBalancesKeyPrefix)
+// dexExpectedToReceiveBalancesStore get the store for the DEX expected to receive balances of all accounts.
+func (k Keeper) dexExpectedToReceiveBalancesStore(ctx sdk.Context) prefix.Store {
+	return prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXExpectedToReceiveBalancesKeyPrefix)
 }
 
-// dexWhitelistingReservedAccountBalanceStore gets the store for the DEX whitelisting reserved balances of an account.
-func (k Keeper) dexWhitelistingReservedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
-	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateDEXWhitelistingReservedBalancesKey(addr))
+// dexExpectedToReceiveAccountBalanceStore gets the store for the DEX expected to receive balances of an account.
+func (k Keeper) dexExpectedToReceiveAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
+	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateDEXExpectedToReceiveBalancesKey(addr))
+}
+
+func (k Keeper) shouldRecordExpectedToReceiveBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) (bool, error) {
+	def, err := k.getDefinitionOrNil(ctx, denom)
+	if err != nil {
+		return false, err
+	}
+	// increase for FT with the whitelisting enabled
+	if def == nil ||
+		!def.IsFeatureEnabled(types.Feature_whitelisting) ||
+		// it's prohibited to whitelist the admin
+		def.IsAdmin(addr) {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (k Keeper) validateWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, coin sdk.Coin) error {
 	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
 	whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, coin.Denom)
-	dexWhitelistingReservedBalance := k.GetDEXWhitelistingReservedBalance(ctx, addr, coin.Denom)
+	dexExpectedToReceiveBalance := k.GetDEXExpectedToReceivedBalance(ctx, addr, coin.Denom)
 	availableToReceiveAmount := whitelistedBalance.Amount.
 		Sub(balance.Amount).
-		Sub(dexWhitelistingReservedBalance.Amount)
+		Sub(dexExpectedToReceiveBalance.Amount)
 
 	if availableToReceiveAmount.LT(coin.Amount) {
 		return sdkerrors.Wrapf(

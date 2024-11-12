@@ -186,14 +186,14 @@ func (k Keeper) matchRecords(
 		unlockCoin := sdk.NewCoin(
 			recordToReduceReceiveCoin.Denom, recordToClose.RemainingBalance.Sub(recordToReduceReceiveCoin.Amount),
 		)
-		reserveWhitelistingAmt, err := types.ComputeLimitOrderWhitelistingReservedAmount(
+		expectedToReceiveAmt, err := types.ComputeLimitOrderExpectedToReceiveAmount(
 			recordToClose.Side, recordToCloseRemainingQuantity, recordToClose.Price,
 		)
 		if err != nil {
 			return false, err
 		}
 		mr.RegisterMakerUnlock(
-			recordToClose.AccountNumber, unlockCoin, sdk.NewCoin(recordToCloseReceiveCoin.Denom, reserveWhitelistingAmt),
+			recordToClose.AccountNumber, unlockCoin, sdk.NewCoin(recordToCloseReceiveCoin.Denom, expectedToReceiveAmt),
 		)
 		mr.RegisterMakerRemoveRecord(recordToClose)
 	} else {
@@ -271,7 +271,7 @@ func (k Keeper) lockRequiredBalances(
 	if err != nil {
 		return types.OrderBookRecord{}, err
 	}
-	reserveWhitelistingCoin, err := types.ComputeLimitOrderWhitelistingReservedBalance(
+	expectedToReceiveCoin, err := types.ComputeLimitOrderExpectedToReceiveBalance(
 		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, *order.Price,
 	)
 	if err != nil {
@@ -291,7 +291,7 @@ func (k Keeper) lockRequiredBalances(
 		ctx,
 		creatorAddr,
 		lockCoin,
-		reserveWhitelistingCoin,
+		expectedToReceiveCoin,
 	); err != nil {
 		return types.OrderBookRecord{}, err
 	}

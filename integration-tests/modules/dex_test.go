@@ -343,7 +343,7 @@ func TestOrderCancellation(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceDenom1Res.LockedInDEX.String())
-	requireT.True(balanceDenom1Res.WhitelistingReservedInDex.IsZero())
+	requireT.True(balanceDenom1Res.ExpectedToReceiveInDEX.IsZero())
 
 	balanceDenom2Res, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
@@ -351,7 +351,7 @@ func TestOrderCancellation(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.True(balanceDenom2Res.LockedInDEX.IsZero())
-	whitelistingReservedInDex, err := dextypes.ComputeLimitOrderWhitelistingReservedBalance(
+	expectedToReceiveInDex, err := dextypes.ComputeLimitOrderExpectedToReceiveBalance(
 		placeSellOrderMsg.Side,
 		placeSellOrderMsg.BaseDenom,
 		placeSellOrderMsg.QuoteDenom,
@@ -359,7 +359,7 @@ func TestOrderCancellation(t *testing.T) {
 		*placeSellOrderMsg.Price,
 	)
 	requireT.NoError(err)
-	requireT.Equal(whitelistingReservedInDex.Amount.String(), balanceDenom2Res.WhitelistingReservedInDex.String())
+	requireT.Equal(expectedToReceiveInDex.Amount.String(), balanceDenom2Res.ExpectedToReceiveInDEX.String())
 
 	countRes, err := dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
 		Account: acc1.String(),
@@ -397,7 +397,7 @@ func TestOrderCancellation(t *testing.T) {
 	requireT.NoError(err)
 	// check that nothing is locked
 	requireT.True(balanceDenom1Res.LockedInDEX.IsZero())
-	requireT.True(balanceDenom1Res.WhitelistingReservedInDex.IsZero())
+	requireT.True(balanceDenom1Res.ExpectedToReceiveInDEX.IsZero())
 
 	balanceDenom2Res, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
@@ -406,7 +406,7 @@ func TestOrderCancellation(t *testing.T) {
 	requireT.NoError(err)
 	// check that nothing is locked
 	requireT.True(balanceDenom2Res.LockedInDEX.IsZero())
-	requireT.True(balanceDenom2Res.WhitelistingReservedInDex.IsZero())
+	requireT.True(balanceDenom2Res.ExpectedToReceiveInDEX.IsZero())
 
 	countRes, err = dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
 		Account: acc1.String(),

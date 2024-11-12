@@ -803,7 +803,7 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 	}
 
 	unlockCoin := sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance)
-	releaseWhitelistingCoin, err := types.ComputeLimitOrderWhitelistingReservedBalance(
+	expectedToReceiveCoin, err := types.ComputeLimitOrderExpectedToReceiveBalance(
 		order.Side, order.BaseDenom, order.QuoteDenom, record.RemainingQuantity, *order.Price,
 	)
 	if err != nil {
@@ -811,7 +811,7 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 	}
 
 	return k.decreaseFTLimits(
-		ctx, acc, unlockCoin, releaseWhitelistingCoin,
+		ctx, acc, unlockCoin, expectedToReceiveCoin,
 	)
 }
 

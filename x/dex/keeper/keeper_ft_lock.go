@@ -10,16 +10,16 @@ import (
 func (k Keeper) increaseFTLimits(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
-	lockCoin, reserveWhitelistingCoinCoin sdk.Coin,
+	lockedCoin, expectedToReceiveCoin sdk.Coin,
 ) error {
 	k.logger(ctx).Debug(
 		"Increasing DEX FT limits.",
 		"addr", addr,
-		"lockCoin", lockCoin.String(),
-		"reserveWhitelistingCoinCoin", reserveWhitelistingCoinCoin.String(),
+		"lockedCoin", lockedCoin.String(),
+		"expectedToReceiveCoin", expectedToReceiveCoin.String(),
 	)
 
-	if err := k.assetFTKeeper.DEXIncreaseLimits(ctx, addr, lockCoin, reserveWhitelistingCoinCoin); err != nil {
+	if err := k.assetFTKeeper.DEXIncreaseLimits(ctx, addr, lockedCoin, expectedToReceiveCoin); err != nil {
 		return sdkerrors.Wrap(err, "failed to increase DEX FT limits")
 	}
 
@@ -29,16 +29,16 @@ func (k Keeper) increaseFTLimits(
 func (k Keeper) decreaseFTLimits(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
-	unlockCoin, releaseWhitelistingCoin sdk.Coin,
+	lockedCoin, expectedToReceiveCoin sdk.Coin,
 ) error {
 	k.logger(ctx).Debug(
 		"Decreasing DEX FT limits.",
 		"addr", addr,
-		"unlockCoin", unlockCoin.String(),
-		"releaseWhitelistingCoin", releaseWhitelistingCoin.String(),
+		"lockedCoin", lockedCoin.String(),
+		"expectedToReceiveCoin", expectedToReceiveCoin.String(),
 	)
 
-	if err := k.assetFTKeeper.DEXDecreaseLimits(ctx, addr, unlockCoin, releaseWhitelistingCoin); err != nil {
+	if err := k.assetFTKeeper.DEXDecreaseLimits(ctx, addr, lockedCoin, expectedToReceiveCoin); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to decrease DEX FT limits, err: %s", err)
 	}
 
@@ -48,18 +48,18 @@ func (k Keeper) decreaseFTLimits(
 func (k Keeper) decreaseFTLimitsAndSend(
 	ctx sdk.Context,
 	fromAddr, toAddr sdk.AccAddress,
-	unlockAndSendCoin, releaseWhitelistingCoin sdk.Coin,
+	unlockAndSendCoin, expectedToReceiveCoin sdk.Coin,
 ) error {
 	k.logger(ctx).Debug(
 		"Decreasing DEX FT limits and sending.",
 		"fromAddr", fromAddr,
 		"toAddr", toAddr,
 		"unlockAndSendCoin", unlockAndSendCoin.String(),
-		"releaseWhitelistingCoin", releaseWhitelistingCoin.String(),
+		"expectedToReceiveCoin", expectedToReceiveCoin.String(),
 	)
 
 	if err := k.assetFTKeeper.DEXDecreaseLimitsAndSend(
-		ctx, fromAddr, toAddr, unlockAndSendCoin, releaseWhitelistingCoin,
+		ctx, fromAddr, toAddr, unlockAndSendCoin, expectedToReceiveCoin,
 	); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to decrease DEX FT limits and send, err: %s", err)
 	}
@@ -67,23 +67,23 @@ func (k Keeper) decreaseFTLimitsAndSend(
 	return nil
 }
 
-func (k Keeper) checksFTLimitsAndSend(
+func (k Keeper) checkFTLimitsAndSend(
 	ctx sdk.Context,
 	fromAddr, toAddr sdk.AccAddress,
-	sendCoin, checkReserveWhitelistingCoin sdk.Coin,
+	sendCoin, checkExpectedToReceiveCoin sdk.Coin,
 ) error {
 	k.logger(ctx).Debug(
 		"Checking DEX FT limits and sending.",
 		"fromAddr", fromAddr,
 		"toAddr", toAddr,
 		"sendCoin", sendCoin.String(),
-		"checkReserveWhitelistingCoin", checkReserveWhitelistingCoin.String(),
+		"checkExpectedToReceiveCoin", checkExpectedToReceiveCoin.String(),
 	)
 
-	if err := k.assetFTKeeper.DEXChecksLimitsAndSend(
+	if err := k.assetFTKeeper.DEXCheckLimitsAndSend(
 		ctx,
 		fromAddr, toAddr,
-		sendCoin, checkReserveWhitelistingCoin,
+		sendCoin, checkExpectedToReceiveCoin,
 	); err != nil {
 		return sdkerrors.Wrap(err, "failed to check DEX FT limits and send")
 	}

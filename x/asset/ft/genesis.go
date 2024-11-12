@@ -74,13 +74,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.SetDEXLockedBalances(ctx, address, dexLockedBalance.Coins)
 	}
 
-	// Init DEX whitelisting reserved balances
-	for _, dexWhitelistingReservedBalance := range genState.DEXWhitelistingReservedBalances {
-		if err := types.ValidateAssetCoins(dexWhitelistingReservedBalance.Coins); err != nil {
+	// Init DEX expected to receive balances
+	for _, dexExpectedToReceiveBalance := range genState.DEXExpectedToReceiveBalances {
+		if err := types.ValidateAssetCoins(dexExpectedToReceiveBalance.Coins); err != nil {
 			panic(err)
 		}
-		address := sdk.MustAccAddressFromBech32(dexWhitelistingReservedBalance.Address)
-		k.SetDEXWhitelistingReservedBalances(ctx, address, dexWhitelistingReservedBalance.Coins)
+		address := sdk.MustAccAddressFromBech32(dexExpectedToReceiveBalance.Address)
+		k.SetDEXExpectedToReceiveBalances(ctx, address, dexExpectedToReceiveBalance.Coins)
 	}
 
 	// Init pending version upgrades
@@ -120,7 +120,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
-	dexWhitelistingReservedBalances, _, err := k.GetAccountsDEXWhitelistingReservedBalances(
+	dexExpectedToReceiveBalances, _, err := k.GetAccountsDEXExpectedToReceiveBalances(
 		ctx, &query.PageRequest{Limit: query.PaginationMaxLimit},
 	)
 	if err != nil {
@@ -138,13 +138,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	return &types.GenesisState{
-		Params:                          k.GetParams(ctx),
-		Tokens:                          tokens,
-		FrozenBalances:                  frozenBalances,
-		WhitelistedBalances:             whitelistedBalances,
-		PendingTokenUpgrades:            pendingTokenUpgrades,
-		DEXLockedBalances:               dexLockedBalances,
-		DEXWhitelistingReservedBalances: dexWhitelistingReservedBalances,
-		DEXSettings:                     dexSettings,
+		Params:                       k.GetParams(ctx),
+		Tokens:                       tokens,
+		FrozenBalances:               frozenBalances,
+		WhitelistedBalances:          whitelistedBalances,
+		PendingTokenUpgrades:         pendingTokenUpgrades,
+		DEXLockedBalances:            dexLockedBalances,
+		DEXExpectedToReceiveBalances: dexExpectedToReceiveBalances,
+		DEXSettings:                  dexSettings,
 	}
 }

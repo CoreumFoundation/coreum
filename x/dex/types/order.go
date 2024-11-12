@@ -132,7 +132,7 @@ func (o Order) Validate() error {
 		if _, err := o.ComputeLimitOrderLockedBalance(); err != nil {
 			return err
 		}
-		if _, err := ComputeLimitOrderWhitelistingReservedBalance(
+		if _, err := ComputeLimitOrderExpectedToReceiveBalance(
 			o.Side, o.BaseDenom, o.QuoteDenom, o.Quantity, *o.Price,
 		); err != nil {
 			return err
@@ -237,11 +237,11 @@ func ComputeLimitOrderLockedBalance(
 	return sdk.NewCoin(baseDenom, quantity), nil
 }
 
-// ComputeLimitOrderWhitelistingReservedBalance computes the limit order whitelisting reserved balance.
-func ComputeLimitOrderWhitelistingReservedBalance(
+// ComputeLimitOrderExpectedToReceiveBalance computes the limit order expected to receive balance.
+func ComputeLimitOrderExpectedToReceiveBalance(
 	side Side, baseDenom, quoteDenom string, quantity sdkmath.Int, price Price,
 ) (sdk.Coin, error) {
-	amt, err := ComputeLimitOrderWhitelistingReservedAmount(side, quantity, price)
+	amt, err := ComputeLimitOrderExpectedToReceiveAmount(side, quantity, price)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
@@ -253,8 +253,8 @@ func ComputeLimitOrderWhitelistingReservedBalance(
 	return sdk.NewCoin(quoteDenom, amt), nil
 }
 
-// ComputeLimitOrderWhitelistingReservedAmount computes the limit order whitelisting reserved amount.
-func ComputeLimitOrderWhitelistingReservedAmount(
+// ComputeLimitOrderExpectedToReceiveAmount computes the limit order expected to receive amount.
+func ComputeLimitOrderExpectedToReceiveAmount(
 	side Side, quantity sdkmath.Int, price Price,
 ) (sdkmath.Int, error) {
 	if side == SIDE_BUY {

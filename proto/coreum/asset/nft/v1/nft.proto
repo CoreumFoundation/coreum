@@ -20,8 +20,8 @@ message ClassDefinition {
   string id = 1 [(gogoproto.customname) = "ID"];
   string issuer = 2;
   repeated ClassFeature features = 3;
-  // royalty_rate is a number between 0 and 1,which will be used in coreum native Dex.
-  // whenever an NFT this class is traded on the Dex, the traded amount will be multiplied by this value
+  // royalty_rate is a number between 0 and 1,which will be used in coreum native DEX.
+  // whenever an NFT this class is traded on the DEX, the traded amount will be multiplied by this value
   // that will be transferred to the issuer of the NFT.
   string royalty_rate = 4 [
     (gogoproto.nullable) = false,
@@ -40,8 +40,8 @@ message Class {
   string uri_hash = 7 [(gogoproto.customname) = "URIHash"];
   google.protobuf.Any data = 8;
   repeated ClassFeature features = 9;
-  // royalty_rate is a number between 0 and 1,which will be used in coreum native Dex.
-  // whenever an NFT this class is traded on the Dex, the traded amount will be multiplied by this value
+  // royalty_rate is a number between 0 and 1,which will be used in coreum native DEX.
+  // whenever an NFT this class is traded on the DEX, the traded amount will be multiplied by this value
   // that will be transferred to the issuer of the NFT.
   string royalty_rate = 10 [
     (gogoproto.nullable) = false,

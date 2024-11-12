@@ -830,13 +830,13 @@ func TestBalanceQuery(t *testing.T) {
 
 	requireT.Equal(
 		assetfttypes.QueryBalanceResponse{
-			Balance:                   sdkmath.NewInt(15),
-			Whitelisted:               whitelistedCoin.Amount,
-			Frozen:                    frozenCoin.Amount,
-			Locked:                    vestingCoin.Amount,
-			LockedInVesting:           vestingCoin.Amount,
-			LockedInDEX:               sdkmath.ZeroInt(),
-			WhitelistingReservedInDex: sdkmath.ZeroInt(),
+			Balance:                sdkmath.NewInt(15),
+			Whitelisted:            whitelistedCoin.Amount,
+			Frozen:                 frozenCoin.Amount,
+			Locked:                 vestingCoin.Amount,
+			LockedInVesting:        vestingCoin.Amount,
+			LockedInDEX:            sdkmath.ZeroInt(),
+			ExpectedToReceiveInDEX: sdkmath.ZeroInt(),
 		}, *ftBalanceRes,
 	)
 
@@ -871,11 +871,11 @@ func TestBalanceQuery(t *testing.T) {
 			Balance:     bankBalanceRes.Balance.Amount,
 			Whitelisted: whitelistedCoin.Amount,
 			// balance is frozen
-			Frozen:                    bankBalanceRes.Balance.Amount,
-			Locked:                    vestingCoin.Amount,
-			LockedInVesting:           vestingCoin.Amount,
-			LockedInDEX:               sdkmath.ZeroInt(),
-			WhitelistingReservedInDex: sdkmath.ZeroInt(),
+			Frozen:                 bankBalanceRes.Balance.Amount,
+			Locked:                 vestingCoin.Amount,
+			LockedInVesting:        vestingCoin.Amount,
+			LockedInDEX:            sdkmath.ZeroInt(),
+			ExpectedToReceiveInDEX: sdkmath.ZeroInt(),
 		}, *ftBalanceRes,
 	)
 }
@@ -1103,13 +1103,13 @@ func TestEmptyBalanceQuery(t *testing.T) {
 
 	requireT.Equal(
 		assetfttypes.QueryBalanceResponse{
-			Balance:                   sdkmath.ZeroInt(),
-			Whitelisted:               sdkmath.ZeroInt(),
-			Frozen:                    sdkmath.ZeroInt(),
-			Locked:                    sdkmath.ZeroInt(),
-			LockedInVesting:           sdkmath.ZeroInt(),
-			LockedInDEX:               sdkmath.ZeroInt(),
-			WhitelistingReservedInDex: sdkmath.ZeroInt(),
+			Balance:                sdkmath.ZeroInt(),
+			Whitelisted:            sdkmath.ZeroInt(),
+			Frozen:                 sdkmath.ZeroInt(),
+			Locked:                 sdkmath.ZeroInt(),
+			LockedInVesting:        sdkmath.ZeroInt(),
+			LockedInDEX:            sdkmath.ZeroInt(),
+			ExpectedToReceiveInDEX: sdkmath.ZeroInt(),
 		}, *resp,
 	)
 }
