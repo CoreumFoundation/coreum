@@ -198,6 +198,7 @@
 - [coreum/dex/v1/event.proto](#coreum/dex/v1/event.proto)
     - [EventOrderClosed](#coreum.dex.v1.EventOrderClosed)
     - [EventOrderCreated](#coreum.dex.v1.EventOrderCreated)
+    - [EventOrderPlaced](#coreum.dex.v1.EventOrderPlaced)
     - [EventOrderReduced](#coreum.dex.v1.EventOrderReduced)
   
 - [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
@@ -4495,7 +4496,11 @@ EventOrderClosed is emitted when the order is closed during matching or manually
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `order` | [Order](#coreum.dex.v1.Order) |  |    |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `uint64 is unique order sequence.`  |
+| `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
+| `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
 
 
 
@@ -4514,7 +4519,30 @@ EventOrderCreated is emitted when the limit order is saved to the order book.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `order` | [Order](#coreum.dex.v1.Order) |  |    |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `uint64 is unique order sequence.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.EventOrderPlaced"></a>
+
+### EventOrderPlaced
+
+```
+EventOrderPlaced is emitted when a new order is placed and new sequence is generated for it.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `uint64 is unique order sequence.`  |
 
 
 
@@ -4535,6 +4563,7 @@ EventOrderReduced is emitted when the order is reduced during the matching.
 | ----- | ---- | ----- | ----------- |
 | `creator` | [string](#string) |  |  `creator is order creator address.`  |
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `uint64 is unique order sequence.`  |
 | `sent_coin` | [string](#string) |  |  `sent_coin is coin sent during matching.`  |
 | `received_coin` | [string](#string) |  |  `received_coin is coin received during matching.`  |
 
