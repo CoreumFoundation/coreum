@@ -25,6 +25,8 @@ var (
 	ErrExtensionCallFailed = sdkerrors.Register(ModuleName, 9, "call to asset extension failed")
 	// ErrDEXSettingsNotFound error for a DEX settings not found in the store.
 	ErrDEXSettingsNotFound = sdkerrors.Register(ModuleName, 10, "DEX settings not found")
-	// ErrDEXLockFailed is returned when DEX lock is failed.
-	ErrDEXLockFailed = sdkerrors.Register(ModuleName, 11, "DEX lock is failed")
+	// ErrDEXInsufficientSpendableBalance is returned when the amount to use for the DEX is more than the user has.
+	ErrDEXInsufficientSpendableBalance = sdkerrors.Register(
+		ModuleName, 11, "DEX insufficient spendable balance",
+	)
 )

@@ -442,7 +442,7 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 		t.Logf("Placement failed, err: %s", err.Error())
 		creator := sdk.MustAccAddressFromBech32(order.Creator)
 		switch {
-		case sdkerrors.IsOf(err, assetfttypes.ErrDEXLockFailed):
+		case sdkerrors.IsOf(err, assetfttypes.ErrDEXInsufficientSpendableBalance):
 			// check that the order can't be placed because of the lack of balance
 			if order.Type != types.ORDER_TYPE_LIMIT {
 				return

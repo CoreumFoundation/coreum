@@ -161,11 +161,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 		lockedBalance, err := orderWithSeq.Order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(lockedBalance))
-		require.NoError(t, testApp.AssetFTKeeper.DEXLock(
+		require.NoError(t, testApp.AssetFTKeeper.DEXIncreaseLocked(
 			sdkCtx, creator, lockedBalance,
 		))
 		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(prams.OrderReserve))
-		require.NoError(t, testApp.AssetFTKeeper.DEXLock(
+		require.NoError(t, testApp.AssetFTKeeper.DEXIncreaseLocked(
 			sdkCtx, creator, orderWithSeq.Order.Reserve,
 		))
 	}
