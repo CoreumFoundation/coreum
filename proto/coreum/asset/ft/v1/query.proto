@@ -144,10 +144,10 @@ message QueryBalanceResponse {
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "LockedInDEX"
   ];
-  string whitelisting_reserved_in_dex = 7 [
+  string expected_to_receive_in_dex = 7 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
-    (gogoproto.customname) = "WhitelistingReservedInDex"
+    (gogoproto.customname) = "ExpectedToReceiveInDEX"
   ];
 }
 

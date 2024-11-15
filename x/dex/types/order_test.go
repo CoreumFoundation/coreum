@@ -168,7 +168,7 @@ func TestOrder_Validate(t *testing.T) {
 			wantErr: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid_whitelisting_reserve_balance_out_or_range",
+			name: "invalid_expected_to_receive_balance_out_or_range",
 			order: func() types.Order {
 				order := validOrder()
 				order.Side = types.SIDE_SELL

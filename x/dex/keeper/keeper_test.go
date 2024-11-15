@@ -335,7 +335,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.NoError(t, err)
 	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(sellLockedBalance))
 	fundOrderReserve(t, testApp, sdkCtx, acc)
-	sellLWhitelistedBalance, err := types.ComputeLimitOrderWhitelistingReservedBalance(
+	sellLWhitelistedBalance, err := types.ComputeLimitOrderExpectedToReceiveBalance(
 		sellOrder.Side, sellOrder.BaseDenom, sellOrder.QuoteDenom, sellOrder.Quantity, *sellOrder.Price,
 	)
 	require.NoError(t, err)
@@ -356,10 +356,10 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 
 	dexLockedBalance := assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, sellLockedBalance.Denom)
 	require.Equal(t, sellLockedBalance.String(), dexLockedBalance.String())
-	dexWhitelistingReservedBalance := assetFTKeeper.GetDEXWhitelistingReservedBalance(
+	dexExpectedToReceiveBalance := assetFTKeeper.GetDEXExpectedToReceivedBalance(
 		sdkCtx, acc, sellLWhitelistedBalance.Denom,
 	)
-	require.Equal(t, sellLWhitelistedBalance.String(), dexWhitelistingReservedBalance.String())
+	require.Equal(t, sellLWhitelistedBalance.String(), dexExpectedToReceiveBalance.String())
 
 	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, sellOrder.ID))
@@ -375,10 +375,10 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, sellLockedBalance.Denom)
 	require.True(t, dexLockedBalance.IsZero())
-	dexWhitelistingReservedBalance = assetFTKeeper.GetDEXWhitelistingReservedBalance(
+	dexExpectedToReceiveBalance = assetFTKeeper.GetDEXExpectedToReceivedBalance(
 		sdkCtx, acc, sellLWhitelistedBalance.Denom,
 	)
-	require.True(t, dexWhitelistingReservedBalance.IsZero())
+	require.True(t, dexExpectedToReceiveBalance.IsZero())
 
 	buyOrder := types.Order{
 		Creator:    acc.String(),
@@ -433,8 +433,8 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
 	require.True(t, dexLockedBalance.IsZero())
-	dexWhitelistingReservedBalance = assetFTKeeper.GetDEXWhitelistingReservedBalance(sdkCtx, acc, buyLockedBalance.Denom)
-	require.True(t, dexWhitelistingReservedBalance.IsZero())
+	dexExpectedToReceiveBalance = assetFTKeeper.GetDEXExpectedToReceivedBalance(sdkCtx, acc, buyLockedBalance.Denom)
+	require.True(t, dexExpectedToReceiveBalance.IsZero())
 
 	// now place both orders to let them match partially
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
@@ -482,8 +482,8 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
 	require.True(t, dexLockedBalance.IsZero())
-	dexWhitelistingReservedBalance = assetFTKeeper.GetDEXWhitelistingReservedBalance(sdkCtx, acc, buyLockedBalance.Denom)
-	require.True(t, dexWhitelistingReservedBalance.IsZero())
+	dexExpectedToReceiveBalance = assetFTKeeper.GetDEXExpectedToReceivedBalance(sdkCtx, acc, buyLockedBalance.Denom)
+	require.True(t, dexExpectedToReceiveBalance.IsZero())
 }
 
 func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {

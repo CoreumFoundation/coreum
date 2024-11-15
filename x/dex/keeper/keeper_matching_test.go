@@ -38,14 +38,14 @@ func (t TestSet) orderReserveTimes(times int64) sdk.Coin {
 
 func TestKeeper_MatchOrders(t *testing.T) {
 	tests := []struct {
-		name                             string
-		balances                         func(testSet TestSet) map[string]sdk.Coins
-		whitelistedBalances              func(testSet TestSet) map[string]sdk.Coins
-		orders                           func(testSet TestSet) []types.Order
-		wantOrders                       func(testSet TestSet) []types.Order
-		wantAvailableBalances            func(testSet TestSet) map[string]sdk.Coins
-		wantWhitelistingReservedBalances func(testSet TestSet) map[string]sdk.Coins
-		wantErrorContains                string
+		name                          string
+		balances                      func(testSet TestSet) map[string]sdk.Coins
+		whitelistedBalances           func(testSet TestSet) map[string]sdk.Coins
+		orders                        func(testSet TestSet) []types.Order
+		wantOrders                    func(testSet TestSet) []types.Order
+		wantAvailableBalances         func(testSet TestSet) map[string]sdk.Coins
+		wantExpectedToReceiveBalances func(testSet TestSet) map[string]sdk.Coins
+		wantErrorContains             string
 	}{
 		// ******************** No matching ********************
 
@@ -4513,7 +4513,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 377),
@@ -4641,7 +4641,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 101)),
 				}
@@ -4727,7 +4727,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 101)),
 				}
@@ -4816,7 +4816,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 3375)),
 				}
@@ -4958,7 +4958,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 3375)),
 				}
@@ -5044,7 +5044,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 25507)),
 				}
@@ -5130,7 +5130,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 2751)),
 				}
@@ -5203,7 +5203,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{}
 			},
 		},
@@ -5322,7 +5322,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc3.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 129000)),
 				}
@@ -5459,7 +5459,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 2125)),
 				}
@@ -5576,7 +5576,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 777),
@@ -5622,7 +5622,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 1000)),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{}
 			},
 		},
@@ -5695,7 +5695,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{}
 			},
 		},
@@ -5737,7 +5737,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 1000)),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{}
 			},
 		},
@@ -5815,7 +5815,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 3760)),
 				}
 			},
-			wantWhitelistingReservedBalances: func(testSet TestSet) map[string]sdk.Coins {
+			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 377)),
 				}
@@ -6006,7 +6006,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 
 			availableBalances := make(map[string]sdk.Coins)
 			lockedBalances := make(map[string]sdk.Coins)
-			whitelistingReservedBalances := make(map[string]sdk.Coins)
+			expectedToReceiveBalances := make(map[string]sdk.Coins)
 			for addr := range tt.balances(testSet) {
 				addrBalances := testApp.BankKeeper.GetAllBalances(sdkCtx, sdk.MustAccAddressFromBech32(addr))
 				addrFTLockedBalances := sdk.NewCoins()
@@ -6018,21 +6018,21 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					addrBalances = addrBalances.Sub(lockedBalance)
 				}
 
-				addrFTWhitelistingReservedBalances := sdk.NewCoins()
+				addrFTExpectedToReceiveBalances := sdk.NewCoins()
 				for denom := range ordersDenoms {
-					addrFTWhitelistingReservedBalance := testApp.AssetFTKeeper.GetDEXWhitelistingReservedBalance(
+					addrFTExpectedToReceiveBalance := testApp.AssetFTKeeper.GetDEXExpectedToReceivedBalance(
 						sdkCtx, sdk.MustAccAddressFromBech32(addr), denom,
 					)
-					addrFTWhitelistingReservedBalances = addrFTWhitelistingReservedBalances.Add(addrFTWhitelistingReservedBalance)
+					addrFTExpectedToReceiveBalances = addrFTExpectedToReceiveBalances.Add(addrFTExpectedToReceiveBalance)
 				}
 
 				availableBalances[addr] = addrBalances
 				lockedBalances[addr] = addrFTLockedBalances
-				whitelistingReservedBalances[addr] = addrFTWhitelistingReservedBalances
+				expectedToReceiveBalances[addr] = addrFTExpectedToReceiveBalances
 			}
 			availableBalances = removeEmptyBalances(availableBalances)
 			lockedBalances = removeEmptyBalances(lockedBalances)
-			whitelistingReservedBalances = removeEmptyBalances(whitelistingReservedBalances)
+			expectedToReceiveBalances = removeEmptyBalances(expectedToReceiveBalances)
 
 			wantAvailableBalances := tt.wantAvailableBalances(testSet)
 			require.True(
@@ -6042,15 +6042,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			)
 
 			// by default must be empty
-			wantWhitelistingReservedBalances := make(map[string]sdk.Coins)
-			if tt.wantWhitelistingReservedBalances != nil {
-				wantWhitelistingReservedBalances = tt.wantWhitelistingReservedBalances(testSet)
+			wantExpectedToReceiveBalances := make(map[string]sdk.Coins)
+			if tt.wantExpectedToReceiveBalances != nil {
+				wantExpectedToReceiveBalances = tt.wantExpectedToReceiveBalances(testSet)
 			}
 
 			require.True(
 				t,
-				reflect.DeepEqual(wantWhitelistingReservedBalances, whitelistingReservedBalances),
-				fmt.Sprintf("want: %v, got: %v", wantWhitelistingReservedBalances, whitelistingReservedBalances),
+				reflect.DeepEqual(wantExpectedToReceiveBalances, expectedToReceiveBalances),
+				fmt.Sprintf("want: %v, got: %v", wantExpectedToReceiveBalances, expectedToReceiveBalances),
 			)
 
 			// check that balance locked in the orders correspond the balance locked in the asset ft
@@ -6341,14 +6341,14 @@ func cancelAllOrdersAndAssertState(
 				fmt.Sprintf("denom: %s, acc: %s, dexLockedBalance: %s", denom, acc, dexLockedBalance.String()),
 			)
 
-			dexWhitelistingReservedBalance := testApp.AssetFTKeeper.GetDEXWhitelistingReservedBalance(
+			dexExpectedToReceiveBalance := testApp.AssetFTKeeper.GetDEXExpectedToReceivedBalance(
 				sdkCtx, sdk.MustAccAddressFromBech32(acc), denom,
 			)
 			require.True(
-				t, dexWhitelistingReservedBalance.IsZero(),
+				t, dexExpectedToReceiveBalance.IsZero(),
 				fmt.Sprintf(
-					"denom: %s, acc: %s, dexWhitelistingReservedBalance: %s",
-					denom, acc, dexWhitelistingReservedBalance.String(),
+					"denom: %s, acc: %s, dexExpectedToReceiveBalance: %s",
+					denom, acc, dexExpectedToReceiveBalance.String(),
 				),
 			)
 

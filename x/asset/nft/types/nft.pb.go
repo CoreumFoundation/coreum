@@ -65,8 +65,8 @@ type ClassDefinition struct {
 	ID       string         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Issuer   string         `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
 	Features []ClassFeature `protobuf:"varint,3,rep,packed,name=features,proto3,enum=coreum.asset.nft.v1.ClassFeature" json:"features,omitempty"`
-	// royalty_rate is a number between 0 and 1,which will be used in coreum native Dex.
-	// whenever an NFT this class is traded on the Dex, the traded amount will be multiplied by this value
+	// royalty_rate is a number between 0 and 1,which will be used in coreum native DEX.
+	// whenever an NFT this class is traded on the DEX, the traded amount will be multiplied by this value
 	// that will be transferred to the issuer of the NFT.
 	RoyaltyRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,4,opt,name=royalty_rate,json=royaltyRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"royalty_rate"`
 }
@@ -136,8 +136,8 @@ type Class struct {
 	URIHash     string         `protobuf:"bytes,7,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
 	Data        *types.Any     `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 	Features    []ClassFeature `protobuf:"varint,9,rep,packed,name=features,proto3,enum=coreum.asset.nft.v1.ClassFeature" json:"features,omitempty"`
-	// royalty_rate is a number between 0 and 1,which will be used in coreum native Dex.
-	// whenever an NFT this class is traded on the Dex, the traded amount will be multiplied by this value
+	// royalty_rate is a number between 0 and 1,which will be used in coreum native DEX.
+	// whenever an NFT this class is traded on the DEX, the traded amount will be multiplied by this value
 	// that will be transferred to the issuer of the NFT.
 	RoyaltyRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,10,opt,name=royalty_rate,json=royaltyRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"royalty_rate"`
 }

@@ -668,7 +668,7 @@ func TestKeeper_Burn(t *testing.T) {
 
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)))
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
-	err = ftKeeper.DEXChecksLimitsAndSend(
+	err = ftKeeper.DEXCheckLimitsAndSend(
 		// denom1 with whitelisting disabled
 		ctx, recipient, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)), sdk.NewCoin(denom1, sdkmath.NewInt(123)),
 	)
@@ -1583,7 +1583,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.NoError(err)
 }
 
-func TestKeeper_WhitelistingReserved(t *testing.T) {
+func TestKeeper_ExpectedToReceive(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -1624,29 +1624,28 @@ func TestKeeper_WhitelistingReserved(t *testing.T) {
 	_, err = ftKeeper.GetToken(ctx, unwhitelistableDenom)
 	requireT.NoError(err)
 
-	// reservation passed but nothing is reserved
-	requireT.NoError(ftKeeper.DEXReserveWhitelisting(
+	// function passed but nothing is reserved
+	requireT.NoError(ftKeeper.DEXIncreaseExpectedToReceive(
 		ctx, recipient, sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(1)),
 	))
-	requireT.True(ftKeeper.GetDEXWhitelistingReservedBalance(ctx, recipient, unwhitelistableDenom).IsZero())
+	requireT.True(ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, unwhitelistableDenom).IsZero())
 
-	// reserve non-existent denom, passes but nothing is reserved
-	nonExistentDenom := types.BuildDenom("nonexist", issuer)
-	requireT.NoError(ftKeeper.DEXReserveWhitelisting(
-		ctx, recipient, sdk.NewCoin(nonExistentDenom, sdkmath.NewInt(10)),
+	// increase for not asset FT denom, passes but nothing is reserved
+	notFTDenom := types.BuildDenom("nonexist", issuer)
+	requireT.NoError(ftKeeper.DEXIncreaseExpectedToReceive(
+		ctx, recipient, sdk.NewCoin(notFTDenom, sdkmath.NewInt(10)),
 	))
 	requireT.True(
-		ftKeeper.GetDEXWhitelistingReservedBalance(ctx, recipient, "nonexist").IsZero(),
+		ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, "nonexist").IsZero(),
 	)
 
-	// reserve and release the whitelisting for the admin, passed but nothing is reserved, because it's prohibited
-	// to whitelist admin
-	requireT.NoError(ftKeeper.DEXReserveWhitelisting(
-		ctx, issuer, sdk.NewCoin(denom, sdkmath.NewInt(10)),
+	// increase and decrease the whitelisting for the admin
+	requireT.NoError(ftKeeper.DEXIncreaseExpectedToReceive(
+		ctx, issuer, sdk.NewCoin(denom, sdkmath.NewInt(10_000)),
 	))
-	requireT.True(ftKeeper.GetDEXWhitelistingReservedBalance(ctx, issuer, denom).IsZero())
-	requireT.NoError(ftKeeper.DEXReleaseWhitelisting(
-		ctx, issuer, sdk.NewCoin(denom, sdkmath.NewInt(10)),
+	requireT.True(ftKeeper.GetDEXExpectedToReceivedBalance(ctx, issuer, denom).IsZero())
+	requireT.NoError(ftKeeper.DEXDecreaseExpectedToReceive(
+		ctx, issuer, sdk.NewCoin(denom, sdkmath.NewInt(10_000)),
 	))
 
 	// set whitelisted balance
@@ -1654,34 +1653,35 @@ func TestKeeper_WhitelistingReserved(t *testing.T) {
 	// whitelist sender and fund
 	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, sender, coinToSend))
 	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, sender, sdk.NewCoins(coinToSend)))
-	// send without the reserve
+	// send without the expected to received balance
 	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, coinToSend))
 	requireT.NoError(bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coinToSend)))
 	// return coin
 	requireT.NoError(bankKeeper.SendCoins(ctx, recipient, sender, sdk.NewCoins(coinToSend)))
-	// reserve
-	coinToReserve := sdk.NewCoin(denom, sdkmath.NewInt(1))
-	requireT.NoError(ftKeeper.DEXReserveWhitelisting(ctx, recipient, coinToReserve))
+	// increase expected to received balance
+	coinToIncreaseExpectedToReceive := sdk.NewCoin(denom, sdkmath.NewInt(1))
+	requireT.NoError(ftKeeper.DEXIncreaseExpectedToReceive(ctx, recipient, coinToIncreaseExpectedToReceive))
 	requireT.Equal(
-		coinToReserve.String(),
-		ftKeeper.GetDEXWhitelistingReservedBalance(ctx, recipient, denom).String(),
+		coinToIncreaseExpectedToReceive.String(),
+		ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, denom).String(),
 	)
-	// try to send with the reserved part
+	// try to send with the increased part
 	requireT.ErrorIs(
 		bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coinToSend)),
 		types.ErrWhitelistedLimitExceeded,
 	)
 
-	// try to reserve more that the balance
+	// try to decrease more that the balance
 	requireT.ErrorIs(
 		cosmoserrors.ErrInsufficientFunds,
-		ftKeeper.DEXReleaseWhitelisting(ctx, recipient, coinToReserve.Add(coinToReserve)),
+		ftKeeper.DEXDecreaseExpectedToReceive(
+			ctx, recipient, coinToIncreaseExpectedToReceive.Add(coinToIncreaseExpectedToReceive),
+		),
 	)
 
-	// release reserved part
-	requireT.NoError(ftKeeper.DEXReleaseWhitelisting(ctx, recipient, coinToReserve))
-	requireT.True(ftKeeper.GetDEXWhitelistingReservedBalance(ctx, recipient, denom).IsZero())
-	// send without released amount
+	requireT.NoError(ftKeeper.DEXDecreaseExpectedToReceive(ctx, recipient, coinToIncreaseExpectedToReceive))
+	requireT.True(ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, denom).IsZero())
+	// send without decreased amount
 	requireT.NoError(bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coinToSend)))
 }
 
@@ -1850,7 +1850,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 		cosmoserrors.ErrInsufficientFunds,
 	)
 	requireT.ErrorIs(
-		ftKeeper.DEXChecksLimitsAndSend(ctx, acc, acc, coinToSend.Add(vestingCoin), sdk.NewInt64Coin(denom1, 1)),
+		ftKeeper.DEXCheckLimitsAndSend(ctx, acc, acc, coinToSend.Add(vestingCoin), sdk.NewInt64Coin(denom1, 1)),
 		types.ErrDEXLockFailed,
 	)
 	// send max allowed amount
@@ -1864,7 +1864,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 		cosmoserrors.ErrInsufficientFunds,
 	)
 	requireT.ErrorIs(
-		ftKeeper.DEXChecksLimitsAndSend(ctx, acc, acc, sdk.NewInt64Coin(denom, 1), sdk.NewInt64Coin(denom1, 1)),
+		ftKeeper.DEXCheckLimitsAndSend(ctx, acc, acc, sdk.NewInt64Coin(denom, 1), sdk.NewInt64Coin(denom1, 1)),
 		types.ErrDEXLockFailed,
 	)
 	// DEX unlock full balance
@@ -1924,7 +1924,7 @@ func TestKeeper_DEXLockAndUnlock(t *testing.T) {
 	// globally unfreeze now and check that we can lock max allowed
 	requireT.NoError(ftKeeper.GloballyUnfreeze(ctx, issuer, denom))
 	requireT.NoError(
-		ftKeeper.DEXChecksLimitsAndSend(ctx, acc, acc, sdk.NewInt64Coin(denom, 350), sdk.NewInt64Coin(denom1, 350)),
+		ftKeeper.DEXCheckLimitsAndSend(ctx, acc, acc, sdk.NewInt64Coin(denom, 350), sdk.NewInt64Coin(denom1, 350)),
 	)
 	requireT.NoError(ftKeeper.DEXLock(ctx, acc, sdk.NewInt64Coin(denom, 350)))
 	// freeze more than balance
@@ -1999,20 +1999,20 @@ func TestKeeper_DEXBlockSmartContracts(t *testing.T) {
 		ftKeeper.DEXIncreaseLimits(ctxFromSmartContract, acc, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin),
 		blockingErr,
 	)
-	// same check for DEXChecksLimitsAndSend
+	// same check for DEXCheckLimitsAndSend
 	requireT.ErrorContains(
-		ftKeeper.DEXChecksLimitsAndSend(ctxFromSmartContract, acc, acc, blockSmartContractCoin, sdk.NewInt64Coin(denom1, 1)),
+		ftKeeper.DEXCheckLimitsAndSend(ctxFromSmartContract, acc, acc, blockSmartContractCoin, sdk.NewInt64Coin(denom1, 1)),
 		blockingErr,
 	)
 	requireT.ErrorContains(
-		ftKeeper.DEXChecksLimitsAndSend(ctxFromSmartContract, acc, acc, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin),
+		ftKeeper.DEXCheckLimitsAndSend(ctxFromSmartContract, acc, acc, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin),
 		blockingErr,
 	)
 
 	// but still allowed to lock by admin
 	testApp.MintAndSendCoin(t, ctxFromSmartContract, issuer, sdk.NewCoins(sdk.NewInt64Coin(denom1, 1)))
 	requireT.NoError(
-		ftKeeper.DEXChecksLimitsAndSend(
+		ftKeeper.DEXCheckLimitsAndSend(
 			ctxFromSmartContract, issuer, issuer, sdk.NewInt64Coin(denom1, 1), blockSmartContractCoin,
 		),
 	)
@@ -2067,7 +2067,7 @@ func TestKeeper_DEXSettings_BlockDEX(t *testing.T) {
 			ctx, acc, sdk.NewInt64Coin(denom1, 50), sdk.NewInt64Coin(ft1Denom, 1),
 		), errStr)
 	requireT.ErrorContains(
-		ftKeeper.DEXChecksLimitsAndSend(
+		ftKeeper.DEXCheckLimitsAndSend(
 			ctx, acc, acc, sdk.NewInt64Coin(denom1, 50), sdk.NewInt64Coin(ft1Denom, 1),
 		), errStr)
 }
@@ -2128,7 +2128,7 @@ func TestKeeper_DEXSettings_WhitelistedDenom(t *testing.T) {
 	errStr := fmt.Sprintf("denom %s not whitelisted for %s", denom2, ft1Denom)
 	requireT.ErrorContains(ftKeeper.DEXIncreaseLimits(ctx, acc, ft1CoinToLock, sdk.NewInt64Coin(denom2, 1)), errStr)
 	requireT.ErrorContains(
-		ftKeeper.DEXChecksLimitsAndSend(ctx, acc, acc, ft1CoinToLock, sdk.NewInt64Coin(denom2, 1)), errStr,
+		ftKeeper.DEXCheckLimitsAndSend(ctx, acc, acc, ft1CoinToLock, sdk.NewInt64Coin(denom2, 1)), errStr,
 	)
 	requireT.NoError(ftKeeper.DEXIncreaseLimits(ctx, acc, ft1CoinToLock, sdk.NewInt64Coin(denom1, 1)))
 

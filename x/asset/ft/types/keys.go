@@ -37,8 +37,8 @@ var (
 	ParamsKey = []byte{0x08}
 	// DEXLockedBalancesKeyPrefix defines the key prefix to track DEX locked balances.
 	DEXLockedBalancesKeyPrefix = []byte{0x09}
-	// DEXWhitelistingReservedBalancesKeyPrefix defines the key prefix to track DEX whitelisting reserved balances.
-	DEXWhitelistingReservedBalancesKeyPrefix = []byte{0x10}
+	// DEXExpectedToReceiveBalancesKeyPrefix defines the key prefix to track DEX expected to receive balances.
+	DEXExpectedToReceiveBalancesKeyPrefix = []byte{0x10}
 	// DEXSettingsKeyPrefix defines the key prefix for the DEX settings.
 	DEXSettingsKeyPrefix = []byte{0x11}
 )
@@ -91,9 +91,9 @@ func CreateDEXLockedBalancesKey(addr []byte) []byte {
 	return store.JoinKeys(DEXLockedBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
-// CreateDEXWhitelistingReservedBalancesKey creates the key for an account's whitelisting reserved balances.
-func CreateDEXWhitelistingReservedBalancesKey(addr []byte) []byte {
-	return store.JoinKeys(DEXWhitelistingReservedBalancesKeyPrefix, address.MustLengthPrefix(addr))
+// CreateDEXExpectedToReceiveBalancesKey creates the key for an account's expected to receive balances.
+func CreateDEXExpectedToReceiveBalancesKey(addr []byte) []byte {
+	return store.JoinKeys(DEXExpectedToReceiveBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
 // CreateDEXSettingsKey creates the key for DEX settings.

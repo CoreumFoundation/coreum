@@ -10,25 +10,25 @@ import (
 
 // TakerCheckLimitsAndSendCoin is the taker coin to check limits send.
 type TakerCheckLimitsAndSendCoin struct {
-	MakerAccNumber               uint64
-	MakerOrderID                 string
-	SendCoin                     sdk.Coin
-	CheckReserveWhitelistingCoin sdk.Coin
+	MakerAccNumber             uint64
+	MakerOrderID               string
+	SendCoin                   sdk.Coin
+	CheckExpectedToReceiveCoin sdk.Coin
 }
 
 // MakerUnlockAndSendCoin is the maker coin to unlock and send.
 type MakerUnlockAndSendCoin struct {
-	MakerAccNumber          uint64
-	MakerOrderID            string
-	UnlockAndSendCoin       sdk.Coin
-	ReleaseWhitelistingCoin sdk.Coin
+	MakerAccNumber                uint64
+	MakerOrderID                  string
+	UnlockAndSendCoin             sdk.Coin
+	DecreaseExpectedToReceiveCoin sdk.Coin
 }
 
 // MakerUnlockCoin is the maker coin to unlock.
 type MakerUnlockCoin struct {
-	MakerAccNumber          uint64
-	UnlockCoin              sdk.Coin
-	ReleaseWhitelistingCoin sdk.Coin
+	MakerAccNumber                uint64
+	UnlockCoin                    sdk.Coin
+	DecreaseExpectedToReceiveCoin sdk.Coin
 }
 
 // MatchingResult is the result of a matching operation.
@@ -71,17 +71,17 @@ func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 func (mr *MatchingResult) RegisterTakerCheckLimitsAndSendCoin(
 	makerAccNumber uint64,
 	makerOrderID string,
-	sendCoin, checkReserveWhitelistingCoin sdk.Coin,
+	sendCoin, checkExpectedToReceiveCoin sdk.Coin,
 ) {
 	if sendCoin.IsZero() {
 		return
 	}
 
 	mr.TakerCheckLimitsAndSend = append(mr.TakerCheckLimitsAndSend, TakerCheckLimitsAndSendCoin{
-		MakerAccNumber:               makerAccNumber,
-		MakerOrderID:                 makerOrderID,
-		SendCoin:                     sendCoin,
-		CheckReserveWhitelistingCoin: checkReserveWhitelistingCoin,
+		MakerAccNumber:             makerAccNumber,
+		MakerOrderID:               makerOrderID,
+		SendCoin:                   sendCoin,
+		CheckExpectedToReceiveCoin: checkExpectedToReceiveCoin,
 	})
 }
 
@@ -89,30 +89,32 @@ func (mr *MatchingResult) RegisterTakerCheckLimitsAndSendCoin(
 func (mr *MatchingResult) RegisterMakerUnlockAndSend(
 	makerAccNumber uint64,
 	makerOrderID string,
-	unlockAndSendCoin, releaseWhitelistingCoin sdk.Coin,
+	unlockAndSendCoin, decreaseExpectedToReceiveCoin sdk.Coin,
 ) {
 	if unlockAndSendCoin.IsZero() {
 		return
 	}
 
 	mr.MakerUnlockAndSend = append(mr.MakerUnlockAndSend, MakerUnlockAndSendCoin{
-		MakerOrderID:            makerOrderID,
-		MakerAccNumber:          makerAccNumber,
-		UnlockAndSendCoin:       unlockAndSendCoin,
-		ReleaseWhitelistingCoin: releaseWhitelistingCoin,
+		MakerOrderID:                  makerOrderID,
+		MakerAccNumber:                makerAccNumber,
+		UnlockAndSendCoin:             unlockAndSendCoin,
+		DecreaseExpectedToReceiveCoin: decreaseExpectedToReceiveCoin,
 	})
 }
 
 // RegisterMakerUnlock sets the maker coin to unlock.
-func (mr *MatchingResult) RegisterMakerUnlock(makerAccNumber uint64, unlockCoin, releaseWhitelistingCoin sdk.Coin) {
+func (mr *MatchingResult) RegisterMakerUnlock(
+	makerAccNumber uint64, unlockCoin, decreaseExpectedToReceiveCoin sdk.Coin,
+) {
 	if unlockCoin.IsZero() {
 		return
 	}
 
 	mr.MakerUnlock = append(mr.MakerUnlock, MakerUnlockCoin{
-		MakerAccNumber:          makerAccNumber,
-		UnlockCoin:              unlockCoin,
-		ReleaseWhitelistingCoin: releaseWhitelistingCoin,
+		MakerAccNumber:                makerAccNumber,
+		UnlockCoin:                    unlockCoin,
+		DecreaseExpectedToReceiveCoin: decreaseExpectedToReceiveCoin,
 	})
 }
 
@@ -196,7 +198,7 @@ func (k Keeper) applyMatchingResultTakerCheckLimitsAndSend(
 		if err != nil {
 			return err
 		}
-		accsToCoins.Add(makerAddr, item.SendCoin, item.CheckReserveWhitelistingCoin)
+		accsToCoins.Add(makerAddr, item.SendCoin, item.CheckExpectedToReceiveCoin)
 
 		// init event
 		mr.MakerOrderReducedEvents = append(mr.MakerOrderReducedEvents, types.EventOrderReduced{
@@ -207,7 +209,7 @@ func (k Keeper) applyMatchingResultTakerCheckLimitsAndSend(
 		mr.TakerOrderReducedEvent.SentCoin = mr.TakerOrderReducedEvent.SentCoin.Add(item.SendCoin)
 	}
 	for _, accToCoins := range accsToCoins.mapping {
-		if err := k.checksFTLimitsAndSend(
+		if err := k.checkFTLimitsAndSend(
 			ctx, mr.TakerAddress, accToCoins.AccAddress, accToCoins.Coin1, accToCoins.Coin2,
 		); err != nil {
 			return err
@@ -228,7 +230,7 @@ func (k Keeper) applyMatchingResultMakerUnlockAndSend(
 		if err != nil {
 			return err
 		}
-		accsToCoins.Add(makerAddr, item.UnlockAndSendCoin, item.ReleaseWhitelistingCoin)
+		accsToCoins.Add(makerAddr, item.UnlockAndSendCoin, item.DecreaseExpectedToReceiveCoin)
 
 		// add sent part
 		for i := range mr.MakerOrderReducedEvents {
@@ -263,7 +265,7 @@ func (k Keeper) applyMatchingResultMakerUnlock(
 		if err != nil {
 			return err
 		}
-		accsToCoins.Add(makerAddr, item.UnlockCoin, item.ReleaseWhitelistingCoin)
+		accsToCoins.Add(makerAddr, item.UnlockCoin, item.DecreaseExpectedToReceiveCoin)
 	}
 
 	for _, accToCoins := range accsToCoins.mapping {

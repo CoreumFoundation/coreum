@@ -114,11 +114,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 			})
 	}
 
-	// DEX whitelisting reserved balances
-	var dexWhitelistingReservedBalances []types.Balance
+	// DEX expected to receive balances
+	var dexExpectedToReceiveBalances []types.Balance
 	for i := 0; i < 3; i++ {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-		dexWhitelistingReservedBalances = append(dexWhitelistingReservedBalances,
+		dexExpectedToReceiveBalances = append(dexExpectedToReceiveBalances,
 			types.Balance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
@@ -147,14 +147,14 @@ func TestInitAndExportGenesis(t *testing.T) {
 		})
 
 	genState := types.GenesisState{
-		Params:                          types.DefaultParams(),
-		Tokens:                          tokens,
-		FrozenBalances:                  frozenBalances,
-		WhitelistedBalances:             whitelistedBalances,
-		PendingTokenUpgrades:            pendingTokenUpgrades,
-		DEXLockedBalances:               dexLockedBalances,
-		DEXWhitelistingReservedBalances: dexWhitelistingReservedBalances,
-		DEXSettings:                     dexSettings,
+		Params:                       types.DefaultParams(),
+		Tokens:                       tokens,
+		FrozenBalances:               frozenBalances,
+		WhitelistedBalances:          whitelistedBalances,
+		PendingTokenUpgrades:         pendingTokenUpgrades,
+		DEXLockedBalances:            dexLockedBalances,
+		DEXExpectedToReceiveBalances: dexExpectedToReceiveBalances,
+		DEXSettings:                  dexSettings,
 	}
 
 	// init the keeper
@@ -201,11 +201,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
-	// DEX whitelisting reserved balances
-	for _, balance := range dexWhitelistingReservedBalances {
+	// DEX expected to receive balances
+	for _, balance := range dexExpectedToReceiveBalances {
 		address, err := sdk.AccAddressFromBech32(balance.Address)
 		requireT.NoError(err)
-		coins, _, err := ftKeeper.GetDEXWhitelistingReservedBalances(ctx, address, nil)
+		coins, _, err := ftKeeper.GetDEXExpectedToReceiveBalances(ctx, address, nil)
 		requireT.NoError(err)
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
@@ -225,7 +225,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	assertT.ElementsMatch(genState.PendingTokenUpgrades, exportedGenState.PendingTokenUpgrades)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)
-	assertT.ElementsMatch(genState.DEXWhitelistingReservedBalances, exportedGenState.DEXWhitelistingReservedBalances)
+	assertT.ElementsMatch(genState.DEXExpectedToReceiveBalances, exportedGenState.DEXExpectedToReceiveBalances)
 	assertT.ElementsMatch(genState.DEXLockedBalances, exportedGenState.DEXLockedBalances)
 	assertT.ElementsMatch(genState.DEXSettings, exportedGenState.DEXSettings)
 }

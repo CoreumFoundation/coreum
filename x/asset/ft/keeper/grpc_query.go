@@ -38,7 +38,7 @@ type QueryKeeper interface {
 	) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetDEXWhitelistingReservedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetDEXExpectedToReceivedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error)
 }
 
@@ -123,19 +123,19 @@ func (qs QueryService) Balance(
 	denom := req.GetDenom()
 	vestingLocked := qs.bankKeeper.LockedCoins(ctx, account).AmountOf(denom)
 	dexLocked := qs.keeper.GetDEXLockedBalance(sdk.UnwrapSDKContext(ctx), account, denom).Amount
-	whitelistingReservedInDex := qs.keeper.GetDEXWhitelistingReservedBalance(
+	expectedToReceiveInDex := qs.keeper.GetDEXExpectedToReceivedBalance(
 		sdk.UnwrapSDKContext(ctx), account, denom,
 	).Amount
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	return &types.QueryBalanceResponse{
-		Balance:                   qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
-		Whitelisted:               qs.keeper.GetWhitelistedBalance(sdkCtx, account, denom).Amount,
-		Frozen:                    qs.keeper.GetFrozenBalance(sdkCtx, account, denom).Amount,
-		Locked:                    vestingLocked.Add(dexLocked),
-		LockedInVesting:           vestingLocked,
-		LockedInDEX:               dexLocked,
-		WhitelistingReservedInDex: whitelistingReservedInDex,
+		Balance:                qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
+		Whitelisted:            qs.keeper.GetWhitelistedBalance(sdkCtx, account, denom).Amount,
+		Frozen:                 qs.keeper.GetFrozenBalance(sdkCtx, account, denom).Amount,
+		Locked:                 vestingLocked.Add(dexLocked),
+		LockedInVesting:        vestingLocked,
+		LockedInDEX:            dexLocked,
+		ExpectedToReceiveInDEX: expectedToReceiveInDex,
 	}, nil
 }
 
