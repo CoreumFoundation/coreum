@@ -843,7 +843,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
-	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
+	requireT.ErrorContains(err, assetfttypes.ErrDEXInsufficientSpendableBalance.Error())
 
 	balanceRes, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
@@ -1487,7 +1487,7 @@ func TestLimitOrdersMatchingWithStaking(t *testing.T) {
 		chain.TxFactoryAuto(),
 		placeSellOrderMsg,
 	)
-	requireT.ErrorContains(err, assetfttypes.ErrDEXLockFailed.Error())
+	requireT.ErrorContains(err, assetfttypes.ErrDEXInsufficientSpendableBalance.Error())
 
 	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
 		Amount: delegateAmount.Add(sdkmath.NewInt(100_000)),

@@ -607,12 +607,6 @@ func (k Keeper) createOrder(
 		"record", record.String(),
 	)
 
-	var err error
-	record, err = k.lockRequiredBalances(ctx, params, order, record)
-	if err != nil {
-		return err
-	}
-
 	if err := k.incrementAccountDenomsOrdersCounter(
 		ctx,
 		record.AccountNumber,
@@ -631,7 +625,6 @@ func (k Keeper) createOrder(
 	if params.OrderReserve.IsPositive() {
 		order.Reserve = params.OrderReserve
 	}
-
 	order.RemainingQuantity = record.RemainingQuantity
 	order.RemainingBalance = record.RemainingBalance
 
@@ -710,7 +703,7 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 
 func (k Keeper) removeOrderByRecord(
 	ctx sdk.Context,
-	acc sdk.AccAddress,
+	creator sdk.AccAddress,
 	record types.OrderBookRecord,
 ) error {
 	k.logger(ctx).Debug(
@@ -733,13 +726,6 @@ func (k Keeper) removeOrderByRecord(
 	}
 	k.removeOrderData(ctx, record.OrderSeq)
 
-	// unlock the reserve is present
-	if orderData.Reserve.IsPositive() {
-		if err := k.unlockFT(ctx, acc, orderData.Reserve); err != nil {
-			return err
-		}
-	}
-
 	if err := k.removeOrderIDToSeq(ctx, record.AccountNumber, record.OrderID); err != nil {
 		return err
 	}
@@ -759,7 +745,7 @@ func (k Keeper) removeOrderByRecord(
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventOrderClosed{
 		Order: types.Order{
-			Creator:           acc.String(),
+			Creator:           creator.String(),
 			Type:              types.ORDER_TYPE_LIMIT,
 			ID:                record.OrderID,
 			BaseDenom:         orderBookData.BaseDenom,
@@ -802,7 +788,7 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 		return err
 	}
 
-	unlockCoin := sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance)
+	lockedCoins := sdk.NewCoins(sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance))
 	expectedToReceiveCoin, err := types.ComputeLimitOrderExpectedToReceiveBalance(
 		order.Side, order.BaseDenom, order.QuoteDenom, record.RemainingQuantity, *order.Price,
 	)
@@ -810,8 +796,13 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 		return err
 	}
 
-	return k.decreaseFTLimits(
-		ctx, acc, unlockCoin, expectedToReceiveCoin,
+	// unlock the reserve if present
+	if order.Reserve.IsPositive() {
+		lockedCoins = lockedCoins.Add(order.Reserve)
+	}
+
+	return k.assetFTKeeper.DEXDecreaseLimits(
+		ctx, acc, lockedCoins, expectedToReceiveCoin,
 	)
 }
 

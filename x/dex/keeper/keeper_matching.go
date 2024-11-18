@@ -39,6 +39,7 @@ func (k Keeper) matchOrder(
 	if err != nil {
 		return err
 	}
+	accNumberToAddCache := make(map[uint64]sdk.AccAddress)
 	for {
 		makerRecord, matches, err := mf.Next()
 		if err != nil {
@@ -47,7 +48,7 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		stop, err := k.matchRecords(ctx, mr, &takerRecord, &makerRecord, order)
+		stop, err := k.matchRecords(ctx, mr, &takerRecord, &makerRecord, order, accNumberToAddCache)
 		if err != nil {
 			return err
 		}
@@ -60,14 +61,18 @@ func (k Keeper) matchOrder(
 	case types.ORDER_TYPE_LIMIT:
 		switch order.TimeInForce {
 		case types.TIME_IN_FORCE_GTC:
+			if err := mr.IncreaseTakerLimitsForRecord(params, order, &takerRecord); err != nil {
+				return err
+			}
 			// create new order with the updated record
 			if err := k.applyMatchingResult(ctx, mr); err != nil {
 				return err
 			}
-			if takerRecord.RemainingBalance.IsPositive() {
-				return k.createOrder(ctx, params, order, takerRecord)
+			if takerRecord.RemainingBalance.IsZero() {
+				return nil
 			}
-			return nil
+
+			return k.createOrder(ctx, params, order, takerRecord)
 		case types.TIME_IN_FORCE_IOC:
 			return k.applyMatchingResult(ctx, mr)
 		case types.TIME_IN_FORCE_FOK:
@@ -154,6 +159,7 @@ func (k Keeper) matchRecords(
 	mr *MatchingResult,
 	takerRecord, makerRecord *types.OrderBookRecord,
 	order types.Order,
+	accNumberToAddCache map[uint64]sdk.AccAddress,
 ) (bool, error) {
 	recordToClose, recordToReduce := k.getRecordToCloseAndReduce(ctx, takerRecord, makerRecord)
 	k.logger(ctx).Debug(
@@ -177,31 +183,36 @@ func (k Keeper) matchRecords(
 
 	recordToCloseRemainingQuantity := recordToClose.RemainingQuantity.Sub(recordToCloseReducedQuantity)
 	if recordToClose.IsMaker() {
-		mr.RegisterTakerCheckLimitsAndSendCoin(
-			recordToClose.AccountNumber, recordToClose.OrderID, recordToCloseReceiveCoin, recordToReduceReceiveCoin,
+		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToClose.AccountNumber, accNumberToAddCache)
+		if err != nil {
+			return false, err
+		}
+		mr.TakerSend(
+			makerAddr, recordToClose.OrderID, recordToCloseReceiveCoin,
 		)
-		mr.RegisterMakerUnlockAndSend(
-			recordToClose.AccountNumber, recordToClose.OrderID, recordToReduceReceiveCoin, recordToCloseReceiveCoin,
+		mr.MakerSend(
+			makerAddr, recordToClose.OrderID, recordToReduceReceiveCoin,
 		)
-		unlockCoin := sdk.NewCoin(
-			recordToReduceReceiveCoin.Denom, recordToClose.RemainingBalance.Sub(recordToReduceReceiveCoin.Amount),
-		)
-		expectedToReceiveAmt, err := types.ComputeLimitOrderExpectedToReceiveAmount(
-			recordToClose.Side, recordToCloseRemainingQuantity, recordToClose.Price,
+
+		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoins(
+			ctx, recordToReduceReceiveCoin, recordToClose, recordToCloseRemainingQuantity, recordToCloseReceiveCoin,
 		)
 		if err != nil {
 			return false, err
 		}
-		mr.RegisterMakerUnlock(
-			recordToClose.AccountNumber, unlockCoin, sdk.NewCoin(recordToCloseReceiveCoin.Denom, expectedToReceiveAmt),
-		)
-		mr.RegisterMakerRemoveRecord(recordToClose)
+
+		mr.DecreaseMakerLimits(makerAddr, lockedCoins, expectedToReceiveCoin)
+		mr.RemoveRecord(makerAddr, recordToClose)
 	} else {
-		mr.RegisterTakerCheckLimitsAndSendCoin(
-			recordToReduce.AccountNumber, recordToReduce.OrderID, recordToReduceReceiveCoin, recordToCloseReceiveCoin,
+		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToReduce.AccountNumber, accNumberToAddCache)
+		if err != nil {
+			return false, err
+		}
+		mr.TakerSend(
+			makerAddr, recordToReduce.OrderID, recordToReduceReceiveCoin,
 		)
-		mr.RegisterMakerUnlockAndSend(
-			recordToReduce.AccountNumber, recordToReduce.OrderID, recordToCloseReceiveCoin, recordToReduceReceiveCoin,
+		mr.MakerSend(
+			makerAddr, recordToReduce.OrderID, recordToCloseReceiveCoin,
 		)
 	}
 
@@ -224,8 +235,38 @@ func (k Keeper) matchRecords(
 		return false, nil
 	}
 
-	mr.RegisterMakerUpdateRecord(*makerRecord)
+	mr.UpdateRecord(*makerRecord)
 	return true, nil
+}
+
+func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(
+	ctx sdk.Context,
+	recordToReduceReceiveCoin sdk.Coin,
+	recordToClose *types.OrderBookRecord,
+	recordToCloseRemainingQuantity sdkmath.Int,
+	recordToCloseReceiveCoin sdk.Coin,
+) (sdk.Coins, sdk.Coin, error) {
+	lockedCoins := sdk.NewCoins(sdk.NewCoin(
+		recordToReduceReceiveCoin.Denom, recordToClose.RemainingBalance.Sub(recordToReduceReceiveCoin.Amount),
+	))
+	// get the record data to unlock the reserve if present
+	recordToCloseOrderData, err := k.getOrderData(ctx, recordToClose.OrderSeq)
+	if err != nil {
+		return nil, sdk.Coin{}, err
+	}
+	if recordToCloseOrderData.Reserve.IsPositive() {
+		lockedCoins = lockedCoins.Add(recordToCloseOrderData.Reserve)
+	}
+
+	expectedToReceiveAmt, err := types.ComputeLimitOrderExpectedToReceiveAmount(
+		recordToClose.Side, recordToCloseRemainingQuantity, recordToClose.Price,
+	)
+	if err != nil {
+		return nil, sdk.Coin{}, err
+	}
+	expectedToReceiveCoin := sdk.NewCoin(recordToCloseReceiveCoin.Denom, expectedToReceiveAmt)
+
+	return lockedCoins, expectedToReceiveCoin, nil
 }
 
 func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRecord *types.OrderBookRecord) (
@@ -255,49 +296,6 @@ func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRec
 	}
 
 	return recordToClose, recordToReduce
-}
-
-func (k Keeper) lockRequiredBalances(
-	ctx sdk.Context, params types.Params, order types.Order, takerRecord types.OrderBookRecord,
-) (types.OrderBookRecord, error) {
-	creatorAddr, err := sdk.AccAddressFromBech32(order.Creator)
-	if err != nil {
-		return types.OrderBookRecord{}, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
-	}
-	// recompute the min required balance to be locked based on record remaining quantity
-	lockCoin, err := types.ComputeLimitOrderLockedBalance(
-		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, *order.Price,
-	)
-	if err != nil {
-		return types.OrderBookRecord{}, err
-	}
-	expectedToReceiveCoin, err := types.ComputeLimitOrderExpectedToReceiveBalance(
-		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, *order.Price,
-	)
-	if err != nil {
-		return types.OrderBookRecord{}, err
-	}
-
-	// lock reserve if positive
-	if params.OrderReserve.IsPositive() {
-		// don't check for the DEX FT limits since it's independent of the trading limits
-		if err := k.lockFT(ctx, creatorAddr, params.OrderReserve); err != nil {
-			return types.OrderBookRecord{},
-				sdkerrors.Wrapf(err, "failed to lock order reserve: %s", params.OrderReserve.String())
-		}
-	}
-
-	if err := k.increaseFTLimits(
-		ctx,
-		creatorAddr,
-		lockCoin,
-		expectedToReceiveCoin,
-	); err != nil {
-		return types.OrderBookRecord{}, err
-	}
-	takerRecord.RemainingBalance = lockCoin.Amount
-
-	return takerRecord, nil
 }
 
 func getRecordsReceiveCoins(

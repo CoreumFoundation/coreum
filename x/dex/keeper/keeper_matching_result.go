@@ -4,43 +4,27 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/samber/lo"
 
+	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-// TakerCheckLimitsAndSendCoin is the taker coin to check limits send.
-type TakerCheckLimitsAndSendCoin struct {
-	MakerAccNumber             uint64
-	MakerOrderID               string
-	SendCoin                   sdk.Coin
-	CheckExpectedToReceiveCoin sdk.Coin
-}
-
-// MakerUnlockAndSendCoin is the maker coin to unlock and send.
-type MakerUnlockAndSendCoin struct {
-	MakerAccNumber                uint64
-	MakerOrderID                  string
-	UnlockAndSendCoin             sdk.Coin
-	DecreaseExpectedToReceiveCoin sdk.Coin
-}
-
-// MakerUnlockCoin is the maker coin to unlock.
-type MakerUnlockCoin struct {
-	MakerAccNumber                uint64
-	UnlockCoin                    sdk.Coin
-	DecreaseExpectedToReceiveCoin sdk.Coin
+// RecordToAddress is acc address mapped to record.
+type RecordToAddress struct {
+	Address sdk.AccAddress
+	Record  *types.OrderBookRecord
 }
 
 // MatchingResult is the result of a matching operation.
 type MatchingResult struct {
 	TakerAddress            sdk.AccAddress
+	FTActions               assetfttypes.DEXActions
 	TakerOrderReducedEvent  types.EventOrderReduced
-	TakerCheckLimitsAndSend []TakerCheckLimitsAndSendCoin
-	MakerUnlockAndSend      []MakerUnlockAndSendCoin
-	MakerUnlock             []MakerUnlockCoin
-	MakerRemoveRecords      []*types.OrderBookRecord
 	MakerOrderReducedEvents []types.EventOrderReduced
-	MakerUpdateRecord       *types.OrderBookRecord
+
+	RecordsToRemove []RecordToAddress
+	RecordToUpdate  *types.OrderBookRecord
 }
 
 // NewMatchingResult creates a new MatchingResult.
@@ -50,250 +34,187 @@ func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
 	}
 
+	var orderStrPrice *string
+	if order.Price != nil {
+		orderStrPrice = lo.ToPtr(order.Price.String())
+	}
+
 	return &MatchingResult{
 		TakerAddress: takerAddress,
+		FTActions: assetfttypes.NewDEXActions(
+			assetfttypes.DEXOrder{
+				Creator:    takerAddress,
+				Type:       order.Type.String(),
+				ID:         order.ID,
+				BaseDenom:  order.BaseDenom,
+				QuoteDenom: order.QuoteDenom,
+				Price:      orderStrPrice,
+				Quantity:   order.Quantity,
+				Side:       order.Side.String(),
+			},
+		),
 		TakerOrderReducedEvent: types.EventOrderReduced{
 			Creator:      order.Creator,
 			ID:           order.ID,
 			SentCoin:     sdk.NewCoin(order.GetSpendDenom(), sdkmath.ZeroInt()),
 			ReceivedCoin: sdk.NewCoin(order.GetReceiveDenom(), sdkmath.ZeroInt()),
 		},
-		TakerCheckLimitsAndSend: make([]TakerCheckLimitsAndSendCoin, 0),
-		MakerUnlockAndSend:      make([]MakerUnlockAndSendCoin, 0),
-		MakerUnlock:             make([]MakerUnlockCoin, 0),
-		MakerRemoveRecords:      make([]*types.OrderBookRecord, 0),
 		MakerOrderReducedEvents: make([]types.EventOrderReduced, 0),
-		MakerUpdateRecord:       nil,
+		RecordsToRemove:         make([]RecordToAddress, 0),
+		RecordToUpdate:          nil,
 	}, nil
 }
 
-// RegisterTakerCheckLimitsAndSendCoin sets the taker coin to check limits and send.
-func (mr *MatchingResult) RegisterTakerCheckLimitsAndSendCoin(
-	makerAccNumber uint64,
+// TakerSend registers the coin to send from taker to maker.
+func (mr *MatchingResult) TakerSend(makerAddr sdk.AccAddress, makerOrderID string, coin sdk.Coin) {
+	if coin.IsZero() {
+		return
+	}
+
+	mr.FTActions.AddCreatorExpectedToSpend(coin)
+	mr.FTActions.AddSend(mr.TakerAddress, makerAddr, coin)
+	mr.FTActions.AddDecreaseExpectedToReceive(makerAddr, coin)
+
+	mr.updateTakerSendEvents(makerAddr, makerOrderID, coin)
+}
+
+// MakerSend registers the coin to send from maker to taker.
+func (mr *MatchingResult) MakerSend(makerAddr sdk.AccAddress, makerOrderID string, coin sdk.Coin) {
+	if coin.IsZero() {
+		return
+	}
+
+	// call `AddCreatorExpectedToReceive` but don't call AddIncreaseExpectedToReceive since
+	// `AddIncreaseExpectedToReceive` is used for the state after the matching, but CreatorExpectedToReceive before
+	mr.FTActions.AddCreatorExpectedToReceive(coin)
+	mr.FTActions.AddDecreaseLocked(makerAddr, coin)
+	mr.FTActions.AddSend(makerAddr, mr.TakerAddress, coin)
+
+	mr.updateMakerSendEvents(makerAddr, makerOrderID, coin)
+}
+
+// DecreaseMakerLimits registers the coins to unlock and decrease expected to receive.
+func (mr *MatchingResult) DecreaseMakerLimits(
+	makerAddr sdk.AccAddress,
+	lockedCoins sdk.Coins, expectedToReceiveCoin sdk.Coin,
+) {
+	for _, coin := range lockedCoins {
+		if coin.IsZero() {
+			continue
+		}
+		mr.FTActions.AddDecreaseLocked(makerAddr, coin)
+	}
+
+	if !expectedToReceiveCoin.IsZero() {
+		mr.FTActions.AddDecreaseExpectedToReceive(makerAddr, expectedToReceiveCoin)
+	}
+}
+
+// IncreaseTakerLimitsForRecord increase required limits for the taker record.
+func (mr *MatchingResult) IncreaseTakerLimitsForRecord(
+	params types.Params,
+	order types.Order,
+	takerRecord *types.OrderBookRecord,
+) error {
+	// if the order is filled fully
+	if takerRecord.RemainingBalance.IsZero() {
+		return nil
+	}
+
+	lockedCoin, err := types.ComputeLimitOrderLockedBalance(
+		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, *order.Price,
+	)
+	if err != nil {
+		return err
+	}
+	// update taker record with the remaining balance
+	takerRecord.RemainingBalance = lockedCoin.Amount
+
+	mr.FTActions.AddCreatorExpectedToSpend(lockedCoin)
+	mr.FTActions.AddIncreaseLocked(mr.TakerAddress, lockedCoin)
+
+	expectedToReceiveCoin, err := types.ComputeLimitOrderExpectedToReceiveBalance(
+		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, *order.Price,
+	)
+	if err != nil {
+		return err
+	}
+	mr.FTActions.AddCreatorExpectedToReceive(expectedToReceiveCoin)
+	mr.FTActions.AddIncreaseExpectedToReceive(mr.TakerAddress, expectedToReceiveCoin)
+
+	// lock reserve if is set
+	if params.OrderReserve.IsPositive() {
+		// lock but don't increase expected to receive
+		mr.FTActions.AddIncreaseLocked(mr.TakerAddress, params.OrderReserve)
+	}
+
+	return nil
+}
+
+// RemoveRecord registers the record to remove.
+func (mr *MatchingResult) RemoveRecord(creator sdk.AccAddress, record *types.OrderBookRecord) {
+	mr.RecordsToRemove = append(mr.RecordsToRemove, RecordToAddress{
+		Address: creator,
+		Record:  record,
+	})
+}
+
+// UpdateRecord registers the record to update.
+func (mr *MatchingResult) UpdateRecord(record types.OrderBookRecord) {
+	mr.RecordToUpdate = &record
+}
+
+func (mr *MatchingResult) updateTakerSendEvents(
+	makerAddr sdk.AccAddress,
 	makerOrderID string,
-	sendCoin, checkExpectedToReceiveCoin sdk.Coin,
+	coin sdk.Coin,
 ) {
-	if sendCoin.IsZero() {
-		return
-	}
-
-	mr.TakerCheckLimitsAndSend = append(mr.TakerCheckLimitsAndSend, TakerCheckLimitsAndSendCoin{
-		MakerAccNumber:             makerAccNumber,
-		MakerOrderID:               makerOrderID,
-		SendCoin:                   sendCoin,
-		CheckExpectedToReceiveCoin: checkExpectedToReceiveCoin,
+	mr.TakerOrderReducedEvent.SentCoin = mr.TakerOrderReducedEvent.SentCoin.Add(coin)
+	mr.MakerOrderReducedEvents = append(mr.MakerOrderReducedEvents, types.EventOrderReduced{
+		Creator:      makerAddr.String(),
+		ID:           makerOrderID,
+		ReceivedCoin: coin,
 	})
 }
 
-// RegisterMakerUnlockAndSend sets the maker coin to unlock and send.
-func (mr *MatchingResult) RegisterMakerUnlockAndSend(
-	makerAccNumber uint64,
+func (mr *MatchingResult) updateMakerSendEvents(
+	makerAddr sdk.AccAddress,
 	makerOrderID string,
-	unlockAndSendCoin, decreaseExpectedToReceiveCoin sdk.Coin,
+	coin sdk.Coin,
 ) {
-	if unlockAndSendCoin.IsZero() {
-		return
-	}
-
-	mr.MakerUnlockAndSend = append(mr.MakerUnlockAndSend, MakerUnlockAndSendCoin{
-		MakerOrderID:                  makerOrderID,
-		MakerAccNumber:                makerAccNumber,
-		UnlockAndSendCoin:             unlockAndSendCoin,
-		DecreaseExpectedToReceiveCoin: decreaseExpectedToReceiveCoin,
-	})
-}
-
-// RegisterMakerUnlock sets the maker coin to unlock.
-func (mr *MatchingResult) RegisterMakerUnlock(
-	makerAccNumber uint64, unlockCoin, decreaseExpectedToReceiveCoin sdk.Coin,
-) {
-	if unlockCoin.IsZero() {
-		return
-	}
-
-	mr.MakerUnlock = append(mr.MakerUnlock, MakerUnlockCoin{
-		MakerAccNumber:                makerAccNumber,
-		UnlockCoin:                    unlockCoin,
-		DecreaseExpectedToReceiveCoin: decreaseExpectedToReceiveCoin,
-	})
-}
-
-// RegisterMakerRemoveRecord sets the record to remove.
-func (mr *MatchingResult) RegisterMakerRemoveRecord(record *types.OrderBookRecord) {
-	mr.MakerRemoveRecords = append(mr.MakerRemoveRecords, record)
-}
-
-// RegisterMakerUpdateRecord sets the record to update.
-func (mr *MatchingResult) RegisterMakerUpdateRecord(record types.OrderBookRecord) {
-	mr.MakerUpdateRecord = &record
-}
-
-type accountToCoinsMapping struct {
-	AccAddress sdk.AccAddress
-	Coin1      sdk.Coin
-	Coin2      sdk.Coin
-}
-
-type accountsToCoins struct {
-	mapping []accountToCoinsMapping
-}
-
-func newAccountsToCoins() *accountsToCoins {
-	return &accountsToCoins{
-		mapping: make([]accountToCoinsMapping, 0),
-	}
-}
-
-func (a *accountsToCoins) Add(acc sdk.AccAddress, coin1, coin2 sdk.Coin) {
-	for i := range a.mapping {
-		if a.mapping[i].AccAddress.String() == acc.String() {
-			a.mapping[i].Coin1 = a.mapping[i].Coin1.Add(coin1)
-			a.mapping[i].Coin2 = a.mapping[i].Coin2.Add(coin2)
-			return
+	mr.TakerOrderReducedEvent.ReceivedCoin = mr.TakerOrderReducedEvent.ReceivedCoin.Add(coin)
+	for i := range mr.MakerOrderReducedEvents {
+		// find corresponding event created by `updateTakerSendEvents`
+		if mr.MakerOrderReducedEvents[i].Creator == makerAddr.String() && mr.MakerOrderReducedEvents[i].ID == makerOrderID {
+			mr.MakerOrderReducedEvents[i].SentCoin = coin
+			break
 		}
 	}
-	a.mapping = append(a.mapping, accountToCoinsMapping{
-		AccAddress: acc,
-		Coin1:      coin1,
-		Coin2:      coin2,
-	})
 }
 
 func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
-	accCache := make(map[uint64]sdk.AccAddress)
+	// if matched passed but no changes are applied return
+	if mr.FTActions.CreatorExpectedToSpend.IsNil() {
+		return nil
+	}
 
-	if err := k.applyMatchingResultTakerCheckLimitsAndSend(ctx, mr, accCache); err != nil {
+	if err := k.assetFTKeeper.DEXExecuteActions(ctx, mr.FTActions); err != nil {
 		return err
 	}
 
-	if err := k.applyMatchingResultMakerUnlockAndSend(ctx, mr, accCache); err != nil {
-		return err
+	for _, item := range mr.RecordsToRemove {
+		if err := k.removeOrderByRecord(ctx, item.Address, *item.Record); err != nil {
+			return err
+		}
 	}
 
-	if err := k.applyMatchingResultMakerUnlock(ctx, mr, accCache); err != nil {
-		return err
-	}
-
-	if err := k.applyMatchingResultMakerRemoveRecords(ctx, mr, accCache); err != nil {
-		return err
-	}
-
-	if mr.MakerUpdateRecord != nil {
-		if err := k.saveOrderBookRecord(ctx, *mr.MakerUpdateRecord); err != nil {
+	if mr.RecordToUpdate != nil {
+		if err := k.saveOrderBookRecord(ctx, *mr.RecordToUpdate); err != nil {
 			return err
 		}
 	}
 
 	return k.publishMatchingEvents(ctx, mr)
-}
-
-func (k Keeper) applyMatchingResultTakerCheckLimitsAndSend(
-	ctx sdk.Context,
-	mr *MatchingResult,
-	accCache map[uint64]sdk.AccAddress,
-) error {
-	accsToCoins := newAccountsToCoins()
-	for _, item := range mr.TakerCheckLimitsAndSend {
-		makerAddr, err := k.getAccountAddressWithCache(ctx, item.MakerAccNumber, accCache)
-		if err != nil {
-			return err
-		}
-		accsToCoins.Add(makerAddr, item.SendCoin, item.CheckExpectedToReceiveCoin)
-
-		// init event
-		mr.MakerOrderReducedEvents = append(mr.MakerOrderReducedEvents, types.EventOrderReduced{
-			Creator:      makerAddr.String(),
-			ID:           item.MakerOrderID,
-			ReceivedCoin: item.SendCoin,
-		})
-		mr.TakerOrderReducedEvent.SentCoin = mr.TakerOrderReducedEvent.SentCoin.Add(item.SendCoin)
-	}
-	for _, accToCoins := range accsToCoins.mapping {
-		if err := k.checkFTLimitsAndSend(
-			ctx, mr.TakerAddress, accToCoins.AccAddress, accToCoins.Coin1, accToCoins.Coin2,
-		); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (k Keeper) applyMatchingResultMakerUnlockAndSend(
-	ctx sdk.Context,
-	mr *MatchingResult,
-	accCache map[uint64]sdk.AccAddress,
-) error {
-	accsToCoins := newAccountsToCoins()
-	for _, item := range mr.MakerUnlockAndSend {
-		makerAddr, err := k.getAccountAddressWithCache(ctx, item.MakerAccNumber, accCache)
-		if err != nil {
-			return err
-		}
-		accsToCoins.Add(makerAddr, item.UnlockAndSendCoin, item.DecreaseExpectedToReceiveCoin)
-
-		// add sent part
-		for i := range mr.MakerOrderReducedEvents {
-			if mr.MakerOrderReducedEvents[i].Creator == makerAddr.String() &&
-				mr.MakerOrderReducedEvents[i].ID == item.MakerOrderID {
-				mr.MakerOrderReducedEvents[i].SentCoin = item.UnlockAndSendCoin
-			}
-		}
-
-		mr.TakerOrderReducedEvent.ReceivedCoin = mr.TakerOrderReducedEvent.ReceivedCoin.Add(item.UnlockAndSendCoin)
-	}
-
-	for _, accToCoins := range accsToCoins.mapping {
-		if err := k.decreaseFTLimitsAndSend(
-			ctx, accToCoins.AccAddress, mr.TakerAddress, accToCoins.Coin1, accToCoins.Coin2,
-		); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (k Keeper) applyMatchingResultMakerUnlock(
-	ctx sdk.Context,
-	mr *MatchingResult,
-	accCache map[uint64]sdk.AccAddress,
-) error {
-	accsToCoins := newAccountsToCoins()
-	for _, item := range mr.MakerUnlock {
-		makerAddr, err := k.getAccountAddressWithCache(ctx, item.MakerAccNumber, accCache)
-		if err != nil {
-			return err
-		}
-		accsToCoins.Add(makerAddr, item.UnlockCoin, item.DecreaseExpectedToReceiveCoin)
-	}
-
-	for _, accToCoins := range accsToCoins.mapping {
-		if err := k.decreaseFTLimits(
-			ctx, accToCoins.AccAddress, accToCoins.Coin1, accToCoins.Coin2,
-		); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (k Keeper) applyMatchingResultMakerRemoveRecords(
-	ctx sdk.Context,
-	mr *MatchingResult,
-	accCache map[uint64]sdk.AccAddress,
-) error {
-	for _, item := range mr.MakerRemoveRecords {
-		makerAddr, err := k.getAccountAddressWithCache(ctx, item.AccountNumber, accCache)
-		if err != nil {
-			return err
-		}
-		if err := k.removeOrderByRecord(ctx, makerAddr, *item); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (k Keeper) publishMatchingEvents(
