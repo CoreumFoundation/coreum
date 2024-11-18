@@ -194,7 +194,7 @@ func (k Keeper) matchRecords(
 			makerAddr, recordToClose.OrderID, recordToReduceReceiveCoin,
 		)
 
-		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockerAndExpectedToReceiveCoins(
+		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoins(
 			ctx, recordToReduceReceiveCoin, recordToClose, recordToCloseRemainingQuantity, recordToCloseReceiveCoin,
 		)
 		if err != nil {
@@ -239,7 +239,7 @@ func (k Keeper) matchRecords(
 	return true, nil
 }
 
-func (k Keeper) getMakerLockerAndExpectedToReceiveCoins(
+func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(
 	ctx sdk.Context,
 	recordToReduceReceiveCoin sdk.Coin,
 	recordToClose *types.OrderBookRecord,
