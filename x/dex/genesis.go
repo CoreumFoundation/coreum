@@ -35,36 +35,31 @@ func InitGenesis(
 		}
 	}
 	if maxOrderID != 0 {
-		if err := dexKeeper.SetOrderBookSeq(ctx, maxOrderID); err != nil {
+		if err := dexKeeper.SetOrderBookSequence(ctx, maxOrderID); err != nil {
 			panic(errors.Wrap(err, "failed to set order book sequence"))
 		}
 	}
 
-	maxOrderSeq := uint64(0)
-
 	accAddressToNumberCache := make(map[string]uint64)
-	for _, orderWithSeq := range genState.Orders {
+	for _, order := range genState.Orders {
 		// check that the order book exists
-		orderBookID, err := dexKeeper.GetOrderBookIDByDenoms(ctx, orderWithSeq.Order.BaseDenom, orderWithSeq.Order.QuoteDenom)
+		orderBookID, err := dexKeeper.GetOrderBookIDByDenoms(ctx, order.BaseDenom, order.QuoteDenom)
 		if err != nil {
 			panic(
 				errors.Wrapf(
 					err,
 					"failed to get order book ID by denoms, base: %s, quote: %s",
-					orderWithSeq.Order.BaseDenom, orderWithSeq.Order.QuoteDenom,
+					order.BaseDenom, order.QuoteDenom,
 				),
 			)
 		}
-		if orderWithSeq.Sequence > maxOrderSeq {
-			maxOrderSeq = orderWithSeq.Sequence
-		}
 
-		creator, err := sdk.AccAddressFromBech32(orderWithSeq.Order.Creator)
+		creator, err := sdk.AccAddressFromBech32(order.Creator)
 		if err != nil {
-			panic(sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", orderWithSeq.Order.Creator))
+			panic(sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator))
 		}
 
-		accNumber, ok := accAddressToNumberCache[orderWithSeq.Order.Creator]
+		accNumber, ok := accAddressToNumberCache[order.Creator]
 		if !ok {
 			var err error
 			acc := accountKeeper.GetAccount(ctx, creator)
@@ -72,27 +67,25 @@ func InitGenesis(
 				panic(errors.Wrap(err, "account not fond: "+creator.String()))
 			}
 			accNumber = acc.GetAccountNumber()
-			accAddressToNumberCache[orderWithSeq.Order.Creator] = accNumber
+			accAddressToNumberCache[order.Creator] = accNumber
 		}
 
 		record := types.OrderBookRecord{
 			OrderBookID:       orderBookID,
-			Side:              orderWithSeq.Order.Side,
-			Price:             *orderWithSeq.Order.Price,
-			OrderSeq:          orderWithSeq.Sequence,
-			OrderID:           orderWithSeq.Order.ID,
+			Side:              order.Side,
+			Price:             *order.Price,
+			OrderSequence:     order.Sequence,
+			OrderID:           order.ID,
 			AccountNumber:     accNumber,
-			RemainingQuantity: orderWithSeq.Order.RemainingQuantity,
-			RemainingBalance:  orderWithSeq.Order.RemainingBalance,
+			RemainingQuantity: order.RemainingQuantity,
+			RemainingBalance:  order.RemainingBalance,
 		}
-		if err := dexKeeper.SaveOrderWithOrderBookRecord(ctx, orderWithSeq.Order, record); err != nil {
+		if err := dexKeeper.SaveOrderWithOrderBookRecord(ctx, order, record); err != nil {
 			panic(errors.Wrap(err, "failed to set order with order book record"))
 		}
 	}
-	if maxOrderSeq != 0 {
-		if err := dexKeeper.SetOrderSeq(ctx, maxOrderSeq); err != nil {
-			panic(errors.Wrap(err, "failed to set order sequence"))
-		}
+	if err := dexKeeper.SetOrderSequence(ctx, genState.OrderSequence); err != nil {
+		panic(errors.Wrap(err, "failed to set order sequence"))
 	}
 
 	for _, accountDenomOrdersCount := range genState.AccountsDenomsOrdersCounts {
@@ -104,7 +97,7 @@ func InitGenesis(
 
 // ExportGenesis returns the dex module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	ordersWithSeq, _, err := k.GetOrdersWithSequence(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	orders, _, err := k.GetAccountsOrders(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		panic(errors.Wrap(err, "failed to get orders with sequence"))
 	}
@@ -121,10 +114,16 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(errors.Wrap(err, "failed to get accounts denoms orders counts"))
 	}
 
+	orderSequence, err := k.GetOrderSequence(ctx)
+	if err != nil {
+		panic(errors.Wrap(err, "failed to get order sequence"))
+	}
+
 	return &types.GenesisState{
 		Params:                     k.GetParams(ctx),
-		Orders:                     ordersWithSeq,
+		Orders:                     orders,
 		OrderBooks:                 orderBooksWithID,
+		OrderSequence:              orderSequence,
 		AccountsDenomsOrdersCounts: accountsDenomsOrdersCounts,
 	}
 }

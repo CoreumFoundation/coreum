@@ -11,7 +11,7 @@ import (
 
 // CancelOrderKeeper is keeper interface required for CancelGoodTil.
 type CancelOrderKeeper interface {
-	CancelOrderBySeq(ctx sdk.Context, acc sdk.AccAddress, orderSeq uint64) error
+	CancelOrderBySequence(ctx sdk.Context, acc sdk.AccAddress, orderSequence uint64) error
 }
 
 // NewDelayCancelOrderHandler handles order cancellation.
@@ -26,6 +26,6 @@ func NewDelayCancelOrderHandler(keeper CancelOrderKeeper) func(ctx sdk.Context, 
 			return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender")
 		}
 
-		return keeper.CancelOrderBySeq(ctx, sender, msg.OrderSeq)
+		return keeper.CancelOrderBySequence(ctx, sender, msg.OrderSequence)
 	}
 }

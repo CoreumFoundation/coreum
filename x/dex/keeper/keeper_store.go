@@ -10,7 +10,7 @@ import (
 )
 
 func (k Keeper) incrementUint64Counter(ctx sdk.Context, key []byte) (uint64, error) {
-	return k.genNextUint64Seq(ctx, key)
+	return k.genNextUint64Sequence(ctx, key)
 }
 
 func (k Keeper) decrementUint64Counter(ctx sdk.Context, key []byte) (uint64, error) {
@@ -24,15 +24,25 @@ func (k Keeper) decrementUint64Counter(ctx sdk.Context, key []byte) (uint64, err
 	return val.Value, k.setDataToStore(ctx, key, &val)
 }
 
-func (k Keeper) setUint64Value(ctx sdk.Context, key []byte, seq uint64) error {
+func (k Keeper) getUint64Value(ctx sdk.Context, key []byte) (uint64, error) {
+	var val gogotypes.UInt64Value
+	err := k.getDataFromStore(ctx, key, &val)
+	if err != nil {
+		return 0, err
+	}
+
+	return val.Value, nil
+}
+
+func (k Keeper) setUint64Value(ctx sdk.Context, key []byte, sequence uint64) error {
 	val := gogotypes.UInt64Value{
-		Value: seq,
+		Value: sequence,
 	}
 
 	return k.setDataToStore(ctx, key, &val)
 }
 
-func (k Keeper) genNextUint64Seq(ctx sdk.Context, key []byte) (uint64, error) {
+func (k Keeper) genNextUint64Sequence(ctx sdk.Context, key []byte) (uint64, error) {
 	var val gogotypes.UInt64Value
 	err := k.getDataFromStore(ctx, key, &val)
 	if err != nil {
@@ -46,15 +56,15 @@ func (k Keeper) genNextUint64Seq(ctx sdk.Context, key []byte) (uint64, error) {
 	return val.Value, k.setDataToStore(ctx, key, &val)
 }
 
-func (k Keeper) setUint32Value(ctx sdk.Context, key []byte, seq uint32) error {
+func (k Keeper) setUint32Value(ctx sdk.Context, key []byte, sequence uint32) error {
 	val := gogotypes.UInt32Value{
-		Value: seq,
+		Value: sequence,
 	}
 
 	return k.setDataToStore(ctx, key, &val)
 }
 
-func (k Keeper) genNextUint32Seq(ctx sdk.Context, key []byte) (uint32, error) {
+func (k Keeper) genNextUint32Sequence(ctx sdk.Context, key []byte) (uint32, error) {
 	var val gogotypes.UInt32Value
 	err := k.getDataFromStore(ctx, key, &val)
 	if err != nil {

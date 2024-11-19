@@ -34,6 +34,15 @@ func (k Keeper) matchOrder(
 	if err != nil {
 		return err
 	}
+	order.Sequence = takerRecord.OrderSequence
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventOrderPlaced{
+		Creator:  order.Creator,
+		ID:       order.ID,
+		Sequence: takerRecord.OrderSequence,
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderPlaced: %s", err)
+	}
 
 	mr, err := NewMatchingResult(order)
 	if err != nil {
@@ -108,11 +117,17 @@ func (k Keeper) initTakerRecord(
 	if order.Price != nil {
 		price = *order.Price
 	}
+
+	orderSequence, err := k.genNextOrderSequence(ctx)
+	if err != nil {
+		return types.OrderBookRecord{}, err
+	}
+
 	return types.OrderBookRecord{
 		OrderBookID:       orderBookID,
 		Side:              order.Side,
 		Price:             price,
-		OrderSeq:          0, // set to zero and update only if we need to save it to the state
+		OrderSequence:     orderSequence,
 		OrderID:           order.ID,
 		AccountNumber:     accNumber,
 		RemainingQuantity: order.Quantity,
@@ -182,13 +197,14 @@ func (k Keeper) matchRecords(
 	}
 
 	recordToCloseRemainingQuantity := recordToClose.RemainingQuantity.Sub(recordToCloseReducedQuantity)
-	if recordToClose.IsMaker() {
+	closeMaker := order.Sequence != recordToClose.OrderSequence
+	if closeMaker {
 		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToClose.AccountNumber, accNumberToAddCache)
 		if err != nil {
 			return false, err
 		}
 		mr.TakerSend(
-			makerAddr, recordToClose.OrderID, recordToCloseReceiveCoin,
+			makerAddr, recordToClose.OrderID, recordToClose.OrderSequence, recordToCloseReceiveCoin,
 		)
 		mr.MakerSend(
 			makerAddr, recordToClose.OrderID, recordToReduceReceiveCoin,
@@ -209,7 +225,7 @@ func (k Keeper) matchRecords(
 			return false, err
 		}
 		mr.TakerSend(
-			makerAddr, recordToReduce.OrderID, recordToReduceReceiveCoin,
+			makerAddr, recordToReduce.OrderID, recordToReduce.OrderSequence, recordToReduceReceiveCoin,
 		)
 		mr.MakerSend(
 			makerAddr, recordToReduce.OrderID, recordToCloseReceiveCoin,
@@ -225,7 +241,7 @@ func (k Keeper) matchRecords(
 	k.logger(ctx).Debug("Updated recordToReduce.", "recordToReduce", recordToReduce)
 
 	// continue or stop
-	if recordToClose.IsMaker() {
+	if closeMaker {
 		if recordToReduce.RemainingQuantity.IsZero() {
 			k.logger(ctx).Debug("Taker record is filled fully.")
 			recordToReduce.RemainingBalance = sdkmath.ZeroInt()
@@ -250,7 +266,7 @@ func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(
 		recordToReduceReceiveCoin.Denom, recordToClose.RemainingBalance.Sub(recordToReduceReceiveCoin.Amount),
 	))
 	// get the record data to unlock the reserve if present
-	recordToCloseOrderData, err := k.getOrderData(ctx, recordToClose.OrderSeq)
+	recordToCloseOrderData, err := k.getOrderData(ctx, recordToClose.OrderSequence)
 	if err != nil {
 		return nil, sdk.Coin{}, err
 	}
@@ -314,6 +330,7 @@ func getRecordsReceiveCoins(
 		oppositeExecutionQuantity sdkmath.Int
 	)
 
+	closeMaker := order.Sequence != recordToClose.OrderSequence
 	if recordToClose.Side != recordToReduce.Side { // self
 		executionQuantity, oppositeExecutionQuantity = computeMaxExecutionQuantity(
 			makerRecord.Price.Rat(), recordToClose.RemainingQuantity,
@@ -323,7 +340,7 @@ func getRecordsReceiveCoins(
 	} else {
 		// if closeMaker is true we find max execution quantity with its price,
 		// else with inverse price
-		if recordToClose.IsMaker() {
+		if closeMaker {
 			executionQuantity, oppositeExecutionQuantity = computeMaxExecutionQuantity(
 				makerRecord.Price.Rat(), recordToClose.RemainingQuantity,
 			)
@@ -345,7 +362,7 @@ func getRecordsReceiveCoins(
 		recordToReduceReceiveAmt = executionQuantity
 	}
 
-	if recordToClose.IsMaker() {
+	if closeMaker {
 		recordToCloseReceiveDenom = order.GetSpendDenom()
 		recordToReduceReceiveDenom = order.GetReceiveDenom()
 	} else {

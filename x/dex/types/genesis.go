@@ -23,14 +23,14 @@ func (gs GenesisState) Validate() error {
 		denoms[ob.Data.BaseDenom] = struct{}{}
 		denoms[ob.Data.QuoteDenom] = struct{}{}
 	}
-	usedSeq := make(map[uint64]struct{})
-	for _, orderWithSeq := range gs.Orders {
-		if _, ok := usedSeq[orderWithSeq.Sequence]; ok {
-			return sdkerrors.Wrapf(ErrInvalidInput, "duplicate order sequence %d", orderWithSeq.Sequence)
+	usedSequence := make(map[uint64]struct{})
+	for _, order := range gs.Orders {
+		if _, ok := usedSequence[order.Sequence]; ok {
+			return sdkerrors.Wrapf(ErrInvalidInput, "duplicate order sequence %d", order.Sequence)
 		}
-		usedSeq[orderWithSeq.Sequence] = struct{}{}
+		usedSequence[order.Sequence] = struct{}{}
 
-		order := orderWithSeq.Order // copy
+		order := order // copy
 		if _, ok := denoms[order.BaseDenom]; !ok {
 			return sdkerrors.Wrapf(ErrInvalidInput, "base denom %s does not exist in order books", order.BaseDenom)
 		}
@@ -38,6 +38,7 @@ func (gs GenesisState) Validate() error {
 			return sdkerrors.Wrapf(ErrInvalidInput, "quote denom %s does not exist in order books", order.QuoteDenom)
 		}
 
+		order.Sequence = 0
 		order.RemainingQuantity = sdkmath.Int{}
 		order.RemainingBalance = sdkmath.Int{}
 		order.Reserve = sdk.Coin{}

@@ -90,6 +90,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		Creator:           acc1.String(),
 		Type:              dextypes.ORDER_TYPE_LIMIT,
 		ID:                "id1",
+		Sequence:          sellOrderRes.Order.Sequence,
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,
 		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
@@ -141,6 +142,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		Creator:           acc2.String(),
 		Type:              dextypes.ORDER_TYPE_LIMIT,
 		ID:                "id1", // same ID allowed for different users
+		Sequence:          buyOrderRes.Order.Sequence,
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,
 		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
@@ -615,6 +617,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 		acc1OrderPlaceMsgs...,
 	)
 	requireT.NoError(err)
+	acc1Orders = fillOrderSequences(ctx, t, chain.ClientContext, acc1Orders)
 
 	// create acc2 orders
 	acc2Orders := []dextypes.Order{
@@ -661,6 +664,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 		acc2OrderPlaceMsgs...,
 	)
 	requireT.NoError(err)
+	acc2Orders = fillOrderSequences(ctx, t, chain.ClientContext, acc2Orders)
 
 	// check order books query
 	orderBooksRes, err := dexClient.OrderBooks(ctx, &dextypes.QueryOrderBooksRequest{})
@@ -1608,6 +1612,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		Creator:           acc1.String(),
 		Type:              dextypes.ORDER_TYPE_LIMIT,
 		ID:                "id1",
+		Sequence:          sellOrderRes.Order.Sequence,
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,
 		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
@@ -1757,6 +1762,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		Creator:           acc1.String(),
 		Type:              dextypes.ORDER_TYPE_LIMIT,
 		ID:                "id1",
+		Sequence:          sellOrderRes.Order.Sequence,
 		BaseDenom:         denom1,
 		QuoteDenom:        denom2,
 		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
@@ -2155,38 +2161,6 @@ func TestCancelOrdersByDenom(t *testing.T) {
 	requireT.Empty(orderRes.Orders)
 }
 
-func issueFT(
-	ctx context.Context,
-	t *testing.T,
-	chain integration.CoreumChain,
-	issuer sdk.AccAddress,
-	initialAmount sdkmath.Int,
-	features ...assetfttypes.Feature,
-) string {
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
-	})
-	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        issuer.String(),
-		Symbol:        "TKN" + uuid.NewString()[:4],
-		Subunit:       "tkn" + uuid.NewString()[:4],
-		Precision:     5,
-		InitialAmount: initialAmount,
-		Features:      features,
-	}
-	_, err := client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
-		issueMsg,
-	)
-	require.NoError(t, err)
-	return assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
-}
-
 // TestAssetFTBlockSmartContractsFeatureWithDEX tests the dex module integration with the asset ft
 // block_smart_contracts features.
 func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
@@ -2520,6 +2494,57 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 	// 100 is burnt 100 remains
 	requireT.Equal(sdkmath.NewInt(100).String(), balanceRes.Balance.String())
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
+}
+
+func issueFT(
+	ctx context.Context,
+	t *testing.T,
+	chain integration.CoreumChain,
+	issuer sdk.AccAddress,
+	initialAmount sdkmath.Int,
+	features ...assetfttypes.Feature,
+) string {
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "TKN" + uuid.NewString()[:4],
+		Subunit:       "tkn" + uuid.NewString()[:4],
+		Precision:     5,
+		InitialAmount: initialAmount,
+		Features:      features,
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	require.NoError(t, err)
+	return assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+}
+
+func fillOrderSequences(
+	ctx context.Context,
+	t *testing.T,
+	clientCtx client.Context,
+	orders []dextypes.Order,
+) []dextypes.Order {
+	dexClient := dextypes.NewQueryClient(clientCtx)
+	for i, order := range orders {
+		res, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
+			Creator: order.Creator,
+			Id:      order.ID,
+		})
+		require.NoError(t, err)
+		orders[i].Sequence = res.Order.Sequence
+	}
+
+	return orders
 }
 
 func ordersToPlaceMsgs(orders []dextypes.Order) []sdk.Msg {

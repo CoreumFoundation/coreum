@@ -88,6 +88,10 @@ func (o Order) Validate() error {
 		return err
 	}
 
+	if o.Sequence != 0 {
+		return sdkerrors.Wrap(ErrInvalidInput, "order sequence must be zero")
+	}
+
 	if o.BaseDenom == "" {
 		return sdkerrors.Wrap(ErrInvalidInput, "base denom can't be empty")
 	}
@@ -210,16 +214,6 @@ func (o Order) GetReceiveDenom() string {
 // Denoms returns the order denoms.
 func (o Order) Denoms() []string {
 	return []string{o.BaseDenom, o.QuoteDenom}
-}
-
-// IsTaker returns true if record is taker record (based on sequence).
-func (r OrderBookRecord) IsTaker() bool {
-	return r.OrderSeq == 0
-}
-
-// IsMaker returns true if record is maker record (based on sequence).
-func (r OrderBookRecord) IsMaker() bool {
-	return r.OrderSeq > 0
 }
 
 // ComputeLimitOrderLockedBalance computes the limit order locked balance.
