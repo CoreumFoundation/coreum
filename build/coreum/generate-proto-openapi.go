@@ -97,7 +97,7 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps types.DepsFunc, inclu
 
 	args := []string{
 		"--openapiv2_out=logtostderr=true,allow_merge=true,json_names_for_fields=false,fqn_for_openapi_name=true,simple_operation_ids=true,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.", //nolint:lll // breaking down this string will make it more complicated.
-		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-openapiv2", tools.TargetPlatformLocal)),
+		"--plugin=" + tools.Path("bin/protoc-gen-openapiv2", tools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {

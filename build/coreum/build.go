@@ -166,7 +166,7 @@ func buildCoredInDocker(
 	default:
 		return errors.Errorf("building is not possible for platform %s", targetPlatform)
 	}
-	envs = append(envs, fmt.Sprintf("CC=%s", cc))
+	envs = append(envs, "CC="+cc)
 
 	versionLDFlags, err := coredVersionLDFlags(ctx, buildTags, mod)
 	if err != nil {
