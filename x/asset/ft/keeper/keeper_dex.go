@@ -566,7 +566,10 @@ func (k Keeper) updateDEXSettings(
 		}
 	}
 
-	k.SetDEXSettings(ctx, denom, newSettings)
+	err = k.SetDEXSettings(ctx, denom, newSettings)
+	if err != nil {
+		return err
+	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXSettingsChanged{
 		PreviousSettings: prevSettings,

@@ -638,7 +638,7 @@ func TestKeeper_DEXLimitsWithGlobalFreeze(t *testing.T) {
 	)
 
 	// globally freeze
-	ftKeeper.SetGlobalFreeze(ctx, ft1CoinToSend.Denom, true)
+	requireT.NoError(ftKeeper.SetGlobalFreeze(ctx, ft1CoinToSend.Denom, true))
 	requireT.ErrorContains(
 		ftKeeper.DEXCheckOrderAmounts(
 			simapp.CopyContextWithMultiStore(ctx),
@@ -649,8 +649,8 @@ func TestKeeper_DEXLimitsWithGlobalFreeze(t *testing.T) {
 		fmt.Sprintf("usage of %s for DEX is blocked because the token is globally frozen", ft1CoinToSend.Denom),
 	)
 
-	ftKeeper.SetGlobalFreeze(ctx, ft1CoinToSend.Denom, false)
-	ftKeeper.SetGlobalFreeze(ctx, ft2CoinToSend.Denom, true)
+	requireT.NoError(ftKeeper.SetGlobalFreeze(ctx, ft1CoinToSend.Denom, false))
+	requireT.NoError(ftKeeper.SetGlobalFreeze(ctx, ft2CoinToSend.Denom, true))
 	requireT.ErrorContains(
 		ftKeeper.DEXCheckOrderAmounts(
 			simapp.CopyContextWithMultiStore(ctx),
