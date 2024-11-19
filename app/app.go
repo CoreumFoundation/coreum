@@ -823,7 +823,7 @@ func New(
 
 	app.DEXKeeper = dexkeeper.NewKeeper(
 		appCodec,
-		keys[dextypes.StoreKey],
+		runtime.NewKVStoreService(keys[dextypes.StoreKey]),
 		app.AccountKeeper,
 		authkeeper.NewQueryServer(app.AccountKeeper),
 		app.AssetFTKeeper,
