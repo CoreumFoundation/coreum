@@ -1123,7 +1123,8 @@ func (k Keeper) saveOrderData(ctx sdk.Context, orderSequence uint64, data types.
 }
 
 func (k Keeper) removeOrderData(ctx sdk.Context, orderSequence uint64) error {
-	return ctx.KVStore(k.storeKey).Delete(types.CreateOrderKey(orderSequence))
+	store := k.storeService.OpenKVStore(ctx)
+	return store.Delete(types.CreateOrderKey(orderSequence))
 }
 
 func (k Keeper) getOrderData(ctx sdk.Context, orderSequence uint64) (types.OrderData, error) {
@@ -1140,7 +1141,8 @@ func (k Keeper) saveOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID
 }
 
 func (k Keeper) removeOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID string) error {
-	return ctx.KVStore(k.storeKey).Delete(types.CreateOrderIDToSequenceKey(accNumber, orderID))
+	store := k.storeService.OpenKVStore(ctx)
+	return store.Delete(types.CreateOrderIDToSequenceKey(accNumber, orderID))
 }
 
 func (k Keeper) getOrderSequenceByID(ctx sdk.Context, accNumber uint64, orderID string) (uint64, error) {
