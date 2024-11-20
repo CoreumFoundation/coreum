@@ -5,7 +5,6 @@ package cosmoscmd
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"time"
@@ -177,7 +176,7 @@ func initAppConfig() (string, interface{}) {
 	//   own app.toml to override, or use this default value.
 	//
 	// In app, we set the min gas prices to 0.
-	srvCfg.MinGasPrices = fmt.Sprintf("0.00000000000000001%s", app.ChosenNetwork.Denom())
+	srvCfg.MinGasPrices = "0.00000000000000001" + app.ChosenNetwork.Denom()
 
 	// WASMConfig defines configuration for the wasm module.
 	type WASMConfig struct {

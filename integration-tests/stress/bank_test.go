@@ -52,7 +52,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
 	coinToFund := sdk.NewCoin(denom, sdkmath.NewInt(10_000_000_000))
 
-	for i := 0; i < numAccountsToFund; i++ {
+	for range numAccountsToFund {
 		inputItem.Coins = inputItem.Coins.Add(coinToFund)
 		recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		fundedAccounts = append(fundedAccounts, recipient)
@@ -63,7 +63,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 	}
 	// prepare MultiSend messages
 	multiSendMsgs := make([]sdk.Msg, 0, iterationsToFund)
-	for i := 0; i < iterationsToFund; i++ {
+	for range iterationsToFund {
 		multiSendMsgs = append(multiSendMsgs, &banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				inputItem,
@@ -140,7 +140,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	bankSendSendMsgs := make([]sdk.Msg, 0, numAccountsToFund)
 	coinToFund := sdk.NewCoin(denom, sdkmath.NewInt(10_000_000_000))
 	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
-	for i := 0; i < numAccountsToFund; i++ {
+	for range numAccountsToFund {
 		recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		fundedAccounts = append(fundedAccounts, recipient)
 		bankSendSendMsgs = append(bankSendSendMsgs, &banktypes.MsgSend{
@@ -152,7 +152,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 
 	fundMsgs := make([]sdk.Msg, 0)
 	fundMsgs = append(fundMsgs, issueMsg)
-	for i := 0; i < iterationsToFund; i++ {
+	for range iterationsToFund {
 		fundMsgs = append(fundMsgs, bankSendSendMsgs...)
 	}
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
@@ -171,7 +171,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 
 	// send coins in loop
 	start := time.Now()
-	for i := 0; i < iterationsToFund; i++ {
+	for range iterationsToFund {
 		res, err := client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(issuer),

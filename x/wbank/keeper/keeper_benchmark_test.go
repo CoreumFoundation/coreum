@@ -33,14 +33,14 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 	testAction := func(b *testing.B, numberOfDenoms int) {
 		b.StopTimer()
 		denoms := make([]string, numberOfDenoms)
-		for i := 0; i < numberOfDenoms; i++ {
+		for i := range numberOfDenoms {
 			denoms[i] = fmt.Sprintf("test-denom-%d", i)
 			coins := sdk.NewCoins(sdk.NewCoin(denoms[i], sdkmath.NewInt(1_000_000_000)))
 			requireT.NoError(bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins))
 		}
 
 		addresses := make([]sdk.AccAddress, b.N)
-		for i := 0; i < b.N; i++ {
+		for i := range b.N {
 			address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 			addresses[i] = address
 
@@ -50,7 +50,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 		}
 
 		b.StartTimer()
-		for i := 0; i < b.N; i++ {
+		for i := range b.N {
 			fromAddress := addresses[i]
 			toAddress := addresses[(i+1)%len(addresses)]
 			denom := denoms[b.N%len(denoms)]
@@ -83,7 +83,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	coins := sdk.NewCoins(coin)
 	requireT.NoError(bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins))
 	b.Run("test-single-get-supply", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			supply := bankKeeper.GetSupply(sdkContext, singleCoinDenom)
 			assert.EqualValues(b, coin.String(), supply.String())
 		}
@@ -91,7 +91,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 
 	var denoms []string
 	mintValue := sdkmath.NewInt(1_000_000_000)
-	for i := 0; i < 100_000; i++ {
+	for i := range 100_000 {
 		denom := fmt.Sprintf("test-denom-%d", i)
 		denoms = append(denoms, denom)
 		coins := sdk.NewCoins(sdk.NewCoin(denom, mintValue))
@@ -99,7 +99,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	}
 
 	b.Run("test-100k-get-supply", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			denom := denoms[b.N%len(denoms)]
 			supply := bankKeeper.GetSupply(sdkContext, denom)
 			assert.EqualValues(b, mintValue, supply.Amount, "denom: %s", supply.Denom)

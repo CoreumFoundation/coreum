@@ -1,7 +1,6 @@
 package app_test
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	_ "unsafe"
@@ -129,7 +128,7 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		}
 
 		_, expectedNonAmino := expectedNonAminoMsgURLs[messageURL]
-		require.True(t, expectedNonAmino, fmt.Sprintf("Unexpected non-amino message:%s", messageURL))
+		require.True(t, expectedNonAmino, "Unexpected non-amino message:%s", messageURL)
 		delete(expectedNonAminoMsgURLs, messageURL)
 	}
 

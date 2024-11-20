@@ -251,6 +251,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.671267795027995000
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
+				//nolint:testifylint // eplison does not apply here.
 				assertT.EqualValues(
 					low.Amount.MustFloat64(),
 					model.CalculateGasPriceWithMaxDiscount().MustFloat64(),
@@ -284,7 +285,6 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec("coin", sdkmath.LegacyMustNewDecFromStr("0.0625")))
 			keeper.SetShortEMAGas(ctx, tc.shortEMA)

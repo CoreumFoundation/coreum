@@ -227,7 +227,6 @@ func (k Keeper) publishMatchingEvents(
 	}
 
 	for _, evt := range events {
-		evt := evt
 		if err := ctx.EventManager().EmitTypedEvent(&evt); err != nil {
 			return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderReduced: %s", err)
 		}

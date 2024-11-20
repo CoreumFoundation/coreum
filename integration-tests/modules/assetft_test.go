@@ -69,7 +69,6 @@ func TestAssetFTIssue(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 			issuer := chain.GenAccount()
@@ -5178,7 +5177,6 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 	}
 
 	for _, tc := range testData {
-		tc := tc
 		t.Run(tc.description, func(t *testing.T) {
 			t.Parallel()
 

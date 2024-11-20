@@ -63,10 +63,10 @@ func ExecQueryCmd(t *testing.T, clientCtx client.Context, cmd *cobra.Command, ex
 
 	extraArgs = append(extraArgs, fmt.Sprintf("--%s=json", tmcli.OutputFlag))
 	buf, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, extraArgs)
-	require.NoError(t, err, fmt.Sprintf("can't execute, %s, err:%s", cmd.Use, err))
+	require.NoError(t, err, "can't execute, %s, err:%s", cmd.Use, err)
 
 	err = clientCtx.Codec.UnmarshalJSON(buf.Bytes(), msg)
-	require.NoError(t, err, fmt.Sprintf("can't decode response, %s, err:%s", buf.Bytes(), err))
+	require.NoError(t, err, "can't decode response, %s, err:%s", buf.Bytes(), err)
 }
 
 // ExecRootQueryCmd is a func to execute query cmd from root.
@@ -86,10 +86,10 @@ func ExecRootQueryCmd(t *testing.T, clientCtx client.Context, args []string, msg
 	require.NoError(t, autoCliOpts.EnhanceRootCommand(cmd))
 
 	buf, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-	require.NoError(t, err, fmt.Sprintf("failed to execute, %v", args))
+	require.NoError(t, err, "failed to execute, %v", args)
 	require.NoError(
 		t,
 		clientCtx.LegacyAmino.UnmarshalJSON(buf.Bytes(), msg),
-		fmt.Sprintf("failed to decode response, %s", buf.Bytes()),
+		"failed to decode response, %s", buf.Bytes(),
 	)
 }

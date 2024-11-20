@@ -165,7 +165,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	var data2 assetnfttypes.DataBytes
 	requireT.NoError(proto.Unmarshal(assetNftClassRes.Class.Data.Value, &data2))
 
-	requireT.Equal(jsonData, data2.Data)
+	requireT.JSONEq(string(jsonData), string(data2.Data))
 
 	assetNftClassesRes, err := assetNftClient.Classes(ctx, &assetnfttypes.QueryClassesRequest{
 		Issuer: issuer.String(),
@@ -576,7 +576,7 @@ func TestAssetNFTMint(t *testing.T) {
 	var data2 assetnfttypes.DataBytes
 	requireT.NoError(proto.Unmarshal(nftRes.Nft.Data.Value, &data2))
 
-	requireT.Equal(jsonData, data2.Data)
+	requireT.JSONEq(string(jsonData), string(data2.Data))
 
 	// check the owner
 	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{

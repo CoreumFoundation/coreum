@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
@@ -24,10 +22,10 @@ var (
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgPlaceOrder{}, fmt.Sprintf("%s/MsgPlaceOrder", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgCancelOrder{}, fmt.Sprintf("%s/MsgCancelOrder", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgCancelOrdersByDenom{}, fmt.Sprintf("%s/MsgCancelOrdersByDenom", ModuleName))
+	legacy.RegisterAminoMsg(cdc, &MsgPlaceOrder{}, ModuleName+"/MsgPlaceOrder")
+	legacy.RegisterAminoMsg(cdc, &MsgCancelOrder{}, ModuleName+"/MsgCancelOrder")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, ModuleName+"/MsgUpdateParams")
+	legacy.RegisterAminoMsg(cdc, &MsgCancelOrdersByDenom{}, ModuleName+"/MsgCancelOrdersByDenom")
 }
 
 // ValidateBasic checks that message fields are valid.

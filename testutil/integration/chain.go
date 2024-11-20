@@ -162,7 +162,7 @@ func (c ChainContext) GenMultisigAccount(
 ) (*sdkmultisig.LegacyAminoPubKey, []string, error) {
 	keyNamesSet := []string{}
 	publicKeySet := make([]cryptotypes.PubKey, 0, signersCount)
-	for i := 0; i < signersCount; i++ {
+	for range signersCount {
 		signerKeyInfo, err := c.ClientContext.Keyring().KeyByAddress(c.GenAccount())
 		if err != nil {
 			return nil, nil, err
@@ -373,7 +373,7 @@ func QueryChainSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainS
 
 	var addressPrefix string
 	for _, account := range accountsRes.Accounts {
-		if account != nil && account.TypeUrl == fmt.Sprintf("/%s", proto.MessageName(&authtypes.BaseAccount{})) {
+		if account != nil && account.TypeUrl == "/"+proto.MessageName(&authtypes.BaseAccount{}) {
 			var acc authtypes.BaseAccount
 			if err := proto.Unmarshal(account.Value, &acc); err != nil {
 				panic(fmt.Sprintf("failed to unpack account, err: %s", err))

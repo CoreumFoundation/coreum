@@ -449,7 +449,6 @@ func TestKeeper_UpdateData(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 			owner := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -1744,11 +1743,11 @@ func assertWhitelisting(
 ) {
 	isWhitelisted, err := k.IsWhitelisted(ctx, classID, nftID, account)
 	require.NoError(t, err)
-	require.EqualValues(t, isWhitelisted, expectedWhitelisting)
+	require.EqualValues(t, expectedWhitelisting, isWhitelisted)
 }
 
 func assertFrozen(t *testing.T, ctx sdk.Context, k keeper.Keeper, classID, nftID string, expected bool) {
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
 	require.NoError(t, err)
-	require.EqualValues(t, frozen, expected)
+	require.EqualValues(t, expected, frozen)
 }

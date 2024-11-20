@@ -209,7 +209,7 @@ func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) 
 	minBlockGas := int64(0)
 	maxBlockGas := params.Model.MaxBlockGas
 
-	for i := uint32(0); i < after; i++ {
+	for range after {
 		maxShortEMA = types.CalculateEMA(maxShortEMA, maxBlockGas,
 			params.Model.ShortEmaBlockLength)
 		maxLongEMA = types.CalculateEMA(maxLongEMA, params.Model.MaxBlockGas,

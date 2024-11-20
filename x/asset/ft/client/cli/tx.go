@@ -46,7 +46,7 @@ const (
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("%s transactions subcommands", types.ModuleName),
+		Short:                      types.ModuleName + " transactions subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -814,7 +814,7 @@ $ %s tx grant <grantee_addr> burn --burn-limit 100ucore --expiration 1667979596
 				}
 
 				if !limitCoins.IsAllPositive() {
-					return fmt.Errorf("mint-limit should be greater than zero")
+					return errors.New("mint-limit should be greater than zero")
 				}
 				authorization = types.NewMintAuthorization(limitCoins)
 			case "burn":
@@ -829,7 +829,7 @@ $ %s tx grant <grantee_addr> burn --burn-limit 100ucore --expiration 1667979596
 				}
 
 				if !limitCoins.IsAllPositive() {
-					return fmt.Errorf("burn-limit should be greater than zero")
+					return errors.New("burn-limit should be greater than zero")
 				}
 				authorization = types.NewBurnAuthorization(limitCoins)
 			default:

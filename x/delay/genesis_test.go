@@ -80,5 +80,5 @@ func TestInitAndExportGenesis(t *testing.T) {
 	gotJSON, err := testApp.AppCodec().MarshalJSON(gotGenState)
 	require.NoError(t, err)
 
-	require.Equal(t, wantJSON, gotJSON)
+	require.JSONEq(t, string(wantJSON), string(gotJSON))
 }

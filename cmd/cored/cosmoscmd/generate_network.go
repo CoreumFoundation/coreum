@@ -43,7 +43,7 @@ func GenerateGenesisCmd(basicManager module.BasicManager) *cobra.Command {
 
 			inputContent, err := os.ReadFile(inputPath)
 			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("failed to read file %s", inputPath))
+				return errors.Wrap(err, "failed to read file "+inputPath)
 			}
 
 			var genCfg config.GenesisInitConfig

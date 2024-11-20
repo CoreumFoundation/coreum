@@ -115,7 +115,6 @@ func TestDelayedItemKey(t *testing.T) {
 	}
 
 	for _, tc := range tCases {
-		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
@@ -162,7 +161,7 @@ func TestInvalidDelayedItemKeys(t *testing.T) {
 	assertT := assert.New(t)
 	for _, tc := range tCases {
 		_, _, err := DecodeDelayedItemKey(tc)
-		assertT.Error(err, tc) //nolint:testifylint // We don't want to use require here.
+		assertT.Error(err, tc)
 	}
 }
 
@@ -195,7 +194,6 @@ func TestBlockItemKey(t *testing.T) {
 		},
 	}
 	for _, tc := range tCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

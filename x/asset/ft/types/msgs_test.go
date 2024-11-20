@@ -349,7 +349,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	defaultMsg := func() M {
 		return M{
 			Sender: acc.String(),
-			Coin:   sdk.NewCoin("abc"+"-"+acc.String(), sdkmath.NewInt(100)), //nolint:goconst
+			Coin:   sdk.NewCoin("abc"+"-"+acc.String(), sdkmath.NewInt(100)),
 		}
 	}
 
@@ -375,7 +375,6 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			requireT := require.New(t)
 			msg := tc.modifyMsg(defaultMsg())
@@ -421,7 +420,6 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			requireT := require.New(t)
 			msg := tc.modifyMsg(defaultMsg())
@@ -890,7 +888,6 @@ func TestAmino(t *testing.T) {
 	legacyAmino := codec.NewLegacyAmino()
 	types.RegisterLegacyAminoCodec(legacyAmino)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			generatedJSON := legacyAmino.Amino.MustMarshalJSON(tt.msg)
 			require.Equal(t, tt.wantAminoJSON, string(sdk.MustSortJSON(generatedJSON)))

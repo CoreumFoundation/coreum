@@ -42,7 +42,7 @@ const (
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("%s transactions subcommands", types.ModuleName),
+		Short:                      types.ModuleName + " transactions subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -159,7 +159,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." --from [issuer] -
 		fmt.Sprintf("Features to be enabled on non-fungible token. e.g --%s=%s", FeaturesFlag, allowedFeaturesString),
 	)
 	//nolint:lll // breaking this down will make it look worse when printed to user screen.
-	cmd.Flags().String(RoyaltyRateFlag, "0", fmt.Sprintf("%s is a number between 0 and 1, and will be used to determine royalties sent to issuer, when an nft in this class is traded.", RoyaltyRateFlag))
+	cmd.Flags().String(RoyaltyRateFlag, "0", RoyaltyRateFlag+" is a number between 0 and 1, and will be used to determine royalties sent to issuer, when an nft in this class is traded.")
 	cmd.Flags().String(URIFlag, "", "Class URI.")
 	cmd.Flags().String(URIHashFlag, "", "Class URI hash.")
 	cmd.Flags().String(DataFileFlag, "", "path to the file containing data.")

@@ -127,7 +127,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
 	assertT.Equal(feeModelParamsRes.Params.Model.MaxDiscount.String(), targetMaxDiscount.String())
-	assertT.Equal(feeModelParamsRes.Params.Model.String(), feeModelParamsRes.Params.Model.String())
+	assertT.Equal(newParams.Model.String(), feeModelParamsRes.Params.Model.String())
 }
 
 func getFeemodelParams(ctx context.Context, t *testing.T, clientCtx client.Context) feemodeltypes.ModelParams {

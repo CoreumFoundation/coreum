@@ -183,7 +183,7 @@ func (fa *FuzzApp) PlaceOrdersAndAssertFinalState(
 		Time:   fa.cfg.InitialBlockTime,
 	})
 
-	for i := 0; i < fa.cfg.OrdersCount; i++ {
+	for i := range fa.cfg.OrdersCount {
 		_, err := fa.testApp.BeginBlocker(sdkCtx)
 		require.NoError(t, err)
 
@@ -467,7 +467,7 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			require.True(
 				t,
 				spendableBalance.IsLT(orderLockedBalance),
-				fmt.Sprintf("availableBalance: %s, orderLockedBalance: %s", spendableBalance.String(), orderLockedBalance.String()),
+				"availableBalance: %s, orderLockedBalance: %s", spendableBalance.String(), orderLockedBalance.String(),
 			)
 			t.Logf("Placement is failed due to lack of spendable balance, spendableBalance: %s, orderLockedBalance: %s",
 				spendableBalance.String(), orderLockedBalance.String())
@@ -505,9 +505,8 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			require.True(
 				t,
 				receivableAmt.LT(requiredWhitelistedAmt),
-				fmt.Sprintf(
-					"receivableAmt: %s, requiredWhitelistedAmt: %s",
-					receivableAmt.String(), requiredWhitelistedAmt.String()),
+				"receivableAmt: %s, requiredWhitelistedAmt: %s",
+				receivableAmt.String(), requiredWhitelistedAmt.String(),
 			)
 			return
 		case strings.Contains(err.Error(), "the price must be multiple of"), // price tick

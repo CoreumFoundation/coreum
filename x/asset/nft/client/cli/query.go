@@ -122,7 +122,7 @@ $ %[1]s query %s classes --issuer %s
 		},
 	}
 
-	cmd.Flags().String(IssuerFlag, "", fmt.Sprintf("Class issuer address. e.g %s", constant.AddressSampleTest))
+	cmd.Flags().String(IssuerFlag, "", "Class issuer address. e.g "+constant.AddressSampleTest)
 	flags.AddPaginationFlagsToCmd(cmd, "classes")
 	flags.AddQueryFlagsToCmd(cmd)
 

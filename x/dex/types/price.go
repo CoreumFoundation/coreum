@@ -38,6 +38,8 @@ const (
 var priceRegex = regexp.MustCompile(`^(([1-9])|([1-9]\d*[1-9]))(e-?[1-9]\d*)?$`)
 
 // Price is the price type.
+//
+//nolint:recvcheck // we are ok with combination of pointer and non-pointer receiver.
 type Price struct {
 	exp int8
 	num uint64

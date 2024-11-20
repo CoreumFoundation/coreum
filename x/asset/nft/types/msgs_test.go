@@ -2,7 +2,6 @@ package types_test
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -401,7 +400,7 @@ func TestMsgUpdateData_ValidateBasic(t *testing.T) {
 	sender := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	validMessage := types.MsgUpdateData{
 		Sender:  sender.String(),
-		ClassID: fmt.Sprintf("symbol-%s", sender.String()),
+		ClassID: "symbol-" + sender.String(),
 		ID:      "my-id",
 		Items: []types.DataDynamicIndexedItem{
 			{
@@ -896,7 +895,6 @@ func TestAmino(t *testing.T) {
 	legacyAmino := codec.NewLegacyAmino()
 	types.RegisterLegacyAminoCodec(legacyAmino)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			generatedJSON := legacyAmino.Amino.MustMarshalJSON(tt.msg)
 			require.Equal(t, tt.wantAminoJSON, string(sdk.MustSortJSON(generatedJSON)))

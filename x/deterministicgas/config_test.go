@@ -1,7 +1,6 @@
 package deterministicgas_test
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -84,7 +83,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 		msgURL := deterministicgas.MsgToMsgURL(sdkMsg)
 		gasFunc, ok := cfg.GasByMessageMap()[msgURL]
-		assert.True(t, ok, fmt.Sprintf("sdk.Msg %s, not found in the gasByMsg map", msgURL))
+		assert.True(t, ok, "sdk.Msg %s, not found in the gasByMsg map", msgURL)
 
 		_, _, nonExtensionMsg, err := types.TypeAssertMessages(sdkMsg)
 		require.NoError(t, err)
@@ -228,7 +227,6 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			gas, isDeterministic := cfg.GasRequiredByMessage(tc.msg)
 			assert.Equal(t, tc.expectedIsDeterministic, isDeterministic)
@@ -268,7 +266,7 @@ func TestDeterministicGas_AuthzGrant(t *testing.T) {
 			name: "send_auth",
 			fn: func(itemsCount int) authz.Authorization {
 				authorization := &assetnfttypes.SendAuthorization{}
-				for i := 0; i < itemsCount; i++ {
+				for range itemsCount {
 					authorization.Nfts = append(authorization.Nfts, assetnfttypes.NFTIdentifier{
 						ClassId: "class-id-" + address.String(),
 						Id:      "id-" + address.String(),
@@ -281,7 +279,7 @@ func TestDeterministicGas_AuthzGrant(t *testing.T) {
 			name: "mint_auth",
 			fn: func(itemsCount int) authz.Authorization {
 				authorization := &assetfttypes.MintAuthorization{}
-				for i := 0; i < itemsCount; i++ {
+				for range itemsCount {
 					authorization.MintLimit = append(
 						authorization.MintLimit,
 						sdk.NewCoin("random-denom-"+address.String(), sdkmath.NewInt(1_000_000_000_000)),
@@ -294,7 +292,7 @@ func TestDeterministicGas_AuthzGrant(t *testing.T) {
 			name: "burn_auth",
 			fn: func(itemsCount int) authz.Authorization {
 				authorization := &assetfttypes.BurnAuthorization{}
-				for i := 0; i < itemsCount; i++ {
+				for range itemsCount {
 					authorization.BurnLimit = append(
 						authorization.BurnLimit,
 						sdk.NewCoin("random-denom-"+address.String(), sdkmath.NewInt(1_000_000_000_000)),
@@ -308,7 +306,6 @@ func TestDeterministicGas_AuthzGrant(t *testing.T) {
 	cfg := deterministicgas.DefaultConfig()
 	for _, gen := range genAuthFuncs {
 		for _, tc := range testCases {
-			tc := tc
 			gen := gen
 			t.Run(tc.name+"_"+gen.name, func(t *testing.T) {
 				requireT := require.New(t)

@@ -6251,7 +6251,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 			orders: func(testSet TestSet) []types.Order {
 				orders := make([]types.Order, 0)
-				for i := 0; i < 10; i++ {
+				for i := range 10 {
 					orders = append(orders, types.Order{
 						Creator:     testSet.acc1.String(),
 						Type:        types.ORDER_TYPE_LIMIT,
@@ -6308,7 +6308,6 @@ func TestKeeper_MatchOrders(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			logger := log.NewTestLogger(t)
 			testApp := simapp.New(simapp.WithCustomLogger(logger))
@@ -6409,7 +6408,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			require.True(
 				t,
 				reflect.DeepEqual(wantAvailableBalances, availableBalances),
-				fmt.Sprintf("want: %v, got: %v", wantAvailableBalances, availableBalances),
+				"want: %v, got: %v", wantAvailableBalances, availableBalances,
 			)
 
 			// by default must be empty
@@ -6421,7 +6420,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			require.True(
 				t,
 				reflect.DeepEqual(wantExpectedToReceiveBalances, expectedToReceiveBalances),
-				fmt.Sprintf("want: %v, got: %v", wantExpectedToReceiveBalances, expectedToReceiveBalances),
+				"want: %v, got: %v", wantExpectedToReceiveBalances, expectedToReceiveBalances,
 			)
 
 			// check that balance locked in the orders correspond the balance locked in the asset ft
@@ -6440,7 +6439,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			require.True(
 				t,
 				reflect.DeepEqual(lockedBalances, orderLockedBalances),
-				fmt.Sprintf("want: %v, got: %v", lockedBalances, orderLockedBalances),
+				"want: %v, got: %v", lockedBalances, orderLockedBalances,
 			)
 
 			cancelAllOrdersAndAssertState(t, sdkCtx, testApp)
@@ -6633,7 +6632,7 @@ func assertExecutionPrice(t *testing.T, order types.Order, spendAmt, receiveAmt 
 		require.True(
 			t,
 			cbig.RatLTE(executionPriceRat, orderPriceRat),
-			fmt.Sprintf("orderPrice: %s, executionPrice: %s", orderPriceRat.String(), executionPriceRat.String()),
+			"orderPrice: %s, executionPrice: %s", orderPriceRat.String(), executionPriceRat.String(),
 		)
 	} else {
 		if spendAmt.IsZero() {
@@ -6643,7 +6642,7 @@ func assertExecutionPrice(t *testing.T, order types.Order, spendAmt, receiveAmt 
 		require.True(
 			t,
 			cbig.RatGTE(executionPriceRat, orderPriceRat),
-			fmt.Sprintf("orderPrice: %s, executionPrice: %s", orderPriceRat.String(), executionPriceRat.String()),
+			"orderPrice: %s, executionPrice: %s", orderPriceRat.String(), executionPriceRat.String(),
 		)
 	}
 	t.Logf(
@@ -6709,7 +6708,7 @@ func cancelAllOrdersAndAssertState(
 			)
 			require.True(
 				t, dexLockedBalance.IsZero(),
-				fmt.Sprintf("denom: %s, acc: %s, dexLockedBalance: %s", denom, acc, dexLockedBalance.String()),
+				"denom: %s, acc: %s, dexLockedBalance: %s", denom, acc, dexLockedBalance.String(),
 			)
 
 			dexExpectedToReceiveBalance := testApp.AssetFTKeeper.GetDEXExpectedToReceivedBalance(
@@ -6717,10 +6716,8 @@ func cancelAllOrdersAndAssertState(
 			)
 			require.True(
 				t, dexExpectedToReceiveBalance.IsZero(),
-				fmt.Sprintf(
-					"denom: %s, acc: %s, dexExpectedToReceiveBalance: %s",
-					denom, acc, dexExpectedToReceiveBalance.String(),
-				),
+				"denom: %s, acc: %s, dexExpectedToReceiveBalance: %s",
+				denom, acc, dexExpectedToReceiveBalance.String(),
 			)
 
 			accountDenomOrdersCount, err := testApp.DEXKeeper.GetAccountDenomOrdersCount(
