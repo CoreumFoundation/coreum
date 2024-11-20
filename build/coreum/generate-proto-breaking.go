@@ -22,7 +22,7 @@ import (
 )
 
 //go:embed proto-breaking.tmpl.json
-//nolint:unused // TODO: uncomment in next PR
+//nolint:unused // FIXME: uncomment in next PR
 var configBreakingTmpl string
 
 //nolint:deadcode

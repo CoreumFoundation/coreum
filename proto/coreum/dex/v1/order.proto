@@ -42,8 +42,8 @@ message GoodTil {
 message CancelGoodTil {
   // creator is order creator address.
   string creator = 1;
-  // order_seq is order sequence.
-  uint64 order_seq = 2;
+  // order_sequence is order sequence.
+  uint64 order_sequence = 2;
 }
 
 // TimeInForce is order time in force.
@@ -68,35 +68,37 @@ message Order {
   OrderType type = 2;
   // id is unique order ID.
   string id = 3 [(gogoproto.customname) = "ID"];
+  // sequence is unique order sequence generated at the time of the order placement.
+  uint64 sequence = 4;
   // base_denom is base order denom.
-  string base_denom = 4;
+  string base_denom = 5;
   // quote_denom is quote order denom
-  string quote_denom = 5;
+  string quote_denom = 6;
   // price is value of one unit of the base_denom expressed in terms of the quote_denom.
-  string price = 6 [(gogoproto.customtype) = "Price"];
+  string price = 7 [(gogoproto.customtype) = "Price"];
   // quantity is amount of the base base_denom being traded.
-  string quantity = 7 [
+  string quantity = 8 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // side is order side.
-  Side side = 8;
+  Side side = 9;
   // remaining_quantity is remaining filling quantity sell/buy.
-  string remaining_quantity = 9 [
+  string remaining_quantity = 10 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // remaining_balance is remaining order balance.
-  string remaining_balance = 10 [
+  string remaining_balance = 11 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // good_til is order good til
-  GoodTil good_til = 11;
+  GoodTil good_til = 12;
   // time_in_force is order time in force
-  TimeInForce time_in_force = 12;
+  TimeInForce time_in_force = 13;
   // reserve is the reserve required to save the order in the order book
-  cosmos.base.v1beta1.Coin reserve = 13 [
+  cosmos.base.v1beta1.Coin reserve = 14 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
@@ -148,8 +150,8 @@ message OrderBookRecord {
     (gogoproto.customtype) = "Price",
     (gogoproto.nullable) = false
   ];
-  // order_seq is order sequence.
-  uint64 order_seq = 4;
+  // order_sequence is order sequence.
+  uint64 order_sequence = 4;
   // order ID provided by the creator.
   string order_id = 5 [(gogoproto.customname) = "OrderID"];
   // account_number is account number which corresponds the order creator.

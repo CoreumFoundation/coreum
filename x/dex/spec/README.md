@@ -235,6 +235,18 @@ The default reserve amount is  `10 CORE` and can be updated by the governance.
 The number of active orders a user can have for each denom is limited by a value called `max_orders_per_denom`,
 which is determined by DEX governance.
 
+### Events
+
+The DEX module emits events at the time of the matching to notify the interested parties of the changes caused by the
+matching. The events are defined in the [event.proto](../../../proto/coreum/dex/v1/event.proto). The events are emitted
+for each order that was placed. The events are:
+
+1. `EventOrderPlaced` is emitted when the order is placed.
+2. `EventOrderReduced` is emitted when the order is reduced during the matching.
+3. `EventOrderClosed` is emitted when the order is closed during the matching or manually, or because of `good_til` in
+   the `begin blocker`, and removed from the order book.
+4. `EventOrderCreated` is emitted when the order is saved to the order book.
+
 ## Asset FT and DEX
 
 ### Unified ref amount

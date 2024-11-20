@@ -144,7 +144,7 @@ func (i *OrderBookIterator) nextFromIterator() (types.OrderBookRecord, bool, err
 
 func (i *OrderBookIterator) readOrderBookRecordFromIterator() (types.OrderBookRecord, error) {
 	// decode key to values
-	price, orderSeq, err := types.DecodeOrderBookSideRecordKey(i.iterator.Key())
+	price, orderSequence, err := types.DecodeOrderBookSideRecordKey(i.iterator.Key())
 	if err != nil {
 		return types.OrderBookRecord{}, err
 	}
@@ -157,10 +157,10 @@ func (i *OrderBookIterator) readOrderBookRecordFromIterator() (types.OrderBookRe
 
 	return types.OrderBookRecord{
 		// key attributes
-		OrderBookID: i.orderBookID,
-		Side:        i.side,
-		Price:       price,
-		OrderSeq:    orderSeq,
+		OrderBookID:   i.orderBookID,
+		Side:          i.side,
+		Price:         price,
+		OrderSequence: orderSequence,
 		// value attributes
 		OrderID:           storedRecord.OrderID,
 		AccountNumber:     storedRecord.AccountNumber,

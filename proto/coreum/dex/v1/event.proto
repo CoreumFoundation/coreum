@@ -1,14 +1,18 @@
 syntax = "proto3";
 package coreum.dex.v1;
 
-import "coreum/dex/v1/order.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/v5/x/dex/types";
 
-// EventOrderCreated is emitted when the limit order is saved to the order book.
-message EventOrderCreated {
-  Order order = 1 [(gogoproto.nullable) = false];
+// EventOrderPlaced is emitted when a new order is placed and new sequence is generated for it.
+message EventOrderPlaced {
+  // creator is order creator address.
+  string creator = 1;
+  // id is unique order ID.
+  string id = 2 [(gogoproto.customname) = "ID"];
+  // sequence is unique order sequence.
+  uint64 sequence = 3;
 }
 
 // EventOrderReduced is emitted when the order is reduced during the matching.
@@ -17,19 +21,56 @@ message EventOrderReduced {
   string creator = 1;
   // id is unique order ID.
   string id = 2 [(gogoproto.customname) = "ID"];
+  // sequence is unique order sequence.
+  uint64 sequence = 3;
   // sent_coin is coin sent during matching.
-  string sent_coin = 3 [
+  string sent_coin = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
     (gogoproto.nullable) = false
   ];
   // received_coin is coin received during matching.
-  string received_coin = 4 [
+  string received_coin = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
     (gogoproto.nullable) = false
   ];
 }
 
-// EventOrderClosed is emitted when the order is closed during matching or manually.
+// EventOrderCreated is emitted when the limit order is saved to the order book.
+message EventOrderCreated {
+  // creator is order creator address.
+  string creator = 1;
+  // id is unique order ID.
+  string id = 2 [(gogoproto.customname) = "ID"];
+  // sequence is unique order sequence.
+  uint64 sequence = 3;
+  // remaining_quantity is remaining filling quantity sell/buy.
+  string remaining_quantity = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // remaining_balance is remaining order balance.
+  string remaining_balance = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// EventOrderClosed is emitted when the order is closed during matching or manually, and removed from the order book.
 message EventOrderClosed {
-  Order order = 1 [(gogoproto.nullable) = false];
+  // creator is order creator address.
+  string creator = 1;
+  // id is unique order ID.
+  string id = 2 [(gogoproto.customname) = "ID"];
+  // sequence is unique order sequence.
+  uint64 sequence = 3;
+  // remaining_quantity is remaining filling quantity sell/buy.
+  string remaining_quantity = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // remaining_balance is remaining order balance.
+  string remaining_balance = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
 }
