@@ -132,9 +132,9 @@ func (k Keeper) GetDEXSettingsWithDenoms(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.DEXSettingsWithDenom, *query.PageResponse, error) {
-	s := k.storeService.OpenKVStore(ctx)
+	moduleStore := k.storeService.OpenKVStore(ctx)
 	dexSettings := make([]types.DEXSettingsWithDenom, 0)
-	store := prefix.NewStore(runtime.KVStoreAdapter(s), types.DEXSettingsKeyPrefix)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.DEXSettingsKeyPrefix)
 	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
 		denom, err := types.DecodeDenomFromKey(key)
 		if err != nil {
@@ -566,8 +566,7 @@ func (k Keeper) updateDEXSettings(
 		}
 	}
 
-	err = k.SetDEXSettings(ctx, denom, newSettings)
-	if err != nil {
+	if err = k.SetDEXSettings(ctx, denom, newSettings); err != nil {
 		return err
 	}
 

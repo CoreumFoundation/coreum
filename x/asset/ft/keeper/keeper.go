@@ -72,8 +72,7 @@ func NewKeeper(
 
 // GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, _ := store.Get(types.ParamsKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
@@ -81,12 +80,11 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // SetParams sets the parameters of the module.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	return store.Set(types.ParamsKey, bz)
+	return k.storeService.OpenKVStore(ctx).Set(types.ParamsKey, bz)
 }
 
 // UpdateParams is a governance operation that sets parameters of the module.
@@ -156,12 +154,11 @@ func (k Keeper) IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition)
 
 // GetDefinition returns the Definition by the denom.
 func (k Keeper) GetDefinition(ctx sdk.Context, denom string) (types.Definition, error) {
-	store := k.storeService.OpenKVStore(ctx)
 	subunit, issuer, err := types.DeconstructDenom(denom)
 	if err != nil {
 		return types.Definition{}, err
 	}
-	bz, err := store.Get(types.CreateTokenKey(issuer, subunit))
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.CreateTokenKey(issuer, subunit))
 	if err != nil {
 		return types.Definition{}, err
 	}
@@ -350,21 +347,19 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 
 // SetSymbol saves the symbol to store.
 func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
-	store := k.storeService.OpenKVStore(ctx)
 	symbol = types.NormalizeSymbolForKey(symbol)
 	if k.isSymbolDuplicated(ctx, symbol, issuer) {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
 
-	return store.Set(types.CreateSymbolKey(issuer, symbol), types.StoreTrue)
+	return k.storeService.OpenKVStore(ctx).Set(types.CreateSymbolKey(issuer, symbol), types.StoreTrue)
 }
 
 // SetDefinition stores the Definition.
 func (k Keeper) SetDefinition(
 	ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition,
 ) error {
-	store := k.storeService.OpenKVStore(ctx)
-	return store.Set(types.CreateTokenKey(issuer, subunit), k.cdc.MustMarshal(&definition))
+	return k.storeService.OpenKVStore(ctx).Set(types.CreateTokenKey(issuer, subunit), k.cdc.MustMarshal(&definition))
 }
 
 // SetDenomMetadata registers denom metadata on the bank keeper.
@@ -992,9 +987,8 @@ func (k Keeper) validateCoinReceivable(
 }
 
 func (k Keeper) isSymbolDuplicated(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
-	store := k.storeService.OpenKVStore(ctx)
 	compositeKey := types.CreateSymbolKey(issuer, symbol)
-	rawBytes, _ := store.Get(compositeKey)
+	rawBytes, _ := k.storeService.OpenKVStore(ctx).Get(compositeKey)
 	return rawBytes != nil
 }
 
@@ -1153,8 +1147,7 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
-	store := k.storeService.OpenKVStore(ctx)
-	isGloballyFrozen, _ := store.Get(types.CreateGlobalFreezeKey(denom))
+	isGloballyFrozen, _ := k.storeService.OpenKVStore(ctx).Get(types.CreateGlobalFreezeKey(denom))
 	return bytes.Equal(isGloballyFrozen, types.StoreTrue)
 }
 

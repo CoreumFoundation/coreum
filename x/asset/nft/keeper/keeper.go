@@ -50,8 +50,7 @@ func NewKeeper(
 
 // GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, _ := store.Get(types.ParamsKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
@@ -59,12 +58,11 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // SetParams sets the parameters of the module.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	return store.Set(types.ParamsKey, bz)
+	return k.storeService.OpenKVStore(ctx).Set(types.ParamsKey, bz)
 }
 
 // UpdateParams is a governance operation that sets parameters of the module.

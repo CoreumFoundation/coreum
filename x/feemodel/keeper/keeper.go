@@ -63,18 +63,16 @@ func (k Keeper) TrackGas(ctx sdk.Context, gas int64) error {
 
 // SetParams sets the parameters of the module.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	return store.Set(paramsKey, bz)
+	return k.storeService.OpenKVStore(ctx).Set(paramsKey, bz)
 }
 
 // GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, _ := store.Get(paramsKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(paramsKey)
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
@@ -92,8 +90,7 @@ func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Par
 // GetShortEMAGas retrieves average gas used by previous blocks, used as a representation of
 // smoothed gas used by latest block.
 func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, _ := store.Get(shortEMAGasKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(shortEMAGasKey)
 
 	if bz == nil {
 		return 0
@@ -109,21 +106,18 @@ func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
 // SetShortEMAGas sets average gas used by previous blocks, used as a representation of smoothed gas
 // used by latest block.
 func (k Keeper) SetShortEMAGas(ctx sdk.Context, emaGas int64) error {
-	store := k.storeService.OpenKVStore(ctx)
-
 	bz, err := sdkmath.NewInt(emaGas).Marshal()
 	if err != nil {
 		panic(err)
 	}
 
-	return store.Set(shortEMAGasKey, bz)
+	return k.storeService.OpenKVStore(ctx).Set(shortEMAGasKey, bz)
 }
 
 // GetLongEMAGas retrieves long average gas used by previous blocks, used for determining average block
 // load where maximum discount is applied.
 func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, _ := store.Get(longEMAGasKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(longEMAGasKey)
 
 	if bz == nil {
 		return 0
@@ -139,20 +133,17 @@ func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
 // SetLongEMAGas sets long average gas used by previous blocks, used for determining average block load where
 // maximum discount is applied.
 func (k Keeper) SetLongEMAGas(ctx sdk.Context, emaGas int64) error {
-	store := k.storeService.OpenKVStore(ctx)
-
 	bz, err := sdkmath.NewInt(emaGas).Marshal()
 	if err != nil {
 		panic(err)
 	}
 
-	return store.Set(longEMAGasKey, bz)
+	return k.storeService.OpenKVStore(ctx).Set(longEMAGasKey, bz)
 }
 
 // GetMinGasPrice returns current minimum gas price required by the network.
 func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, _ := store.Get(gasPriceKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(gasPriceKey)
 	if bz == nil {
 		// This is really a panic condition because it means that genesis initialization was not done correctly
 		panic("min gas price not set")
@@ -166,12 +157,11 @@ func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
 
 // SetMinGasPrice sets minimum gas price required by the network on current block.
 func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) error {
-	store := k.storeService.OpenKVStore(ctx)
 	bz, err := minGasPrice.Marshal()
 	if err != nil {
 		panic(err)
 	}
-	return store.Set(gasPriceKey, bz)
+	return k.storeService.OpenKVStore(ctx).Set(gasPriceKey, bz)
 }
 
 // CalculateEdgeGasPriceAfterBlocks returns the smallest and highest possible values for min gas price in future blocks.
