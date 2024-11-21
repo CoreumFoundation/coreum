@@ -67,8 +67,7 @@ func (k Keeper) RemoveExecuteAtBlock(ctx sdk.Context, id string, height uint64) 
 		return err
 	}
 
-	store := k.storeService.OpenKVStore(ctx)
-	return store.Delete(key)
+	return k.storeService.OpenKVStore(ctx).Delete(key)
 }
 
 // RemoveExecuteAfter removes an item to be executed at after specified time.
@@ -78,8 +77,7 @@ func (k Keeper) RemoveExecuteAfter(ctx sdk.Context, id string, time time.Time) e
 		return err
 	}
 
-	store := k.storeService.OpenKVStore(ctx)
-	return store.Delete(key)
+	return k.storeService.OpenKVStore(ctx).Delete(key)
 }
 
 // StoreDelayedExecution stores delayed execution item using absolute time.

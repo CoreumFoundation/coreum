@@ -190,8 +190,7 @@ func (k Keeper) GetOrderBookOrders(
 
 // GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, _ := store.Get(types.ParamsKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
@@ -211,12 +210,11 @@ func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Par
 
 // SetParams sets the parameters of the module.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	return store.Set(types.ParamsKey, bz)
+	return k.storeService.OpenKVStore(ctx).Set(types.ParamsKey, bz)
 }
 
 // GetAccountsOrders returns paginated orders.
@@ -224,8 +222,8 @@ func (k Keeper) GetAccountsOrders(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.Order, *query.PageResponse, error) {
-	s := k.storeService.OpenKVStore(ctx)
-	store := prefix.NewStore(runtime.KVStoreAdapter(s), types.OrderIDToSequenceKeyPrefix)
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.OrderIDToSequenceKeyPrefix)
 	orderBookIDToOrderBookData := make(map[uint32]types.OrderBookData)
 	accNumberToAddCache := make(map[uint64]sdk.AccAddress)
 	orders, pageRes, err := query.GenericFilteredPaginate(
@@ -358,8 +356,8 @@ func (k Keeper) GetAccountsDenomsOrdersCounts(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.AccountDenomOrdersCount, *query.PageResponse, error) {
-	s := k.storeService.OpenKVStore(ctx)
-	store := prefix.NewStore(runtime.KVStoreAdapter(s), types.AccountDenomOrdersCountKeyPrefix)
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.AccountDenomOrdersCountKeyPrefix)
 	counts, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,
@@ -731,8 +729,8 @@ func (k Keeper) removeOrderByRecord(
 			return err
 		}
 	}
-	err = k.removeOrderData(ctx, record.OrderSequence)
-	if err != nil {
+
+	if err = k.removeOrderData(ctx, record.OrderSequence); err != nil {
 		return err
 	}
 
@@ -935,8 +933,8 @@ func (k Keeper) getPaginatedOrders(
 	if err != nil {
 		return nil, nil, err
 	}
-	s := k.storeService.OpenKVStore(ctx)
-	store := prefix.NewStore(runtime.KVStoreAdapter(s), types.CreateOrderIDToSequenceKeyPrefix(accNumber))
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.CreateOrderIDToSequenceKeyPrefix(accNumber))
 	orderBookIDToOrderBookData := make(map[uint32]types.OrderBookData)
 	orders, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
@@ -1005,8 +1003,8 @@ func (k Keeper) getPaginatedOrderBooksWithID(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.OrderBookDataWithID, *query.PageResponse, error) {
-	s := k.storeService.OpenKVStore(ctx)
-	store := prefix.NewStore(runtime.KVStoreAdapter(s), types.OrderBookDataKeyPrefix)
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.OrderBookDataKeyPrefix)
 	orders, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,
@@ -1047,8 +1045,8 @@ func (k Keeper) getPaginatedOrderBookOrders(
 		return nil, nil, err
 	}
 
-	s := k.storeService.OpenKVStore(ctx)
-	store := prefix.NewStore(runtime.KVStoreAdapter(s), types.CreateOrderBookSideKey(orderBookID, side))
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.CreateOrderBookSideKey(orderBookID, side))
 	accNumberToAddCache := make(map[uint64]sdk.AccAddress)
 
 	orders, pageRes, err := query.GenericFilteredPaginate(
@@ -1111,12 +1109,11 @@ func (k Keeper) removeOrderBookRecord(
 	price types.Price,
 	orderSequence uint64,
 ) error {
-	store := k.storeService.OpenKVStore(ctx)
 	key, err := types.CreateOrderBookRecordKey(orderBookID, side, price, orderSequence)
 	if err != nil {
 		return err
 	}
-	return store.Delete(key)
+	return k.storeService.OpenKVStore(ctx).Delete(key)
 }
 
 func (k Keeper) saveOrderData(ctx sdk.Context, orderSequence uint64, data types.OrderData) error {
@@ -1124,8 +1121,7 @@ func (k Keeper) saveOrderData(ctx sdk.Context, orderSequence uint64, data types.
 }
 
 func (k Keeper) removeOrderData(ctx sdk.Context, orderSequence uint64) error {
-	store := k.storeService.OpenKVStore(ctx)
-	return store.Delete(types.CreateOrderKey(orderSequence))
+	return k.storeService.OpenKVStore(ctx).Delete(types.CreateOrderKey(orderSequence))
 }
 
 func (k Keeper) getOrderData(ctx sdk.Context, orderSequence uint64) (types.OrderData, error) {
@@ -1142,8 +1138,7 @@ func (k Keeper) saveOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID
 }
 
 func (k Keeper) removeOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID string) error {
-	store := k.storeService.OpenKVStore(ctx)
-	return store.Delete(types.CreateOrderIDToSequenceKey(accNumber, orderID))
+	return k.storeService.OpenKVStore(ctx).Delete(types.CreateOrderIDToSequenceKey(accNumber, orderID))
 }
 
 func (k Keeper) getOrderSequenceByID(ctx sdk.Context, accNumber uint64, orderID string) (uint64, error) {
@@ -1224,8 +1219,8 @@ func (k Keeper) saveAccountDenomOrderSequence(
 			return err
 		}
 		// save empty slice
-		err = k.storeService.OpenKVStore(ctx).Set(key, make([]byte, 0))
-		if err != nil {
+
+		if err = k.storeService.OpenKVStore(ctx).Set(key, make([]byte, 0)); err != nil {
 			return err
 		}
 	}

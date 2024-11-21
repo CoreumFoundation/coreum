@@ -32,8 +32,7 @@ func NewKeeper(
 
 // GetStakingParams returns the set of staking parameters.
 func (k Keeper) GetStakingParams(ctx sdk.Context) types.StakingParams {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, _ := store.Get(types.StakingParamsKey)
+	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.StakingParamsKey)
 	var params types.StakingParams
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
@@ -41,12 +40,11 @@ func (k Keeper) GetStakingParams(ctx sdk.Context) types.StakingParams {
 
 // SetStakingParams sets the module staking parameters to the param space.
 func (k Keeper) SetStakingParams(ctx sdk.Context, params types.StakingParams) error {
-	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	return store.Set(types.StakingParamsKey, bz)
+	return k.storeService.OpenKVStore(ctx).Set(types.StakingParamsKey, bz)
 }
 
 // UpdateStakingParams is a governance operation that sets the staking parameters of the module.

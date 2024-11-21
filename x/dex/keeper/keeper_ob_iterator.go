@@ -32,8 +32,8 @@ func NewOrderBookIterator(
 	side types.Side,
 	readFromTail bool,
 ) *OrderBookIterator {
-	s := storeService.OpenKVStore(ctx)
-	store := prefix.NewStore(runtime.KVStoreAdapter(s), types.CreateOrderBookSideKey(orderBookID, side))
+	moduleStore := storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.CreateOrderBookSideKey(orderBookID, side))
 	var iterator storetypes.Iterator
 	if readFromTail {
 		iterator = store.ReverseIterator(nil, nil)
