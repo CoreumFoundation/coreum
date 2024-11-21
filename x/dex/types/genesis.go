@@ -30,7 +30,6 @@ func (gs GenesisState) Validate() error {
 		}
 		usedSequence[order.Sequence] = struct{}{}
 
-		order := order // copy
 		if _, ok := denoms[order.BaseDenom]; !ok {
 			return sdkerrors.Wrapf(ErrInvalidInput, "base denom %s does not exist in order books", order.BaseDenom)
 		}

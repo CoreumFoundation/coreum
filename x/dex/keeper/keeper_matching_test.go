@@ -6513,7 +6513,7 @@ func fillReserveAndOrderSequence(
 			sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.ID,
 		)
 		require.NoError(t, err)
-		require.Greater(t, storedOrder.Sequence, uint64(0))
+		require.Positive(t, storedOrder.Sequence)
 		orders[i].Sequence = storedOrder.Sequence
 		orders[i].Reserve = orderReserve
 	}
@@ -6563,7 +6563,7 @@ func assertOrderPlacementResult(
 }
 
 func assertPlacementEvents(t *testing.T, order types.Order, events OrderPlacementEvents) {
-	require.Greater(t, events.OrderPlaced.Sequence, uint64(0))
+	require.Positive(t, events.OrderPlaced.Sequence)
 	require.Equal(t, types.EventOrderPlaced{
 		Creator:  order.Creator,
 		ID:       order.ID,
