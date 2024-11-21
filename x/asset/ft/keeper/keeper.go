@@ -707,25 +707,36 @@ func (k Keeper) GetSpendableBalance(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 	denom string,
-) sdk.Coin {
+) (sdk.Coin, error) {
 	balance := k.bankKeeper.GetBalance(ctx, addr, denom)
 	if balance.Amount.IsZero() {
-		return balance
+		return balance, nil
 	}
 
 	notLockedAmt := balance.Amount.
 		Sub(k.GetDEXLockedBalance(ctx, addr, denom).Amount).
 		Sub(k.bankKeeper.LockedCoins(ctx, addr).AmountOf(denom))
 	if notLockedAmt.IsNegative() {
-		return sdk.NewCoin(denom, sdkmath.ZeroInt())
-	}
-	notFrozenAmt := balance.Amount.Sub(k.GetFrozenBalance(ctx, addr, denom).Amount)
-	if notFrozenAmt.IsNegative() {
-		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+		return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
 	}
 
-	spendableAmount := sdkmath.MinInt(notLockedAmt, notFrozenAmt)
-	return sdk.NewCoin(denom, spendableAmount)
+	def, err := k.getDefinitionOrNil(ctx, denom)
+	if err != nil {
+		return sdk.Coin{}, err
+	}
+	// the spendable balance counts the frozen balance, but if extensions are not enabled
+	if def != nil &&
+		def.IsFeatureEnabled(types.Feature_freezing) &&
+		!def.IsFeatureEnabled(types.Feature_extension) {
+		notFrozenAmt := balance.Amount.Sub(k.GetFrozenBalance(ctx, addr, denom).Amount)
+		if notFrozenAmt.IsNegative() {
+			return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
+		}
+		spendableAmount := sdkmath.MinInt(notLockedAmt, notFrozenAmt)
+		return sdk.NewCoin(denom, spendableAmount), nil
+	}
+
+	return sdk.NewCoin(denom, notLockedAmt), nil
 }
 
 // TransferAdmin changes admin of a fungible token.

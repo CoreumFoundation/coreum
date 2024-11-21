@@ -6,7 +6,6 @@ import (
 	"cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/log"
-	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -192,12 +191,13 @@ func (k BaseKeeperWrapper) SpendableBalances(
 		return nil, err
 	}
 
-	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
-
 	balances := balancesRes.Balances
 	for i := range balances {
-		bankLockedCoin := sdk.NewCoin(balances[i].Denom, bankLockedCoins.AmountOf(balances[i].Denom))
-		balances[i] = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, balances[i], bankLockedCoin)
+		spendableCoin, err := k.ftProvider.GetSpendableBalance(sdk.UnwrapSDKContext(ctx), addr, balances[i].Denom)
+		if err != nil {
+			return nil, err
+		}
+		balances[i] = spendableCoin
 	}
 
 	return &banktypes.QuerySpendableBalancesResponse{
@@ -228,32 +228,14 @@ func (k BaseKeeperWrapper) SpendableBalanceByDenom(
 		return &banktypes.QuerySpendableBalanceByDenomResponse{}, nil
 	}
 
-	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
-	bankLockedCoin := sdk.NewCoin(req.Denom, bankLockedCoins.AmountOf(req.Denom))
-
-	return &banktypes.QuerySpendableBalanceByDenomResponse{
-		Balance: lo.ToPtr(k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, *balanceRes.Balance, bankLockedCoin)),
-	}, nil
-}
-
-func (k BaseKeeperWrapper) getSpendableCoin(
-	ctx sdk.Context,
-	addr sdk.AccAddress,
-	balance, bankLocked sdk.Coin,
-) sdk.Coin {
-	denom := balance.Denom
-	notLockedAmt := balance.Amount.
-		Sub(bankLocked.Amount).
-		Sub(k.ftProvider.GetDEXLockedBalance(ctx, addr, denom).Amount)
-
-	notFrozenAmt := balance.Amount.Sub(k.ftProvider.GetFrozenBalance(ctx, addr, denom).Amount)
-
-	spendableAmount := sdkmath.MinInt(notLockedAmt, notFrozenAmt)
-	if !spendableAmount.IsPositive() {
-		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+	spendableCoin, err := k.ftProvider.GetSpendableBalance(sdk.UnwrapSDKContext(ctx), addr, balanceRes.Balance.Denom)
+	if err != nil {
+		return nil, err
 	}
 
-	return sdk.NewCoin(denom, spendableAmount)
+	return &banktypes.QuerySpendableBalanceByDenomResponse{
+		Balance: lo.ToPtr(spendableCoin),
+	}, nil
 }
 
 func (k BaseKeeperWrapper) isSmartContract(ctx sdk.Context, addr sdk.AccAddress) bool {

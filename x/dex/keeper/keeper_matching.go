@@ -154,7 +154,10 @@ func (k Keeper) getInitialRemainingAmount(
 		}
 	case types.ORDER_TYPE_MARKET:
 		if order.Side == types.SIDE_BUY {
-			remainingBalance = k.assetFTKeeper.GetSpendableBalance(ctx, creatorAddr, order.QuoteDenom)
+			remainingBalance, err = k.assetFTKeeper.GetSpendableBalance(ctx, creatorAddr, order.QuoteDenom)
+			if err != nil {
+				return sdkmath.Int{}, err
+			}
 		} else {
 			remainingBalance = sdk.NewCoin(order.BaseDenom, order.Quantity)
 		}

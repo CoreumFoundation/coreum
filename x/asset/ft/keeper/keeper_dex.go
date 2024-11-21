@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"encoding/json"
+
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
@@ -13,6 +15,19 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
 )
+
+// ExtensionPlaceOrderMethod is the function name of the extension smart contract, which will be invoked
+// when place and DEX order.
+const ExtensionPlaceOrderMethod = "extension_place_order"
+
+// sudoExtensionPlaceOrderMsg contains the fields passed to extension method call.
+//
+//nolint:tagliatelle // these will be exposed to rust and must be snake case.
+type sudoExtensionPlaceOrderMsg struct {
+	Order             types.DEXOrder `json:"order"`
+	ExpectedToSpend   sdk.Coin       `json:"expected_to_spend"`
+	ExpectedToReceive sdk.Coin       `json:"expected_to_receive"`
+}
 
 // DEXExecuteActions executes a series of DEX actions which include checking order amounts,
 // adjusting locked balances, and updating expected to receive balances. It performs necessary
@@ -87,26 +102,11 @@ func (k Keeper) DEXCheckOrderAmounts(
 	order types.DEXOrder,
 	expectedToSpend, expectedToReceive sdk.Coin,
 ) error {
-	spendDef, err := k.getDefinitionOrNil(ctx, expectedToSpend.Denom)
-	if err != nil {
-		return err
-	}
-	if err := k.dexChecksForDenom(ctx, order.Creator, spendDef, expectedToReceive.Denom); err != nil {
-		return err
-	}
-	if err := k.dexExpectedToSpendChecks(ctx, order.Creator, spendDef, expectedToSpend); err != nil {
+	if err := k.dexCheckExpectedToSpend(ctx, order, expectedToSpend, expectedToReceive); err != nil {
 		return err
 	}
 
-	receiveDef, err := k.getDefinitionOrNil(ctx, expectedToReceive.Denom)
-	if err != nil {
-		return err
-	}
-	if err := k.dexChecksForDenom(ctx, order.Creator, receiveDef, expectedToSpend.Denom); err != nil {
-		return err
-	}
-
-	return k.dexExpectedToReceiveChecks(ctx, order.Creator, receiveDef, expectedToReceive)
+	return k.dexCheckExpectedToReceive(ctx, order, expectedToSpend, expectedToReceive)
 }
 
 // SetDEXSettings sets the DEX settings of a specified denom.
@@ -384,20 +384,118 @@ func (k Keeper) ValidateDEXCancelOrdersByDenomIsAllowed(ctx sdk.Context, addr sd
 	return nil
 }
 
-func (k Keeper) dexExpectedToReceiveChecks(
+func (k Keeper) dexCheckExpectedToSpend(
 	ctx sdk.Context,
-	addr sdk.AccAddress,
-	def *types.Definition,
-	coin sdk.Coin,
+	order types.DEXOrder,
+	expectedToSpend, expectedToReceive sdk.Coin,
 ) error {
-	if coin.IsZero() || def == nil {
+	// validate that the order creator has enough balance, for both extension and non-extension coin
+	balance := k.bankKeeper.GetBalance(ctx, order.Creator, expectedToSpend.Denom)
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, order.Creator, balance, expectedToSpend); err != nil {
+		return sdkerrors.Wrapf(types.ErrDEXInsufficientSpendableBalance, "%s", err)
+	}
+
+	spendDef, err := k.getDefinitionOrNil(ctx, expectedToSpend.Denom)
+	if err != nil {
+		return err
+	}
+
+	if spendDef == nil {
 		return nil
 	}
 
-	if def.IsFeatureEnabled(types.Feature_whitelisting) && !def.HasAdminPrivileges(addr) {
-		if err := k.validateWhitelistedBalance(ctx, addr, coin); err != nil {
+	if spendDef.IsFeatureEnabled(types.Feature_extension) {
+		extensionContract, err := sdk.AccAddressFromBech32(spendDef.ExtensionCWAddress)
+		if err != nil {
 			return err
 		}
+		return k.dexCallExtensionPlaceOrder(
+			ctx, extensionContract, order, expectedToSpend, expectedToReceive,
+		)
+	}
+
+	if err := k.dexChecksForDenom(ctx, order.Creator, spendDef, expectedToReceive.Denom); err != nil {
+		return err
+	}
+
+	if spendDef.IsFeatureEnabled(types.Feature_freezing) && !spendDef.HasAdminPrivileges(order.Creator) {
+		frozenAmt := k.GetFrozenBalance(ctx, order.Creator, expectedToSpend.Denom).Amount
+		notFrozenTotalAmt := balance.Amount.Sub(frozenAmt)
+		if notFrozenTotalAmt.LT(expectedToSpend.Amount) {
+			return sdkerrors.Wrapf(
+				types.ErrDEXInsufficientSpendableBalance,
+				"failed to DEX lock %s available %s%s",
+				expectedToSpend.String(),
+				notFrozenTotalAmt,
+				expectedToSpend.Denom,
+			)
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) dexCheckExpectedToReceive(
+	ctx sdk.Context,
+	order types.DEXOrder,
+	expectedToSpend, expectedToReceive sdk.Coin,
+) error {
+	receiveDef, err := k.getDefinitionOrNil(ctx, expectedToReceive.Denom)
+	if err != nil {
+		return err
+	}
+	if receiveDef == nil {
+		return nil
+	}
+
+	if receiveDef.IsFeatureEnabled(types.Feature_extension) {
+		extensionContract, err := sdk.AccAddressFromBech32(receiveDef.ExtensionCWAddress)
+		if err != nil {
+			return err
+		}
+		return k.dexCallExtensionPlaceOrder(
+			ctx, extensionContract, order, expectedToSpend, expectedToReceive,
+		)
+	}
+
+	if err := k.dexChecksForDenom(ctx, order.Creator, receiveDef, expectedToSpend.Denom); err != nil {
+		return err
+	}
+
+	if receiveDef.IsFeatureEnabled(types.Feature_whitelisting) && !receiveDef.HasAdminPrivileges(order.Creator) {
+		if err := k.validateWhitelistedBalance(ctx, order.Creator, expectedToReceive); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) dexCallExtensionPlaceOrder(
+	ctx sdk.Context,
+	extensionContract sdk.AccAddress,
+	order types.DEXOrder,
+	expectedToSpend, expectedToReceive sdk.Coin,
+) error {
+	contractMsg := map[string]interface{}{
+		ExtensionPlaceOrderMethod: sudoExtensionPlaceOrderMsg{
+			Order:             order,
+			ExpectedToSpend:   expectedToSpend,
+			ExpectedToReceive: expectedToReceive,
+		},
+	}
+	contractMsgBytes, err := json.Marshal(contractMsg)
+	if err != nil {
+		return errors.Wrapf(err, "failed to marshal contract msg")
+	}
+
+	_, err = k.wasmPermissionedKeeper.Sudo(
+		ctx,
+		extensionContract,
+		contractMsgBytes,
+	)
+	if err != nil {
+		return types.ErrExtensionCallFailed.Wrapf("wasm error: %s", err)
 	}
 
 	return nil
@@ -440,14 +538,6 @@ func (k Keeper) dexChecksForDenom(
 }
 
 func (k Keeper) dexChecksForDefinition(ctx sdk.Context, acc sdk.AccAddress, def types.Definition) error {
-	if def.ExtensionCWAddress != "" {
-		return sdkerrors.Wrapf(
-			types.ErrInvalidInput,
-			"usage of %s is not supported for DEX, the token has extensions",
-			def.Denom,
-		)
-	}
-
 	if def.IsFeatureEnabled(types.Feature_dex_block) {
 		return sdkerrors.Wrapf(
 			cosmoserrors.ErrUnauthorized,
@@ -475,43 +565,6 @@ func (k Keeper) dexChecksForDefinition(ctx sdk.Context, acc sdk.AccAddress, def 
 				cosmoserrors.ErrUnauthorized,
 				"usage of %s for DEX is blocked because the token is globally frozen",
 				def.Denom,
-			)
-		}
-	}
-
-	return nil
-}
-
-func (k Keeper) dexExpectedToSpendChecks(
-	ctx sdk.Context,
-	addr sdk.AccAddress,
-	def *types.Definition,
-	coin sdk.Coin,
-) error {
-	if coin.IsZero() {
-		return nil
-	}
-
-	// validate locked balance for any token
-	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
-	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, coin); err != nil {
-		return sdkerrors.Wrapf(types.ErrDEXInsufficientSpendableBalance, "%s", err)
-	}
-
-	if def == nil {
-		return nil
-	}
-
-	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
-		frozenAmt := k.GetFrozenBalance(ctx, addr, coin.Denom).Amount
-		notFrozenTotalAmt := balance.Amount.Sub(frozenAmt)
-		if notFrozenTotalAmt.LT(coin.Amount) {
-			return sdkerrors.Wrapf(
-				types.ErrDEXInsufficientSpendableBalance,
-				"failed to DEX lock %s available %s%s",
-				coin.String(),
-				notFrozenTotalAmt,
-				coin.Denom,
 			)
 		}
 	}
@@ -615,7 +668,7 @@ func (k Keeper) shouldRecordExpectedToReceiveBalance(ctx sdk.Context, denom stri
 		return false, err
 	}
 	// increase for FT with the whitelisting enabled only
-	if def != nil && def.IsFeatureEnabled(types.Feature_whitelisting) {
+	if def != nil && (def.IsFeatureEnabled(types.Feature_whitelisting) || def.IsFeatureEnabled(types.Feature_extension)) {
 		return true, nil
 	}
 

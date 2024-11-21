@@ -24,6 +24,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 const (
@@ -49,7 +50,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)).   // one million added for uploading wasm code
+			Add(sdkmath.NewInt(500_000)).
 			Add(sdkmath.NewInt(3 * 500_000)), // give 500k gas for each message since extensions are nondeterministic
 	})
 
@@ -205,7 +206,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 			&assetfttypes.MsgSetWhitelistedLimit{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdkmath.NewInt(2)).
-			Add(sdkmath.NewInt(1_000_000)).    // added 1 million for smart contract upload
+			Add(sdkmath.NewInt(500_000)).      // added 1 million for smart contract upload
 			Add(sdkmath.NewInt(10 * 500_000)), // give 500k gas for each message since extensions are nondeterministic
 	})
 	chain.FundAccountWithOptions(ctx, t, nonIssuer, integration.BalancesOptions{
@@ -463,7 +464,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 			&assetfttypes.MsgUnfreeze{},
 		},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
+			Add(sdkmath.NewInt(500_000)).     // added 1 million for smart contract upload
 			Add(sdkmath.NewInt(2 * 500_000)), // add 500k for each message with extenstion transfer
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
@@ -616,7 +617,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Messages: []sdk.Msg{},
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
-			Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
+			Add(sdkmath.NewInt(500_000)).     // added 1 million for smart contract upload
 			Add(sdkmath.NewInt(6 * 500_000)), // add 500k for each message with extenstion transfer
 	})
 
@@ -803,7 +804,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
-			Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
+			Add(sdkmath.NewInt(500_000)).     // added 1 million for smart contract upload
 			Add(sdkmath.NewInt(7 * 500_000)), // add 500k for each message with extenstion transfer
 	})
 
@@ -812,7 +813,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	})
 
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1_000_000),
+		Amount: sdkmath.NewInt(500_000),
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1010,7 +1011,7 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)),
+			Add(sdkmath.NewInt(500_000)),
 	})
 
 	clientCtx := chain.ClientContext
@@ -1117,7 +1118,7 @@ func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
 	requireT := require.New(t)
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)),
+			Add(sdkmath.NewInt(500_000)),
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1198,7 +1199,7 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 	requireT := require.New(t)
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
-			Add(sdkmath.NewInt(1_000_000)),
+			Add(sdkmath.NewInt(500_000)),
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(500_000),
@@ -1312,7 +1313,7 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 	requireT := require.New(t)
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)),
+			Add(sdkmath.NewInt(500_000)),
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1389,7 +1390,7 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 	requireT := require.New(t)
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)),
+			Add(sdkmath.NewInt(500_000)),
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1530,7 +1531,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)). // added 1 million for smart contract upload
+			Add(sdkmath.NewInt(500_000)). // added 1 million for smart contract upload
 			Add(sdkmath.NewInt(2 * 500_000)),
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
@@ -1672,7 +1673,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 
 	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
 		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)). // added 1 million for smart contract upload
+			Add(sdkmath.NewInt(500_000)). // added 1 million for smart contract upload
 			Add(sdkmath.NewInt(2 * 500_000)),
 	})
 	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
@@ -1805,4 +1806,179 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 		&recipient2: 99, // 209 - 100 - 10 (10% commission from sender)
 		&extension:  30, // 25 + 5 (50% of the commission to the extension)
 	})
+}
+
+// TestAssetFTExtensionDEX checks extension works with the DEX.
+func TestAssetFTExtensionDEX(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	assetFTClint := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	dexReserver := dexParamsRes.Params.OrderReserve
+
+	admin := chain.GenAccount()
+	acc1 := chain.GenAccount()
+	acc2 := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			AddRaw(500_000). // added 1 million for smart contract upload
+			AddRaw(2 * 500_000),
+	})
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(500_000). // message + order reserve
+							Add(dexReserver.Amount),
+	})
+	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(500_000).
+			AddRaw(100).
+			Add(dexReserver.Amount), // message  + balance to place an order + order reserve
+	})
+
+	codeID, err := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), admin, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        admin.String(),
+		Symbol:        "EXABC",
+		Subunit:       "extabc",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_extension,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Label:  "testing-dex",
+		},
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactoryAuto(),
+		issueMsg,
+	)
+	requireT.NoError(err)
+	tokenIssuedEvents, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
+	requireT.NoError(err)
+	denomWithExtension := tokenIssuedEvents[0].Denom
+
+	// send from admin to acc1 to place an order
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   acc1.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denomWithExtension, sdkmath.NewInt(400))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactoryAuto(),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denomWithExtension,
+		QuoteDenom:  chain.ChainSettings.Denom,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+		Quantity:    sdkmath.NewInt(104), // 104 is prohibited by extensions smart contract
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactoryAuto(),
+		placeSellOrderMsg,
+	)
+	requireT.ErrorContains(err, "wasm error: DEX order placement is failed")
+
+	// update to allowed
+	placeSellOrderMsg.Quantity = sdkmath.NewInt(100)
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactoryAuto(),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	acc1BalanceRes, err := assetFTClint.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denomWithExtension,
+	})
+	requireT.NoError(err)
+	requireT.True(acc1BalanceRes.ExpectedToReceiveInDEX.IsZero())
+	requireT.Equal(sdkmath.NewInt(100).String(), acc1BalanceRes.LockedInDEX.String())
+
+	// place buy order from acc2
+
+	acc2BalanceRes, err := assetFTClint.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc2.String(),
+		Denom:   denomWithExtension,
+	})
+	requireT.NoError(err)
+	// no coins of the denomWithExtension
+	requireT.True(acc2BalanceRes.Balance.IsZero())
+
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc2.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denomWithExtension,
+		QuoteDenom:  chain.ChainSettings.Denom,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+		Quantity:    sdkmath.NewInt(103), // 103 is prohibited by extensions smart contract
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactoryAuto(),
+		placeBuyOrderMsg,
+	)
+	requireT.ErrorContains(err, "wasm error: DEX order placement is failed")
+
+	// update to allowed
+	placeBuyOrderMsg.Quantity = sdkmath.NewInt(100)
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactoryAuto(),
+		placeBuyOrderMsg,
+	)
+	requireT.NoError(err)
+
+	// both order are executed and closed
+	acc2BalanceRes, err = assetFTClint.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc2.String(),
+		Denom:   denomWithExtension,
+	})
+	requireT.NoError(err)
+	// bought expected quantity
+	requireT.Equal(sdkmath.NewInt(100).String(), acc2BalanceRes.Balance.String())
+	requireT.True(acc2BalanceRes.LockedInDEX.IsZero())
+	requireT.True(acc2BalanceRes.ExpectedToReceiveInDEX.IsZero())
+
+	acc1BalanceRes, err = assetFTClint.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denomWithExtension,
+	})
+	requireT.NoError(err)
+	requireT.True(acc1BalanceRes.LockedInDEX.IsZero())
+	requireT.True(acc1BalanceRes.ExpectedToReceiveInDEX.IsZero())
 }
