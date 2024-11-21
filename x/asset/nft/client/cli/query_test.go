@@ -29,7 +29,7 @@ func TestQueryClassAndNFT(t *testing.T) {
 
 	testNetwork := network.New(t)
 
-	symbol := "nft" + uuid.NewString()[:4] //nolint:goconst
+	symbol := "nft" + uuid.NewString()[:4]
 	name := "class name"
 	description := "class description"
 	uri := "https://my-class-meta.invalid/1"
@@ -72,7 +72,7 @@ func TestQueryClassAndNFT(t *testing.T) {
 	// classes
 	var classesRes types.QueryClassesResponse
 	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryClasses(),
-		[]string{fmt.Sprintf("--%s", cli.IssuerFlag), testNetwork.Validators[0].Address.String(), "--output", "json"},
+		[]string{"--" + cli.IssuerFlag, testNetwork.Validators[0].Address.String(), "--output", "json"},
 		&classesRes)
 	requireT.Equal(expectedClass, classesRes.Classes[0])
 
@@ -174,7 +174,7 @@ func issueClass(
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	if royaltyRate != "" {
-		args = append(args, fmt.Sprintf("--%s", cli.RoyaltyRateFlag), royaltyRate)
+		args = append(args, "--"+cli.RoyaltyRateFlag, royaltyRate)
 	}
 	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
 	require.NoError(t, err)

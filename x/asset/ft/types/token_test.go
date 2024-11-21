@@ -39,7 +39,6 @@ func TestValidatePrecision(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(fmt.Sprint(tc), func(t *testing.T) {
 			requireT := require.New(t)
 			err := types.ValidatePrecision(tc.precision)
@@ -328,7 +327,6 @@ func TestValidateFeatures(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
@@ -411,7 +409,6 @@ func TestValidateBurnRate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		name := fmt.Sprintf("%+v", tc)
 		t.Run(name, func(t *testing.T) {
 			requireT := require.New(t)
@@ -493,7 +490,6 @@ func TestValidateSendCommissionRate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		name := fmt.Sprintf("%+v", tc)
 		t.Run(name, func(t *testing.T) {
 			requireT := require.New(t)
@@ -585,7 +581,6 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 				feature: types.Feature_minting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
-				//nolint:testifylint // We don't want to use `require` here.
 				if assert.ErrorIs(t, err, cosmoserrors.ErrUnauthorized) {
 					return
 				}
@@ -602,7 +597,6 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 				feature: types.Feature_minting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
-				//nolint:testifylint // We don't want to use `require` here.
 				if assert.ErrorIs(t, err, types.ErrFeatureDisabled) {
 					return
 				}
@@ -611,7 +605,6 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			def := types.Definition{
 				Denom:              tt.fields.Denom,

@@ -50,7 +50,7 @@ func TestBankSendEstimation(t *testing.T) {
 		ToAddress:   recipient1.String(),
 	}
 	initialAmount := sdkmath.NewInt(100_000_000_000)
-	for i := 0; i < nTokens; i++ {
+	for i := range nTokens {
 		subunit := fmt.Sprintf("tok%d", i)
 		denom := assetfttypes.BuildDenom(subunit, issuer)
 		deterministicMsgs = append(deterministicMsgs, &assetfttypes.MsgIssue{
@@ -106,7 +106,7 @@ func TestBankSendEstimation(t *testing.T) {
 			ToAddress:   recipient2.String(),
 		}
 
-		for i := 0; i < n; i++ {
+		for i := range n {
 			sendMsg.Amount = sendMsg.Amount.Add(sdk.NewCoin(tokens[i], sdkmath.NewInt(1_0000_000)))
 		}
 

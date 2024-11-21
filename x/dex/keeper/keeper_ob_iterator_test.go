@@ -224,7 +224,6 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
 			sdkCtx := testApp.BaseApp.NewContext(false)
@@ -309,25 +308,25 @@ func assertOrdersOrdering(
 	storedRecords := getSorterOrderBookRecords(t, testApp, sdkCtx, orderBookID, side)
 	if side == types.SIDE_BUY {
 		// buy - price desc + order sec asc
-		for i := 0; i < len(storedRecords)-1; i++ {
+		for i := range len(storedRecords) - 1 {
 			left := storedRecords[i]
 			right := storedRecords[i+1]
 			require.True(t, //nolint:testifylint // require.NotEqual shouldn't be used here
 				// left.Price >= right.Price
 				left.Price.Rat().Cmp(right.Price.Rat()) != -1,
-				fmt.Sprintf("left price: %s < right price: %s", left.Price.String(), right.Price.String()),
+				"left price: %s < right price: %s", left.Price.String(), right.Price.String(),
 			)
 			if left.Price.Rat().Cmp(right.Price.Rat()) == 0 {
 				require.Less(t,
 					left.OrderSequence, right.OrderSequence,
-					fmt.Sprintf("left order sequence: %d >= right order sequence: %d", left.OrderSequence, right.OrderSequence),
+					"left order sequence: %d >= right order sequence: %d", left.OrderSequence, right.OrderSequence,
 				)
 			}
 		}
 		return
 	}
 	// sell - price asc + order sec asc
-	for i := 0; i < len(storedRecords)-1; i++ {
+	for i := range len(storedRecords) - 1 {
 		left := storedRecords[i]
 		right := storedRecords[i+1]
 		require.True(t, //nolint:testifylint // require.NotEqual shouldn't be used here
@@ -338,7 +337,7 @@ func assertOrdersOrdering(
 		if left.Price.Rat().Cmp(right.Price.Rat()) == 0 {
 			require.Less(t,
 				left.OrderSequence, right.OrderSequence,
-				fmt.Sprintf("left order sequence: %d >= right order sequence: %d", left.OrderSequence, right.OrderSequence),
+				"left order sequence: %d >= right order sequence: %d", left.OrderSequence, right.OrderSequence,
 			)
 		}
 	}

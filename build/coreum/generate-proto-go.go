@@ -3,7 +3,6 @@ package coreum
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -61,8 +60,8 @@ func executeGoProtocCommand(ctx context.Context, deps types.DepsFunc, includeDir
 	args := []string{
 		"--gocosmos_out=plugins=interfacetype+grpc,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.",
 		"--grpc-gateway_out=logtostderr=true:.",
-		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-gocosmos", tools.TargetPlatformLocal)),
-		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-grpc-gateway", tools.TargetPlatformLocal)),
+		"--plugin=" + tools.Path("bin/protoc-gen-gocosmos", tools.TargetPlatformLocal),
+		"--plugin=" + tools.Path("bin/protoc-gen-grpc-gateway", tools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {

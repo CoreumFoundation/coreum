@@ -108,7 +108,7 @@ func TestShapeInEscalationRegion(t *testing.T) {
 func TestWithRandomModels(t *testing.T) {
 	t.Parallel()
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		t.Run("RandomCase", func(t *testing.T) {
 			t.Parallel()
 

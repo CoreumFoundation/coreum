@@ -2,7 +2,6 @@ package network
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -159,7 +158,7 @@ func DefaultConfig(t *testing.T) network.Config {
 		ChainID:        chainID,
 		NumValidators:  1,
 		BondDenom:      devNetwork.Denom(),
-		MinGasPrices:   fmt.Sprintf("0.000006%s", devNetwork.Denom()),
+		MinGasPrices:   "0.000006" + devNetwork.Denom(),
 		AccountTokens:  sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:  sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:   sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),

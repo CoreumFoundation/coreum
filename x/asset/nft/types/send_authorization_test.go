@@ -84,7 +84,6 @@ func TestFindAndRemoveNFT(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			a := NewSendAuthorization(tc.nfts)
 			found := a.findAndRemoveNFT(tc.classID, tc.nftID)

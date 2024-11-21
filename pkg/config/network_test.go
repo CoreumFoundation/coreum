@@ -64,7 +64,6 @@ func TestStaticConfigProviders(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			n, err := config.NetworkConfigByChainID(tt.chainID)
 			require.NoError(t, err)

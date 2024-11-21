@@ -271,7 +271,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	requireT.Equal(coinToFreeze.Amount.String(), respBalance.Frozen.String())
 
 	// issue and freeze more to test pagination
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		token.Symbol = fmt.Sprintf("btc%d%s", i, uuid.NewString()[:4])
 		token.Subunit = fmt.Sprintf("satoshi%d%s", i, uuid.NewString()[:4])
 		newDenom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
@@ -437,7 +437,7 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	// test pagination
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		token.Symbol = fmt.Sprintf("btc%d%s", i, uuid.NewString()[:4])
 		token.Subunit = fmt.Sprintf("satoshi%d%s", i, uuid.NewString()[:4])
 		denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)

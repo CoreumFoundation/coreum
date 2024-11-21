@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
@@ -42,19 +40,19 @@ const (
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgIssueClass{}, fmt.Sprintf("%s/MsgIssueClass", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgMint{}, fmt.Sprintf("%s/MsgMint", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateData{}, fmt.Sprintf("%s/MsgUpdateData", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgBurn{}, fmt.Sprintf("%s/MsgBurn", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgFreeze{}, fmt.Sprintf("%s/MsgFreeze", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgUnfreeze{}, fmt.Sprintf("%s/MsgUnfreeze", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgAddToWhitelist{}, fmt.Sprintf("%s/MsgAddToWhitelist", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgRemoveFromWhitelist{}, fmt.Sprintf("%s/MsgRemoveFromWhitelist", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgAddToClassWhitelist{}, fmt.Sprintf("%s/MsgAddToClassWhitelist", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgRemoveFromClassWhitelist{}, fmt.Sprintf("%s/MsgRemoveFromClassWhitelist", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgClassFreeze{}, fmt.Sprintf("%s/MsgClassFreeze", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgClassUnfreeze{}, fmt.Sprintf("%s/MsgClassUnfreeze", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName))
+	legacy.RegisterAminoMsg(cdc, &MsgIssueClass{}, ModuleName+"/MsgIssueClass")
+	legacy.RegisterAminoMsg(cdc, &MsgMint{}, ModuleName+"/MsgMint")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateData{}, ModuleName+"/MsgUpdateData")
+	legacy.RegisterAminoMsg(cdc, &MsgBurn{}, ModuleName+"/MsgBurn")
+	legacy.RegisterAminoMsg(cdc, &MsgFreeze{}, ModuleName+"/MsgFreeze")
+	legacy.RegisterAminoMsg(cdc, &MsgUnfreeze{}, ModuleName+"/MsgUnfreeze")
+	legacy.RegisterAminoMsg(cdc, &MsgAddToWhitelist{}, ModuleName+"/MsgAddToWhitelist")
+	legacy.RegisterAminoMsg(cdc, &MsgRemoveFromWhitelist{}, ModuleName+"/MsgRemoveFromWhitelist")
+	legacy.RegisterAminoMsg(cdc, &MsgAddToClassWhitelist{}, ModuleName+"/MsgAddToClassWhitelist")
+	legacy.RegisterAminoMsg(cdc, &MsgRemoveFromClassWhitelist{}, ModuleName+"/MsgRemoveFromClassWhitelist")
+	legacy.RegisterAminoMsg(cdc, &MsgClassFreeze{}, ModuleName+"/MsgClassFreeze")
+	legacy.RegisterAminoMsg(cdc, &MsgClassUnfreeze{}, ModuleName+"/MsgClassUnfreeze")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, ModuleName+"/MsgUpdateParams")
 }
 
 // ValidateBasic checks that message fields are valid.

@@ -197,7 +197,7 @@ func BuildTxForSimulation(
 	var signatureData signing.SignatureData
 	if multisigPubKey, ok := pubKey.(*multisig.LegacyAminoPubKey); ok {
 		multiSignatureData := make([]signing.SignatureData, 0, multisigPubKey.Threshold)
-		for i := uint32(0); i < multisigPubKey.Threshold; i++ {
+		for range multisigPubKey.Threshold {
 			multiSignatureData = append(multiSignatureData, &signing.SingleSignatureData{
 				SignMode: txf.SignMode(),
 			})

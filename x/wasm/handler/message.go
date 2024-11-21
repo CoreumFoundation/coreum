@@ -132,6 +132,7 @@ func decodeCoreumMessage(coreumMessages coreumMsg, sender sdk.AccAddress) (sdk.M
 		return decodeNFTMessage(coreumMessages.NFT, sender.String())
 	}
 
+	//nolint:nilnil // we are ok with this.
 	return nil, nil
 }
 
@@ -177,6 +178,7 @@ func decodeAssetFTMessage(assetFTMsg *assetFTMsg, sender string) (sdk.Msg, error
 		return assetFTMsg.UpgradeTokenV1, nil
 	}
 
+	//nolint:nilnil // we are ok with this.
 	return nil, nil
 }
 
@@ -262,6 +264,7 @@ func decodeAssetNFTMessage(assetNFTMsg *assetNFTMsg, sender string) (sdk.Msg, er
 		return assetNFTMsg.RemoveFromClassWhitelist, nil
 	}
 
+	//nolint:nilnil // we are ok with this.
 	return nil, nil
 }
 
@@ -271,6 +274,7 @@ func decodeNFTMessage(nftMsg *nftMsg, sender string) (sdk.Msg, error) {
 		return nftMsg.Send, nil
 	}
 
+	//nolint:nilnil // we are ok with this.
 	return nil, nil
 }
 

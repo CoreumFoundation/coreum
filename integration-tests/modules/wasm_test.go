@@ -417,7 +417,7 @@ func TestWASMBankSendContract(t *testing.T) {
 
 	require.Equal(t, "cosmos.bank.v1beta1.MsgSend", gasEvents[0].MsgURL)
 	require.Equal(t, msgGas, gasEvents[0].DeterministicGas)
-	require.Greater(t, gasEvents[0].RealGas, uint64(0))
+	require.Positive(t, gasEvents[0].RealGas)
 }
 
 // TestWASMGasBankSendAndBankSend checks that a message containing a deterministic and a
@@ -1949,7 +1949,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	royaltyRate := "100000000000000000" // 1e18 = 10%
 	data := make([]byte, 256)
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		data[i] = uint8(i)
 	}
 	encodedData := base64.StdEncoding.EncodeToString(data)
@@ -2537,7 +2537,7 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 
 	royaltyRate := sdkmath.LegacyMustNewDecFromStr("0.1")
 	data := make([]byte, 256)
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		data[i] = uint8(i)
 	}
 	encodedData := base64.StdEncoding.EncodeToString(data)
@@ -3441,7 +3441,6 @@ func TestWASMContractInstantiationIsNotRejectedIfAccountExists(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 

@@ -47,32 +47,31 @@ func TestAutoGasPrices(t *testing.T) {
 		},
 		{
 			name:  "specific gas prices are provided",
-			flags: []string{fmt.Sprintf("--gas-prices=0.1%s", denom), "--gas=115000"},
+			flags: []string{"--gas-prices=0.1" + denom, "--gas=115000"},
 			feeAssertion: func(t *testing.T, fee sdk.Coins) {
 				assert.True(t, fee.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(11500)))))
 			},
 		},
 		{
 			name:  "specific fees are provided",
-			flags: []string{fmt.Sprintf("--fees=12345%s", denom)},
+			flags: []string{"--fees=12345" + denom},
 			feeAssertion: func(t *testing.T, fee sdk.Coins) {
 				assert.True(t, fee.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(12345)))))
 			},
 		},
 		{
 			name:        "both gas prices and fees are provided",
-			flags:       []string{fmt.Sprintf("--fees=12345%s", denom), "--gas-prices=auto"},
+			flags:       []string{"--fees=12345" + denom, "--gas-prices=auto"},
 			expectError: true,
 		},
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			requireT := require.New(t)
 			recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 			args := append([]string{
-				"send", testNetwork.Validators[0].Address.String(), recipient.String(), fmt.Sprintf("100%s", denom),
+				"send", testNetwork.Validators[0].Address.String(), recipient.String(), "100" + denom,
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 			}, tc.flags...)
