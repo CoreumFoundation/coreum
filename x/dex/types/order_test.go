@@ -59,6 +59,15 @@ func TestOrder_Validate(t *testing.T) {
 			wantErr: types.ErrInvalidInput,
 		},
 		{
+			name: "invalid_order_sequence",
+			order: func() types.Order {
+				order := validOrder()
+				order.Sequence = 1
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
 			name: "invalid_id_too_long",
 			order: func() types.Order {
 				order := validOrder()

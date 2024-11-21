@@ -10101,6 +10101,11 @@
           "type": "string",
           "description": "id is unique order ID."
         },
+        "sequence": {
+          "type": "string",
+          "format": "uint64",
+          "description": "sequence is unique order sequence generated at the time of the order placement."
+        },
         "base_denom": {
           "type": "string",
           "description": "base_denom is base order denom."

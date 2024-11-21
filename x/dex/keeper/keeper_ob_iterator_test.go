@@ -318,8 +318,8 @@ func assertOrdersOrdering(
 			)
 			if left.Price.Rat().Cmp(right.Price.Rat()) == 0 {
 				require.Less(t,
-					left.OrderSeq, right.OrderSeq,
-					"left order seq: %d >= right order seq: %d", left.OrderSeq, right.OrderSeq,
+					left.OrderSequence, right.OrderSequence,
+					"left order sequence: %d >= right order sequence: %d", left.OrderSequence, right.OrderSequence,
 				)
 			}
 		}
@@ -336,8 +336,8 @@ func assertOrdersOrdering(
 		)
 		if left.Price.Rat().Cmp(right.Price.Rat()) == 0 {
 			require.Less(t,
-				left.OrderSeq, right.OrderSeq,
-				"left order seq: %d >= right order seq: %d", left.OrderSeq, right.OrderSeq,
+				left.OrderSequence, right.OrderSequence,
+				"left order sequence: %d >= right order sequence: %d", left.OrderSequence, right.OrderSequence,
 			)
 		}
 	}

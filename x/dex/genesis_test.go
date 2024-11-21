@@ -79,72 +79,66 @@ func TestInitAndExportGenesis(t *testing.T) {
 				},
 			},
 		},
-		Orders: []types.OrderWithSequence{
+		Orders: []types.Order{
 			{
-				Sequence: 0,
-				Order: types.Order{
-					Creator:    acc1.String(),
-					Type:       types.ORDER_TYPE_LIMIT,
-					ID:         "id1",
-					BaseDenom:  denom1,
-					QuoteDenom: denom2,
-					Price:      lo.ToPtr(types.MustNewPriceFromString("1e-2")),
-					Quantity:   sdkmath.NewInt(100),
-					Side:       types.SIDE_BUY,
-					GoodTil: &types.GoodTil{
-						GoodTilBlockHeight: 1000,
-					},
-					TimeInForce:       types.TIME_IN_FORCE_GTC,
-					RemainingQuantity: sdkmath.NewInt(90),
-					RemainingBalance:  sdkmath.NewInt(90),
-					Reserve:           prams.OrderReserve,
+				Creator:    acc1.String(),
+				Type:       types.ORDER_TYPE_LIMIT,
+				ID:         "id1",
+				Sequence:   1,
+				BaseDenom:  denom1,
+				QuoteDenom: denom2,
+				Price:      lo.ToPtr(types.MustNewPriceFromString("1e-2")),
+				Quantity:   sdkmath.NewInt(100),
+				Side:       types.SIDE_BUY,
+				GoodTil: &types.GoodTil{
+					GoodTilBlockHeight: 1000,
 				},
+				TimeInForce:       types.TIME_IN_FORCE_GTC,
+				RemainingQuantity: sdkmath.NewInt(90),
+				RemainingBalance:  sdkmath.NewInt(90),
+				Reserve:           prams.OrderReserve,
 			},
 			{
-				Sequence: 1,
-				Order: types.Order{
-					Creator:           acc2.String(),
-					Type:              types.ORDER_TYPE_LIMIT,
-					ID:                "id2",
-					BaseDenom:         denom2,
-					QuoteDenom:        denom1,
-					Price:             lo.ToPtr(types.MustNewPriceFromString("3e3")),
-					Quantity:          sdkmath.NewInt(100),
-					Side:              types.SIDE_SELL,
-					TimeInForce:       types.TIME_IN_FORCE_GTC,
-					RemainingQuantity: sdkmath.NewInt(90),
-					RemainingBalance:  sdkmath.NewInt(90),
-					Reserve:           prams.OrderReserve,
-				},
+				Creator:           acc2.String(),
+				Type:              types.ORDER_TYPE_LIMIT,
+				ID:                "id2",
+				Sequence:          2,
+				BaseDenom:         denom2,
+				QuoteDenom:        denom1,
+				Price:             lo.ToPtr(types.MustNewPriceFromString("3e3")),
+				Quantity:          sdkmath.NewInt(100),
+				Side:              types.SIDE_SELL,
+				TimeInForce:       types.TIME_IN_FORCE_GTC,
+				RemainingQuantity: sdkmath.NewInt(90),
+				RemainingBalance:  sdkmath.NewInt(90),
+				Reserve:           prams.OrderReserve,
 			},
 			{
-				Sequence: 2,
-				Order: types.Order{
-					Creator:    acc2.String(),
-					Type:       types.ORDER_TYPE_LIMIT,
-					ID:         "id3",
-					BaseDenom:  denom2,
-					QuoteDenom: denom3,
-					Price:      lo.ToPtr(types.MustNewPriceFromString("11111e12")),
-					Quantity:   sdkmath.NewInt(10000000),
-					Side:       types.SIDE_BUY,
-					GoodTil: &types.GoodTil{
-						GoodTilBlockHeight: 323,
-					},
-					TimeInForce:       types.TIME_IN_FORCE_GTC,
-					RemainingQuantity: sdkmath.NewInt(70000),
-					RemainingBalance:  sdkmath.NewInt(50),
-					Reserve:           prams.OrderReserve,
+				Creator:    acc2.String(),
+				Type:       types.ORDER_TYPE_LIMIT,
+				ID:         "id3",
+				Sequence:   3,
+				BaseDenom:  denom2,
+				QuoteDenom: denom3,
+				Price:      lo.ToPtr(types.MustNewPriceFromString("11111e12")),
+				Quantity:   sdkmath.NewInt(10000000),
+				Side:       types.SIDE_BUY,
+				GoodTil: &types.GoodTil{
+					GoodTilBlockHeight: 323,
 				},
+				TimeInForce:       types.TIME_IN_FORCE_GTC,
+				RemainingQuantity: sdkmath.NewInt(70000),
+				RemainingBalance:  sdkmath.NewInt(50),
+				Reserve:           prams.OrderReserve,
 			},
 		},
 	}
 
 	accountDenomToAccountDenomOrdersCount := make(map[string]types.AccountDenomOrdersCount, 0)
-	for _, orderWithSeq := range genState.Orders {
-		creator := sdk.MustAccAddressFromBech32(orderWithSeq.Order.Creator)
+	for _, order := range genState.Orders {
+		creator := sdk.MustAccAddressFromBech32(order.Creator)
 		accNum := testApp.AccountKeeper.GetAccount(sdkCtx, creator).GetAccountNumber()
-		for _, denom := range orderWithSeq.Order.Denoms() {
+		for _, denom := range order.Denoms() {
 			key := fmt.Sprintf("%d%s", accNum, denom)
 			count, ok := accountDenomToAccountDenomOrdersCount[key]
 			if !ok {
@@ -158,7 +152,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 			accountDenomToAccountDenomOrdersCount[key] = count
 		}
 		// emulate asset FT locking, expecting that the asset FT imports state before the DEX
-		lockedBalance, err := orderWithSeq.Order.ComputeLimitOrderLockedBalance()
+		lockedBalance, err := order.ComputeLimitOrderLockedBalance()
 		require.NoError(t, err)
 		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(lockedBalance))
 		require.NoError(t, testApp.AssetFTKeeper.DEXIncreaseLocked(
@@ -166,11 +160,14 @@ func TestInitAndExportGenesis(t *testing.T) {
 		))
 		testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(prams.OrderReserve))
 		require.NoError(t, testApp.AssetFTKeeper.DEXIncreaseLocked(
-			sdkCtx, creator, orderWithSeq.Order.Reserve,
+			sdkCtx, creator, order.Reserve,
 		))
 	}
 	// set the correct state
 	genState.AccountsDenomsOrdersCounts = lo.Values(accountDenomToAccountDenomOrdersCount)
+
+	// the order sequence is last order sequence
+	genState.OrderSequence = 3
 
 	// init the keeper
 	dex.InitGenesis(sdkCtx, dexKeeper, testApp.AccountKeeper, genState)
@@ -201,6 +198,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		Creator:     acc2.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          "id4",
+		Sequence:    0,
 		BaseDenom:   denom2,
 		QuoteDenom:  denom3,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("4e3")),
@@ -215,6 +213,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, orderWithExisingOrderBook))
 
 	// set the expected state
+	orderWithExisingOrderBook.Sequence = 4
 	orderWithExisingOrderBook.RemainingQuantity = sdkmath.NewInt(10000000)
 	orderWithExisingOrderBook.RemainingBalance = sdkmath.NewInt(40000000000)
 	orderWithExisingOrderBook.Reserve = params.OrderReserve
@@ -228,18 +227,17 @@ func TestInitAndExportGenesis(t *testing.T) {
 	require.Equal(t, uint64(2), denom3Count)
 
 	// check that this order sequence is next
-	ordersWithSeq, _, err := dexKeeper.GetOrdersWithSequence(
+	orders, _, err := dexKeeper.GetAccountsOrders(
 		sdkCtx, &query.PageRequest{Limit: query.PaginationMaxLimit},
 	)
 	require.NoError(t, err)
 
 	orderFound := false
-	for _, orderWithSeq := range ordersWithSeq {
-		if orderWithSeq.Order.Creator == acc2.String() && orderWithSeq.Order.ID == orderWithExisingOrderBook.ID {
+	for _, order := range orders {
+		if order.Creator == acc2.String() && order.ID == orderWithExisingOrderBook.ID {
 			orderFound = true
-			// check that next seq is max from imported + 1
-			requireT.Equal(uint64(3), orderWithSeq.Sequence)
-			requireT.EqualValues(orderWithExisingOrderBook, orderWithSeq.Order)
+			// the `orderWithExisingOrderBook` has the sequence eq to 4 to check that next sequence from imported is used
+			requireT.EqualValues(orderWithExisingOrderBook, order)
 		}
 	}
 	require.True(t, orderFound)
@@ -270,7 +268,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint32(5), denom3ToDenom1OrderBookID)
 
-	// cancel orders by denom to be sure that the acc-denom-orderSeq mapping is saved
+	// cancel orders by denom to be sure that the acc-denom-order mapping is saved
 	acc1Orders, _, err := dexKeeper.GetOrders(sdkCtx, acc2, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	require.NoError(t, err)
 	require.Len(t, acc1Orders, 3)

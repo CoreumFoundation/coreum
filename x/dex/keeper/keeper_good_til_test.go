@@ -584,10 +584,8 @@ func TestKeeper_GoodTil(t *testing.T) {
 				gotOrders = append(gotOrders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_SELL)...)
 			}
 			wantOrders := tt.wantOrders(testSet)
-			// set order reserve for all orders
-			for i := range wantOrders {
-				wantOrders[i].Reserve = testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
-			}
+			wantOrders = fillReserveAndOrderSequence(t, sdkCtx, testApp, wantOrders)
+
 			require.ElementsMatch(t, wantOrders, gotOrders)
 		})
 	}

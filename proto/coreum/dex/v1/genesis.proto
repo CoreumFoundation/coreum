@@ -12,8 +12,10 @@ message GenesisState {
   // params defines all the parameters of the module.
   Params params = 1 [(gogoproto.nullable) = false];
   repeated OrderBookDataWithID order_books = 2 [(gogoproto.nullable) = false];
-  repeated OrderWithSequence orders = 3 [(gogoproto.nullable) = false];
-  repeated AccountDenomOrdersCount accounts_denoms_orders_counts = 4 [(gogoproto.nullable) = false];
+  repeated Order orders = 3 [(gogoproto.nullable) = false];
+  // order_sequence is current order sequence;
+  uint64 order_sequence = 4;
+  repeated AccountDenomOrdersCount accounts_denoms_orders_counts = 5 [(gogoproto.nullable) = false];
 }
 
 // OrderBookDataWithID is a order book data with it's corresponding ID.
@@ -22,14 +24,6 @@ message OrderBookDataWithID {
   uint32 id = 1 [(gogoproto.customname) = "ID"];
   // data is order book data.
   OrderBookData data = 2 [(gogoproto.nullable) = false];
-}
-
-// OrderWithSequence is a order with it's corresponding sequence.
-message OrderWithSequence {
-  // sequence is order sequence.
-  uint64 sequence = 1;
-  // data is order book data.
-  Order order = 2 [(gogoproto.nullable) = false];
 }
 
 // AccountDenomOrderCount is a count of orders per account and denom.

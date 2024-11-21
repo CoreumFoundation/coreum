@@ -198,13 +198,13 @@
 - [coreum/dex/v1/event.proto](#coreum/dex/v1/event.proto)
     - [EventOrderClosed](#coreum.dex.v1.EventOrderClosed)
     - [EventOrderCreated](#coreum.dex.v1.EventOrderCreated)
+    - [EventOrderPlaced](#coreum.dex.v1.EventOrderPlaced)
     - [EventOrderReduced](#coreum.dex.v1.EventOrderReduced)
   
 - [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
     - [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount)
     - [GenesisState](#coreum.dex.v1.GenesisState)
     - [OrderBookDataWithID](#coreum.dex.v1.OrderBookDataWithID)
-    - [OrderWithSequence](#coreum.dex.v1.OrderWithSequence)
   
 - [coreum/dex/v1/order.proto](#coreum/dex/v1/order.proto)
     - [CancelGoodTil](#coreum.dex.v1.CancelGoodTil)
@@ -4488,14 +4488,18 @@ EventGas is emitted by deterministic gas module to report gas information.
 ### EventOrderClosed
 
 ```
-EventOrderClosed is emitted when the order is closed during matching or manually.
+EventOrderClosed is emitted when the order is closed during matching or manually, and removed from the order book.
 ```
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `order` | [Order](#coreum.dex.v1.Order) |  |    |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `sequence is unique order sequence.`  |
+| `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
+| `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
 
 
 
@@ -4514,7 +4518,32 @@ EventOrderCreated is emitted when the limit order is saved to the order book.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `order` | [Order](#coreum.dex.v1.Order) |  |    |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `sequence is unique order sequence.`  |
+| `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
+| `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
+
+
+
+
+
+
+<a name="coreum.dex.v1.EventOrderPlaced"></a>
+
+### EventOrderPlaced
+
+```
+EventOrderPlaced is emitted when a new order is placed and new sequence is generated for it.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `creator` | [string](#string) |  |  `creator is order creator address.`  |
+| `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `sequence is unique order sequence.`  |
 
 
 
@@ -4535,6 +4564,7 @@ EventOrderReduced is emitted when the order is reduced during the matching.
 | ----- | ---- | ----- | ----------- |
 | `creator` | [string](#string) |  |  `creator is order creator address.`  |
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `sequence is unique order sequence.`  |
 | `sent_coin` | [string](#string) |  |  `sent_coin is coin sent during matching.`  |
 | `received_coin` | [string](#string) |  |  `received_coin is coin received during matching.`  |
 
@@ -4594,7 +4624,8 @@ GenesisState defines the module genesis state.
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#coreum.dex.v1.Params) |  |  `params defines all the parameters of the module.`  |
 | `order_books` | [OrderBookDataWithID](#coreum.dex.v1.OrderBookDataWithID) | repeated |    |
-| `orders` | [OrderWithSequence](#coreum.dex.v1.OrderWithSequence) | repeated |    |
+| `orders` | [Order](#coreum.dex.v1.Order) | repeated |    |
+| `order_sequence` | [uint64](#uint64) |  |  `order_sequence is current order sequence;`  |
 | `accounts_denoms_orders_counts` | [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount) | repeated |    |
 
 
@@ -4616,26 +4647,6 @@ OrderBookDataWithID is a order book data with it's corresponding ID.
 | ----- | ---- | ----- | ----------- |
 | `id` | [uint32](#uint32) |  |  `id is order book ID.`  |
 | `data` | [OrderBookData](#coreum.dex.v1.OrderBookData) |  |  `data is order book data.`  |
-
-
-
-
-
-
-<a name="coreum.dex.v1.OrderWithSequence"></a>
-
-### OrderWithSequence
-
-```
-OrderWithSequence is a order with it's corresponding sequence.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sequence` | [uint64](#uint64) |  |  `sequence is order sequence.`  |
-| `order` | [Order](#coreum.dex.v1.Order) |  |  `data is order book data.`  |
 
 
 
@@ -4671,7 +4682,7 @@ CancelGoodTil is a cancel good til message for the delay router.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `creator` | [string](#string) |  |  `creator is order creator address.`  |
-| `order_seq` | [uint64](#uint64) |  |  `order_seq is order sequence.`  |
+| `order_sequence` | [uint64](#uint64) |  |  `order_sequence is order sequence.`  |
 
 
 
@@ -4713,6 +4724,7 @@ Order is a DEX order.
 | `creator` | [string](#string) |  |  `creator is order creator address.`  |
 | `type` | [OrderType](#coreum.dex.v1.OrderType) |  |  `type is order type.`  |
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
+| `sequence` | [uint64](#uint64) |  |  `sequence is unique order sequence generated at the time of the order placement.`  |
 | `base_denom` | [string](#string) |  |  `base_denom is base order denom.`  |
 | `quote_denom` | [string](#string) |  |  `quote_denom is quote order denom`  |
 | `price` | [string](#string) |  |  `price is value of one unit of the base_denom expressed in terms of the quote_denom.`  |
@@ -4764,7 +4776,7 @@ OrderBookRecord is a single order book record.
 | `order_book_id` | [uint32](#uint32) |  |  `order_book_id is order book ID.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `price` | [string](#string) |  |  `price is order book record price.`  |
-| `order_seq` | [uint64](#uint64) |  |  `order_seq is order sequence.`  |
+| `order_sequence` | [uint64](#uint64) |  |  `order_sequence is order sequence.`  |
 | `order_id` | [string](#string) |  |  `order ID provided by the creator.`  |
 | `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
 | `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |

@@ -56,6 +56,7 @@ func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 		TakerOrderReducedEvent: types.EventOrderReduced{
 			Creator:      order.Creator,
 			ID:           order.ID,
+			Sequence:     order.Sequence,
 			SentCoin:     sdk.NewCoin(order.GetSpendDenom(), sdkmath.ZeroInt()),
 			ReceivedCoin: sdk.NewCoin(order.GetReceiveDenom(), sdkmath.ZeroInt()),
 		},
@@ -66,7 +67,9 @@ func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 }
 
 // TakerSend registers the coin to send from taker to maker.
-func (mr *MatchingResult) TakerSend(makerAddr sdk.AccAddress, makerOrderID string, coin sdk.Coin) {
+func (mr *MatchingResult) TakerSend(
+	makerAddr sdk.AccAddress, makerOrderID string, makerOrderSequence uint64, coin sdk.Coin,
+) {
 	if coin.IsZero() {
 		return
 	}
@@ -75,7 +78,7 @@ func (mr *MatchingResult) TakerSend(makerAddr sdk.AccAddress, makerOrderID strin
 	mr.FTActions.AddSend(mr.TakerAddress, makerAddr, coin)
 	mr.FTActions.AddDecreaseExpectedToReceive(makerAddr, coin)
 
-	mr.updateTakerSendEvents(makerAddr, makerOrderID, coin)
+	mr.updateTakerSendEvents(makerAddr, makerOrderID, makerOrderSequence, coin)
 }
 
 // MakerSend registers the coin to send from maker to taker.
@@ -167,12 +170,14 @@ func (mr *MatchingResult) UpdateRecord(record types.OrderBookRecord) {
 func (mr *MatchingResult) updateTakerSendEvents(
 	makerAddr sdk.AccAddress,
 	makerOrderID string,
+	makerOrderSequence uint64,
 	coin sdk.Coin,
 ) {
 	mr.TakerOrderReducedEvent.SentCoin = mr.TakerOrderReducedEvent.SentCoin.Add(coin)
 	mr.MakerOrderReducedEvents = append(mr.MakerOrderReducedEvents, types.EventOrderReduced{
 		Creator:      makerAddr.String(),
 		ID:           makerOrderID,
+		Sequence:     makerOrderSequence,
 		ReceivedCoin: coin,
 	})
 }

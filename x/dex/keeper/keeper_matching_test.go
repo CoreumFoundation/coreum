@@ -6368,10 +6368,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_SELL)...)
 			}
 			wantOrders := tt.wantOrders(testSet)
-			// set order reserve for all orders
-			for i := range wantOrders {
-				wantOrders[i].Reserve = testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
-			}
+			// set order reserve and order sequence for all orders
+			wantOrders = fillReserveAndOrderSequence(t, sdkCtx, testApp, wantOrders)
 			require.ElementsMatch(t, wantOrders, orders)
 
 			availableBalances := make(map[string]sdk.Coins)
@@ -6503,6 +6501,26 @@ func removeEmptyBalances(balances map[string]sdk.Coins) map[string]sdk.Coins {
 	return balances
 }
 
+func fillReserveAndOrderSequence(
+	t *testing.T,
+	sdkCtx sdk.Context,
+	testApp *simapp.App,
+	orders []types.Order,
+) []types.Order {
+	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	for i, order := range orders {
+		storedOrder, err := testApp.DEXKeeper.GetOrderByAddressAndID(
+			sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.ID,
+		)
+		require.NoError(t, err)
+		require.Greater(t, storedOrder.Sequence, uint64(0))
+		orders[i].Sequence = storedOrder.Sequence
+		orders[i].Reserve = orderReserve
+	}
+
+	return orders
+}
+
 func assertOrderPlacementResult(
 	t *testing.T,
 	sdkCtx sdk.Context,
@@ -6510,7 +6528,8 @@ func assertOrderPlacementResult(
 	availableBalancesBefore map[string]sdkmath.Int,
 	order types.Order,
 ) {
-	events := readOrderEvents(t, sdkCtx, testApp)
+	events := readOrderEvents(t, sdkCtx)
+	assertPlacementEvents(t, order, events)
 
 	sentAmt, receivedAmt := assetOrderSentReceivedAmounts(
 		t, sdkCtx, testApp, availableBalancesBefore, order, events,
@@ -6527,13 +6546,69 @@ func assertOrderPlacementResult(
 
 	t.Logf("Order found in the order book.")
 	require.NotNil(t, events.OrderCreated)
-	require.Equal(t, events.OrderCreated.Order, storedOrder)
+	require.Equal(t, types.EventOrderCreated{
+		Creator:           storedOrder.Creator,
+		ID:                storedOrder.ID,
+		Sequence:          events.OrderPlaced.Sequence,
+		RemainingQuantity: storedOrder.RemainingQuantity,
+		RemainingBalance:  storedOrder.RemainingBalance,
+	}, *events.OrderCreated)
 
 	if order.Type != types.ORDER_TYPE_LIMIT {
 		t.Fatalf("Saved not market order, type: %s", order.Type.String())
 	}
 	if order.TimeInForce != types.TIME_IN_FORCE_GTC {
 		t.Fatalf("Saved not GTC order, time in force: %s", order.TimeInForce.String())
+	}
+}
+
+func assertPlacementEvents(t *testing.T, order types.Order, events OrderPlacementEvents) {
+	require.Greater(t, events.OrderPlaced.Sequence, uint64(0))
+	require.Equal(t, types.EventOrderPlaced{
+		Creator:  order.Creator,
+		ID:       order.ID,
+		Sequence: events.OrderPlaced.Sequence,
+	}, events.OrderPlaced)
+
+	// set initial quantity
+	expectedRemainingQuantity := order.Quantity
+
+	takerSentAmt := sdk.NewCoin(order.GetSpendDenom(), sdkmath.ZeroInt())
+	takerReceivedAmt := sdk.NewCoin(order.GetReceiveDenom(), sdkmath.ZeroInt())
+	makerSentAmt := sdk.NewCoin(order.GetReceiveDenom(), sdkmath.ZeroInt())
+	makerReceivedAmt := sdk.NewCoin(order.GetSpendDenom(), sdkmath.ZeroInt())
+	for _, reducedEvt := range events.OrdersReduced {
+		// is taker
+		if events.OrderPlaced.Sequence == reducedEvt.Sequence {
+			require.True(t, takerSentAmt.IsZero())
+			require.True(t, takerReceivedAmt.IsZero())
+			takerSentAmt = reducedEvt.SentCoin
+			takerReceivedAmt = reducedEvt.ReceivedCoin
+
+			if order.Side == types.SIDE_BUY {
+				expectedRemainingQuantity = expectedRemainingQuantity.Sub(reducedEvt.ReceivedCoin.Amount)
+			} else {
+				expectedRemainingQuantity = expectedRemainingQuantity.Sub(reducedEvt.SentCoin.Amount)
+			}
+			continue
+		}
+		makerSentAmt = makerSentAmt.Add(reducedEvt.SentCoin)
+		makerReceivedAmt = makerReceivedAmt.Add(reducedEvt.ReceivedCoin)
+	}
+	require.Equal(t, takerSentAmt.String(), makerReceivedAmt.String())
+	require.Equal(t, makerSentAmt.String(), takerReceivedAmt.String())
+	if events.OrderCreated != nil {
+		expectedRemainingBalance, err := types.ComputeLimitOrderLockedBalance(
+			order.Side, order.BaseDenom, order.QuoteDenom, expectedRemainingQuantity, *order.Price,
+		)
+		require.NoError(t, err)
+		require.Equal(t, types.EventOrderCreated{
+			Creator:           order.Creator,
+			ID:                order.ID,
+			Sequence:          events.OrderPlaced.Sequence,
+			RemainingQuantity: expectedRemainingQuantity,
+			RemainingBalance:  expectedRemainingBalance.Amount,
+		}, *events.OrderCreated)
 	}
 }
 
@@ -6582,7 +6657,7 @@ func assetOrderSentReceivedAmounts(
 	orderUsedAmt := orderSentAmt
 	if events.OrderCreated != nil {
 		// locked balance
-		orderUsedAmt = orderUsedAmt.Add(events.OrderCreated.Order.RemainingBalance)
+		orderUsedAmt = orderUsedAmt.Add(events.OrderCreated.RemainingBalance)
 	}
 
 	creator := sdk.MustAccAddressFromBech32(order.Creator)
@@ -6686,7 +6761,7 @@ func cancelAllOrdersAndAssertState(
 ) {
 	t.Helper()
 
-	orders, _, err := testApp.DEXKeeper.GetOrdersWithSequence(sdkCtx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	orders, _, err := testApp.DEXKeeper.GetAccountsOrders(sdkCtx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	require.NoError(t, err)
 
 	t.Logf("Cancelling all orders, count %d", len(orders))
@@ -6695,11 +6770,11 @@ func cancelAllOrdersAndAssertState(
 	denoms := make(map[string]struct{})
 	for _, order := range orders {
 		require.NoError(t, testApp.DEXKeeper.CancelOrder(
-			sdkCtx, sdk.MustAccAddressFromBech32(order.Order.Creator), order.Order.ID),
+			sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.ID),
 		)
-		accounts[order.Order.Creator] = struct{}{}
-		denoms[order.Order.BaseDenom] = struct{}{}
-		denoms[order.Order.QuoteDenom] = struct{}{}
+		accounts[order.Creator] = struct{}{}
+		denoms[order.BaseDenom] = struct{}{}
+		denoms[order.QuoteDenom] = struct{}{}
 	}
 	for acc := range accounts {
 		for denom := range denoms {

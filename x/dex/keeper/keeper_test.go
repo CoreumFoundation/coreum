@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/gogoproto/proto"
 	"github.com/docker/distribution/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -34,8 +34,9 @@ const (
 )
 
 type OrderPlacementEvents struct {
-	OrderCreated  *types.EventOrderCreated
+	OrderPlaced   types.EventOrderPlaced
 	OrdersReduced []types.EventOrderReduced
+	OrderCreated  *types.EventOrderCreated
 	OrdersClosed  []types.EventOrderClosed
 }
 
@@ -52,65 +53,30 @@ func (o OrderPlacementEvents) getOrderReduced(acc, id string) (types.EventOrderR
 func readOrderEvents(
 	t *testing.T,
 	sdkCtx sdk.Context,
-	testApp *simapp.App,
 ) OrderPlacementEvents {
-	const (
-		attrKeyOrder        = "order"
-		attrKeyCreator      = "creator"
-		attrKeyID           = "id"
-		attrKeySentCoin     = "sent_coin"
-		attrKeyReceivedCoin = "received_coin"
-	)
 	events := OrderPlacementEvents{
 		OrderCreated:  nil,
 		OrdersReduced: make([]types.EventOrderReduced, 0),
 		OrdersClosed:  make([]types.EventOrderClosed, 0),
 	}
 
-	for _, evt := range sdkCtx.EventManager().Events() {
-		switch evt.Type {
-		case proto.MessageName(&types.EventOrderCreated{}):
+	for _, evt := range sdkCtx.EventManager().Events().ToABCIEvents() {
+		if !strings.HasPrefix(evt.Type, "coreum.dex.v1") {
+			continue
+		}
+		msg, err := sdk.ParseTypedEvent(evt)
+		require.NoError(t, err)
+		switch typedEvt := msg.(type) {
+		case *types.EventOrderPlaced:
+			require.Empty(t, events.OrderPlaced.Creator, "Only one types.OrderPlaced is expected.")
+			events.OrderPlaced = *typedEvt
+		case *types.EventOrderReduced:
+			events.OrdersReduced = append(events.OrdersReduced, *typedEvt)
+		case *types.EventOrderCreated:
 			require.Nil(t, events.OrderCreated, "Only one types.EventOrderCreated is expected.")
-			orderAttr, ok := evt.GetAttribute(attrKeyOrder)
-			require.True(t, ok)
-			order := types.Order{}
-			require.NoError(t, testApp.AppCodec().UnmarshalJSON([]byte(orderAttr.Value), &order))
-			events.OrderCreated = &types.EventOrderCreated{
-				Order: order,
-			}
-		case proto.MessageName(&types.EventOrderReduced{}):
-			creatorAttr, ok := evt.GetAttribute(attrKeyCreator)
-			require.True(t, ok)
-			creator := creatorAttr.Value[1 : len(creatorAttr.Value)-1] // unwrap quotes
-
-			idAttr, ok := evt.GetAttribute(attrKeyID)
-			require.True(t, ok)
-			id := idAttr.Value[1 : len(idAttr.Value)-1] // unwrap quotes
-
-			sentCoinAttr, ok := evt.GetAttribute(attrKeySentCoin)
-			require.True(t, ok)
-			spentCoin := sdk.Coin{}
-			require.NoError(t, testApp.AppCodec().UnmarshalJSON([]byte(sentCoinAttr.Value), &spentCoin))
-
-			receivedCoinAttr, ok := evt.GetAttribute(attrKeyReceivedCoin)
-			require.True(t, ok)
-			receivedCoin := sdk.Coin{}
-			require.NoError(t, testApp.AppCodec().UnmarshalJSON([]byte(receivedCoinAttr.Value), &receivedCoin))
-
-			events.OrdersReduced = append(events.OrdersReduced, types.EventOrderReduced{
-				Creator:      creator,
-				ID:           id,
-				SentCoin:     spentCoin,
-				ReceivedCoin: receivedCoin,
-			})
-		case proto.MessageName(&types.EventOrderClosed{}):
-			orderAttr, ok := evt.GetAttribute(attrKeyOrder)
-			require.True(t, ok)
-			order := types.Order{}
-			require.NoError(t, testApp.AppCodec().UnmarshalJSON([]byte(orderAttr.Value), &order))
-			events.OrdersClosed = append(events.OrdersClosed, types.EventOrderClosed{
-				Order: order,
-			})
+			events.OrderCreated = typedEvt
+		case *types.EventOrderClosed:
+			events.OrdersClosed = append(events.OrdersClosed, *typedEvt)
 		}
 	}
 
@@ -257,6 +223,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	require.NoError(t, err)
 
 	// set expected values
+	sellOrder.Sequence = 1
 	sellOrder.RemainingQuantity = sdkmath.NewInt(10)
 	sellOrder.RemainingBalance = sdkmath.NewInt(10)
 	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
@@ -289,6 +256,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	require.NoError(t, err)
 
 	// set expected values
+	buyOrder.Sequence = 2
 	buyOrder.RemainingQuantity = sdkmath.NewInt(100)
 	buyOrder.RemainingBalance = sdkmath.NewInt(120)
 	buyOrder.Reserve = orderReserve
@@ -343,14 +311,23 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 
 	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
-	events := readOrderEvents(t, sdkCtx, testApp)
+	events := readOrderEvents(t, sdkCtx)
 	require.NotNil(t, events.OrderCreated)
-	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
-	expectedOrder := sellOrder
-	expectedOrder.RemainingBalance = sellLockedBalance.Amount
-	expectedOrder.RemainingQuantity = sellOrder.Quantity
-	expectedOrder.Reserve = orderReserve
-	require.Equal(t, expectedOrder, events.OrderCreated.Order)
+
+	expectedSellOrderSequence := uint64(1)
+	require.Equal(t, types.EventOrderPlaced{
+		Creator:  sellOrder.Creator,
+		ID:       sellOrder.ID,
+		Sequence: expectedSellOrderSequence, // first order sequence
+	}, events.OrderPlaced)
+
+	require.Equal(t, types.EventOrderCreated{
+		Creator:           sellOrder.Creator,
+		ID:                sellOrder.ID,
+		Sequence:          expectedSellOrderSequence,
+		RemainingQuantity: sellOrder.Quantity,
+		RemainingBalance:  sellLockedBalance.Amount,
+	}, *events.OrderCreated)
 	require.Empty(t, events.OrdersClosed)
 	require.Empty(t, events.OrdersReduced)
 
@@ -363,11 +340,15 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 
 	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, sellOrder.ID))
-	events = readOrderEvents(t, sdkCtx, testApp)
+	events = readOrderEvents(t, sdkCtx)
 	require.Nil(t, events.OrderCreated)
 	require.EqualValues(t, []types.EventOrderClosed{
 		{
-			Order: expectedOrder,
+			Creator:           sellOrder.Creator,
+			ID:                sellOrder.ID,
+			Sequence:          expectedSellOrderSequence,
+			RemainingQuantity: sellOrder.Quantity,
+			RemainingBalance:  sellLockedBalance.Amount,
 		},
 	}, events.OrdersClosed)
 	require.Empty(t, events.OrdersReduced)
@@ -441,35 +422,43 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 
 	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
-	events = readOrderEvents(t, sdkCtx, testApp)
-	expectedOrder = buyOrder
-	expectedOrder.RemainingQuantity = sdkmath.NewInt(4000) // filled partially
-	expectedOrder.RemainingBalance = sdkmath.NewInt(5200)
-	expectedOrder.Reserve = orderReserve
-	require.Equal(t, expectedOrder, events.OrderCreated.Order)
+	events = readOrderEvents(t, sdkCtx)
+
+	// update sequence
+	expectedSellOrderSequence = uint64(3)
+	expectedBuyOrderSequence := uint64(4)
+	require.Equal(t, types.EventOrderCreated{
+		Creator:           buyOrder.Creator,
+		ID:                buyOrder.ID,
+		Sequence:          expectedBuyOrderSequence,
+		RemainingQuantity: sdkmath.NewInt(4000), // filled partially
+		RemainingBalance:  sdkmath.NewInt(5200),
+	}, *events.OrderCreated)
 
 	require.EqualValues(t, []types.EventOrderReduced{
 		{
 			Creator:      sellOrder.Creator,
 			ID:           sellOrder.ID,
+			Sequence:     expectedSellOrderSequence,
 			SentCoin:     sdk.NewCoin(sellOrder.BaseDenom, sdkmath.NewIntFromUint64(1000)),
 			ReceivedCoin: sdk.NewCoin(sellOrder.QuoteDenom, sdkmath.NewIntFromUint64(1200)),
 		},
 		{
 			Creator:      buyOrder.Creator,
 			ID:           buyOrder.ID,
+			Sequence:     expectedBuyOrderSequence,
 			SentCoin:     sdk.NewCoin(buyOrder.QuoteDenom, sdkmath.NewIntFromUint64(1200)),
 			ReceivedCoin: sdk.NewCoin(buyOrder.BaseDenom, sdkmath.NewIntFromUint64(1000)),
 		},
 	}, events.OrdersReduced)
 
-	expectedOrder = sellOrder
-	expectedOrder.Reserve = orderReserve
-	expectedOrder.RemainingBalance = sdkmath.ZeroInt()
-	expectedOrder.RemainingQuantity = sdkmath.ZeroInt()
 	require.EqualValues(t, []types.EventOrderClosed{
 		{
-			Order: expectedOrder,
+			Creator:           sellOrder.Creator,
+			ID:                sellOrder.ID,
+			Sequence:          expectedSellOrderSequence,
+			RemainingQuantity: sdkmath.ZeroInt(),
+			RemainingBalance:  sdkmath.ZeroInt(),
 		},
 	}, events.OrdersClosed)
 
@@ -665,9 +654,9 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 		// fill order with the remaining quantity for assertions
 		order.RemainingQuantity = order.Quantity
 		order.RemainingBalance = lockedBalance.Amount
-		order.Reserve = testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
 		orders[i] = order
 	}
+	orders = fillReserveAndOrderSequence(t, sdkCtx, testApp, orders)
 
 	// get account orders
 	acc1Orders, pageRes, err := testApp.DEXKeeper.GetOrders(sdkCtx, acc1, &query.PageRequest{
@@ -684,6 +673,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 		Limit: query.PaginationMaxLimit,
 	})
 	require.NoError(t, err)
+
 	require.ElementsMatch(t, []types.Order{
 		orders[0], orders[1], orders[2],
 	}, acc1Orders)
