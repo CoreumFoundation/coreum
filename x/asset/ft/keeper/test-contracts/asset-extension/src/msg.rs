@@ -1,6 +1,6 @@
-use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Uint128};
 use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Uint128;
 
 #[cw_serde]
 pub struct InstantiateMsg {

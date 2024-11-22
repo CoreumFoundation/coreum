@@ -1,5 +1,8 @@
 use crate::error::ContractError;
-use crate::msg::{DEXOrder, ExecuteMsg, IBCPurpose, InstantiateMsg, QueryIssuanceMsgResponse, QueryMsg, SudoMsg, TransferContext};
+use crate::msg::{
+    DEXOrder, ExecuteMsg, IBCPurpose, InstantiateMsg, QueryIssuanceMsgResponse, QueryMsg, SudoMsg,
+    TransferContext,
+};
 use crate::state::{DENOM, EXTRA_DATA};
 use coreum_wasm_sdk::assetft::{FREEZING, WHITELISTING};
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumResult};
@@ -88,11 +91,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> CoreumResult<ContractError
             order,
             expected_to_spend,
             expected_to_receive,
-        } => sudo_extension_place_order(
-            order,
-            expected_to_spend,
-            expected_to_receive,
-        ),
+        } => sudo_extension_place_order(order, expected_to_spend, expected_to_receive),
     }
 }
 
@@ -160,7 +159,7 @@ pub fn sudo_extension_transfer(
             denom: token.denom.to_string(),
             amount: amount.to_string(),
         }]
-            .to_vec(),
+        .to_vec(),
     };
 
     let mut response = rsp.add_message(CosmosMsg::Any(transfer_msg.to_any()));
@@ -195,9 +194,10 @@ pub fn sudo_extension_place_order(
     expected_to_spend: Coin,
     expected_to_receive: Coin,
 ) -> CoreumResult<ContractError> {
-    if order.id == ID_DEX_ORDER_TRIGGER ||
-        expected_to_spend.amount == AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER.to_string() ||
-        expected_to_receive.amount == AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER.to_string() {
+    if order.id == ID_DEX_ORDER_TRIGGER
+        || expected_to_spend.amount == AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER.to_string()
+        || expected_to_receive.amount == AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER.to_string()
+    {
         return Err(ContractError::DEXOrderPlacementError {});
     }
     Ok(Response::new().add_attribute("method", "extension_place_order"))
@@ -327,7 +327,7 @@ fn assert_minting(
             denom: token.denom.to_string(),
             amount: amount.to_string(),
         }]
-            .to_vec(),
+        .to_vec(),
     };
 
     Ok(Response::new()
@@ -386,7 +386,7 @@ fn assert_send_commission_rate(
                 denom: token.denom.to_string(),
                 amount: commission_amount.to_string(),
             }]
-                .to_vec(),
+            .to_vec(),
         };
 
         return Ok(response
@@ -409,7 +409,7 @@ fn assert_send_commission_rate(
                 denom: token.denom.to_string(),
                 amount: admin_commission_amount.to_string(),
             }]
-                .to_vec(),
+            .to_vec(),
         };
 
         return Ok(response
@@ -440,7 +440,7 @@ fn assert_burn_rate(
                 denom: token.denom.to_string(),
                 amount: burn_amount.to_string(),
             }]
-                .to_vec(),
+            .to_vec(),
         };
 
         return Ok(response
