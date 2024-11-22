@@ -6342,7 +6342,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				// use new event manager for each order
 				sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 				gasBefore := sdkCtx.GasMeter().GasConsumed()
-				err := testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
+				err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
 				if err != nil && tt.wantErrorContains != "" {
 					require.True(t, sdkerrors.IsOf(
 						err,

@@ -33,8 +33,8 @@ func (k *keeperMock) SetParams(ctx sdk.Context, params types.Params) error {
 	return nil
 }
 
-func (k *keeperMock) GetParams(ctx sdk.Context) types.Params {
-	return k.state.Params
+func (k *keeperMock) GetParams(ctx sdk.Context) (types.Params, error) {
+	return k.state.Params, nil
 }
 
 func (k *keeperMock) GetShortEMAGas(ctx sdk.Context) int64 {

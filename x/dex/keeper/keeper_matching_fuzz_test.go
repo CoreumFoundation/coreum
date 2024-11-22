@@ -380,7 +380,8 @@ func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
 		require.NoError(t, err)
 		reserve := params.OrderReserve
 
-		spendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(sdkCtx, creator, reserve.Denom)
+		spendableBalance, err := fa.testApp.AssetFTKeeper.GetSpendableBalance(sdkCtx, creator, reserve.Denom)
+		require.NoError(t, err)
 		if spendableBalance.IsLT(reserve) {
 			t.Logf("Funding order reserve, account: %s coin: %s", creator.String(), reserve.String())
 			fa.testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(reserve))
@@ -456,9 +457,10 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			params, err := fa.testApp.DEXKeeper.GetParams(sdkCtx)
 			require.NoError(t, err)
 			reserve := params.OrderReserve
-			reserveDenomSpendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(
+			reserveDenomSpendableBalance, err := fa.testApp.AssetFTKeeper.GetSpendableBalance(
 				sdkCtx, creator, reserve.Denom,
 			)
+			require.NoError(t, err)
 			if reserveDenomSpendableBalance.Amount.LT(reserve.Amount) {
 				t.Logf("Placement is failed due to insufficient reserve, reserve: %s, reserveDenomSpendableBalance: %s",
 					reserve.String(), reserveDenomSpendableBalance.String())
@@ -466,9 +468,10 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			}
 
 			// check spendable balance
-			spendableBalance := fa.testApp.AssetFTKeeper.GetSpendableBalance(
+			spendableBalance, err := fa.testApp.AssetFTKeeper.GetSpendableBalance(
 				sdkCtx, creator, order.GetSpendDenom(),
 			)
+			require.NoError(t, err)
 			orderLockedBalance, err := order.ComputeLimitOrderLockedBalance()
 			require.NoError(t, err)
 			require.True(

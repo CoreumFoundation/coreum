@@ -218,12 +218,16 @@ func TestKeeper_DEXLocked(t *testing.T) {
 	// decrease locked part
 	requireT.NoError(ftKeeper.DEXDecreaseLocked(ctx, acc, sdk.NewInt64Coin(denom, 400)))
 	requireT.Equal(sdk.NewInt64Coin(denom, 600).String(), ftKeeper.GetDEXLockedBalance(ctx, acc, denom).String())
-	requireT.Equal(sdk.NewInt64Coin(denom, 400).String(), ftKeeper.GetSpendableBalance(ctx, acc, denom).String())
+	spendableBalance, err := ftKeeper.GetSpendableBalance(ctx, acc, denom)
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewInt64Coin(denom, 400).String(), spendableBalance.String())
 
 	// freeze locked balance
 	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, coinToSend))
 	// 1050 - total, 600 locked by dex, 50 locked by bank, 1000 frozen
-	requireT.Equal(sdk.NewInt64Coin(denom, 50).String(), ftKeeper.GetSpendableBalance(ctx, acc, denom).String())
+	spendableBalance, err = ftKeeper.GetSpendableBalance(ctx, acc, denom)
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewInt64Coin(denom, 50).String(), spendableBalance.String())
 
 	// decrease locked 2d part, even when it's frozen we allow it
 	requireT.NoError(ftKeeper.DEXDecreaseLocked(ctx, acc, sdk.NewInt64Coin(denom, 600)))
@@ -273,7 +277,9 @@ func TestKeeper_DEXLocked(t *testing.T) {
 		),
 		fmt.Sprintf("usage of %s for DEX is blocked because the token is globally frozen", denom),
 	)
-	requireT.True(ftKeeper.GetSpendableBalance(ctx, acc, denom).IsZero())
+	spendableBalance, err = ftKeeper.GetSpendableBalance(ctx, acc, denom)
+	requireT.NoError(err)
+	requireT.True(spendableBalance.IsZero())
 	// globally unfreeze now and check that we can use the previously locked amount
 	requireT.NoError(ftKeeper.GloballyUnfreeze(ctx, issuer, denom))
 	requireT.NoError(
