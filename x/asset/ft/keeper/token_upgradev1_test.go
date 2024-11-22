@@ -27,7 +27,8 @@ func TestTokenUpgradeV1(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 	delayKeeper := testApp.DelayKeeper
 
-	params := ftKeeper.GetParams(ctxSDK)
+	params, err := ftKeeper.GetParams(ctxSDK)
+	requireT.NoError(err)
 	params.TokenUpgradeDecisionTimeout = time.Date(2023, 2, 13, 1, 2, 3, 0, time.UTC)
 	requireT.NoError(ftKeeper.SetParams(ctxSDK, params))
 
@@ -76,7 +77,8 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.Empty(token1.Features)
 	requireT.EqualValues(1, token1.Version)
 
-	tokenUpgradeStatuses := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom1)
+	tokenUpgradeStatuses, err := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom1)
+	requireT.NoError(err)
 	requireT.Equal(&types.TokenUpgradeV1Status{
 		IbcEnabled: false,
 		StartTime:  ctxSDK.BlockTime(),
@@ -103,7 +105,8 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.Empty(token2.Features)
 	requireT.EqualValues(0, token2.Version)
 
-	tokenUpgradeStatuses2 := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom2)
+	tokenUpgradeStatuses2, err := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom2)
+	requireT.NoError(err)
 	requireT.Equal(&types.TokenUpgradeV1Status{
 		IbcEnabled: true,
 		StartTime:  ctxSDK.BlockTime(),

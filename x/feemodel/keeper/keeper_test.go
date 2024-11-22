@@ -89,7 +89,8 @@ func TestParams(t *testing.T) {
 
 	defParams := types.DefaultParams()
 	require.NoError(t, keeper.SetParams(ctx, defParams))
-	params := keeper.GetParams(ctx)
+	params, err := keeper.GetParams(ctx)
+	require.NoError(t, err)
 
 	assert.Equal(t, defParams.Model.InitialGasPrice.String(), params.Model.InitialGasPrice.String())
 	assert.Equal(t, defParams.Model.MaxGasPriceMultiplier.String(), params.Model.MaxGasPriceMultiplier.String())

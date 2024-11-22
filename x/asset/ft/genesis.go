@@ -143,8 +143,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
-		Params:                       k.GetParams(ctx),
+		Params:                       params,
 		Tokens:                       tokens,
 		FrozenBalances:               frozenBalances,
 		WhitelistedBalances:          whitelistedBalances,

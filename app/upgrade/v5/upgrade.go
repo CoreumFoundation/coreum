@@ -60,7 +60,10 @@ func New(mm *module.Manager, configurator module.Configurator,
 
 			sdkCtx := sdk.UnwrapSDKContext(ctx)
 			//nolint:contextcheck // this is correct context passing.
-			dexParams := dexKeeper.GetParams(sdkCtx)
+			dexParams, err := dexKeeper.GetParams(sdkCtx)
+			if err != nil {
+				return nil, err
+			}
 			// 10core
 			dexParams.OrderReserve = sdk.NewInt64Coin(chosenNetwork.Denom(), 10_000_000)
 			//nolint:contextcheck // this is correct context passing.

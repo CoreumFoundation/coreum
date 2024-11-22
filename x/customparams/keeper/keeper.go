@@ -31,11 +31,14 @@ func NewKeeper(
 }
 
 // GetStakingParams returns the set of staking parameters.
-func (k Keeper) GetStakingParams(ctx sdk.Context) types.StakingParams {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.StakingParamsKey)
+func (k Keeper) GetStakingParams(ctx sdk.Context) (types.StakingParams, error) {
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.StakingParamsKey)
+	if err != nil {
+		return types.StakingParams{}, err
+	}
 	var params types.StakingParams
 	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	return params, nil
 }
 
 // SetStakingParams sets the module staking parameters to the param space.

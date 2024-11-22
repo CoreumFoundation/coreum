@@ -14,7 +14,10 @@ const tokenUpgradeV1Version = 1
 
 // AddDelayedTokenUpgradeV1 stores request for upgrading token to V1.
 func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
-	params := k.GetParams(ctx)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
 	if ctx.BlockTime().After(params.TokenUpgradeDecisionTimeout) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "it is no longer possible to upgrade the token")
 	}

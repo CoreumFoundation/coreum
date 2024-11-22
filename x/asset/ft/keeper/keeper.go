@@ -71,11 +71,14 @@ func NewKeeper(
 }
 
 // GetParams gets the parameters of the module.
-func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
+	if err != nil {
+		return types.Params{}, err
+	}
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	return params, nil
 }
 
 // SetParams sets the parameters of the module.
@@ -225,7 +228,10 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		)
 	}
 
-	params := k.GetParams(ctx)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return "", err
+	}
 	if params.IssueFee.IsPositive() {
 		if err := k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
 			return "", err
@@ -348,7 +354,12 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 // SetSymbol saves the symbol to store.
 func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
 	symbol = types.NormalizeSymbolForKey(symbol)
-	if k.isSymbolDuplicated(ctx, symbol, issuer) {
+	isSymbolDuplicated, err := k.isSymbolDuplicated(ctx, symbol, issuer)
+	if err != nil {
+		return err
+	}
+
+	if isSymbolDuplicated {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
 
@@ -581,11 +592,15 @@ func (k Keeper) GetFrozenBalances(
 }
 
 // GetFrozenBalance returns the frozen balance of a denom and account.
-func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
-	if k.isGloballyFrozen(ctx, denom) {
-		return k.bankKeeper.GetBalance(ctx, addr, denom)
+func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) (sdk.Coin, error) {
+	isGloballyFrozen, err := k.isGloballyFrozen(ctx, denom)
+	if err != nil {
+		return sdk.Coin{}, err
 	}
-	return k.frozenAccountBalanceStore(ctx, addr).Balance(denom)
+	if isGloballyFrozen {
+		return k.bankKeeper.GetBalance(ctx, addr, denom), nil
+	}
+	return k.frozenAccountBalanceStore(ctx, addr).Balance(denom), nil
 }
 
 // SetFrozenBalances sets the frozen balances of a specified account.
@@ -714,25 +729,29 @@ func (k Keeper) GetSpendableBalance(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 	denom string,
-) sdk.Coin {
+) (sdk.Coin, error) {
 	balance := k.bankKeeper.GetBalance(ctx, addr, denom)
 	if balance.Amount.IsZero() {
-		return balance
+		return balance, nil
 	}
 
 	notLockedAmt := balance.Amount.
 		Sub(k.GetDEXLockedBalance(ctx, addr, denom).Amount).
 		Sub(k.bankKeeper.LockedCoins(ctx, addr).AmountOf(denom))
 	if notLockedAmt.IsNegative() {
-		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+		return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
 	}
-	notFrozenAmt := balance.Amount.Sub(k.GetFrozenBalance(ctx, addr, denom).Amount)
+	frozenBalance, err := k.GetFrozenBalance(ctx, addr, denom)
+	if err != nil {
+		return sdk.Coin{}, err
+	}
+	notFrozenAmt := balance.Amount.Sub(frozenBalance.Amount)
 	if notFrozenAmt.IsNegative() {
-		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+		return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
 	}
 
 	spendableAmount := sdkmath.MinInt(notLockedAmt, notFrozenAmt)
-	return sdk.NewCoin(denom, spendableAmount)
+	return sdk.NewCoin(denom, spendableAmount), nil
 }
 
 // TransferAdmin changes admin of a fungible token.
@@ -892,8 +911,12 @@ func (k Keeper) validateCoinSpendable(
 		return nil
 	}
 
+	isGloballyFrozen, err := k.isGloballyFrozen(ctx, def.Denom)
+	if err != nil {
+		return err
+	}
 	if def.IsFeatureEnabled(types.Feature_freezing) &&
-		k.isGloballyFrozen(ctx, def.Denom) &&
+		isGloballyFrozen &&
 		!def.HasAdminPrivileges(addr) {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
@@ -922,7 +945,11 @@ func (k Keeper) validateCoinSpendable(
 	}
 
 	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
-		frozenAmt := k.GetFrozenBalance(ctx, addr, def.Denom).Amount
+		frozenBalance, err := k.GetFrozenBalance(ctx, addr, def.Denom)
+		if err != nil {
+			return err
+		}
+		frozenAmt := frozenBalance.Amount
 		notFrozenAmt := balance.Amount.Sub(frozenAmt)
 		if notFrozenAmt.LT(amount) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s%s is not available, available %s%s",
@@ -986,10 +1013,13 @@ func (k Keeper) validateCoinReceivable(
 	return nil
 }
 
-func (k Keeper) isSymbolDuplicated(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
+func (k Keeper) isSymbolDuplicated(ctx sdk.Context, symbol string, issuer sdk.AccAddress) (bool, error) {
 	compositeKey := types.CreateSymbolKey(issuer, symbol)
-	rawBytes, _ := k.storeService.OpenKVStore(ctx).Get(compositeKey)
-	return rawBytes != nil
+	rawBytes, err := k.storeService.OpenKVStore(ctx).Get(compositeKey)
+	if err != nil {
+		return false, err
+	}
+	return rawBytes != nil, nil
 }
 
 func (k Keeper) getDefinitions(
@@ -1053,6 +1083,11 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		return types.Token{}, err
 	}
 
+	isGloballyFrozen, err := k.isGloballyFrozen(ctx, definition.Denom)
+	if err != nil {
+		return types.Token{}, err
+	}
+
 	return types.Token{
 		Denom:              definition.Denom,
 		Issuer:             definition.Issuer,
@@ -1063,7 +1098,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		Features:           definition.Features,
 		BurnRate:           definition.BurnRate,
 		SendCommissionRate: definition.SendCommissionRate,
-		GloballyFrozen:     k.isGloballyFrozen(ctx, definition.Denom),
+		GloballyFrozen:     isGloballyFrozen,
 		Version:            definition.Version,
 		URI:                definition.URI,
 		URIHash:            definition.URIHash,
@@ -1146,9 +1181,12 @@ func (k Keeper) freezingChecks(ctx sdk.Context, sender, addr sdk.AccAddress, coi
 	return def.CheckFeatureAllowed(sender, types.Feature_freezing)
 }
 
-func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
-	isGloballyFrozen, _ := k.storeService.OpenKVStore(ctx).Get(types.CreateGlobalFreezeKey(denom))
-	return bytes.Equal(isGloballyFrozen, types.StoreTrue)
+func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) (bool, error) {
+	isGloballyFrozen, err := k.storeService.OpenKVStore(ctx).Get(types.CreateGlobalFreezeKey(denom))
+	if err != nil {
+		return false, err
+	}
+	return bytes.Equal(isGloballyFrozen, types.StoreTrue), nil
 }
 
 func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {

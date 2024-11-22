@@ -164,7 +164,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// params
 
-	params := ftKeeper.GetParams(ctx)
+	params, err := ftKeeper.GetParams(ctx)
+	requireT.NoError(err)
 	assertT.EqualValues(types.DefaultParams(), params)
 
 	// token definitions

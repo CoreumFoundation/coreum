@@ -24,7 +24,9 @@ func TestKeeper_InitAndExportGenesis(t *testing.T) {
 	keeper.InitGenesis(ctx, genState)
 
 	requireT := require.New(t)
-	requireT.Equal(sdkmath.OneInt().String(), keeper.GetStakingParams(ctx).MinSelfDelegation.String())
+	params, err := keeper.GetStakingParams(ctx)
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.OneInt().String(), params.MinSelfDelegation.String())
 
 	exportedGetState := keeper.ExportGenesis(ctx)
 	requireT.Equal(genState, *exportedGetState)

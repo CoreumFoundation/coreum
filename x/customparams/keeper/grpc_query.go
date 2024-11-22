@@ -12,7 +12,7 @@ import (
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
-	GetStakingParams(ctx sdk.Context) types.StakingParams
+	GetStakingParams(ctx sdk.Context) (types.StakingParams, error)
 }
 
 // NewQueryService creates query service.
@@ -36,7 +36,9 @@ func (qs QueryService) StakingParams(
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	return &types.QueryStakingParamsResponse{
-		Params: qs.keeper.GetStakingParams(sdk.UnwrapSDKContext(ctx)),
-	}, nil
+	params, err := qs.keeper.GetStakingParams(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryStakingParamsResponse{Params: params}, nil
 }

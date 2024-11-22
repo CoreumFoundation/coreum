@@ -95,7 +95,10 @@ func (k Keeper) getDataFromStore(
 	key []byte,
 	val proto.Message,
 ) error {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(key)
+	bz, err := k.storeService.OpenKVStore(ctx).Get(key)
+	if err != nil {
+		return err
+	}
 	if bz == nil {
 		return sdkerrors.Wrapf(types.ErrRecordNotFound, "store type %T", val)
 	}

@@ -32,7 +32,11 @@ func (s MsgServer) CreateValidator(
 ) (*stakingtypes.MsgCreateValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	expectedMinSelfDelegation := s.customParamsKeeper.GetStakingParams(ctx).MinSelfDelegation
+	params, err := s.customParamsKeeper.GetStakingParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+	expectedMinSelfDelegation := params.MinSelfDelegation
 	if expectedMinSelfDelegation.GT(msg.MinSelfDelegation) {
 		return nil, sdkerrors.Wrapf(
 			stakingtypes.ErrSelfDelegationBelowMinimum,

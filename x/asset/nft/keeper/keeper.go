@@ -49,11 +49,14 @@ func NewKeeper(
 }
 
 // GetParams gets the parameters of the module.
-func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
+	if err != nil {
+		return types.Params{}, err
+	}
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	return params, nil
 }
 
 // SetParams sets the parameters of the module.
@@ -199,7 +202,10 @@ func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.Class
 		return types.ClassDefinition{}, err
 	}
 
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(classKey)
+	bz, err := k.storeService.OpenKVStore(ctx).Get(classKey)
+	if err != nil {
+		return types.ClassDefinition{}, err
+	}
 	if bz == nil {
 		return types.ClassDefinition{}, sdkerrors.Wrapf(types.ErrClassNotFound, "classID: %s", classID)
 	}
@@ -332,7 +338,10 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q has been burnt for the class", settings.ID)
 	}
 
-	params := k.GetParams(ctx)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
 	if params.MintFee.IsPositive() {
 		coinsToBurn := sdk.NewCoins(params.MintFee)
 		if err := k.bankKeeper.SendCoinsFromAccountToModule(
@@ -494,7 +503,10 @@ func (k Keeper) IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error) {
 		return false, err
 	}
 
-	isBurnt, _ := k.storeService.OpenKVStore(ctx).Get(key)
+	isBurnt, err := k.storeService.OpenKVStore(ctx).Get(key)
+	if err != nil {
+		return false, err
+	}
 	return bytes.Equal(isBurnt, types.StoreTrue), nil
 }
 
@@ -701,7 +713,10 @@ func (k Keeper) IsClassFrozen(ctx sdk.Context, classID string, account sdk.AccAd
 		return false, err
 	}
 
-	val, _ := k.storeService.OpenKVStore(ctx).Get(key)
+	val, err := k.storeService.OpenKVStore(ctx).Get(key)
+	if err != nil {
+		return false, err
+	}
 	return bytes.Equal(val, types.StoreTrue), nil
 }
 
@@ -883,7 +898,10 @@ func (k Keeper) isClassWhitelisted(ctx sdk.Context, classID string, account sdk.
 		return false, err
 	}
 
-	val, _ := k.storeService.OpenKVStore(ctx).Get(classKey)
+	val, err := k.storeService.OpenKVStore(ctx).Get(classKey)
+	if err != nil {
+		return false, err
+	}
 	return bytes.Equal(val, types.StoreTrue), nil
 }
 
@@ -897,7 +915,10 @@ func (k Keeper) isTokenWhitelisted(ctx sdk.Context, classID, nftID string, accou
 		return false, err
 	}
 
-	val, _ := k.storeService.OpenKVStore(ctx).Get(key)
+	val, err := k.storeService.OpenKVStore(ctx).Get(key)
+	if err != nil {
+		return false, err
+	}
 	return bytes.Equal(val, types.StoreTrue), nil
 }
 

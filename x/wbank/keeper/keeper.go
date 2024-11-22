@@ -197,7 +197,10 @@ func (k BaseKeeperWrapper) SpendableBalances(
 	balances := balancesRes.Balances
 	for i := range balances {
 		bankLockedCoin := sdk.NewCoin(balances[i].Denom, bankLockedCoins.AmountOf(balances[i].Denom))
-		balances[i] = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, balances[i], bankLockedCoin)
+		balances[i], err = k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, balances[i], bankLockedCoin)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &banktypes.QuerySpendableBalancesResponse{
@@ -230,9 +233,13 @@ func (k BaseKeeperWrapper) SpendableBalanceByDenom(
 
 	bankLockedCoins := k.BaseKeeper.LockedCoins(ctx, addr)
 	bankLockedCoin := sdk.NewCoin(req.Denom, bankLockedCoins.AmountOf(req.Denom))
+	spendableCoin, err := k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, *balanceRes.Balance, bankLockedCoin)
+	if err != nil {
+		return nil, err
+	}
 
 	return &banktypes.QuerySpendableBalanceByDenomResponse{
-		Balance: lo.ToPtr(k.getSpendableCoin(sdk.UnwrapSDKContext(ctx), addr, *balanceRes.Balance, bankLockedCoin)),
+		Balance: lo.ToPtr(spendableCoin),
 	}, nil
 }
 
@@ -240,20 +247,24 @@ func (k BaseKeeperWrapper) getSpendableCoin(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 	balance, bankLocked sdk.Coin,
-) sdk.Coin {
+) (sdk.Coin, error) {
 	denom := balance.Denom
 	notLockedAmt := balance.Amount.
 		Sub(bankLocked.Amount).
 		Sub(k.ftProvider.GetDEXLockedBalance(ctx, addr, denom).Amount)
 
-	notFrozenAmt := balance.Amount.Sub(k.ftProvider.GetFrozenBalance(ctx, addr, denom).Amount)
+	frozenBalance, err := k.ftProvider.GetFrozenBalance(ctx, addr, denom)
+	if err != nil {
+		return sdk.Coin{}, nil
+	}
+	notFrozenAmt := balance.Amount.Sub(frozenBalance.Amount)
 
 	spendableAmount := sdkmath.MinInt(notLockedAmt, notFrozenAmt)
 	if !spendableAmount.IsPositive() {
-		return sdk.NewCoin(denom, sdkmath.ZeroInt())
+		return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
 	}
 
-	return sdk.NewCoin(denom, spendableAmount)
+	return sdk.NewCoin(denom, spendableAmount), nil
 }
 
 func (k BaseKeeperWrapper) isSmartContract(ctx sdk.Context, addr sdk.AccAddress) bool {

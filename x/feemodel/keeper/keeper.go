@@ -71,11 +71,14 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 }
 
 // GetParams gets the parameters of the module.
-func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(paramsKey)
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	bz, err := k.storeService.OpenKVStore(ctx).Get(paramsKey)
+	if err != nil {
+		return types.Params{}, err
+	}
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	return params, nil
 }
 
 // UpdateParams is a governance operation that sets parameters of the module.
@@ -90,7 +93,10 @@ func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Par
 // GetShortEMAGas retrieves average gas used by previous blocks, used as a representation of
 // smoothed gas used by latest block.
 func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(shortEMAGasKey)
+	bz, err := k.storeService.OpenKVStore(ctx).Get(shortEMAGasKey)
+	if err != nil {
+		panic(err)
+	}
 
 	if bz == nil {
 		return 0
@@ -117,7 +123,10 @@ func (k Keeper) SetShortEMAGas(ctx sdk.Context, emaGas int64) error {
 // GetLongEMAGas retrieves long average gas used by previous blocks, used for determining average block
 // load where maximum discount is applied.
 func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(longEMAGasKey)
+	bz, err := k.storeService.OpenKVStore(ctx).Get(longEMAGasKey)
+	if err != nil {
+		panic(err)
+	}
 
 	if bz == nil {
 		return 0
@@ -143,7 +152,10 @@ func (k Keeper) SetLongEMAGas(ctx sdk.Context, emaGas int64) error {
 
 // GetMinGasPrice returns current minimum gas price required by the network.
 func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(gasPriceKey)
+	bz, err := k.storeService.OpenKVStore(ctx).Get(gasPriceKey)
+	if err != nil {
+		panic(err)
+	}
 	if bz == nil {
 		// This is really a panic condition because it means that genesis initialization was not done correctly
 		panic("min gas price not set")
@@ -166,7 +178,11 @@ func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) error {
 
 // CalculateEdgeGasPriceAfterBlocks returns the smallest and highest possible values for min gas price in future blocks.
 func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
-	shortEMABlockLength := k.GetParams(ctx).Model.ShortEmaBlockLength
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return sdk.DecCoin{}, sdk.DecCoin{}, err
+	}
+	shortEMABlockLength := params.Model.ShortEmaBlockLength
 	if after > shortEMABlockLength {
 		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(
 			cosmoserrors.ErrInvalidRequest,
@@ -180,7 +196,11 @@ func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) 
 		after = shortEMABlockLength
 	}
 
-	params := k.GetParams(ctx)
+	params, err = k.GetParams(ctx)
+	if err != nil {
+		return sdk.DecCoin{}, sdk.DecCoin{}, err
+	}
+
 	shortEMA := k.GetShortEMAGas(ctx)
 	longEMA := k.GetLongEMAGas(ctx)
 

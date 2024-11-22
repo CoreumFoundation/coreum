@@ -9,6 +9,6 @@ import (
 type FungibleTokenProvider interface {
 	BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error
 	BeforeInputOutputCoins(ctx sdk.Context, input banktypes.Input, outputs []banktypes.Output) error
-	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) (sdk.Coin, error)
 	GetDEXLockedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }

@@ -6336,7 +6336,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			for i, order := range initialOrders {
 				ordersDenoms[order.BaseDenom] = struct{}{}
 				ordersDenoms[order.QuoteDenom] = struct{}{}
-				availableBalancesBefore := getAvailableBalances(sdkCtx, testApp, sdk.MustAccAddressFromBech32(order.Creator))
+				availableBalancesBefore, err := getAvailableBalances(sdkCtx, testApp, sdk.MustAccAddressFromBech32(order.Creator))
+				require.NoError(t, err)
 
 				// use new event manager for each order
 				sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
@@ -6429,8 +6430,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					coins = sdk.NewCoins()
 				}
 				coins = coins.Add(sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance))
+				params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+				require.NoError(t, err)
 				// add reserve for each order
-				coins = coins.Add(testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve)
+				coins = coins.Add(params.OrderReserve)
 				orderLockedBalances[order.Creator] = coins
 			}
 			orderLockedBalances = removeEmptyBalances(orderLockedBalances)
@@ -6476,6 +6479,9 @@ func genTestSet(t *testing.T, sdkCtx sdk.Context, testApp *simapp.App) TestSet {
 	})
 	require.NoError(t, err)
 
+	param, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
+
 	testSet := TestSet{
 		acc1: acc1,
 		acc2: acc2,
@@ -6485,7 +6491,7 @@ func genTestSet(t *testing.T, sdkCtx sdk.Context, testApp *simapp.App) TestSet {
 		ftDenomWhitelisting1: ftDenomWhitelisting1,
 		ftDenomWhitelisting2: ftDenomWhitelisting2,
 
-		orderReserve: testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve,
+		orderReserve: param.OrderReserve,
 	}
 
 	return testSet
@@ -6507,7 +6513,9 @@ func fillReserveAndOrderSequence(
 	testApp *simapp.App,
 	orders []types.Order,
 ) []types.Order {
-	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
+	orderReserve := params.OrderReserve
 	for i, order := range orders {
 		storedOrder, err := testApp.DEXKeeper.GetOrderByAddressAndID(
 			sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), order.ID,
@@ -6666,7 +6674,8 @@ func assetOrderSentReceivedAmounts(
 	if !ok {
 		availableAmtBefore = sdkmath.ZeroInt()
 	}
-	availableBalancesAfter := getAvailableBalances(sdkCtx, testApp, creator)
+	availableBalancesAfter, err := getAvailableBalances(sdkCtx, testApp, creator)
+	require.NoError(t, err)
 	availableBalanceAmtAfter, ok := availableBalancesAfter[order.GetSpendDenom()]
 	if !ok {
 		availableBalanceAmtAfter = sdkmath.ZeroInt()
@@ -6741,17 +6750,21 @@ func assertFilledQuantity(t *testing.T, order types.Order, sent, receiveAmt sdkm
 	require.True(t, order.Quantity.GTE(filledQuantity))
 }
 
-func getAvailableBalances(sdkCtx sdk.Context, testApp *simapp.App, acc sdk.AccAddress) map[string]sdkmath.Int {
+func getAvailableBalances(sdkCtx sdk.Context, testApp *simapp.App, acc sdk.AccAddress) (map[string]sdkmath.Int, error) {
 	balances := testApp.BankKeeper.GetAllBalances(sdkCtx, acc)
 	spendableBalances := make(map[string]sdkmath.Int)
 	for _, balance := range balances {
-		frozenAmt := testApp.AssetFTKeeper.GetFrozenBalance(sdkCtx, acc, balance.Denom).Amount
+		frozenBalance, err := testApp.AssetFTKeeper.GetFrozenBalance(sdkCtx, acc, balance.Denom)
+		if err != nil {
+			return nil, err
+		}
+		frozenAmt := frozenBalance.Amount
 		dexLockedAmt := testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, balance.Denom).Amount
 		// can be negative
 		spendableBalances[balance.Denom] = balance.Amount.Sub(frozenAmt).Sub(dexLockedAmt)
 	}
 
-	return spendableBalances
+	return spendableBalances, nil
 }
 
 func cancelAllOrdersAndAssertState(

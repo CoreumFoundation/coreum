@@ -58,7 +58,10 @@ func NewKeeper(
 func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 	k.logger(ctx).Debug("Placing order.", "order", order)
 
-	params := k.GetParams(ctx)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
 	if err := k.validateOrder(ctx, params, order); err != nil {
 		return err
 	}
@@ -188,11 +191,14 @@ func (k Keeper) GetOrderBookOrders(
 }
 
 // GetParams gets the parameters of the module.
-func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
+	if err != nil {
+		return types.Params{}, err
+	}
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	return params, nil
 }
 
 // UpdateParams is a governance operation that sets parameters of the module.

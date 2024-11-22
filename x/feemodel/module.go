@@ -39,7 +39,7 @@ var (
 type Keeper interface {
 	TrackedGas(ctx sdk.Context) int64
 	SetParams(ctx sdk.Context, params types.Params) error
-	GetParams(ctx sdk.Context) types.Params
+	GetParams(ctx sdk.Context) (types.Params, error)
 	GetShortEMAGas(ctx sdk.Context) int64
 	SetShortEMAGas(ctx sdk.Context, emaGas int64) error
 	GetLongEMAGas(ctx sdk.Context) int64
@@ -152,8 +152,12 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 // ExportGenesis returns the exported genesis state as raw bytes for the fee
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
+	params, err := am.keeper.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
 	return cdc.MustMarshalJSON(&types.GenesisState{
-		Params:      am.keeper.GetParams(ctx),
+		Params:      params,
 		MinGasPrice: am.keeper.GetMinGasPrice(ctx),
 	})
 }
@@ -172,7 +176,10 @@ func (AppModule) ConsensusVersion() uint64 { return 2 }
 func (am AppModule) EndBlock(c context.Context) error {
 	ctx := sdk.UnwrapSDKContext(c)
 	currentGasUsage := am.keeper.TrackedGas(ctx)
-	params := am.keeper.GetParams(ctx)
+	params, err := am.keeper.GetParams(ctx)
+	if err != nil {
+		return err
+	}
 	model := types.NewModel(params.Model)
 	previousMinGasPrice := am.keeper.GetMinGasPrice(ctx)
 

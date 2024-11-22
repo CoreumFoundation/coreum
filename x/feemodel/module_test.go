@@ -108,7 +108,8 @@ func TestInitGenesis(t *testing.T) {
 
 	module.InitGenesis(sdk.Context{}, cdc, cdc.MustMarshalJSON(&genesisState))
 
-	params := keeper.GetParams(sdk.Context{})
+	params, err := keeper.GetParams(sdk.Context{})
+	require.NoError(t, err)
 	minGasPrice := keeper.GetMinGasPrice(sdk.Context{})
 	assert.Equal(t, genesisState.Params.Model.InitialGasPrice.String(), params.Model.InitialGasPrice.String())
 	assert.Equal(t, genesisState.Params.Model.MaxGasPriceMultiplier.String(), params.Model.MaxGasPriceMultiplier.String())

@@ -242,7 +242,9 @@ func TestKeeper_DEXLocked(t *testing.T) {
 
 	// unfreeze part
 	requireT.NoError(ftKeeper.Unfreeze(ctx, issuer, acc, sdk.NewInt64Coin(denom, 300)))
-	requireT.Equal(sdk.NewInt64Coin(denom, 700).String(), ftKeeper.GetFrozenBalance(ctx, acc, denom).String())
+	frozenBalance, err := ftKeeper.GetFrozenBalance(ctx, acc, denom)
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewInt64Coin(denom, 700).String(), frozenBalance.String())
 
 	// now 700 frozen, 50 locked by vesting, 1050 balance
 	// try to use more than allowed

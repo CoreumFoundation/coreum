@@ -117,7 +117,10 @@ func (k Keeper) SetDEXSettings(ctx sdk.Context, denom string, settings types.DEX
 
 // GetDEXSettings gets the DEX settings of a specified denom.
 func (k Keeper) GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error) {
-	bz, _ := k.storeService.OpenKVStore(ctx).Get(types.CreateDEXSettingsKey(denom))
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.CreateDEXSettingsKey(denom))
+	if err != nil {
+		return types.DEXSettings{}, err
+	}
 	if bz == nil {
 		return types.DEXSettings{}, sdkerrors.Wrapf(types.ErrDEXSettingsNotFound, "denom: %s", denom)
 	}
@@ -470,7 +473,11 @@ func (k Keeper) dexChecksForDefinition(ctx sdk.Context, acc sdk.AccAddress, def 
 	}
 
 	if def.IsFeatureEnabled(types.Feature_freezing) {
-		if k.isGloballyFrozen(ctx, def.Denom) &&
+		isGloballyFrozen, err := k.isGloballyFrozen(ctx, def.Denom)
+		if err != nil {
+			return err
+		}
+		if isGloballyFrozen &&
 			// sill allow the admin to do the trade, to follow same logic as we have in the sending
 			!def.HasAdminPrivileges(acc) {
 			return sdkerrors.Wrapf(
@@ -505,7 +512,11 @@ func (k Keeper) dexExpectedToSpendChecks(
 	}
 
 	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
-		frozenAmt := k.GetFrozenBalance(ctx, addr, coin.Denom).Amount
+		frozenBalance, err := k.GetFrozenBalance(ctx, addr, coin.Denom)
+		if err != nil {
+			return err
+		}
+		frozenAmt := frozenBalance.Amount
 		notFrozenTotalAmt := balance.Amount.Sub(frozenAmt)
 		if notFrozenTotalAmt.LT(coin.Amount) {
 			return sdkerrors.Wrapf(

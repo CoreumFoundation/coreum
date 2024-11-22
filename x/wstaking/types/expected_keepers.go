@@ -8,5 +8,5 @@ import (
 
 // CustomParamsKeeper defines the custom params keeper interface required for the module.
 type CustomParamsKeeper interface {
-	GetStakingParams(ctx sdk.Context) customparamstypes.StakingParams
+	GetStakingParams(ctx sdk.Context) (customparamstypes.StakingParams, error)
 }

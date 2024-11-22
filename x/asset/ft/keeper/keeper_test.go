@@ -1125,25 +1125,29 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	// try to freeze more than balance
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(110)))
 	requireT.NoError(err)
-	frozenBalance := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(110)), frozenBalance)
 
 	// try to unfreeze more than frozen balance
 	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(130)))
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(110)), frozenBalance)
 
 	// set frozen balance back to zero
 	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(110)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(0)).String(), frozenBalance.String())
 
 	// freeze, query frozen
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(40)).String(), frozenBalance.String())
 
 	// test query all frozen
@@ -1157,7 +1161,8 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	// increase frozen and query
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(80)), frozenBalance)
 
 	// try to send more than available
@@ -1198,13 +1203,15 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	// set absolute frozen amount
 	err = ftKeeper.SetFrozen(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), frozenBalance)
 
 	// unfreeze, query frozen, and try to send
 	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), frozenBalance)
 	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(40)))
 	// send
@@ -2184,7 +2191,8 @@ func TestKeeper_TransferAdmin_FreezeUnfreeze(t *testing.T) {
 	// freeze, query frozen
 	err = ftKeeper.Freeze(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
 	requireT.NoError(err)
-	frozenBalance := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(40)).String(), frozenBalance.String())
 
 	// test query all frozen
@@ -2202,13 +2210,15 @@ func TestKeeper_TransferAdmin_FreezeUnfreeze(t *testing.T) {
 	// set absolute frozen amount
 	err = ftKeeper.SetFrozen(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)), frozenBalance)
 
 	// unfreeze, query frozen
 	err = ftKeeper.Unfreeze(ctx, admin, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)), frozenBalance)
 }
 

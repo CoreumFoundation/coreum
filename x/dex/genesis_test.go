@@ -173,7 +173,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 	dex.InitGenesis(sdkCtx, dexKeeper, testApp.AccountKeeper, genState)
 
 	// check imported state
-	params := dexKeeper.GetParams(sdkCtx)
+	params, err := dexKeeper.GetParams(sdkCtx)
+	requireT.NoError(err)
 	requireT.EqualValues(prams, params)
 
 	// check that export is equal import
