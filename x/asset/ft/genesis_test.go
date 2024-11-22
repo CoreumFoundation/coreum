@@ -33,7 +33,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// token definitions
 	var tokens []types.Token
 	var pendingTokenUpgrades []types.PendingTokenUpgrade
-	for i := uint32(0); i < 5; i++ {
+	for i := range uint32(5) {
 		token := types.Token{
 			Denom:       types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
 			Issuer:      issuer.String(),
@@ -74,7 +74,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// frozen balances
 	var frozenBalances []types.Balance
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		frozenBalances = append(frozenBalances,
 			types.Balance{
@@ -88,7 +88,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// whitelisted balances
 	var whitelistedBalances []types.Balance
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		whitelistedBalances = append(whitelistedBalances,
 			types.Balance{
@@ -102,7 +102,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// DEX locked balances
 	var dexLockedBalances []types.Balance
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		dexLockedBalances = append(dexLockedBalances,
 			types.Balance{
@@ -116,7 +116,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// DEX expected to receive balances
 	var dexExpectedToReceiveBalances []types.Balance
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		dexExpectedToReceiveBalances = append(dexExpectedToReceiveBalances,
 			types.Balance{
@@ -130,7 +130,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// DEX settings
 	var dexSettings []types.DEXSettingsWithDenom
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		dexSettings = append(dexSettings,
 			types.DEXSettingsWithDenom{
 				Denom: fmt.Sprintf("denom-%d", i),

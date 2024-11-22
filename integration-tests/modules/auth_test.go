@@ -320,7 +320,6 @@ func TestGasEstimation(t *testing.T) {
 		},
 	}
 	for _, tt := range testsDeterm {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -401,7 +400,6 @@ func TestGasEstimation(t *testing.T) {
 		},
 	}
 	for _, tt := range testsNonDeterm {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			_, estimatedGas, err := client.CalculateGas(
@@ -411,7 +409,7 @@ func TestGasEstimation(t *testing.T) {
 				tt.msgs...,
 			)
 			require.NoError(t, err)
-			require.Greater(t, int(estimatedGas), 0)
+			require.Positive(t, int(estimatedGas))
 		})
 	}
 }

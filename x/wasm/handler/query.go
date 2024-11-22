@@ -178,7 +178,7 @@ func newModuleQuerySafeAllowList() wasmkeeper.AcceptedQueries {
 
 	allowList := wasmkeeper.AcceptedQueries{}
 	protoFiles.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
-		for i := 0; i < fd.Services().Len(); i++ {
+		for i := range fd.Services().Len() {
 			// Get the service descriptor
 			sd := fd.Services().Get(i)
 
@@ -187,7 +187,7 @@ func newModuleQuerySafeAllowList() wasmkeeper.AcceptedQueries {
 				continue
 			}
 
-			for j := 0; j < sd.Methods().Len(); j++ {
+			for j := range sd.Methods().Len() {
 				// Get the method descriptor
 				md := sd.Methods().Get(j)
 
@@ -413,7 +413,7 @@ func processAssetNFTQuery(
 
 				classesResponse.Pagination.NextKey = classesRes.Pagination.NextKey
 				classesResponse.Pagination.Total = classesRes.Pagination.Total
-				for i := 0; i < len(classesRes.Classes); i++ {
+				for i := range len(classesRes.Classes) {
 					var dataString string
 					if classesRes.Classes[i].Data != nil {
 						dataString, err = unmarshalData(classesRes.Classes[i].Data)
@@ -608,7 +608,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 
 				nftsResponse.Pagination.NextKey = nftsRes.Pagination.NextKey
 				nftsResponse.Pagination.Total = nftsRes.Pagination.Total
-				for i := 0; i < len(nftsRes.Nfts); i++ {
+				for i := range len(nftsRes.Nfts) {
 					var dataString string
 					if nftsRes.Nfts[i].Data != nil {
 						dataString, err = unmarshalData(nftsRes.Nfts[i].Data)
@@ -682,7 +682,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 				nftClassesResponse.Pagination.NextKey = nftClassesRes.Pagination.NextKey
 				nftClassesResponse.Pagination.Total = nftClassesRes.Pagination.Total
 
-				for i := 0; i < len(nftClassesRes.Classes); i++ {
+				for i := range len(nftClassesRes.Classes) {
 					var dataString string
 					if nftClassesRes.Classes[i].Data != nil {
 						dataString, err = unmarshalData(nftClassesRes.Classes[i].Data)

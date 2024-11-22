@@ -3,7 +3,6 @@ package keeper
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/log"
@@ -1188,5 +1187,5 @@ func (k Keeper) validateWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress,
 
 // logger returns the Keeper logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }

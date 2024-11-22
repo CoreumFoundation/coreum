@@ -35,7 +35,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// class definitions
 	var classDefinitions []types.ClassDefinition
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		classDefinition := types.ClassDefinition{
 			ID: fmt.Sprintf("classid%d-%s", i, issuer),
 			Features: []types.ClassFeature{
@@ -53,7 +53,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		classDefinitions = append(classDefinitions, classDefinition)
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		rawGenState.Entries = append(rawGenState.Entries, &rawnft.Entry{
 			Owner: sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
 			Nfts: []*rawnft.NFT{
@@ -71,7 +71,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// Frozen NFTs
 	var frozen []types.FrozenNFT
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		frozen = append(frozen, types.FrozenNFT{
 			ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
 			NftIDs: []string{
@@ -83,7 +83,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// Whitelisting
 	var whitelisted []types.WhitelistedNFTAccounts
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		whitelisted = append(whitelisted,
 			types.WhitelistedNFTAccounts{
 				ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
@@ -107,7 +107,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// ClassWhitelisting
 	var classWhitelisted []types.ClassWhitelistedAccounts
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		classWhitelisted = append(classWhitelisted,
 			types.ClassWhitelistedAccounts{
 				ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
@@ -122,7 +122,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// ClassFrozen
 	var classFrozen []types.ClassFrozenAccounts
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		classFrozen = append(classFrozen,
 			types.ClassFrozenAccounts{
 				ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
@@ -137,7 +137,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// Burnt NFTs
 	var burnt []types.BurntNFT
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		burnt = append(burnt, types.BurntNFT{
 			ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
 			NftIDs: []string{

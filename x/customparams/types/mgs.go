@@ -1,8 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,7 +21,7 @@ var _ extendedMsg = &MsgUpdateStakingParams{}
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateStakingParams{}, fmt.Sprintf("%s/MsgUpdateStakingParams", ModuleName))
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateStakingParams{}, ModuleName+"/MsgUpdateStakingParams")
 }
 
 // ValidateBasic checks that message fields are valid.

@@ -542,7 +542,6 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
 			sdkCtx := testApp.BaseApp.NewContext(false)
@@ -841,7 +840,6 @@ func TestKeeper_ComputePriceTick(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			assertTickCalculations(t, tt.base, tt.quote)
 			assertTickCalculations(t, tt.quote, tt.base)
@@ -1030,7 +1028,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	)
 
 	denoms := make([]string, 0)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		settings := assetfttypes.IssueSettings{
 			Issuer:        issuer,
 			Symbol:        fmt.Sprintf("SMB%d", i),
@@ -1047,7 +1045,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	}
 
 	// place 5 limit orders to denom0/denom1
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		order := types.Order{
 			Creator:     acc1.String(),
 			Type:        types.ORDER_TYPE_LIMIT,
@@ -1066,7 +1064,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	}
 	// place 5 limit orders to denom1/denom0
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		order := types.Order{
 			Creator:     acc1.String(),
 			Type:        types.ORDER_TYPE_LIMIT,
@@ -1085,7 +1083,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 		require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 	}
 	// place 5 limit orders to denom1/denom2
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		order := types.Order{
 			Creator:     acc1.String(),
 			Type:        types.ORDER_TYPE_LIMIT,

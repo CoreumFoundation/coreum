@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
@@ -46,22 +44,22 @@ var (
 
 // RegisterLegacyAminoCodec registers the amino types and interfaces.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgIssue{}, fmt.Sprintf("%s/MsgIssue", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgMint{}, fmt.Sprintf("%s/MsgMint", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgBurn{}, fmt.Sprintf("%s/MsgBurn", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgFreeze{}, fmt.Sprintf("%s/MsgFreeze", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgUnfreeze{}, fmt.Sprintf("%s/MsgUnfreeze", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgSetFrozen{}, fmt.Sprintf("%s/MsgSetFrozen", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgGloballyFreeze{}, fmt.Sprintf("%s/MsgGloballyFreeze", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgGloballyUnfreeze{}, fmt.Sprintf("%s/MsgGloballyUnfreeze", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgSetWhitelistedLimit{}, fmt.Sprintf("%s/MsgSetWhitelistedLimit", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgUpgradeTokenV1{}, fmt.Sprintf("%s/MsgUpgradeTokenV1", ModuleName))
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName))
+	legacy.RegisterAminoMsg(cdc, &MsgIssue{}, ModuleName+"/MsgIssue")
+	legacy.RegisterAminoMsg(cdc, &MsgMint{}, ModuleName+"/MsgMint")
+	legacy.RegisterAminoMsg(cdc, &MsgBurn{}, ModuleName+"/MsgBurn")
+	legacy.RegisterAminoMsg(cdc, &MsgFreeze{}, ModuleName+"/MsgFreeze")
+	legacy.RegisterAminoMsg(cdc, &MsgUnfreeze{}, ModuleName+"/MsgUnfreeze")
+	legacy.RegisterAminoMsg(cdc, &MsgSetFrozen{}, ModuleName+"/MsgSetFrozen")
+	legacy.RegisterAminoMsg(cdc, &MsgGloballyFreeze{}, ModuleName+"/MsgGloballyFreeze")
+	legacy.RegisterAminoMsg(cdc, &MsgGloballyUnfreeze{}, ModuleName+"/MsgGloballyUnfreeze")
+	legacy.RegisterAminoMsg(cdc, &MsgSetWhitelistedLimit{}, ModuleName+"/MsgSetWhitelistedLimit")
+	legacy.RegisterAminoMsg(cdc, &MsgUpgradeTokenV1{}, ModuleName+"/MsgUpgradeTokenV1")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, ModuleName+"/MsgUpdateParams")
 	legacy.RegisterAminoMsg(
-		cdc, &MsgUpdateDEXUnifiedRefAmount{}, fmt.Sprintf("%s/MsgUpdateDEXUnifiedRefAmount", ModuleName),
+		cdc, &MsgUpdateDEXUnifiedRefAmount{}, ModuleName+"/MsgUpdateDEXUnifiedRefAmount",
 	)
 	legacy.RegisterAminoMsg(
-		cdc, &MsgUpdateDEXWhitelistedDenoms{}, fmt.Sprintf("%s/MsgUpdateDEXWhitelistedDenoms", ModuleName),
+		cdc, &MsgUpdateDEXWhitelistedDenoms{}, ModuleName+"/MsgUpdateDEXWhitelistedDenoms",
 	)
 }
 

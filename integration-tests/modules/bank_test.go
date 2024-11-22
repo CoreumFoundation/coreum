@@ -66,7 +66,7 @@ func TestBankSendDeterministicGas(t *testing.T) {
 
 	require.Equal(t, "cosmos.bank.v1beta1.MsgSend", gasEvents[0].MsgURL)
 	require.Equal(t, msgGas, gasEvents[0].DeterministicGas)
-	require.Greater(t, gasEvents[0].RealGas, uint64(0))
+	require.Positive(t, gasEvents[0].RealGas)
 }
 
 // TestBankSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas.
@@ -118,7 +118,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	amountToSend := sdkmath.NewInt(1000)
 
 	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
-	for i := 0; i < numOfTokens; i++ {
+	for i := range numOfTokens {
 		issueMsgs = append(issueMsgs, &assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),
@@ -256,7 +256,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	amountToSend := sdkmath.NewInt(1000)
 
 	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
-	for i := 0; i < numOfTokens; i++ {
+	for i := range numOfTokens {
 		issueMsgs = append(issueMsgs, &assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),

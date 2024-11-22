@@ -78,19 +78,19 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 
 	gotToken, err := ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
-	requireT.EqualValues(gotToken.Denom, denom)
-	requireT.EqualValues(gotToken.Issuer, settings.Issuer.String())
-	requireT.EqualValues(gotToken.Symbol, settings.Symbol)
-	requireT.EqualValues(gotToken.Description, settings.Description)
-	requireT.EqualValues(gotToken.Subunit, strings.ToLower(settings.Subunit))
-	requireT.EqualValues(gotToken.Precision, settings.Precision)
-	requireT.EqualValues(gotToken.Features, []types.Feature{types.Feature_extension})
-	requireT.EqualValues(gotToken.BurnRate, sdkmath.LegacyNewDec(0))
-	requireT.EqualValues(gotToken.SendCommissionRate, sdkmath.LegacyNewDec(0))
-	requireT.EqualValues(gotToken.Version, types.CurrentTokenVersion)
-	requireT.EqualValues(gotToken.URI, settings.URI)
-	requireT.EqualValues(gotToken.URIHash, settings.URIHash)
-	requireT.EqualValues(66, len(gotToken.ExtensionCWAddress))
+	requireT.EqualValues(denom, gotToken.Denom)
+	requireT.EqualValues(settings.Issuer.String(), gotToken.Issuer)
+	requireT.EqualValues(settings.Symbol, gotToken.Symbol)
+	requireT.EqualValues(settings.Description, gotToken.Description)
+	requireT.EqualValues(strings.ToLower(settings.Subunit), gotToken.Subunit)
+	requireT.EqualValues(settings.Precision, gotToken.Precision)
+	requireT.EqualValues([]types.Feature{types.Feature_extension}, gotToken.Features)
+	requireT.EqualValues(sdkmath.LegacyNewDec(0), gotToken.BurnRate)
+	requireT.EqualValues(sdkmath.LegacyNewDec(0), gotToken.SendCommissionRate)
+	requireT.EqualValues(types.CurrentTokenVersion, gotToken.Version)
+	requireT.EqualValues(settings.URI, gotToken.URI)
+	requireT.EqualValues(settings.URIHash, gotToken.URIHash)
+	requireT.Len(gotToken.ExtensionCWAddress, 66)
 
 	contractAddress, err := sdk.AccAddressFromBech32(gotToken.ExtensionCWAddress)
 	requireT.NoError(err)
@@ -147,7 +147,6 @@ func TestKeeper_Extension_Issue_WithIBCAndBlockSmartContract(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		codeID, _, err := testApp.WasmPermissionedKeeper.Create(
 			ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
@@ -1000,7 +999,6 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	}
 
 	for counter, tc := range testCases {
-		tc := tc
 		t.Run(fmt.Sprintf("%s case #%d", tc.name, counter), func(t *testing.T) {
 			err := bankKeeper.InputOutputCoins(ctx, tc.input, tc.outputs)
 			requireT.NoError(err)

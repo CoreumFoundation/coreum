@@ -1,6 +1,6 @@
 module github.com/CoreumFoundation/coreum/v5
 
-go 1.22.4
+go 1.23.3
 
 replace (
 	// TODO(https://github.com/cosmos/rosetta/issues/76): Rosetta requires cosmossdk.io/core v0.12.0 erroneously but

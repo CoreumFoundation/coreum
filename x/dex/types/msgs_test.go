@@ -89,7 +89,6 @@ func TestMsgUpdateParams_ValidateBasic(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			requireT := require.New(t)
 			err := tt.msg.ValidateBasic()
@@ -145,7 +144,6 @@ func TestMsgCancelOrder_ValidateBasic(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			requireT := require.New(t)
 			err := tt.msg.ValidateBasic()
@@ -205,7 +203,6 @@ func TestMsgCancelOrdersByDenom_ValidateBasic(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			requireT := require.New(t)
 			err := tt.msg.ValidateBasic()
@@ -272,7 +269,6 @@ func TestAmino(t *testing.T) {
 	legacyAmino := codec.NewLegacyAmino()
 	types.RegisterLegacyAminoCodec(legacyAmino)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			generatedJSON := legacyAmino.Amino.MustMarshalJSON(tt.msg)
 			require.Equal(t, tt.wantAminoJSON, string(sdk.MustSortJSON(generatedJSON)))

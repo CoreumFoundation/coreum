@@ -87,7 +87,6 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 	newSD.Methods = methods
 
 	for i, method := range newSD.Methods {
-		method := method
 		newSD.Methods[i].Handler = func(
 			srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor googlegrpc.UnaryServerInterceptor,
 		) (interface{}, error) {
@@ -140,7 +139,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 	s.baseServer.RegisterService(&newSD, handler)
 }
 
-func (s deterministicMsgServer) ctxForDeterministicGas(
+func (s *deterministicMsgServer) ctxForDeterministicGas(
 	ctx sdk.Context,
 	msg sdk.Msg,
 ) (sdk.Context, storetypes.Gas, bool, error) {

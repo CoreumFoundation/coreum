@@ -31,7 +31,7 @@ func TestBaseKeeperWrapper_SpendableBalances(t *testing.T) {
 	totalTokens := 10
 	amountToSend := sdkmath.NewInt(100)
 	denoms := make([]string, 0, totalTokens)
-	for i := 0; i < totalTokens; i++ {
+	for i := range totalTokens {
 		settings := types.IssueSettings{
 			Issuer:        issuer,
 			Symbol:        fmt.Sprintf("DEF%d", i),

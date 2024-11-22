@@ -4,7 +4,6 @@ package modules
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -501,7 +500,7 @@ func setUnbondingTimeViaGovernance(
 		ctx,
 		proposer,
 		[]sdk.Msg{msgUpdateParam},
-		fmt.Sprintf("Change the unbnunbondingdig time to %s", unbondingTime.String()),
+		"Change the unbnunbondingdig time to "+unbondingTime.String(),
 		"Changing unbonding time for the integration test",
 		"Changing unbonding time for the integration test",
 		false,

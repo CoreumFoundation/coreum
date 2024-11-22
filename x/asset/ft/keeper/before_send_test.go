@@ -24,7 +24,7 @@ func TestApplyRate(t *testing.T) {
 	}
 	var accounts []string
 	var smartContracts []string
-	for i := 0; i < 11; i++ {
+	for range 11 {
 		accounts = append(accounts, genAccount())
 	}
 	for i := byte(0); i < 2; i++ {
@@ -140,7 +140,6 @@ func TestApplyRate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			assertT := assert.New(t)
 			ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)

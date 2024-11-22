@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"math/big"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -1257,7 +1256,7 @@ func (k Keeper) getAccountDenomOrdersCounter(ctx sdk.Context, accNumber uint64, 
 
 // logger returns the Keeper logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
 
 // ComputePriceTick returns the price tick of a given ref amounts and price tick exponent.

@@ -128,7 +128,6 @@ func TestNewPriceFromString(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.strPrice, func(t *testing.T) {
 			got, err := types.NewPriceFromString(tt.strPrice)
 			if tt.wantErr {
@@ -211,7 +210,6 @@ func TestPrice_OrderedBytesMarshalling(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.priceStr, func(t *testing.T) {
 			priceToMarshall, err := types.NewPriceFromString(tt.priceStr)
 			require.NoError(t, err)
@@ -261,7 +259,6 @@ func TestPrice_Rat(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.priceStr, func(t *testing.T) {
 			p, err := types.NewPriceFromString(tt.priceStr)
 			require.NoError(t, err)
@@ -283,7 +280,6 @@ func TestPrice_Marshalling(t *testing.T) {
 	}
 
 	for _, priceStr := range priceStrings {
-		priceStr := priceStr
 		t.Run(priceStr, func(t *testing.T) {
 			t.Parallel()
 

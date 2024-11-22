@@ -31,26 +31,26 @@ func ExampleGasPriceOverTime() {
 	for i := int64(0.4 * float64(feeModelSim.CalculateEscalationStartBlockGas())); i <= params.MaxBlockGas; i += 1000 {
 		blockGas = append(blockGas, i)
 	}
-	for i := 0; i < 5000; i++ {
+	for range 5000 {
 		blockGas = append(blockGas, params.MaxBlockGas)
 	}
 	gas := int64(0.7 * float64(feeModelSim.CalculateEscalationStartBlockGas()))
-	for i := 0; i < 5000; i++ {
+	for range 5000 {
 		blockGas = append(blockGas, gas)
 	}
 	gas = int64(0.5 * float64(feeModelSim.CalculateEscalationStartBlockGas()))
-	for i := 0; i < 3000; i++ {
+	for range 3000 {
 		blockGas = append(blockGas, gas)
 	}
 	gas = int64(0.2 * float64(feeModelSim.CalculateEscalationStartBlockGas()))
-	for i := 0; i < 3000; i++ {
+	for range 3000 {
 		blockGas = append(blockGas, gas)
 	}
 	gas = int64(0.9 * float64(feeModelSim.CalculateEscalationStartBlockGas()))
-	for i := 0; i < 5000; i++ {
+	for range 5000 {
 		blockGas = append(blockGas, gas)
 	}
-	for i := 0; i < 3000; i++ {
+	for range 3000 {
 		blockGas = append(blockGas, 0)
 	}
 

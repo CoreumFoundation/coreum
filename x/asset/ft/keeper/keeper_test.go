@@ -145,7 +145,7 @@ func TestKeeper_Issue(t *testing.T) {
 	st.Symbol = "aBc"
 	_, err = ftKeeper.Issue(ctx, st)
 	requireT.ErrorIs(err, types.ErrInvalidInput)
-	requireT.True(strings.Contains(err.Error(), "duplicate"))
+	requireT.Contains(err.Error(), "duplicate")
 
 	// try to create token containing non-existing feature
 	settings.Symbol = "CDE"
@@ -254,7 +254,7 @@ func TestKeeper_Issue_EqualDisplayAndBaseDenom(t *testing.T) {
 
 	_, err := ftKeeper.Issue(ctx, settings)
 	requireT.Error(err)
-	requireT.True(strings.Contains(err.Error(), "duplicate denomination"))
+	requireT.Contains(err.Error(), "duplicate denomination")
 }
 
 func TestKeeper_Issue_ValidateSymbol(t *testing.T) {
@@ -756,7 +756,7 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 	var recipients []sdk.AccAddress
 	var issuers []sdk.AccAddress
 	var denoms []string
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		issuers = append(issuers, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 		settings := types.IssueSettings{
 			Issuer:             issuers[i],
@@ -898,7 +898,6 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 	}
 
 	for counter, tc := range testCases {
-		tc := tc
 		t.Run(fmt.Sprintf("%s case #%d", tc.name, counter), func(t *testing.T) {
 			err := bankKeeper.InputOutputCoins(ctx, tc.inputs, tc.outputs)
 			requireT.NoError(err)
@@ -1828,7 +1827,7 @@ func TestKeeper_GetIssuerTokens(t *testing.T) {
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	numberOfTokens := 5
-	for i := 0; i < numberOfTokens; i++ {
+	for range numberOfTokens {
 		settings := types.IssueSettings{
 			Issuer:        addr,
 			Symbol:        "ABC" + uuid.NewString()[:4],

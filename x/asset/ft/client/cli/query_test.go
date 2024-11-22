@@ -23,8 +23,8 @@ func TestQueryTokens(t *testing.T) {
 	issuer := testNetwork.Validators[0].Address
 
 	token := types.Token{
-		Symbol:      "btc" + uuid.NewString()[:4],     //nolint:goconst
-		Subunit:     "satoshi" + uuid.NewString()[:4], //nolint:goconst
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
 		Precision:   8,
 		Description: "description",
 		Features: []types.Feature{
