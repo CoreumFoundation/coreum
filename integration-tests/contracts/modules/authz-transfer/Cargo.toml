@@ -29,4 +29,4 @@ cosmwasm-std = { version = "2.1.4", features = ["cosmwasm_2_0"] }
 cw2 = "2.0.0"
 cw-storage-plus = "2.0.0"
 cosmwasm-schema = "2.1.4"
-coreum-wasm-sdk = { git = "https://github.com/CoreumFoundation/coreum-wasm-sdk.git" }
+coreum-wasm-sdk = { git = "https://github.com/CoreumFoundation/coreum-wasm-sdk.git", rev = "a0a00147d65b409bef2d86ebebf35959c96263c3" }
