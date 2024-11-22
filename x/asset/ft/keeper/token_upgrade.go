@@ -51,7 +51,11 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingToke
 func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32) error {
 	store := k.storeService.OpenKVStore(ctx)
 	key := types.CreatePendingTokenUpgradeKey(denom)
-	if val, _ := store.Has(key); val {
+	val, err := store.Has(key)
+	if err != nil {
+		return err
+	}
+	if val {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "token upgrade is already pending for denom %q", denom)
 	}
 

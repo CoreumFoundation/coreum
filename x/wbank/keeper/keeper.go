@@ -255,7 +255,7 @@ func (k BaseKeeperWrapper) getSpendableCoin(
 
 	frozenBalance, err := k.ftProvider.GetFrozenBalance(ctx, addr, denom)
 	if err != nil {
-		return sdk.Coin{}, nil
+		return sdk.Coin{}, err
 	}
 	notFrozenAmt := balance.Amount.Sub(frozenBalance.Amount)
 

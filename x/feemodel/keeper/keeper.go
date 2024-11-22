@@ -40,7 +40,10 @@ func (k Keeper) TrackedGas(ctx sdk.Context) int64 {
 	tStore := k.transientStoreService.OpenTransientStore(ctx)
 
 	gasUsed := sdkmath.NewInt(0)
-	bz, _ := tStore.Get(gasTrackingKey)
+	bz, err := tStore.Get(gasTrackingKey)
+	if err != nil {
+		panic(err)
+	}
 
 	if bz != nil {
 		if err := gasUsed.Unmarshal(bz); err != nil {

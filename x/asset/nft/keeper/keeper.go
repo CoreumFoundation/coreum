@@ -678,7 +678,10 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 		return false, err
 	}
 
-	val, _ := store.Get(key)
+	val, err := store.Get(key)
+	if err != nil {
+		return false, err
+	}
 	if bytes.Equal(val, types.StoreTrue) {
 		return true, nil
 	}
@@ -689,7 +692,10 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 		return false, err
 	}
 
-	val, _ = store.Get(key)
+	val, err = store.Get(key)
+	if err != nil {
+		return false, err
+	}
 	return bytes.Equal(val, types.StoreTrue), nil
 }
 

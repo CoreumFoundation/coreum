@@ -95,7 +95,11 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Mes
 	}
 
 	store := k.storeService.OpenKVStore(ctx)
-	if val, _ := store.Has(key); val {
+	val, err := store.Has(key)
+	if err != nil {
+		return err
+	}
+	if val {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "delayed item is already stored under the key, id: %s", id)
 	}
 
@@ -127,7 +131,11 @@ func (k Keeper) StoreBlockExecution(ctx sdk.Context, id string, data proto.Messa
 	}
 
 	store := k.storeService.OpenKVStore(ctx)
-	if val, _ := store.Has(key); val {
+	val, err := store.Has(key)
+	if err != nil {
+		return err
+	}
+	if val {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "block item is already stored under the key, id: %s", id)
 	}
 
