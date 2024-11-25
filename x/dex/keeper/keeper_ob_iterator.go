@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
@@ -25,12 +27,13 @@ type OrderBookIterator struct {
 func NewOrderBookIterator(
 	ctx sdk.Context,
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeService sdkstore.KVStoreService,
 	orderBookID uint32,
 	side types.Side,
 	readFromTail bool,
 ) *OrderBookIterator {
-	store := prefix.NewStore(ctx.KVStore(storeKey), types.CreateOrderBookSideKey(orderBookID, side))
+	moduleStore := storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.CreateOrderBookSideKey(orderBookID, side))
 	var iterator storetypes.Iterator
 	if readFromTail {
 		iterator = store.ReverseIterator(nil, nil)
@@ -176,5 +179,5 @@ func (k Keeper) NewOrderBookSideIterator(ctx sdk.Context, orderBookID uint32, si
 		readFromTail = true
 	}
 
-	return NewOrderBookIterator(ctx, k.cdc, k.storeKey, orderBookID, side, readFromTail)
+	return NewOrderBookIterator(ctx, k.cdc, k.storeService, orderBookID, side, readFromTail)
 }

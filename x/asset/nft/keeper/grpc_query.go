@@ -16,7 +16,7 @@ var _ types.QueryServer = QueryService{}
 //
 //nolint:interfacebloat // breaking down this interface is not beneficial.
 type QueryKeeper interface {
-	GetParams(ctx sdk.Context) types.Params
+	GetParams(ctx sdk.Context) (types.Params, error)
 	GetClass(ctx sdk.Context, classID string) (types.Class, error)
 	GetClasses(
 		ctx sdk.Context,
@@ -55,9 +55,11 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 
 // Params queries the parameters of x/asset/nft module.
 func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
-	return &types.QueryParamsResponse{
-		Params: qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx)),
-	}, nil
+	params, err := qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryParamsResponse{Params: params}, nil
 }
 
 // Class returns the asset NFT class.

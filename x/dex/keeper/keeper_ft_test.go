@@ -320,7 +320,9 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order))
 
 	balance = testApp.BankKeeper.GetBalance(sdkCtx, acc, denomToStake)
-	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
+	orderReserve := params.OrderReserve
 	require.Equal(t, orderLockedBalance.Add(orderReserve).String(), balance.String())
 
 	lockedBalance = testApp.AssetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, denomToStake)

@@ -4,6 +4,7 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -110,13 +111,16 @@ func (k Keeper) DEXCheckOrderAmounts(
 }
 
 // SetDEXSettings sets the DEX settings of a specified denom.
-func (k Keeper) SetDEXSettings(ctx sdk.Context, denom string, settings types.DEXSettings) {
-	ctx.KVStore(k.storeKey).Set(types.CreateDEXSettingsKey(denom), k.cdc.MustMarshal(&settings))
+func (k Keeper) SetDEXSettings(ctx sdk.Context, denom string, settings types.DEXSettings) error {
+	return k.storeService.OpenKVStore(ctx).Set(types.CreateDEXSettingsKey(denom), k.cdc.MustMarshal(&settings))
 }
 
 // GetDEXSettings gets the DEX settings of a specified denom.
 func (k Keeper) GetDEXSettings(ctx sdk.Context, denom string) (types.DEXSettings, error) {
-	bz := ctx.KVStore(k.storeKey).Get(types.CreateDEXSettingsKey(denom))
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.CreateDEXSettingsKey(denom))
+	if err != nil {
+		return types.DEXSettings{}, err
+	}
 	if bz == nil {
 		return types.DEXSettings{}, sdkerrors.Wrapf(types.ErrDEXSettingsNotFound, "denom: %s", denom)
 	}
@@ -131,8 +135,9 @@ func (k Keeper) GetDEXSettingsWithDenoms(
 	ctx sdk.Context,
 	pagination *query.PageRequest,
 ) ([]types.DEXSettingsWithDenom, *query.PageResponse, error) {
+	moduleStore := k.storeService.OpenKVStore(ctx)
 	dexSettings := make([]types.DEXSettingsWithDenom, 0)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXSettingsKeyPrefix)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.DEXSettingsKeyPrefix)
 	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
 		denom, err := types.DecodeDenomFromKey(key)
 		if err != nil {
@@ -468,7 +473,11 @@ func (k Keeper) dexChecksForDefinition(ctx sdk.Context, acc sdk.AccAddress, def 
 	}
 
 	if def.IsFeatureEnabled(types.Feature_freezing) {
-		if k.isGloballyFrozen(ctx, def.Denom) &&
+		isGloballyFrozen, err := k.isGloballyFrozen(ctx, def.Denom)
+		if err != nil {
+			return err
+		}
+		if isGloballyFrozen &&
 			// sill allow the admin to do the trade, to follow same logic as we have in the sending
 			!def.HasAdminPrivileges(acc) {
 			return sdkerrors.Wrapf(
@@ -503,7 +512,11 @@ func (k Keeper) dexExpectedToSpendChecks(
 	}
 
 	if def.IsFeatureEnabled(types.Feature_freezing) && !def.HasAdminPrivileges(addr) {
-		frozenAmt := k.GetFrozenBalance(ctx, addr, coin.Denom).Amount
+		frozenBalance, err := k.GetFrozenBalance(ctx, addr, coin.Denom)
+		if err != nil {
+			return err
+		}
+		frozenAmt := frozenBalance.Amount
 		notFrozenTotalAmt := balance.Amount.Sub(frozenAmt)
 		if notFrozenTotalAmt.LT(coin.Amount) {
 			return sdkerrors.Wrapf(
@@ -564,7 +577,9 @@ func (k Keeper) updateDEXSettings(
 		}
 	}
 
-	k.SetDEXSettings(ctx, denom, newSettings)
+	if err = k.SetDEXSettings(ctx, denom, newSettings); err != nil {
+		return err
+	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventDEXSettingsChanged{
 		PreviousSettings: prevSettings,
@@ -601,12 +616,14 @@ func (k Keeper) validateCoinIsNotLockedByDEXAndBank(
 
 // dexExpectedToReceiveBalancesStore get the store for the DEX expected to receive balances of all accounts.
 func (k Keeper) dexExpectedToReceiveBalancesStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXExpectedToReceiveBalancesKeyPrefix)
+	store := k.storeService.OpenKVStore(ctx)
+	return prefix.NewStore(runtime.KVStoreAdapter(store), types.DEXExpectedToReceiveBalancesKeyPrefix)
 }
 
 // dexExpectedToReceiveAccountBalanceStore gets the store for the DEX expected to receive balances of an account.
 func (k Keeper) dexExpectedToReceiveAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
-	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateDEXExpectedToReceiveBalancesKey(addr))
+	store := k.storeService.OpenKVStore(ctx)
+	return newBalanceStore(k.cdc, runtime.KVStoreAdapter(store), types.CreateDEXExpectedToReceiveBalancesKey(addr))
 }
 
 func (k Keeper) shouldRecordExpectedToReceiveBalance(ctx sdk.Context, denom string) (bool, error) {
@@ -624,12 +641,14 @@ func (k Keeper) shouldRecordExpectedToReceiveBalance(ctx sdk.Context, denom stri
 
 // dexLockedBalancesStore get the store for the DEX locked balances of all accounts.
 func (k Keeper) dexLockedBalancesStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.DEXLockedBalancesKeyPrefix)
+	store := k.storeService.OpenKVStore(ctx)
+	return prefix.NewStore(runtime.KVStoreAdapter(store), types.DEXLockedBalancesKeyPrefix)
 }
 
 // dexLockedAccountBalanceStore gets the store for the DEX locked balances of an account.
 func (k Keeper) dexLockedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
-	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateDEXLockedBalancesKey(addr))
+	store := k.storeService.OpenKVStore(ctx)
+	return newBalanceStore(k.cdc, runtime.KVStoreAdapter(store), types.CreateDEXLockedBalancesKey(addr))
 }
 
 func (k Keeper) getDEXSettingsOrNil(ctx sdk.Context, denom string) (*types.DEXSettings, error) {

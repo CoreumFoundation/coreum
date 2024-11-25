@@ -88,7 +88,8 @@ func TestKeeper_UpdateParams(t *testing.T) {
 	sdkCtx := testApp.BaseApp.NewContext(false)
 	dexKeeper := testApp.DEXKeeper
 
-	gotParams := dexKeeper.GetParams(sdkCtx)
+	gotParams, err := dexKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
 	require.Equal(t, types.DefaultParams(), gotParams)
 
 	newPrams := gotParams
@@ -102,7 +103,8 @@ func TestKeeper_UpdateParams(t *testing.T) {
 
 	govAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	require.NoError(t, dexKeeper.UpdateParams(sdkCtx, govAddr, newPrams))
-	gotParams = dexKeeper.GetParams(sdkCtx)
+	gotParams, err = dexKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
 	require.Equal(t, newPrams, gotParams)
 }
 
@@ -226,7 +228,9 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	sellOrder.Sequence = 1
 	sellOrder.RemainingQuantity = sdkmath.NewInt(10)
 	sellOrder.RemainingBalance = sdkmath.NewInt(10)
-	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
+	orderReserve := params.OrderReserve
 	sellOrder.Reserve = orderReserve
 	require.Equal(t, sellOrder, gotOrder)
 
@@ -547,15 +551,15 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			sdkCtx := testApp.BaseApp.NewContext(false)
 
 			if tt.baseDenomRefAmount != nil {
-				testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
+				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
 					UnifiedRefAmount: tt.baseDenomRefAmount,
-				})
+				}))
 			}
 
 			if tt.quoteDenomRefAmount != nil {
-				testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
+				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
 					UnifiedRefAmount: tt.quoteDenomRefAmount,
-				})
+				}))
 			}
 
 			acc, _ := testApp.GenAccount(sdkCtx)
@@ -851,7 +855,8 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
 
-	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
 	params.MaxOrdersPerDenom = 2
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
@@ -1003,7 +1008,8 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
 
-	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
 	acc1, _ := testApp.GenAccount(sdkCtx)
@@ -1258,7 +1264,9 @@ func fundOrderReserve(
 	sdkCtx sdk.Context,
 	acc sdk.AccAddress,
 ) {
-	orderReserve := testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
+	orderReserve := params.OrderReserve
 	if !orderReserve.IsPositive() {
 		return
 	}

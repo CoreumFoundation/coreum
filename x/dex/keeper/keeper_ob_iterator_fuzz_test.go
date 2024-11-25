@@ -25,11 +25,12 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 	// don't limit the price tick
 	sdkCtx, _, _ := testApp.BeginNextBlock()
 
-	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(f, err)
 	params.PriceTickExponent = int32(types.MinExp)
 	require.NoError(f, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
-	_, err := testApp.EndBlocker(sdkCtx)
+	_, err = testApp.EndBlocker(sdkCtx)
 	require.NoError(f, err)
 
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
@@ -56,11 +57,12 @@ func FuzzSaveBuyOrderAndReadWithSorting(f *testing.F) {
 	// don't limit the price tick
 	sdkCtx, _, _ := testApp.BeginNextBlock()
 
-	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(f, err)
 	params.PriceTickExponent = int32(types.MinExp)
 	require.NoError(f, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
-	_, err := testApp.EndBlocker(sdkCtx)
+	_, err = testApp.EndBlocker(sdkCtx)
 	require.NoError(f, err)
 
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {

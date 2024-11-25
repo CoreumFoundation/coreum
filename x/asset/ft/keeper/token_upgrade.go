@@ -5,6 +5,7 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -24,7 +25,8 @@ func (k Keeper) ImportPendingTokenUpgrades(ctx sdk.Context, versions []types.Pen
 
 // ExportPendingTokenUpgrades exports pending version upgrades.
 func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingTokenUpgrade, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingTokenUpgradeKeyPrefix)
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.PendingTokenUpgradeKeyPrefix)
 	versions := []types.PendingTokenUpgrade{}
 	_, err := query.Paginate(store, &query.PageRequest{Limit: query.PaginationMaxLimit}, func(key, value []byte) error {
 		version, n := binary.Uvarint(value)
@@ -47,34 +49,39 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingToke
 
 // SetPendingVersion sets pending version for token upgrade.
 func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32) error {
-	store := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	key := types.CreatePendingTokenUpgradeKey(denom)
-	if store.Has(key) {
+	val, err := store.Has(key)
+	if err != nil {
+		return err
+	}
+	if val {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "token upgrade is already pending for denom %q", denom)
 	}
 
 	value := make([]byte, binary.MaxVarintLen32)
 	n := binary.PutUvarint(value, uint64(version))
-	store.Set(key, value[:n])
-
-	return nil
+	return store.Set(key, value[:n])
 }
 
 // ClearPendingVersion clears pending version marker.
-func (k Keeper) ClearPendingVersion(ctx sdk.Context, denom string) {
-	ctx.KVStore(k.storeKey).Delete(types.CreatePendingTokenUpgradeKey(denom))
+func (k Keeper) ClearPendingVersion(ctx sdk.Context, denom string) error {
+	return k.storeService.OpenKVStore(ctx).Delete(types.CreatePendingTokenUpgradeKey(denom))
 }
 
 // GetTokenUpgradeStatuses returns the token upgrade statuses of a specified denom.
-func (k Keeper) GetTokenUpgradeStatuses(ctx sdk.Context, denom string) types.TokenUpgradeStatuses {
-	bz := ctx.KVStore(k.storeKey).Get(types.CreateTokenUpgradeStatusesKey(denom))
+func (k Keeper) GetTokenUpgradeStatuses(ctx sdk.Context, denom string) (types.TokenUpgradeStatuses, error) {
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.CreateTokenUpgradeStatusesKey(denom))
+	if err != nil {
+		return types.TokenUpgradeStatuses{}, err
+	}
 	if bz == nil {
-		return types.TokenUpgradeStatuses{}
+		return types.TokenUpgradeStatuses{}, nil
 	}
 	var tokenUpgradeStatuses types.TokenUpgradeStatuses
 	k.cdc.MustUnmarshal(bz, &tokenUpgradeStatuses)
 
-	return tokenUpgradeStatuses
+	return tokenUpgradeStatuses, nil
 }
 
 // SetTokenUpgradeStatuses sets the token upgrade statuses of a specified denom.
@@ -82,6 +89,9 @@ func (k Keeper) SetTokenUpgradeStatuses(
 	ctx sdk.Context,
 	denom string,
 	tokenUpgradeStatuses types.TokenUpgradeStatuses,
-) {
-	ctx.KVStore(k.storeKey).Set(types.CreateTokenUpgradeStatusesKey(denom), k.cdc.MustMarshal(&tokenUpgradeStatuses))
+) error {
+	return k.storeService.OpenKVStore(ctx).Set(
+		types.CreateTokenUpgradeStatusesKey(denom),
+		k.cdc.MustMarshal(&tokenUpgradeStatuses),
+	)
 }

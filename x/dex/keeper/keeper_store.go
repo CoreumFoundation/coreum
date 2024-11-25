@@ -87,8 +87,7 @@ func (k Keeper) setDataToStore(
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to marshal %T, err: %s", err, val)
 	}
-	ctx.KVStore(k.storeKey).Set(key, bz)
-	return nil
+	return k.storeService.OpenKVStore(ctx).Set(key, bz)
 }
 
 func (k Keeper) getDataFromStore(
@@ -96,7 +95,10 @@ func (k Keeper) getDataFromStore(
 	key []byte,
 	val proto.Message,
 ) error {
-	bz := ctx.KVStore(k.storeKey).Get(key)
+	bz, err := k.storeService.OpenKVStore(ctx).Get(key)
+	if err != nil {
+		return err
+	}
 	if bz == nil {
 		return sdkerrors.Wrapf(types.ErrRecordNotFound, "store type %T", val)
 	}

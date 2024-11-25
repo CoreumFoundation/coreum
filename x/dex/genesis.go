@@ -119,8 +119,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(errors.Wrap(err, "failed to get order sequence"))
 	}
 
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(errors.Wrap(err, "failed to get params"))
+	}
+
 	return &types.GenesisState{
-		Params:                     k.GetParams(ctx),
+		Params:                     params,
 		Orders:                     orders,
 		OrderBooks:                 orderBooksWithID,
 		OrderSequence:              orderSequence,

@@ -9,6 +9,7 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
@@ -34,7 +35,7 @@ func TestApplyRate(t *testing.T) {
 	issuer := genAccount()
 	dummyAddress := genAccount()
 	key := storetypes.NewKVStoreKey(types.StoreKey)
-	assetFTKeeper := assetftkeeper.NewKeeper(nil, key, nil, nil, nil, nil, nil, "")
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, runtime.NewKVStoreService(key), nil, nil, nil, nil, nil, "")
 
 	testCases := []struct {
 		name         string

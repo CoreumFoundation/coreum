@@ -1,7 +1,7 @@
 package types
 
 import (
-	context "context"
+	"context"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,7 +27,7 @@ type AccountQueryServer interface {
 type AssetFTKeeper interface {
 	DEXExecuteActions(ctx sdk.Context, actions dextypes.DEXActions) error
 	DEXDecreaseLimits(ctx sdk.Context, addr sdk.AccAddress, lockedCoin sdk.Coins, expectedToReceiveCoin sdk.Coin) error
-	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) (sdk.Coin, error)
 	GetDEXSettings(ctx sdk.Context, denom string) (dextypes.DEXSettings, error)
 	ValidateDEXCancelOrdersByDenomIsAllowed(ctx sdk.Context, addr sdk.AccAddress, denom string) error
 }

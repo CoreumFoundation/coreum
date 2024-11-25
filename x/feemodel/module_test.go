@@ -33,28 +33,33 @@ func (k *keeperMock) SetParams(ctx sdk.Context, params types.Params) error {
 	return nil
 }
 
-func (k *keeperMock) GetParams(ctx sdk.Context) types.Params {
-	return k.state.Params
+func (k *keeperMock) GetParams(ctx sdk.Context) (types.Params, error) {
+	return k.state.Params, nil
 }
 
 func (k *keeperMock) GetShortEMAGas(ctx sdk.Context) int64 {
 	return 0
 }
 
-func (k *keeperMock) SetShortEMAGas(ctx sdk.Context, emaGas int64) {}
+func (k *keeperMock) SetShortEMAGas(ctx sdk.Context, emaGas int64) error {
+	return nil
+}
 
 func (k *keeperMock) GetLongEMAGas(ctx sdk.Context) int64 {
 	return 0
 }
 
-func (k *keeperMock) SetLongEMAGas(ctx sdk.Context, emaGas int64) {}
+func (k *keeperMock) SetLongEMAGas(ctx sdk.Context, emaGas int64) error {
+	return nil
+}
 
 func (k *keeperMock) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
 	return k.state.MinGasPrice
 }
 
-func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
+func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) error {
 	k.state.MinGasPrice = minGasPrice
+	return nil
 }
 
 func (k *keeperMock) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
@@ -103,7 +108,8 @@ func TestInitGenesis(t *testing.T) {
 
 	module.InitGenesis(sdk.Context{}, cdc, cdc.MustMarshalJSON(&genesisState))
 
-	params := keeper.GetParams(sdk.Context{})
+	params, err := keeper.GetParams(sdk.Context{})
+	require.NoError(t, err)
 	minGasPrice := keeper.GetMinGasPrice(sdk.Context{})
 	assert.Equal(t, genesisState.Params.Model.InitialGasPrice.String(), params.Model.InitialGasPrice.String())
 	assert.Equal(t, genesisState.Params.Model.MaxGasPriceMultiplier.String(), params.Model.MaxGasPriceMultiplier.String())
