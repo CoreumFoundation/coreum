@@ -1,9 +1,9 @@
-use coreum_wasm_sdk::assetft::{
+use coreum_wasm_sdk::deprecated::assetft::{
     self, BalanceResponse, FrozenBalanceResponse, FrozenBalancesResponse, ParamsResponse, Query,
     TokenResponse, TokensResponse, WhitelistedBalanceResponse, WhitelistedBalancesResponse,
 };
-use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
-use coreum_wasm_sdk::pagination::PageRequest;
+use coreum_wasm_sdk::deprecated::core::{CoreumMsg, CoreumQueries, CoreumResult};
+use coreum_wasm_sdk::deprecated::pagination::PageRequest;
 use cosmwasm_std::{coin, entry_point, to_json_binary, Binary, Deps, QueryRequest, StdResult};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
