@@ -1,5 +1,5 @@
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{DexSettings, ExtensionIssueSettings};
-use coreum_wasm_sdk::types::coreum::dex::v1::Order;
+use coreum_wasm_sdk::types::coreum::dex::v1::{MsgPlaceOrder, Order};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 
@@ -21,7 +21,7 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    PlaceOrder { order: Order },
+    PlaceOrder { order: MsgPlaceOrder },
     CancelOrder { order_id: String },
     CancelOrdersByDenom { account: String, denom: String },
 }

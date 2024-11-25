@@ -34,6 +34,6 @@ cosmwasm-storage = "1.5.0"
 cw-storage-plus = "1.1.0"
 cw2 = "1.1.1"
 thiserror = "1.0.50"
-coreum-wasm-sdk = "1.0.0"
+coreum-wasm-sdk = "1.0.0" # we use old version intentionally
 cosmwasm-schema = "1.4.1"
 cw-ownable = "0.5.1"
