@@ -1,4 +1,4 @@
-use coreum_wasm_sdk::core::CoreumResult;
+use coreum_wasm_sdk::deprecated::core::CoreumResult;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;

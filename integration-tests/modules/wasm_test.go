@@ -121,7 +121,7 @@ type accountBodyFTRequest struct {
 }
 
 type placeOrderBodyDEXRequest struct {
-	Order dextypes.Order `json:"order"`
+	Order dextypes.MsgPlaceOrder `json:"order"`
 }
 
 //nolint:tagliatelle
@@ -3613,8 +3613,6 @@ func TestVestingToWASMContract(t *testing.T) {
 
 // TestWASMDEXInContract verifies that smart contract is able to execute all Coreum DEX messages and queries.
 func TestWASMDEXInContract(t *testing.T) {
-	t.Skip() // FIXME(dzmitryhil) restore once we merge and regenerate protos and contract
-
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -3768,8 +3766,8 @@ func TestWASMDEXInContract(t *testing.T) {
 	orderQuantity := sdkmath.NewInt(100)
 	placeOrderPayload, err := json.Marshal(map[dexMethod]placeOrderBodyDEXRequest{
 		dexMethodPlaceOrder: {
-			Order: dextypes.Order{
-				Creator:    contractAddr,
+			Order: dextypes.MsgPlaceOrder{
+				Sender:     contractAddr,
 				Type:       dextypes.ORDER_TYPE_LIMIT,
 				ID:         "id1",
 				BaseDenom:  denom1,
@@ -3780,10 +3778,7 @@ func TestWASMDEXInContract(t *testing.T) {
 				GoodTil: &dextypes.GoodTil{
 					GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
 				},
-				TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-				RemainingQuantity: orderQuantity,
-				RemainingBalance:  orderQuantity,
-				Reserve:           wasmParamsRes.Params.OrderReserve,
+				TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 			},
 		},
 	})
@@ -3801,24 +3796,6 @@ func TestWASMDEXInContract(t *testing.T) {
 
 	// ********** Query Order **********
 
-	expectedOrder := dextypes.Order{
-		Creator:    contractAddr,
-		Type:       dextypes.ORDER_TYPE_LIMIT,
-		ID:         "id1",
-		BaseDenom:  denom1,
-		QuoteDenom: denom2,
-		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("999")),
-		Quantity:   orderQuantity,
-		Side:       dextypes.SIDE_SELL,
-		GoodTil: &dextypes.GoodTil{
-			GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
-		},
-		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-		RemainingQuantity: orderQuantity,
-		RemainingBalance:  orderQuantity,
-		Reserve:           dexParms.OrderReserve,
-	}
-
 	orderPayload, err := json.Marshal(map[dexMethod]OrderBodyDEXRequest{
 		dexMethodOrder: {
 			Account: contractAddr,
@@ -3830,6 +3807,25 @@ func TestWASMDEXInContract(t *testing.T) {
 	requireT.NoError(err)
 	var wasmOrderRes dextypes.QueryOrderResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmOrderRes))
+
+	expectedOrder := dextypes.Order{
+		Creator:    contractAddr,
+		Type:       dextypes.ORDER_TYPE_LIMIT,
+		ID:         "id1",
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+		Sequence:   wasmOrderRes.Order.Sequence,
+		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("999")),
+		Quantity:   orderQuantity,
+		Side:       dextypes.SIDE_SELL,
+		GoodTil: &dextypes.GoodTil{
+			GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
+		},
+		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
+		RemainingQuantity: orderQuantity,
+		RemainingBalance:  orderQuantity,
+		Reserve:           dexParms.OrderReserve,
+	}
 	requireT.Equal(expectedOrder, wasmOrderRes.Order)
 
 	// ********** Query Orders **********

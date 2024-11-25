@@ -2333,8 +2333,8 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 
 	placeOrderPayload, err := json.Marshal(map[dexMethod]placeOrderBodyDEXRequest{
 		dexMethodPlaceOrder: {
-			Order: dextypes.Order{
-				Creator:     contractAddr,
+			Order: dextypes.MsgPlaceOrder{
+				Sender:      contractAddr,
 				Type:        dextypes.ORDER_TYPE_LIMIT,
 				ID:          "id1",
 				BaseDenom:   denom1WithBlockSmartContract,
@@ -2343,11 +2343,6 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 				Quantity:    sdkmath.NewInt(100),
 				Side:        dextypes.SIDE_BUY,
 				TimeInForce: dextypes.TIME_IN_FORCE_GTC,
-				// next attributes are required by smart contract, but not used
-				RemainingQuantity: sdkmath.ZeroInt(),
-				RemainingBalance:  sdkmath.ZeroInt(),
-				GoodTil:           nil,
-				Reserve:           sdk.NewCoin("denom1", sdkmath.ZeroInt()),
 			},
 		},
 	})

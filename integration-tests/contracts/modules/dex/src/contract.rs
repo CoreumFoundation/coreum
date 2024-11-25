@@ -75,7 +75,7 @@ pub fn execute(
 
 // ********** Transactions **********
 
-fn place_order(env: Env, order: Order) -> Result<Response, ContractError> {
+fn place_order(env: Env, order: MsgPlaceOrder) -> Result<Response, ContractError> {
     let place_order = MsgPlaceOrder {
         sender: env.contract.address.to_string(),
         r#type: order.r#type,
