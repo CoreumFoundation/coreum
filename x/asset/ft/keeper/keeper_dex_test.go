@@ -1064,7 +1064,7 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 	coinWithoutExtension := sdk.NewInt64Coin(denom1, 123)
 	testApp.MintAndSendCoin(t, ctx, acc, sdk.NewCoins(coinWithoutExtension))
 
-	// the extension controls all features, bot to locked, amount
+	// the extension controls all features, but to locked, amount
 	requireT.ErrorIs(
 		ftKeeper.DEXCheckOrderAmounts(
 			simapp.CopyContextWithMultiStore(ctx),
@@ -1104,8 +1104,7 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 	requireT.NoError(ftKeeper.DEXDecreaseLocked(ctx, acc, coinWithExtension))
 
 	// try with prohibited balances
-
-	coinWithExtensionProhibitedToSpend := sdk.NewCoin(extensionDenom, sdkmath.NewInt(103))
+	coinWithExtensionProhibitedToSpend := sdk.NewCoin(extensionDenom, AmountDEXExpectToSpendTrigger)
 	requireT.ErrorContains(
 		ftKeeper.DEXCheckOrderAmounts(
 			simapp.CopyContextWithMultiStore(ctx),
@@ -1116,7 +1115,7 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 		"wasm error: DEX order placement is failed",
 	)
 
-	coinWithExtensionProhibitedToReceive := sdk.NewCoin(extensionDenom, sdkmath.NewInt(104))
+	coinWithExtensionProhibitedToReceive := sdk.NewCoin(extensionDenom, AmountDEXExpectToReceiveTrigger)
 	requireT.ErrorContains(
 		ftKeeper.DEXCheckOrderAmounts(
 			simapp.CopyContextWithMultiStore(ctx),

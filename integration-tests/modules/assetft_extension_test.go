@@ -27,15 +27,17 @@ import (
 	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-const (
-	AmountDisallowedTrigger               = 7
-	AmountIgnoreWhitelistingTrigger       = 49
-	AmountIgnoreFreezingTrigger           = 79
-	AmountBurningTrigger                  = 101
-	AmountMintingTrigger                  = 105
-	AmountIgnoreBurnRateTrigger           = 108
-	AmountIgnoreSendCommissionRateTrigger = 109
-	AmountBlockSmartContractTrigger       = 111
+var (
+	AmountDisallowedTrigger               = sdkmath.NewInt(7)
+	AmountIgnoreWhitelistingTrigger       = sdkmath.NewInt(49)
+	AmountIgnoreFreezingTrigger           = sdkmath.NewInt(79)
+	AmountBurningTrigger                  = sdkmath.NewInt(101)
+	AmountMintingTrigger                  = sdkmath.NewInt(105)
+	AmountIgnoreBurnRateTrigger           = sdkmath.NewInt(108)
+	AmountIgnoreSendCommissionRateTrigger = sdkmath.NewInt(109)
+	AmountBlockSmartContractTrigger       = sdkmath.NewInt(111)
+	AmountDEXExpectToSpendTrigger         = sdkmath.NewInt(103)
+	AmountDEXExpectToReceiveTrigger       = sdkmath.NewInt(104)
 )
 
 // TestAssetFTExtensionIssue tests extension issue functionality of fungible tokens.
@@ -142,7 +144,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	requireT.EqualValues("12", balance.Balance.Amount.String())
 
 	// sending 7 will fail
-	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountDisallowedTrigger)))
+	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, AmountDisallowedTrigger))
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
@@ -406,7 +408,7 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreWhitelistingTrigger))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, AmountIgnoreWhitelistingTrigger)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -420,12 +422,12 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 	// try to send trigger amount via Multisend
 	multiSendMsg = &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{{Address: issuer.String(), Coins: sdk.NewCoins(
-			sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreWhitelistingTrigger)),
+			sdk.NewCoin(denom, AmountIgnoreWhitelistingTrigger),
 			sdk.NewCoin(denomWithoutExtension, sdkmath.NewInt(10)),
 			chain.NewCoin(sdkmath.NewInt(10)),
 		)}},
 		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: sdk.NewCoins(
-			sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreWhitelistingTrigger)),
+			sdk.NewCoin(denom, AmountIgnoreWhitelistingTrigger),
 			sdk.NewCoin(denomWithoutExtension, sdkmath.NewInt(10)),
 			chain.NewCoin(sdkmath.NewInt(10)),
 		)}},
@@ -590,7 +592,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreFreezingTrigger))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, AmountIgnoreFreezingTrigger)),
 	}
 	res, err = client.BroadcastTx(
 		ctx,
@@ -703,7 +705,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount: sdk.NewCoins(sdk.Coin{
 			Denom:  unburnable,
-			Amount: sdkmath.NewInt(AmountBurningTrigger),
+			Amount: AmountBurningTrigger,
 		}),
 	}
 
@@ -764,7 +766,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	// burn tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))
+	burnCoin := sdk.NewCoin(burnableDenom, AmountBurningTrigger)
 
 	burnMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
@@ -860,7 +862,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount: sdk.NewCoins(sdk.Coin{
 			Denom:  unmintableDenom,
-			Amount: sdkmath.NewInt(AmountMintingTrigger),
+			Amount: AmountMintingTrigger,
 		}),
 	}
 
@@ -920,7 +922,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	// mint tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(AmountMintingTrigger))
+	mintCoin := sdk.NewCoin(mintableDenom, AmountMintingTrigger)
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   issuer.String(),
@@ -946,7 +948,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 
 	// mint tokens to recipient
-	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(AmountMintingTrigger))
+	mintCoin = sdk.NewCoin(mintableDenom, AmountMintingTrigger)
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
@@ -988,7 +990,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   contractAddr,
-		Amount:      sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(AmountBlockSmartContractTrigger))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(mintableDenom, AmountBlockSmartContractTrigger)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1073,7 +1075,7 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   contractAddr,
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger)),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, AmountBlockSmartContractTrigger)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1087,13 +1089,13 @@ func TestAssetFTExtensionSendingToSmartContractIsDenied(t *testing.T) {
 		Inputs: []banktypes.Input{
 			{
 				Address: issuer.String(),
-				Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger)),
+				Coins:   sdk.NewCoins(sdk.NewCoin(denom, AmountBlockSmartContractTrigger)),
 			},
 		},
 		Outputs: []banktypes.Output{
 			{
 				Address: contractAddr,
-				Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger)),
+				Coins:   sdk.NewCoins(sdk.NewCoin(denom, AmountBlockSmartContractTrigger)),
 			},
 		},
 	}
@@ -1181,7 +1183,7 @@ func TestAssetFTExtensionAttachingToSmartContractCallIsDenied(t *testing.T) {
 	incrementPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleIncrement)
 	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(
-		ctx, txf, issuer, contractAddr, incrementPayload, sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger),
+		ctx, txf, issuer, contractAddr, incrementPayload, sdk.NewCoin(denom, AmountBlockSmartContractTrigger),
 	)
 	requireT.ErrorContains(err, "Transferring to or from smart contracts are prohibited.")
 }
@@ -1274,7 +1276,7 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 	requireT.NoError(err)
 
 	// mint to someone else
-	amountToMint = sdkmath.NewInt(AmountBlockSmartContractTrigger)
+	amountToMint = AmountBlockSmartContractTrigger
 	mintPayload, err = json.Marshal(map[ftMethod]amountRecipientBodyFTRequest{
 		ftMethodMint: {
 			Amount:    amountToMint.String(),
@@ -1366,7 +1368,7 @@ func TestAssetFTExtensionAttachingToSmartContractInstantiationIsDenied(t *testin
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
-			Amount:     sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger),
+			Amount:     sdk.NewCoin(denom, AmountBlockSmartContractTrigger),
 			Label:      "simple_state",
 		},
 	)
@@ -1488,12 +1490,12 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 		&banktypes.MsgSend{
 			FromAddress: contractAddr,
 			ToAddress:   recipient.String(),
-			Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger)),
+			Amount:      sdk.NewCoins(sdk.NewCoin(denom, AmountBlockSmartContractTrigger)),
 		},
 		&assetfttypes.MsgMint{
 			Sender:    contractAddr,
 			Recipient: recipient.String(),
-			Coin:      sdk.NewInt64Coin(denom, AmountBlockSmartContractTrigger),
+			Coin:      sdk.NewCoin(denom, AmountBlockSmartContractTrigger),
 		},
 	})
 
@@ -1601,7 +1603,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreBurnRateTrigger))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, AmountIgnoreBurnRateTrigger)),
 	}
 
 	_, err = client.BroadcastTx(
@@ -1748,7 +1750,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreSendCommissionRateTrigger))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, AmountIgnoreSendCommissionRateTrigger)),
 	}
 
 	_, err = client.BroadcastTx(
@@ -1894,7 +1896,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 		BaseDenom:   denomWithExtension,
 		QuoteDenom:  chain.ChainSettings.Denom,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
-		Quantity:    sdkmath.NewInt(104), // 104 is prohibited by extensions smart contract
+		Quantity:    AmountDEXExpectToReceiveTrigger,
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1941,7 +1943,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 		BaseDenom:   denomWithExtension,
 		QuoteDenom:  chain.ChainSettings.Denom,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
-		Quantity:    sdkmath.NewInt(103), // 103 is prohibited by extensions smart contract
+		Quantity:    AmountDEXExpectToSpendTrigger,
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}

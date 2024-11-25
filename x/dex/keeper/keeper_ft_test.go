@@ -24,6 +24,11 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
+var (
+	AmountDEXExpectToSpendTrigger   = sdkmath.NewInt(103)
+	AmountDEXExpectToReceiveTrigger = sdkmath.NewInt(104)
+)
+
 func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
@@ -89,7 +94,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				BaseDenom:   denomWithExtension,
 				QuoteDenom:  denom2,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
-				Quantity:    sdkmath.NewInt(103), // 103 is prohibited by extensions smart contract
+				Quantity:    AmountDEXExpectToSpendTrigger,
 				Side:        types.SIDE_SELL,
 				TimeInForce: types.TIME_IN_FORCE_GTC,
 			},
@@ -125,7 +130,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				BaseDenom:   denom2,
 				QuoteDenom:  denomWithExtension,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
-				Quantity:    sdkmath.NewInt(104), // 104 is prohibited by extensions smart contract
+				Quantity:    AmountDEXExpectToReceiveTrigger,
 				Side:        types.SIDE_BUY,
 				TimeInForce: types.TIME_IN_FORCE_GTC,
 			},
