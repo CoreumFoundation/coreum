@@ -1,11 +1,11 @@
-use coreum_wasm_sdk::deprecated::assetnft::{
+use coreum_wasm_sdk::assetnft::{
     self, BurntNFTResponse, BurntNFTsInClassResponse, ClassFrozenAccountsResponse,
     ClassFrozenResponse, ClassResponse, ClassWhitelistedAccountsResponse, ClassesResponse,
     FrozenResponse, ParamsResponse, WhitelistedAccountsForNFTResponse, WhitelistedResponse,
 };
-use coreum_wasm_sdk::deprecated::core::{CoreumMsg, CoreumQueries, CoreumResult};
-use coreum_wasm_sdk::deprecated::nft;
-use coreum_wasm_sdk::deprecated::pagination::PageRequest;
+use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
+use coreum_wasm_sdk::nft;
+use coreum_wasm_sdk::pagination::PageRequest;
 use cosmwasm_std::{
     entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
     StdResult,
