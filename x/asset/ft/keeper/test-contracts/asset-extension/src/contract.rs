@@ -4,8 +4,8 @@ use crate::msg::{
     TransferContext,
 };
 use crate::state::{DENOM, EXTRA_DATA};
-use coreum_wasm_sdk::assetft::{FREEZING, WHITELISTING};
-use coreum_wasm_sdk::core::{CoreumMsg, CoreumResult};
+use coreum_wasm_sdk::deprecated::assetft::{FREEZING, WHITELISTING};
+use coreum_wasm_sdk::deprecated::core::{CoreumMsg, CoreumResult};
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
     MsgBurn, MsgMint, QueryFrozenBalanceRequest, QueryFrozenBalanceResponse, QueryTokenRequest,
     QueryTokenResponse, QueryWhitelistedBalanceRequest, QueryWhitelistedBalanceResponse, Token,

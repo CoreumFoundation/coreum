@@ -1,4 +1,4 @@
-use coreum_wasm_sdk::core::CoreumResult;
+use coreum_wasm_sdk::deprecated::core::CoreumResult;
 use coreum_wasm_sdk::shim;
 use coreum_wasm_sdk::types::cosmos::authz::v1beta1::MsgExec;
 use coreum_wasm_sdk::types::cosmos::bank::v1beta1::MsgSend as BankMsg;
