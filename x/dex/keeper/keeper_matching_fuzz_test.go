@@ -75,7 +75,8 @@ func NewFuzzApp(
 
 	sdkCtx, _, _ := testApp.BeginNextBlock()
 
-	params := testApp.DEXKeeper.GetParams(sdkCtx)
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
 	params.PriceTickExponent = int32(-10) // use low but not too much
 
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
@@ -160,7 +161,7 @@ func NewFuzzApp(
 		types.SIDE_SELL,
 	}
 
-	_, err := testApp.EndBlocker(sdkCtx)
+	_, err = testApp.EndBlocker(sdkCtx)
 	require.NoError(t, err)
 
 	return FuzzApp{
@@ -375,7 +376,10 @@ func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
 	if order.Type == types.ORDER_TYPE_LIMIT &&
 		order.TimeInForce == types.TIME_IN_FORCE_GTC &&
 		randBoolWithPercent(orderRnd, fa.cfg.FundOrderReservePercent) {
-		reserve := fa.testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+		params, err := fa.testApp.DEXKeeper.GetParams(sdkCtx)
+		require.NoError(t, err)
+		reserve := params.OrderReserve
+
 		spendableBalance, err := fa.testApp.AssetFTKeeper.GetSpendableBalance(sdkCtx, creator, reserve.Denom)
 		require.NoError(t, err)
 		if spendableBalance.IsLT(reserve) {
@@ -390,7 +394,8 @@ func (fa *FuzzApp) AdjustAppState(t *testing.T, sdkCtx sdk.Context, rnd *rand.Ra
 	if randBoolWithPercent(rnd, fa.cfg.UnifiedRefAmountChangePercent) {
 		// change globally
 		if randBool(rnd) {
-			params := fa.testApp.DEXKeeper.GetParams(sdkCtx)
+			params, err := fa.testApp.DEXKeeper.GetParams(sdkCtx)
+			require.NoError(t, err)
 
 			params.DefaultUnifiedRefAmount = randPositiveSDKDec(rnd)
 			t.Logf("Updating new default unified ref amount: %s", params.DefaultUnifiedRefAmount.String())
@@ -449,7 +454,9 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 				return
 			}
 			// check failed because of reserve
-			reserve := fa.testApp.DEXKeeper.GetParams(sdkCtx).OrderReserve
+			params, err := fa.testApp.DEXKeeper.GetParams(sdkCtx)
+			require.NoError(t, err)
+			reserve := params.OrderReserve
 			reserveDenomSpendableBalance, err := fa.testApp.AssetFTKeeper.GetSpendableBalance(
 				sdkCtx, creator, reserve.Denom,
 			)
@@ -522,7 +529,8 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 		}
 	}
 
-	availableBalancesBefore := getAvailableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
+	availableBalancesBefore, err := getAvailableBalances(sdkCtx, fa.testApp, sdk.MustAccAddressFromBech32(order.Creator))
+	require.NoError(t, err)
 
 	// use empty event manager for each order placement to check events properly
 	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
@@ -564,7 +572,9 @@ func (fa *FuzzApp) CancelOrdersByDenom(t *testing.T, sdkCtx sdk.Context, account
 		return
 	}
 
-	require.LessOrEqual(t, count, fa.testApp.DEXKeeper.GetParams(sdkCtx).MaxOrdersPerDenom)
+	params, err := fa.testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
+	require.LessOrEqual(t, count, params.MaxOrdersPerDenom)
 
 	require.NoError(t, fa.testApp.DEXKeeper.CancelOrdersByDenom(
 		sdkCtx,

@@ -17,20 +17,20 @@ var _ types.QueryServer = QueryService{}
 //
 //nolint:interfacebloat // breaking down this interface is not beneficial.
 type QueryKeeper interface {
-	GetParams(ctx sdk.Context) types.Params
+	GetParams(ctx sdk.Context) (types.Params, error)
 	GetIssuerTokens(
 		ctx sdk.Context,
 		issuer sdk.AccAddress,
 		pagination *query.PageRequest,
 	) ([]types.Token, *query.PageResponse, error)
 	GetToken(ctx sdk.Context, denom string) (types.Token, error)
-	GetTokenUpgradeStatuses(ctx sdk.Context, denom string) types.TokenUpgradeStatuses
+	GetTokenUpgradeStatuses(ctx sdk.Context, denom string) (types.TokenUpgradeStatuses, error)
 	GetFrozenBalances(
 		ctx sdk.Context,
 		addr sdk.AccAddress,
 		pagination *query.PageRequest,
 	) (sdk.Coins, *query.PageResponse, error)
-	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) (sdk.Coin, error)
 	GetWhitelistedBalances(
 		ctx sdk.Context,
 		addr sdk.AccAddress,
@@ -64,9 +64,11 @@ func NewQueryService(keeper QueryKeeper, bankKeeper BankKeeper) QueryService {
 
 // Params queries the parameters of x/asset/ft module.
 func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
-	return &types.QueryParamsResponse{
-		Params: qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx)),
-	}, nil
+	params, err := qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryParamsResponse{Params: params}, nil
 }
 
 // Tokens returns fungible tokens query result.
@@ -103,8 +105,10 @@ func (qs QueryService) TokenUpgradeStatuses(
 	ctx context.Context,
 	req *types.QueryTokenUpgradeStatusesRequest,
 ) (*types.QueryTokenUpgradeStatusesResponse, error) {
-	tokenUpgradeStatuses := qs.keeper.GetTokenUpgradeStatuses(sdk.UnwrapSDKContext(ctx), req.GetDenom())
-
+	tokenUpgradeStatuses, err := qs.keeper.GetTokenUpgradeStatuses(sdk.UnwrapSDKContext(ctx), req.GetDenom())
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryTokenUpgradeStatusesResponse{
 		Statuses: tokenUpgradeStatuses,
 	}, nil
@@ -128,10 +132,16 @@ func (qs QueryService) Balance(
 	).Amount
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	frozenBalance, err := qs.keeper.GetFrozenBalance(sdkCtx, account, denom)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryBalanceResponse{
 		Balance:                qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
 		Whitelisted:            qs.keeper.GetWhitelistedBalance(sdkCtx, account, denom).Amount,
-		Frozen:                 qs.keeper.GetFrozenBalance(sdkCtx, account, denom).Amount,
+		Frozen:                 frozenBalance.Amount,
 		Locked:                 vestingLocked.Add(dexLocked),
 		LockedInVesting:        vestingLocked,
 		LockedInDEX:            dexLocked,
@@ -170,7 +180,10 @@ func (qs QueryService) FrozenBalance(
 	if err != nil {
 		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
-	balance := qs.keeper.GetFrozenBalance(ctx, account, req.GetDenom())
+	balance, err := qs.keeper.GetFrozenBalance(ctx, account, req.GetDenom())
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.QueryFrozenBalanceResponse{
 		Balance: balance,

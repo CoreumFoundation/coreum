@@ -14,7 +14,10 @@ const tokenUpgradeV1Version = 1
 
 // AddDelayedTokenUpgradeV1 stores request for upgrading token to V1.
 func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
-	params := k.GetParams(ctx)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
 	if ctx.BlockTime().After(params.TokenUpgradeDecisionTimeout) {
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "it is no longer possible to upgrade the token")
 	}
@@ -53,14 +56,19 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 		if err != nil {
 			return err
 		}
-		k.SetDefinition(ctx, issuer, subunit, def)
-		k.ClearPendingVersion(ctx, denom)
+		if err := k.SetDefinition(ctx, issuer, subunit, def); err != nil {
+			return err
+		}
+		if err := k.ClearPendingVersion(ctx, denom); err != nil {
+			return err
+		}
 		tokenUpgradeStatuses.V1.EndTime = tokenUpgradeStatuses.V1.StartTime
-		k.SetTokenUpgradeStatuses(ctx, denom, tokenUpgradeStatuses)
-		return nil
+		return k.SetTokenUpgradeStatuses(ctx, denom, tokenUpgradeStatuses)
 	}
 
-	k.SetTokenUpgradeStatuses(ctx, denom, tokenUpgradeStatuses)
+	if err := k.SetTokenUpgradeStatuses(ctx, denom, tokenUpgradeStatuses); err != nil {
+		return err
+	}
 
 	data := &types.DelayedTokenUpgradeV1{
 		Denom: denom,
@@ -88,10 +96,10 @@ func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgrad
 
 	def.Features = append(def.Features, types.Feature_ibc)
 	def.Version = tokenUpgradeV1Version
-	k.SetDefinition(ctx, issuer, subunit, def)
-	k.ClearPendingVersion(ctx, data.Denom)
-
-	return nil
+	if err := k.SetDefinition(ctx, issuer, subunit, def); err != nil {
+		return err
+	}
+	return k.ClearPendingVersion(ctx, data.Denom)
 }
 
 func tokenUpgradeID(version int, denom string) string {

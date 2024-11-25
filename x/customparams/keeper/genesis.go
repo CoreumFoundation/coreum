@@ -15,7 +15,9 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 
 // ExportGenesis returns the customparams module's exported genesis state.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	return &types.GenesisState{
-		StakingParams: k.GetStakingParams(ctx),
+	params, err := k.GetStakingParams(ctx)
+	if err != nil {
+		panic(err)
 	}
+	return &types.GenesisState{StakingParams: params}
 }

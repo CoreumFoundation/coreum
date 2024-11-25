@@ -36,14 +36,18 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			URIHash:            token.URIHash,
 		}
 
-		k.SetDefinition(ctx, issuer, subunit, definition)
-
-		err = k.SetSymbol(ctx, token.Symbol, issuer)
-		if err != nil {
+		if err := k.SetDefinition(ctx, issuer, subunit, definition); err != nil {
 			panic(err)
 		}
+
+		if err := k.SetSymbol(ctx, token.Symbol, issuer); err != nil {
+			panic(err)
+		}
+
 		if token.GloballyFrozen {
-			k.SetGlobalFreeze(ctx, token.Denom, true)
+			if err := k.SetGlobalFreeze(ctx, token.Denom, true); err != nil {
+				panic(err)
+			}
 		}
 	}
 
@@ -89,7 +93,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, settings := range genState.DEXSettings {
-		k.SetDEXSettings(ctx, settings.Denom, settings.DEXSettings)
+		if err := k.SetDEXSettings(ctx, settings.Denom, settings.DEXSettings); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -137,8 +143,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
-		Params:                       k.GetParams(ctx),
+		Params:                       params,
 		Tokens:                       tokens,
 		FrozenBalances:               frozenBalances,
 		WhitelistedBalances:          whitelistedBalances,

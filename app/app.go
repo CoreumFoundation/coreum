@@ -412,7 +412,12 @@ func New(
 	)
 
 	delayRouter := delaytypes.NewRouter()
-	app.DelayKeeper = delaykeeper.NewKeeper(appCodec, keys[delaytypes.StoreKey], delayRouter, app.interfaceRegistry)
+	app.DelayKeeper = delaykeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[delaytypes.StoreKey]),
+		delayRouter,
+		app.interfaceRegistry,
+	)
 
 	originalBankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
@@ -425,7 +430,7 @@ func New(
 	app.WasmPermissionedKeeper = wasmkeeper.NewGovPermissionKeeper(&app.WasmKeeper)
 	app.AssetFTKeeper = assetftkeeper.NewKeeper(
 		appCodec,
-		keys[assetfttypes.StoreKey],
+		runtime.NewKVStoreService(keys[assetfttypes.StoreKey]),
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
 		app.DelayKeeper,
@@ -549,14 +554,14 @@ func New(
 	)
 
 	app.FeeModelKeeper = feemodelkeeper.NewKeeper(
-		keys[feemodeltypes.StoreKey],
-		tkeys[feemodeltypes.TransientStoreKey],
+		runtime.NewKVStoreService(keys[feemodeltypes.StoreKey]),
+		runtime.NewTransientStoreService(tkeys[feemodeltypes.TransientStoreKey]),
 		appCodec,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(
-		keys[customparamstypes.StoreKey],
+		runtime.NewKVStoreService(keys[customparamstypes.StoreKey]),
 		appCodec,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -579,7 +584,7 @@ func New(
 	)
 	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
 		appCodec,
-		keys[assetnfttypes.StoreKey],
+		runtime.NewKVStoreService(keys[assetnfttypes.StoreKey]),
 		nftKeeper,
 		// for the assetnft we use the clear bank keeper without the assets integration
 		// because it interacts only with native token.
@@ -818,7 +823,7 @@ func New(
 
 	app.DEXKeeper = dexkeeper.NewKeeper(
 		appCodec,
-		keys[dextypes.StoreKey],
+		runtime.NewKVStoreService(keys[dextypes.StoreKey]),
 		app.AccountKeeper,
 		authkeeper.NewQueryServer(app.AccountKeeper),
 		app.AssetFTKeeper,

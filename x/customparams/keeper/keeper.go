@@ -1,8 +1,8 @@
 package keeper
 
 import (
+	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -12,42 +12,42 @@ import (
 
 // Keeper is customparams module Keeper.
 type Keeper struct {
-	storeKey  storetypes.StoreKey
-	cdc       codec.BinaryCodec
-	authority string
+	storeService sdkstore.KVStoreService
+	cdc          codec.BinaryCodec
+	authority    string
 }
 
 // NewKeeper returns a new Keeper instance.
 func NewKeeper(
-	storeKey storetypes.StoreKey,
+	storeService sdkstore.KVStoreService,
 	cdc codec.BinaryCodec,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:       cdc,
-		storeKey:  storeKey,
-		authority: authority,
+		cdc:          cdc,
+		storeService: storeService,
+		authority:    authority,
 	}
 }
 
 // GetStakingParams returns the set of staking parameters.
-func (k Keeper) GetStakingParams(ctx sdk.Context) types.StakingParams {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.StakingParamsKey)
+func (k Keeper) GetStakingParams(ctx sdk.Context) (types.StakingParams, error) {
+	bz, err := k.storeService.OpenKVStore(ctx).Get(types.StakingParamsKey)
+	if err != nil {
+		return types.StakingParams{}, err
+	}
 	var params types.StakingParams
 	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	return params, nil
 }
 
 // SetStakingParams sets the module staking parameters to the param space.
 func (k Keeper) SetStakingParams(ctx sdk.Context, params types.StakingParams) error {
-	store := ctx.KVStore(k.storeKey)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-	store.Set(types.StakingParamsKey, bz)
-	return nil
+	return k.storeService.OpenKVStore(ctx).Set(types.StakingParamsKey, bz)
 }
 
 // UpdateStakingParams is a governance operation that sets the staking parameters of the module.

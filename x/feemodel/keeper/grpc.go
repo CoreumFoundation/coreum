@@ -12,7 +12,7 @@ import (
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
-	GetParams(ctx sdk.Context) types.Params
+	GetParams(ctx sdk.Context) (types.Params, error)
 	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
 	CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error)
 }
@@ -69,7 +69,9 @@ func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	return &types.QueryParamsResponse{
-		Params: qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx)),
-	}, nil
+	params, err := qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryParamsResponse{Params: params}, nil
 }

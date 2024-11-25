@@ -171,7 +171,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	// params
-	params := nftKeeper.GetParams(ctx)
+	params, err := nftKeeper.GetParams(ctx)
+	requireT.NoError(err)
 	assertT.EqualValues(types.DefaultParams(), params)
 
 	// check that export is equal import

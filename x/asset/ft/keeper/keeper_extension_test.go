@@ -401,7 +401,8 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	// freeze, query frozen
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(120)))
 	requireT.NoError(err)
-	frozenBalance := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(120)), frozenBalance)
 	// try to send more than available
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(80)))
@@ -422,7 +423,8 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 
 	bankBalance := bankKeeper.GetBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), bankBalance.String())
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(120)).String(), frozenBalance.String())
 
 	// send trigger amount to transfer despite freezing
@@ -433,7 +435,8 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 
 	bankBalance = bankKeeper.GetBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(21)).String(), bankBalance.String())
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(120)).String(), frozenBalance.String())
 }
 
