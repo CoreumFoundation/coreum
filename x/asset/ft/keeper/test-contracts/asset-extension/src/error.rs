@@ -26,4 +26,7 @@ pub enum ContractError {
 
     #[error("Invalid amount.")]
     InvalidAmountError {},
+
+    #[error("DEX order placement is failed.")]
+    DEXOrderPlacementError {},
 }

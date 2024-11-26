@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/wasm"
@@ -14,12 +15,9 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v5/x/wibctransfer/types"
 )
 
-// extension method calls.
-const (
-	// the function name of the extension smart contract, which will be invoked
-	// when doing the transfer.
-	ExtenstionTransferMethod = "extension_transfer"
-)
+// ExtensionTransferMethod the function name of the extension smart contract, which will be invoked
+// when doing the transfer.
+const ExtensionTransferMethod = "extension_transfer"
 
 // sudoExtensionTransferMsg contains the fields passed to extension method call.
 //
@@ -201,7 +199,7 @@ func (k Keeper) invokeAssetExtension(
 		wasm.IsSmartContract(ctx, recipient, k.wasmKeeper)
 
 	contractMsg := map[string]interface{}{
-		ExtenstionTransferMethod: sudoExtensionTransferMsg{
+		ExtensionTransferMethod: sudoExtensionTransferMsg{
 			Sender:           sender.String(),
 			Recipient:        recipient.String(),
 			TransferAmount:   sendAmount.Amount,
@@ -216,7 +214,7 @@ func (k Keeper) invokeAssetExtension(
 	}
 	contractMsgBytes, err := json.Marshal(contractMsg)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to marshal contract msg")
 	}
 
 	_, err = k.wasmPermissionedKeeper.Sudo(
@@ -225,7 +223,7 @@ func (k Keeper) invokeAssetExtension(
 		contractMsgBytes,
 	)
 	if err != nil {
-		return types.ErrExtensionCallFailed.Wrapf("was error: %s", err)
+		return types.ErrExtensionCallFailed.Wrapf("wasm error: %s", err)
 	}
 	return nil
 }

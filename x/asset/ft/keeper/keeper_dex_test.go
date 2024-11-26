@@ -30,7 +30,10 @@ func TestKeeper_DEXExpectedToReceive(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -39,20 +42,7 @@ func TestKeeper_DEXExpectedToReceive(t *testing.T) {
 	sender := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	settings := types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "DEF",
-		Subunit:       "def",
-		Precision:     1,
-		Description:   "DEF Desc",
-		InitialAmount: sdkmath.NewInt(666),
-		Features:      []types.Feature{types.Feature_whitelisting},
-	}
-
-	denom, err := ftKeeper.Issue(ctx, settings)
-	requireT.NoError(err)
-
-	unwhitelistableSettings := types.IssueSettings{
+	noFeaturesIssuanceSettings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
 		Subunit:       "abc",
@@ -62,16 +52,16 @@ func TestKeeper_DEXExpectedToReceive(t *testing.T) {
 		Features:      []types.Feature{},
 	}
 
-	unwhitelistableDenom, err := ftKeeper.Issue(ctx, unwhitelistableSettings)
+	noFeaturesDenom, err := ftKeeper.Issue(ctx, noFeaturesIssuanceSettings)
 	requireT.NoError(err)
-	_, err = ftKeeper.GetToken(ctx, unwhitelistableDenom)
+	_, err = ftKeeper.GetToken(ctx, noFeaturesDenom)
 	requireT.NoError(err)
 
 	// function passed but nothing is reserved
 	requireT.NoError(ftKeeper.DEXIncreaseExpectedToReceive(
-		ctx, recipient, sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(1)),
+		ctx, recipient, sdk.NewCoin(noFeaturesDenom, sdkmath.NewInt(1)),
 	))
-	requireT.True(ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, unwhitelistableDenom).IsZero())
+	requireT.True(ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, noFeaturesDenom).IsZero())
 
 	// increase for not asset FT denom, passes but nothing is reserved
 	notFTDenom := types.BuildDenom("nonexist", issuer)
@@ -82,9 +72,22 @@ func TestKeeper_DEXExpectedToReceive(t *testing.T) {
 		ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, "nonexist").IsZero(),
 	)
 
+	whitelistingIssuanceSettings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdkmath.NewInt(666),
+		Features:      []types.Feature{types.Feature_whitelisting},
+	}
+
+	whitelistingDenom, err := ftKeeper.Issue(ctx, whitelistingIssuanceSettings)
+	requireT.NoError(err)
+
 	// set whitelisted balance
-	coinToSend := sdk.NewCoin(denom, sdkmath.NewInt(100))
-	// whitelist sender and fund
+	coinToSend := sdk.NewCoin(whitelistingDenom, sdkmath.NewInt(100))
+	// whitelist sender and whitelistingDenom
 	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, sender, coinToSend))
 	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, sender, sdk.NewCoins(coinToSend)))
 	// send without the expected to received balance
@@ -93,11 +96,11 @@ func TestKeeper_DEXExpectedToReceive(t *testing.T) {
 	// return coin
 	requireT.NoError(bankKeeper.SendCoins(ctx, recipient, sender, sdk.NewCoins(coinToSend)))
 	// increase expected to received balance
-	coinToIncreaseExpectedToReceive := sdk.NewCoin(denom, sdkmath.NewInt(1))
+	coinToIncreaseExpectedToReceive := sdk.NewCoin(whitelistingDenom, sdkmath.NewInt(1))
 	requireT.NoError(ftKeeper.DEXIncreaseExpectedToReceive(ctx, recipient, coinToIncreaseExpectedToReceive))
 	requireT.Equal(
 		coinToIncreaseExpectedToReceive.String(),
-		ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, denom).String(),
+		ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, whitelistingDenom).String(),
 	)
 	// try to send with the increased part
 	requireT.ErrorIs(
@@ -114,9 +117,39 @@ func TestKeeper_DEXExpectedToReceive(t *testing.T) {
 	)
 
 	requireT.NoError(ftKeeper.DEXDecreaseExpectedToReceive(ctx, recipient, coinToIncreaseExpectedToReceive))
-	requireT.True(ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, denom).IsZero())
+	requireT.True(ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, whitelistingDenom).IsZero())
 	// send without decreased amount
 	requireT.NoError(bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coinToSend)))
+
+	// extension
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+	settingsWithExtension := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFEXT",
+		Subunit:       "defext",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features:      []types.Feature{types.Feature_extension},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+	extensionDenom, err := ftKeeper.Issue(ctx, settingsWithExtension)
+	requireT.NoError(err)
+	coinToIncreaseExpectedToReceive = sdk.NewCoin(extensionDenom, sdkmath.NewInt(1))
+	requireT.NoError(ftKeeper.DEXIncreaseExpectedToReceive(ctx, recipient, coinToIncreaseExpectedToReceive))
+	requireT.Equal(
+		coinToIncreaseExpectedToReceive.String(),
+		ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, extensionDenom).String(),
+	)
+
+	requireT.NoError(ftKeeper.DEXDecreaseExpectedToReceive(ctx, recipient, coinToIncreaseExpectedToReceive))
+	requireT.True(
+		ftKeeper.GetDEXExpectedToReceivedBalance(ctx, recipient, extensionDenom).IsZero(),
+	)
 }
 
 func TestKeeper_DEXLocked(t *testing.T) {
@@ -294,6 +327,8 @@ func TestKeeper_DEXLocked(t *testing.T) {
 	// freeze more than balance
 	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, sdk.NewInt64Coin(denom, 1_000_000)))
 
+	// check freezing with extensions
+
 	// extension
 	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
 		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
@@ -305,25 +340,25 @@ func TestKeeper_DEXLocked(t *testing.T) {
 		Subunit:       "defext",
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
-		Features:      []types.Feature{types.Feature_extension},
-
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_extension,
+		},
 		ExtensionSettings: &types.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
 	}
-	denomWithExtension, err := ftKeeper.Issue(ctx, settingsWithExtension)
+	extensionDenom, err := ftKeeper.Issue(ctx, settingsWithExtension)
 	requireT.NoError(err)
-	extensionCoin := sdk.NewInt64Coin(denomWithExtension, 50)
-	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(extensionCoin)))
-	requireT.ErrorContains(
-		ftKeeper.DEXCheckOrderAmounts(
-			ctx,
-			types.DEXOrder{Creator: acc},
-			extensionCoin,
-			sdk.NewInt64Coin(denom1, 0),
-		),
-		"the token has extensions",
-	)
+	coinWithExtensionToSend := sdk.NewCoin(extensionDenom, sdkmath.NewInt(33))
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinWithExtensionToSend)))
+
+	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, coinWithExtensionToSend))
+
+	spendableBalance, err = ftKeeper.GetSpendableBalance(ctx, acc, extensionDenom)
+	requireT.NoError(err)
+	// the balance is frozen, not we don't count it as spendable, since the extensions control it
+	requireT.Equal(coinWithExtensionToSend.String(), spendableBalance.String())
 }
 
 func TestKeeper_DEXBlockSmartContracts(t *testing.T) {
@@ -417,6 +452,7 @@ func TestKeeper_DEXSettings_BlockDEX(t *testing.T) {
 	})
 
 	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
 
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -443,19 +479,21 @@ func TestKeeper_DEXSettings_BlockDEX(t *testing.T) {
 
 	ft1Denom, err := ftKeeper.Issue(ctx, ft1Settings)
 	requireT.NoError(err)
+	dexBlockedCoin := sdk.NewInt64Coin(ft1Denom, 50)
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(dexBlockedCoin)))
 
 	errStr := fmt.Sprintf("usage of %s is not supported for DEX, the token has dex_block", ft1Denom)
 	requireT.ErrorContains(ftKeeper.DEXCheckOrderAmounts(
 		ctx,
 		types.DEXOrder{Creator: acc},
-		sdk.NewInt64Coin(ft1Denom, 50),
+		dexBlockedCoin,
 		sdk.NewInt64Coin(denom1, 0),
 	), errStr)
 	requireT.ErrorContains(ftKeeper.DEXCheckOrderAmounts(
 		ctx,
 		types.DEXOrder{Creator: acc},
 		sdk.NewInt64Coin(denom1, 0),
-		sdk.NewInt64Coin(ft1Denom, 50),
+		dexBlockedCoin,
 	), errStr)
 }
 
@@ -672,7 +710,7 @@ func TestKeeper_DEXLimitsWithGlobalFreeze(t *testing.T) {
 	// admin still can increase the limits
 	requireT.NoError(
 		ftKeeper.DEXCheckOrderAmounts(
-			simapp.CopyContextWithMultiStore(ctx),
+			ctx,
 			types.DEXOrder{Creator: issuer},
 			ft1CoinToSend,
 			ft2CoinToSend,
@@ -984,4 +1022,120 @@ func TestKeeper_UpdateDEXWhitelistedDenoms(t *testing.T) {
 	requireT.Equal(types.DEXSettings{
 		WhitelistedDenoms: whitelistedDenoms,
 	}, dexSettings)
+}
+
+func TestKeeper_DEXExtensions(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	acc := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// extension
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+	settingsWithExtension := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEFEXT",
+		Subunit:       "defext",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_extension,
+			types.Feature_whitelisting,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+	extensionDenom, err := ftKeeper.Issue(ctx, settingsWithExtension)
+	requireT.NoError(err)
+	coinWithExtension := sdk.NewCoin(extensionDenom, sdkmath.NewInt(200))
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, acc, coinWithExtension))
+	coinWithoutExtension := sdk.NewInt64Coin(denom1, 123)
+	testApp.MintAndSendCoin(t, ctx, acc, sdk.NewCoins(coinWithoutExtension))
+
+	// the extension controls all features, but to locked, amount
+	requireT.ErrorIs(
+		ftKeeper.DEXCheckOrderAmounts(
+			simapp.CopyContextWithMultiStore(ctx),
+			types.DEXOrder{Creator: acc},
+			coinWithExtension,
+			coinWithoutExtension,
+		),
+		types.ErrDEXInsufficientSpendableBalance,
+	)
+	// send coins now to lock
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(coinWithExtension)))
+
+	// freeze locked balance, to check that is extension controls the freezing, but asset FT ignores
+	requireT.NoError(ftKeeper.Freeze(ctx, issuer, acc, coinWithExtension))
+	requireT.NoError(
+		ftKeeper.DEXCheckOrderAmounts(
+			ctx,
+			types.DEXOrder{Creator: acc},
+			coinWithExtension,
+			coinWithoutExtension,
+		),
+	)
+	requireT.NoError(ftKeeper.DEXIncreaseLocked(ctx, acc, coinWithExtension))
+
+	// try with locked balance
+	requireT.ErrorIs(
+		ftKeeper.DEXCheckOrderAmounts(
+			simapp.CopyContextWithMultiStore(ctx),
+			types.DEXOrder{Creator: acc},
+			coinWithExtension,
+			coinWithoutExtension,
+		),
+		types.ErrDEXInsufficientSpendableBalance,
+	)
+
+	// check expected to send and receive with prohibited amounts
+	requireT.NoError(ftKeeper.DEXDecreaseLocked(ctx, acc, coinWithExtension))
+
+	// try with prohibited balances
+	coinWithExtensionProhibitedToSpend := sdk.NewCoin(extensionDenom, AmountDEXExpectToSpendTrigger)
+	requireT.ErrorContains(
+		ftKeeper.DEXCheckOrderAmounts(
+			simapp.CopyContextWithMultiStore(ctx),
+			types.DEXOrder{Creator: acc},
+			coinWithExtensionProhibitedToSpend,
+			coinWithoutExtension,
+		),
+		"wasm error: DEX order placement is failed",
+	)
+
+	coinWithExtensionProhibitedToReceive := sdk.NewCoin(extensionDenom, AmountDEXExpectToReceiveTrigger)
+	requireT.ErrorContains(
+		ftKeeper.DEXCheckOrderAmounts(
+			simapp.CopyContextWithMultiStore(ctx),
+			types.DEXOrder{Creator: acc},
+			coinWithoutExtension,
+			coinWithExtensionProhibitedToReceive,
+		),
+		"wasm error: DEX order placement is failed",
+	)
+
+	// update whitelisted balance, and check that asset FT doesn't control it, so the check passes
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, acc, sdk.NewCoin(extensionDenom, sdkmath.NewInt(1))))
+	requireT.NoError(
+		ftKeeper.DEXCheckOrderAmounts(
+			ctx,
+			types.DEXOrder{Creator: acc},
+			coinWithoutExtension,
+			coinWithExtension,
+		),
+	)
 }

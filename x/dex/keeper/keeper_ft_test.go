@@ -24,6 +24,11 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
+var (
+	AmountDEXExpectToSpendTrigger   = sdkmath.NewInt(103)
+	AmountDEXExpectToReceiveTrigger = sdkmath.NewInt(104)
+)
+
 func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
@@ -31,7 +36,6 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 		AppHash: []byte("some-hash"),
 	})
 
-	acc, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
 	// extension
@@ -45,7 +49,9 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 		Subunit:       "defext",
 		Precision:     6,
 		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
-		Features:      []assetfttypes.Feature{assetfttypes.Feature_extension},
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_extension,
+		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
 			CodeId: codeID,
 		},
@@ -53,28 +59,102 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	denomWithExtension, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithExtension)
 	require.NoError(t, err)
 
-	order := types.Order{
-		Creator:    acc.String(),
-		Type:       types.ORDER_TYPE_LIMIT,
-		ID:         uuid.Generate().String(),
-		BaseDenom:  denomWithExtension,
-		QuoteDenom: denom2,
-		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
-		Side:       types.SIDE_SELL,
-		GoodTil: &types.GoodTil{
-			GoodTilBlockHeight: 390,
+	tests := []struct {
+		name       string
+		order      types.Order
+		wantDEXErr bool
+	}{
+		{
+			name: "sell_positive",
+			order: types.Order{
+				Creator: func() string {
+					creator, _ := testApp.GenAccount(sdkCtx)
+					return creator.String()
+				}(),
+				Type:        types.ORDER_TYPE_LIMIT,
+				ID:          uuid.Generate().String(),
+				BaseDenom:   denomWithExtension,
+				QuoteDenom:  denom2,
+				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
+				Quantity:    sdkmath.NewInt(10),
+				Side:        types.SIDE_SELL,
+				TimeInForce: types.TIME_IN_FORCE_GTC,
+			},
+			wantDEXErr: false,
 		},
-		TimeInForce: types.TIME_IN_FORCE_GTC,
+		{
+			name: "sell_dex_error",
+			order: types.Order{
+				Creator: func() string {
+					creator, _ := testApp.GenAccount(sdkCtx)
+					return creator.String()
+				}(),
+				Type:        types.ORDER_TYPE_LIMIT,
+				ID:          uuid.Generate().String(),
+				BaseDenom:   denomWithExtension,
+				QuoteDenom:  denom2,
+				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
+				Quantity:    AmountDEXExpectToSpendTrigger,
+				Side:        types.SIDE_SELL,
+				TimeInForce: types.TIME_IN_FORCE_GTC,
+			},
+			wantDEXErr: true,
+		},
+		{
+			name: "buy_positive",
+			order: types.Order{
+				Creator: func() string {
+					creator, _ := testApp.GenAccount(sdkCtx)
+					return creator.String()
+				}(),
+				Type:        types.ORDER_TYPE_LIMIT,
+				ID:          uuid.Generate().String(),
+				BaseDenom:   denom2,
+				QuoteDenom:  denomWithExtension,
+				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
+				Quantity:    sdkmath.NewInt(10),
+				Side:        types.SIDE_BUY,
+				TimeInForce: types.TIME_IN_FORCE_GTC,
+			},
+			wantDEXErr: false,
+		},
+		{
+			name: "buy_dex_error",
+			order: types.Order{
+				Creator: func() string {
+					creator, _ := testApp.GenAccount(sdkCtx)
+					return creator.String()
+				}(),
+				Type:        types.ORDER_TYPE_LIMIT,
+				ID:          uuid.Generate().String(),
+				BaseDenom:   denom2,
+				QuoteDenom:  denomWithExtension,
+				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
+				Quantity:    AmountDEXExpectToReceiveTrigger,
+				Side:        types.SIDE_BUY,
+				TimeInForce: types.TIME_IN_FORCE_GTC,
+			},
+			wantDEXErr: true,
+		},
 	}
-	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
-	require.NoError(t, err)
-	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
-	fundOrderReserve(t, testApp, sdkCtx, acc)
-
-	require.ErrorContains(
-		t, testApp.DEXKeeper.PlaceOrder(sdkCtx, order), "is not supported for DEX, the token has extensions",
-	)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			creator := sdk.MustAccAddressFromBech32(tt.order.Creator)
+			lockedBalance, err := tt.order.ComputeLimitOrderLockedBalance()
+			require.NoError(t, err)
+			testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(lockedBalance))
+			fundOrderReserve(t, testApp, sdkCtx, creator)
+			if !tt.wantDEXErr {
+				require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, tt.order))
+			} else {
+				require.ErrorContains(
+					t,
+					testApp.DEXKeeper.PlaceOrder(sdkCtx, tt.order),
+					"wasm error: DEX order placement is failed",
+				)
+			}
+		})
+	}
 }
 
 func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {

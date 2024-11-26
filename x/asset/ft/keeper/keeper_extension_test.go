@@ -24,14 +24,16 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 )
 
-const (
-	AmountDisallowedTrigger               = 7
-	AmountIgnoreWhitelistingTrigger       = 49
-	AmountIgnoreFreezingTrigger           = 79
-	AmountBurningTrigger                  = 101
-	AmountMintingTrigger                  = 105
-	AmountIgnoreBurnRateTrigger           = 108
-	AmountIgnoreSendCommissionRateTrigger = 109
+var (
+	AmountDisallowedTrigger               = sdkmath.NewInt(7)
+	AmountIgnoreWhitelistingTrigger       = sdkmath.NewInt(49)
+	AmountIgnoreFreezingTrigger           = sdkmath.NewInt(79)
+	AmountBurningTrigger                  = sdkmath.NewInt(101)
+	AmountMintingTrigger                  = sdkmath.NewInt(105)
+	AmountIgnoreBurnRateTrigger           = sdkmath.NewInt(108)
+	AmountIgnoreSendCommissionRateTrigger = sdkmath.NewInt(109)
+	AmountDEXExpectToSpendTrigger         = sdkmath.NewInt(103)
+	AmountDEXExpectToReceiveTrigger       = sdkmath.NewInt(104)
 )
 
 func TestKeeper_Extension_Issue(t *testing.T) {
@@ -111,7 +113,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	// send 7 coin will fail.
 	// the test contract is written as such that sending 7 will fail.
 	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(
-		sdk.NewCoin(denom, sdkmath.NewInt(AmountDisallowedTrigger))),
+		sdk.NewCoin(denom, AmountDisallowedTrigger)),
 	)
 	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
 	balance = bankKeeper.GetBalance(ctx, receiver, denom)
@@ -309,7 +311,7 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 
 	// sending trigger amount will be transferred despite whitelisted amount being exceeded
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
-		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreWhitelistingTrigger))),
+		sdk.NewCoin(denom, AmountIgnoreWhitelistingTrigger)),
 	)
 	requireT.NoError(err)
 
@@ -427,7 +429,7 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 
 	// send trigger amount to transfer despite freezing
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
-		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreFreezingTrigger))),
+		sdk.NewCoin(denom, AmountIgnoreFreezingTrigger)),
 	)
 	requireT.NoError(err)
 
@@ -489,7 +491,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(102))))
 	requireT.NoError(err)
 
-	coinsToBurn := sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(AmountBurningTrigger)))
+	coinsToBurn := sdk.NewCoins(sdk.NewCoin(unburnableDenom, AmountBurningTrigger))
 
 	// try to burn unburnable token from the recipient account and make sure that extension can do it
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, coinsToBurn)
@@ -514,12 +516,12 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	// the amount should be burnt
 	requireT.Equal(
 		issuerBalanceBefore.String(),
-		issuerBalanceAfter.Add(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(AmountBurningTrigger))).String(),
+		issuerBalanceAfter.Add(sdk.NewCoin(unburnableDenom, AmountBurningTrigger)).String(),
 	)
 	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
 	requireT.Equal(
 		totalSupplyBefore.Supply.String(),
-		totalSupplyAfter.Supply.Add(sdk.NewCoin(unburnableDenom, sdkmath.NewInt(AmountBurningTrigger))).String(),
+		totalSupplyAfter.Supply.Add(sdk.NewCoin(unburnableDenom, AmountBurningTrigger)).String(),
 	)
 
 	// Issue a burnable fungible token
@@ -560,7 +562,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	// try to burn as non-issuer
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
-		sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))),
+		sdk.NewCoin(burnableDenom, AmountBurningTrigger)),
 	)
 	requireT.NoError(err)
 
@@ -573,12 +575,12 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	// the amount should be burnt
 	requireT.Equal(
 		recipientBalanceBefore.String(),
-		recipientBalanceAfter.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))).String(),
+		recipientBalanceAfter.Add(sdk.NewCoin(burnableDenom, AmountBurningTrigger)).String(),
 	)
 	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
 	requireT.Equal(
 		totalSupplyBefore.Supply.String(),
-		totalSupplyAfter.Supply.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))).String(),
+		totalSupplyAfter.Supply.Add(sdk.NewCoin(burnableDenom, AmountBurningTrigger)).String(),
 	)
 
 	issuerBalanceBefore = bankKeeper.GetBalance(ctx, issuer, burnableDenom)
@@ -589,7 +591,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 
 	// burn tokens and check balance and total supply
 	err = bankKeeper.SendCoins(ctx, issuer, issuer, sdk.NewCoins(
-		sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))),
+		sdk.NewCoin(burnableDenom, AmountBurningTrigger)),
 	)
 	requireT.NoError(err)
 
@@ -602,12 +604,12 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	// the amount should be burnt
 	requireT.Equal(
 		issuerBalanceBefore.String(),
-		issuerBalanceAfter.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))).String(),
+		issuerBalanceAfter.Add(sdk.NewCoin(burnableDenom, AmountBurningTrigger)).String(),
 	)
 	requireT.Equal(cwExtensionBalanceBefore.String(), cwExtensionBalanceAfter.String())
 	requireT.Equal(
 		totalSupplyBefore.Supply.String(),
-		totalSupplyAfter.Supply.Add(sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))).String(),
+		totalSupplyAfter.Supply.Add(sdk.NewCoin(burnableDenom, AmountBurningTrigger)).String(),
 	)
 
 	balance := bankKeeper.GetBalance(ctx, issuer, burnableDenom)
@@ -622,10 +624,10 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// try to burn non-issuer frozen coins
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger)))
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(burnableDenom, AmountBurningTrigger))
 	requireT.NoError(err)
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
-		sdk.NewCoin(burnableDenom, sdkmath.NewInt(AmountBurningTrigger))),
+		sdk.NewCoin(burnableDenom, AmountBurningTrigger)),
 	)
 	requireT.ErrorContains(err, "Requested transfer token is frozen.")
 }
@@ -672,7 +674,7 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 
 	// try to mint unmintable token
 	err = bankKeeper.SendCoins(ctx, addr, addr, sdk.NewCoins(
-		sdk.NewCoin(unmintableDenom, sdkmath.NewInt(AmountMintingTrigger))),
+		sdk.NewCoin(unmintableDenom, AmountMintingTrigger)),
 	)
 	requireT.ErrorContains(err, "feature minting is disabled")
 
@@ -695,7 +697,7 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	mintableDenom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
-	coinsToMint := sdk.NewCoins(sdk.NewCoin(mintableDenom, sdkmath.NewInt(AmountMintingTrigger)))
+	coinsToMint := sdk.NewCoins(sdk.NewCoin(mintableDenom, AmountMintingTrigger))
 
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
@@ -783,7 +785,7 @@ func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 	// send trigger amount from recipient1 to recipient2 (burn must not apply if the extension decides)
 	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
-		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreBurnRateTrigger)),
+		sdk.NewCoin(denom, AmountIgnoreBurnRateTrigger),
 	))
 	requireT.NoError(err)
 
@@ -1074,7 +1076,7 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 	// send trigger amount from recipient1 to recipient2 (send commission rate must not apply)
 	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
-		sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreSendCommissionRateTrigger)),
+		sdk.NewCoin(denom, AmountIgnoreSendCommissionRateTrigger),
 	))
 	requireT.NoError(err)
 

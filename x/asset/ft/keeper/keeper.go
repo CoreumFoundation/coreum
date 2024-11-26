@@ -741,17 +741,28 @@ func (k Keeper) GetSpendableBalance(
 	if notLockedAmt.IsNegative() {
 		return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
 	}
-	frozenBalance, err := k.GetFrozenBalance(ctx, addr, denom)
+
+	def, err := k.getDefinitionOrNil(ctx, denom)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
-	notFrozenAmt := balance.Amount.Sub(frozenBalance.Amount)
-	if notFrozenAmt.IsNegative() {
-		return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
+	// the spendable balance counts the frozen balance, but if extensions are not enabled
+	if def != nil &&
+		def.IsFeatureEnabled(types.Feature_freezing) &&
+		!def.IsFeatureEnabled(types.Feature_extension) {
+		frozenBalance, err := k.GetFrozenBalance(ctx, addr, denom)
+		if err != nil {
+			return sdk.Coin{}, err
+		}
+		notFrozenAmt := balance.Amount.Sub(frozenBalance.Amount)
+		if notFrozenAmt.IsNegative() {
+			return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
+		}
+		spendableAmount := sdkmath.MinInt(notLockedAmt, notFrozenAmt)
+		return sdk.NewCoin(denom, spendableAmount), nil
 	}
 
-	spendableAmount := sdkmath.MinInt(notLockedAmt, notFrozenAmt)
-	return sdk.NewCoin(denom, spendableAmount), nil
+	return sdk.NewCoin(denom, notLockedAmt), nil
 }
 
 // TransferAdmin changes admin of a fungible token.
@@ -911,14 +922,14 @@ func (k Keeper) validateCoinSpendable(
 		return nil
 	}
 
-	isGloballyFrozen, err := k.isGloballyFrozen(ctx, def.Denom)
-	if err != nil {
-		return err
-	}
-	if def.IsFeatureEnabled(types.Feature_freezing) &&
-		isGloballyFrozen &&
-		!def.HasAdminPrivileges(addr) {
-		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
+	if def.IsFeatureEnabled(types.Feature_freezing) {
+		isGloballyFrozen, err := k.isGloballyFrozen(ctx, def.Denom)
+		if err != nil {
+			return err
+		}
+		if isGloballyFrozen && !def.HasAdminPrivileges(addr) {
+			return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
+		}
 	}
 
 	// Checking for IBC-received transfer is done here (after call to k.isGloballyFrozen), because those transfers

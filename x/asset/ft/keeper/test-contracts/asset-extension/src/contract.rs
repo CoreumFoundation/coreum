@@ -1,6 +1,6 @@
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, IBCPurpose, InstantiateMsg, QueryIssuanceMsgResponse, QueryMsg, SudoMsg,
+    DEXOrder, ExecuteMsg, IBCPurpose, InstantiateMsg, QueryIssuanceMsgResponse, QueryMsg, SudoMsg,
     TransferContext,
 };
 use crate::state::{DENOM, EXTRA_DATA};
@@ -18,6 +18,7 @@ use cosmwasm_std::{entry_point, to_json_binary, CosmosMsg, StdError};
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw2::set_contract_version;
 use std::ops::Div;
+use std::string::ToString;
 
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -32,6 +33,9 @@ const AMOUNT_IGNORE_BURN_RATE_TRIGGER: Uint128 = Uint128::new(108);
 const AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER: Uint128 = Uint128::new(109);
 const AMOUNT_BLOCK_IBC_TRIGGER: Uint128 = Uint128::new(110);
 const AMOUNT_BLOCK_SMART_CONTRACT_TRIGGER: Uint128 = Uint128::new(111);
+const ID_DEX_ORDER_TRIGGER: &str = "id-blocked";
+const AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER: Uint128 = Uint128::new(103);
+const AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER: Uint128 = Uint128::new(104);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -83,6 +87,11 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> CoreumResult<ContractError
             burn_amount,
             context,
         ),
+        SudoMsg::ExtensionPlaceOrder {
+            order,
+            expected_to_spend,
+            expected_to_receive,
+        } => sudo_extension_place_order(order, expected_to_spend, expected_to_receive),
     }
 }
 
@@ -178,6 +187,20 @@ pub fn sudo_extension_transfer(
     }
 
     Ok(response)
+}
+
+pub fn sudo_extension_place_order(
+    order: DEXOrder,
+    expected_to_spend: Coin,
+    expected_to_receive: Coin,
+) -> CoreumResult<ContractError> {
+    if order.id == ID_DEX_ORDER_TRIGGER
+        || expected_to_spend.amount == AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER.to_string()
+        || expected_to_receive.amount == AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER.to_string()
+    {
+        return Err(ContractError::DEXOrderPlacementError {});
+    }
+    Ok(Response::new().add_attribute("method", "extension_place_order"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

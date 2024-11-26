@@ -1,3 +1,4 @@
+use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Uint128;
 
@@ -16,6 +17,19 @@ pub struct IssuanceMsg {
 pub enum ExecuteMsg {}
 
 #[cw_serde]
+pub struct DEXOrder {
+    pub creator: String,
+    #[serde(rename = "type")]
+    pub order_type: String,
+    pub id: String,
+    pub base_denom: String,
+    pub quote_denom: String,
+    pub price: Option<String>,
+    pub quantity: Uint128,
+    pub side: String,
+}
+
+#[cw_serde]
 pub enum SudoMsg {
     ExtensionTransfer {
         recipient: String,
@@ -24,6 +38,11 @@ pub enum SudoMsg {
         commission_amount: Uint128,
         burn_amount: Uint128,
         context: TransferContext,
+    },
+    ExtensionPlaceOrder {
+        order: DEXOrder,
+        expected_to_spend: Coin,
+        expected_to_receive: Coin,
     },
 }
 
