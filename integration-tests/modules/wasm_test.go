@@ -147,6 +147,7 @@ type updateDEXUnifiedRefAmountRequest struct {
 	Amount string `json:"amount"`
 }
 
+//nolint:tagliatelle
 type updateDEXWhitelistedDenoms struct {
 	Denom             string   `json:"denom"`
 	WhitelistedDenoms []string `json:"whitelisted_denoms"`
@@ -178,7 +179,6 @@ type dexSettingsDEXRequest struct {
 	Denom string `json:"denom"`
 }
 
-//nolint:tagliatelle
 type balanceDEXRequest struct {
 	Account string `json:"account"`
 	Denom   string `json:"denom"`
@@ -3802,6 +3802,7 @@ func TestWASMDEXInContract(t *testing.T) {
 	requireT.NoError(err)
 	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, dexSettingsPayload)
 	requireT.NoError(err)
+	//nolint:tagliatelle
 	var dexSettingsRes struct {
 		DEXSettings ftDEXSettings `json:"dex_settings"`
 	}
