@@ -2366,7 +2366,7 @@ DEXSettings defines the token settings of the dex.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `unified_ref_amount` | [string](#string) |  |  `unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size`  |
+| `unified_ref_amount` | [string](#string) |  |  `unified_ref_amount is the approximate amount you need to buy 1USD, used to define the price tick size`  |
 | `whitelisted_denoms` | [string](#string) | repeated |  `whitelisted_denoms is the list of denoms to trade with.`  |
 
 
@@ -2795,7 +2795,7 @@ MsgIssue defines message to issue new fungible token.
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  |    |
 | `denom` | [string](#string) |  |    |
-| `unified_ref_amount` | [string](#string) |  |  `unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size`  |
+| `unified_ref_amount` | [string](#string) |  |  `unified_ref_amount is the approximate amount you need to buy 1USD, used to define the price tick size`  |
 
 
 
@@ -4917,7 +4917,7 @@ Params keeps gov manageable parameters.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `default_unified_ref_amount` | [string](#string) |  |  `default_unified_ref_amount is the default approximate amount you need to by 1USD, used to for tokens without custom value`  |
+| `default_unified_ref_amount` | [string](#string) |  |  `default_unified_ref_amount is the default approximate amount you need to buy 1USD, used to for tokens without custom value`  |
 | `price_tick_exponent` | [int32](#int32) |  |  `price_tick_exponent is the exponent used for the price tick calculation`  |
 | `max_orders_per_denom` | [uint64](#uint64) |  |  `max_orders_per_denom is the maximum number of orders per denom the user can have`  |
 | `order_reserve` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  `order_reserve is the reserve required to save the order in the order book`  |

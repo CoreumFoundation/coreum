@@ -345,7 +345,7 @@ func (m *TokenUpgradeStatuses) GetV1() *TokenUpgradeV1Status {
 
 // DEXSettings defines the token settings of the dex.
 type DEXSettings struct {
-	// unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size
+	// unified_ref_amount is the approximate amount you need to buy 1USD, used to define the price tick size
 	UnifiedRefAmount *cosmossdk_io_math.LegacyDec `protobuf:"bytes,1,opt,name=unified_ref_amount,json=unifiedRefAmount,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"unified_ref_amount,omitempty"`
 	// whitelisted_denoms is the list of denoms to trade with.
 	WhitelistedDenoms []string `protobuf:"bytes,2,rep,name=whitelisted_denoms,json=whitelistedDenoms,proto3" json:"whitelisted_denoms,omitempty"`

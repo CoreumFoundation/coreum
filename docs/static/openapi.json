@@ -9592,7 +9592,7 @@
       "properties": {
         "unified_ref_amount": {
           "type": "string",
-          "title": "unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size"
+          "title": "unified_ref_amount is the approximate amount you need to buy 1USD, used to define the price tick size"
         },
         "whitelisted_denoms": {
           "type": "array",
@@ -10178,7 +10178,7 @@
       "properties": {
         "default_unified_ref_amount": {
           "type": "string",
-          "title": "default_unified_ref_amount is the default approximate amount you need to by 1USD, used to for tokens without custom value"
+          "title": "default_unified_ref_amount is the default approximate amount you need to buy 1USD, used to for tokens without custom value"
         },
         "price_tick_exponent": {
           "type": "integer",

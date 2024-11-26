@@ -1,11 +1,12 @@
-use coreum_wasm_sdk::types::coreum::asset::ft::v1::MsgIssue;
+use coreum_wasm_sdk::types::coreum::asset::ft::v1::{MsgIssue, MsgUpdateDexUnifiedRefAmount, MsgUpdateDexWhitelistedDenoms, QueryBalanceRequest, QueryBalanceResponse, QueryDexSettingsRequest, QueryDexSettingsResponse};
 use coreum_wasm_sdk::types::coreum::dex::v1::{
-    MsgCancelOrder, MsgCancelOrdersByDenom, MsgPlaceOrder, Order, OrderType,
+    MsgCancelOrder, MsgCancelOrdersByDenom, MsgPlaceOrder, OrderType,
     QueryAccountDenomOrdersCountRequest, QueryAccountDenomOrdersCountResponse,
     QueryOrderBookOrdersRequest, QueryOrderBookOrdersResponse, QueryOrderBooksRequest,
     QueryOrderBooksResponse, QueryOrderRequest, QueryOrderResponse, QueryOrdersRequest,
     QueryOrdersResponse, QueryParamsRequest, QueryParamsResponse, Side, TimeInForce,
 };
+
 use coreum_wasm_sdk::types::cosmos::base::query::v1beta1::PageRequest;
 use cosmwasm_std::{entry_point, to_json_binary, Binary, CosmosMsg, Deps, StdError, StdResult};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
@@ -70,6 +71,13 @@ pub fn execute(
         ExecuteMsg::CancelOrdersByDenom { account, denom } => {
             cancel_orders_by_denom(env, account, denom)
         }
+        ExecuteMsg::UpdateDEXUnifiedRefAmount { denom, amount } => {
+            update_dex_unified_ref_amount(env, denom, amount)
+        }
+        ExecuteMsg::UpdateDEXWhitelistedDenoms {
+            denom,
+            whitelisted_denoms,
+        } => update_dex_whitelisted_denoms(env, denom, whitelisted_denoms),
     }
 }
 
@@ -169,6 +177,43 @@ fn cancel_orders_by_denom(
         .add_message(CosmosMsg::Any(cancel_orders_by_denom.to_any())))
 }
 
+fn update_dex_unified_ref_amount(
+    env: Env,
+    denom: String,
+    amount: String,
+) -> Result<Response, ContractError> {
+    let dex_unified_ref_amount = MsgUpdateDexUnifiedRefAmount {
+        sender: env.contract.address.to_string(),
+        denom: denom.clone(),
+        unified_ref_amount: amount.clone(),
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "dex_unified_ref_amount")
+        .add_attribute("sender", env.contract.address.to_string())
+        .add_attribute("unified_ref_amount", amount)
+        .add_message(CosmosMsg::Any(dex_unified_ref_amount.to_any())))
+}
+
+fn update_dex_whitelisted_denoms(
+    env: Env,
+    denom: String,
+    whitelisted_denoms: Vec<String>,
+) -> Result<Response, ContractError> {
+    let update_dex_whitelisted_denoms = MsgUpdateDexWhitelistedDenoms {
+        sender: env.contract.address.to_string(),
+        denom: denom.clone(),
+        whitelisted_denoms: whitelisted_denoms.clone(),
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "update_dex_whitelisted_denoms")
+        .add_attribute("sender", env.contract.address.to_string())
+        .add_attribute("account", denom)
+        .add_attribute("whitelisted_denoms", whitelisted_denoms.join(","))
+        .add_message(CosmosMsg::Any(update_dex_whitelisted_denoms.to_any())))
+}
+
 // ********** Queries **********
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -189,6 +234,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
         QueryMsg::AccountDenomOrdersCount { account, denom } => {
             to_json_binary(&query_account_denom_orders_count(deps, account, denom)?)
+        }
+        QueryMsg::DEXSettings { denom } => {
+            to_json_binary(&query_dex_settings(deps, denom)?)
+        }
+        QueryMsg::Balance { account, denom } => {
+            to_json_binary(&query_balance(deps, account, denom)?)
         }
     }
 }
@@ -309,5 +360,22 @@ fn query_account_denom_orders_count(
     denom: String,
 ) -> StdResult<QueryAccountDenomOrdersCountResponse> {
     let request = QueryAccountDenomOrdersCountRequest { account, denom };
+    request.query(&deps.querier)
+}
+
+fn query_dex_settings(
+    deps: Deps,
+    denom: String,
+) -> StdResult<QueryDexSettingsResponse> {
+    let request = QueryDexSettingsRequest { denom };
+    request.query(&deps.querier)
+}
+
+fn query_balance(
+    deps: Deps,
+    account: String,
+    denom: String,
+) -> StdResult<QueryBalanceResponse> {
+    let request = QueryBalanceRequest { account, denom };
     request.query(&deps.querier)
 }
