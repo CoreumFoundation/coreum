@@ -424,7 +424,11 @@ func (k Keeper) dexCheckExpectedToSpend(
 	}
 
 	if spendDef.IsFeatureEnabled(types.Feature_freezing) && !spendDef.HasAdminPrivileges(order.Creator) {
-		frozenAmt := k.GetFrozenBalance(ctx, order.Creator, expectedToSpend.Denom).Amount
+		frozenCoin, err := k.GetFrozenBalance(ctx, order.Creator, expectedToSpend.Denom)
+		if err != nil {
+			return err
+		}
+		frozenAmt := frozenCoin.Amount
 		notFrozenTotalAmt := balance.Amount.Sub(frozenAmt)
 		if notFrozenTotalAmt.LT(expectedToSpend.Amount) {
 			return sdkerrors.Wrapf(

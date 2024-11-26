@@ -922,14 +922,14 @@ func (k Keeper) validateCoinSpendable(
 		return nil
 	}
 
-	isGloballyFrozen, err := k.isGloballyFrozen(ctx, def.Denom)
-	if err != nil {
-		return err
-	}
-	if def.IsFeatureEnabled(types.Feature_freezing) &&
-		isGloballyFrozen &&
-		!def.HasAdminPrivileges(addr) {
-		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
+	if def.IsFeatureEnabled(types.Feature_freezing) {
+		isGloballyFrozen, err := k.isGloballyFrozen(ctx, def.Denom)
+		if err != nil {
+			return err
+		}
+		if isGloballyFrozen && !def.HasAdminPrivileges(addr) {
+			return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
+		}
 	}
 
 	// Checking for IBC-received transfer is done here (after call to k.isGloballyFrozen), because those transfers
