@@ -93,6 +93,7 @@ type coreumMsg struct {
 
 // NewCoreumMsgHandler returns coreum handler that handles messages received from smart contracts.
 // The in the input sender is the address of smart contract.
+// Deprecated: Supported for backward compatibility of legacy smart contracts only.
 func NewCoreumMsgHandler() *wasmkeeper.MessageEncoders {
 	return &wasmkeeper.MessageEncoders{
 		Custom: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {

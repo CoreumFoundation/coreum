@@ -67,6 +67,14 @@ const (
 // fungible token wasm models
 //
 //nolint:tagliatelle
+type ftDEXSettings struct {
+	UnifiedRefAmount  string   `json:"unified_ref_amount"`
+	WhitelistedDenoms []string `json:"whitelisted_denoms"`
+}
+
+// fungible token wasm models
+//
+//nolint:tagliatelle
 type issueFTRequest struct {
 	Symbol             string                               `json:"symbol"`
 	Subunit            string                               `json:"subunit"`
@@ -79,7 +87,7 @@ type issueFTRequest struct {
 	URI                string                               `json:"uri"`
 	URIHash            string                               `json:"uri_hash"`
 	ExtensionSettings  *assetfttypes.ExtensionIssueSettings `json:"extension_settings"`
-	DexSettings        *assetfttypes.DEXSettings            `json:"dex_settings"`
+	DEXSettings        *ftDEXSettings                       `json:"dex_settings"`
 }
 
 // fungible token wasm models
@@ -134,24 +142,44 @@ type cancelOrdersByDenomBodyDEXRequest struct {
 	Denom   string `json:"denom"`
 }
 
+type updateDEXUnifiedRefAmountRequest struct {
+	Denom  string `json:"denom"`
+	Amount string `json:"amount"`
+}
+
 //nolint:tagliatelle
-type OrderBodyDEXRequest struct {
+type updateDEXWhitelistedDenoms struct {
+	Denom             string   `json:"denom"`
+	WhitelistedDenoms []string `json:"whitelisted_denoms"`
+}
+
+//nolint:tagliatelle
+type orderBodyDEXRequest struct {
 	Account string `json:"acc"`
 	OrderID string `json:"order_id"`
 }
 
-type OrdersBodyDEXRequest struct {
+type ordersBodyDEXRequest struct {
 	Creator string `json:"creator"`
 }
 
 //nolint:tagliatelle
-type OrderBookOrdersBodyDEXRequest struct {
+type orderBookOrdersBodyDEXRequest struct {
 	BaseDenom  string        `json:"base_denom"`
 	QuoteDenom string        `json:"quote_denom"`
 	Side       dextypes.Side `json:"side"`
 }
 
-type AccountDenomOrdersCountBodyDEXRequest struct {
+type accountDenomOrdersCountBodyDEXRequest struct {
+	Account string `json:"account"`
+	Denom   string `json:"denom"`
+}
+
+type dexSettingsDEXRequest struct {
+	Denom string `json:"denom"`
+}
+
+type balanceDEXRequest struct {
 	Account string `json:"account"`
 	Denom   string `json:"denom"`
 }
@@ -186,9 +214,11 @@ type dexMethod string
 
 const (
 	// tx.
-	dexMethodPlaceOrder          dexMethod = "place_order"
-	dexMethodCancelOrder         dexMethod = "cancel_order"
-	dexMethodCancelOrdersByDenom dexMethod = "cancel_orders_by_denom"
+	dexMethodPlaceOrder                 dexMethod = "place_order"
+	dexMethodCancelOrder                dexMethod = "cancel_order"
+	dexMethodCancelOrdersByDenom        dexMethod = "cancel_orders_by_denom"
+	dexMethodUpdateDEXUnifiedRefAmount  dexMethod = "update_dex_unified_ref_amount"
+	dexMethodUpdateDEXWhitelistedDenoms dexMethod = "update_dex_whitelisted_denoms"
 	// query.
 	dexMethodParams                  dexMethod = "params"
 	dexMethodOrder                   dexMethod = "order"
@@ -196,6 +226,8 @@ const (
 	dexMethodOrderBooks              dexMethod = "order_books"
 	dexMethodOrderBookOrders         dexMethod = "order_book_orders"
 	dexMethodAccountDenomOrdersCount dexMethod = "account_denom_orders_count"
+	dexMethodDEXSettings             dexMethod = "dex_settings"
+	dexMethodBalance                 dexMethod = "balance"
 )
 
 // TestContractInstantiation tests contract instantiation using two instantiation methods.
@@ -1797,11 +1829,11 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 
 	// ********** Params **********
 
-	paramsPayLoad, err := json.Marshal(map[ftMethod]struct{}{
+	paramsPayload, err := json.Marshal(map[ftMethod]struct{}{
 		ftMethodParams: {},
 	})
 	requireT.NoError(err)
-	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayLoad)
+	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayload)
 	requireT.NoError(err)
 	var wasmParamsRes assetfttypes.QueryParamsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
@@ -2931,11 +2963,11 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 
 	// ********** Params **********
 
-	paramsPayLoad, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+	paramsPayload, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
 		moduleswasm.NftMethodParams: {},
 	})
 	requireT.NoError(err)
-	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayLoad)
+	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayload)
 	requireT.NoError(err)
 	var wasmParamsRes assetnfttypes.QueryParamsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
@@ -3066,11 +3098,11 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, classFreezePayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	classFrozenAccountsPayLoad, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+	classFrozenAccountsPayload, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
 		moduleswasm.NftMethodClassFrozenAccounts: {},
 	})
 	requireT.NoError(err)
-	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classFrozenAccountsPayLoad)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classFrozenAccountsPayload)
 	requireT.NoError(err)
 	var classFrozenAccountsQueryRes assetnfttypes.QueryClassFrozenAccountsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classFrozenAccountsQueryRes))
@@ -3117,11 +3149,11 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, addToClassWhitelistPayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	classWhitelistedAccountsPayLoad, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+	classWhitelistedAccountsPayload, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
 		moduleswasm.NftMethodClassWhitelistedAccounts: {},
 	})
 	requireT.NoError(err)
-	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classWhitelistedAccountsPayLoad)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classWhitelistedAccountsPayload)
 	requireT.NoError(err)
 	var classWhitelistedAccountsQueryRes assetnfttypes.QueryClassWhitelistedAccountsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classWhitelistedAccountsQueryRes))
@@ -3632,7 +3664,6 @@ func TestWASMDEXInContract(t *testing.T) {
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
 	bankClient := banktypes.NewQueryClient(clientCtx)
-	assetftClient := assetfttypes.NewQueryClient(clientCtx)
 	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 
 	dexParms := chain.QueryDEXParams(ctx, t)
@@ -3672,10 +3703,6 @@ func TestWASMDEXInContract(t *testing.T) {
 	requireT.NoError(err)
 	denom1 := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 
-	// Issue another fungible token using smart contract
-	burnRate := "1000000000000000000"           // LegacyDec has 18 decimal positions, so here we are passing 1e19= 100%
-	sendCommissionRate := "1000000000000000000" // LegacyDec has 18 decimal positions, so here we are passing 1e19 = 100%
-
 	issuanceAmount := sdkmath.NewInt(10_000_000)
 	issuanceReq := issueFTRequest{
 		Symbol:        "ABC2",
@@ -3688,10 +3715,14 @@ func TestWASMDEXInContract(t *testing.T) {
 			assetfttypes.Feature_dex_order_cancellation,
 			assetfttypes.Feature_dex_unified_ref_amount_change,
 		},
-		BurnRate:           burnRate,
-		SendCommissionRate: sendCommissionRate,
+		BurnRate:           sdkmath.LegacyMustNewDecFromStr("1").BigInt().String(),
+		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("1").BigInt().String(),
 		URI:                "https://example.com",
 		URIHash:            "1234567890abcdef",
+		DEXSettings: &ftDEXSettings{
+			UnifiedRefAmount:  sdkmath.LegacyMustNewDecFromStr("150").BigInt().String(),
+			WhitelistedDenoms: []string{denom1},
+		},
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
@@ -3741,13 +3772,13 @@ func TestWASMDEXInContract(t *testing.T) {
 	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
 
-	// ********** Query Params **********
+	// ********** Query params **********
 
-	paramsPayLoad, err := json.Marshal(map[dexMethod]struct{}{
+	paramsPayload, err := json.Marshal(map[dexMethod]struct{}{
 		dexMethodParams: {},
 	})
 	requireT.NoError(err)
-	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayLoad)
+	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayload)
 	requireT.NoError(err)
 	var wasmParamsRes dextypes.QueryParamsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
@@ -3759,6 +3790,55 @@ func TestWASMDEXInContract(t *testing.T) {
 	)
 	requireT.Equal(
 		dexParms.PriceTickExponent, wasmParamsRes.Params.PriceTickExponent,
+	)
+
+	// ********** Query and update asset FT DEX settings **********
+
+	dexSettingsPayload, err := json.Marshal(map[dexMethod]dexSettingsDEXRequest{
+		dexMethodDEXSettings: {
+			denom2,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, dexSettingsPayload)
+	requireT.NoError(err)
+	//nolint:tagliatelle
+	var dexSettingsRes struct {
+		DEXSettings ftDEXSettings `json:"dex_settings"`
+	}
+	requireT.NoError(json.Unmarshal(queryOut, &dexSettingsRes))
+	requireT.Equal(*issuanceReq.DEXSettings, dexSettingsRes.DEXSettings)
+
+	newUnifiedRefAmount := sdkmath.LegacyMustNewDecFromStr("19000")
+	updateDEXUnifiedRefAmountPayload, err := json.Marshal(map[dexMethod]updateDEXUnifiedRefAmountRequest{
+		dexMethodUpdateDEXUnifiedRefAmount: {
+			Denom:  denom2,
+			Amount: newUnifiedRefAmount.BigInt().String(),
+		},
+	})
+	requireT.NoError(err)
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, updateDEXUnifiedRefAmountPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	newWhitelistedDenoms := []string{denom1, chain.ChainSettings.Denom}
+	updateDEXWhitelistedDenomsPayload, err := json.Marshal(map[dexMethod]updateDEXWhitelistedDenoms{
+		dexMethodUpdateDEXWhitelistedDenoms: {
+			Denom:             denom2,
+			WhitelistedDenoms: newWhitelistedDenoms,
+		},
+	})
+	requireT.NoError(err)
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, updateDEXWhitelistedDenomsPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, dexSettingsPayload)
+	requireT.NoError(err)
+	requireT.NoError(json.Unmarshal(queryOut, &dexSettingsRes))
+	requireT.Equal(
+		ftDEXSettings{
+			UnifiedRefAmount:  newUnifiedRefAmount.BigInt().String(),
+			WhitelistedDenoms: newWhitelistedDenoms,
+		}, dexSettingsRes.DEXSettings,
 	)
 
 	// ********** Place Order **********
@@ -3787,16 +3867,22 @@ func TestWASMDEXInContract(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, placeOrderPayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	assetftBalanceRes, err := assetftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
-		Account: contractAddr,
-		Denom:   denom1,
+	balancePayload, err := json.Marshal(map[dexMethod]balanceDEXRequest{
+		dexMethodBalance: {
+			Account: contractAddr,
+			Denom:   denom1,
+		},
 	})
 	requireT.NoError(err)
-	requireT.Equal(orderQuantity.String(), assetftBalanceRes.LockedInDEX.String())
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, balancePayload)
+	requireT.NoError(err)
+	var ftBalanceRes assetfttypes.QueryBalanceResponse
+	requireT.NoError(json.Unmarshal(queryOut, &ftBalanceRes))
+	requireT.Equal(orderQuantity.String(), ftBalanceRes.LockedInDEX.String())
 
 	// ********** Query Order **********
 
-	orderPayload, err := json.Marshal(map[dexMethod]OrderBodyDEXRequest{
+	orderPayload, err := json.Marshal(map[dexMethod]orderBodyDEXRequest{
 		dexMethodOrder: {
 			Account: contractAddr,
 			OrderID: "id1",
@@ -3830,7 +3916,7 @@ func TestWASMDEXInContract(t *testing.T) {
 
 	// ********** Query Orders **********
 
-	ordersPayload, err := json.Marshal(map[dexMethod]OrdersBodyDEXRequest{
+	ordersPayload, err := json.Marshal(map[dexMethod]ordersBodyDEXRequest{
 		dexMethodOrders: {
 			Creator: contractAddr,
 		},
@@ -3864,7 +3950,7 @@ func TestWASMDEXInContract(t *testing.T) {
 
 	// ********** Query Order Book Orders **********
 
-	orderBookOrdersPayload, err := json.Marshal(map[dexMethod]OrderBookOrdersBodyDEXRequest{
+	orderBookOrdersPayload, err := json.Marshal(map[dexMethod]orderBookOrdersBodyDEXRequest{
 		dexMethodOrderBookOrders: {
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
@@ -3883,7 +3969,7 @@ func TestWASMDEXInContract(t *testing.T) {
 
 	// ********** Query Account Denom Orders Count **********
 
-	accountDenomOrdersCountPayload, err := json.Marshal(map[dexMethod]AccountDenomOrdersCountBodyDEXRequest{
+	accountDenomOrdersCountPayload, err := json.Marshal(map[dexMethod]accountDenomOrdersCountBodyDEXRequest{
 		dexMethodAccountDenomOrdersCount: {
 			Account: contractAddr,
 			Denom:   denom1,

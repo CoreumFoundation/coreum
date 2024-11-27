@@ -1,5 +1,5 @@
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{DexSettings, ExtensionIssueSettings};
-use coreum_wasm_sdk::types::coreum::dex::v1::{MsgPlaceOrder, Order};
+use coreum_wasm_sdk::types::coreum::dex::v1::MsgPlaceOrder;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 
@@ -21,9 +21,26 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    PlaceOrder { order: MsgPlaceOrder },
-    CancelOrder { order_id: String },
-    CancelOrdersByDenom { account: String, denom: String },
+    PlaceOrder {
+        order: MsgPlaceOrder,
+    },
+    CancelOrder {
+        order_id: String,
+    },
+    CancelOrdersByDenom {
+        account: String,
+        denom: String,
+    },
+    #[serde(rename = "update_dex_unified_ref_amount")]
+    UpdateDEXUnifiedRefAmount {
+        denom: String,
+        amount: String,
+    },
+    #[serde(rename = "update_dex_whitelisted_denoms")]
+    UpdateDEXWhitelistedDenoms {
+        denom: String,
+        whitelisted_denoms: Vec<String>,
+    },
 }
 
 #[cw_serde]
@@ -43,6 +60,14 @@ pub enum QueryMsg {
         side: i32,
     },
     AccountDenomOrdersCount {
+        account: String,
+        denom: String,
+    },
+    #[serde(rename = "dex_settings")]
+    DEXSettings {
+        denom: String,
+    },
+    Balance {
         account: String,
         denom: String,
     },

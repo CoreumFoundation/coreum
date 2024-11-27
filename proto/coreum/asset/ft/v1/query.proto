@@ -15,11 +15,13 @@ option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types";
 service Query {
   // Params queries the parameters of x/asset/ft module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/params";
   }
 
   // Tokens queries the fungible tokens of the module.
   rpc Tokens(QueryTokensRequest) returns (QueryTokensResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/tokens";
   }
 
@@ -31,16 +33,19 @@ service Query {
 
   // TokenUpgradeStatuses returns token upgrades info.
   rpc TokenUpgradeStatuses(QueryTokenUpgradeStatusesRequest) returns (QueryTokenUpgradeStatusesResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}/upgrade-statuses";
   }
 
   // Balance returns balance of the denom for the account.
   rpc Balance(QueryBalanceRequest) returns (QueryBalanceResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/summary/{denom}";
   }
 
   // FrozenBalances returns all the frozen balances for the account.
   rpc FrozenBalances(QueryFrozenBalancesRequest) returns (QueryFrozenBalancesResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/frozen";
   }
 
@@ -52,6 +57,7 @@ service Query {
 
   // WhitelistedBalances returns all the whitelisted balances for the account.
   rpc WhitelistedBalances(QueryWhitelistedBalancesRequest) returns (QueryWhitelistedBalancesResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted";
   }
 
@@ -63,6 +69,7 @@ service Query {
 
   // DEXSettings returns DEX settings of the denom.
   rpc DEXSettings(QueryDEXSettingsRequest) returns (QueryDEXSettingsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}/dex-settings";
   }
 }

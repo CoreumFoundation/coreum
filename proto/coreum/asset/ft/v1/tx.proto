@@ -243,7 +243,7 @@ message MsgUpdateDEXUnifiedRefAmount {
 
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string denom = 2;
-  // unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size
+  // unified_ref_amount is the approximate amount you need to buy 1USD, used to define the price tick size
   string unified_ref_amount = 3 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
