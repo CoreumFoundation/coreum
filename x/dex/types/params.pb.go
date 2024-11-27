@@ -28,7 +28,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params keeps gov manageable parameters.
 type Params struct {
-	// default_unified_ref_amount is the default approximate amount you need to by 1USD, used to for tokens without custom value
+	// default_unified_ref_amount is the default approximate amount you need to buy 1USD, used to for tokens without custom value
 	DefaultUnifiedRefAmount cosmossdk_io_math.LegacyDec `protobuf:"bytes,1,opt,name=default_unified_ref_amount,json=defaultUnifiedRefAmount,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"default_unified_ref_amount"`
 	// price_tick_exponent is the exponent used for the price tick calculation
 	PriceTickExponent int32 `protobuf:"varint,2,opt,name=price_tick_exponent,json=priceTickExponent,proto3" json:"price_tick_exponent,omitempty"`

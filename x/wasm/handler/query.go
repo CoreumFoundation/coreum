@@ -241,6 +241,7 @@ func convertStringToDataBytes(dataString string) (*codectypes.Any, error) {
 	return dataValue, nil
 }
 
+// Deprecated: Supported for backward compatibility of legacy smart contracts only.
 func processCoreumQuery(
 	ctx sdk.Context,
 	queries coreumQuery,

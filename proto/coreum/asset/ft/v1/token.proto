@@ -105,7 +105,7 @@ message TokenUpgradeStatuses {
 
 // DEXSettings defines the token settings of the dex.
 message DEXSettings {
-  // unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size
+  // unified_ref_amount is the approximate amount you need to buy 1USD, used to define the price tick size
   string unified_ref_amount = 1 [(gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"];
   // whitelisted_denoms is the list of denoms to trade with.
   repeated string whitelisted_denoms = 2;

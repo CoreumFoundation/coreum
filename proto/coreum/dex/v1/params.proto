@@ -8,7 +8,7 @@ option go_package = "github.com/CoreumFoundation/coreum/v5/x/dex/types";
 
 // Params keeps gov manageable parameters.
 message Params {
-  // default_unified_ref_amount is the default approximate amount you need to by 1USD, used to for tokens without custom value
+  // default_unified_ref_amount is the default approximate amount you need to buy 1USD, used to for tokens without custom value
   string default_unified_ref_amount = 1 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"

@@ -643,7 +643,7 @@ var xxx_messageInfo_MsgUpdateParams proto.InternalMessageInfo
 type MsgUpdateDEXUnifiedRefAmount struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Denom  string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
-	// unified_ref_amount is the approximate amount you need to by 1USD, used to define the price tick size
+	// unified_ref_amount is the approximate amount you need to buy 1USD, used to define the price tick size
 	UnifiedRefAmount cosmossdk_io_math.LegacyDec `protobuf:"bytes,3,opt,name=unified_ref_amount,json=unifiedRefAmount,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"unified_ref_amount"`
 }
 

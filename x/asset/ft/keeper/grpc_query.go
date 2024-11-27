@@ -127,7 +127,7 @@ func (qs QueryService) Balance(
 	denom := req.GetDenom()
 	vestingLocked := qs.bankKeeper.LockedCoins(ctx, account).AmountOf(denom)
 	dexLocked := qs.keeper.GetDEXLockedBalance(sdk.UnwrapSDKContext(ctx), account, denom).Amount
-	expectedToReceiveInDex := qs.keeper.GetDEXExpectedToReceivedBalance(
+	expectedToReceiveInDEX := qs.keeper.GetDEXExpectedToReceivedBalance(
 		sdk.UnwrapSDKContext(ctx), account, denom,
 	).Amount
 
@@ -145,7 +145,7 @@ func (qs QueryService) Balance(
 		Locked:                 vestingLocked.Add(dexLocked),
 		LockedInVesting:        vestingLocked,
 		LockedInDEX:            dexLocked,
-		ExpectedToReceiveInDEX: expectedToReceiveInDex,
+		ExpectedToReceiveInDEX: expectedToReceiveInDEX,
 	}, nil
 }
 

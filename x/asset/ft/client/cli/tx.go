@@ -252,7 +252,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 	//nolint:lll // breaking this down will make it look worse when printed to user screen.
 	cmd.Flags().String(ExtensionIssuanceMsgFlag, "{}", "Optional json encoded data to pass to WASM on instantiation by the ft issuer.")
 	//nolint:lll // breaking this down will make it look worse when printed to user screen.
-	cmd.Flags().String(DEXUnifiedRefAmountFlag, "", "DEX unified ref amount is the approximate amount you need to by 1USD, used to define the price tick size.")
+	cmd.Flags().String(DEXUnifiedRefAmountFlag, "", "DEX unified ref amount is the approximate amount you need to buy 1USD, used to define the price tick size.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
