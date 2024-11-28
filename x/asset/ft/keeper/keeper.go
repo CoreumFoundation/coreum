@@ -746,10 +746,8 @@ func (k Keeper) GetSpendableBalance(
 	if err != nil {
 		return sdk.Coin{}, err
 	}
-	// the spendable balance counts the frozen balance, but if extensions are not enabled
-	if def != nil &&
-		def.IsFeatureEnabled(types.Feature_freezing) &&
-		!def.IsFeatureEnabled(types.Feature_extension) {
+	// the spendable balance counts the frozen balance
+	if def != nil && def.IsFeatureEnabled(types.Feature_freezing) {
 		frozenBalance, err := k.GetFrozenBalance(ctx, addr, denom)
 		if err != nil {
 			return sdk.Coin{}, err
@@ -950,8 +948,7 @@ func (k Keeper) validateCoinSpendable(
 		)
 	}
 
-	balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
-	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, sdk.NewCoin(def.Denom, amount)); err != nil {
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, sdk.NewCoin(def.Denom, amount)); err != nil {
 		return err
 	}
 
@@ -961,6 +958,7 @@ func (k Keeper) validateCoinSpendable(
 			return err
 		}
 		frozenAmt := frozenBalance.Amount
+		balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
 		notFrozenAmt := balance.Amount.Sub(frozenAmt)
 		if notFrozenAmt.LT(amount) {
 			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s%s is not available, available %s%s",
@@ -1210,8 +1208,7 @@ func (k Keeper) validateClawbackAllowed(ctx sdk.Context, sender, addr sdk.AccAdd
 		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "claw back from module accounts is prohibited")
 	}
 
-	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
-	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, coin); err != nil {
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, coin); err != nil {
 		return err
 	}
 

@@ -244,7 +244,7 @@ func TestValidateFeatures(t *testing.T) {
 				types.Feature_ibc,
 				types.Feature_extension,
 			},
-			Ok: false,
+			Ok: true,
 		},
 		{
 			Name:     "all",
@@ -313,6 +313,14 @@ func TestValidateFeatures(t *testing.T) {
 			Features: []types.Feature{
 				types.Feature_dex_block,
 				types.Feature_dex_order_cancellation,
+			},
+			Ok: false,
+		},
+		{
+			Name: "dex_block_unified_ref_amount_change",
+			Features: []types.Feature{
+				types.Feature_dex_block,
+				types.Feature_dex_unified_ref_amount_change,
 			},
 			Ok: false,
 		},

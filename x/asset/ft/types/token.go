@@ -228,11 +228,17 @@ func ValidateFeatures(features []Feature) error {
 		present[f] = struct{}{}
 	}
 	for _, feature := range features {
-		if hasExtension && (feature == Feature_ibc || feature == Feature_block_smart_contracts) {
+		if hasExtension && feature == Feature_block_smart_contracts {
 			return sdkerrors.Wrapf(ErrInvalidInput, "extension is not allowed in combination with %s", feature.String())
 		}
-		if hasDEXBlock && (feature == Feature_dex_whitelisted_denoms || feature == Feature_dex_order_cancellation) {
-			return sdkerrors.Wrapf(ErrInvalidInput, "DEX block is not allowed in combination with %s", feature.String())
+		// if dex is blocked those features make not sense
+		if hasDEXBlock && (feature == Feature_dex_whitelisted_denoms ||
+			feature == Feature_dex_order_cancellation ||
+			feature == Feature_dex_unified_ref_amount_change) {
+			return sdkerrors.Wrapf(
+				ErrInvalidInput,
+				"%s is not allowed in combination with %s", Feature_dex_block.String(), feature.String(),
+			)
 		}
 	}
 
