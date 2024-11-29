@@ -8,6 +8,10 @@ znet:
 znet-start:
 	$(BUILDER) znet start --profiles=3cored
 
+.PHONY: znet-start-ibc
+znet-start-ibc:
+	$(BUILDER) znet start --profiles=3cored,ibc
+
 .PHONY: znet-start-stress
 znet-start-stress:
 	$(BUILDER) znet start --profiles=3cored,dex

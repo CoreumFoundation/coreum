@@ -13,21 +13,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/samber/lo"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
 	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
 	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v5/x/wibctransfer/types"
 )
 
 var (
 	AmountDisallowedTrigger               = sdkmath.NewInt(7)
-	AmountIgnoreWhitelistingTrigger       = sdkmath.NewInt(49)
-	AmountIgnoreFreezingTrigger           = sdkmath.NewInt(79)
 	AmountBurningTrigger                  = sdkmath.NewInt(101)
 	AmountMintingTrigger                  = sdkmath.NewInt(105)
 	AmountIgnoreBurnRateTrigger           = sdkmath.NewInt(108)
@@ -120,61 +117,8 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT.EqualValues("2", balance.Amount.String())
 }
 
-func TestKeeper_Extension_Issue_WithIBCAndBlockSmartContract(t *testing.T) {
+func TestKeeper_Extension_IBC(t *testing.T) {
 	requireT := require.New(t)
-
-	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
-		Time:    time.Now(),
-		AppHash: []byte("some-hash"),
-	})
-
-	ftKeeper := testApp.AssetFTKeeper
-
-	testCases := []struct {
-		features []types.Feature
-	}{
-		{
-			features: []types.Feature{
-				types.Feature_extension,
-				types.Feature_ibc,
-			},
-		},
-		{
-			features: []types.Feature{
-				types.Feature_extension,
-				types.Feature_block_smart_contracts,
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-		codeID, _, err := testApp.WasmPermissionedKeeper.Create(
-			ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
-		)
-		requireT.NoError(err)
-
-		settings := types.IssueSettings{
-			Issuer:        issuer,
-			Symbol:        "ABC",
-			Description:   "ABC Desc",
-			Subunit:       "extensionabc",
-			Precision:     8,
-			InitialAmount: sdkmath.NewInt(777),
-			Features:      tc.features,
-			ExtensionSettings: &types.ExtensionIssueSettings{
-				CodeId: codeID,
-			},
-		}
-		_, err = ftKeeper.Issue(ctx, settings)
-		requireT.ErrorIs(err, types.ErrInvalidInput)
-	}
-}
-
-func TestKeeper_Extension_Whitelist(t *testing.T) {
-	requireT := require.New(t)
-	assertT := assert.New(t)
 
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
@@ -186,6 +130,87 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 	bankKeeper := testApp.BankKeeper
 
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	requireT.NoError(err)
+
+	settingsWithoutIBC := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(666),
+		Features: []types.Feature{
+			types.Feature_whitelisting,
+			types.Feature_extension,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+
+	denomWithoutIBC, err := ftKeeper.Issue(ctx, settingsWithoutIBC)
+	requireT.NoError(err)
+
+	settingsWithIBC := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     1,
+		InitialAmount: sdkmath.NewInt(666),
+		Features: []types.Feature{
+			types.Feature_whitelisting,
+			types.Feature_extension,
+			types.Feature_ibc,
+		},
+		ExtensionSettings: &types.ExtensionIssueSettings{
+			CodeId: codeID,
+		},
+	}
+
+	denomWithIBC, err := ftKeeper.Issue(ctx, settingsWithIBC)
+	requireT.NoError(err)
+
+	// Trick the ctx to look like an outgoing IBC,
+	// so we may use regular bank send to test the logic.
+	ctx = sdk.UnwrapSDKContext(wibctransfertypes.WithPurpose(ctx, wibctransfertypes.PurposeOut))
+
+	// transferring denom with disabled IBC should fail
+	err = bankKeeper.SendCoins(
+		ctx,
+		issuer,
+		recipient,
+		sdk.NewCoins(sdk.NewCoin(denomWithoutIBC, sdkmath.NewInt(100))),
+	)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
+
+	// transferring denom with enabled IBC should succeed
+	err = bankKeeper.SendCoins(
+		ctx,
+		issuer,
+		recipient,
+		sdk.NewCoins(sdk.NewCoin(denomWithIBC, sdkmath.NewInt(100))),
+	)
+	requireT.NoError(err)
+}
+
+func TestKeeper_Extension_Whitelist(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Time:    time.Now(),
+		AppHash: []byte("some-hash"),
+	})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
 		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
@@ -211,122 +236,42 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 	denom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
-	token, err := ftKeeper.GetToken(ctx, denom)
-	requireT.NoError(err)
-
-	extensionCWAddress, err := sdk.AccAddressFromBech32(token.ExtensionCWAddress)
-	requireT.NoError(err)
-
-	unwhitelistableSettings := types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "ABC",
-		Subunit:       "abc",
-		Precision:     1,
-		Description:   "ABC Desc",
-		InitialAmount: sdkmath.NewInt(666),
-		Features: []types.Feature{
-			types.Feature_extension,
-		},
-		ExtensionSettings: &types.ExtensionIssueSettings{
-			CodeId: codeID,
-		},
-	}
-
-	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-
-	unwhitelistableDenom, err := ftKeeper.Issue(ctx, unwhitelistableSettings)
-	requireT.NoError(err)
-	_, err = ftKeeper.GetToken(ctx, unwhitelistableDenom)
-	requireT.NoError(err)
-
-	// set whitelisted balance to 0
-	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(0))))
-	whitelistedBalance := ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)).String(), whitelistedBalance.String())
-
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100)))
+	coinToSend := sdk.NewCoin(denom, sdkmath.NewInt(100))
+	coinsToSend := sdk.NewCoins(coinToSend)
 	// send
-	err = bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend)
-	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
-	// return attached fund of failed transaction
-	err = bankKeeper.SendCoins(ctx, extensionCWAddress, issuer, coinsToSend)
-	requireT.NoError(err)
+	requireT.ErrorIs(bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend), types.ErrWhitelistedLimitExceeded)
 	// multi-send
-	err = bankKeeper.InputOutputCoins(ctx,
+	requireT.ErrorIs(bankKeeper.InputOutputCoins(ctx,
 		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
-		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
-	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
-	// return attached fund of failed transaction
-	err = bankKeeper.SendCoins(ctx, extensionCWAddress, issuer, coinsToSend)
-	requireT.NoError(err)
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}}), types.ErrWhitelistedLimitExceeded)
 
-	// set whitelisted balance to 100
-	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(100))))
-	whitelistedBalance = ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), whitelistedBalance.String())
+	// set whitelisted balance (for 2 sends)
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, coinToSend.Add(coinToSend)))
 
-	// test query all whitelisted balances
-	allBalances, pageRes, err := ftKeeper.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{})
-	requireT.NoError(err)
-	assertT.Len(allBalances, 1)
-	assertT.EqualValues(1, pageRes.GetTotal())
-	assertT.EqualValues(recipient.String(), allBalances[0].Address)
-	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))).String(), allBalances[0].Coins.String())
-
-	coinsToSend = sdk.NewCoins(
-		sdk.NewCoin(denom, sdkmath.NewInt(50)),
-		sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(50)),
+	// check that expected to fail extension call fails
+	err = bankKeeper.SendCoins(ctx, settings.Issuer, recipient, sdk.NewCoins(
+		sdk.NewCoin(denom, AmountDisallowedTrigger)),
 	)
-	// send
-	err = bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend)
-	requireT.NoError(err)
+	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
+	requireT.ErrorContains(err, "7 is not allowed")
+
+	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend))
 	// multi-send
-	err = bankKeeper.InputOutputCoins(ctx,
+	requireT.NoError(bankKeeper.InputOutputCoins(ctx,
 		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
-		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
-	requireT.NoError(err)
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}}))
 
 	bankBalance := bankKeeper.GetBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), bankBalance.String())
-
-	whitelistedBalance = ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), whitelistedBalance.String())
+	requireT.Equal(coinToSend.Add(coinToSend).String(), bankBalance.String())
 
 	// try to send more
 	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1)))
 	// send
-	err = bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend)
-	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
-	// return attached fund of failed transaction
-	err = bankKeeper.SendCoins(ctx, extensionCWAddress, issuer, coinsToSend)
-	requireT.NoError(err)
+	requireT.ErrorIs(bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend), types.ErrWhitelistedLimitExceeded)
 	// multi-send
-	err = bankKeeper.InputOutputCoins(ctx,
+	requireT.ErrorIs(bankKeeper.InputOutputCoins(ctx,
 		banktypes.Input{Address: issuer.String(), Coins: coinsToSend},
-		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
-	requireT.ErrorContains(err, "Whitelisted limit exceeded.")
-	// return attached fund of failed transaction
-	err = bankKeeper.SendCoins(ctx, extensionCWAddress, issuer, coinsToSend)
-	requireT.NoError(err)
-
-	// sending trigger amount will be transferred despite whitelisted amount being exceeded
-	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
-		sdk.NewCoin(denom, AmountIgnoreWhitelistingTrigger)),
-	)
-	requireT.NoError(err)
-
-	bankBalance = bankKeeper.GetBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(149)).String(), bankBalance.String())
-
-	whitelistedBalance = ftKeeper.GetWhitelistedBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), whitelistedBalance.String())
-
-	// reduce whitelisting limit below the current balance
-	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(80)))
-	requireT.NoError(err)
-
-	bankBalance = bankKeeper.GetBalance(ctx, issuer, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(517)).String(), bankBalance.String())
+		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}}), types.ErrWhitelistedLimitExceeded)
 }
 
 func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
@@ -342,6 +287,8 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	bankKeeper := testApp.BankKeeper
 
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient1 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	codeID, _, err := testApp.WasmPermissionedKeeper.Create(
 		ctx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
@@ -367,77 +314,49 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	denom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
-	token, err := ftKeeper.GetToken(ctx, denom)
-	requireT.NoError(err)
+	// check that expected to fail extension call fails
+	err = bankKeeper.SendCoins(ctx, settings.Issuer, recipient1, sdk.NewCoins(
+		sdk.NewCoin(denom, AmountDisallowedTrigger)),
+	)
+	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
+	requireT.ErrorContains(err, "7 is not allowed")
 
-	extensionCWAddress, err := sdk.AccAddressFromBech32(token.ExtensionCWAddress)
-	requireT.NoError(err)
-
-	unfreezableSettings := types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "ABC",
-		Subunit:       "abc",
-		Precision:     1,
-		Description:   "ABC Desc",
-		InitialAmount: sdkmath.NewInt(666),
-		Features:      []types.Feature{types.Feature_extension},
-		ExtensionSettings: &types.ExtensionIssueSettings{
-			CodeId: codeID,
-		},
-	}
-
-	unfreezableDenom, err := ftKeeper.Issue(ctx, unfreezableSettings)
-	requireT.NoError(err)
-	_, err = ftKeeper.GetToken(ctx, unfreezableDenom)
-	requireT.NoError(err)
-
-	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
+	// send coins to recipient1
+	err = bankKeeper.SendCoins(ctx, issuer, recipient1, sdk.NewCoins(
 		sdk.NewCoin(denom, sdkmath.NewInt(100)),
-		sdk.NewCoin(unfreezableDenom, sdkmath.NewInt(100)),
 	))
 	requireT.NoError(err)
 
-	// freeze, query frozen
-	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(120)))
-	requireT.NoError(err)
-	frozenBalance, err := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(120)), frozenBalance)
+	// freeze
+	requireT.NoError(ftKeeper.Freeze(ctx, issuer, recipient1, sdk.NewCoin(denom, sdkmath.NewInt(120))))
+
 	// try to send more than available
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(80)))
 	// send
-	err = bankKeeper.SendCoins(ctx, recipient, issuer, coinsToSend)
-	requireT.ErrorContains(err, "Requested transfer token is frozen.")
-	// return attached fund of failed transaction
-	err = bankKeeper.SendCoins(ctx, extensionCWAddress, recipient, coinsToSend)
-	requireT.NoError(err)
+	requireT.ErrorIs(bankKeeper.SendCoins(ctx, recipient1, recipient2, coinsToSend), cosmoserrors.ErrInsufficientFunds)
 	// multi-send
-	err = bankKeeper.InputOutputCoins(ctx,
-		banktypes.Input{Address: recipient.String(), Coins: coinsToSend},
-		[]banktypes.Output{{Address: issuer.String(), Coins: coinsToSend}})
-	requireT.ErrorContains(err, "Requested transfer token is frozen.")
-	// return attached fund of failed transaction
-	err = bankKeeper.SendCoins(ctx, extensionCWAddress, recipient, coinsToSend)
-	requireT.NoError(err)
-
-	bankBalance := bankKeeper.GetBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), bankBalance.String())
-	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(120)).String(), frozenBalance.String())
-
-	// send trigger amount to transfer despite freezing
-	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
-		sdk.NewCoin(denom, AmountIgnoreFreezingTrigger)),
+	requireT.ErrorIs(bankKeeper.InputOutputCoins(
+		ctx,
+		banktypes.Input{Address: recipient1.String(), Coins: coinsToSend},
+		[]banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}}),
+		cosmoserrors.ErrInsufficientFunds,
 	)
-	requireT.NoError(err)
 
-	bankBalance = bankKeeper.GetBalance(ctx, recipient, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(21)).String(), bankBalance.String())
-	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
-	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(120)).String(), frozenBalance.String())
+	// unfreeze
+	requireT.NoError(ftKeeper.Unfreeze(ctx, issuer, recipient1, sdk.NewCoin(denom, sdkmath.NewInt(120))))
+
+	// send
+	requireT.NoError(bankKeeper.SendCoins(ctx, recipient1, recipient2, coinsToSend))
+
+	// freeze globally
+	requireT.NoError(ftKeeper.SetGlobalFreeze(ctx, denom, true))
+
+	// try to send more than available
+	requireT.ErrorIs(
+		bankKeeper.SendCoins(
+			ctx, recipient1, recipient2, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1))),
+		), types.ErrGloballyFrozen,
+	)
 }
 
 func TestKeeper_Extension_Burn(t *testing.T) {
@@ -629,7 +548,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
 		sdk.NewCoin(burnableDenom, AmountBurningTrigger)),
 	)
-	requireT.ErrorContains(err, "Requested transfer token is frozen.")
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 }
 
 func TestKeeper_Extension_Mint(t *testing.T) {
