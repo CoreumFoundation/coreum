@@ -79,8 +79,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			}
 			if def == nil {
 				// if the token doesn't have the definition we validate DEX locking rule only.
-				balance := k.bankKeeper.GetBalance(ctx, sender, coin.Denom)
-				if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, balance, coin); err != nil {
+				if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, coin); err != nil {
 					return err
 				}
 
@@ -110,33 +109,10 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 			burnAmount := k.CalculateRate(ctx, def.BurnRate, sender, coin)
 			commissionAmount := k.CalculateRate(ctx, def.SendCommissionRate, sender, coin)
 
-			if def.IsFeatureEnabled(types.Feature_extension) {
-				balance := k.bankKeeper.GetBalance(ctx, sender, coin.Denom)
-				if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, balance, coin); err != nil {
-					return err
-				}
-
-				if err := k.invokeAssetExtension(ctx, sender, recipient, *def, coin, commissionAmount, burnAmount); err != nil {
-					return err
-				}
-				// We will not enforce any policies(e.g whitelisting, burn rate), apart from DEX locking, or perform bank
-				//	transfers if the token has extensions. It is up to the contract to enforce them as needed.
-				//	As a result we will skip the next operations in this for loop.
-				continue
-			}
-
 			senderOrReceiverIsAdmin := def.Admin == sender.String() || def.Admin == recipient.String()
 
-			if !senderOrReceiverIsAdmin && commissionAmount.IsPositive() {
-				adminAddr := sdk.MustAccAddressFromBech32(def.Admin)
-				commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
-				if err := k.bankKeeper.SendCoins(ctx, sender, adminAddr, commissionCoin); err != nil {
-					return err
-				}
-			}
-
-			if !senderOrReceiverIsAdmin && burnAmount.IsPositive() {
-				if err := k.burnIfSpendable(ctx, sender, *def, burnAmount); err != nil {
+			if !senderOrReceiverIsAdmin && !def.IsFeatureEnabled(types.Feature_extension) {
+				if err := k.applyCommissionAndBurnRate(ctx, sender, def, commissionAmount, burnAmount); err != nil {
 					return err
 				}
 			}
@@ -147,6 +123,15 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 
 			if err := k.validateCoinReceivable(ctx, recipient, *def, coin.Amount); err != nil {
 				return err
+			}
+
+			if def.IsFeatureEnabled(types.Feature_extension) {
+				if err := k.invokeAssetExtensionExtensionTransferMethod(
+					ctx, sender, recipient, *def, coin, commissionAmount, burnAmount,
+				); err != nil {
+					return err
+				}
+				continue
 			}
 
 			if err := k.bankKeeper.SendCoins(ctx, sender, recipient, sdk.NewCoins(coin)); err != nil {
@@ -161,10 +146,36 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 	return nil
 }
 
-// invokeAssetExtension calls the smart contract of the extension. This smart contract is
+func (k Keeper) applyCommissionAndBurnRate(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	def *types.Definition,
+	commissionAmount, burnAmount sdkmath.Int,
+) error {
+	if commissionAmount.IsPositive() {
+		adminAddr, err := sdk.AccAddressFromBech32(def.Admin)
+		if err != nil {
+			return err
+		}
+		commissionCoin := sdk.NewCoins(sdk.NewCoin(def.Denom, commissionAmount))
+		if err := k.bankKeeper.SendCoins(ctx, sender, adminAddr, commissionCoin); err != nil {
+			return err
+		}
+	}
+
+	if burnAmount.IsPositive() {
+		if err := k.burnIfSpendable(ctx, sender, *def, burnAmount); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// invokeAssetExtensionExtensionTransferMethod calls the smart contract of the extension. This smart contract is
 // responsible to enforce any policies and do the final tranfer. The amount attached to the call
 // is the send amount plus the burn and commission amount.
-func (k Keeper) invokeAssetExtension(
+func (k Keeper) invokeAssetExtensionExtensionTransferMethod(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	recipient sdk.AccAddress,

@@ -190,7 +190,7 @@ func (k Keeper) DEXIncreaseExpectedToReceive(ctx sdk.Context, addr sdk.AccAddres
 		)
 	}
 
-	shouldRecord, err := k.shouldRecordExpectedToReceiveBalance(ctx, coin.Denom)
+	shouldRecord, err := k.shouldRecordDEXExpectedToReceiveBalance(ctx, coin.Denom)
 	if err != nil {
 		return err
 	}
@@ -224,7 +224,7 @@ func (k Keeper) DEXDecreaseExpectedToReceive(ctx sdk.Context, addr sdk.AccAddres
 		)
 	}
 
-	shouldRecord, err := k.shouldRecordExpectedToReceiveBalance(ctx, coin.Denom)
+	shouldRecord, err := k.shouldRecordDEXExpectedToReceiveBalance(ctx, coin.Denom)
 	if err != nil {
 		return err
 	}
@@ -291,8 +291,7 @@ func (k Keeper) DEXIncreaseLocked(ctx sdk.Context, addr sdk.AccAddress, coin sdk
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "amount to lock DEX tokens must be positive")
 	}
 
-	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
-	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, balance, coin); err != nil {
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, addr, coin); err != nil {
 		return sdkerrors.Wrapf(types.ErrDEXInsufficientSpendableBalance, "%s", err)
 	}
 
@@ -395,8 +394,7 @@ func (k Keeper) dexCheckExpectedToSpend(
 	expectedToSpend, expectedToReceive sdk.Coin,
 ) error {
 	// validate that the order creator has enough balance, for both extension and non-extension coin
-	balance := k.bankKeeper.GetBalance(ctx, order.Creator, expectedToSpend.Denom)
-	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, order.Creator, balance, expectedToSpend); err != nil {
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, order.Creator, expectedToSpend); err != nil {
 		return sdkerrors.Wrapf(types.ErrDEXInsufficientSpendableBalance, "%s", err)
 	}
 
@@ -409,36 +407,22 @@ func (k Keeper) dexCheckExpectedToSpend(
 		return nil
 	}
 
+	if err := k.dexChecksForDenom(ctx, order.Creator, spendDef, expectedToReceive.Denom); err != nil {
+		return err
+	}
+
+	if err := k.validateCoinSpendable(ctx, order.Creator, *spendDef, expectedToSpend.Amount); err != nil {
+		return sdkerrors.Wrapf(types.ErrDEXInsufficientSpendableBalance, "err: %s", err)
+	}
+
 	if spendDef.IsFeatureEnabled(types.Feature_extension) {
 		extensionContract, err := sdk.AccAddressFromBech32(spendDef.ExtensionCWAddress)
 		if err != nil {
 			return err
 		}
-		return k.dexCallExtensionPlaceOrder(
+		return k.invokeAssetExtensionPlaceOrderMethod(
 			ctx, extensionContract, order, expectedToSpend, expectedToReceive,
 		)
-	}
-
-	if err := k.dexChecksForDenom(ctx, order.Creator, spendDef, expectedToReceive.Denom); err != nil {
-		return err
-	}
-
-	if spendDef.IsFeatureEnabled(types.Feature_freezing) && !spendDef.HasAdminPrivileges(order.Creator) {
-		frozenCoin, err := k.GetFrozenBalance(ctx, order.Creator, expectedToSpend.Denom)
-		if err != nil {
-			return err
-		}
-		frozenAmt := frozenCoin.Amount
-		notFrozenTotalAmt := balance.Amount.Sub(frozenAmt)
-		if notFrozenTotalAmt.LT(expectedToSpend.Amount) {
-			return sdkerrors.Wrapf(
-				types.ErrDEXInsufficientSpendableBalance,
-				"failed to DEX lock %s available %s%s",
-				expectedToSpend.String(),
-				notFrozenTotalAmt,
-				expectedToSpend.Denom,
-			)
-		}
 	}
 
 	return nil
@@ -457,30 +441,28 @@ func (k Keeper) dexCheckExpectedToReceive(
 		return nil
 	}
 
+	if err := k.dexChecksForDenom(ctx, order.Creator, receiveDef, expectedToSpend.Denom); err != nil {
+		return err
+	}
+
+	if err := k.validateCoinReceivable(ctx, order.Creator, *receiveDef, expectedToReceive.Amount); err != nil {
+		return err
+	}
+
 	if receiveDef.IsFeatureEnabled(types.Feature_extension) {
 		extensionContract, err := sdk.AccAddressFromBech32(receiveDef.ExtensionCWAddress)
 		if err != nil {
 			return err
 		}
-		return k.dexCallExtensionPlaceOrder(
+		return k.invokeAssetExtensionPlaceOrderMethod(
 			ctx, extensionContract, order, expectedToSpend, expectedToReceive,
 		)
-	}
-
-	if err := k.dexChecksForDenom(ctx, order.Creator, receiveDef, expectedToSpend.Denom); err != nil {
-		return err
-	}
-
-	if receiveDef.IsFeatureEnabled(types.Feature_whitelisting) && !receiveDef.HasAdminPrivileges(order.Creator) {
-		if err := k.validateWhitelistedBalance(ctx, order.Creator, expectedToReceive); err != nil {
-			return err
-		}
 	}
 
 	return nil
 }
 
-func (k Keeper) dexCallExtensionPlaceOrder(
+func (k Keeper) invokeAssetExtensionPlaceOrderMethod(
 	ctx sdk.Context,
 	extensionContract sdk.AccAddress,
 	order types.DEXOrder,
@@ -647,8 +629,9 @@ func (k Keeper) updateDEXSettings(
 func (k Keeper) validateCoinIsNotLockedByDEXAndBank(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
-	balance, coin sdk.Coin,
+	coin sdk.Coin,
 ) error {
+	balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
 	dexLockedAmt := k.GetDEXLockedBalance(ctx, addr, coin.Denom).Amount
 	availableAmt := balance.Amount.Sub(dexLockedAmt)
 	if availableAmt.LT(coin.Amount) {
@@ -679,13 +662,13 @@ func (k Keeper) dexExpectedToReceiveAccountBalanceStore(ctx sdk.Context, addr sd
 	return newBalanceStore(k.cdc, runtime.KVStoreAdapter(store), types.CreateDEXExpectedToReceiveBalancesKey(addr))
 }
 
-func (k Keeper) shouldRecordExpectedToReceiveBalance(ctx sdk.Context, denom string) (bool, error) {
+func (k Keeper) shouldRecordDEXExpectedToReceiveBalance(ctx sdk.Context, denom string) (bool, error) {
 	def, err := k.getDefinitionOrNil(ctx, denom)
 	if err != nil {
 		return false, err
 	}
 	// increase for FT with the whitelisting enabled only
-	if def != nil && (def.IsFeatureEnabled(types.Feature_whitelisting) || def.IsFeatureEnabled(types.Feature_extension)) {
+	if def != nil && def.IsFeatureEnabled(types.Feature_whitelisting) {
 		return true, nil
 	}
 
