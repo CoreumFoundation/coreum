@@ -30,7 +30,7 @@ const AMOUNT_IGNORE_BURN_RATE_TRIGGER: Uint128 = Uint128::new(108);
 const AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER: Uint128 = Uint128::new(109);
 const AMOUNT_BLOCK_IBC_TRIGGER: Uint128 = Uint128::new(110);
 const AMOUNT_BLOCK_SMART_CONTRACT_TRIGGER: Uint128 = Uint128::new(111);
-const ID_DEX_ORDER_TRIGGER: &str = "id-blocked";
+const ID_DEX_ORDER_SUFFIX_TRIGGER: &str = "blocked";
 const AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER: Uint128 = Uint128::new(103);
 const AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER: Uint128 = Uint128::new(104);
 
@@ -183,7 +183,7 @@ pub fn sudo_extension_place_order(
     expected_to_spend: Coin,
     expected_to_receive: Coin,
 ) -> CoreumResult<ContractError> {
-    if order.id == ID_DEX_ORDER_TRIGGER
+    if order.id.ends_with(ID_DEX_ORDER_SUFFIX_TRIGGER)
         || expected_to_spend.amount == AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER.to_string()
         || expected_to_receive.amount == AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER.to_string()
     {
