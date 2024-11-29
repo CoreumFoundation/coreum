@@ -78,21 +78,25 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 
 // ensureReleasedBinaries ensures that all previous cored versions are installed.
 func ensureReleasedBinaries(ctx context.Context, deps types.DepsFunc) error {
-	for _, binaryTool := range []tools.Name{
-		tools.CoredV303,
-		tools.CoredV401,
-	} {
-		if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
-			return err
-		}
-		if err := tools.CopyToolBinaries(
-			binaryTool,
-			tools.TargetPlatformLinuxLocalArchInDocker,
-			filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String()),
-			fmt.Sprintf("bin/%s", binaryTool)); err != nil {
-			return err
-		}
+	const binaryTool = tools.CoredV401
+	if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
+		return err
 	}
-
-	return nil
+	if err := tools.CopyToolBinaries(
+		binaryTool,
+		tools.TargetPlatformLinuxLocalArchInDocker,
+		filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String()),
+		fmt.Sprintf("bin/%s", binaryTool)); err != nil {
+		return err
+	}
+	// copy the release binary for the local platform to use for the genesis generation
+	if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLocal); err != nil {
+		return err
+	}
+	return tools.CopyToolBinaries(
+		binaryTool,
+		tools.TargetPlatformLocal,
+		filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLocal.String()),
+		fmt.Sprintf("bin/%s", binaryTool),
+	)
 }
