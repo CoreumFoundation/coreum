@@ -33,6 +33,63 @@ const (
 	AmountBlockIBCTrigger                 = 110
 )
 
+func TestExtensionIBCFailsWithIBCProhibitedAmount(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	coreumChain := chains.Coreum
+	coreumIssuer := coreumChain.GenAccount()
+
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
+		Amount: issueFee.
+			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload.
+			Add(sdkmath.NewInt(2 * 500_000)),
+	})
+
+	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
+		ctx, chains.Coreum.TxFactory().WithSimulateAndExecute(true), coreumIssuer, testcontracts.AssetExtensionWasm,
+	)
+	requireT.NoError(err)
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        coreumIssuer.String(),
+		Symbol:        "mysymbol",
+		Subunit:       "mysubunit",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(1_000_000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_extension,
+			assetfttypes.Feature_ibc,
+		},
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId: codeID,
+			Label:  "testing-ibc",
+		},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+		coreumChain.TxFactoryAuto(),
+		issueMsg,
+	)
+	require.NoError(t, err)
+
+	gaiaChain := chains.Gaia
+	_, err = coreumChain.ExecuteIBCTransfer(
+		ctx,
+		t,
+		coreumChain.TxFactory().WithGas(500_000),
+		coreumIssuer,
+		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(AmountBlockIBCTrigger)),
+		gaiaChain.ChainContext,
+		gaiaChain.GenAccount(),
+	)
+	requireT.ErrorContains(err, "IBC feature is disabled.")
+}
+
 func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 	t.Parallel()
 
@@ -82,11 +139,11 @@ func TestExtensionIBCFailsIfNotEnabled(t *testing.T) {
 		t,
 		coreumChain.TxFactory().WithGas(500_000),
 		coreumIssuer,
-		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(AmountBlockIBCTrigger)),
+		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(10)),
 		gaiaChain.ChainContext,
 		gaiaChain.GenAccount(),
 	)
-	requireT.ErrorContains(err, "IBC feature is disabled.")
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
@@ -132,6 +189,7 @@ func TestExtensionIBCAssetFTWhitelisting(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_whitelisting,
 			assetfttypes.Feature_extension,
 		},
@@ -396,6 +454,7 @@ func TestExtensionEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_extension,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
@@ -520,6 +579,7 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(1_000_000),
 			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_ibc,
 				assetfttypes.Feature_extension,
 			},
 			ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -655,6 +715,7 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_extension,
 		},
@@ -795,6 +856,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		BurnRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
 		SendCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.2"),
 		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1008,6 +1070,7 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(1_000_000),
 		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
 			assetfttypes.Feature_extension,
@@ -1158,6 +1221,7 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(1_000_000),
 			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_ibc,
 				assetfttypes.Feature_whitelisting,
 				assetfttypes.Feature_freezing,
 				assetfttypes.Feature_extension,
@@ -1344,6 +1408,7 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 		Precision:     8,
 		InitialAmount: sdkmath.NewInt(910_000),
 		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
 			assetfttypes.Feature_extension,
 		},
 		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
@@ -1479,6 +1544,7 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 			Precision:     8,
 			InitialAmount: sdkmath.NewInt(910_000),
 			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_ibc,
 				assetfttypes.Feature_extension,
 			},
 			ExtensionSettings: &assetfttypes.ExtensionIssueSettings{

@@ -4,11 +4,10 @@ use crate::msg::{
     TransferContext,
 };
 use crate::state::{DENOM, EXTRA_DATA};
-use coreum_wasm_sdk::deprecated::assetft::{FREEZING, WHITELISTING};
 use coreum_wasm_sdk::deprecated::core::{CoreumMsg, CoreumResult};
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
     MsgBurn, MsgMint, QueryFrozenBalanceRequest, QueryFrozenBalanceResponse, QueryTokenRequest,
-    QueryTokenResponse, QueryWhitelistedBalanceRequest, QueryWhitelistedBalanceResponse, Token,
+    QueryTokenResponse, Token,
 };
 use coreum_wasm_sdk::types::cosmos::bank::v1beta1::{
     MsgSend, QueryBalanceRequest, QueryBalanceResponse,
@@ -25,8 +24,6 @@ const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const AMOUNT_DISALLOWED_TRIGGER: Uint128 = Uint128::new(7);
-const AMOUNT_IGNORE_WHITELISTING_TRIGGER: Uint128 = Uint128::new(49);
-const AMOUNT_IGNORE_FREEZING_TRIGGER: Uint128 = Uint128::new(79);
 const AMOUNT_BURNING_TRIGGER: Uint128 = Uint128::new(101);
 const AMOUNT_MINTING_TRIGGER: Uint128 = Uint128::new(105);
 const AMOUNT_IGNORE_BURN_RATE_TRIGGER: Uint128 = Uint128::new(108);
@@ -125,14 +122,6 @@ pub fn sudo_extension_transfer(
     let token = query_token(deps.as_ref(), &denom)?;
 
     if !&token.features.is_empty() {
-        if token.features.contains(&(FREEZING as i32)) {
-            assert_freezing(&context, deps.as_ref(), sender.as_ref(), &token, amount)?;
-        }
-
-        if token.features.contains(&(WHITELISTING as i32)) {
-            assert_whitelisting(&context, deps.as_ref(), &recipient, &token, amount)?;
-        }
-
         assert_block_smart_contracts(&context, &recipient, &token, amount)?;
 
         assert_ibc(&context, &recipient, &token, amount)?;
@@ -159,7 +148,7 @@ pub fn sudo_extension_transfer(
             denom: token.denom.to_string(),
             amount: amount.to_string(),
         }]
-        .to_vec(),
+            .to_vec(),
     };
 
     let mut response = rsp.add_message(CosmosMsg::Any(transfer_msg.to_any()));
@@ -216,80 +205,6 @@ fn query_issuance_msg(deps: Deps) -> StdResult<Binary> {
     to_json_binary(&resp)
 }
 
-fn assert_freezing(
-    context: &TransferContext,
-    deps: Deps,
-    account: &str,
-    token: &Token,
-    amount: Uint128,
-) -> Result<(), ContractError> {
-    // Allow any amount if recipient is admin
-    if token.admin == account {
-        return Ok(());
-    }
-
-    // Ignore freezing if the transfer is an IBC transfer in. In case of IBC transfer coming into the chain
-    // source account is the escrow account and since we don't want to allow freeze of every
-    // escrow address we ignore freezing for incoming ibc transfers.
-    if context.ibc_purpose == IBCPurpose::In {
-        return Ok(());
-    }
-
-    if amount == AMOUNT_IGNORE_FREEZING_TRIGGER {
-        return Ok(());
-    }
-
-    if token.globally_frozen {
-        return Err(ContractError::FreezingError {});
-    }
-
-    let bank_balance = query_bank_balance(deps, account, &token.denom)?;
-    let frozen_balance = query_frozen_balance(deps, account, &token.denom)?;
-
-    // the amount is already deducted from the balance, so you can omit it from both sides
-    if frozen_balance.amount.parse::<u128>().unwrap() > bank_balance.amount.parse::<u128>().unwrap()
-    {
-        return Err(ContractError::FreezingError {});
-    }
-
-    Ok(())
-}
-
-fn assert_whitelisting(
-    context: &TransferContext,
-    deps: Deps,
-    account: &str,
-    token: &Token,
-    amount: Uint128,
-) -> Result<(), ContractError> {
-    // Allow any amount if recipient is admin
-    if token.admin == account {
-        return Ok(());
-    }
-
-    // Ignore whitelising if the transfer is an IBC transfer. In case of IBC transfer
-    // destination account is the escrow account and since we don't want to whitelist every
-    // escrow address we ignore whitelisting for outgoing ibc transfers.
-    if context.ibc_purpose == IBCPurpose::Out {
-        return Ok(());
-    }
-
-    if amount == AMOUNT_IGNORE_WHITELISTING_TRIGGER {
-        return Ok(());
-    }
-
-    let bank_balance = query_bank_balance(deps, account, &token.denom)?;
-    let whitelisted_balance = query_whitelisted_balance(deps, account, &token.denom)?;
-
-    if amount + Uint128::from(bank_balance.amount.parse::<u128>().unwrap())
-        > Uint128::from(whitelisted_balance.amount.parse::<u128>().unwrap())
-    {
-        return Err(ContractError::WhitelistingError {});
-    }
-
-    Ok(())
-}
-
 fn assert_burning(contract: &str, amount: Uint128, token: &Token) -> CoreumResult<ContractError> {
     let burn_message = MsgBurn {
         sender: contract.to_string(),
@@ -327,7 +242,7 @@ fn assert_minting(
             denom: token.denom.to_string(),
             amount: amount.to_string(),
         }]
-        .to_vec(),
+            .to_vec(),
     };
 
     Ok(Response::new()
@@ -386,7 +301,7 @@ fn assert_send_commission_rate(
                 denom: token.denom.to_string(),
                 amount: commission_amount.to_string(),
             }]
-            .to_vec(),
+                .to_vec(),
         };
 
         return Ok(response
@@ -409,7 +324,7 @@ fn assert_send_commission_rate(
                 denom: token.denom.to_string(),
                 amount: admin_commission_amount.to_string(),
             }]
-            .to_vec(),
+                .to_vec(),
         };
 
         return Ok(response
@@ -440,7 +355,7 @@ fn assert_burn_rate(
                 denom: token.denom.to_string(),
                 amount: burn_amount.to_string(),
             }]
-            .to_vec(),
+                .to_vec(),
         };
 
         return Ok(response
@@ -468,15 +383,6 @@ fn query_frozen_balance(deps: Deps, account: &str, denom: &str) -> StdResult<Coi
     };
     let frozen_balance: QueryFrozenBalanceResponse = request.query(&deps.querier)?;
     Ok(frozen_balance.balance.unwrap_or_default())
-}
-
-fn query_whitelisted_balance(deps: Deps, account: &str, denom: &str) -> StdResult<Coin> {
-    let request = QueryWhitelistedBalanceRequest {
-        account: account.to_string(),
-        denom: denom.to_string(),
-    };
-    let whitelisted_balance: QueryWhitelistedBalanceResponse = request.query(&deps.querier)?;
-    Ok(whitelisted_balance.balance.unwrap_or_default())
 }
 
 fn query_bank_balance(deps: Deps, account: &str, denom: &str) -> StdResult<Coin> {
