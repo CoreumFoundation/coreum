@@ -11,6 +11,7 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
+	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
@@ -30,7 +32,7 @@ type FuzzAppConfig struct {
 	AssetFTDefaultDenomsCount     int
 	AssetFTWhitelistingCount      int
 	AssetFTFreezingDenomsCount    int
-	AssetFTWhitelistedDenomsCount int
+	AssetFTExtensionDenomsCount   int
 	AssetFTAllFeaturesDenomsCount int
 	NativeDenomCount              int
 
@@ -42,11 +44,12 @@ type FuzzAppConfig struct {
 	CancelOrdersPercent        int
 	CancelOrdersByDenomPercent int
 
-	MarketOrdersPercent       int
-	TimeInForceIOCPercent     int
-	TimeInForceFOKPercent     int
-	GoodTilBlockHeightPercent int
-	GoodTilBlockTimePercent   int
+	MarketOrdersPercent             int
+	TimeInForceIOCPercent           int
+	TimeInForceFOKPercent           int
+	GoodTilBlockHeightPercent       int
+	GoodTilBlockTimePercent         int
+	ProhibitedExtensionOrderPercent int
 
 	FundOrderReservePercent     int
 	CreateVestingAccountPercent int
@@ -95,6 +98,11 @@ func NewFuzzApp(
 		return denom
 	})
 
+	extensionCodeID, _, err := testApp.WasmPermissionedKeeper.Create(
+		sdkCtx, issuer, testcontracts.AssetExtensionWasm, &wasmtypes.AllowEverybody,
+	)
+	require.NoError(t, err)
+
 	ftDenoms := make([]string, 0)
 	defaultFTSettings := assetfttypes.IssueSettings{
 		Issuer:        issuer,
@@ -140,6 +148,21 @@ func NewFuzzApp(
 		require.NoError(t, err)
 		return denom
 	})...)
+	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTExtensionDenomsCount, func(i int) string {
+		settings := defaultFTSettings
+		settings.Symbol = fmt.Sprintf("EXT%d", i)
+		settings.Subunit = fmt.Sprintf("ext%d", i)
+		settings.Features = append(
+			settings.Features,
+			assetfttypes.Feature_extension,
+		)
+		settings.ExtensionSettings = &assetfttypes.ExtensionIssueSettings{
+			CodeId: extensionCodeID,
+		}
+		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
+		require.NoError(t, err)
+		return denom
+	})...)
 	ftDenoms = append(ftDenoms, lo.RepeatBy(cfg.AssetFTAllFeaturesDenomsCount, func(i int) string {
 		settings := defaultFTSettings
 		settings.Symbol = fmt.Sprintf("ALL%d", i)
@@ -149,7 +172,11 @@ func NewFuzzApp(
 			assetfttypes.Feature_whitelisting,
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_dex_whitelisted_denoms,
+			assetfttypes.Feature_extension,
 		)
+		settings.ExtensionSettings = &assetfttypes.ExtensionIssueSettings{
+			CodeId: extensionCodeID,
+		}
 		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
 		require.NoError(t, err)
 		return denom
@@ -293,10 +320,15 @@ func (fa *FuzzApp) GenOrder(
 		quantity = 1
 	}
 
+	var orderIDSuffix string
+	if randBoolWithPercent(rnd, fa.cfg.ProhibitedExtensionOrderPercent) {
+		orderIDSuffix = IDDEXOrderSuffixTrigger
+	}
+
 	return types.Order{
 		Creator:     creator.String(),
 		Type:        orderType,
-		ID:          randString(20, rnd),
+		ID:          randString(20, rnd) + orderIDSuffix,
 		BaseDenom:   baseDenom,
 		QuoteDenom:  quoteDenom,
 		Price:       price,
@@ -519,6 +551,9 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 				receivableAmt.String(), requiredWhitelistedAmt.String(),
 			)
 			return
+		case sdkerrors.IsOf(err, assetfttypes.ErrExtensionCallFailed):
+			// the error is expected, the failure is cased by extension smart contract
+			return
 		case strings.Contains(err.Error(), "the price must be multiple of"), // price tick
 			strings.Contains(err.Error(), "good til"),
 			strings.Contains(err.Error(), "it's prohibited to save more than"),
@@ -604,6 +639,7 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				AssetFTDefaultDenomsCount:     2,
 				AssetFTWhitelistingCount:      2,
 				AssetFTFreezingDenomsCount:    2,
+				AssetFTExtensionDenomsCount:   2,
 				AssetFTAllFeaturesDenomsCount: 2,
 				NativeDenomCount:              2,
 
@@ -614,11 +650,12 @@ func FuzzPlaceCancelOrder(f *testing.F) {
 				CancelOrdersPercent:        5,
 				CancelOrdersByDenomPercent: 2,
 
-				MarketOrdersPercent:       8,
-				TimeInForceIOCPercent:     4,
-				TimeInForceFOKPercent:     4,
-				GoodTilBlockHeightPercent: 10,
-				GoodTilBlockTimePercent:   10,
+				MarketOrdersPercent:             8,
+				TimeInForceIOCPercent:           4,
+				TimeInForceFOKPercent:           4,
+				GoodTilBlockHeightPercent:       10,
+				GoodTilBlockTimePercent:         10,
+				ProhibitedExtensionOrderPercent: 10,
 
 				FundOrderReservePercent:     80,
 				CreateVestingAccountPercent: 25, // 25% of accounts will be vesting accounts
