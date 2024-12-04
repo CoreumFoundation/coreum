@@ -25,6 +25,7 @@ import (
 )
 
 var (
+	IDDEXOrderSuffixTrigger         = "blocked"
 	AmountDEXExpectToSpendTrigger   = sdkmath.NewInt(103)
 	AmountDEXExpectToReceiveTrigger = sdkmath.NewInt(104)
 )
@@ -83,7 +84,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 			wantDEXErr: false,
 		},
 		{
-			name: "sell_dex_error",
+			name: "sell_dex_error_spend_amount",
 			order: types.Order{
 				Creator: func() string {
 					creator, _ := testApp.GenAccount(sdkCtx)
@@ -95,6 +96,24 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				QuoteDenom:  denom2,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
 				Quantity:    AmountDEXExpectToSpendTrigger,
+				Side:        types.SIDE_SELL,
+				TimeInForce: types.TIME_IN_FORCE_GTC,
+			},
+			wantDEXErr: true,
+		},
+		{
+			name: "sell_dex_error_order_id",
+			order: types.Order{
+				Creator: func() string {
+					creator, _ := testApp.GenAccount(sdkCtx)
+					return creator.String()
+				}(),
+				Type:        types.ORDER_TYPE_LIMIT,
+				ID:          uuid.Generate().String()[:10] + IDDEXOrderSuffixTrigger,
+				BaseDenom:   denomWithExtension,
+				QuoteDenom:  denom2,
+				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
+				Quantity:    sdkmath.NewInt(10),
 				Side:        types.SIDE_SELL,
 				TimeInForce: types.TIME_IN_FORCE_GTC,
 			},
@@ -119,7 +138,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 			wantDEXErr: false,
 		},
 		{
-			name: "buy_dex_error",
+			name: "buy_dex_error_receive_amount",
 			order: types.Order{
 				Creator: func() string {
 					creator, _ := testApp.GenAccount(sdkCtx)
@@ -147,9 +166,11 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 			if !tt.wantDEXErr {
 				require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, tt.order))
 			} else {
+				err := testApp.DEXKeeper.PlaceOrder(sdkCtx, tt.order)
+				require.ErrorIs(t, err, assetfttypes.ErrExtensionCallFailed)
 				require.ErrorContains(
 					t,
-					testApp.DEXKeeper.PlaceOrder(sdkCtx, tt.order),
+					err,
 					"wasm error: DEX order placement is failed",
 				)
 			}
