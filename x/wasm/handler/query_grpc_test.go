@@ -19,7 +19,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/wasm/handler"
 )
 
-func TestGRPCQuerier_Query(t *testing.T) {
+func TestGRPCQuerier(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
@@ -47,15 +47,17 @@ func TestGRPCQuerier_Query(t *testing.T) {
 	wasmGrpcData, err := testApp.AppCodec().Marshal(queryTokenReq)
 	require.NoError(t, err)
 
-	eg, _ := errgroup.WithContext(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 	for range 1000 {
+		// rebuild the ctx
+		routineSDKCtx := testApp.BaseApp.NewContext(false)
 		eg.Go(func() error {
 			wasmGrpcReq := &wasmvmtypes.GrpcQuery{
 				Data: wasmGrpcData,
 				// url which corresponds query token
 				Path: "/coreum.asset.ft.v1.Query/Token",
 			}
-			wasmGrpcRes, err := q.Query(sdkCtx, wasmGrpcReq)
+			wasmGrpcRes, err := q.Query(routineSDKCtx, wasmGrpcReq)
 			if err != nil {
 				return err
 			}
