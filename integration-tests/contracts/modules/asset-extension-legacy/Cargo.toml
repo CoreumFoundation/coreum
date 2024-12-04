@@ -1,0 +1,37 @@
+[package]
+name = "asset-extension-legacy"
+version = "0.1.0"
+authors = ["Coreum"]
+edition = "2021"
+
+exclude = [
+  "asset-extension-legacy.wasm",
+  "checksums.txt",
+]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+library = []
+
+[dependencies]
+cosmwasm-std = "1.5.4"
+cosmwasm-storage = "1.2.5"
+cw2 = "1.0.1"
+thiserror = "1.0.40"
+cosmwasm-schema = {git = "https://github.com/CosmWasm/cosmwasm" ,package="cosmwasm-schema", rev= "3f8bd842742bc94aa60f587f79dd66b782928b15"}
+coreum-wasm-sdk = "1.0.0" # we use old version intentionally
+cw-storage-plus = "1.0.1"

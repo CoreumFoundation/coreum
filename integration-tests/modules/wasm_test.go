@@ -2597,7 +2597,7 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		moduleswasm.NftLegacyWASM,
+		moduleswasm.NFTLegacyWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerNFTInstantiatePayload,
@@ -2698,7 +2698,7 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		moduleswasm.NftLegacyWASM,
+		moduleswasm.NFTLegacyWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerNFTInstantiatePayload,
