@@ -53,8 +53,9 @@ func TestUpgrade(t *testing.T) {
 func upgradeV4ToV5(t *testing.T) {
 	tests := []upgradeTest{
 		&cosmosSDKVersion{},
-		&dex{},
 		&gov{},
+		&dex{},
+		&assetft{},
 	}
 
 	for _, test := range tests {
