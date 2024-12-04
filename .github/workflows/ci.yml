@@ -54,6 +54,10 @@ jobs:
     steps:
       - name: Go version used to build builder
         run: go version
+      - name: Go env check
+        run: go env
+      - name: Env check
+        run: env
       - name: Checkout coreum
         uses: actions/checkout@v4
         with:
