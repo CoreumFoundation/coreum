@@ -22,6 +22,7 @@ pub struct DEXOrder {
     #[serde(rename = "type")]
     pub order_type: String,
     pub id: String,
+    pub sequence: u64,
     pub base_denom: String,
     pub quote_denom: String,
     pub price: Option<String>,
