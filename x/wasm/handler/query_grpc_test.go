@@ -47,7 +47,7 @@ func TestGRPCQuerier(t *testing.T) {
 	wasmGrpcData, err := testApp.AppCodec().Marshal(queryTokenReq)
 	require.NoError(t, err)
 
-	eg, ctx := errgroup.WithContext(ctx)
+	eg, _ := errgroup.WithContext(ctx)
 	for range 1000 {
 		// rebuild the ctx
 		routineSDKCtx := testApp.BaseApp.NewContext(false)
