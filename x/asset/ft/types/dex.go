@@ -25,6 +25,7 @@ type DEXOrder struct {
 	Creator    sdk.AccAddress `json:"creator"`
 	Type       string         `json:"type"`
 	ID         string         `json:"id"`
+	Sequence   uint64         `json:"sequence"`
 	BaseDenom  string         `json:"base_denom"`
 	QuoteDenom string         `json:"quote_denom"`
 	Price      *string        `json:"price,omitempty"` // might be nil

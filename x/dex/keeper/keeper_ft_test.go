@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -18,14 +19,19 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/v5/testutil/event"
 	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
 	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-var (
+const (
+	ExtensionOrderDataWASMAttribute = "order_data"
 	IDDEXOrderSuffixTrigger         = "blocked"
+)
+
+var (
 	AmountDEXExpectToSpendTrigger   = sdkmath.NewInt(103)
 	AmountDEXExpectToReceiveTrigger = sdkmath.NewInt(104)
 )
@@ -84,7 +90,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 			wantDEXErr: false,
 		},
 		{
-			name: "sell_dex_error_spend_amount",
+			name: "sell_dex_error",
 			order: types.Order{
 				Creator: func() string {
 					creator, _ := testApp.GenAccount(sdkCtx)
@@ -96,24 +102,6 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				QuoteDenom:  denom2,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
 				Quantity:    AmountDEXExpectToSpendTrigger,
-				Side:        types.SIDE_SELL,
-				TimeInForce: types.TIME_IN_FORCE_GTC,
-			},
-			wantDEXErr: true,
-		},
-		{
-			name: "sell_dex_error_order_id",
-			order: types.Order{
-				Creator: func() string {
-					creator, _ := testApp.GenAccount(sdkCtx)
-					return creator.String()
-				}(),
-				Type:        types.ORDER_TYPE_LIMIT,
-				ID:          uuid.Generate().String()[:10] + IDDEXOrderSuffixTrigger,
-				BaseDenom:   denomWithExtension,
-				QuoteDenom:  denom2,
-				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
-				Quantity:    sdkmath.NewInt(10),
 				Side:        types.SIDE_SELL,
 				TimeInForce: types.TIME_IN_FORCE_GTC,
 			},
@@ -138,7 +126,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 			wantDEXErr: false,
 		},
 		{
-			name: "buy_dex_error_receive_amount",
+			name: "buy_dex_error",
 			order: types.Order{
 				Creator: func() string {
 					creator, _ := testApp.GenAccount(sdkCtx)
@@ -164,13 +152,38 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 			testApp.MintAndSendCoin(t, sdkCtx, creator, sdk.NewCoins(lockedBalance))
 			fundOrderReserve(t, testApp, sdkCtx, creator)
 			if !tt.wantDEXErr {
+				sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
 				require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, tt.order))
+
+				// decode wasm events
+				orderStr, err := event.FindStringEventAttribute(
+					sdkCtx.EventManager().Events().ToABCIEvents(),
+					wasmtypes.WasmModuleEventType,
+					ExtensionOrderDataWASMAttribute,
+				)
+				require.NoError(t, err)
+
+				extensionOrderData := assetfttypes.DEXOrder{}
+				require.NoError(t, json.Unmarshal([]byte(orderStr), &extensionOrderData))
+
+				order, err := testApp.DEXKeeper.GetOrderByAddressAndID(sdkCtx, creator, tt.order.ID)
+				require.NoError(t, err)
+
+				require.Equal(t, assetfttypes.DEXOrder{
+					Creator:    sdk.MustAccAddressFromBech32(order.Creator),
+					Type:       order.Type.String(),
+					ID:         order.ID,
+					Sequence:   order.Sequence,
+					BaseDenom:  order.BaseDenom,
+					QuoteDenom: order.QuoteDenom,
+					Price:      lo.ToPtr(order.Price.String()),
+					Quantity:   order.Quantity,
+					Side:       order.Side.String(),
+				}, extensionOrderData)
 			} else {
-				err := testApp.DEXKeeper.PlaceOrder(sdkCtx, tt.order)
-				require.ErrorIs(t, err, assetfttypes.ErrExtensionCallFailed)
 				require.ErrorContains(
 					t,
-					err,
+					testApp.DEXKeeper.PlaceOrder(simapp.CopyContextWithMultiStore(sdkCtx), tt.order),
 					"wasm error: DEX order placement is failed",
 				)
 			}

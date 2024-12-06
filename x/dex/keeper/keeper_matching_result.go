@@ -46,6 +46,7 @@ func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 				Creator:    takerAddress,
 				Type:       order.Type.String(),
 				ID:         order.ID,
+				Sequence:   order.Sequence,
 				BaseDenom:  order.BaseDenom,
 				QuoteDenom: order.QuoteDenom,
 				Price:      orderStrPrice,

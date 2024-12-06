@@ -6,11 +6,10 @@ use crate::msg::{
 use crate::state::{DENOM, EXTRA_DATA};
 use coreum_wasm_sdk::deprecated::core::{CoreumMsg, CoreumResult};
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
-    MsgBurn, MsgMint, QueryFrozenBalanceRequest, QueryFrozenBalanceResponse, QueryTokenRequest,
-    QueryTokenResponse, Token,
+    MsgBurn, MsgMint, QueryTokenRequest, QueryTokenResponse, Token,
 };
 use coreum_wasm_sdk::types::cosmos::bank::v1beta1::{
-    MsgSend, QueryBalanceRequest, QueryBalanceResponse,
+    MsgSend,
 };
 use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
 use cosmwasm_std::{entry_point, to_json_binary, CosmosMsg, StdError};
@@ -18,6 +17,7 @@ use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 use cw2::set_contract_version;
 use std::ops::Div;
 use std::string::ToString;
+use cosmwasm_schema::schemars::_serde_json::to_string;
 
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -189,7 +189,15 @@ pub fn sudo_extension_place_order(
     {
         return Err(ContractError::DEXOrderPlacementError {});
     }
-    Ok(Response::new().add_attribute("method", "extension_place_order"))
+
+    let order_data = to_string(&order).
+        map_err(|_| ContractError::Std(StdError::generic_err("failed to serialize order to json string")))?;
+
+    Ok(
+        Response::new()
+            .add_attribute("method", "extension_place_order")
+            .add_attribute("order_data", order_data)
+    )
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -374,24 +382,6 @@ fn assert_burn_rate(
     Ok(response
         .add_attribute("burn_amount", burn_amount)
         .add_message(CosmosMsg::Any(burn_message.to_any())))
-}
-
-fn query_frozen_balance(deps: Deps, account: &str, denom: &str) -> StdResult<Coin> {
-    let request = QueryFrozenBalanceRequest {
-        account: account.to_string(),
-        denom: denom.to_string(),
-    };
-    let frozen_balance: QueryFrozenBalanceResponse = request.query(&deps.querier)?;
-    Ok(frozen_balance.balance.unwrap_or_default())
-}
-
-fn query_bank_balance(deps: Deps, account: &str, denom: &str) -> StdResult<Coin> {
-    let request = QueryBalanceRequest {
-        address: account.to_string(),
-        denom: denom.to_string(),
-    };
-    let bank_balance: QueryBalanceResponse = request.query(&deps.querier)?;
-    Ok(bank_balance.balance.unwrap_or_default())
 }
 
 fn query_token(deps: Deps, denom: &str) -> StdResult<Token> {
