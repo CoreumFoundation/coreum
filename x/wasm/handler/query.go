@@ -4,10 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 
-	msgv1 "cosmossdk.io/api/cosmos/msg/v1"
-	queryv1 "cosmossdk.io/api/cosmos/query/v1"
 	sdkmath "cosmossdk.io/math"
 	nfttypes "cosmossdk.io/x/nft"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -17,10 +14,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogoproto "github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protodesc"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/dynamicpb"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
@@ -160,64 +153,13 @@ type coreumQuery struct {
 	NFT      *nftQuery      `json:"nft"`
 }
 
-// newModuleQuerySafeAllowList returns a map of all query paths labeled with module_query_safe in the proto files to
-// their response proto.
-func newModuleQuerySafeAllowList() wasmkeeper.AcceptedQueries {
-	fds, err := gogoproto.MergedGlobalFileDescriptors()
-	if err != nil {
-		panic(err)
-	}
-	// create the files using 'AllowUnresolvable' to avoid
-	// unnecessary panic: https://github.com/cosmos/ibc-go/issues/6435
-	protoFiles, err := protodesc.FileOptions{
-		AllowUnresolvable: true,
-	}.NewFiles(fds)
-	if err != nil {
-		panic(err)
-	}
-
-	allowList := wasmkeeper.AcceptedQueries{}
-	protoFiles.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
-		for i := range fd.Services().Len() {
-			// Get the service descriptor
-			sd := fd.Services().Get(i)
-
-			// Skip services that are annotated with the "cosmos.msg.v1.service" option.
-			if ext := proto.GetExtension(sd.Options(), msgv1.E_Service); ext != nil && ext.(bool) {
-				continue
-			}
-
-			for j := range sd.Methods().Len() {
-				// Get the method descriptor
-				md := sd.Methods().Get(j)
-
-				// Skip methods that are not annotated with the "cosmos.query.v1.module_query_safe" option.
-				if ext := proto.GetExtension(md.Options(), queryv1.E_ModuleQuerySafe); ext == nil || !ext.(bool) {
-					continue
-				}
-
-				// Add the method to the whitelist
-				path := fmt.Sprintf("/%s/%s", sd.FullName(), md.Name())
-				allowList[path] = dynamicpb.NewMessage(md.Output())
-			}
-		}
-		return true
-	})
-
-	return allowList
-}
-
 // NewCoreumQueryHandler returns the coreum handler which handles queries from smart contracts.
 func NewCoreumQueryHandler(
 	assetFTQueryServer assetfttypes.QueryServer, assetNFTQueryServer assetnfttypes.QueryServer,
-	nftQueryServer nfttypes.QueryServer, gRPCQueryRouter *baseapp.GRPCQueryRouter, codec *codec.ProtoCodec,
+	nftQueryServer nfttypes.QueryServer, gRPCQueryRouter *baseapp.GRPCQueryRouter, codec codec.Codec,
 ) *wasmkeeper.QueryPlugins {
-	acceptList := newModuleQuerySafeAllowList()
-	// TODO: "/cosmos.nft.v1beta1.Query/Owner" is not marked as module_query_safe in cosmos, but we need it
-	acceptList["/cosmos.nft.v1beta1.Query/Owner"] = &nfttypes.QueryOwnerResponse{}
-
 	return &wasmkeeper.QueryPlugins{
-		Grpc: wasmkeeper.AcceptListGrpcQuerier(acceptList, gRPCQueryRouter, codec),
+		Grpc: NewGRPCQuerier(gRPCQueryRouter, codec).Query,
 		Custom: func(ctx sdk.Context, query json.RawMessage) ([]byte, error) {
 			var coreumQuery coreumQuery
 			if err := json.Unmarshal(query, &coreumQuery); err != nil {

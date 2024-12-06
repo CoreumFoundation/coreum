@@ -33,6 +33,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 )
 
+const appHash = "sim-app-hash"
+
 // Settings for the simapp initialization.
 type Settings struct {
 	db     dbm.DB
@@ -128,7 +130,11 @@ func New(options ...Option) *App {
 
 // BeginNextBlock begins new SimApp block and returns the ctx of the new block.
 func (s *App) BeginNextBlock() (sdk.Context, sdk.BeginBlock, error) {
-	header := tmproto.Header{Height: s.App.LastBlockHeight() + 1, Time: time.Now()}
+	header := tmproto.Header{
+		Height:  s.App.LastBlockHeight() + 1,
+		Time:    time.Now(),
+		AppHash: []byte(appHash),
+	}
 	ctx := s.NewContextLegacy(false, header)
 	beginBlock, err := s.App.BeginBlocker(ctx)
 	return ctx, beginBlock, err
@@ -136,7 +142,11 @@ func (s *App) BeginNextBlock() (sdk.Context, sdk.BeginBlock, error) {
 
 // BeginNextBlockAtTime begins new SimApp block and returns the ctx of the new block with given time.
 func (s *App) BeginNextBlockAtTime(blockTime time.Time) (sdk.Context, sdk.BeginBlock, error) {
-	header := tmproto.Header{Height: s.App.LastBlockHeight() + 1, Time: blockTime}
+	header := tmproto.Header{
+		Height:  s.App.LastBlockHeight() + 1,
+		Time:    blockTime,
+		AppHash: []byte(appHash),
+	}
 	ctx := s.NewContextLegacy(false, header)
 	beginBlock, err := s.App.BeginBlocker(ctx)
 	return ctx, beginBlock, err
@@ -144,7 +154,11 @@ func (s *App) BeginNextBlockAtTime(blockTime time.Time) (sdk.Context, sdk.BeginB
 
 // BeginNextBlockAtHeight begins new SimApp block and returns the ctx of the new block with given hight.
 func (s *App) BeginNextBlockAtHeight(height int64) (sdk.Context, sdk.BeginBlock, error) {
-	header := tmproto.Header{Height: height, Time: time.Now()}
+	header := tmproto.Header{
+		Height:  height,
+		Time:    time.Now(),
+		AppHash: []byte(appHash),
+	}
 	ctx := s.NewContextLegacy(false, header)
 	beginBlock, err := s.App.BeginBlocker(ctx)
 	return ctx, beginBlock, err
