@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"sync"
 
 	msgv1 "cosmossdk.io/api/cosmos/msg/v1"
 	queryv1 "cosmossdk.io/api/cosmos/query/v1"
@@ -25,7 +24,6 @@ type GRPCQuerier struct {
 	codec           codec.Codec
 	// map[query proto URL]proto response type
 	acceptedQueries map[string]func() gogoproto.Message
-	mu              sync.Mutex
 }
 
 // NewGRPCQuerier returns a new instance of GRPCQuerier.
@@ -40,7 +38,6 @@ func NewGRPCQuerier(gRPCQueryRouter *baseapp.GRPCQueryRouter, codec codec.Codec)
 		gRPCQueryRouter: gRPCQueryRouter,
 		codec:           codec,
 		acceptedQueries: acceptedQueries,
-		mu:              sync.Mutex{},
 	}
 }
 
@@ -59,12 +56,10 @@ func (q *GRPCQuerier) Query(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (go
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 	}
 
-	q.mu.Lock()
 	res, err := handler(ctx, &abci.RequestQuery{
 		Data: request.Data,
 		Path: request.Path,
 	})
-	q.mu.Unlock()
 	if err != nil {
 		return nil, err
 	}
