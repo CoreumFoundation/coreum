@@ -193,8 +193,6 @@ Same rules apply to receiving tokens over IBC transfer protocol if IBC is enable
 
 When token is created, admin decides if users may send and receive it over IBC transfer protocol.
 If IBC feature is disabled token can never leave the Coreum chain.
-The IBC feature is incompatible with the extension feature. The reason for it is that extension can override
-the full functionality of ibc, so allowing the two features together can lead to confusion.
 
 ### Clawback
 
@@ -265,12 +263,15 @@ The fields are:
     - `ibc_purpose`: if it is an ibc transfer, indicates whether it's an outgoing, incoming, acknowledged or timed-out
       transfer
 
-_**Note**: The extension feature is not compatible with ibc and block smart contract feature. It will error out if you
-try
-to enable those features at the same time._
+_**Note**: The extension feature is not compatible with block smart contract feature. It will error out if you
+try to enable those features at the same time._
 
 There is a sample implementation of extension in `x/asset/ft/keeper/test-contracts/asset-extension` which can be used to
 take inspiration from, when implementing other extensions.
+
+#### DEX extension
+
+The `extension` is also integrate with the DEX check [DEX spec](../../../dex/spec/README.md#Extension) for more details.
 
 ### DEX unified ref amount.
 
@@ -300,7 +301,7 @@ the `dex_whitelisted_denoms` feature is not enabled or not the `whitelisted_deno
   <tr>
     <th rowspan="3"></th>
     <th colspan="14">Features</th>
-    <th colspan="4">Extensions</th>
+    <th colspan="4">Extension</th>
   </tr>
   <tr>
     <th colspan="2">Default</th>

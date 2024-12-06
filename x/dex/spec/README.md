@@ -280,7 +280,98 @@ This feature introduces an enhancement to the asset FT (`restrict_dex` feature),
 This adds a layer of control over trading pairs, ensuring that denom(asset FT) can only be exchanged with certain
 denoms/currencies or assets, as specified by the admin.
 
-### Extensions
+### Extension
 
-The current version of the DEX doesn't support the extensions. It means if a user places an order with the asset FT
-extension token, such an order will be rejected.
+The `extension` feature integrates the DEX with the smart contract extension capability of asset FT. This integration
+enables asset FT extension contracts to define custom extension functions that the DEX invokes before executing an
+order. The extension functions can leverage order details, including the amounts expected to be spent and received
+post-execution, to implement custom rules. For example, they can validate an order against specific business logic or
+constraints.
+
+#### Asset FT features handling
+
+If the extension feature is enabled for a token but no contract extension function is implemented, all order
+placements will fail. When multiple asset FT features are enabled, the rules of the asset FT features are validated
+first, followed by invoking the extension.
+
+#### Example of WASM Call Implementation in an Extension Smart Contract
+
+Below is an example showcasing how to implement the extension functionality in a smart contract:
+
+##### Code Example
+
+```rust
+#[cw_serde]
+pub struct DEXOrder {
+    pub creator: String,
+    #[serde(rename = "type")]
+    pub order_type: String,
+    pub id: String,
+    pub base_denom: String,
+    pub quote_denom: String,
+    pub price: Option<String>,
+    pub quantity: Uint128,
+    pub side: String,
+}
+
+pub enum SudoMsg {
+    ExtensionTransfer {
+        recipient: String,
+        sender: String,
+        transfer_amount: Uint128,
+        commission_amount: Uint128,
+        burn_amount: Uint128,
+        context: TransferContext,
+    },
+    ExtensionPlaceOrder {
+        order: DEXOrder,
+        expected_to_spend: Coin,
+        expected_to_receive: Coin,
+    },
+}
+
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> CoreumResult<ContractError> {
+    match msg {
+        SudoMsg::ExtensionTransfer {
+            recipient,
+            sender,
+            transfer_amount,
+            commission_amount,
+            burn_amount,
+            context,
+        } => sudo_extension_transfer(
+            deps,
+            env,
+            recipient,
+            sender,
+            transfer_amount,
+            commission_amount,
+            burn_amount,
+            context,
+        ),
+        SudoMsg::ExtensionPlaceOrder {
+            order,
+            expected_to_spend,
+            expected_to_receive,
+        } => sudo_extension_place_order(
+            deps,
+            env,
+            order,
+            expected_to_spend,
+            expected_to_receive,
+        ),
+    }
+}
+```
+
+**`SudoMsg` Enum**:
+
+- Defines the types of messages the extension supports, such as `ExtensionTransfer` and `ExtensionPlaceOrder`.
+- Each variant carries the necessary information to execute specific logic.
+
+**`sudo` Entry Point**:
+
+- Acts as the main function that handles incoming messages.
+- Delegates to specific helper functions based on the message type.
+
