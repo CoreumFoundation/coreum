@@ -23,7 +23,7 @@ Coreum blockchain is under development and all the features are going to be adde
 Everyone is encouraged to run a chain locally for development and testing purposes.
 
 Entire process of running local chain is automated by our tooling. The only prerequisites are:
-- `docker` installed from your favorite package manager
+- `docker`, `g++` and `make` installed from your favorite package manager
 - `go 1.21` or newer installed and available in your `PATH` (ensure version of go, installing from package manager might get you an older version)
 
 ### Build binaries
