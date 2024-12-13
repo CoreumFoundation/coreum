@@ -68,7 +68,7 @@ func CmdPlaceOrder() *cobra.Command {
 			fmt.Sprintf(`Place new order.
 
 Example:
-$ %s tx %s cored tx dex place-order ORDER_TYPE_LIMIT "my-order-id1" denom1 denom2 1000 SIDE_SELL --price 12e-1 --time-in-force=TIME_IN_FORCE_GTC --from [sender]
+$ %s tx %s place-order ORDER_TYPE_LIMIT "my-order-id1" denom1 denom2 1000 SIDE_SELL --price 12e-1 --time-in-force=TIME_IN_FORCE_GTC --from [sender]
 `,
 				version.AppName, types.ModuleName,
 			),
