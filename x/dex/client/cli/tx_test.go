@@ -251,18 +251,8 @@ func placeOrder(
 	testNetwork *network.Network,
 	order types.Order,
 ) {
-	var orderType string
-	switch order.Type {
-	case types.ORDER_TYPE_LIMIT:
-		orderType = cli.OrderTypeLimit
-	case types.ORDER_TYPE_MARKET:
-		orderType = cli.OrderTypeMarket
-	default:
-		requireT.Fail(fmt.Sprintf("unknown type '%s'", order.Type))
-	}
-
 	args := []string{
-		orderType,
+		order.Type.String(),
 		order.ID,
 		order.BaseDenom,
 		order.QuoteDenom,
