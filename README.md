@@ -24,6 +24,7 @@ Everyone is encouraged to run a chain locally for development and testing purpos
 
 Entire process of running local chain is automated by our tooling. The only prerequisites are:
 - `docker`, `g++` and `make` installed from your favorite package manager
+- Make sure docker service is running and your current user has permissions to run docker commands (instructions [here](https://docs.docker.com/engine/install/linux-postinstall/))
 - `go 1.21` or newer installed and available in your `PATH` (ensure version of go, installing from package manager might get you an older version)
 
 ### Build binaries
