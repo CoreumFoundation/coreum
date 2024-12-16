@@ -789,7 +789,6 @@ func TestKeeper_ComputePriceTick(t *testing.T) {
 			base:  3.0,
 			quote: 27.123,
 		},
-
 		{
 			name:  "10000.0/10000.0",
 			base:  10000.0,
@@ -820,7 +819,6 @@ func TestKeeper_ComputePriceTick(t *testing.T) {
 			base:  3.0,
 			quote: 1.0,
 		},
-
 		{
 			name:  "3100000.0/8.0",
 			base:  3100000.0,
@@ -1247,7 +1245,7 @@ func getAccountDenomsOrdersCount(
 }
 
 func assertTickCalculations(t *testing.T, base, quote float64) {
-	tickExponent := -5
+	tickExponent := -8
 
 	finalTickExp := math.Floor(math.Log10(quote/base)) + float64(tickExponent)
 	finalTick := math.Pow(10, finalTickExp)
