@@ -140,7 +140,7 @@ whether within the same trading pair or its inverse, optimizing the trading expe
 To provide a better trading experience we define the [price_tick](https://www.investopedia.com/terms/t/tick.asp) for
 each order book. The `price_tick` mostly depends on the price of the assets traded, that's why we can define the
 variable for a token used to define the order book `price_tick`. This variable is named `unified_ref_amount`.
-`unified_ref_amount`for token represents the amount of the token subunit you need to pay to buy 1 USD dollar. If the
+`unified_ref_amount` for token represents the amount of the token subunit you need to pay to buy 1 USD dollar. If the
 token is issued on the Coreum chain, that variable can be set/updated by the token admin. If the token is IBC token,
 or the token doesn't have and admin this variable can be set/updated by the chain governance. If the
 `unified_ref_amount` is not set for a token, the `unified_ref_amount` is equal to 10^6.
@@ -159,10 +159,10 @@ Tick size example:
 | unified_ref_amount(AAA) | unified_ref_amount(BBB) | price_tick(AAA/BBB) | price_tick(BBB/AAA) |    
 |-------------------------|-------------------------|---------------------|---------------------|
 | 10000.0                 | 10000.0                 | 10^-5               | 10^-5               | 
-| 3000.0                  | 20.0                    | 10^-8               | 10^-3               | 
-| 3100000.0               | 8.0                     | 10^-11              | 1                   |
-| 0.00017                 | 100.0                   | 1                   | 10^-11              |
-| 0.000001                | 10000000                | 10^8                | 10^-18              |
+| 3000.0                  | 20.0                    | 10^-11              | 10^-6               | 
+| 3100000.0               | 8.0                     | 10^-14              | 10^-3               |
+| 0.00017                 | 100.0                   | 10^-3               | 10^-14              |
+| 0.000001                | 10000000                | 10^5                | 10^-21              |
 
 The update of the `unified_ref_amount` doesn't affect the created orders.
 
@@ -228,7 +228,7 @@ The `good_til` setting specifies how long an order remains active based on certa
 This feature introduces an order reserve requirement for each order placed on the chain. The reserve acts as a security
 deposit that ensures users have a vested interest in their orders, helping to prevent spam and malicious activities.
 Once the order is executed that reserve is released.
-The default reserve amount is  `10 CORE` and can be updated by the governance.
+The default reserve amount is `10 CORE` and can be updated by the governance.
 
 ### Max orders limit
 
@@ -260,8 +260,6 @@ The users can cancel their orders within the DEX. Or The token admin or gov can 
 It grants specific administrative or governance roles the power to manage and oversee active orders, providing a
 safeguard against potential issues such as erroneous trades, malicious activity, or market manipulation. For the token
 admin to cancel the user's orders, the `dex_order_cancellation` feature must be enabled.
-
-### Restricted trade
 
 ### Block DEX
 
