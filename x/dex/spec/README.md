@@ -16,7 +16,7 @@ Users can place orders with the following attributes:
 * `quote_denom` - when you buy, you are selling the `quote_denom`, when you sell, you are buying the `quote_denom`.
 * `price` - value of one unit of the `base_denom` expressed in terms of the `quote_denom`. It indicates how much of the
   `quote_denom` is needed to buy one unit of the `base_denom`.
-* `quantity` - is amount of the base `base_denom` being traded.
+* `quantity` - is amount of the `base_denom` being traded.
 * `side`
     * `sell` - means that the order is to sell `base_denom` `quantity` with the `price`.
     * `buy` - means that the order is to buy `base_denom` `quantity` with the `price`.
@@ -140,7 +140,7 @@ whether within the same trading pair or its inverse, optimizing the trading expe
 To provide a better trading experience we define the [price_tick](https://www.investopedia.com/terms/t/tick.asp) for
 each order book. The `price_tick` mostly depends on the price of the assets traded, that's why we can define the
 variable for a token used to define the order book `price_tick`. This variable is named `unified_ref_amount`.
-`unified_ref_amount`for token represents the amount of the token subunit you need to pay to buy 1 USD dollar. If the
+`unified_ref_amount` for token represents the amount of the token subunit you need to pay to buy 1 USD dollar. If the
 token is issued on the Coreum chain, that variable can be set/updated by the token admin. If the token is IBC token,
 or the token doesn't have and admin this variable can be set/updated by the chain governance. If the
 `unified_ref_amount` is not set for a token, the `unified_ref_amount` is equal to 10^6.
@@ -158,11 +158,11 @@ Tick size example:
 
 | unified_ref_amount(AAA) | unified_ref_amount(BBB) | price_tick(AAA/BBB) | price_tick(BBB/AAA) |    
 |-------------------------|-------------------------|---------------------|---------------------|
-| 10000.0                 | 10000.0                 | 10^-5               | 10^-5               | 
-| 3000.0                  | 20.0                    | 10^-8               | 10^-3               | 
-| 3100000.0               | 8.0                     | 10^-11              | 1                   |
-| 0.00017                 | 100.0                   | 1                   | 10^-11              |
-| 0.000001                | 10000000                | 10^8                | 10^-18              |
+| 10000.0                 | 10000.0                 | 10^-8               | 10^-8               | 
+| 3000.0                  | 20.0                    | 10^-11              | 10^-6               | 
+| 3100000.0               | 8.0                     | 10^-14              | 10^-3               |
+| 0.00017                 | 100.0                   | 10^-3               | 10^-14              |
+| 0.000001                | 10000000                | 10^5                | 10^-21              |
 
 The update of the `unified_ref_amount` doesn't affect the created orders.
 
@@ -192,12 +192,12 @@ Examples:
 
 ### Balance locking/freezing/whitelisting/clawback.
 
-When a user places an order we lock the coins in the assetft (similar to freezing), both assetft and native coins. Also,
-we reserve the expected receiving amount if whitelisting for the token the user expects to receive is enabled.
-At the time of the placement we enforce all assetft rules. If, at the time of matching, the assetft rules for the
-maker orders are changed, the orders will be still executed with the amounts in the order book. That's why to avoid
-unexpected behavior with the `freezing/whitelisting/clawback` the token admin should [cancel](#Order-cancellation) users
-orders before update the rules.
+When a user places an order we lock the coins in the assetft (similar to freezing). Also, we reserve the expected
+receiving amount if whitelisting for the token the user expects to receive is enabled. At the time of the placement we
+enforce all assetft rules. If, at the time of matching, the assetft rules for the maker orders are changed, the orders
+will be still executed with the amounts in the order book. That's why to avoid unexpected behavior with the
+`freezing/whitelisting/clawback` the token admin should [cancel](#Order-cancellation) user's orders before update the
+rules.
 
 ### Time in force
 
@@ -228,12 +228,12 @@ The `good_til` setting specifies how long an order remains active based on certa
 This feature introduces an order reserve requirement for each order placed on the chain. The reserve acts as a security
 deposit that ensures users have a vested interest in their orders, helping to prevent spam and malicious activities.
 Once the order is executed that reserve is released.
-The default reserve amount is  `10 CORE` and can be updated by the governance.
+The default reserve amount is `10 CORE` and can be updated by the governance.
 
 ### Max orders limit
 
 The number of active orders a user can have for each denom is limited by a value called `max_orders_per_denom`,
-which is determined by DEX governance.
+which is determined by DEX governance. The default value is 100.
 
 ### Events
 
@@ -260,8 +260,6 @@ The users can cancel their orders within the DEX. Or The token admin or gov can 
 It grants specific administrative or governance roles the power to manage and oversee active orders, providing a
 safeguard against potential issues such as erroneous trades, malicious activity, or market manipulation. For the token
 admin to cancel the user's orders, the `dex_order_cancellation` feature must be enabled.
-
-### Restricted trade
 
 ### Block DEX
 
