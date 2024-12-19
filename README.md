@@ -41,9 +41,9 @@ $ ./crust/bin/crust setup
 $ git clone https://github.com/CoreumFoundation/coreum
 $ cd coreum
 ```
-3. Compile the `cored` binary:
+3. Compile the `cored` binary and related docker images:
 ```
-$ make build
+$ make build images
 ```
 
 After the command completes you may find executable `./bin/cored`, being both blockchain node and client.
