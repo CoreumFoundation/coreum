@@ -16,7 +16,7 @@ Users can place orders with the following attributes:
 * `quote_denom` - when you buy, you are selling the `quote_denom`, when you sell, you are buying the `quote_denom`.
 * `price` - value of one unit of the `base_denom` expressed in terms of the `quote_denom`. It indicates how much of the
   `quote_denom` is needed to buy one unit of the `base_denom`.
-* `quantity` - is amount of the base `base_denom` being traded.
+* `quantity` - is amount of the `base_denom` being traded.
 * `side`
     * `sell` - means that the order is to sell `base_denom` `quantity` with the `price`.
     * `buy` - means that the order is to buy `base_denom` `quantity` with the `price`.
@@ -158,7 +158,7 @@ Tick size example:
 
 | unified_ref_amount(AAA) | unified_ref_amount(BBB) | price_tick(AAA/BBB) | price_tick(BBB/AAA) |    
 |-------------------------|-------------------------|---------------------|---------------------|
-| 10000.0                 | 10000.0                 | 10^-5               | 10^-5               | 
+| 10000.0                 | 10000.0                 | 10^-8               | 10^-8               | 
 | 3000.0                  | 20.0                    | 10^-11              | 10^-6               | 
 | 3100000.0               | 8.0                     | 10^-14              | 10^-3               |
 | 0.00017                 | 100.0                   | 10^-3               | 10^-14              |
@@ -192,12 +192,12 @@ Examples:
 
 ### Balance locking/freezing/whitelisting/clawback.
 
-When a user places an order we lock the coins in the assetft (similar to freezing), both assetft and native coins. Also,
-we reserve the expected receiving amount if whitelisting for the token the user expects to receive is enabled.
-At the time of the placement we enforce all assetft rules. If, at the time of matching, the assetft rules for the
-maker orders are changed, the orders will be still executed with the amounts in the order book. That's why to avoid
-unexpected behavior with the `freezing/whitelisting/clawback` the token admin should [cancel](#Order-cancellation) users
-orders before update the rules.
+When a user places an order we lock the coins in the assetft (similar to freezing). Also, we reserve the expected
+receiving amount if whitelisting for the token the user expects to receive is enabled. At the time of the placement we
+enforce all assetft rules. If, at the time of matching, the assetft rules for the maker orders are changed, the orders
+will be still executed with the amounts in the order book. That's why to avoid unexpected behavior with the
+`freezing/whitelisting/clawback` the token admin should [cancel](#Order-cancellation) user's orders before update the
+rules.
 
 ### Time in force
 
@@ -233,7 +233,7 @@ The default reserve amount is `10 CORE` and can be updated by the governance.
 ### Max orders limit
 
 The number of active orders a user can have for each denom is limited by a value called `max_orders_per_denom`,
-which is determined by DEX governance.
+which is determined by DEX governance. The default value is 100.
 
 ### Events
 

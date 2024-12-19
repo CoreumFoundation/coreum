@@ -27,10 +27,6 @@ const (
 	GoodTilBlockHeightFlag = "good-til-block-height"
 	// GoodTilBlockTimeFlag is good til block time flag.
 	GoodTilBlockTimeFlag = "good-til-block-time"
-	// OrderTypeLimit is limit order type.
-	OrderTypeLimit = "limit"
-	// OrderTypeMarket is limit order market.
-	OrderTypeMarket = "market"
 	// TimeInForce is time-in-force flag.
 	TimeInForce = "time-in-force"
 )
@@ -60,16 +56,19 @@ func GetTxCmd() *cobra.Command {
 func CmdPlaceOrder() *cobra.Command {
 	availableTimeInForces := lo.Values(types.TimeInForce_name)
 	sort.Strings(availableTimeInForces)
+	availableOrderTypes := lo.Values(types.OrderType_name)
+	sort.Strings(availableTimeInForces)
+	availableSides := lo.Values(types.Side_name)
+	sort.Strings(availableTimeInForces)
 	cmd := &cobra.Command{
-		Use:   "place-order [type (limit,market)] [id] [base_denom] [quote_denom] [quantity] [side] --price 123e-2 --time-in-force=" + strings.Join(availableTimeInForces, ",") + " --good-til-block-height=123 --good-til-block-time=1727124446 --from [sender]", //nolint:lll // string example
+		Use:   "place-order [type (" + strings.Join(availableOrderTypes, ",") + ")] [id] [base_denom] [quote_denom] [quantity] [side (" + strings.Join(availableSides, ",") + ")] --price 123e-2 --time-in-force=" + strings.Join(availableTimeInForces, ",") + " --good-til-block-height=123 --good-til-block-time=1727124446 --from [sender]", //nolint:lll // string example
 		Args:  cobra.ExactArgs(6),
 		Short: "Place new order",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Place new order.
 
 Example:
-$ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
-`,
+$ %s tx %s place-order ORDER_TYPE_LIMIT "my-order-id1" denom1 denom2 1000 SIDE_SELL --price 12e-1 --time-in-force=TIME_IN_FORCE_GTC --from [sender]`, //nolint:lll // string example
 				version.AppName, types.ModuleName,
 			),
 		),
@@ -81,25 +80,8 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 
 			sender := clientCtx.GetFromAddress()
 
-			var orderType types.OrderType
-			timeInForceString, err := cmd.Flags().GetString(TimeInForce)
-			timeInForceInt, ok := types.TimeInForce_value[timeInForceString]
+			orderType, ok := types.OrderType_value[args[0]]
 			if !ok {
-				return errors.Errorf(
-					"unknown TimeInForce '%s',available TimeInForces: %s",
-					timeInForceString, strings.Join(availableTimeInForces, ","),
-				)
-			}
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			timeInForce := types.TimeInForce(timeInForceInt)
-			switch args[0] {
-			case OrderTypeLimit:
-				orderType = types.ORDER_TYPE_LIMIT
-			case OrderTypeMarket:
-				orderType = types.ORDER_TYPE_MARKET
-			default:
 				return errors.Errorf("unknown type '%s'", args[0])
 			}
 
@@ -109,7 +91,7 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 
 			quantity, ok := sdkmath.NewIntFromString(args[4])
 			if !ok {
-				return sdkerrors.Wrap(err, "invalid quantity")
+				return errors.New("invalid quantity")
 			}
 
 			side, ok := types.Side_value[args[5]]
@@ -144,9 +126,22 @@ $ %s tx %s place-order id1 denom1 denom2 123e-2 10000 buy --from [sender]
 				goodTilBlockTime = lo.ToPtr(time.Unix(goodTilBlockTimeNum, 0))
 			}
 
+			timeInForceString, err := cmd.Flags().GetString(TimeInForce)
+			timeInForceInt, ok := types.TimeInForce_value[timeInForceString]
+			if !ok {
+				return errors.Errorf(
+					"unknown TimeInForce '%s',available TimeInForces: %s",
+					timeInForceString, strings.Join(availableTimeInForces, ","),
+				)
+			}
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			timeInForce := types.TimeInForce(timeInForceInt)
+
 			msg := &types.MsgPlaceOrder{
 				Sender:      sender.String(),
-				Type:        orderType,
+				Type:        types.OrderType(orderType),
 				ID:          id,
 				BaseDenom:   baseDenom,
 				QuoteDenom:  quoteDenom,
