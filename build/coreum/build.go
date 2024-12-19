@@ -30,6 +30,7 @@ const (
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
+	goRaceFlag           = "-race"
 )
 
 var defaultBuildTags = []string{"netgo", "ledger"}
@@ -54,12 +55,13 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 		CGOEnabled:     true,
 		Tags:           defaultBuildTags,
 		LDFlags:        ldFlags,
+		Flags:          []string{goCoverFlag, goRaceFlag},
 	})
 }
 
 // BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
-	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
+	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag, goRaceFlag},
 		binaryName, "")
 }
 
@@ -81,7 +83,7 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 		return err
 	}
 
-	err = buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
+	err = buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag, goRaceFlag},
 		extendedBinaryName, "ext")
 	if err != nil {
 		return err
