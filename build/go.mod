@@ -28,7 +28,7 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v5 v5.0.0-20241022051641-b49ec5faa621
-	github.com/CoreumFoundation/crust v0.0.0-20241206080514-16aacae70905
+	github.com/CoreumFoundation/crust v0.0.0-20241223113002-63d051aec9a8
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.39.0
