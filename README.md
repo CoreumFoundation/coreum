@@ -23,20 +23,27 @@ Coreum blockchain is under development and all the features are going to be adde
 Everyone is encouraged to run a chain locally for development and testing purposes.
 
 Entire process of running local chain is automated by our tooling. The only prerequisites are:
-- `docker` installed from your favorite package manager
-- `go 1.21` or newer installed and available in your `PATH`
+- `docker`, `g++` and `make` installed from your favorite package manager
+- Make sure docker service is running and your current user has permissions to run docker commands (instructions [here](https://docs.docker.com/engine/install/linux-postinstall/))
+- `go 1.21` or newer installed and available in your `PATH` (ensure version of go, installing from package manager might get you an older version)
 
 ### Build binaries
 
 Steps to build required binaries:
-1. Clone this repository
+1. Clone crust repository and setup initial dependencies
+```
+$ git clone https://github.com/CoreumFoundation/crust
+$ ./crust/bin/crust setup
+```
+
+2. Clone this repository
 ```
 $ git clone https://github.com/CoreumFoundation/coreum
 $ cd coreum
 ```
-2. Compile the `cored` binary:
+3. Compile the `cored` binary and related docker images:
 ```
-$ make build
+$ make build images
 ```
 
 After the command completes you may find executable `./bin/cored`, being both blockchain node and client.
