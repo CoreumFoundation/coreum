@@ -12,12 +12,6 @@ replace (
 	// github.com/coinbase/rosetta-sdk-go module in v0.7.9 but now it is standalone module.
 	// And this causes "ambiguous import" error. Note: it gets broken only when using go work.
 	github.com/coinbase/rosetta-sdk-go v0.7.9 => github.com/coinbase/rosetta-sdk-go v0.8.4
-	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
-	// TODO(v5): remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
-	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
-	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
-	// TODO(v5) Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
-	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.1
 	// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
 	github.com/spf13/viper => github.com/spf13/viper v1.16.0
 	// https://github.com/cosmos/cosmos-sdk/issues/14949
@@ -27,7 +21,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
-	github.com/CoreumFoundation/coreum/v5 v5.0.0-20241022051641-b49ec5faa621
+	github.com/CoreumFoundation/coreum/v5 v5.0.0-20241223114814-5d31643a6731
 	github.com/CoreumFoundation/crust v0.0.0-20241223113002-63d051aec9a8
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
