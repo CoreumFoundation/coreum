@@ -19,8 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev4 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4"
-	appupgradev4patch1 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4patch1"
+	appupgradev4patch2 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4patch2"
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 	"github.com/CoreumFoundation/coreum/v4/testutil/integration"
 )
@@ -44,40 +43,23 @@ func TestUpgrade(t *testing.T) {
 	infoRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
 
-	if strings.HasPrefix(infoRes.ApplicationVersion.Version, "v3.") {
-		upgradeV3ToV4(t)
-		upgradeV4ToV4Patch1(t)
+	if strings.HasPrefix(infoRes.ApplicationVersion.Version, "v4.1.") {
+		// upgradeV3ToV4(t)
+		upgradeV4Patch1ToV4Patch2(t)
 		return
 	}
 	requireT.Failf("not supported cored version", "version: %s", infoRes.ApplicationVersion.Version)
 }
 
-func upgradeV3ToV4(t *testing.T) {
+func upgradeV4Patch1ToV4Patch2(t *testing.T) {
 	tests := []upgradeTest{
-		&ftAdminFieldTest{},
-		&maxBlockSizeTest{},
-	}
-
-	for _, test := range tests {
-		test.Before(t)
-	}
-
-	runUpgrade(t, appupgradev4.Name, upgradeDelayInBlocks)
-
-	for _, test := range tests {
-		test.After(t)
-	}
-}
-
-func upgradeV4ToV4Patch1(t *testing.T) {
-	tests := []upgradeTest{
-		&wasmdUpgradeTest{},
+		&cosmosUpgradeTest{},
 	}
 	for _, test := range tests {
 		test.Before(t)
 	}
 
-	runUpgrade(t, appupgradev4patch1.Name, upgradeDelayInBlocks)
+	runUpgrade(t, appupgradev4patch2.Name, upgradeDelayInBlocks)
 
 	for _, test := range tests {
 		test.After(t)

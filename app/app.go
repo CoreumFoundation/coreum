@@ -129,6 +129,7 @@ import (
 	appupgrade "github.com/CoreumFoundation/coreum/v4/app/upgrade"
 	appupgradev4 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4"
 	appupgradev4patch1 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4patch1"
+	appupgradev4patch2 "github.com/CoreumFoundation/coreum/v4/app/upgrade/v4patch2"
 	"github.com/CoreumFoundation/coreum/v4/docs"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
@@ -1122,6 +1123,7 @@ func New(
 		appupgradev4.New(appupgradev4.Name, app.ModuleManager, app.configurator, app.ConsensusParamsKeeper),
 		appupgradev4.New(appupgradev4.NameAlias, app.ModuleManager, app.configurator, app.ConsensusParamsKeeper),
 		appupgradev4patch1.New(appupgradev4patch1.Name, app.ModuleManager, app.configurator),
+		appupgradev4patch2.New(appupgradev4patch2.Name, app.ModuleManager, app.configurator),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
