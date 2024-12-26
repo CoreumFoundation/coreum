@@ -81,6 +81,7 @@ func ensureReleasedBinaries(ctx context.Context, deps types.DepsFunc) error {
 	for _, binaryTool := range []tools.Name{
 		tools.CoredV303,
 		tools.CoredV401,
+		tools.CoredV410,
 	} {
 		if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 			return err

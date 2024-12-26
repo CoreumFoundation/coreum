@@ -12,32 +12,22 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v4/integration-tests"
 )
 
-type wasmdUpgradeTest struct {
+type cosmosUpgradeTest struct {
 }
 
-func (wut *wasmdUpgradeTest) Before(t *testing.T) {
+func (cut *cosmosUpgradeTest) Before(t *testing.T) {
 	assertDependencyVersion(
 		t,
-		"github.com/CosmWasm/wasmd",
-		"v0.45.",
-	)
-	assertDependencyVersion(
-		t,
-		"github.com/CosmWasm/wasmvm",
-		"v1.5.2",
+		"github.com/cosmos/cosmos-sdk",
+		"v0.47.12",
 	)
 }
 
-func (wut *wasmdUpgradeTest) After(t *testing.T) {
+func (cut *cosmosUpgradeTest) After(t *testing.T) {
 	assertDependencyVersion(
 		t,
-		"github.com/CosmWasm/wasmd",
-		"v0.46.0",
-	)
-	assertDependencyVersion(
-		t,
-		"github.com/CosmWasm/wasmvm",
-		"v1.5.4",
+		"github.com/cosmos/cosmos-sdk",
+		"v0.47.15",
 	)
 }
 
