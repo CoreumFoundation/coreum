@@ -13,27 +13,16 @@ exclude = [
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
-
 [features]
 backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = "1.5.4"
-cosmwasm-storage = "1.5.0"
-cw-storage-plus = "1.1.0"
-cw2 = "1.1.1"
-thiserror = "1.0.50"
-coreum-wasm-sdk = "1.0.0" # we use old version intentionally
-cosmwasm-schema = "1.4.1"
-cw-ownable = "0.5.1"
+cosmwasm-storage.workspace = true
+thiserror.workspace = true
+cosmwasm-schema.workspace = true
+cosmwasm-std = "1.5.4" # we use the old version intentionally
+cw-storage-plus = "1.1.0" # we use the old version intentionally
+cw2 = "1.1.1" # we use the old version intentionally
+coreum-wasm-sdk = "1.0.0" # we use the old version intentionally
+cw-ownable = "0.5.1" # we use the old version intentionally

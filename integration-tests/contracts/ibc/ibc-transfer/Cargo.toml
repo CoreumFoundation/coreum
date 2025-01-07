@@ -12,26 +12,15 @@ exclude = [
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
-
 [features]
 backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
 cosmwasm-std = { version = "1.5.4", features = ["ibc3"] }
-cosmwasm-storage = "1.2.5"
+cosmwasm-storage.workspace = true
 cw-storage-plus = "1.0.1"
 cw2 = "1.0.1"
-schemars = "0.8.8"
-thiserror = { version = "1.0.31" }
-cosmwasm-schema = "1.5.0"
+schemars.workspace = true
+thiserror.workspace = true
+cosmwasm-schema.workspace = true
