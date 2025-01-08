@@ -77,7 +77,10 @@ func (nc NodeConfig) TendermintNodeConfig(cfg *tmcfg.Config) *tmcfg.Config {
 	}
 
 	// Update the default consensus config
-	cfg.Consensus.TimeoutCommit = time.Second
+	cfg.Consensus.TimeoutCommit = 500 * time.Millisecond
+	cfg.Consensus.PeerGossipSleepDuration = 10 * time.Millisecond
+	cfg.Consensus.PeerQueryMaj23SleepDuration = 10 * time.Millisecond
+	cfg.P2P.FlushThrottleTimeout = 10 * time.Millisecond
 
 	return cfg
 }
