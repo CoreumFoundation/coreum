@@ -10147,7 +10147,7 @@
           "title": "reserve is the reserve required to save the order in the order book"
         }
       },
-      "description": "Order is a DEX order."
+      "description": "Order represents a DEX order, encapsulating both limit and market orders. It contains comprehensive information about\nthe order's state."
     },
     "coreum.dex.v1.OrderBookData": {
       "type": "object",

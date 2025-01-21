@@ -4714,7 +4714,8 @@ GoodTil is a good til order settings.
 ### Order
 
 ```
-Order is a DEX order.
+Order represents a DEX order, encapsulating both limit and market orders. It contains comprehensive information about
+the order's state.
 ```
 
 
@@ -4766,7 +4767,7 @@ OrderBookData is a order book data used by order for the store.
 ### OrderBookRecord
 
 ```
-OrderBookRecord is a single order book record.
+OrderBookRecord is a single order book record, it combines both key and value from the store.
 ```
 
 
@@ -4814,7 +4815,7 @@ OrderBookRecordData is a single order book record used for the store.
 ### OrderData
 
 ```
-OrderData is a order data used for the store.
+OrderData represents the order information for the store missing in the order book record.
 ```
 
 

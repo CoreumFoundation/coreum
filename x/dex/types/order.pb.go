@@ -213,7 +213,8 @@ func (m *CancelGoodTil) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CancelGoodTil proto.InternalMessageInfo
 
-// Order is a DEX order.
+// Order represents a DEX order, encapsulating both limit and market orders. It contains comprehensive information about
+// the order's state.
 type Order struct {
 	// creator is order creator address.
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
@@ -278,7 +279,7 @@ func (m *Order) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Order proto.InternalMessageInfo
 
-// OrderData is a order data used for the store.
+// OrderData represents the order information for the store missing in the order book record.
 type OrderData struct {
 	// order ID provided by the creator.
 	OrderID string `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
@@ -370,7 +371,7 @@ func (m *OrderBookData) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_OrderBookData proto.InternalMessageInfo
 
-// OrderBookRecord is a single order book record.
+// OrderBookRecord is a single order book record, it combines both key and value from the store.
 type OrderBookRecord struct {
 	// order_book_id is order book ID.
 	OrderBookID uint32 `protobuf:"varint,1,opt,name=order_book_id,json=orderBookId,proto3" json:"order_book_id,omitempty"`
