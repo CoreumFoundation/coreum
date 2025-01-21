@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-// MatchingFinder responsible to find orders with the best price and priority.
+// MatchingFinder is responsible for finding orders with the best price and priority.
 type MatchingFinder struct {
 	log log.Logger
 
@@ -67,7 +67,7 @@ func (mf *MatchingFinder) Next() (types.OrderBookRecord, bool, error) {
 		}
 	default:
 		return types.OrderBookRecord{}, false, sdkerrors.Wrapf(
-			types.ErrInvalidInput, "unexpect order type : %s", mf.order.Type.String(),
+			types.ErrInvalidInput, "unexpected order type : %s", mf.order.Type.String(),
 		)
 	}
 
@@ -136,6 +136,8 @@ func (mf *MatchingFinder) isSelfRecordBestMatch(selfMatches, oppositeMatches boo
 	// both matches, find best
 	selfPriceRat := mf.selfRecord.Price.Rat()
 	oppositeInvPriceRat := cbig.RatInv(mf.oppositeRecord.Price.Rat())
+
+	// the same price is impossible because in that case the opposite order would have been matched
 
 	if mf.order.Side == types.SIDE_BUY {
 		// find best sell - lower wins

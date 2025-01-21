@@ -10,24 +10,23 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-// RecordToAddress is acc address mapped to record.
+// RecordToAddress maps an account address to an order book record.
 type RecordToAddress struct {
 	Address sdk.AccAddress
 	Record  *types.OrderBookRecord
 }
 
-// MatchingResult is the result of a matching operation.
+// MatchingResult holds the result of a matching operation.
 type MatchingResult struct {
 	TakerAddress            sdk.AccAddress
 	FTActions               assetfttypes.DEXActions
 	TakerOrderReducedEvent  types.EventOrderReduced
 	MakerOrderReducedEvents []types.EventOrderReduced
-
-	RecordsToRemove []RecordToAddress
-	RecordToUpdate  *types.OrderBookRecord
+	RecordsToRemove         []RecordToAddress
+	RecordToUpdate          *types.OrderBookRecord
 }
 
-// NewMatchingResult creates a new MatchingResult.
+// NewMatchingResult creates a new instance of MatchingResult.
 func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 	takerAddress, err := sdk.AccAddressFromBech32(order.Creator)
 	if err != nil {
@@ -67,7 +66,7 @@ func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 	}, nil
 }
 
-// TakerSend registers the coin to send from taker to maker.
+// TakerSend registers the coin to be sent from taker to maker.
 func (mr *MatchingResult) TakerSend(
 	makerAddr sdk.AccAddress, makerOrderID string, makerOrderSequence uint64, coin sdk.Coin,
 ) {
@@ -82,7 +81,7 @@ func (mr *MatchingResult) TakerSend(
 	mr.updateTakerSendEvents(makerAddr, makerOrderID, makerOrderSequence, coin)
 }
 
-// MakerSend registers the coin to send from maker to taker.
+// MakerSend registers the coin to be sent from maker to taker.
 func (mr *MatchingResult) MakerSend(makerAddr sdk.AccAddress, makerOrderID string, coin sdk.Coin) {
 	if coin.IsZero() {
 		return
@@ -97,7 +96,7 @@ func (mr *MatchingResult) MakerSend(makerAddr sdk.AccAddress, makerOrderID strin
 	mr.updateMakerSendEvents(makerAddr, makerOrderID, coin)
 }
 
-// DecreaseMakerLimits registers the coins to unlock and decrease expected to receive.
+// DecreaseMakerLimits registers the coins to be unlocked and decreases the expected to receive.
 func (mr *MatchingResult) DecreaseMakerLimits(
 	makerAddr sdk.AccAddress,
 	lockedCoins sdk.Coins, expectedToReceiveCoin sdk.Coin,
@@ -114,7 +113,7 @@ func (mr *MatchingResult) DecreaseMakerLimits(
 	}
 }
 
-// IncreaseTakerLimitsForRecord increase required limits for the taker record.
+// IncreaseTakerLimitsForRecord increases the required limits for the taker record.
 func (mr *MatchingResult) IncreaseTakerLimitsForRecord(
 	params types.Params,
 	order types.Order,
@@ -146,16 +145,14 @@ func (mr *MatchingResult) IncreaseTakerLimitsForRecord(
 	mr.FTActions.AddCreatorExpectedToReceive(expectedToReceiveCoin)
 	mr.FTActions.AddIncreaseExpectedToReceive(mr.TakerAddress, expectedToReceiveCoin)
 
-	// lock reserve if is set
 	if params.OrderReserve.IsPositive() {
-		// lock but don't increase expected to receive
 		mr.FTActions.AddIncreaseLocked(mr.TakerAddress, params.OrderReserve)
 	}
 
 	return nil
 }
 
-// RemoveRecord registers the record to remove.
+// RemoveRecord registers the record for removal.
 func (mr *MatchingResult) RemoveRecord(creator sdk.AccAddress, record *types.OrderBookRecord) {
 	mr.RecordsToRemove = append(mr.RecordsToRemove, RecordToAddress{
 		Address: creator,
@@ -163,7 +160,7 @@ func (mr *MatchingResult) RemoveRecord(creator sdk.AccAddress, record *types.Ord
 	})
 }
 
-// UpdateRecord registers the record to update.
+// UpdateRecord registers the record for update.
 func (mr *MatchingResult) UpdateRecord(record types.OrderBookRecord) {
 	mr.RecordToUpdate = &record
 }

@@ -60,7 +60,8 @@ enum TimeInForce {
   TIME_IN_FORCE_FOK = 3;
 }
 
-// Order is a DEX order.
+// Order represents a DEX order, encapsulating both limit and market orders. It contains comprehensive information about
+// the order's state.
 message Order {
   // creator is order creator address.
   string creator = 1;
@@ -104,7 +105,7 @@ message Order {
   ];
 }
 
-// OrderData is a order data used for the store.
+// OrderData represents the order information for the store missing in the order book record.
 message OrderData {
   // order ID provided by the creator.
   string order_id = 1 [(gogoproto.customname) = "OrderID"];
@@ -139,7 +140,7 @@ message OrderBookData {
   string quote_denom = 2;
 }
 
-// OrderBookRecord is a single order book record.
+// OrderBookRecord is a single order book record, it combines both key and value from the store.
 message OrderBookRecord {
   // order_book_id is order book ID.
   uint32 order_book_id = 1 [(gogoproto.customname) = "OrderBookID"];
