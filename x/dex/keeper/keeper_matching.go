@@ -48,7 +48,7 @@ func (k Keeper) matchOrder(
 	if err != nil {
 		return err
 	}
-	accNumberToAddCache := make(map[uint64]sdk.AccAddress)
+	accNumberToAddrCache := make(map[uint64]sdk.AccAddress)
 	for {
 		makerRecord, matches, err := mf.Next()
 		if err != nil {
@@ -57,7 +57,7 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		stop, err := k.matchRecords(ctx, mr, &takerRecord, &makerRecord, order, accNumberToAddCache)
+		stop, err := k.matchRecords(ctx, mr, &takerRecord, &makerRecord, order, accNumberToAddrCache)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func (k Keeper) matchOrder(
 			if err := mr.IncreaseTakerLimitsForRecord(params, order, &takerRecord); err != nil {
 				return err
 			}
-			// create new order with the updated record
+			// apply matching result and create new order if necessary
 			if err := k.applyMatchingResult(ctx, mr); err != nil {
 				return err
 			}
@@ -85,7 +85,7 @@ func (k Keeper) matchOrder(
 		case types.TIME_IN_FORCE_IOC:
 			return k.applyMatchingResult(ctx, mr)
 		case types.TIME_IN_FORCE_FOK:
-			// if the order is not fill fully don't apply the matching result
+			// ensure full order fill
 			if takerRecord.RemainingQuantity.IsPositive() {
 				return nil
 			}
@@ -97,7 +97,7 @@ func (k Keeper) matchOrder(
 		return k.applyMatchingResult(ctx, mr)
 	default:
 		return sdkerrors.Wrapf(
-			types.ErrInvalidInput, "unexpect order type : %s", order.Type.String(),
+			types.ErrInvalidInput, "unexpected order type: %s", order.Type.String(),
 		)
 	}
 }
@@ -163,7 +163,7 @@ func (k Keeper) getInitialRemainingAmount(
 		}
 	default:
 		return sdkmath.Int{}, sdkerrors.Wrapf(
-			types.ErrInvalidInput, "unexpect order type : %s", order.Type.String(),
+			types.ErrInvalidInput, "unexpected order type : %s", order.Type.String(),
 		)
 	}
 
@@ -177,7 +177,7 @@ func (k Keeper) matchRecords(
 	mr *MatchingResult,
 	takerRecord, makerRecord *types.OrderBookRecord,
 	order types.Order,
-	accNumberToAddCache map[uint64]sdk.AccAddress,
+	accNumberToAddrCache map[uint64]sdk.AccAddress,
 ) (bool, error) {
 	recordToClose, recordToReduce := k.getRecordToCloseAndReduce(ctx, takerRecord, makerRecord)
 	k.logger(ctx).Debug(
@@ -202,7 +202,7 @@ func (k Keeper) matchRecords(
 	recordToCloseRemainingQuantity := recordToClose.RemainingQuantity.Sub(recordToCloseReducedQuantity)
 	closeMaker := order.Sequence != recordToClose.OrderSequence
 	if closeMaker {
-		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToClose.AccountNumber, accNumberToAddCache)
+		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToClose.AccountNumber, accNumberToAddrCache)
 		if err != nil {
 			return false, err
 		}
@@ -223,7 +223,7 @@ func (k Keeper) matchRecords(
 		mr.DecreaseMakerLimits(makerAddr, lockedCoins, expectedToReceiveCoin)
 		mr.RemoveRecord(makerAddr, recordToClose)
 	} else {
-		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToReduce.AccountNumber, accNumberToAddCache)
+		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToReduce.AccountNumber, accNumberToAddrCache)
 		if err != nil {
 			return false, err
 		}

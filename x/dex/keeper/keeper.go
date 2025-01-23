@@ -230,7 +230,7 @@ func (k Keeper) GetAccountsOrders(
 	moduleStore := k.storeService.OpenKVStore(ctx)
 	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.OrderIDToSequenceKeyPrefix)
 	orderBookIDToOrderBookData := make(map[uint32]types.OrderBookData)
-	accNumberToAddCache := make(map[uint64]sdk.AccAddress)
+	accNumberToAddrCache := make(map[uint64]sdk.AccAddress)
 	orders, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,
@@ -243,7 +243,7 @@ func (k Keeper) GetAccountsOrders(
 			}
 
 			var acc sdk.AccAddress
-			acc, err = k.getAccountAddressWithCache(ctx, accNumber, accNumberToAddCache)
+			acc, err = k.getAccountAddressWithCache(ctx, accNumber, accNumberToAddrCache)
 			if err != nil {
 				return nil, err
 			}
@@ -1052,7 +1052,7 @@ func (k Keeper) getPaginatedOrderBookOrders(
 
 	moduleStore := k.storeService.OpenKVStore(ctx)
 	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.CreateOrderBookSideKey(orderBookID, side))
-	accNumberToAddCache := make(map[uint64]sdk.AccAddress)
+	accNumberToAddrCache := make(map[uint64]sdk.AccAddress)
 
 	orders, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
@@ -1067,7 +1067,7 @@ func (k Keeper) getPaginatedOrderBookOrders(
 			}
 
 			var acc sdk.AccAddress
-			acc, err = k.getAccountAddressWithCache(ctx, record.AccountNumber, accNumberToAddCache)
+			acc, err = k.getAccountAddressWithCache(ctx, record.AccountNumber, accNumberToAddrCache)
 			if err != nil {
 				return nil, err
 			}
