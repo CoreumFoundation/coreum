@@ -13,8 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/tools"
+	buildtools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -60,8 +61,8 @@ func executeGoProtocCommand(ctx context.Context, deps types.DepsFunc, includeDir
 	args := []string{
 		"--gocosmos_out=plugins=interfacetype+grpc,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.",
 		"--grpc-gateway_out=logtostderr=true:.",
-		"--plugin=" + tools.Path("bin/protoc-gen-gocosmos", tools.TargetPlatformLocal),
-		"--plugin=" + tools.Path("bin/protoc-gen-grpc-gateway", tools.TargetPlatformLocal),
+		"--plugin=" + buildtools.Path("bin/protoc-gen-gocosmos", buildtools.TargetPlatformLocal),
+		"--plugin=" + buildtools.Path("bin/protoc-gen-grpc-gateway", buildtools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {
@@ -84,7 +85,7 @@ func executeGoProtocCommand(ctx context.Context, deps types.DepsFunc, includeDir
 	for _, files := range packages {
 		args := append([]string{}, args...)
 		args = append(args, files...)
-		cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
+		cmd := exec.Command(buildtools.Path("bin/protoc", buildtools.TargetPlatformLocal), args...)
 		cmd.Dir = outDir
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err

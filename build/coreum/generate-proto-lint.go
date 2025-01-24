@@ -10,8 +10,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/tools"
+	buildtools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -51,7 +52,7 @@ func executeLintProtocCommand(ctx context.Context, deps types.DepsFunc, includeD
 	args := []string{
 		"--buf-lint_out=.",
 		fmt.Sprintf("--buf-lint_opt=%s", configLint),
-		"--plugin=" + tools.Path("bin/protoc-gen-buf-lint", tools.TargetPlatformLocal),
+		"--plugin=" + buildtools.Path("bin/protoc-gen-buf-lint", buildtools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {
@@ -74,7 +75,7 @@ func executeLintProtocCommand(ctx context.Context, deps types.DepsFunc, includeD
 	for _, files := range packages {
 		args := append([]string{}, args...)
 		args = append(args, files...)
-		cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
+		cmd := exec.Command(buildtools.Path("bin/protoc", buildtools.TargetPlatformLocal), args...)
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err
 		}

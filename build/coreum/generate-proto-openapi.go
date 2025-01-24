@@ -13,8 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/tools"
+	buildtools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -97,7 +98,7 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps types.DepsFunc, inclu
 
 	args := []string{
 		"--openapiv2_out=logtostderr=true,allow_merge=true,json_names_for_fields=false,fqn_for_openapi_name=true,simple_operation_ids=true,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.", //nolint:lll // breaking down this string will make it more complicated.
-		"--plugin=" + tools.Path("bin/protoc-gen-openapiv2", tools.TargetPlatformLocal),
+		"--plugin=" + buildtools.Path("bin/protoc-gen-openapiv2", buildtools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {
@@ -136,7 +137,7 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps types.DepsFunc, inclu
 			}
 			args := append([]string{}, args...)
 			args = append(args, pf)
-			cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
+			cmd := exec.Command(buildtools.Path("bin/protoc", buildtools.TargetPlatformLocal), args...)
 			cmd.Dir = dir
 			if err := libexec.Exec(ctx, cmd); err != nil {
 				return err
