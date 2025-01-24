@@ -14,9 +14,10 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/tools"
+	buildtools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -60,7 +61,7 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 		return errors.WithStack(err)
 	}
 
-	cmdImage := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal),
+	cmdImage := exec.Command(buildtools.Path("bin/protoc", buildtools.TargetPlatformLocal),
 		append(
 			append([]string{"--include_imports", "--include_source_info", "-o", imageFile}, masterIncludeArgs...),
 			masterProtoFiles...)...)
@@ -99,11 +100,11 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	args := []string{
 		"--buf-breaking_out=.",
 		fmt.Sprintf("--buf-breaking_opt=%s", configBuf),
-		"--plugin=" + tools.Path("bin/protoc-gen-buf-breaking", tools.TargetPlatformLocal),
+		"--plugin=" + buildtools.Path("bin/protoc-gen-buf-breaking", buildtools.TargetPlatformLocal),
 	}
 
 	args = append(args, includeArgs...)
 	args = append(args, masterProtoFiles...)
-	cmdBreaking := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
+	cmdBreaking := exec.Command(buildtools.Path("bin/protoc", buildtools.TargetPlatformLocal), args...)
 	return libexec.Exec(ctx, cmdBreaking)
 }

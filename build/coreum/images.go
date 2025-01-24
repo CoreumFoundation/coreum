@@ -6,16 +6,17 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum/build/coreum/image"
+	"github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
-	"github.com/CoreumFoundation/crust/build/tools"
+	buildtools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
 type imageConfig struct {
 	BinaryPath      string
-	TargetPlatforms []tools.TargetPlatform
+	TargetPlatforms []buildtools.TargetPlatform
 	Action          docker.Action
 	Username        string
 	Versions        []string
@@ -27,7 +28,7 @@ func BuildCoredDockerImage(ctx context.Context, deps types.DepsFunc) error {
 
 	return buildCoredDockerImage(ctx, imageConfig{
 		BinaryPath:      binaryPath,
-		TargetPlatforms: []tools.TargetPlatform{tools.TargetPlatformLinuxLocalArchInDocker},
+		TargetPlatforms: []buildtools.TargetPlatform{buildtools.TargetPlatformLinuxLocalArchInDocker},
 		Action:          docker.ActionLoad,
 		Versions:        []string{config.ZNetVersion},
 	})
@@ -39,7 +40,7 @@ func BuildExtendedCoredDockerImage(ctx context.Context, deps types.DepsFunc) err
 
 	return buildCoredDockerImage(ctx, imageConfig{
 		BinaryPath:      extendedBinaryPath,
-		TargetPlatforms: []tools.TargetPlatform{tools.TargetPlatformLinuxLocalArchInDocker},
+		TargetPlatforms: []buildtools.TargetPlatform{buildtools.TargetPlatformLinuxLocalArchInDocker},
 		Action:          docker.ActionLoad,
 		Versions:        []string{config.ZNetVersion},
 	})
@@ -79,24 +80,24 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 // ensureReleasedBinaries ensures that all previous cored versions are installed.
 func ensureReleasedBinaries(ctx context.Context, deps types.DepsFunc) error {
 	const binaryTool = tools.CoredV401
-	if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
+	if err := buildtools.Ensure(ctx, binaryTool, buildtools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 		return err
 	}
-	if err := tools.CopyToolBinaries(
+	if err := CopyToolBinaries(
 		binaryTool,
-		tools.TargetPlatformLinuxLocalArchInDocker,
-		filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String()),
+		buildtools.TargetPlatformLinuxLocalArchInDocker,
+		filepath.Join("bin", ".cache", binaryName, buildtools.TargetPlatformLinuxLocalArchInDocker.String()),
 		fmt.Sprintf("bin/%s", binaryTool)); err != nil {
 		return err
 	}
 	// copy the release binary for the local platform to use for the genesis generation
-	if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLocal); err != nil {
+	if err := buildtools.Ensure(ctx, binaryTool, buildtools.TargetPlatformLocal); err != nil {
 		return err
 	}
-	return tools.CopyToolBinaries(
+	return CopyToolBinaries(
 		binaryTool,
-		tools.TargetPlatformLocal,
-		filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLocal.String()),
+		buildtools.TargetPlatformLocal,
+		filepath.Join("bin", ".cache", binaryName, buildtools.TargetPlatformLocal.String()),
 		fmt.Sprintf("bin/%s", binaryTool),
 	)
 }
