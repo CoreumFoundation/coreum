@@ -107,7 +107,9 @@ func BuildGaiaDockerImage(ctx context.Context, deps types.DepsFunc) error {
 		return err
 	}
 
-	gaiaLocalPath := filepath.Join("bin", ".cache", gaiaBinaryName, buildtools.TargetPlatformLinuxLocalArchInDocker.String())
+	gaiaLocalPath := filepath.Join(
+		"bin", ".cache", gaiaBinaryName, buildtools.TargetPlatformLinuxLocalArchInDocker.String(),
+	)
 	if err := CopyToolBinaries(
 		tools.Gaia,
 		buildtools.TargetPlatformLinuxLocalArchInDocker,
@@ -139,7 +141,9 @@ func BuildHermesDockerImage(ctx context.Context, deps types.DepsFunc) error {
 		return err
 	}
 
-	hermesLocalPath := filepath.Join("bin", ".cache", hermesBinaryName, buildtools.TargetPlatformLinuxLocalArchInDocker.String())
+	hermesLocalPath := filepath.Join(
+		"bin", ".cache", hermesBinaryName, buildtools.TargetPlatformLinuxLocalArchInDocker.String(),
+	)
 	if err := CopyToolBinaries(
 		tools.Hermes,
 		buildtools.TargetPlatformLinuxLocalArchInDocker,
@@ -172,7 +176,9 @@ func BuildOsmosisDockerImage(ctx context.Context, deps types.DepsFunc) error {
 		return err
 	}
 
-	binaryLocalPath := filepath.Join("bin", ".cache", osmosisBinaryName, buildtools.TargetPlatformLinuxLocalArchInDocker.String())
+	binaryLocalPath := filepath.Join(
+		"bin", ".cache", osmosisBinaryName, buildtools.TargetPlatformLinuxLocalArchInDocker.String(),
+	)
 	if err := CopyToolBinaries(
 		tools.Osmosis,
 		buildtools.TargetPlatformLinuxLocalArchInDocker,
@@ -353,7 +359,9 @@ func formatProto(ctx context.Context, deps types.DepsFunc) error {
 
 // CopyToolBinaries moves the toolsMap artifacts from the local cache to the target local location.
 // In case the binPath doesn't exist the method will create it.
-func CopyToolBinaries(toolName buildtools.Name, platform buildtools.TargetPlatform, path string, binaryNames ...string) error {
+func CopyToolBinaries(
+	toolName buildtools.Name, platform buildtools.TargetPlatform, path string, binaryNames ...string,
+) error {
 	tool, err := buildtools.Get(toolName)
 	if err != nil {
 		return err

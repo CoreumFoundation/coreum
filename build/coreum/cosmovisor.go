@@ -8,7 +8,9 @@ import (
 	buildtools "github.com/CoreumFoundation/crust/build/tools"
 )
 
-func ensureCosmovisorWithInstalledBinary(ctx context.Context, platform buildtools.TargetPlatform, binaryName string) error {
+func ensureCosmovisorWithInstalledBinary(
+	ctx context.Context, platform buildtools.TargetPlatform, binaryName string,
+) error {
 	if err := buildtools.Ensure(ctx, tools.Cosmovisor, platform); err != nil {
 		return err
 	}
