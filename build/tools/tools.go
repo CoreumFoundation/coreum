@@ -8,23 +8,40 @@ import (
 )
 
 const (
-	Cosmovisor           tools.Name = "cosmovisor"
-	MuslCC               tools.Name = "muslcc"
-	LibWASM              tools.Name = "libwasmvm"
-	Gaia                 tools.Name = "gaia"
-	Osmosis              tools.Name = "osmosis"
-	Hermes               tools.Name = "hermes"
-	CoredV401            tools.Name = "cored-v4.0.1"
-	Buf                  tools.Name = "buf"
-	Protoc               tools.Name = "protoc"
-	ProtocGenDoc         tools.Name = "protoc-gen-doc"
+	// Cosmovisor is a process manager for Cosmos SDK application binaries
+	// that automates application binary switch at chain upgrades.
+	Cosmovisor tools.Name = "cosmovisor"
+	// MuslCC static cross- and native- musl-based toolchains.
+	MuslCC tools.Name = "muslcc"
+	// LibWASM is the WASM VM library.
+	LibWASM tools.Name = "libwasmvm"
+	// Gaia is Cosmos Hub chain.
+	Gaia tools.Name = "gaia"
+	// Osmosis is Osmosis chain.
+	Osmosis tools.Name = "osmosis"
+	// Hermes is an Inter-Blockchain Communication (IBC) relayer.
+	Hermes tools.Name = "hermes"
+	// CoredV401 is an older version of cored used for testing chain upgrades.
+	CoredV401 tools.Name = "cored-v4.0.1"
+	// Buf is a tool for working with Protocol Buffers.
+	Buf tools.Name = "buf"
+	// Protoc is the Protocol Buffers compiler.
+	Protoc tools.Name = "protoc"
+	// ProtocGenDoc is a documentation generator plugin for Google Protocol Buffers.
+	ProtocGenDoc tools.Name = "protoc-gen-doc"
+	// ProtocGenGRPCGateway is gRPC to JSON proxy generator.
 	ProtocGenGRPCGateway tools.Name = "protoc-gen-grpc-gateway"
-	ProtocGenOpenAPIV2   tools.Name = "protoc-gen-openapiv2"
-	ProtocGenGoCosmos    tools.Name = "protoc-gen-gocosmos"
-	ProtocGenBufLint     tools.Name = "protoc-gen-buf-lint"
+	// ProtocGenOpenAPIV2 is a tool to generate OpenAPI definitions.
+	ProtocGenOpenAPIV2 tools.Name = "protoc-gen-openapiv2"
+	// ProtocGenGoCosmos is Protocol Buffers for Go with Gadgets for Cosmos.
+	ProtocGenGoCosmos tools.Name = "protoc-gen-gocosmos"
+	// ProtocGenBufLint lints Protobuf files.
+	ProtocGenBufLint tools.Name = "protoc-gen-buf-lint"
+	// ProtocGenBufBreaking detects breaking changes in Protobuf files.
 	ProtocGenBufBreaking tools.Name = "protoc-gen-buf-breaking"
 )
 
+// Tools list of required binaries and libraries.
 var Tools = []tools.Tool{
 	// https://github.com/cosmos/cosmos-sdk/releases
 	tools.BinaryTool{
