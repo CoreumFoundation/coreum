@@ -30,18 +30,13 @@ Entire process of running local chain is automated by our tooling. The only prer
 ### Build binaries
 
 Steps to build required binaries:
-1. Clone crust repository and setup initial dependencies
-```
-$ git clone https://github.com/CoreumFoundation/crust
-$ ./crust/bin/crust setup
-```
-
-2. Clone this repository
+1. Clone this repository and setup initial dependencies
 ```
 $ git clone https://github.com/CoreumFoundation/coreum
 $ cd coreum
+$ ./bin/coreum-builder setup
 ```
-3. Compile the `cored` binary and related docker images:
+2. Compile the `cored` binary and related docker images:
 ```
 $ make build images
 ```
