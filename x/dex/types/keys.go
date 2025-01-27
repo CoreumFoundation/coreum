@@ -207,7 +207,7 @@ func CreateAccountDenomOrderSequenceKey(accNumber uint64, denom string, orderSeq
 // CreateAccountDenomKeyPrefix creates account denom key prefix.
 func CreateAccountDenomKeyPrefix(accNumber uint64, denom string) ([]byte, error) {
 	key := make([]byte, 0)
-	key = store.AppendUint64ToOrderedBytes(key, accNumber)
+	key = store.AppendUint64ToOrderedBytes(key, accNumber) // same as in method CreateAccountDenomOrdersCountKey and references the same functionality.
 	denomKey, err := store.JoinKeysWithLength([]byte(denom))
 	if err != nil {
 		return key, err
