@@ -272,6 +272,15 @@ func (c ChainContext) SignAndBroadcastMultisigTx(
 	return client.BroadcastRawTx(ctx, c.ClientContext, encodedTx)
 }
 
+func (c ChainContext) LatestBlockHeader(ctx context.Context) (cmtservice.Header, error) {
+	blockRes, err := cmtservice.NewServiceClient(c.ClientContext).GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	if err != nil {
+		return cmtservice.Header{}, err
+	}
+
+	return blockRes.SdkBlock.Header, nil
+}
+
 // Chain holds network and client for the blockchain.
 type Chain struct {
 	ChainContext

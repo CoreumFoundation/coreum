@@ -88,10 +88,10 @@ func runUpgrade(
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &cmtservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
 
-	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
 
-	upgradeHeight := latestBlockRes.SdkBlock.Header.Height + blocksToWait
+	upgradeHeight := latestBlock.Height + blocksToWait
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
