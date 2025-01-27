@@ -57,8 +57,8 @@ func (t TimeInForce) Validate() error {
 	return nil
 }
 
-// NewOrderFormMsgPlaceOrder creates and validates Order from MsgPlaceOrder.
-func NewOrderFormMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
+// NewOrderFromMsgPlaceOrder creates and validates Order from MsgPlaceOrder.
+func NewOrderFromMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 	o := Order{
 		Creator:     msg.Sender,
 		Type:        msg.Type,

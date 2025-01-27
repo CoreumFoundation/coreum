@@ -30,7 +30,6 @@ func TestFeeGrant(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 	feegrantClient := feegrant.NewQueryClient(chain.ClientContext)
-	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 
 	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -64,12 +63,12 @@ func TestFeeGrant(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
 
 	expiringAllowance, err := codectypes.NewAnyWithValue(&feegrant.BasicAllowance{
 		SpendLimit: nil, // empty means no limit
-		Expiration: lo.ToPtr(blockRes.SdkBlock.Header.Time.Add(10 * time.Second)),
+		Expiration: lo.ToPtr(latestBlock.Time.Add(10 * time.Second)),
 	})
 	requireT.NoError(err)
 

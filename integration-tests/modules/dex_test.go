@@ -432,7 +432,6 @@ func TestOrderTilBlockHeight(t *testing.T) {
 
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
 
 	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
@@ -445,7 +444,7 @@ func TestOrderTilBlockHeight(t *testing.T) {
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
 
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
@@ -458,7 +457,7 @@ func TestOrderTilBlockHeight(t *testing.T) {
 		Quantity:   sdkmath.NewInt(100),
 		Side:       dextypes.SIDE_SELL,
 		GoodTil: lo.ToPtr(dextypes.GoodTil{
-			GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 20),
+			GoodTilBlockHeight: uint64(latestBlock.Height + 20),
 		}),
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -502,7 +501,6 @@ func TestOrderTilBlockTime(t *testing.T) {
 
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
 
 	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
@@ -515,7 +513,7 @@ func TestOrderTilBlockTime(t *testing.T) {
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
 
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
 
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
@@ -528,7 +526,7 @@ func TestOrderTilBlockTime(t *testing.T) {
 		Quantity:   sdkmath.NewInt(100),
 		Side:       dextypes.SIDE_SELL,
 		GoodTil: lo.ToPtr(dextypes.GoodTil{
-			GoodTilBlockTime: lo.ToPtr(blockRes.SdkBlock.Header.Time.Add(10 * time.Second)),
+			GoodTilBlockTime: lo.ToPtr(latestBlock.Time.Add(10 * time.Second)),
 		}),
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -572,7 +570,6 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 
 	requireT := require.New(t)
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
-	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 
 	// issue assetft
 	acc1 := chain.GenAccount()
@@ -581,7 +578,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
 
 	// create acc1 orders
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
 
 	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
@@ -598,7 +595,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			Quantity:   sdkmath.NewInt(100),
 			Side:       dextypes.SIDE_SELL,
 			GoodTil: &dextypes.GoodTil{
-				GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
+				GoodTilBlockHeight: uint64(latestBlock.Height + 500),
 			},
 			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 			RemainingQuantity: sdkmath.NewInt(100),
@@ -631,7 +628,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			Quantity:   sdkmath.NewInt(10),
 			Side:       dextypes.SIDE_BUY,
 			GoodTil: &dextypes.GoodTil{
-				GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 1000),
+				GoodTilBlockHeight: uint64(currentHeight + 1000),
 			},
 			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 			RemainingQuantity: sdkmath.NewInt(10),
@@ -1174,7 +1171,6 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// it's because the token the acc receives is globally frozen
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
@@ -1660,6 +1656,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 	balanceAfterMatchingOrder := balanceRes.Balance
 	requireT.Equal(balanceAfterPlaceOrder.Sub(placeSellOrderMsg.Quantity).String(), balanceAfterMatchingOrder.String())
 
+	// burn rate is not applied to receiver account and full amount is received
 	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc2.String(),
 		Denom:   denom1,
@@ -1810,6 +1807,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 	balanceAfterMatchingOrder := balanceRes.Balance
 	requireT.Equal(balanceAfterPlaceOrder.Sub(placeSellOrderMsg.Quantity).String(), balanceAfterMatchingOrder.String())
 
+	// commision rate is not applied to receiver account and full amount is received
 	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc2.String(),
 		Denom:   denom1,
@@ -1895,7 +1893,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
 
 	// place order should fail because acc2 is out of whitelisted coins
-	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc2.String(),
 		Type:        dextypes.ORDER_TYPE_LIMIT,
 		ID:          "id1",
@@ -1911,7 +1909,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
 		chain.TxFactoryAuto(),
-		placeSellOrderMsg,
+		placeBuyOrderMsg,
 	)
 	requireT.ErrorContains(err, assetfttypes.ErrWhitelistedLimitExceeded.Error())
 
@@ -1936,19 +1934,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// now placing order should succeed because the receiving amount is within the whitelist limit
-	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
-		Sender:      acc2.String(),
-		Type:        dextypes.ORDER_TYPE_LIMIT,
-		ID:          "id1",
-		BaseDenom:   denom1,
-		QuoteDenom:  denom2,
-		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:    sdkmath.NewInt(300),
-		Side:        dextypes.SIDE_BUY,
-		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
-	}
-
+	// now placing of the same order should succeed because the receiving amount is within the whitelist limit
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
@@ -1980,7 +1966,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	requireT.NoError(err)
 
 	// place sell order to match the buy
-	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc1.String(),
 		Type:        dextypes.ORDER_TYPE_LIMIT,
 		ID:          "id1", // same ID allowed for different user
@@ -2056,13 +2042,18 @@ func TestCancelOrdersByDenom(t *testing.T) {
 	})
 
 	acc1 := chain.GenAccount()
+	acc2 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
+		Amount: sdkmath.NewIntWithDecimal(1, 6), // amount to cover cancellation
+	})
+
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 10), assetfttypes.Feature_dex_order_cancellation)
 	denom2 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 10), assetfttypes.Feature_dex_order_cancellation)
 
 	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
 	requireT.NoError(err)
 
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
 
 	ordersCount := int(dexParamsRes.Params.MaxOrdersPerDenom)
@@ -2079,14 +2070,14 @@ func TestCancelOrdersByDenom(t *testing.T) {
 			Quantity:   amtPerOrder,
 			Side:       dextypes.SIDE_SELL,
 			GoodTil: lo.ToPtr(dextypes.GoodTil{
-				GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 20_000),
-				GoodTilBlockTime:   lo.ToPtr(blockRes.SdkBlock.Header.Time.Add(time.Hour)),
+				GoodTilBlockHeight: uint64(latestBlock.Height + 20_000),
+				GoodTilBlockTime:   lo.ToPtr(latestBlock.Time.Add(time.Hour)),
 			}),
 			TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 		}
 	})
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(len(placeMsgs))).AddRaw(100_000 * int64(ordersCount)),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(ordersCount)).AddRaw(100_000 * int64(ordersCount)),
 	})
 
 	// send required tokens to acc1
@@ -2132,6 +2123,22 @@ func TestCancelOrdersByDenom(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(coinToFundAcc.Amount.String(), balanceRes.LockedInDEX.String())
 
+	// Cancelation from non-issuer and order creator accounts should fail.
+	for _, sender := range []sdk.AccAddress{acc1, acc2} {
+		_, err = client.BroadcastTx(
+			ctx,
+			chain.ClientContext.WithFromAddress(sender),
+			chain.TxFactoryAuto(),
+			&dextypes.MsgCancelOrdersByDenom{
+				Sender:  sender.String(),
+				Account: acc1.String(),
+				Denom:   denom2,
+			})
+		requireT.Error(err)
+		requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
+	}
+
+	// Cancellation from issuer account succeeds.
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
@@ -2348,7 +2355,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	// however the contract has the coins to place such and order, the placement is failed because the order expects
+	// Even though, the contract has enough balance to place such and order, the placement is failed because the order expects
 	// to receive the asset ft with block_smart_contracts feature
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
@@ -2443,7 +2450,7 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 	requireT.Equal(sdkmath.NewInt(200).String(), balanceRes.Balance.String())
 	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.LockedInDEX.String())
 
-	// try to burn unburnable token, locked in dex
+	// try to burn burnable token, locked in dex
 	burnMsg := &assetfttypes.MsgBurn{
 		Sender: acc1.String(),
 		Coin: sdk.Coin{

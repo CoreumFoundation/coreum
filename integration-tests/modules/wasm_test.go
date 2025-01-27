@@ -3664,7 +3664,6 @@ func TestWASMDEXInContract(t *testing.T) {
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactoryAuto()
 	bankClient := banktypes.NewQueryClient(clientCtx)
-	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 
 	dexParms := chain.QueryDEXParams(ctx, t)
 
@@ -3769,7 +3768,7 @@ func TestWASMDEXInContract(t *testing.T) {
 		Amount: dexParms.OrderReserve.Amount,
 	})
 
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
 
 	// ********** Query params **********
@@ -3856,7 +3855,7 @@ func TestWASMDEXInContract(t *testing.T) {
 				Quantity:   orderQuantity,
 				Side:       dextypes.SIDE_SELL,
 				GoodTil: &dextypes.GoodTil{
-					GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
+					GoodTilBlockHeight: uint64(latestBlock.Height + 500),
 				},
 				TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 			},
@@ -3905,7 +3904,7 @@ func TestWASMDEXInContract(t *testing.T) {
 		Quantity:   orderQuantity,
 		Side:       dextypes.SIDE_SELL,
 		GoodTil: &dextypes.GoodTil{
-			GoodTilBlockHeight: uint64(blockRes.SdkBlock.Header.Height + 500),
+			GoodTilBlockHeight: uint64(latestBlock.Height + 500),
 		},
 		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 		RemainingQuantity: orderQuantity,

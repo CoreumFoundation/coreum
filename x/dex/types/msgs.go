@@ -39,7 +39,7 @@ func (m MsgUpdateParams) ValidateBasic() error {
 
 // ValidateBasic validates the message.
 func (m MsgPlaceOrder) ValidateBasic() error {
-	if _, err := NewOrderFormMsgPlaceOrder(m); err != nil {
+	if _, err := NewOrderFromMsgPlaceOrder(m); err != nil {
 		return err
 	}
 
