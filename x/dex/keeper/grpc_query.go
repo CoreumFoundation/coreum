@@ -15,6 +15,7 @@ var _ types.QueryServer = QueryService{}
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
 	GetParams(ctx sdk.Context) (types.Params, error)
+	// do we need QueryOrderBySequence ?
 	GetOrderByAddressAndID(ctx sdk.Context, acc sdk.AccAddress, orderID string) (types.Order, error)
 	GetOrders(
 		ctx sdk.Context,
@@ -25,6 +26,7 @@ type QueryKeeper interface {
 		ctx sdk.Context,
 		pagination *query.PageRequest,
 	) ([]types.OrderBookData, *query.PageResponse, error)
+	// we don't return reverted orders, do we ? how friendly DEX handles this ?
 	GetOrderBookOrders(
 		ctx sdk.Context,
 		baseDenom, quoteDenom string,
