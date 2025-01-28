@@ -66,8 +66,8 @@ func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 	}, nil
 }
 
-// TakerSend registers the coin to be sent from taker to maker.
-func (mr *MatchingResult) TakerSend(
+// SendFromTaker registers the coin to be sent from taker to maker.
+func (mr *MatchingResult) SendFromTaker(
 	makerAddr sdk.AccAddress, makerOrderID string, makerOrderSequence uint64, coin sdk.Coin,
 ) {
 	if coin.IsZero() {
@@ -81,8 +81,8 @@ func (mr *MatchingResult) TakerSend(
 	mr.updateTakerSendEvents(makerAddr, makerOrderID, makerOrderSequence, coin)
 }
 
-// MakerSend registers the coin to be sent from maker to taker.
-func (mr *MatchingResult) MakerSend(makerAddr sdk.AccAddress, makerOrderID string, coin sdk.Coin) {
+// SendFromMaker registers the coin to be sent from maker to taker.
+func (mr *MatchingResult) SendFromMaker(makerAddr sdk.AccAddress, makerOrderID string, coin sdk.Coin) {
 	if coin.IsZero() {
 		return
 	}

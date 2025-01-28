@@ -15,12 +15,12 @@ func (k Keeper) matchOrder(
 	ctx sdk.Context,
 	params types.Params,
 	accNumber uint64,
-	orderBookID, oppositeOrderBookID uint32,
+	orderBookID, invertedOrderBookID uint32,
 	order types.Order,
 ) error {
 	k.logger(ctx).Debug("Matching order.", "order", order.String())
 
-	mf, err := k.NewMatchingFinder(ctx, orderBookID, oppositeOrderBookID, order)
+	mf, err := k.NewMatchingFinder(ctx, orderBookID, invertedOrderBookID, order)
 	if err != nil {
 		return err
 	}
@@ -206,10 +206,10 @@ func (k Keeper) matchRecords(
 		if err != nil {
 			return false, err
 		}
-		mr.TakerSend(
+		mr.SendFromTaker(
 			makerAddr, recordToClose.OrderID, recordToClose.OrderSequence, recordToCloseReceiveCoin,
 		)
-		mr.MakerSend(
+		mr.SendFromMaker(
 			makerAddr, recordToClose.OrderID, recordToReduceReceiveCoin,
 		)
 
@@ -227,10 +227,10 @@ func (k Keeper) matchRecords(
 		if err != nil {
 			return false, err
 		}
-		mr.TakerSend(
+		mr.SendFromTaker(
 			makerAddr, recordToReduce.OrderID, recordToReduce.OrderSequence, recordToReduceReceiveCoin,
 		)
-		mr.MakerSend(
+		mr.SendFromMaker(
 			makerAddr, recordToReduce.OrderID, recordToCloseReceiveCoin,
 		)
 	}
