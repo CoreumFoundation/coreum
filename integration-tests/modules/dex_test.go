@@ -11,7 +11,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -628,7 +627,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			Quantity:   sdkmath.NewInt(10),
 			Side:       dextypes.SIDE_BUY,
 			GoodTil: &dextypes.GoodTil{
-				GoodTilBlockHeight: uint64(currentHeight + 1000),
+				GoodTilBlockHeight: uint64(latestBlock.Height + 1000),
 			},
 			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
 			RemainingQuantity: sdkmath.NewInt(10),
@@ -2031,7 +2030,6 @@ func TestCancelOrdersByDenom(t *testing.T) {
 	requireT := require.New(t)
 	assetFTClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
-	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{

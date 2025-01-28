@@ -8,7 +8,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/feegrant"
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"

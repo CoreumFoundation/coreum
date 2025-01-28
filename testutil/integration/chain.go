@@ -272,6 +272,7 @@ func (c ChainContext) SignAndBroadcastMultisigTx(
 	return client.BroadcastRawTx(ctx, c.ClientContext, encodedTx)
 }
 
+// LatestBlockHeader returns Header of the latest block.
 func (c ChainContext) LatestBlockHeader(ctx context.Context) (cmtservice.Header, error) {
 	blockRes, err := cmtservice.NewServiceClient(c.ClientContext).GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
 	if err != nil {
