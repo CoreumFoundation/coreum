@@ -2133,7 +2133,7 @@ func TestCancelOrdersByDenom(t *testing.T) {
 				Denom:   denom2,
 			})
 		requireT.Error(err)
-		requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
+		requireT.ErrorContains(err, "only admin is able to cancel orders by denom")
 	}
 
 	// Cancellation from issuer account succeeds.
