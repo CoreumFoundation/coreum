@@ -1806,7 +1806,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 	balanceAfterMatchingOrder := balanceRes.Balance
 	requireT.Equal(balanceAfterPlaceOrder.Sub(placeSellOrderMsg.Quantity).String(), balanceAfterMatchingOrder.String())
 
-	// commision rate is not applied to receiver account and full amount is received
+	// commission rate is not applied to receiver account and full amount is received
 	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc2.String(),
 		Denom:   denom1,
@@ -2353,8 +2353,8 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	// Even though, the contract has enough balance to place such and order, the placement is failed because the order expects
-	// to receive the asset ft with block_smart_contracts feature
+	// Even though, the contract has enough balance to place such and order, the placement is failed because
+	// the order expects to receive the asset ft with block_smart_contracts feature
 	_, err = chain.Wasm.ExecuteWASMContract(
 		ctx,
 		chain.TxFactoryAuto(),
