@@ -15,12 +15,12 @@ func (k Keeper) matchOrder(
 	ctx sdk.Context,
 	params types.Params,
 	accNumber uint64,
-	orderBookID, oppositeOrderBookID uint32,
+	orderBookID, invertedOrderBookID uint32,
 	order types.Order,
 ) error {
 	k.logger(ctx).Debug("Matching order.", "order", order.String())
 
-	mf, err := k.NewMatchingFinder(ctx, orderBookID, oppositeOrderBookID, order)
+	mf, err := k.NewMatchingFinder(ctx, orderBookID, invertedOrderBookID, order)
 	if err != nil {
 		return err
 	}
