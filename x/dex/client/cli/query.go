@@ -234,7 +234,7 @@ $ %[1]s query %s order-book-orders denom1 denom2 buy
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "orders")
+	flags.AddPaginationFlagsToCmd(cmd, "order-book-orders")
 
 	return cmd
 }

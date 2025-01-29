@@ -27,6 +27,10 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
+const (
+	IDDEXOrderSuffixTrigger = "blocked"
+)
+
 type FuzzAppConfig struct {
 	AccountsCount                 int
 	AssetFTDefaultDenomsCount     int

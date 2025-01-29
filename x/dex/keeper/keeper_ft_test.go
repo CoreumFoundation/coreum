@@ -28,7 +28,6 @@ import (
 
 const (
 	ExtensionOrderDataWASMAttribute = "order_data"
-	IDDEXOrderSuffixTrigger         = "blocked"
 )
 
 var (
@@ -343,7 +342,7 @@ func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 	acc, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
-	settingsWithExtension := assetfttypes.IssueSettings{
+	settingsWithBurn := assetfttypes.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "DEFEXT",
 		Subunit:       "defext",
@@ -353,7 +352,7 @@ func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 			assetfttypes.Feature_burning,
 		},
 	}
-	denomWithBurn, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithExtension)
+	denomWithBurn, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithBurn)
 	require.NoError(t, err)
 
 	order := types.Order{
@@ -485,7 +484,7 @@ func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
 	acc, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
-	settingsWithExtension := assetfttypes.IssueSettings{
+	settingsWithBurnRate := assetfttypes.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "DEFEXT",
 		Subunit:       "defext",
@@ -496,7 +495,7 @@ func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
 		},
 		BurnRate: sdkmath.LegacyMustNewDecFromStr("0.5"),
 	}
-	denomWithBurnRate, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithExtension)
+	denomWithBurnRate, err := testApp.AssetFTKeeper.Issue(sdkCtx, settingsWithBurnRate)
 	require.NoError(t, err)
 
 	order := types.Order{

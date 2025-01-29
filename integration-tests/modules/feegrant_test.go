@@ -8,7 +8,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/feegrant"
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -30,7 +29,6 @@ func TestFeeGrant(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 	feegrantClient := feegrant.NewQueryClient(chain.ClientContext)
-	tmQueryClient := cmtservice.NewServiceClient(chain.ClientContext)
 
 	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -64,12 +62,12 @@ func TestFeeGrant(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &cmtservice.GetLatestBlockRequest{})
+	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
 
 	expiringAllowance, err := codectypes.NewAnyWithValue(&feegrant.BasicAllowance{
 		SpendLimit: nil, // empty means no limit
-		Expiration: lo.ToPtr(blockRes.SdkBlock.Header.Time.Add(10 * time.Second)),
+		Expiration: lo.ToPtr(latestBlock.Time.Add(10 * time.Second)),
 	})
 	requireT.NoError(err)
 

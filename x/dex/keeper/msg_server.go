@@ -43,7 +43,7 @@ func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 // PlaceOrder places an order on orderbook.
 func (ms MsgServer) PlaceOrder(ctx context.Context, msg *types.MsgPlaceOrder) (*types.EmptyResponse, error) {
-	order, err := types.NewOrderFormMsgPlaceOrder(*msg)
+	order, err := types.NewOrderFromMsgPlaceOrder(*msg)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (ms MsgServer) CancelOrdersByDenom(
 
 	acc, err := sdk.AccAddressFromBech32(msg.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account")
 	}
 
 	return &types.EmptyResponse{}, ms.keeper.CancelOrdersByDenom(sdk.UnwrapSDKContext(ctx), sender, acc, msg.Denom)
