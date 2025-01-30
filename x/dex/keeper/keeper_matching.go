@@ -206,10 +206,10 @@ func (k Keeper) matchRecords(
 		if err != nil {
 			return false, err
 		}
-		mr.TakerSend(
+		mr.SendFromTaker(
 			makerAddr, recordToClose.OrderID, recordToClose.OrderSequence, recordToCloseReceiveCoin,
 		)
-		mr.MakerSend(
+		mr.SendFromMaker(
 			makerAddr, recordToClose.OrderID, recordToReduceReceiveCoin,
 		)
 
@@ -227,10 +227,10 @@ func (k Keeper) matchRecords(
 		if err != nil {
 			return false, err
 		}
-		mr.TakerSend(
+		mr.SendFromTaker(
 			makerAddr, recordToReduce.OrderID, recordToReduce.OrderSequence, recordToReduceReceiveCoin,
 		)
-		mr.MakerSend(
+		mr.SendFromMaker(
 			makerAddr, recordToReduce.OrderID, recordToCloseReceiveCoin,
 		)
 	}
