@@ -14,10 +14,10 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/build/tools"
+	coreumtools "github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
-	buildtools "github.com/CoreumFoundation/crust/build/tools"
+	crusttools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -25,7 +25,7 @@ import (
 var configBreakingTmpl string
 
 func breakingProto(ctx context.Context, deps types.DepsFunc) error {
-	deps(golang.Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
+	deps(golang.Tidy, coreumtools.EnsureProtoc, coreumtools.EnsureProtocGenBufBreaking)
 
 	masterDir, err := os.MkdirTemp("", "coreum-master-*")
 	if err != nil {
@@ -61,7 +61,7 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 		return errors.WithStack(err)
 	}
 
-	cmdImage := exec.Command(buildtools.Path("bin/protoc", buildtools.TargetPlatformLocal),
+	cmdImage := exec.Command(crusttools.Path("bin/protoc", crusttools.TargetPlatformLocal),
 		append(
 			append([]string{"--include_imports", "--include_source_info", "-o", imageFile}, masterIncludeArgs...),
 			masterProtoFiles...)...)
@@ -100,11 +100,11 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	args := []string{
 		"--buf-breaking_out=.",
 		fmt.Sprintf("--buf-breaking_opt=%s", configBuf),
-		"--plugin=" + buildtools.Path("bin/protoc-gen-buf-breaking", buildtools.TargetPlatformLocal),
+		"--plugin=" + crusttools.Path("bin/protoc-gen-buf-breaking", crusttools.TargetPlatformLocal),
 	}
 
 	args = append(args, includeArgs...)
 	args = append(args, masterProtoFiles...)
-	cmdBreaking := exec.Command(buildtools.Path("bin/protoc", buildtools.TargetPlatformLocal), args...)
+	cmdBreaking := exec.Command(crusttools.Path("bin/protoc", crusttools.TargetPlatformLocal), args...)
 	return libexec.Exec(ctx, cmdBreaking)
 }

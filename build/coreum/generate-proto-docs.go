@@ -10,9 +10,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum/build/tools"
+	coreumtools "github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
-	buildtools "github.com/CoreumFoundation/crust/build/tools"
+	crusttools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -47,11 +47,11 @@ func generateProtoDocs(ctx context.Context, deps types.DepsFunc) error {
 
 // executeProtocCommand ensures needed dependencies, composes the protoc command and executes it.
 func executeProtocCommand(ctx context.Context, deps types.DepsFunc, includeDirs, generateDirs []string) error {
-	deps(tools.EnsureProtoc, tools.EnsureProtocGenDoc)
+	deps(coreumtools.EnsureProtoc, coreumtools.EnsureProtocGenDoc)
 
 	args := []string{
 		"--doc_out=docs",
-		"--plugin=" + buildtools.Path("bin/protoc-gen-doc", buildtools.TargetPlatformLocal),
+		"--plugin=" + crusttools.Path("bin/protoc-gen-doc", crusttools.TargetPlatformLocal),
 		"--doc_opt=docs/api.tmpl.md,api.md",
 	}
 
@@ -65,7 +65,7 @@ func executeProtocCommand(ctx context.Context, deps types.DepsFunc, includeDirs,
 	}
 	args = append(args, allProtoFiles...)
 
-	cmd := exec.Command(buildtools.Path("bin/protoc", buildtools.TargetPlatformLocal), args...)
+	cmd := exec.Command(crusttools.Path("bin/protoc", crusttools.TargetPlatformLocal), args...)
 	cmd.Dir = repoPath
 
 	return libexec.Exec(ctx, cmd)
