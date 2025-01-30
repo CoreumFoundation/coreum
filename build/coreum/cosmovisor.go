@@ -15,7 +15,7 @@ func ensureCosmovisorWithInstalledBinary(
 		return err
 	}
 
-	return CopyToolBinaries(coreumtools.Cosmovisor,
+	return crusttools.CopyToolBinaries(coreumtools.Cosmovisor,
 		platform,
 		filepath.Join("bin", ".cache", binaryName, platform.String()),
 		cosmovisorBinaryPath)

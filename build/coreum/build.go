@@ -3,7 +3,6 @@ package coreum
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -110,7 +109,7 @@ func BuildGaiaDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	gaiaLocalPath := filepath.Join(
 		"bin", ".cache", gaiaBinaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String(),
 	)
-	if err := CopyToolBinaries(
+	if err := crusttools.CopyToolBinaries(
 		coreumtools.Gaia,
 		crusttools.TargetPlatformLinuxLocalArchInDocker,
 		gaiaLocalPath,
@@ -144,7 +143,7 @@ func BuildHermesDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	hermesLocalPath := filepath.Join(
 		"bin", ".cache", hermesBinaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String(),
 	)
-	if err := CopyToolBinaries(
+	if err := crusttools.CopyToolBinaries(
 		coreumtools.Hermes,
 		crusttools.TargetPlatformLinuxLocalArchInDocker,
 		hermesLocalPath,
@@ -179,7 +178,7 @@ func BuildOsmosisDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	binaryLocalPath := filepath.Join(
 		"bin", ".cache", osmosisBinaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String(),
 	)
-	if err := CopyToolBinaries(
+	if err := crusttools.CopyToolBinaries(
 		coreumtools.Osmosis,
 		crusttools.TargetPlatformLinuxLocalArchInDocker,
 		binaryLocalPath,
@@ -355,63 +354,4 @@ func formatProto(ctx context.Context, deps types.DepsFunc) error {
 	cmd := exec.Command(crusttools.Path("bin/buf", crusttools.TargetPlatformLocal), "format", "-w")
 	cmd.Dir = filepath.Join(repoPath, "proto", "coreum")
 	return libexec.Exec(ctx, cmd)
-}
-
-// CopyToolBinaries moves the toolsMap artifacts from the local cache to the target local location.
-// In case the binPath doesn't exist the method will create it.
-func CopyToolBinaries(
-	toolName crusttools.Name, platform crusttools.TargetPlatform, path string, binaryNames ...string,
-) error {
-	tool, err := crusttools.Get(toolName)
-	if err != nil {
-		return err
-	}
-
-	if !tool.IsCompatible(platform) {
-		return errors.Errorf("tool %s is not defined for platform %s", toolName, platform)
-	}
-
-	if len(binaryNames) == 0 {
-		return nil
-	}
-
-	storedBinaryNames := map[string]struct{}{}
-	// combine binaries
-	for _, b := range tool.GetBinaries(platform) {
-		storedBinaryNames[b] = struct{}{}
-	}
-
-	// initial validation to check that we have all binaries
-	for _, binaryName := range binaryNames {
-		if _, ok := storedBinaryNames[binaryName]; !ok {
-			return errors.Errorf("the binary %q doesn't exist for the requested tool %q", binaryName, toolName)
-		}
-	}
-
-	for _, binaryName := range binaryNames {
-		dstPath := filepath.Join(path, binaryName)
-
-		// create dir from path
-		err := os.MkdirAll(filepath.Dir(dstPath), os.ModePerm)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// copy the file we need
-		fr, err := os.Open(crusttools.Path(binaryName, platform))
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		defer fr.Close()
-		fw, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		defer fw.Close()
-		if _, err = io.Copy(fw, fr); err != nil {
-			return errors.WithStack(err)
-		}
-	}
-
-	return nil
 }

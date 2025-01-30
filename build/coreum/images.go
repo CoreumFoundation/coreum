@@ -83,7 +83,7 @@ func ensureReleasedBinaries(ctx context.Context, deps types.DepsFunc) error {
 	if err := crusttools.Ensure(ctx, binaryTool, crusttools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 		return err
 	}
-	if err := CopyToolBinaries(
+	if err := crusttools.CopyToolBinaries(
 		binaryTool,
 		crusttools.TargetPlatformLinuxLocalArchInDocker,
 		filepath.Join("bin", ".cache", binaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String()),
@@ -94,7 +94,7 @@ func ensureReleasedBinaries(ctx context.Context, deps types.DepsFunc) error {
 	if err := crusttools.Ensure(ctx, binaryTool, crusttools.TargetPlatformLocal); err != nil {
 		return err
 	}
-	return CopyToolBinaries(
+	return crusttools.CopyToolBinaries(
 		binaryTool,
 		crusttools.TargetPlatformLocal,
 		filepath.Join("bin", ".cache", binaryName, crusttools.TargetPlatformLocal.String()),
