@@ -24,6 +24,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
@@ -193,7 +194,7 @@ func BuildTxForSimulation(
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	//var signatureData signing.SignatureData
+	var signatureData signing.SignatureData
 	if multisigPubKey, ok := pubKey.(*multisig.LegacyAminoPubKey); ok {
 		multiSignatureData := make([]signing.SignatureData, 0, multisigPubKey.Threshold)
 		for range multisigPubKey.Threshold {
@@ -201,24 +202,24 @@ func BuildTxForSimulation(
 				SignMode: txf.SignMode(),
 			})
 		}
-		//signatureData = &signing.MultiSignatureData{
-		//	Signatures: multiSignatureData,
-		//}
+		signatureData = &signing.MultiSignatureData{
+			Signatures: multiSignatureData,
+		}
 	} else {
-		//signatureData = &signing.SingleSignatureData{
-		//	SignMode: txf.SignMode(),
-		//}
+		signatureData = &signing.SingleSignatureData{
+			SignMode: txf.SignMode(),
+		}
 	}
 
-	//modeInfo, signature := authtx.SignatureDataToModeInfoAndSig(signatureData)
+	modeInfo, signature := authtx.SignatureDataToModeInfoAndSig(signatureData)
 
 	simAuthInfoBytes, err := proto.Marshal(&sdktx.AuthInfo{
 		SignerInfos: []*sdktx.SignerInfo{
-			//{
-			//	PublicKey: keyInfo.PubKey,
-			//	ModeInfo:  modeInfo,
-			//	Sequence:  txf.Sequence(),
-			//},
+			{
+				PublicKey: nil,
+				ModeInfo:  modeInfo,
+				Sequence:  txf.Sequence(),
+			},
 		},
 		Fee: &sdktx.Fee{},
 	})
@@ -229,8 +230,8 @@ func BuildTxForSimulation(
 	txBytes, err := proto.Marshal(&sdktx.TxRaw{
 		BodyBytes:     txBodyBytes,
 		AuthInfoBytes: simAuthInfoBytes,
-		Signatures:    [][]byte{
-			//signature,
+		Signatures: [][]byte{
+			signature,
 		},
 	})
 	if err != nil {
