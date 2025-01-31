@@ -109,9 +109,10 @@ func NewContextFromCosmosContext(contextConfig ContextConfig, cosmosContext clie
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation.
 type Context struct {
-	config    ContextConfig
-	clientCtx client.Context
-	awaitTx   bool
+	config             ContextConfig
+	clientCtx          client.Context
+	awaitTx            bool
+	unsignedSimulation bool
 }
 
 // SDKContext returns wrapped SDK context.
@@ -342,6 +343,18 @@ func (c Context) WithGenerateOnly(generateOnly bool) Context {
 func (c Context) WithSimulation(simulate bool) Context {
 	c.clientCtx = c.clientCtx.WithSimulation(simulate)
 	return c
+}
+
+// WithUnsignedSimulation returns a copy of the context with updated UnsignedSimulation flag for simulation
+// to skip adding public key to tx singers.
+func (c Context) WithUnsignedSimulation(unsignedSimulation bool) Context {
+	c.unsignedSimulation = unsignedSimulation
+	return c
+}
+
+// GetUnsignedSimulation returns UnsignedSimulation flag.
+func (c Context) GetUnsignedSimulation() bool {
+	return c.unsignedSimulation
 }
 
 // WithOffline returns a copy of the context with updated Offline value.
