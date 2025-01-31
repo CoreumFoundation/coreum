@@ -170,7 +170,7 @@ func BuildTxForSimulation(
 	}
 
 	var pubKey types.PubKey
-	var wrappedPubKey *codectypes.Any
+	var pubKeyAny *codectypes.Any
 	if !clientCtx.GetUnsignedSimulation() {
 		keyInfo, err := txf.Keybase().KeyByAddress(clientCtx.FromAddress())
 		if err != nil {
@@ -180,7 +180,7 @@ func BuildTxForSimulation(
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		wrappedPubKey = keyInfo.PubKey
+		pubKeyAny = keyInfo.PubKey
 	}
 
 	msgsAny := make([]*codectypes.Any, 0, len(msgs))
@@ -222,7 +222,7 @@ func BuildTxForSimulation(
 	simAuthInfoBytes, err := proto.Marshal(&sdktx.AuthInfo{
 		SignerInfos: []*sdktx.SignerInfo{
 			{
-				PublicKey: wrappedPubKey,
+				PublicKey: pubKeyAny,
 				ModeInfo:  modeInfo,
 				Sequence:  txf.Sequence(),
 			},
