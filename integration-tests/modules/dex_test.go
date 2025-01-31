@@ -2305,6 +2305,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 	)
 	requireT.NoError(err)
 
+	// This test doesn't make sense for me.
 	// it's prohibited to send tokens to the DEX smart contract with the denom with block_smart_contracts feature,
 	// that's why we can't place and order with it
 	sendMsg1 = &banktypes.MsgSend{
@@ -2402,6 +2403,8 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_burning)
+	// 1. If denom doesn't exist, order creation is still possible ? I don't think we should allow this.
+	// 2. Do we need to add test for matching with IBCed denom ?
 	denom2 := "denom2"
 
 	msgSend := &banktypes.MsgSend{
