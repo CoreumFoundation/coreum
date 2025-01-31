@@ -13,8 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	coreumtools "github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/tools"
+	crusttools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -45,7 +46,7 @@ func generateProtoGo(ctx context.Context, deps types.DepsFunc) error {
 
 // executeGoProtocCommand generates go code from proto files.
 func executeGoProtocCommand(ctx context.Context, deps types.DepsFunc, includeDirs, generateDirs []string) error {
-	deps(tools.EnsureProtoc, tools.EnsureProtocGenGRPCGateway, tools.EnsureProtocGenGoCosmos)
+	deps(coreumtools.EnsureProtoc, coreumtools.EnsureProtocGenGRPCGateway, coreumtools.EnsureProtocGenGoCosmos)
 
 	outDir, err := os.MkdirTemp("", "")
 	if err != nil {
@@ -60,8 +61,8 @@ func executeGoProtocCommand(ctx context.Context, deps types.DepsFunc, includeDir
 	args := []string{
 		"--gocosmos_out=plugins=interfacetype+grpc,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.",
 		"--grpc-gateway_out=logtostderr=true:.",
-		"--plugin=" + tools.Path("bin/protoc-gen-gocosmos", tools.TargetPlatformLocal),
-		"--plugin=" + tools.Path("bin/protoc-gen-grpc-gateway", tools.TargetPlatformLocal),
+		"--plugin=" + crusttools.Path("bin/protoc-gen-gocosmos", crusttools.TargetPlatformLocal),
+		"--plugin=" + crusttools.Path("bin/protoc-gen-grpc-gateway", crusttools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {
@@ -84,7 +85,7 @@ func executeGoProtocCommand(ctx context.Context, deps types.DepsFunc, includeDir
 	for _, files := range packages {
 		args := append([]string{}, args...)
 		args = append(args, files...)
-		cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
+		cmd := exec.Command(crusttools.Path("bin/protoc", crusttools.TargetPlatformLocal), args...)
 		cmd.Dir = outDir
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err

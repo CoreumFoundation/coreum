@@ -10,10 +10,8 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/crust/build/gaia"
+	"github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/hermes"
-	"github.com/CoreumFoundation/crust/build/osmosis"
 	"github.com/CoreumFoundation/crust/build/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
@@ -78,7 +76,7 @@ func RunIntegrationTestsStress(runUnsafe bool) types.CommandFunc {
 func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
 		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
-			BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage, hermes.BuildDockerImage)
+			BuildCoredDockerImage, BuildGaiaDockerImage, BuildOsmosisDockerImage, BuildHermesDockerImage)
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
@@ -91,8 +89,8 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
 		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileModulesSmartContracts,
-			BuildCoredLocally, BuildCoredDockerImage, gaia.BuildDockerImage, osmosis.BuildDockerImage,
-			hermes.BuildDockerImage)
+			BuildCoredLocally, BuildCoredDockerImage, BuildGaiaDockerImage, BuildOsmosisDockerImage,
+			BuildHermesDockerImage)
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
@@ -159,5 +157,9 @@ func defaultZNetConfig() *infra.ConfigFactory {
 		TimeoutCommit: 500 * time.Millisecond,
 		HomeDir:       filepath.Join(lo.Must(os.UserHomeDir()), ".crust", "znet"),
 		RootDir:       ".",
+		CoredUpgrades: map[string]string{
+			"v5": "cored",
+			"v4": string(tools.CoredV401),
+		},
 	}
 }

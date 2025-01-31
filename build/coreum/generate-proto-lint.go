@@ -10,8 +10,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	coreumtools "github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/tools"
+	crusttools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -44,14 +45,14 @@ func lintProto(ctx context.Context, deps types.DepsFunc) error {
 }
 
 func executeLintProtocCommand(ctx context.Context, deps types.DepsFunc, includeDirs, generateDirs []string) error {
-	deps(tools.EnsureProtoc, tools.EnsureProtocGenBufLint)
+	deps(coreumtools.EnsureProtoc, coreumtools.EnsureProtocGenBufLint)
 
 	// Linting rule descriptions might be found here: https://buf.build/docs/lint/rules
 
 	args := []string{
 		"--buf-lint_out=.",
 		fmt.Sprintf("--buf-lint_opt=%s", configLint),
-		"--plugin=" + tools.Path("bin/protoc-gen-buf-lint", tools.TargetPlatformLocal),
+		"--plugin=" + crusttools.Path("bin/protoc-gen-buf-lint", crusttools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {
@@ -74,7 +75,7 @@ func executeLintProtocCommand(ctx context.Context, deps types.DepsFunc, includeD
 	for _, files := range packages {
 		args := append([]string{}, args...)
 		args = append(args, files...)
-		cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
+		cmd := exec.Command(crusttools.Path("bin/protoc", crusttools.TargetPlatformLocal), args...)
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err
 		}

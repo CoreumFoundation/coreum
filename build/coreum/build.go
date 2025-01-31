@@ -11,9 +11,13 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	coreumtools "github.com/CoreumFoundation/coreum/build/tools"
+	"github.com/CoreumFoundation/crust/build/config"
+	"github.com/CoreumFoundation/crust/build/docker"
+	dockerbasic "github.com/CoreumFoundation/crust/build/docker/basic"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/tools"
+	crusttools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
@@ -21,10 +25,16 @@ const (
 	blockchainName     = "coreum"
 	binaryName         = "cored"
 	extendedBinaryName = "cored-ext"
+	gaiaBinaryName     = "gaiad"
+	hermesBinaryName   = "hermes"
+	osmosisBinaryName  = "osmosisd"
 	repoPath           = "."
 
 	binaryPath          = "bin/" + binaryName
 	extendedBinaryPath  = "bin/" + extendedBinaryName
+	gaiaBinaryPath      = "bin/" + gaiaBinaryName
+	hermesBinaryPath    = "bin/" + hermesBinaryName
+	osmosisBinaryPath   = "bin/" + osmosisBinaryName
 	integrationTestsDir = repoPath + "/integration-tests"
 	cometBFTCommit      = "099b4104e5b00b3cedd2c06ca3b1270baad2f4e9"
 
@@ -48,7 +58,7 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 	}
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
-		TargetPlatform: tools.TargetPlatformLocal,
+		TargetPlatform: crusttools.TargetPlatformLocal,
 		PackagePath:    "cmd/cored",
 		BinOutputPath:  binaryPath,
 		CGOEnabled:     true,
@@ -59,7 +69,7 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
-	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
+	return buildCoredInDocker(ctx, deps, crusttools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
 		binaryName, "")
 }
 
@@ -81,7 +91,7 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 		return err
 	}
 
-	err = buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
+	err = buildCoredInDocker(ctx, deps, crusttools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
 		extendedBinaryName, "ext")
 	if err != nil {
 		return err
@@ -90,15 +100,118 @@ func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error 
 	return git.RollbackChanges(ctx, "go.mod", "go.sum", "go.work.sum")
 }
 
+// BuildGaiaDockerImage builds docker image of the gaia.
+func BuildGaiaDockerImage(ctx context.Context, deps types.DepsFunc) error {
+	if err := crusttools.Ensure(ctx, coreumtools.Gaia, crusttools.TargetPlatformLinuxLocalArchInDocker); err != nil {
+		return err
+	}
+
+	gaiaLocalPath := filepath.Join(
+		"bin", ".cache", gaiaBinaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String(),
+	)
+	if err := crusttools.CopyToolBinaries(
+		coreumtools.Gaia,
+		crusttools.TargetPlatformLinuxLocalArchInDocker,
+		gaiaLocalPath,
+		gaiaBinaryPath,
+	); err != nil {
+		return err
+	}
+
+	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
+		From:   docker.AlpineImage,
+		Binary: gaiaBinaryPath,
+	})
+	if err != nil {
+		return err
+	}
+
+	return docker.BuildImage(ctx, docker.BuildImageConfig{
+		ContextDir: gaiaLocalPath,
+		ImageName:  gaiaBinaryName,
+		Dockerfile: dockerfile,
+		Versions:   []string{config.ZNetVersion},
+	})
+}
+
+// BuildHermesDockerImage builds docker image of the ibc relayer.
+func BuildHermesDockerImage(ctx context.Context, deps types.DepsFunc) error {
+	if err := crusttools.Ensure(ctx, coreumtools.Hermes, crusttools.TargetPlatformLinuxLocalArchInDocker); err != nil {
+		return err
+	}
+
+	hermesLocalPath := filepath.Join(
+		"bin", ".cache", hermesBinaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String(),
+	)
+	if err := crusttools.CopyToolBinaries(
+		coreumtools.Hermes,
+		crusttools.TargetPlatformLinuxLocalArchInDocker,
+		hermesLocalPath,
+		hermesBinaryPath,
+	); err != nil {
+		return err
+	}
+
+	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
+		From:   docker.UbuntuImage,
+		Binary: hermesBinaryPath,
+		Run:    "apt update && apt install curl jq -y",
+	})
+	if err != nil {
+		return err
+	}
+
+	return docker.BuildImage(ctx, docker.BuildImageConfig{
+		ContextDir: hermesLocalPath,
+		ImageName:  hermesBinaryName,
+		Dockerfile: dockerfile,
+		Versions:   []string{config.ZNetVersion},
+	})
+}
+
+// BuildOsmosisDockerImage builds docker image of the osmosis.
+func BuildOsmosisDockerImage(ctx context.Context, deps types.DepsFunc) error {
+	if err := crusttools.Ensure(ctx, coreumtools.Osmosis, crusttools.TargetPlatformLinuxLocalArchInDocker); err != nil {
+		return err
+	}
+
+	binaryLocalPath := filepath.Join(
+		"bin", ".cache", osmosisBinaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String(),
+	)
+	if err := crusttools.CopyToolBinaries(
+		coreumtools.Osmosis,
+		crusttools.TargetPlatformLinuxLocalArchInDocker,
+		binaryLocalPath,
+		osmosisBinaryPath,
+	); err != nil {
+		return err
+	}
+
+	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
+		From:   docker.AlpineImage,
+		Binary: osmosisBinaryPath,
+	})
+	if err != nil {
+		return err
+	}
+
+	return docker.BuildImage(ctx, docker.BuildImageConfig{
+		ContextDir: binaryLocalPath,
+		ImageName:  osmosisBinaryName,
+		Dockerfile: dockerfile,
+		Versions:   []string{config.ZNetVersion},
+	})
+}
+
 func buildCoredInDocker(
 	ctx context.Context,
 	deps types.DepsFunc,
-	targetPlatform tools.TargetPlatform,
+	targetPlatform crusttools.TargetPlatform,
 	extraFlags []string,
 	binaryName string,
 	mod string,
 ) error {
-	if err := tools.Ensure(ctx, tools.LibWASM, targetPlatform); err != nil {
+	if err := crusttools.Ensure(ctx, coreumtools.LibWASM, targetPlatform); err != nil {
 		return err
 	}
 
@@ -108,9 +221,9 @@ func buildCoredInDocker(
 	envs := make([]string, 0)
 	dockerVolumes := make([]string, 0)
 	switch targetPlatform.OS {
-	case tools.OSLinux:
+	case crusttools.OSLinux:
 		// use cc not installed on the image we use for the build
-		if err := tools.Ensure(ctx, tools.MuslCC, targetPlatform); err != nil {
+		if err := crusttools.Ensure(ctx, coreumtools.MuslCC, targetPlatform); err != nil {
 			return err
 		}
 		buildTags = append(buildTags, "muslc")
@@ -125,19 +238,19 @@ func buildCoredInDocker(
 			wasmCCLibRelativeLibPath string
 		)
 		switch targetPlatform {
-		case tools.TargetPlatformLinuxAMD64InDocker:
+		case crusttools.TargetPlatformLinuxAMD64InDocker:
 			hostCCDirPath = filepath.Dir(
-				filepath.Dir(tools.Path("bin/x86_64-linux-musl-gcc", targetPlatform)),
+				filepath.Dir(crusttools.Path("bin/x86_64-linux-musl-gcc", targetPlatform)),
 			)
 			ccRelativePath = "/bin/x86_64-linux-musl-gcc"
-			wasmHostDirPath = tools.Path("lib/libwasmvm_muslc.x86_64.a", targetPlatform)
+			wasmHostDirPath = crusttools.Path("lib/libwasmvm_muslc.x86_64.a", targetPlatform)
 			wasmCCLibRelativeLibPath = "/x86_64-linux-musl/lib/libwasmvm_muslc.x86_64.a"
-		case tools.TargetPlatformLinuxARM64InDocker:
+		case crusttools.TargetPlatformLinuxARM64InDocker:
 			hostCCDirPath = filepath.Dir(
-				filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", targetPlatform)),
+				filepath.Dir(crusttools.Path("bin/aarch64-linux-musl-gcc", targetPlatform)),
 			)
 			ccRelativePath = "/bin/aarch64-linux-musl-gcc"
-			wasmHostDirPath = tools.Path("lib/libwasmvm_muslc.aarch64.a", targetPlatform)
+			wasmHostDirPath = crusttools.Path("lib/libwasmvm_muslc.aarch64.a", targetPlatform)
 			wasmCCLibRelativeLibPath = "/aarch64-linux-musl/lib/libwasmvm_muslc.aarch64.a"
 		default:
 			return errors.Errorf("building is not possible for platform %s", targetPlatform)
@@ -150,17 +263,17 @@ func buildCoredInDocker(
 			fmt.Sprintf("%s:%s", wasmHostDirPath, fmt.Sprintf("%s%s", ccDockerDir, wasmCCLibRelativeLibPath)),
 		)
 		cc = fmt.Sprintf("%s%s", ccDockerDir, ccRelativePath)
-	case tools.OSDarwin:
+	case crusttools.OSDarwin:
 		buildTags = append(buildTags, "static_wasm")
 		switch targetPlatform {
-		case tools.TargetPlatformDarwinAMD64InDocker:
+		case crusttools.TargetPlatformDarwinAMD64InDocker:
 			cc = "o64-clang"
-		case tools.TargetPlatformDarwinARM64InDocker:
+		case crusttools.TargetPlatformDarwinARM64InDocker:
 			cc = "oa64-clang"
 		default:
 			return errors.Errorf("building is not possible for platform %s", targetPlatform)
 		}
-		wasmHostDirPath := tools.Path("lib/libwasmvmstatic_darwin.a", targetPlatform)
+		wasmHostDirPath := crusttools.Path("lib/libwasmvmstatic_darwin.a", targetPlatform)
 		dockerVolumes = append(dockerVolumes, fmt.Sprintf("%s:%s", wasmHostDirPath, "/lib/libwasmvmstatic_darwin.a"))
 		envs = append(envs, "CGO_LDFLAGS=-L/lib")
 	default:
@@ -236,9 +349,9 @@ func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([
 }
 
 func formatProto(ctx context.Context, deps types.DepsFunc) error {
-	deps(tools.EnsureBuf)
+	deps(coreumtools.EnsureBuf)
 
-	cmd := exec.Command(tools.Path("bin/buf", tools.TargetPlatformLocal), "format", "-w")
+	cmd := exec.Command(crusttools.Path("bin/buf", crusttools.TargetPlatformLocal), "format", "-w")
 	cmd.Dir = filepath.Join(repoPath, "proto", "coreum")
 	return libexec.Exec(ctx, cmd)
 }
