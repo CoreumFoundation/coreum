@@ -181,9 +181,6 @@ func BuildTxForSimulation(
 			return nil, errors.WithStack(err)
 		}
 		wrappedPubKey = keyInfo.PubKey
-	} else {
-		// This is here just for demo purposes:
-		txf = txf.WithGasAdjustment(txf.GasAdjustment() + 0.1)
 	}
 
 	msgsAny := make([]*codectypes.Any, 0, len(msgs))
