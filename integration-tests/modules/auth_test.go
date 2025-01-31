@@ -266,10 +266,11 @@ func TestGasEstimation(t *testing.T) {
 
 	// For deterministic messages we are able to assert that gas estimation is equal to exact number.
 	testsDeterm := []struct {
-		name        string
-		fromAddress sdk.AccAddress
-		msgs        []sdk.Msg
-		expectedGas func(txBytes []byte) uint64
+		name             string
+		fromAddress      sdk.AccAddress
+		msgs             []sdk.Msg
+		simulateUnsigned bool
+		expectedGas      func(txBytes []byte) uint64
 	}{
 		{
 			name:        "singlesig_bank_send",
@@ -318,6 +319,24 @@ func TestGasEstimation(t *testing.T) {
 				return expectedGas
 			},
 		},
+		{
+			name:        "multisig_6_7_bank_send_unsigned",
+			fromAddress: multisigAddress2,
+			msgs: []sdk.Msg{
+				&banktypes.MsgSend{
+					FromAddress: multisigAddress2.String(),
+					ToAddress:   multisigAddress2.String(),
+					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+				},
+			},
+			simulateUnsigned: true,
+			expectedGas: func(txBytes []byte) uint64 {
+				signatureCost := uint64(0)
+				bytesCost := uint64(len(txBytes)) * authParams.Params.TxSizeCostPerByte
+				expectedGas := dgc.FixedGas + deterministicgas.BankSendPerCoinGas + bytesCost + signatureCost
+				return expectedGas
+			},
+		},
 	}
 	for _, tt := range testsDeterm {
 		t.Run(tt.name, func(t *testing.T) {
@@ -325,7 +344,7 @@ func TestGasEstimation(t *testing.T) {
 
 			txBytes, err := client.BuildTxForSimulation(
 				ctx,
-				chain.ClientContext.WithFromAddress(tt.fromAddress),
+				chain.ClientContext.WithFromAddress(tt.fromAddress).WithUnsignedSimulation(tt.simulateUnsigned),
 				chain.TxFactory(),
 				tt.msgs...,
 			)
@@ -333,7 +352,7 @@ func TestGasEstimation(t *testing.T) {
 
 			_, estimatedGas, err := client.CalculateGas(
 				ctx,
-				chain.ClientContext.WithFromAddress(tt.fromAddress),
+				chain.ClientContext.WithFromAddress(tt.fromAddress).WithUnsignedSimulation(tt.simulateUnsigned),
 				chain.TxFactory(),
 				tt.msgs...,
 			)
