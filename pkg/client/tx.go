@@ -20,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
+	"github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
@@ -168,9 +169,21 @@ func BuildTxForSimulation(
 		txf = txf.WithGasAdjustment(clientCtx.GasAdjustment())
 	}
 
-	keyInfo, err := txf.Keybase().KeyByAddress(clientCtx.FromAddress())
-	if err != nil {
-		return nil, errors.WithStack(err)
+	var pubKey types.PubKey
+	var wrappedPubKey *codectypes.Any
+	if !clientCtx.GetUnsignedSimulation() {
+		keyInfo, err := txf.Keybase().KeyByAddress(clientCtx.FromAddress())
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		pubKey, err = keyInfo.GetPubKey()
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		wrappedPubKey = keyInfo.PubKey
+	} else {
+		// This is here just for demo purposes:
+		txf = txf.WithGasAdjustment(txf.GasAdjustment() + 0.1)
 	}
 
 	msgsAny := make([]*codectypes.Any, 0, len(msgs))
@@ -190,10 +203,6 @@ func BuildTxForSimulation(
 		return nil, errors.WithStack(err)
 	}
 
-	pubKey, err := keyInfo.GetPubKey()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
 	var signatureData signing.SignatureData
 	if multisigPubKey, ok := pubKey.(*multisig.LegacyAminoPubKey); ok {
 		multiSignatureData := make([]signing.SignatureData, 0, multisigPubKey.Threshold)
@@ -216,7 +225,7 @@ func BuildTxForSimulation(
 	simAuthInfoBytes, err := proto.Marshal(&sdktx.AuthInfo{
 		SignerInfos: []*sdktx.SignerInfo{
 			{
-				PublicKey: nil,
+				PublicKey: wrappedPubKey,
 				ModeInfo:  modeInfo,
 				Sequence:  txf.Sequence(),
 			},
