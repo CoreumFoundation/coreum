@@ -729,7 +729,7 @@ github.com/CoreumFoundation/crust v0.0.0-20240829115043-b19e0fee4b1f/go.mod h1:a
 github.com/CoreumFoundation/crust v0.0.0-20240910084945-51add516ee39/go.mod h1:jl7aUqRGQj20pctlDXGs64EZJa8g1jtxDiQOCkxx9Gs=
 github.com/CoreumFoundation/crust v0.0.0-20240913053503-d54f466836c9/go.mod h1:E9Gyav98jDtWqIr+gAHu9onNQOFf/SGFsYhwbWtO87M=
 github.com/CoreumFoundation/crust v0.0.0-20241008134118-a7bc074eff93/go.mod h1:rRKCkQ1UpqmKUCsL6XCFQZCo0OXLRVNWCL9h4gt+pq4=
-github.com/CoreumFoundation/crust v0.0.0-20250130134317-5678409abbd9/go.mod h1:zF24u3uF5C4CxYNvlryfTO6/9pagGkYrwErSaHi62+o=
+github.com/CoreumFoundation/crust v0.0.0-20250131082142-5bbfcc8a8961/go.mod h1:zF24u3uF5C4CxYNvlryfTO6/9pagGkYrwErSaHi62+o=
 github.com/CosmWasm/wasmvm/v2 v2.0.0/go.mod h1:su9lg5qLr7adV95eOfzjZWkGiky8WNaNIHDr7Fpu7Ck=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/zstd v1.4.5/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
