@@ -435,7 +435,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 			// we fill the id1 first, so the used balance from id2 is 1000 * 375e-3 = 1000 * 375e-3 = 375
 			// to fill remaining part we need (10000 - 1000) * 376e-3 = 3384, so total expected to send 3384 + 375 = 3759
-			wantErrorContains: "3759denom2 is not available, available 3758denom2",
+			wantErrorContains: "3759denom2 is not available, available 3758denom2", // I don't think we have correct calculation here. It should fail with 3760.
 		},
 		{
 			name: "match_limit_self_maker_sell_taker_buy_close_maker_with_partial_filling",
