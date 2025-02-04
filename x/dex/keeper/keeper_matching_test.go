@@ -253,7 +253,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantErrorContains: "1000denom1 is not available, available 999denom1",
 		},
 
-		// ******************** Direct limit matching ********************
+		// ******************** Direct OB limit matching ********************
 
 		{
 			name: "match_limit_directOB_maker_sell_taker_buy_close_maker",
@@ -798,7 +798,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   denom1,
 						QuoteDenom:  denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("37e-2")), // here do we have similar test ?
+						Price:       lo.ToPtr(types.MustNewPriceFromString("37e-2")),
 						Quantity:    sdkmath.NewInt(500),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
@@ -1546,7 +1546,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Side:       types.SIDE_BUY,
 					},
 				}
-			}, // should fail IMO
+			},
 			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
@@ -1615,13 +1615,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:         "id3",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
-						// FIXME(ysv): I'm not sure if this is correct behavior.
-						// Checked binance and it doesn't allow to place such order but shows modal with add more funds.
-						// From binance doc: https://www.binance.com/en/support/faq/what-are-market-order-and-limit-order-and-how-to-place-them-12cba755d6334ad98ced0b66ddde66ec
-						// "For example, you own 653.72520248 USDT, and the price of BTC/USDT is fluctuating around 67,510.33 USDT. When you place a “Buy 100%” order, the system will match your order with the best available sell order(s) on the market to determine how many BTC you can buy.
-						// If the system calculates that you can buy 0.00968 BTC with 653.72520248 USDT and you click to place the buy order, but at the same time BTC price increases, meaning that 653.72520248 USDT can no longer buy 0.00968 BTC, your order will not be completed. You can place another order by manually editing the amount of BTC to buy, or using the [Total] function instead."
-						Quantity: sdkmath.NewInt(2000),
-						Side:     types.SIDE_BUY,
+						Quantity:   sdkmath.NewInt(2000),
+						Side:       types.SIDE_BUY,
 					},
 				}
 			},
@@ -1740,7 +1735,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:         "id2",
 						BaseDenom:  denom1,
 						QuoteDenom: denom2,
-						Quantity:   sdkmath.NewInt(10000), // FIXME(ysv): shouldn't be allowed. We have to check balance before placing.
+						Quantity:   sdkmath.NewInt(10000),
 						Side:       types.SIDE_SELL,
 					},
 				}
@@ -2270,7 +2265,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					),
 				}
 			},
-			orders: func(testSet TestSet) []types.Order { // FIXME: check if less rounding is possible here.
+			orders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
 						Creator:     testSet.acc1.String(),
@@ -2855,7 +2850,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:         "id2",
 						BaseDenom:  denom2,
 						QuoteDenom: denom1,
-						Quantity:   sdkmath.NewInt(10000), // FIXME(ysv) not ok, should fail - not enough balance.
+						Quantity:   sdkmath.NewInt(10000),
 						Side:       types.SIDE_SELL,
 					},
 				}
@@ -2977,7 +2972,6 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			// FIXME(ysv) Not sure if this behaviour is coorrect. We match only one order.
 			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
@@ -3186,7 +3180,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				}
 			},
 		},
-		{ // stopped here.
+		{
 			name: "match_limit_directOB_and_invertedOB_buy_close_directOB_taker_with_fifo_priority",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
