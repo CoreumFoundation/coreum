@@ -137,7 +137,10 @@ func (mf *MatchingFinder) isDirectRecordBestMatch(directMatches, invertedMatches
 	directOBPriceRat := mf.directOBRecord.Price.Rat()
 	invertedOBInvPriceRat := cbig.RatInv(mf.invertedOBRecord.Price.Rat())
 
-	// the same price is impossible because in that case the opposite order would have been matched
+	// if both prices are the same then FIFO by OrderSequence wins
+	if directOBPriceRat.Cmp(invertedOBInvPriceRat) == 0 {
+		return mf.directOBRecord.OrderSequence < mf.invertedOBRecord.OrderSequence
+	}
 
 	if mf.order.Side == types.SIDE_BUY {
 		// find best sell - lower wins
