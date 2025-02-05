@@ -407,7 +407,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.ErrorContains(
 		t,
 		dexKeeper.PlaceOrder(simapp.CopyContextWithMultiStore(sdkCtx), buyOrderWithGoodTilTime),
-		"good til block height 2023-03-02 01:11:12.000000013 +0000 UTC must be greater than current block height",
+		"good til block time 2023-03-02 01:11:12.000000013 +0000 UTC must be greater than current block time",
 	)
 
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
