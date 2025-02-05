@@ -476,7 +476,7 @@ func (k Keeper) validateGoodTil(ctx sdk.Context, order types.Order) error {
 		if !order.GoodTil.GoodTilBlockTime.After(currentTime) {
 			return sdkerrors.Wrapf(
 				types.ErrInvalidInput,
-				"good til block height %s must be greater than current block height %s",
+				"good til block time %s must be greater than current block time %s",
 				order.GoodTil.GoodTilBlockTime, currentTime,
 			)
 		}
@@ -763,7 +763,7 @@ func (k Keeper) removeOrderByRecord(
 		RemainingQuantity: record.RemainingQuantity,
 		RemainingBalance:  record.RemainingBalance,
 	}); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderCreated: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderClosed: %s", err)
 	}
 
 	return nil

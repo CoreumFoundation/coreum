@@ -366,7 +366,7 @@ func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
 	issuerBalance := fa.testApp.BankKeeper.GetBalance(sdkCtx, fa.issuer, fundCoin.Denom)
 	if issuerBalance.IsLT(fundCoin) {
 		t.Logf(
-			"Failed to fund, insufficient issuer balance, balance:%s, recipient:%s,  coin:%s",
+			"Failed to fund, insufficient issuer balance, balance:%s, recipient:%s, coin:%s",
 			issuerBalance.String(), creator.String(), fundCoin.String(),
 		)
 	} else {
@@ -556,12 +556,13 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 			)
 			return
 		case sdkerrors.IsOf(err, assetfttypes.ErrExtensionCallFailed):
-			// the error is expected, the failure is cased by extension smart contract
+			t.Logf("Placement has failed due to extension call error: %v", err.Error())
 			return
 		case strings.Contains(err.Error(), "the price must be multiple of"), // price tick
-			strings.Contains(err.Error(), "good til"),
+			strings.Contains(err.Error(), "good til block"),
 			strings.Contains(err.Error(), "it's prohibited to save more than"),
 			strings.Contains(err.Error(), "not whitelisted for"): // whitelisted denoms
+			t.Logf("Placement has failed due to expected error: %v", err.Error())
 			return
 		default:
 			require.NoError(t, err)
