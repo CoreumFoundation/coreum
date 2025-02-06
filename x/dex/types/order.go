@@ -216,6 +216,16 @@ func (o Order) Denoms() []string {
 	return []string{o.BaseDenom, o.QuoteDenom}
 }
 
+// MaxReceiveQuantityByPrice returns actual funded remaining quantity.
+// For sell limit order it should be equal to RemainingQuantity but for market it could be
+func (r OrderBookRecord) MaxReceiveQuantityByPrice(side Side, price Price) big.Rat {
+	// sell limit => remaining_quantity
+	// sell market => remaining_quantity
+
+	// buy limit =>
+	return big.Rat{}
+}
+
 // ComputeLimitOrderLockedBalance computes the limit order locked balance.
 func ComputeLimitOrderLockedBalance(
 	side Side, baseDenom, quoteDenom string, quantity sdkmath.Int, price Price,
