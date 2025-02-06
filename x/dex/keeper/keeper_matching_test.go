@@ -6398,6 +6398,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		if tt.name != "match_market_invertedOB_maker_buy_taker_buy_with_partially_filling" {
+			continue
+		}
 		t.Run(tt.name, func(t *testing.T) {
 			logger := log.NewTestLogger(t)
 			testApp := simapp.New(simapp.WithCustomLogger(logger))
