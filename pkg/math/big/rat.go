@@ -32,9 +32,19 @@ func RatQuoWithIntRemainder(x, y *big.Rat) (*big.Int, *big.Int) {
 	return intPart, IntSub(num, IntMul(intPart, denom))
 }
 
+// RatGT returns true if x is equal to y.
+func RatEQ(x, y *big.Rat) bool {
+	return x.Cmp(y) == 0
+}
+
 // RatGTE returns true if x is greater than or equal to y.
 func RatGTE(x, y *big.Rat) bool {
 	return x.Cmp(y) != -1
+}
+
+// RatGT returns true if x is greater than y.
+func RatGT(x, y *big.Rat) bool {
+	return x.Cmp(y) == 1
 }
 
 // RatLTE returns true if x is less than or equal to y.

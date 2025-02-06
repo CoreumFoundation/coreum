@@ -138,7 +138,7 @@ func (mf *MatchingFinder) isDirectRecordBestMatch(directMatches, invertedMatches
 	invertedOBInvPriceRat := cbig.RatInv(mf.invertedOBRecord.Price.Rat())
 
 	// if both prices are the same then FIFO by OrderSequence wins
-	if directOBPriceRat.Cmp(invertedOBInvPriceRat) == 0 {
+	if cbig.RatEQ(directOBPriceRat, invertedOBInvPriceRat) {
 		return mf.directOBRecord.OrderSequence < mf.invertedOBRecord.OrderSequence
 	}
 
