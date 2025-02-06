@@ -16,11 +16,11 @@ func (k Keeper) matchOrder(
 	params types.Params,
 	accNumber uint64,
 	orderBookID, invertedOrderBookID uint32,
-	order types.Order,
+	takerOrder types.Order,
 ) error {
-	k.logger(ctx).Debug("Matching order.", "order", order.String())
+	k.logger(ctx).Debug("Matching order.", "order", takerOrder.String())
 
-	mf, err := k.NewMatchingFinder(ctx, orderBookID, invertedOrderBookID, order)
+	mf, err := k.NewMatchingFinder(ctx, orderBookID, invertedOrderBookID, takerOrder)
 	if err != nil {
 		return err
 	}
@@ -30,21 +30,21 @@ func (k Keeper) matchOrder(
 		}
 	}()
 
-	takerRecord, err := k.initTakerRecord(ctx, accNumber, orderBookID, order)
+	takerRecord, err := k.initTakerRecord(ctx, accNumber, orderBookID, takerOrder)
 	if err != nil {
 		return err
 	}
-	order.Sequence = takerRecord.OrderSequence
+	takerOrder.Sequence = takerRecord.OrderSequence
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventOrderPlaced{
-		Creator:  order.Creator,
-		ID:       order.ID,
+		Creator:  takerOrder.Creator,
+		ID:       takerOrder.ID,
 		Sequence: takerRecord.OrderSequence,
 	}); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderPlaced: %s", err)
 	}
 
-	mr, err := NewMatchingResult(order)
+	mr, err := NewMatchingResult(takerOrder)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		stop, err := k.matchRecords(ctx, cak, mr, &takerRecord, &makerRecord, order)
+		stop, err := k.matchRecords(ctx, cak, mr, &takerRecord, &makerRecord, takerOrder)
 		if err != nil {
 			return err
 		}
@@ -68,11 +68,11 @@ func (k Keeper) matchOrder(
 		}
 	}
 
-	switch order.Type {
+	switch takerOrder.Type {
 	case types.ORDER_TYPE_LIMIT:
-		switch order.TimeInForce {
+		switch takerOrder.TimeInForce {
 		case types.TIME_IN_FORCE_GTC:
-			if err := mr.IncreaseTakerLimitsForRecord(params, order, &takerRecord); err != nil {
+			if err := mr.IncreaseTakerLimitsForRecord(params, takerOrder, &takerRecord); err != nil {
 				return err
 			}
 			// apply matching result and create new order if necessary
@@ -83,7 +83,7 @@ func (k Keeper) matchOrder(
 				return nil
 			}
 
-			return k.createOrder(ctx, params, order, takerRecord)
+			return k.createOrder(ctx, params, takerOrder, takerRecord)
 		case types.TIME_IN_FORCE_IOC:
 			return k.applyMatchingResult(ctx, mr)
 		case types.TIME_IN_FORCE_FOK:
@@ -93,13 +93,13 @@ func (k Keeper) matchOrder(
 			}
 			return k.applyMatchingResult(ctx, mr)
 		default:
-			return sdkerrors.Wrapf(types.ErrInvalidInput, "unsupported time in force: %s", order.TimeInForce.String())
+			return sdkerrors.Wrapf(types.ErrInvalidInput, "unsupported time in force: %s", takerOrder.TimeInForce.String())
 		}
 	case types.ORDER_TYPE_MARKET:
 		return k.applyMatchingResult(ctx, mr)
 	default:
 		return sdkerrors.Wrapf(
-			types.ErrInvalidInput, "unexpected order type: %s", order.Type.String(),
+			types.ErrInvalidInput, "unexpected order type: %s", takerOrder.Type.String(),
 		)
 	}
 }
@@ -110,7 +110,7 @@ func (k Keeper) initTakerRecord(
 	orderBookID uint32,
 	order types.Order,
 ) (types.OrderBookRecord, error) {
-	remainingAmount, err := k.getInitialRemainingAmount(ctx, order)
+	remainingBalance, err := k.getInitialRemainingBalance(ctx, order)
 	if err != nil {
 		return types.OrderBookRecord{}, err
 	}
@@ -133,11 +133,11 @@ func (k Keeper) initTakerRecord(
 		OrderID:           order.ID,
 		AccountNumber:     accNumber,
 		RemainingQuantity: order.Quantity,
-		RemainingBalance:  remainingAmount,
+		RemainingBalance:  remainingBalance,
 	}, nil
 }
 
-func (k Keeper) getInitialRemainingAmount(
+func (k Keeper) getInitialRemainingBalance(
 	ctx sdk.Context,
 	order types.Order,
 ) (sdkmath.Int, error) {
@@ -155,13 +155,9 @@ func (k Keeper) getInitialRemainingAmount(
 			return sdkmath.Int{}, err
 		}
 	case types.ORDER_TYPE_MARKET:
-		if order.Side == types.SIDE_BUY {
-			remainingBalance, err = k.assetFTKeeper.GetSpendableBalance(ctx, creatorAddr, order.QuoteDenom)
-			if err != nil {
-				return sdkmath.Int{}, err
-			}
-		} else {
-			remainingBalance = sdk.NewCoin(order.BaseDenom, order.Quantity)
+		remainingBalance, err = k.assetFTKeeper.GetSpendableBalance(ctx, creatorAddr, order.GetSpendDenom())
+		if err != nil {
+			return sdkmath.Int{}, err
 		}
 	default:
 		return sdkmath.Int{}, sdkerrors.Wrapf(
@@ -179,7 +175,7 @@ func (k Keeper) matchRecords(
 	cak cachedAccountKeeper,
 	mr *MatchingResult,
 	takerRecord, makerRecord *types.OrderBookRecord,
-	order types.Order,
+	takerOrder types.Order,
 ) (bool, error) {
 	recordToClose, recordToReduce := k.getRecordToCloseAndReduce(ctx, takerRecord, makerRecord)
 	k.logger(ctx).Debug(
@@ -191,7 +187,13 @@ func (k Keeper) matchRecords(
 	recordToCloseReceiveCoin,
 		recordToReduceReceiveCoin,
 		recordToCloseReducedQuantity,
-		recordToReduceReducedQuantity := getRecordsReceiveCoins(makerRecord, recordToClose, recordToReduce, order)
+		recordToReduceReducedQuantity := getRecordsReceiveCoins(makerRecord, recordToClose, recordToReduce, takerOrder)
+
+	// if !recordToCloseReceiveCoin.Amount.Equal(recordToReduceReducedQuantity) || !recordToReduceReceiveCoin.Amount.Equal(recordToCloseReducedQuantity) {
+	// 	msg := fmt.Sprintf("inconsistency between recordToClose and recordToReduce: %v != %v || %v != %v",
+	// 		recordToCloseReceiveCoin.String(), recordToReduceReducedQuantity.String(), recordToReduceReceiveCoin.String(), recordToCloseReducedQuantity.String())
+	// 	panic(msg)
+	// }
 
 	// stop if any record receives more than opposite record balance
 	// that situation is possible when a market order with quantity which doesn't correspond the order balance
@@ -202,7 +204,7 @@ func (k Keeper) matchRecords(
 	}
 
 	recordToCloseRemainingQuantity := recordToClose.RemainingQuantity.Sub(recordToCloseReducedQuantity)
-	closeMaker := order.Sequence != recordToClose.OrderSequence
+	closeMaker := takerOrder.Sequence != recordToClose.OrderSequence
 	if closeMaker {
 		makerAddr, err := cak.getAccountAddressWithCache(ctx, recordToClose.AccountNumber)
 		if err != nil {
@@ -298,6 +300,8 @@ func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRec
 		takerVolumeRat, makerVolumeRat *big.Rat
 	)
 
+	// Sell: RemQuan: 10, RemBal: 9 (price: 50_000)
+	// Buy:  RemQuan: 10, RemBal: 450_000 (price: 50_000)
 	takerVolumeRat = cbig.NewRatFromBigInt(takerRecord.RemainingQuantity.BigInt())
 	if takerRecord.Side != makerRecord.Side { // direct
 		makerVolumeRat = cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt())
@@ -345,6 +349,7 @@ func getRecordsReceiveCoins(
 	} else {
 		// if closeMaker is true we find max execution quantity with its price,
 		// else with inverse price
+		// FIXME(ysv) check this part, not clear for me.
 		if closeMaker {
 			executionQuantity, oppositeExecutionQuantity = computeMaxExecutionQuantity(
 				makerRecord.Price.Rat(), recordToClose.RemainingQuantity,
