@@ -216,14 +216,24 @@ func (o Order) Denoms() []string {
 	return []string{o.BaseDenom, o.QuoteDenom}
 }
 
-// MaxReceiveQuantityByPrice returns actual funded remaining quantity.
+// MaxBaseAmntForPrice returns max amount of base unit order can consume/match (receive or spend).
 // For sell limit order it should be equal to RemainingQuantity but for market it could be
-func (r OrderBookRecord) MaxReceiveQuantityByPrice(side Side, price Price) big.Rat {
+func (r OrderBookRecord) MaxBaseAmntForPrice(side Side, ordType OrderType, priceRat *big.Rat) *big.Rat {
 	// sell limit => remaining_quantity
 	// sell market => remaining_quantity
+	// buy limit => remaining_quantity
+	if side == SIDE_SELL || ordType == ORDER_TYPE_LIMIT {
+		return cbig.NewRatFromBigInt(r.RemainingQuantity.BigInt())
+	}
 
-	// buy limit =>
-	return big.Rat{}
+	// buy market => min(RemainingBalance / price, remaining_quantity)
+	maxAmntFromBalance := cbig.RatMul(cbig.NewRatFromBigInt(r.RemainingBalance.BigInt()), cbig.RatInv(priceRat))
+	maxAmntFromQty := cbig.NewRatFromBigInt(r.RemainingQuantity.BigInt())
+
+	if cbig.RatLT(maxAmntFromBalance, maxAmntFromQty) {
+		return maxAmntFromBalance
+	}
+	return maxAmntFromQty
 }
 
 // ComputeLimitOrderLockedBalance computes the limit order locked balance.
