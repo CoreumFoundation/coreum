@@ -155,9 +155,17 @@ func (k Keeper) getInitialRemainingBalance(
 			return sdkmath.Int{}, err
 		}
 	case types.ORDER_TYPE_MARKET:
-		remainingBalance, err = k.assetFTKeeper.GetSpendableBalance(ctx, creatorAddr, order.GetSpendDenom())
+		spendableBalance, err := k.assetFTKeeper.GetSpendableBalance(ctx, creatorAddr, order.GetSpendDenom())
 		if err != nil {
 			return sdkmath.Int{}, err
+		}
+
+		// For market buy order we lock whole spendable balance.
+		remainingBalance := spendableBalance
+
+		// For market sell order we lock min of spendable balance and order quantity.
+		if order.Side == types.SIDE_SELL && order.Quantity.LT(spendableBalance.Amount) {
+			remainingBalance = sdk.NewCoin(remainingBalance.Denom, order.Quantity)
 		}
 	default:
 		return sdkmath.Int{}, sdkerrors.Wrapf(
@@ -177,7 +185,7 @@ func (k Keeper) matchRecords(
 	takerRecord, makerRecord *types.OrderBookRecord,
 	takerOrder types.Order,
 ) (bool, error) {
-	recordToClose, recordToReduce := k.getRecordToCloseAndReduce(ctx, takerRecord, makerRecord)
+	recordToClose, recordToReduce := k.getRecordToCloseAndReduce(ctx, takerOrder, takerRecord, makerRecord)
 	k.logger(ctx).Debug(
 		"Executing orders.",
 		"recordToClose", recordToClose.String(),
@@ -292,35 +300,30 @@ func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(
 	return lockedCoins, expectedToReceiveCoin, nil
 }
 
-func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRecord *types.OrderBookRecord) (
+func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerOrder types.Order, takerRecord, makerRecord *types.OrderBookRecord) (
 	*types.OrderBookRecord, *types.OrderBookRecord,
 ) {
-	var (
-		recordToClose, recordToReduce  *types.OrderBookRecord
-		takerVolumeRat, makerVolumeRat *big.Rat
-	)
+	var executionPrice, makerMaxAmnt *big.Rat
+
+	if takerRecord.Side != makerRecord.Side { // direct
+		makerMaxAmnt = cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt())
+		executionPrice = makerRecord.Price.Rat()
+	} else { // inverted
+		makerMaxAmnt = cbig.RatMul(cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt()), makerRecord.Price.Rat())
+		executionPrice = cbig.RatInv(makerRecord.Price.Rat())
+	}
 
 	// Sell: RemQuan: 10, RemBal: 9 (price: 50_000)
 	// Buy:  RemQuan: 10, RemBal: 450_000 (price: 50_000)
-	takerVolumeRat = cbig.NewRatFromBigInt(takerRecord.RemainingQuantity.BigInt())
-	if takerRecord.Side != makerRecord.Side { // direct
-		makerVolumeRat = cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt())
-	} else { // inverted
-		makerVolumeRat = cbig.RatMul(cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt()), makerRecord.Price.Rat())
-	}
-	k.logger(ctx).Debug("Computed order volumes.", "takerVolume", takerVolumeRat, "makerVolume", makerVolumeRat)
+	takerMaxAmnt := takerRecord.MaxBaseAmntForPrice(takerOrder.Side, takerOrder.Type, executionPrice)
+	k.logger(ctx).Debug("Computed order volumes.", "takerVolume", takerMaxAmnt, "makerVolume", makerMaxAmnt)
 
-	if cbig.RatGTE(takerVolumeRat, makerVolumeRat) {
+	if cbig.RatGTE(takerMaxAmnt, makerMaxAmnt) {
 		// close maker record
-		recordToClose = makerRecord
-		recordToReduce = takerRecord
-	} else {
-		// close taker record
-		recordToClose = takerRecord
-		recordToReduce = makerRecord
+		return makerRecord, takerRecord
 	}
-
-	return recordToClose, recordToReduce
+	// close taker record
+	return takerRecord, makerRecord
 }
 
 func getRecordsReceiveCoins(
