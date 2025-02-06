@@ -48,7 +48,9 @@ func (k Keeper) matchOrder(
 	if err != nil {
 		return err
 	}
-	accNumberToAddrCache := make(map[uint64]sdk.AccAddress)
+
+	cak := newCachedAccountKeeper(k.accountKeeper, k.accountQueryServer)
+
 	for {
 		makerRecord, matches, err := mf.Next()
 		if err != nil {
@@ -57,7 +59,7 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		stop, err := k.matchRecords(ctx, mr, &takerRecord, &makerRecord, order, accNumberToAddrCache)
+		stop, err := k.matchRecords(ctx, cak, mr, &takerRecord, &makerRecord, order)
 		if err != nil {
 			return err
 		}
@@ -174,10 +176,10 @@ func (k Keeper) getInitialRemainingAmount(
 
 func (k Keeper) matchRecords(
 	ctx sdk.Context,
+	cak cachedAccountKeeper,
 	mr *MatchingResult,
 	takerRecord, makerRecord *types.OrderBookRecord,
 	order types.Order,
-	accNumberToAddrCache map[uint64]sdk.AccAddress,
 ) (bool, error) {
 	recordToClose, recordToReduce := k.getRecordToCloseAndReduce(ctx, takerRecord, makerRecord)
 	k.logger(ctx).Debug(
@@ -192,7 +194,7 @@ func (k Keeper) matchRecords(
 		recordToReduceReducedQuantity := getRecordsReceiveCoins(makerRecord, recordToClose, recordToReduce, order)
 
 	// stop if any record receives more than opposite record balance
-	// that situation is possible with the marker order with quantity which doesn't correspond the order balance
+	// that situation is possible when a market order with quantity which doesn't correspond the order balance
 	if recordToClose.RemainingBalance.LT(recordToReduceReceiveCoin.Amount) ||
 		recordToReduce.RemainingBalance.LT(recordToCloseReceiveCoin.Amount) {
 		k.logger(ctx).Debug("Stop matching, order balance is not enough to cover the quantity.")
@@ -202,7 +204,7 @@ func (k Keeper) matchRecords(
 	recordToCloseRemainingQuantity := recordToClose.RemainingQuantity.Sub(recordToCloseReducedQuantity)
 	closeMaker := order.Sequence != recordToClose.OrderSequence
 	if closeMaker {
-		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToClose.AccountNumber, accNumberToAddrCache)
+		makerAddr, err := cak.getAccountAddressWithCache(ctx, recordToClose.AccountNumber)
 		if err != nil {
 			return false, err
 		}
@@ -223,7 +225,7 @@ func (k Keeper) matchRecords(
 		mr.DecreaseMakerLimits(makerAddr, lockedCoins, expectedToReceiveCoin)
 		mr.RemoveRecord(makerAddr, recordToClose)
 	} else {
-		makerAddr, err := k.getAccountAddressWithCache(ctx, recordToReduce.AccountNumber, accNumberToAddrCache)
+		makerAddr, err := cak.getAccountAddressWithCache(ctx, recordToReduce.AccountNumber)
 		if err != nil {
 			return false, err
 		}
@@ -297,9 +299,9 @@ func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerRecord, makerRec
 	)
 
 	takerVolumeRat = cbig.NewRatFromBigInt(takerRecord.RemainingQuantity.BigInt())
-	if takerRecord.Side != makerRecord.Side { // self
+	if takerRecord.Side != makerRecord.Side { // direct
 		makerVolumeRat = cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt())
-	} else { // opposite
+	} else { // inverted
 		makerVolumeRat = cbig.RatMul(cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt()), makerRecord.Price.Rat())
 	}
 	k.logger(ctx).Debug("Computed order volumes.", "takerVolume", takerVolumeRat, "makerVolume", makerVolumeRat)
@@ -322,24 +324,24 @@ func getRecordsReceiveCoins(
 	order types.Order,
 ) (sdk.Coin, sdk.Coin, sdkmath.Int, sdkmath.Int) {
 	var (
-		recordToCloseReceiveDenom     string
-		recordToCloseReceiveAmt       sdkmath.Int
-		recordToReduceReceiveDenom    string
-		recordToReduceReceiveAmt      sdkmath.Int
-		recordToCloseReducedQuantity  sdkmath.Int
-		recordToReduceReducedQuantity sdkmath.Int
+		recordToCloseReceiveDenom   string
+		recordToCloseReceiveAmt     sdkmath.Int
+		recordToReduceReceiveDenom  string
+		recordToReduceReceiveAmt    sdkmath.Int
+		recordToCloseSpendQuantity  sdkmath.Int
+		recordToReduceSpendQuantity sdkmath.Int
 
 		executionQuantity         sdkmath.Int
 		oppositeExecutionQuantity sdkmath.Int
 	)
 
 	closeMaker := order.Sequence != recordToClose.OrderSequence
-	if recordToClose.Side != recordToReduce.Side { // self
+	if recordToClose.Side != recordToReduce.Side { // direct OB
 		executionQuantity, oppositeExecutionQuantity = computeMaxExecutionQuantity(
 			makerRecord.Price.Rat(), recordToClose.RemainingQuantity,
 		)
-		recordToCloseReducedQuantity = executionQuantity
-		recordToReduceReducedQuantity = executionQuantity
+		recordToCloseSpendQuantity = executionQuantity
+		recordToReduceSpendQuantity = executionQuantity
 	} else {
 		// if closeMaker is true we find max execution quantity with its price,
 		// else with inverse price
@@ -353,8 +355,8 @@ func getRecordsReceiveCoins(
 			)
 		}
 
-		recordToCloseReducedQuantity = executionQuantity
-		recordToReduceReducedQuantity = oppositeExecutionQuantity
+		recordToCloseSpendQuantity = executionQuantity
+		recordToReduceSpendQuantity = oppositeExecutionQuantity
 	}
 
 	if recordToClose.Side == types.SIDE_BUY {
@@ -376,7 +378,7 @@ func getRecordsReceiveCoins(
 	recordToCloseReceiveCoin := sdk.NewCoin(recordToCloseReceiveDenom, recordToCloseReceiveAmt)
 	recordToReduceReceiveCoin := sdk.NewCoin(recordToReduceReceiveDenom, recordToReduceReceiveAmt)
 
-	return recordToCloseReceiveCoin, recordToReduceReceiveCoin, recordToCloseReducedQuantity, recordToReduceReducedQuantity
+	return recordToCloseReceiveCoin, recordToReduceReceiveCoin, recordToCloseSpendQuantity, recordToReduceSpendQuantity
 }
 
 func computeMaxExecutionQuantity(priceRat *big.Rat, remainingQuantity sdkmath.Int) (sdkmath.Int, sdkmath.Int) {
