@@ -3539,6 +3539,95 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
+			name: "match_limit_directOB_and_invertedOB_same_price_respect_fifo_priority",
+			balances: func(testSet TestSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					testSet.acc1.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(denom1, 10000),
+					),
+					testSet.acc2.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(denom1, 5000),
+					),
+					testSet.acc3.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(denom2, 25000),
+					),
+				}
+			},
+			orders: func(testSet TestSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     testSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id1",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("2")),
+						Quantity:    sdkmath.NewInt(10000),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+					// partially matches. Inverted price is the same as id1 but id1 has higher priority because of FIFO
+					{
+						Creator:     testSet.acc2.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id2",
+						BaseDenom:   denom2,
+						QuoteDenom:  denom1,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")), // 0.5 = 1/2 which is inversion of 2
+						Quantity:    sdkmath.NewInt(10000),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+					{
+						Creator:     testSet.acc3.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id3",
+						BaseDenom:   denom2,
+						QuoteDenom:  denom1,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("4e-1")),
+						Quantity:    sdkmath.NewInt(25000),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+				}
+			},
+			wantOrders: func(testSet TestSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:           testSet.acc2.String(),
+						Type:              types.ORDER_TYPE_LIMIT,
+						ID:                "id2",
+						BaseDenom:         denom2,
+						QuoteDenom:        denom1,
+						Price:             lo.ToPtr(types.MustNewPriceFromString("5e-1")),
+						Quantity:          sdkmath.NewInt(10000),
+						Side:              types.SIDE_BUY,
+						TimeInForce:       types.TIME_IN_FORCE_GTC,
+						RemainingQuantity: sdkmath.NewInt(5000),
+						RemainingBalance:  sdkmath.NewInt(2500),
+					},
+				}
+			},
+			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					testSet.acc1.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(denom2, 20000),
+					),
+					testSet.acc2.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(denom2, 5000),
+					),
+					testSet.acc3.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(denom1, 12500),
+					),
+				}
+			},
+		},
+		{
 			name: "match_limit_directOB_and_invertedOB_buy_close_all_makers",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
