@@ -161,9 +161,9 @@ func (k Keeper) getInitialRemainingBalance(
 		}
 
 		// For market buy order we lock whole spendable balance.
-		remainingBalance := spendableBalance
+		remainingBalance = spendableBalance
 
-		// For market sell order we lock min of spendable balance and order quantity.
+		// For market sell order we lock min of spendable balance or order quantity.
 		if order.Side == types.SIDE_SELL && order.Quantity.LT(spendableBalance.Amount) {
 			remainingBalance = sdk.NewCoin(remainingBalance.Denom, order.Quantity)
 		}
@@ -205,11 +205,11 @@ func (k Keeper) matchRecords(
 
 	// stop if any record receives more than opposite record balance
 	// that situation is possible when a market order with quantity which doesn't correspond the order balance
-	if recordToClose.RemainingBalance.LT(recordToReduceReceiveCoin.Amount) ||
-		recordToReduce.RemainingBalance.LT(recordToCloseReceiveCoin.Amount) {
-		k.logger(ctx).Debug("Stop matching, order balance is not enough to cover the quantity.")
-		return true, nil
-	}
+	// if recordToClose.RemainingBalance.LT(recordToReduceReceiveCoin.Amount) ||
+	// 	recordToReduce.RemainingBalance.LT(recordToCloseReceiveCoin.Amount) {
+	// 	k.logger(ctx).Debug("Stop matching, order balance is not enough to cover the quantity.")
+	// 	return true, nil
+	// }
 
 	recordToCloseRemainingQuantity := recordToClose.RemainingQuantity.Sub(recordToCloseReducedQuantity)
 	closeMaker := takerOrder.Sequence != recordToClose.OrderSequence
@@ -359,7 +359,7 @@ func getRecordsReceiveCoins(
 			)
 		} else {
 			executionQuantity, oppositeExecutionQuantity = computeMaxExecutionQuantity(
-				cbig.RatInv(makerRecord.Price.Rat()), recordToClose.RemainingQuantity,
+				makerRecord.Price.Rat(), recordToClose.RemainingQuantity,
 			)
 		}
 
@@ -392,6 +392,7 @@ func getRecordsReceiveCoins(
 func computeMaxExecutionQuantity(priceRat *big.Rat, remainingQuantity sdkmath.Int) (sdkmath.Int, sdkmath.Int) {
 	priceNum := priceRat.Num()
 	priceDenom := priceRat.Denom()
+	// FIXME(ysv) multiplication should be first to avoid rounding.
 	n := cbig.IntQuo(remainingQuantity.BigInt(), priceDenom)
 	maxExecutionQuantity := cbig.IntMul(n, priceDenom)
 	oppositeExecutionQuantity := cbig.IntMul(n, priceNum)
