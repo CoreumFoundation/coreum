@@ -47,7 +47,30 @@ func IntGTE(x, y *big.Int) bool {
 	return x.Cmp(y) != -1
 }
 
+// IntGTE returns true if x is greater than y.
+func IntGT(x, y *big.Int) bool {
+	return x.Cmp(y) == 1
+}
+
+// IntGTE returns true if x is less than y.
+func IntLT(x, y *big.Int) bool {
+	return x.Cmp(y) == -1
+}
+
+// IntEQ returns true if x is equal to y.
+func IntEQ(x, y *big.Int) bool {
+	return x.Cmp(y) == 0
+}
+
 // IntEqZero returns true if x is equal to zero.
 func IntEqZero(x *big.Int) bool {
 	return x.Sign() == 0
+}
+
+// IntMin returns minimal of x and y.
+func IntMin(x, y *big.Int) *big.Int {
+	if x.Cmp(y) < 0 {
+		return x
+	}
+	return y
 }
