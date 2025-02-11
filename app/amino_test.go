@@ -17,6 +17,7 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	ibcinterchainaccountscontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	ibcinterchainaccountshosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
+	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
@@ -92,6 +93,9 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		// ibc/applications/interchain_accounts/host
 		sdk.MsgTypeURL(&ibcinterchainaccountshosttypes.MsgModuleQuerySafe{}): {},
 		sdk.MsgTypeURL(&ibcinterchainaccountshosttypes.MsgUpdateParams{}):    {},
+
+		// ibc/applications/fee
+		sdk.MsgTypeURL(&ibcfeetypes.PacketFee{}): {},
 
 		// internal cosmos
 		sdk.MsgTypeURL(&sdktestdatatypes.MsgCreateDog{}): {},
