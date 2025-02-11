@@ -722,7 +722,7 @@ func New(
 	app.EvidenceKeeper = *evidenceKeeper
 
 	wasmDir := filepath.Join(homePath, "wasm-data")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
 		panic(errors.Wrapf(err, "error while reading wasm config"))
 	}

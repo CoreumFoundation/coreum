@@ -28,7 +28,7 @@ type HandlerOptions struct {
 	authante.HandlerOptions
 	DeterministicGasConfig deterministicgas.Config
 	FeeModelKeeper         feemodelante.Keeper
-	WasmConfig             wasmtypes.WasmConfig
+	WasmConfig             wasmtypes.NodeConfig
 	IBCKeeper              *ibckeeper.Keeper
 	GovKeeper              *govkeeper.Keeper
 	WasmTXCounterStoreKey  store.KVStoreService
