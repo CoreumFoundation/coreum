@@ -261,6 +261,7 @@ and the formula for them is
 | `/cosmwasm.wasm.v1.MsgUpdateContractLabel`                             |
 | `/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig`                         |
 | `/cosmwasm.wasm.v1.MsgUpdateParams`                                    |
+| `/ibc.applications.fee.v1.PacketFee`                                   |
 | `/ibc.applications.interchain_accounts.controller.v1.MsgSendTx`        |
 | `/ibc.applications.interchain_accounts.controller.v1.MsgUpdateParams`  |
 | `/ibc.applications.interchain_accounts.host.v1.MsgModuleQuerySafe`     |

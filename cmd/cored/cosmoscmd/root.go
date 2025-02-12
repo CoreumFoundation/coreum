@@ -192,12 +192,12 @@ func initAppConfig() (string, interface{}) {
 		WASM WASMConfig
 	}
 
-	defaultWasmConfig := wasmtypes.DefaultWasmConfig()
+	defaultWasmNodeConfig := wasmtypes.DefaultNodeConfig()
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
 		WASM: WASMConfig{
-			QueryGasLimit:   defaultWasmConfig.SmartQueryGasLimit,
-			MemoryCacheSize: defaultWasmConfig.MemoryCacheSize,
+			QueryGasLimit:   defaultWasmNodeConfig.SmartQueryGasLimit,
+			MemoryCacheSize: defaultWasmNodeConfig.MemoryCacheSize,
 		},
 	}
 

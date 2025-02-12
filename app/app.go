@@ -722,10 +722,11 @@ func New(
 	app.EvidenceKeeper = *evidenceKeeper
 
 	wasmDir := filepath.Join(homePath, "wasm-data")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	wasmNodeConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
-		panic(errors.Wrapf(err, "error while reading wasm config"))
+		panic(errors.Wrapf(err, "error while reading wasm node config"))
 	}
+	wasmVMConfig := wasmtypes.VMConfig{}
 
 	wasmOpts := []wasmkeeper.Option{
 		wasmkeeper.WithAcceptedAccountTypesOnContractInstantiation(
@@ -775,7 +776,8 @@ func New(
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
-		wasmConfig,
+		wasmNodeConfig,
+		wasmVMConfig,
 		wasmkeeper.BuiltInCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
@@ -1141,7 +1143,7 @@ func New(
 			GovKeeper:              &app.GovKeeper,
 			FeeModelKeeper:         app.FeeModelKeeper,
 			WasmTXCounterStoreKey:  runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-			WasmConfig:             wasmConfig,
+			WasmConfig:             wasmNodeConfig,
 		},
 	)
 	if err != nil {

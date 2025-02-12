@@ -7210,13 +7210,46 @@
         ]
       }
     },
+    "/cosmwasm/wasm/v1/code-info/{code_id}": {
+      "get": {
+        "operationId": "GithubComCosmWasmWasmdXWasmTypesCodeInfo",
+        "parameters": [
+          {
+            "name": "code_id",
+            "description": "grpc-gateway_out does not support Go style CodeID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cosmwasm.wasm.v1.QueryCodeInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "CodeInfo gets the metadata for a single wasm code",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/cosmwasm/wasm/v1/code/{code_id}": {
       "get": {
         "operationId": "GithubComCosmWasmWasmdXWasmTypesCode",
         "parameters": [
           {
             "name": "code_id",
-            "description": "grpc-gateway_out does not support Go style CodID",
+            "description": "grpc-gateway_out does not support Go style CodeID",
             "in": "path",
             "required": true,
             "type": "string",
@@ -7237,7 +7270,7 @@
             }
           }
         },
-        "summary": "Code gets the binary code and metadata for a singe wasm code",
+        "summary": "Code gets the binary code and metadata for a single wasm code",
         "tags": [
           "Query"
         ]
@@ -7249,7 +7282,7 @@
         "parameters": [
           {
             "name": "code_id",
-            "description": "grpc-gateway_out does not support Go style CodID",
+            "description": "grpc-gateway_out does not support Go style CodeID",
             "in": "path",
             "required": true,
             "type": "string",
@@ -7770,6 +7803,29 @@
           }
         },
         "summary": "ContractsByCreator gets the contracts by creator",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/cosmwasm/wasm/v1/wasm-limits-config": {
+      "get": {
+        "operationId": "GithubComCosmWasmWasmdXWasmTypesWasmLimitsConfig",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "WasmLimitsConfig gets the configured limits for static validation of Wasm\nfiles, encoded in JSON.",
         "tags": [
           "Query"
         ]
@@ -14686,6 +14742,26 @@
       },
       "description": "QueryBuildAddressResponse is the response type for the Query/BuildAddress RPC\nmethod."
     },
+    "cosmwasm.wasm.v1.QueryCodeInfoResponse": {
+      "type": "object",
+      "properties": {
+        "code_id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "creator": {
+          "type": "string"
+        },
+        "checksum": {
+          "type": "string",
+          "format": "byte"
+        },
+        "instantiate_permission": {
+          "$ref": "#/definitions/cosmwasm.wasm.v1.AccessConfig"
+        }
+      },
+      "title": "QueryCodeInfoResponse is the response type for the Query/CodeInfo RPC method"
+    },
     "cosmwasm.wasm.v1.QueryCodeResponse": {
       "type": "object",
       "properties": {
@@ -14828,6 +14904,15 @@
         }
       },
       "title": "QuerySmartContractStateResponse is the response type for the\nQuery/SmartContractState RPC method"
+    },
+    "cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "type": "string"
+        }
+      },
+      "description": "QueryWasmLimitsConfigResponse is the response type for the\nQuery/WasmLimitsConfig RPC method. It contains the JSON encoded limits for\nstatic validation of Wasm files."
     },
     "google.protobuf.Any": {
       "type": "object",
