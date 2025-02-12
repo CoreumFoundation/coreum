@@ -9,8 +9,12 @@ import (
 var MarketOrderPrice = big.NewRat(-1, 1)
 
 type Trade struct {
-	Quantity *big.Int
-	Price    *big.Rat
+	BaseQuantity  *big.Int
+	QuoteQuantity *big.Int
+	Price         *big.Rat
+
+	TakerReceives *big.Int
+	TakerSpends   *big.Int
 }
 
 type OrderSide int
@@ -20,64 +24,81 @@ const (
 	SellOrderSide
 )
 
-type OBRecord struct {
-	Side              OrderSide
-	Price             *big.Rat
-	RemainingQuantity *big.Int
-	RemainingBalance  *big.Int
+func (o OrderSide) Opposite() OrderSide {
+	if o == SellOrderSide {
+		return BuyOrderSide
+	}
+
+	return SellOrderSide
 }
 
-type MatchType int
+type OBRecord struct {
+	Side         OrderSide
+	Price        *big.Rat
+	BaseQuantity *big.Int
+	SpendBalance *big.Int
+}
+
+type CloseResult int
 
 const (
-	NoneMatchType MatchType = iota
+	NoneCloseType CloseResult = iota
 	CloseTaker
 	CloseMaker
 	CloseBoth
 )
 
-func match(takerRecord, makerRecord OBRecord) (Trade, MatchType, error) {
+func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
 	if takerRecord.Side == makerRecord.Side {
-		return Trade{}, NoneMatchType, nil
+		return Trade{}, NoneCloseType, nil
 	}
 
 	trade := Trade{Price: makerRecord.Price}
 
+	takerBaseQuantity := takerRecord.MaxTakerBaseQuantityForPrice(trade.Price)
+	closeResult := NoneCloseType
 	// TODO(ysv): Consider zero quantity.
-	takerQuantity := takerRecord.MaxTakerQuantityForPrice(makerRecord.Price)
-
-	matchType := NoneMatchType
-	if cbig.IntLT(takerQuantity, makerRecord.RemainingQuantity) {
-		matchType = CloseTaker
-		trade.Quantity = takerQuantity
-	} else if cbig.IntEQ(takerQuantity, makerRecord.RemainingQuantity) {
-		matchType = CloseBoth
-		trade.Quantity = takerQuantity
+	if cbig.IntLT(takerBaseQuantity, makerRecord.BaseQuantity) {
+		closeResult = CloseTaker
+		trade.BaseQuantity = takerBaseQuantity
+	} else if cbig.IntEQ(takerBaseQuantity, makerRecord.BaseQuantity) {
+		closeResult = CloseBoth
+		trade.BaseQuantity = takerBaseQuantity
 	} else {
-		matchType = CloseMaker
-		trade.Quantity = makerRecord.RemainingQuantity
+		closeResult = CloseMaker
+		trade.BaseQuantity = makerRecord.BaseQuantity
 	}
 
-	return trade, matchType, nil
+	trade.QuoteQuantity, _ = cbig.IntMulRatWithRemainder(trade.BaseQuantity, trade.Price)
+
+	if takerRecord.Side == SellOrderSide {
+		trade.TakerSpends = trade.BaseQuantity
+		trade.TakerReceives = trade.QuoteQuantity
+	} else {
+		trade.TakerSpends = trade.QuoteQuantity
+		trade.TakerReceives = trade.BaseQuantity
+	}
+
+	return trade, closeResult, nil
 }
 
-func (obr OBRecord) MaxTakerQuantityForPrice(price *big.Rat) *big.Int {
+func (obr OBRecord) MaxTakerBaseQuantityForPrice(price *big.Rat) *big.Int {
 	// For limit order we execute RemainingQuantity fully.
 	if obr.IsLimit() {
-		return obr.RemainingQuantity
+		return obr.BaseQuantity
 	}
 
 	// For market sell orders we execute up to RemainingQuantity or RemainingBalance, whichever is filled first.
 	if obr.Side == SellOrderSide {
-		return cbig.IntMin(obr.RemainingQuantity, obr.RemainingBalance)
+		return cbig.IntMin(obr.BaseQuantity, obr.SpendBalance)
 	}
 
 	// For market buy orders we execute up to RemainingQuantity or RemainingBalance / Price, whichever is filled first.
 	// RemainingBalance / Price = RemainingBalance * Price^-1
 	// Reminder is not executable so we just round it down.
-	maxQuantityFromBalance, _ := cbig.IntMulRatWithRemainder(obr.RemainingBalance, cbig.RatInv(price))
+	maxQuantityFromBalance, _ := cbig.IntMulRatWithRemainder(obr.SpendBalance, cbig.RatInv(price))
 
-	return cbig.IntMin(obr.RemainingQuantity, maxQuantityFromBalance)
+	return cbig.IntMin(obr.BaseQuantity, maxQuantityFromBalance)
 }
 
 func (obr OBRecord) IsLimit() bool {

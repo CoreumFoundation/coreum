@@ -178,6 +178,113 @@ func (k Keeper) getInitialRemainingBalance(
 	return remainingBalance.Amount, nil
 }
 
+func (k Keeper) mathcRecordsV2(
+	ctx sdk.Context,
+	cak cachedAccountKeeper,
+	mr *MatchingResult,
+	takerRecord, makerRecord *types.OrderBookRecord,
+	takerOrder types.Order,
+) (bool, error) {
+	takerReceivesDenom, takerSpendsDenom := takerOrder.BaseDenom, takerOrder.QuoteDenom
+	if takerOrder.Side == types.SIDE_SELL {
+		takerReceivesDenom, takerSpendsDenom = takerOrder.QuoteDenom, takerOrder.BaseDenom
+	}
+
+	isMakerInverted := takerRecord.Side == makerRecord.Side
+
+	takerRecordForMatching := newMatchingOBRecord(takerRecord, false)
+	makerRecordForMatching := newMatchingOBRecord(makerRecord, isMakerInverted)
+	trade, closeResult, err := match(takerRecordForMatching, makerRecordForMatching)
+	if err != nil {
+		return false, err
+	}
+
+	// Exchange funds
+	makerAddr, err := cak.getAccountAddressWithCache(ctx, makerRecord.AccountNumber)
+	if err != nil {
+		return false, err
+	}
+	mr.SendFromTaker(
+		makerAddr, makerRecord.OrderID, makerRecord.OrderSequence, sdk.NewCoin(takerSpendsDenom, sdkmath.NewIntFromBigInt(trade.TakerSpends)),
+	)
+	mr.SendFromMaker(
+		makerAddr, makerRecord.OrderID, sdk.NewCoin(takerReceivesDenom, sdkmath.NewIntFromBigInt(trade.TakerReceives)),
+	)
+
+	// Reduce taker
+	takerRecord.RemainingQuantity = takerRecord.RemainingQuantity.Sub(sdkmath.NewIntFromBigInt(trade.BaseQuantity))
+	takerRecord.RemainingBalance = takerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerSpends))
+
+	// Reduce maker
+	if !isMakerInverted {
+		makerRecord.RemainingQuantity = makerRecord.RemainingQuantity.Sub(sdkmath.NewIntFromBigInt(trade.BaseQuantity))
+		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
+	} else {
+		makerRecord.RemainingQuantity = makerRecord.RemainingQuantity.Sub(sdkmath.NewIntFromBigInt(trade.QuoteQuantity))
+		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerSpends))
+	}
+
+	// Close or update maker record
+	if closeResult == CloseMaker || closeResult == CloseBoth {
+		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoinsV2(ctx, makerRecord, takerReceivesDenom, takerSpendsDenom)
+		if err != nil {
+			return false, err
+		}
+
+		mr.DecreaseMakerLimits(makerAddr, lockedCoins, expectedToReceiveCoin)
+		mr.RemoveRecord(makerAddr, makerRecord)
+	} else {
+		mr.UpdateRecord(*makerRecord)
+	}
+
+	// We continue only if closeResult shouldn't close the taker record
+	return closeResult != CloseTaker && closeResult != CloseBoth, nil
+}
+
+//
+// original order: market=USD/BTC buy 50 USD for 0.04 BTC per USD
+// RemeaningBaseQuantity: 50 USD
+// RemeaningSpendBalance: 2 BTC
+//
+// inverted order: market=BTC/USD sell 2 BTC for 25 USD per BTC
+// RemeaningBaseQuantity: 2 BTC
+// RemeaningSpendBalance: 2 BTC
+
+// original order: market=USD/BTC sell 50 USD for 0.04 BTC per USD
+// RemeaningBaseQuantity: 50 USD
+// RemeaningSpendBalance: 50 USD
+//
+// inverted order: market=BTC/USD buy 2 BTC for 25 USD per BTC
+// RemeaningBaseQuantity: 2 BTC
+// RemeaningSpendBalance: 50 USD
+func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecord {
+	side := SellOrderSide
+	if obRecord.Side == types.SIDE_BUY {
+		side = BuyOrderSide
+	}
+
+	price := obRecord.Price.Rat()
+	if cbig.RatIsZero(price) {
+		price = MarketOrderPrice
+	}
+
+	if !inverted {
+		return OBRecord{
+			Side:         side,
+			Price:        obRecord.Price.Rat(),
+			BaseQuantity: obRecord.RemainingQuantity.BigInt(),
+			SpendBalance: obRecord.RemainingBalance.BigInt(),
+		}
+	}
+
+	return OBRecord{
+		Side:         side.Opposite(),
+		Price:        cbig.RatInv(obRecord.Price.Rat()),
+		BaseQuantity: obRecord.RemainingBalance.BigInt(),
+		SpendBalance: obRecord.RemainingQuantity.BigInt(),
+	}
+}
+
 func (k Keeper) matchRecords(
 	ctx sdk.Context,
 	cak cachedAccountKeeper,
@@ -268,6 +375,36 @@ func (k Keeper) matchRecords(
 
 	mr.UpdateRecord(*makerRecord)
 	return true, nil
+}
+
+func (k Keeper) getMakerLockedAndExpectedToReceiveCoinsV2(
+	ctx sdk.Context,
+	makerRecord *types.OrderBookRecord,
+	makerSpendsDenom, makerReceivesDenom string,
+) (sdk.Coins, sdk.Coin, error) {
+	// Return non-executed balance
+	lockedCoins := sdk.NewCoins(
+		sdk.NewCoin(makerSpendsDenom, makerRecord.RemainingBalance),
+	)
+	recordToCloseOrderData, err := k.getOrderData(ctx, makerRecord.OrderSequence)
+	if err != nil {
+		return nil, sdk.Coin{}, err
+	}
+	// Return order reserve if any
+	if recordToCloseOrderData.Reserve.IsPositive() {
+		lockedCoins = lockedCoins.Add(recordToCloseOrderData.Reserve)
+	}
+
+	// TODO(ysv): Not sure if this part is correct. Double check.
+	expectedToReceiveAmt, err := types.ComputeLimitOrderExpectedToReceiveAmount(
+		makerRecord.Side, makerRecord.RemainingQuantity, makerRecord.Price,
+	)
+	if err != nil {
+		return nil, sdk.Coin{}, err
+	}
+	expectedToReceiveCoin := sdk.NewCoin(makerReceivesDenom, expectedToReceiveAmt)
+
+	return lockedCoins, expectedToReceiveCoin, nil
 }
 
 func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(

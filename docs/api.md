@@ -4731,8 +4731,8 @@ the order's state.
 | `price` | [string](#string) |  |  `price is value of one unit of the base_denom expressed in terms of the quote_denom.`  |
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
-| `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
-| `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
+| `remaining_quantity` | [string](#string) |  |  `TODO: rename to remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.`  |
+| `remaining_balance` | [string](#string) |  |  `TODO: rename to remaining_spend_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).`  |
 | `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
 | `time_in_force` | [TimeInForce](#coreum.dex.v1.TimeInForce) |  |  `time_in_force is order time in force`  |
 | `reserve` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  `reserve is the reserve required to save the order in the order book`  |
@@ -4780,8 +4780,8 @@ OrderBookRecord is a single order book record, it combines both key and value fr
 | `order_sequence` | [uint64](#uint64) |  |  `order_sequence is order sequence.`  |
 | `order_id` | [string](#string) |  |  `order ID provided by the creator.`  |
 | `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
-| `remaining_quantity` | [string](#string) |  |  `remaining_quantity is remaining filling quantity sell/buy.`  |
-| `remaining_balance` | [string](#string) |  |  `remaining_balance is remaining order balance.`  |
+| `remaining_quantity` | [string](#string) |  |  `TODO: rename to remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.`  |
+| `remaining_balance` | [string](#string) |  |  `TODO: rename to remaining_spend_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).`  |
 
 
 
