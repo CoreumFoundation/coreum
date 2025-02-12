@@ -10184,11 +10184,11 @@
         },
         "remaining_quantity": {
           "type": "string",
-          "description": "remaining_quantity is remaining filling quantity sell/buy."
+          "description": "TODO: rename to remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy."
         },
         "remaining_balance": {
           "type": "string",
-          "description": "remaining_balance is remaining order balance."
+          "description": "TODO: rename to remaining_spend_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution)."
         },
         "good_til": {
           "$ref": "#/definitions/coreum.dex.v1.GoodTil",

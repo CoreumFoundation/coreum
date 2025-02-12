@@ -61,3 +61,8 @@ func RatLT(x, y *big.Rat) bool {
 func RatInv(x *big.Rat) *big.Rat {
 	return (&big.Rat{}).Inv(x)
 }
+
+// RatIsZero returns true if x is equal to zero.
+func RatIsZero(x *big.Rat) bool {
+	return x.Cmp(big.NewRat(0, 1)) == 0
+}
