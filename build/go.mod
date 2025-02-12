@@ -22,15 +22,16 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v5 v5.0.0-20250123052000-bcd32d0bb9f4
-	github.com/CoreumFoundation/crust v0.0.0-20250131082142-5bbfcc8a8961
+	github.com/CoreumFoundation/crust v0.0.0-20250212154339-07fe2ad8b357
+	github.com/CoreumFoundation/crust/znet v0.0.0-20250212154339-07fe2ad8b357
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
-	github.com/samber/lo v1.39.0
+	github.com/samber/lo v1.49.1
 )
 
 require (
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/mod v0.22.0 // indirect
+	golang.org/x/mod v0.23.0 // indirect
 )
 
 require (
