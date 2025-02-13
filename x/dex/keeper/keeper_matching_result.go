@@ -120,7 +120,7 @@ func (mr *MatchingResult) IncreaseTakerLimitsForRecord(
 	takerRecord *types.OrderBookRecord,
 ) error {
 	// if the order is filled fully
-	if takerRecord.RemainingBalance.IsZero() {
+	if takerRecord.IsFilled() {
 		return nil
 	}
 

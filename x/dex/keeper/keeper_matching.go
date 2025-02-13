@@ -80,7 +80,7 @@ func (k Keeper) matchOrder(
 			if err := k.applyMatchingResult(ctx, mr); err != nil {
 				return err
 			}
-			if takerRecord.RemainingBalance.IsZero() {
+			if takerRecord.IsFilled() {
 				return nil
 			}
 
