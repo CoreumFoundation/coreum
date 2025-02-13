@@ -11,6 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/google/go-cmp/cmp"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
@@ -6398,7 +6399,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if tt.name != "match_limit_directOB_close_two_makers_buy_and_and_taker_sell" {
+		if tt.name != "match_limit_directOB_maker_sell_taker_buy_close_maker_with_partial_filling" {
 			continue
 		}
 		t.Run(tt.name, func(t *testing.T) {
@@ -6464,7 +6465,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders := tt.wantOrders(testSet)
 			// set order reserve and order sequence for all orders
 			wantOrders = fillReserveAndOrderSequence(t, sdkCtx, testApp, wantOrders)
-			require.ElementsMatch(t, wantOrders, orders, "orders are not expected")
+			require.ElementsMatch(t, wantOrders, orders, "orders do not match: \n%s", cmp.Diff(wantOrders, orders))
 
 			availableBalances := make(map[string]sdk.Coins)
 			lockedBalances := make(map[string]sdk.Coins)

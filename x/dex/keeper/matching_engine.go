@@ -55,20 +55,23 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
 
 	trade := Trade{Price: makerRecord.Price}
 
-	takerBaseQuantity := takerRecord.MaxTakerBaseQuantityForPrice(trade.Price)
+	takerMaxBaseQuantity := takerRecord.MaxBaseQuantityForPrice(trade.Price)
+	makerMaxBaseQuantity := makerRecord.MaxBaseQuantityForPrice(trade.Price)
 	closeResult := NoneCloseType
+
 	// TODO(ysv): Consider zero quantity.
-	if cbig.IntLT(takerBaseQuantity, makerRecord.BaseQuantity) {
+	if cbig.IntLT(takerMaxBaseQuantity, makerMaxBaseQuantity) {
 		closeResult = CloseTaker
-		trade.BaseQuantity = takerBaseQuantity
-	} else if cbig.IntEQ(takerBaseQuantity, makerRecord.BaseQuantity) {
+		trade.BaseQuantity = takerMaxBaseQuantity
+	} else if cbig.IntEQ(takerMaxBaseQuantity, makerMaxBaseQuantity) {
 		closeResult = CloseBoth
-		trade.BaseQuantity = takerBaseQuantity
+		trade.BaseQuantity = takerMaxBaseQuantity
 	} else {
 		closeResult = CloseMaker
-		trade.BaseQuantity = makerRecord.BaseQuantity
+		trade.BaseQuantity = makerMaxBaseQuantity
 	}
 
+	// BaseQuantity is calculated in the way so that QuoteQuantity = BaseQuantity * Price is always integer.
 	trade.QuoteQuantity, _ = cbig.IntMulRatWithRemainder(trade.BaseQuantity, trade.Price)
 
 	if takerRecord.Side == SellOrderSide {
@@ -82,23 +85,36 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
 	return trade, closeResult, nil
 }
 
-func (obr OBRecord) MaxTakerBaseQuantityForPrice(price *big.Rat) *big.Int {
-	// For limit order we execute RemainingQuantity fully.
+func (obr OBRecord) MaxBaseQuantityForPrice(price *big.Rat) *big.Int {
+	// For limit order we execute BaseQuantity fully.
 	if obr.IsLimit() {
-		return obr.BaseQuantity
+		maxBaseQuantity, _ := computeMaxIntExecutionQuantityV2(price, obr.BaseQuantity)
+		return maxBaseQuantity
 	}
 
-	// For market sell orders we execute up to RemainingQuantity or RemainingBalance, whichever is filled first.
+	// For market sell orders we execute up to BaseQuantity or SpendBalance, whichever is filled first.
 	if obr.Side == SellOrderSide {
-		return cbig.IntMin(obr.BaseQuantity, obr.SpendBalance)
+		maxBaseQuantity, _ := computeMaxIntExecutionQuantityV2(price, cbig.IntMin(obr.BaseQuantity, obr.SpendBalance))
+		return maxBaseQuantity
 	}
 
-	// For market buy orders we execute up to RemainingQuantity or RemainingBalance / Price, whichever is filled first.
+	// For market buy orders we execute up to BaseQuantity or SpendBalance / Price, whichever is filled first.
 	// RemainingBalance / Price = RemainingBalance * Price^-1
-	// Reminder is not executable so we just round it down.
 	maxQuantityFromBalance, _ := cbig.IntMulRatWithRemainder(obr.SpendBalance, cbig.RatInv(price))
 
-	return cbig.IntMin(obr.BaseQuantity, maxQuantityFromBalance)
+	maxBaseQuantity, _ := computeMaxIntExecutionQuantityV2(price, cbig.IntMin(obr.BaseQuantity, maxQuantityFromBalance))
+	return maxBaseQuantity
+}
+
+func computeMaxIntExecutionQuantityV2(priceRat *big.Rat, baseQuantity *big.Int) (*big.Int, *big.Int) {
+	priceNum := priceRat.Num()
+	priceDenom := priceRat.Denom()
+
+	n := cbig.IntQuo(baseQuantity, priceDenom)
+	baseMaxQuantity := cbig.IntMul(n, priceDenom)
+	quoteMaxQuantity := cbig.IntMul(n, priceNum)
+
+	return baseMaxQuantity, quoteMaxQuantity
 }
 
 func (obr OBRecord) IsLimit() bool {
