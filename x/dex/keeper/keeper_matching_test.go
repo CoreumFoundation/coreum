@@ -6398,7 +6398,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if tt.name != "match_market_invertedOB_maker_buy_taker_buy_with_partially_filling" {
+		if tt.name != "match_limit_directOB_close_two_makers_buy_and_and_taker_sell" {
 			continue
 		}
 		t.Run(tt.name, func(t *testing.T) {
@@ -6464,7 +6464,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders := tt.wantOrders(testSet)
 			// set order reserve and order sequence for all orders
 			wantOrders = fillReserveAndOrderSequence(t, sdkCtx, testApp, wantOrders)
-			require.ElementsMatch(t, wantOrders, orders)
+			require.ElementsMatch(t, wantOrders, orders, "orders are not expected")
 
 			availableBalances := make(map[string]sdk.Coins)
 			lockedBalances := make(map[string]sdk.Coins)

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -59,7 +60,7 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		stop, err := k.matchRecords(ctx, cak, mr, &takerRecord, &makerRecord, takerOrder)
+		stop, err := k.mathcRecordsV2(ctx, cak, mr, &takerRecord, &makerRecord, takerOrder)
 		if err != nil {
 			return err
 		}
@@ -185,6 +186,7 @@ func (k Keeper) mathcRecordsV2(
 	takerRecord, makerRecord *types.OrderBookRecord,
 	takerOrder types.Order,
 ) (bool, error) {
+	fmt.Printf("matching records: \ntakerRecord: %v \nmakerRecord: %v\n", takerRecord.String(), makerRecord.String())
 	takerReceivesDenom, takerSpendsDenom := takerOrder.BaseDenom, takerOrder.QuoteDenom
 	if takerOrder.Side == types.SIDE_SELL {
 		takerReceivesDenom, takerSpendsDenom = takerOrder.QuoteDenom, takerOrder.BaseDenom
@@ -198,6 +200,7 @@ func (k Keeper) mathcRecordsV2(
 	if err != nil {
 		return false, err
 	}
+	fmt.Printf("resulting closeResult: %+v trade: %+v\n", closeResult, trade)
 
 	// Exchange funds
 	makerAddr, err := cak.getAccountAddressWithCache(ctx, makerRecord.AccountNumber)
@@ -224,6 +227,8 @@ func (k Keeper) mathcRecordsV2(
 		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerSpends))
 	}
 
+	fmt.Printf("records after reducing: \ntakerRecord: %v \nmakerRecord: %v\n", takerRecord.String(), makerRecord.String())
+
 	// Close or update maker record
 	if closeResult == CloseMaker || closeResult == CloseBoth {
 		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoinsV2(ctx, makerRecord, takerReceivesDenom, takerSpendsDenom)
@@ -238,7 +243,7 @@ func (k Keeper) mathcRecordsV2(
 	}
 
 	// We continue only if closeResult shouldn't close the taker record
-	return closeResult != CloseTaker && closeResult != CloseBoth, nil
+	return closeResult == CloseTaker || closeResult == CloseBoth, nil
 }
 
 //
@@ -271,17 +276,19 @@ func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecor
 	if !inverted {
 		return OBRecord{
 			Side:         side,
-			Price:        obRecord.Price.Rat(),
+			Price:        price,
 			BaseQuantity: obRecord.RemainingQuantity.BigInt(),
 			SpendBalance: obRecord.RemainingBalance.BigInt(),
 		}
 	}
 
+	// TODO: double check all usages of IntMulRatWithRemainder.
+	baseQuantity, _ := cbig.IntMulRatWithRemainder(obRecord.RemainingQuantity.BigInt(), price)
 	return OBRecord{
 		Side:         side.Opposite(),
-		Price:        cbig.RatInv(obRecord.Price.Rat()),
-		BaseQuantity: obRecord.RemainingBalance.BigInt(),
-		SpendBalance: obRecord.RemainingQuantity.BigInt(),
+		Price:        cbig.RatInv(price),
+		BaseQuantity: baseQuantity,
+		SpendBalance: obRecord.RemainingBalance.BigInt(),
 	}
 }
 
