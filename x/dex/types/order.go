@@ -236,10 +236,6 @@ func (r OrderBookRecord) MaxBaseAmntForPrice(side Side, ordType OrderType, price
 	return maxAmntFromQty
 }
 
-func (r OrderBookRecord) IsFilled() bool {
-	return r.RemainingBalance.IsZero() || r.RemainingQuantity.IsZero()
-}
-
 // ComputeLimitOrderLockedBalance computes the limit order locked balance.
 func ComputeLimitOrderLockedBalance(
 	side Side, baseDenom, quoteDenom string, quantity sdkmath.Int, price Price,

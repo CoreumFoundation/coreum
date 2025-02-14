@@ -2934,7 +2934,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						testSet.orderReserveTimes(2),
 						sdk.NewInt64Coin(denom2, 380),
 					),
-					// not enough balance to cover both orders
+					// not enough balance to cover both orders so id2 will be matched partially.
 					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(denom1, 100+900-1)),
 				}
 			},
@@ -2985,8 +2985,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Quantity:          sdkmath.NewInt(900),
 						Side:              types.SIDE_BUY,
 						TimeInForce:       types.TIME_IN_FORCE_GTC,
-						RemainingQuantity: sdkmath.NewInt(900),
-						RemainingBalance:  sdkmath.NewInt(342),
+						RemainingQuantity: sdkmath.NewInt(50),
+						RemainingBalance:  sdkmath.NewInt(19),
 					},
 				}
 			},
@@ -2994,11 +2994,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(denom1, 100),
+						sdk.NewInt64Coin(denom1, 100+850),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(denom1, 899),
-						sdk.NewInt64Coin(denom2, 38),
+						sdk.NewInt64Coin(denom1, 49),
+						sdk.NewInt64Coin(denom2, 38+323),
 					),
 				}
 			},
@@ -6399,7 +6399,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if tt.name != "match_limit_directOB_maker_sell_taker_buy_close_maker_with_partial_filling" {
+		if tt.name != "match_market_invertedOB_maker_buy_taker_buy_with_partially_filling" {
 			continue
 		}
 		t.Run(tt.name, func(t *testing.T) {
