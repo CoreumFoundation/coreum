@@ -52,6 +52,7 @@ func (k Keeper) matchOrder(
 
 	cak := newCachedAccountKeeper(k.accountKeeper, k.accountQueryServer)
 
+	takerIsFilled := false
 	for {
 		makerRecord, matches, err := mf.Next()
 		if err != nil {
@@ -60,11 +61,11 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		stop, err := k.mathcRecordsV2(ctx, cak, mr, &takerRecord, &makerRecord, takerOrder)
+		takerIsFilled, err = k.mathcRecordsV2(ctx, cak, mr, &takerRecord, &makerRecord, takerOrder)
 		if err != nil {
 			return err
 		}
-		if stop {
+		if takerIsFilled {
 			break
 		}
 	}
@@ -73,15 +74,21 @@ func (k Keeper) matchOrder(
 	case types.ORDER_TYPE_LIMIT:
 		switch takerOrder.TimeInForce {
 		case types.TIME_IN_FORCE_GTC:
+			// If taker order is filled fully we just apply matching result and return.
+			if takerIsFilled {
+				return k.applyMatchingResult(ctx, mr)
+			}
+
+			// If taker orders is not filled fully we need to:
+			// - increase taker limits for record for remaining amount
+			// - apply matching result
+			// - add remaining order to the order book
 			if err := mr.IncreaseTakerLimitsForRecord(params, takerOrder, &takerRecord); err != nil {
 				return err
 			}
-			// apply matching result and create new order if necessary
+
 			if err := k.applyMatchingResult(ctx, mr); err != nil {
 				return err
-			}
-			if takerRecord.IsFilled() {
-				return nil
 			}
 
 			return k.createOrder(ctx, params, takerOrder, takerRecord)
@@ -200,7 +207,7 @@ func (k Keeper) mathcRecordsV2(
 	if err != nil {
 		return false, err
 	}
-	fmt.Printf("resulting closeResult: %+v trade: %+v\n", closeResult, trade)
+	fmt.Printf("resulting closeResult: %v \ntrade: %+v", closeResult.String(), trade)
 
 	// Exchange funds
 	makerAddr, err := cak.getAccountAddressWithCache(ctx, makerRecord.AccountNumber)
@@ -224,7 +231,7 @@ func (k Keeper) mathcRecordsV2(
 		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
 	} else {
 		makerRecord.RemainingQuantity = makerRecord.RemainingQuantity.Sub(sdkmath.NewIntFromBigInt(trade.QuoteQuantity))
-		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerSpends))
+		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
 	}
 
 	fmt.Printf("records after reducing: \ntakerRecord: %v \nmakerRecord: %v\n", takerRecord.String(), makerRecord.String())

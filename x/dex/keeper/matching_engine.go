@@ -48,6 +48,19 @@ const (
 	CloseBoth
 )
 
+func (cr CloseResult) String() string {
+	switch cr {
+	case CloseTaker:
+		return "CloseTaker"
+	case CloseMaker:
+		return "CloseMaker"
+	case CloseBoth:
+		return "CloseBoth"
+	default:
+		return "None"
+	}
+}
+
 func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
 	if takerRecord.Side == makerRecord.Side {
 		return Trade{}, NoneCloseType, nil
