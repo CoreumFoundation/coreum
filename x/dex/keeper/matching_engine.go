@@ -112,7 +112,7 @@ func (obr OBRecord) MaxBaseQuantityForPrice(price *big.Rat) *big.Int {
 	}
 
 	// For market buy orders we execute up to BaseQuantity or SpendBalance / Price, whichever is filled first.
-	// RemainingBalance / Price = RemainingBalance * Price^-1
+	// SpendBalance / Price = SpendBalance * Price^-1
 	maxQuantityFromBalance, _ := cbig.IntMulRatWithRemainder(obr.SpendBalance, cbig.RatInv(price))
 
 	maxBaseQuantity, _ := computeMaxIntExecutionQuantityV2(price, cbig.IntMin(obr.BaseQuantity, maxQuantityFromBalance))
