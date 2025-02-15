@@ -66,3 +66,10 @@ func RatInv(x *big.Rat) *big.Rat {
 func RatIsZero(x *big.Rat) bool {
 	return x.Cmp(big.NewRat(0, 1)) == 0
 }
+
+func RatMin(x, y *big.Rat) *big.Rat {
+	if x.Cmp(y) < 0 {
+		return x
+	}
+	return y
+}
