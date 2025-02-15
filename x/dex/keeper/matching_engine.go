@@ -6,8 +6,9 @@ import (
 	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 )
 
-var MarketOrderPrice = big.NewRat(-1, 1)
+var marketOrderPrice = big.NewRat(-1, 1)
 
+// Trade is a matching result of two orders.
 type Trade struct {
 	BaseQuantity  *big.Int
 	QuoteQuantity *big.Int
@@ -17,21 +18,24 @@ type Trade struct {
 	TakerSpends   *big.Int
 }
 
+// OrderSide is a side of an order.
 type OrderSide int
 
 const (
-	BuyOrderSide OrderSide = iota
-	SellOrderSide
+	buyOrderSide OrderSide = iota
+	sellOrderSide
 )
 
+// Opposite returns the opposite side of an order.
 func (o OrderSide) Opposite() OrderSide {
-	if o == SellOrderSide {
-		return BuyOrderSide
+	if o == sellOrderSide {
+		return buyOrderSide
 	}
 
-	return SellOrderSide
+	return sellOrderSide
 }
 
+// OBRecord is an order book record for matching engine.
 type OBRecord struct {
 	Side         OrderSide
 	Price        *big.Rat
@@ -39,31 +43,33 @@ type OBRecord struct {
 	SpendBalance *big.Rat
 }
 
+// CloseResult is a result of order matching which specifies which order should be closed.
 type CloseResult int
 
 const (
-	NoneCloseType CloseResult = iota
-	CloseTaker
-	CloseMaker
-	CloseBoth
+	noneCloseType CloseResult = iota
+	closeTaker
+	closeMaker
+	closeBoth
 )
 
+// String returns a string representation of CloseResult.
 func (cr CloseResult) String() string {
 	switch cr {
-	case CloseTaker:
+	case closeTaker:
 		return "CloseTaker"
-	case CloseMaker:
+	case closeMaker:
 		return "CloseMaker"
-	case CloseBoth:
+	case closeBoth:
 		return "CloseBoth"
 	default:
 		return "None"
 	}
 }
 
-func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
+func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult) {
 	if takerRecord.Side == makerRecord.Side {
-		return Trade{}, NoneCloseType, nil
+		return Trade{}, noneCloseType
 	}
 
 	trade := Trade{Price: makerRecord.Price}
@@ -72,19 +78,20 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
 	makerMaxBaseQuantityRat := makerRecord.MaxBaseQuantityForPrice(trade.Price)
 
 	var baseQuantityRat *big.Rat
-	closeResult := NoneCloseType
+	var closeRes CloseResult
 
 	// Note that we compare max execution quantities for each record as rational.
 	// Because if we do it using integers it may cause roudning and rational reminder
 	// of a bigger order might be executable with the next order.
-	if cbig.RatLT(takerMaxBaseQuantityRat, makerMaxBaseQuantityRat) {
-		closeResult = CloseTaker
+	switch cmp := takerMaxBaseQuantityRat.Cmp(makerMaxBaseQuantityRat); cmp {
+	case -1:
+		closeRes = closeTaker
 		baseQuantityRat = takerMaxBaseQuantityRat
-	} else if cbig.RatEQ(takerMaxBaseQuantityRat, makerMaxBaseQuantityRat) {
-		closeResult = CloseBoth
+	case 0:
+		closeRes = closeBoth
 		baseQuantityRat = takerMaxBaseQuantityRat
-	} else {
-		closeResult = CloseMaker
+	case 1:
+		closeRes = closeMaker
 		baseQuantityRat = makerMaxBaseQuantityRat
 	}
 
@@ -95,7 +102,7 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
 		cbig.IntQuo(baseQuantityRat.Num(), baseQuantityRat.Denom()),
 	)
 
-	if takerRecord.Side == SellOrderSide {
+	if takerRecord.Side == sellOrderSide {
 		trade.TakerSpends = trade.BaseQuantity
 		trade.TakerReceives = trade.QuoteQuantity
 	} else {
@@ -103,9 +110,11 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
 		trade.TakerReceives = trade.BaseQuantity
 	}
 
-	return trade, closeResult, nil
+	return trade, closeRes
 }
 
+// MaxBaseQuantityForPrice returns maximum base quantity order can execute for a given price.
+// Price is expected to be better or equal ot OBRecord.Price.
 func (obr OBRecord) MaxBaseQuantityForPrice(price *big.Rat) *big.Rat {
 	// For limit order we execute BaseQuantity fully.
 	if obr.IsLimit() {
@@ -113,7 +122,7 @@ func (obr OBRecord) MaxBaseQuantityForPrice(price *big.Rat) *big.Rat {
 	}
 
 	// For market sell orders we execute up to BaseQuantity or SpendBalance, whichever is filled first.
-	if obr.Side == SellOrderSide {
+	if obr.Side == sellOrderSide {
 		return cbig.RatMin(obr.BaseQuantity, obr.SpendBalance)
 	}
 
@@ -124,6 +133,7 @@ func (obr OBRecord) MaxBaseQuantityForPrice(price *big.Rat) *big.Rat {
 	return cbig.RatMin(obr.BaseQuantity, maxQuantityFromBalance)
 }
 
+// IsLimit returns true if order is a limit order.
 func (obr OBRecord) IsLimit() bool {
-	return !cbig.RatEQ(obr.Price, MarketOrderPrice)
+	return !cbig.RatEQ(obr.Price, marketOrderPrice)
 }

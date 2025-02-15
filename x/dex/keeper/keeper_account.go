@@ -2,8 +2,9 @@ package keeper
 
 import (
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 func (k Keeper) getAccountNumber(ctx sdk.Context, addr sdk.AccAddress) (uint64, error) {

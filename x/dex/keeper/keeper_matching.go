@@ -207,26 +207,28 @@ func (k Keeper) mathcRecords(
 
 	takerRecordForMatching := newMatchingOBRecord(takerRecord, false)
 	makerRecordForMatching := newMatchingOBRecord(makerRecord, isMakerInverted)
-	trade, closeResult, err := match(takerRecordForMatching, makerRecordForMatching)
-	if err != nil {
-		return false, err
-	}
+	trade, closeResult := match(takerRecordForMatching, makerRecordForMatching)
 	k.logger(ctx).Debug(
 		"Matching result.",
 		"trade", trade,
 		"closeResult", closeResult.String(),
 	)
 
-	// Exchange funds
+	// Send funds
 	makerAddr, err := cachedAccKeeper.getAccountAddressWithCache(ctx, makerRecord.AccountNumber)
 	if err != nil {
 		return false, err
 	}
 	mr.SendFromTaker(
-		makerAddr, makerRecord.OrderID, makerRecord.OrderSequence, sdk.NewCoin(takerSpendsDenom, sdkmath.NewIntFromBigInt(trade.TakerSpends)),
+		makerAddr,
+		makerRecord.OrderID,
+		makerRecord.OrderSequence,
+		sdk.NewCoin(takerSpendsDenom, sdkmath.NewIntFromBigInt(trade.TakerSpends)),
 	)
 	mr.SendFromMaker(
-		makerAddr, makerRecord.OrderID, sdk.NewCoin(takerReceivesDenom, sdkmath.NewIntFromBigInt(trade.TakerReceives)),
+		makerAddr,
+		makerRecord.OrderID,
+		sdk.NewCoin(takerReceivesDenom, sdkmath.NewIntFromBigInt(trade.TakerReceives)),
 	)
 
 	// Reduce taker
@@ -249,8 +251,13 @@ func (k Keeper) mathcRecords(
 	)
 
 	// Close or update maker record
-	if closeResult == CloseMaker || closeResult == CloseBoth || !isOrderRecordExecutableAsMaker(makerRecord) {
-		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoins(ctx, makerRecord, takerReceivesDenom, takerSpendsDenom)
+	if closeResult == closeMaker || closeResult == closeBoth || !isOrderRecordExecutableAsMaker(makerRecord) {
+		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoins(
+			ctx,
+			makerRecord,
+			takerReceivesDenom,
+			takerSpendsDenom,
+		)
 		if err != nil {
 			return false, err
 		}
@@ -262,7 +269,7 @@ func (k Keeper) mathcRecords(
 	}
 
 	// We continue only if closeResult shouldn't close the taker record
-	return closeResult == CloseTaker || closeResult == CloseBoth, nil
+	return closeResult == closeTaker || closeResult == closeBoth, nil
 }
 
 // isOrderRecordExecutableAsMaker returns true if RemainingQuantity inside order is executable with order price.
@@ -296,16 +303,16 @@ func isOrderRecordExecutableAsMaker(obRecord *types.OrderBookRecord) bool {
 //
 // inverted order: market=BTC/USD buy 2 BTC for 25 USD per BTC
 // RemeaningBaseQuantity: 2 BTC
-// RemeaningSpendBalance: 50 USD
+// RemeaningSpendBalance: 50 USD.
 func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecord {
-	side := SellOrderSide
+	side := sellOrderSide
 	if obRecord.Side == types.SIDE_BUY {
-		side = BuyOrderSide
+		side = buyOrderSide
 	}
 
 	price := obRecord.Price.Rat()
 	if cbig.RatIsZero(price) {
-		price = MarketOrderPrice
+		price = marketOrderPrice
 	}
 
 	if !inverted {

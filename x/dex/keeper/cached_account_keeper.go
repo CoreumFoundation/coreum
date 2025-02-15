@@ -2,9 +2,10 @@ package keeper
 
 import (
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
 type cachedAccountKeeper struct {
@@ -14,7 +15,10 @@ type cachedAccountKeeper struct {
 	cache map[uint64]sdk.AccAddress
 }
 
-func newCachedAccountKeeper(accountKeeper types.AccountKeeper, accountQueryServer types.AccountQueryServer) cachedAccountKeeper {
+func newCachedAccountKeeper(
+	accountKeeper types.AccountKeeper,
+	accountQueryServer types.AccountQueryServer,
+) cachedAccountKeeper {
 	return cachedAccountKeeper{
 		accountKeeper:      accountKeeper,
 		accountQueryServer: accountQueryServer,
@@ -22,7 +26,10 @@ func newCachedAccountKeeper(accountKeeper types.AccountKeeper, accountQueryServe
 	}
 }
 
-func (cachedAccKeeper cachedAccountKeeper) getAccountAddress(ctx sdk.Context, accNumber uint64) (sdk.AccAddress, error) {
+func (cachedAccKeeper cachedAccountKeeper) getAccountAddress(
+	ctx sdk.Context,
+	accNumber uint64,
+) (sdk.AccAddress, error) {
 	addr, err := cachedAccKeeper.accountQueryServer.AccountAddressByID(
 		ctx,
 		&authtypes.QueryAccountAddressByIDRequest{AccountId: accNumber},

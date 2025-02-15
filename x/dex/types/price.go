@@ -119,6 +119,7 @@ func (p Price) Rat() *big.Rat {
 	)
 }
 
+// Equal returns true if prices are equal.
 func (p Price) Equal(p2 Price) bool {
 	return p.exp == p2.exp && p.num == p2.num
 }

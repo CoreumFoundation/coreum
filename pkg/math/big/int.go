@@ -48,12 +48,12 @@ func IntGTE(x, y *big.Int) bool {
 	return x.Cmp(y) != -1
 }
 
-// IntGTE returns true if x is greater than y.
+// IntGT returns true if x is greater than y.
 func IntGT(x, y *big.Int) bool {
 	return x.Cmp(y) == 1
 }
 
-// IntGTE returns true if x is less than y.
+// IntLT returns true if x is less than y.
 func IntLT(x, y *big.Int) bool {
 	return x.Cmp(y) == -1
 }
