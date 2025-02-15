@@ -207,7 +207,7 @@ func (k Keeper) mathcRecordsV2(
 	if err != nil {
 		return false, err
 	}
-	fmt.Printf("resulting closeResult: %v \ntrade: %+v", closeResult.String(), trade)
+	fmt.Printf("resulting closeResult: %v \ntrade: %+v\n", closeResult.String(), trade)
 
 	// Exchange funds
 	makerAddr, err := cak.getAccountAddressWithCache(ctx, makerRecord.AccountNumber)
