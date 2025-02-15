@@ -6442,9 +6442,6 @@ func TestKeeper_MatchOrders(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		// if tt.name != "not_fillable_orders_cancelled_right_after_creation" {
-		// 	continue
-		// }
 		t.Run(tt.name, func(t *testing.T) {
 			logger := log.NewTestLogger(t)
 			testApp := simapp.New(simapp.WithCustomLogger(logger))

@@ -22,8 +22,8 @@ func newCachedAccountKeeper(accountKeeper types.AccountKeeper, accountQueryServe
 	}
 }
 
-func (cak cachedAccountKeeper) getAccountAddress(ctx sdk.Context, accNumber uint64) (sdk.AccAddress, error) {
-	addr, err := cak.accountQueryServer.AccountAddressByID(
+func (cachedAccKeeper cachedAccountKeeper) getAccountAddress(ctx sdk.Context, accNumber uint64) (sdk.AccAddress, error) {
+	addr, err := cachedAccKeeper.accountQueryServer.AccountAddressByID(
 		ctx,
 		&authtypes.QueryAccountAddressByIDRequest{AccountId: accNumber},
 	)
@@ -39,18 +39,18 @@ func (cak cachedAccountKeeper) getAccountAddress(ctx sdk.Context, accNumber uint
 	return acc, nil
 }
 
-func (cak cachedAccountKeeper) getAccountAddressWithCache(ctx sdk.Context, accNumber uint64) (
+func (cachedAccKeeper cachedAccountKeeper) getAccountAddressWithCache(ctx sdk.Context, accNumber uint64) (
 	sdk.AccAddress,
 	error,
 ) {
-	addr, ok := cak.cache[accNumber]
+	addr, ok := cachedAccKeeper.cache[accNumber]
 	if !ok {
 		var err error
-		addr, err = cak.getAccountAddress(ctx, accNumber)
+		addr, err = cachedAccKeeper.getAccountAddress(ctx, accNumber)
 		if err != nil {
 			return nil, err
 		}
-		cak.cache[accNumber] = addr
+		cachedAccKeeper.cache[accNumber] = addr
 	}
 
 	return addr, nil

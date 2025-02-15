@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"math/big"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -50,7 +49,7 @@ func (k Keeper) matchOrder(
 		return err
 	}
 
-	cak := newCachedAccountKeeper(k.accountKeeper, k.accountQueryServer)
+	cachedAccKeeper := newCachedAccountKeeper(k.accountKeeper, k.accountQueryServer)
 
 	takerIsFilled := false
 	for {
@@ -61,7 +60,7 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		takerIsFilled, err = k.mathcRecordsV2(ctx, cak, mr, &takerRecord, &makerRecord, takerOrder)
+		takerIsFilled, err = k.mathcRecords(ctx, cachedAccKeeper, mr, &takerRecord, &makerRecord, takerOrder)
 		if err != nil {
 			return err
 		}
@@ -186,14 +185,19 @@ func (k Keeper) getInitialRemainingBalance(
 	return remainingBalance.Amount, nil
 }
 
-func (k Keeper) mathcRecordsV2(
+func (k Keeper) mathcRecords(
 	ctx sdk.Context,
-	cak cachedAccountKeeper,
+	cachedAccKeeper cachedAccountKeeper,
 	mr *MatchingResult,
 	takerRecord, makerRecord *types.OrderBookRecord,
 	takerOrder types.Order,
 ) (bool, error) {
-	fmt.Printf("matching records: \ntakerRecord: %v \nmakerRecord: %v\n", takerRecord.String(), makerRecord.String())
+	k.logger(ctx).Debug(
+		"Matching OB records.",
+		"takerRecord", takerRecord.String(),
+		"makerRecord", makerRecord.String(),
+	)
+
 	takerReceivesDenom, takerSpendsDenom := takerOrder.BaseDenom, takerOrder.QuoteDenom
 	if takerOrder.Side == types.SIDE_SELL {
 		takerReceivesDenom, takerSpendsDenom = takerOrder.QuoteDenom, takerOrder.BaseDenom
@@ -207,10 +211,14 @@ func (k Keeper) mathcRecordsV2(
 	if err != nil {
 		return false, err
 	}
-	fmt.Printf("resulting closeResult: %v \ntrade: %+v\n", closeResult.String(), trade)
+	k.logger(ctx).Debug(
+		"Matching result.",
+		"trade", trade,
+		"closeResult", closeResult.String(),
+	)
 
 	// Exchange funds
-	makerAddr, err := cak.getAccountAddressWithCache(ctx, makerRecord.AccountNumber)
+	makerAddr, err := cachedAccKeeper.getAccountAddressWithCache(ctx, makerRecord.AccountNumber)
 	if err != nil {
 		return false, err
 	}
@@ -234,11 +242,15 @@ func (k Keeper) mathcRecordsV2(
 		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
 	}
 
-	fmt.Printf("records after reducing: \ntakerRecord: %v \nmakerRecord: %v\n", takerRecord.String(), makerRecord.String())
+	k.logger(ctx).Debug(
+		"Matched OB records after reduction.",
+		"takerRecord", takerRecord.String(),
+		"makerRecord", makerRecord.String(),
+	)
 
 	// Close or update maker record
 	if closeResult == CloseMaker || closeResult == CloseBoth || !isOrderRecordExecutableAsMaker(makerRecord) {
-		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoinsV2(ctx, makerRecord, takerReceivesDenom, takerSpendsDenom)
+		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoins(ctx, makerRecord, takerReceivesDenom, takerSpendsDenom)
 		if err != nil {
 			return false, err
 		}
@@ -266,6 +278,9 @@ func isOrderRecordExecutableAsMaker(obRecord *types.OrderBookRecord) bool {
 	return !cbig.IntEqZero(baseQuantity)
 }
 
+// newMatchingOBRecord initializes struct for matching engine and inverts order if needed.
+//
+// E.g.:
 //
 // original order: market=USD/BTC buy 50 USD for 0.04 BTC per USD
 // RemeaningBaseQuantity: 50 USD
@@ -311,7 +326,7 @@ func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecor
 	}
 }
 
-func (k Keeper) getMakerLockedAndExpectedToReceiveCoinsV2(
+func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(
 	ctx sdk.Context,
 	makerRecord *types.OrderBookRecord,
 	makerSpendsDenom, makerReceivesDenom string,
@@ -329,7 +344,6 @@ func (k Keeper) getMakerLockedAndExpectedToReceiveCoinsV2(
 		lockedCoins = lockedCoins.Add(recordToCloseOrderData.Reserve)
 	}
 
-	// TODO(ysv): Not sure if this part is correct. Double check.
 	expectedToReceiveAmt, err := types.ComputeLimitOrderExpectedToReceiveAmount(
 		makerRecord.Side, makerRecord.RemainingQuantity, makerRecord.Price,
 	)
@@ -346,8 +360,8 @@ func computeMaxIntExecutionQuantity(priceRat *big.Rat, baseQuantity *big.Int) (*
 	priceDenom := priceRat.Denom()
 
 	n := cbig.IntQuo(baseQuantity, priceDenom)
-	baseIntQuantity := cbig.IntMul(n, priceDenom)
-	quoteIntQuantity := cbig.IntMul(n, priceNum)
+	baseQuantityInt := cbig.IntMul(n, priceDenom)
+	quoteQuantityInt := cbig.IntMul(n, priceNum)
 
-	return baseIntQuantity, quoteIntQuantity
+	return baseQuantityInt, quoteQuantityInt
 }
