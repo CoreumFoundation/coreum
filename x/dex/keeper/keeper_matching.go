@@ -74,8 +74,8 @@ func (k Keeper) matchOrder(
 	case types.ORDER_TYPE_LIMIT:
 		switch takerOrder.TimeInForce {
 		case types.TIME_IN_FORCE_GTC:
-			// If taker order is filled fully we just apply matching result and return.
-			if takerIsFilled {
+			// If taker order is filled fully or not executable as maker we just apply matching result and return.
+			if takerIsFilled || !isOrderRecordExecutableAsMaker(&takerRecord) {
 				return k.applyMatchingResult(ctx, mr)
 			}
 
@@ -237,7 +237,7 @@ func (k Keeper) mathcRecordsV2(
 	fmt.Printf("records after reducing: \ntakerRecord: %v \nmakerRecord: %v\n", takerRecord.String(), makerRecord.String())
 
 	// Close or update maker record
-	if closeResult == CloseMaker || closeResult == CloseBoth {
+	if closeResult == CloseMaker || closeResult == CloseBoth || !isOrderRecordExecutableAsMaker(makerRecord) {
 		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoinsV2(ctx, makerRecord, takerReceivesDenom, takerSpendsDenom)
 		if err != nil {
 			return false, err
@@ -251,6 +251,19 @@ func (k Keeper) mathcRecordsV2(
 
 	// We continue only if closeResult shouldn't close the taker record
 	return closeResult == CloseTaker || closeResult == CloseBoth, nil
+}
+
+// isOrderRecordExecutableAsMaker returns true if RemainingQuantity inside order is executable with order price.
+// Order with RemainingQuantity: 101 and Price: 0.397 is not executable as maker:
+// Qa' = floor(Qa / pd) * pd = floor(101 / 397) * 1000 = 0.
+//
+// Order with RemainingQuantity: 101 and Price: 0.39 is executable:
+// Qa' = floor(Qa / pd) * pd = floor(101 / 39) * 100 > 0.
+//
+// This func logic might be rewised if we introduce proper ticks for price & quantity.
+func isOrderRecordExecutableAsMaker(obRecord *types.OrderBookRecord) bool {
+	baseQuantity, _ := ComputeMaxIntExecutionQuantityV2(obRecord.Price.Rat(), obRecord.RemainingQuantity.BigInt())
+	return !cbig.IntEqZero(baseQuantity)
 }
 
 //
@@ -284,18 +297,18 @@ func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecor
 		return OBRecord{
 			Side:         side,
 			Price:        price,
-			BaseQuantity: obRecord.RemainingQuantity.BigInt(),
-			SpendBalance: obRecord.RemainingBalance.BigInt(),
+			BaseQuantity: cbig.NewRatFromBigInt(obRecord.RemainingQuantity.BigInt()),
+			SpendBalance: cbig.NewRatFromBigInt(obRecord.RemainingBalance.BigInt()),
 		}
 	}
 
 	// TODO: double check all usages of IntMulRatWithRemainder.
-	baseQuantity, _ := cbig.IntMulRatWithRemainder(obRecord.RemainingQuantity.BigInt(), price)
+	baseQuantity := cbig.RatMul(cbig.NewRatFromBigInt(obRecord.RemainingQuantity.BigInt()), price)
 	return OBRecord{
 		Side:         side.Opposite(),
 		Price:        cbig.RatInv(price),
 		BaseQuantity: baseQuantity,
-		SpendBalance: obRecord.RemainingBalance.BigInt(),
+		SpendBalance: cbig.NewRatFromBigInt(obRecord.RemainingBalance.BigInt()),
 	}
 }
 
@@ -543,7 +556,7 @@ func getRecordsReceiveCoins(
 func computeMaxExecutionQuantity(priceRat *big.Rat, remainingQuantity sdkmath.Int) (sdkmath.Int, sdkmath.Int) {
 	priceNum := priceRat.Num()
 	priceDenom := priceRat.Denom()
-	// FIXME(ysv) multiplication should be first to avoid rounding.
+
 	n := cbig.IntQuo(remainingQuantity.BigInt(), priceDenom)
 	maxExecutionQuantity := cbig.IntMul(n, priceDenom)
 	oppositeExecutionQuantity := cbig.IntMul(n, priceNum)
