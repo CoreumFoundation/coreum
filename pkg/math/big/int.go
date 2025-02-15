@@ -25,6 +25,7 @@ func IntMul(x, y *big.Int) *big.Int {
 }
 
 // IntMulRatWithRemainder multiplies x *big.Int by y *big.Rat and returns *big.Int result with the remainder.
+// TODO(ysv): Double check all usages of this function inside keeper matching.
 func IntMulRatWithRemainder(x *big.Int, y *big.Rat) (*big.Int, *big.Int) {
 	num := IntMul(x, y.Num())
 	denom := y.Denom()
