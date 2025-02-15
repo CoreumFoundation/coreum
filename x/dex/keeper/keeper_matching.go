@@ -262,7 +262,7 @@ func (k Keeper) mathcRecordsV2(
 //
 // This func logic might be rewised if we introduce proper ticks for price & quantity.
 func isOrderRecordExecutableAsMaker(obRecord *types.OrderBookRecord) bool {
-	baseQuantity, _ := ComputeMaxIntExecutionQuantityV2(obRecord.Price.Rat(), obRecord.RemainingQuantity.BigInt())
+	baseQuantity, _ := computeMaxIntExecutionQuantity(obRecord.Price.Rat(), obRecord.RemainingQuantity.BigInt())
 	return !cbig.IntEqZero(baseQuantity)
 }
 
@@ -302,7 +302,6 @@ func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecor
 		}
 	}
 
-	// TODO: double check all usages of IntMulRatWithRemainder.
 	baseQuantity := cbig.RatMul(cbig.NewRatFromBigInt(obRecord.RemainingQuantity.BigInt()), price)
 	return OBRecord{
 		Side:         side.Opposite(),
@@ -310,98 +309,6 @@ func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecor
 		BaseQuantity: baseQuantity,
 		SpendBalance: cbig.NewRatFromBigInt(obRecord.RemainingBalance.BigInt()),
 	}
-}
-
-func (k Keeper) matchRecords(
-	ctx sdk.Context,
-	cak cachedAccountKeeper,
-	mr *MatchingResult,
-	takerRecord, makerRecord *types.OrderBookRecord,
-	takerOrder types.Order,
-) (bool, error) {
-	recordToClose, recordToReduce := k.getRecordToCloseAndReduce(ctx, takerOrder, takerRecord, makerRecord)
-	k.logger(ctx).Debug(
-		"Executing orders.",
-		"recordToClose", recordToClose.String(),
-		"recordToReduce", recordToReduce.String(),
-	)
-
-	recordToCloseReceiveCoin,
-		recordToReduceReceiveCoin,
-		recordToCloseReducedQuantity,
-		recordToReduceReducedQuantity := getRecordsReceiveCoins(makerRecord, recordToClose, recordToReduce, takerOrder)
-
-	// if !recordToCloseReceiveCoin.Amount.Equal(recordToReduceReducedQuantity) || !recordToReduceReceiveCoin.Amount.Equal(recordToCloseReducedQuantity) {
-	// 	msg := fmt.Sprintf("inconsistency between recordToClose and recordToReduce: %v != %v || %v != %v",
-	// 		recordToCloseReceiveCoin.String(), recordToReduceReducedQuantity.String(), recordToReduceReceiveCoin.String(), recordToCloseReducedQuantity.String())
-	// 	panic(msg)
-	// }
-
-	// stop if any record receives more than opposite record balance
-	// that situation is possible when a market order with quantity which doesn't correspond the order balance
-	// if recordToClose.RemainingBalance.LT(recordToReduceReceiveCoin.Amount) ||
-	// 	recordToReduce.RemainingBalance.LT(recordToCloseReceiveCoin.Amount) {
-	// 	k.logger(ctx).Debug("Stop matching, order balance is not enough to cover the quantity.")
-	// 	return true, nil
-	// }
-
-	recordToCloseRemainingQuantity := recordToClose.RemainingQuantity.Sub(recordToCloseReducedQuantity)
-	closeMaker := takerOrder.Sequence != recordToClose.OrderSequence
-	if closeMaker {
-		makerAddr, err := cak.getAccountAddressWithCache(ctx, recordToClose.AccountNumber)
-		if err != nil {
-			return false, err
-		}
-		mr.SendFromTaker(
-			makerAddr, recordToClose.OrderID, recordToClose.OrderSequence, recordToCloseReceiveCoin,
-		)
-		mr.SendFromMaker(
-			makerAddr, recordToClose.OrderID, recordToReduceReceiveCoin,
-		)
-
-		lockedCoins, expectedToReceiveCoin, err := k.getMakerLockedAndExpectedToReceiveCoins(
-			ctx, recordToReduceReceiveCoin, recordToClose, recordToCloseRemainingQuantity, recordToCloseReceiveCoin,
-		)
-		if err != nil {
-			return false, err
-		}
-
-		mr.DecreaseMakerLimits(makerAddr, lockedCoins, expectedToReceiveCoin)
-		mr.RemoveRecord(makerAddr, recordToClose)
-	} else {
-		makerAddr, err := cak.getAccountAddressWithCache(ctx, recordToReduce.AccountNumber)
-		if err != nil {
-			return false, err
-		}
-		mr.SendFromTaker(
-			makerAddr, recordToReduce.OrderID, recordToReduce.OrderSequence, recordToReduceReceiveCoin,
-		)
-		mr.SendFromMaker(
-			makerAddr, recordToReduce.OrderID, recordToCloseReceiveCoin,
-		)
-	}
-
-	recordToClose.RemainingQuantity = recordToCloseRemainingQuantity
-	recordToClose.RemainingBalance = sdkmath.ZeroInt()
-	k.logger(ctx).Debug("Updated recordToClose.", "recordToClose", recordToClose)
-
-	recordToReduce.RemainingQuantity = recordToReduce.RemainingQuantity.Sub(recordToReduceReducedQuantity)
-	recordToReduce.RemainingBalance = recordToReduce.RemainingBalance.Sub(recordToCloseReceiveCoin.Amount)
-	k.logger(ctx).Debug("Updated recordToReduce.", "recordToReduce", recordToReduce)
-
-	// continue or stop
-	if closeMaker {
-		if recordToReduce.RemainingQuantity.IsZero() {
-			k.logger(ctx).Debug("Taker record is filled fully.")
-			recordToReduce.RemainingBalance = sdkmath.ZeroInt()
-			return true, nil
-		}
-		k.logger(ctx).Debug("Going to next record in the order book.")
-		return false, nil
-	}
-
-	mr.UpdateRecord(*makerRecord)
-	return true, nil
 }
 
 func (k Keeper) getMakerLockedAndExpectedToReceiveCoinsV2(
@@ -434,133 +341,13 @@ func (k Keeper) getMakerLockedAndExpectedToReceiveCoinsV2(
 	return lockedCoins, expectedToReceiveCoin, nil
 }
 
-func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(
-	ctx sdk.Context,
-	recordToReduceReceiveCoin sdk.Coin,
-	recordToClose *types.OrderBookRecord,
-	recordToCloseRemainingQuantity sdkmath.Int,
-	recordToCloseReceiveCoin sdk.Coin,
-) (sdk.Coins, sdk.Coin, error) {
-	lockedCoins := sdk.NewCoins(sdk.NewCoin(
-		recordToReduceReceiveCoin.Denom, recordToClose.RemainingBalance.Sub(recordToReduceReceiveCoin.Amount),
-	))
-	// get the record data to unlock the reserve if present
-	recordToCloseOrderData, err := k.getOrderData(ctx, recordToClose.OrderSequence)
-	if err != nil {
-		return nil, sdk.Coin{}, err
-	}
-	if recordToCloseOrderData.Reserve.IsPositive() {
-		lockedCoins = lockedCoins.Add(recordToCloseOrderData.Reserve)
-	}
-
-	expectedToReceiveAmt, err := types.ComputeLimitOrderExpectedToReceiveAmount(
-		recordToClose.Side, recordToCloseRemainingQuantity, recordToClose.Price,
-	)
-	if err != nil {
-		return nil, sdk.Coin{}, err
-	}
-	expectedToReceiveCoin := sdk.NewCoin(recordToCloseReceiveCoin.Denom, expectedToReceiveAmt)
-
-	return lockedCoins, expectedToReceiveCoin, nil
-}
-
-func (k Keeper) getRecordToCloseAndReduce(ctx sdk.Context, takerOrder types.Order, takerRecord, makerRecord *types.OrderBookRecord) (
-	*types.OrderBookRecord, *types.OrderBookRecord,
-) {
-	var executionPrice, makerMaxAmnt *big.Rat
-
-	if takerRecord.Side != makerRecord.Side { // direct
-		makerMaxAmnt = cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt())
-		executionPrice = makerRecord.Price.Rat()
-	} else { // inverted
-		makerMaxAmnt = cbig.RatMul(cbig.NewRatFromBigInt(makerRecord.RemainingQuantity.BigInt()), makerRecord.Price.Rat())
-		executionPrice = cbig.RatInv(makerRecord.Price.Rat())
-	}
-
-	// Sell: RemQuan: 10, RemBal: 9 (price: 50_000)
-	// Buy:  RemQuan: 10, RemBal: 450_000 (price: 50_000)
-	takerMaxAmnt := takerRecord.MaxBaseAmntForPrice(takerOrder.Side, takerOrder.Type, executionPrice)
-	k.logger(ctx).Debug("Computed order volumes.", "takerVolume", takerMaxAmnt, "makerVolume", makerMaxAmnt)
-
-	if cbig.RatGTE(takerMaxAmnt, makerMaxAmnt) {
-		// close maker record
-		return makerRecord, takerRecord
-	}
-	// close taker record
-	return takerRecord, makerRecord
-}
-
-func getRecordsReceiveCoins(
-	makerRecord, recordToClose, recordToReduce *types.OrderBookRecord,
-	order types.Order,
-) (sdk.Coin, sdk.Coin, sdkmath.Int, sdkmath.Int) {
-	var (
-		recordToCloseReceiveDenom   string
-		recordToCloseReceiveAmt     sdkmath.Int
-		recordToReduceReceiveDenom  string
-		recordToReduceReceiveAmt    sdkmath.Int
-		recordToCloseSpendQuantity  sdkmath.Int
-		recordToReduceSpendQuantity sdkmath.Int
-
-		executionQuantity         sdkmath.Int
-		oppositeExecutionQuantity sdkmath.Int
-	)
-
-	closeMaker := order.Sequence != recordToClose.OrderSequence
-	if recordToClose.Side != recordToReduce.Side { // direct OB
-		executionQuantity, oppositeExecutionQuantity = computeMaxExecutionQuantity(
-			makerRecord.Price.Rat(), recordToClose.RemainingQuantity,
-		)
-		recordToCloseSpendQuantity = executionQuantity
-		recordToReduceSpendQuantity = executionQuantity
-	} else {
-		// if closeMaker is true we find max execution quantity with its price,
-		// else with inverse price
-		// FIXME(ysv) check this part, not clear for me.
-		if closeMaker {
-			executionQuantity, oppositeExecutionQuantity = computeMaxExecutionQuantity(
-				makerRecord.Price.Rat(), recordToClose.RemainingQuantity,
-			)
-		} else {
-			executionQuantity, oppositeExecutionQuantity = computeMaxExecutionQuantity(
-				makerRecord.Price.Rat(), recordToClose.RemainingQuantity,
-			)
-		}
-
-		recordToCloseSpendQuantity = executionQuantity
-		recordToReduceSpendQuantity = oppositeExecutionQuantity
-	}
-
-	if recordToClose.Side == types.SIDE_BUY {
-		recordToCloseReceiveAmt = executionQuantity
-		recordToReduceReceiveAmt = oppositeExecutionQuantity
-	} else {
-		recordToCloseReceiveAmt = oppositeExecutionQuantity
-		recordToReduceReceiveAmt = executionQuantity
-	}
-
-	if closeMaker {
-		recordToCloseReceiveDenom = order.GetSpendDenom()
-		recordToReduceReceiveDenom = order.GetReceiveDenom()
-	} else {
-		recordToCloseReceiveDenom = order.GetReceiveDenom()
-		recordToReduceReceiveDenom = order.GetSpendDenom()
-	}
-
-	recordToCloseReceiveCoin := sdk.NewCoin(recordToCloseReceiveDenom, recordToCloseReceiveAmt)
-	recordToReduceReceiveCoin := sdk.NewCoin(recordToReduceReceiveDenom, recordToReduceReceiveAmt)
-
-	return recordToCloseReceiveCoin, recordToReduceReceiveCoin, recordToCloseSpendQuantity, recordToReduceSpendQuantity
-}
-
-func computeMaxExecutionQuantity(priceRat *big.Rat, remainingQuantity sdkmath.Int) (sdkmath.Int, sdkmath.Int) {
+func computeMaxIntExecutionQuantity(priceRat *big.Rat, baseQuantity *big.Int) (*big.Int, *big.Int) {
 	priceNum := priceRat.Num()
 	priceDenom := priceRat.Denom()
 
-	n := cbig.IntQuo(remainingQuantity.BigInt(), priceDenom)
-	maxExecutionQuantity := cbig.IntMul(n, priceDenom)
-	oppositeExecutionQuantity := cbig.IntMul(n, priceNum)
+	n := cbig.IntQuo(baseQuantity, priceDenom)
+	baseIntQuantity := cbig.IntMul(n, priceDenom)
+	quoteIntQuantity := cbig.IntMul(n, priceNum)
 
-	return sdkmath.NewIntFromBigInt(maxExecutionQuantity),
-		sdkmath.NewIntFromBigInt(oppositeExecutionQuantity)
+	return baseIntQuantity, quoteIntQuantity
 }

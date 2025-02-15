@@ -90,7 +90,7 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult, error) {
 
 	// But for matching executeion we use integers.
 	// TODO(ysv): Take zero quantity into consideration.
-	trade.BaseQuantity, trade.QuoteQuantity = ComputeMaxIntExecutionQuantityV2(
+	trade.BaseQuantity, trade.QuoteQuantity = computeMaxIntExecutionQuantity(
 		trade.Price,
 		cbig.IntQuo(baseQuantityRat.Num(), baseQuantityRat.Denom()),
 	)
@@ -122,38 +122,6 @@ func (obr OBRecord) MaxBaseQuantityForPrice(price *big.Rat) *big.Rat {
 	maxQuantityFromBalance := cbig.RatMul(obr.SpendBalance, cbig.RatInv(price))
 
 	return cbig.RatMin(obr.BaseQuantity, maxQuantityFromBalance)
-}
-
-// func (obr OBRecord) MaxBaseQuantityForPriceLeg(price *big.Rat) *big.Int {
-// 	// For limit order we execute BaseQuantity fully.
-// 	if obr.IsLimit() {
-// 		maxBaseQuantity, _ := computeMaxIntExecutionQuantityV2(price, obr.BaseQuantity)
-// 		return maxBaseQuantity
-// 	}
-
-// 	// For market sell orders we execute up to BaseQuantity or SpendBalance, whichever is filled first.
-// 	if obr.Side == SellOrderSide {
-// 		maxBaseQuantity, _ := computeMaxIntExecutionQuantityV2(price, cbig.IntMin(obr.BaseQuantity, obr.SpendBalance))
-// 		return maxBaseQuantity
-// 	}
-
-// 	// For market buy orders we execute up to BaseQuantity or SpendBalance / Price, whichever is filled first.
-// 	// SpendBalance / Price = SpendBalance * Price^-1
-// 	maxQuantityFromBalance, _ := cbig.IntMulRatWithRemainder(obr.SpendBalance, cbig.RatInv(price))
-
-// 	maxBaseQuantity, _ := computeMaxIntExecutionQuantityV2(price, cbig.IntMin(obr.BaseQuantity, maxQuantityFromBalance))
-// 	return maxBaseQuantity
-// }
-
-func ComputeMaxIntExecutionQuantityV2(priceRat *big.Rat, baseQuantity *big.Int) (*big.Int, *big.Int) {
-	priceNum := priceRat.Num()
-	priceDenom := priceRat.Denom()
-
-	n := cbig.IntQuo(baseQuantity, priceDenom)
-	baseIntQuantity := cbig.IntMul(n, priceDenom)
-	quoteIntQuantity := cbig.IntMul(n, priceNum)
-
-	return baseIntQuantity, quoteIntQuantity
 }
 
 func (obr OBRecord) IsLimit() bool {
