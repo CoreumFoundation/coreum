@@ -268,6 +268,16 @@ func TestOrder_Validate(t *testing.T) {
 			wantErr: types.ErrInvalidInput,
 		},
 		{
+			name: "valid_ioc_time_in_force_for_market",
+			order: func() types.Order {
+				order := validOrder()
+				order.Type = types.ORDER_TYPE_MARKET
+				order.Price = nil
+				order.TimeInForce = types.TIME_IN_FORCE_IOC
+				return order
+			}(),
+		},
+		{
 			name: "invalid_unspecified_time_in_force",
 			order: func() types.Order {
 				order := validOrder()

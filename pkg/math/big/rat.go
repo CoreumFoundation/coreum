@@ -74,3 +74,11 @@ func RatMin(x, y *big.Rat) *big.Rat {
 	}
 	return y
 }
+
+// RatMax returns maximum of x and y.
+func RatMax(x, y *big.Rat) *big.Rat {
+	if x.Cmp(y) > 0 {
+		return x
+	}
+	return y
+}

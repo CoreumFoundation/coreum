@@ -152,10 +152,10 @@ func (o Order) Validate() error {
 				ErrInvalidInput, "good til must be nil for the market order",
 			)
 		}
-		if o.TimeInForce != TIME_IN_FORCE_UNSPECIFIED {
+		if o.TimeInForce != TIME_IN_FORCE_IOC {
 			return sdkerrors.Wrap(
 				ErrInvalidInput,
-				"the market order supports only unspecified time in force",
+				"the market order supports only TIME_IN_FORCE_IOC time in force",
 			)
 		}
 	default:
