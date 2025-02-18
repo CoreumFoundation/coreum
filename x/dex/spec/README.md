@@ -108,6 +108,8 @@ The `Qb'` is the opposite order's `max_execution_quantity` (the amount by which 
 opposite_execution_quantity = floor(remaining_quantity / price_denominator) * price_numerator
 ```
 
+This method is implemented inside `x/dex`. The func name is `func computeMaxExecutionQuantity`
+
 Let's return back to the example with the [Rounding issue](#Rounding-issue) :
 
 | order_id | base_denom | quote_denom | side | remaining_quantity | price |

@@ -119,6 +119,11 @@ func (p Price) Rat() *big.Rat {
 	)
 }
 
+// Equal returns true if prices are equal.
+func (p Price) Equal(p2 Price) bool {
+	return p.exp == p2.exp && p.num == p2.num
+}
+
 // MarshallToOrderedBytes returns the ordered bytes representation of the Price.
 func (p Price) MarshallToOrderedBytes() ([]byte, error) {
 	exp, num, err := normalizeForOrderedBytes(p.exp, p.num)

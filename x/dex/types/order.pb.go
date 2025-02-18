@@ -234,9 +234,9 @@ type Order struct {
 	Quantity cosmossdk_io_math.Int `protobuf:"bytes,8,opt,name=quantity,proto3,customtype=cosmossdk.io/math.Int" json:"quantity"`
 	// side is order side.
 	Side Side `protobuf:"varint,9,opt,name=side,proto3,enum=coreum.dex.v1.Side" json:"side,omitempty"`
-	// remaining_quantity is remaining filling quantity sell/buy.
+	// TODO: rename to remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
 	RemainingQuantity cosmossdk_io_math.Int `protobuf:"bytes,10,opt,name=remaining_quantity,json=remainingQuantity,proto3,customtype=cosmossdk.io/math.Int" json:"remaining_quantity"`
-	// remaining_balance is remaining order balance.
+	// TODO: rename to remaining_spend_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).
 	RemainingBalance cosmossdk_io_math.Int `protobuf:"bytes,11,opt,name=remaining_balance,json=remainingBalance,proto3,customtype=cosmossdk.io/math.Int" json:"remaining_balance"`
 	// good_til is order good til
 	GoodTil *GoodTil `protobuf:"bytes,12,opt,name=good_til,json=goodTil,proto3" json:"good_til,omitempty"`
@@ -385,9 +385,9 @@ type OrderBookRecord struct {
 	OrderID string `protobuf:"bytes,5,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	// account_number is account number which corresponds the order creator.
 	AccountNumber uint64 `protobuf:"varint,6,opt,name=account_number,json=accountNumber,proto3" json:"account_number,omitempty"`
-	// remaining_quantity is remaining filling quantity sell/buy.
+	// TODO: rename to remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
 	RemainingQuantity cosmossdk_io_math.Int `protobuf:"bytes,7,opt,name=remaining_quantity,json=remainingQuantity,proto3,customtype=cosmossdk.io/math.Int" json:"remaining_quantity"`
-	// remaining_balance is remaining order balance.
+	// TODO: rename to remaining_spend_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).
 	RemainingBalance cosmossdk_io_math.Int `protobuf:"bytes,8,opt,name=remaining_balance,json=remainingBalance,proto3,customtype=cosmossdk.io/math.Int" json:"remaining_balance"`
 }
 

@@ -119,11 +119,6 @@ func (mr *MatchingResult) IncreaseTakerLimitsForRecord(
 	order types.Order,
 	takerRecord *types.OrderBookRecord,
 ) error {
-	// if the order is filled fully
-	if takerRecord.RemainingBalance.IsZero() {
-		return nil
-	}
-
 	lockedCoin, err := types.ComputeLimitOrderLockedBalance(
 		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, *order.Price,
 	)
