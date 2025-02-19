@@ -34,18 +34,6 @@ func BuildCoredDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	})
 }
 
-// BuildExtendedCoredDockerImage builds extended cored docker image.
-func BuildExtendedCoredDockerImage(ctx context.Context, deps types.DepsFunc) error {
-	deps(BuildExtendedCoredInDocker)
-
-	return buildCoredDockerImage(ctx, imageConfig{
-		BinaryPath:      extendedBinaryPath,
-		TargetPlatforms: []crusttools.TargetPlatform{crusttools.TargetPlatformLinuxLocalArchInDocker},
-		Action:          docker.ActionLoad,
-		Versions:        []string{config.ZNetVersion},
-	})
-}
-
 func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 	binaryName := filepath.Base(cfg.BinaryPath)
 	for _, platform := range cfg.TargetPlatforms {

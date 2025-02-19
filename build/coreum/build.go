@@ -3,7 +3,6 @@ package coreum
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -22,16 +21,14 @@ import (
 )
 
 const (
-	blockchainName     = "coreum"
-	binaryName         = "cored"
-	extendedBinaryName = "cored-ext"
-	gaiaBinaryName     = "gaiad"
-	hermesBinaryName   = "hermes"
-	osmosisBinaryName  = "osmosisd"
-	repoPath           = "."
+	blockchainName    = "coreum"
+	binaryName        = "cored"
+	gaiaBinaryName    = "gaiad"
+	hermesBinaryName  = "hermes"
+	osmosisBinaryName = "osmosisd"
+	repoPath          = "."
 
 	binaryPath          = "bin/" + binaryName
-	extendedBinaryPath  = "bin/" + extendedBinaryName
 	gaiaBinaryPath      = "bin/" + gaiaBinaryName
 	hermesBinaryPath    = "bin/" + hermesBinaryName
 	osmosisBinaryPath   = "bin/" + osmosisBinaryName
@@ -71,33 +68,6 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 func BuildCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
 	return buildCoredInDocker(ctx, deps, crusttools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
 		binaryName, "")
-}
-
-// BuildExtendedCoredInDocker builds extended cored in docker.
-func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
-	f, err := os.OpenFile("go.mod", os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer f.Close()
-
-	_, err = f.WriteString("replace github.com/cometbft/cometbft => github.com/CoreumFoundation/cometbft " +
-		cometBFTCommit)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err := golang.Tidy(ctx, deps); err != nil {
-		return err
-	}
-
-	err = buildCoredInDocker(ctx, deps, crusttools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
-		extendedBinaryName, "ext")
-	if err != nil {
-		return err
-	}
-
-	return git.RollbackChanges(ctx, "go.mod", "go.sum", "go.work.sum")
 }
 
 // BuildGaiaDockerImage builds docker image of the gaia.
