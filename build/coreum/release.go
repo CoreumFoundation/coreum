@@ -31,24 +31,24 @@ func ReleaseCored(ctx context.Context, deps types.DepsFunc) error {
 	}
 
 	if err := buildCoredInDocker(
-		ctx, deps, tools.TargetPlatformLinuxAMD64InDocker, []string{}, binaryName, "",
+		ctx, deps, tools.TargetPlatformLinuxAMD64InDocker, []string{},
 	); err != nil {
 		return err
 	}
 
 	if err := buildCoredInDocker(
-		ctx, deps, tools.TargetPlatformLinuxARM64InDocker, []string{}, binaryName, "",
+		ctx, deps, tools.TargetPlatformLinuxARM64InDocker, []string{},
 	); err != nil {
 		return err
 	}
 
 	if err := buildCoredInDocker(
-		ctx, deps, tools.TargetPlatformDarwinAMD64InDocker, []string{}, binaryName, "",
+		ctx, deps, tools.TargetPlatformDarwinAMD64InDocker, []string{},
 	); err != nil {
 		return err
 	}
 
-	return buildCoredInDocker(ctx, deps, tools.TargetPlatformDarwinARM64InDocker, []string{}, binaryName, "")
+	return buildCoredInDocker(ctx, deps, tools.TargetPlatformDarwinARM64InDocker, []string{})
 }
 
 // ReleaseCoredImage releases cored docker images for amd64 and arm64.
