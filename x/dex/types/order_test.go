@@ -278,7 +278,18 @@ func TestOrder_Validate(t *testing.T) {
 			}(),
 		},
 		{
-			name: "invalid_unspecified_time_in_force",
+			name: "invalid_unspecified_time_in_force_for_market",
+			order: func() types.Order {
+				order := validOrder()
+				order.Type = types.ORDER_TYPE_MARKET
+				order.Price = nil
+				order.TimeInForce = types.TIME_IN_FORCE_UNSPECIFIED
+				return order
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_unspecified_time_in_force_for_limit",
 			order: func() types.Order {
 				order := validOrder()
 				order.TimeInForce = types.TIME_IN_FORCE_UNSPECIFIED
