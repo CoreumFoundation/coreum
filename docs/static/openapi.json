@@ -10188,7 +10188,7 @@
         },
         "remaining_spendable_balance": {
           "type": "string",
-          "description": "remaining_spendable_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution)."
+          "description": "remaining_spendable_balance - is balance up to which user wants to spend to execute the order."
         },
         "good_til": {
           "$ref": "#/definitions/coreum.dex.v1.GoodTil",

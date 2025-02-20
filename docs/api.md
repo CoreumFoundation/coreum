@@ -4503,7 +4503,7 @@ EventOrderClosed is emitted when the order is closed during matching or manually
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
 | `sequence` | [uint64](#uint64) |  |  `sequence is unique order sequence.`  |
 | `remaining_base_quantity` | [string](#string) |  |  `remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.`  |
-| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).`  |
+| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute the order.`  |
 
 
 
@@ -4526,7 +4526,7 @@ EventOrderCreated is emitted when the limit order is saved to the order book.
 | `id` | [string](#string) |  |  `id is unique order ID.`  |
 | `sequence` | [uint64](#uint64) |  |  `sequence is unique order sequence.`  |
 | `remaining_base_quantity` | [string](#string) |  |  `remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.`  |
-| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).`  |
+| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute the order.`  |
 
 
 
@@ -4736,7 +4736,7 @@ the order's state.
 | `quantity` | [string](#string) |  |  `quantity is amount of the base base_denom being traded.`  |
 | `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
 | `remaining_base_quantity` | [string](#string) |  |  `remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.`  |
-| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).`  |
+| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute the order.`  |
 | `good_til` | [GoodTil](#coreum.dex.v1.GoodTil) |  |  `good_til is order good til`  |
 | `time_in_force` | [TimeInForce](#coreum.dex.v1.TimeInForce) |  |  `time_in_force is order time in force`  |
 | `reserve` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  `reserve is the reserve required to save the order in the order book`  |
@@ -4785,7 +4785,7 @@ OrderBookRecord is a single order book record, it combines both key and value fr
 | `order_id` | [string](#string) |  |  `order ID provided by the creator.`  |
 | `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
 | `remaining_base_quantity` | [string](#string) |  |  `remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.`  |
-| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).`  |
+| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute the order.`  |
 
 
 
@@ -4807,7 +4807,7 @@ OrderBookRecordData is a single order book record used for the store.
 | `order_id` | [string](#string) |  |  `order ID provided by the creator.`  |
 | `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
 | `remaining_base_quantity` | [string](#string) |  |  `remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.`  |
-| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).`  |
+| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute the order.`  |
 
 
 
