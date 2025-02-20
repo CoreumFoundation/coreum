@@ -244,16 +244,22 @@ func (k Keeper) mathcRecords(
 	)
 
 	// Reduce taker
-	takerRecord.RemainingBaseQuantity = takerRecord.RemainingBaseQuantity.Sub(sdkmath.NewIntFromBigInt(trade.BaseQuantity))
-	takerRecord.RemainingSpendableBalance = takerRecord.RemainingSpendableBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerSpends))
+	takerRecord.RemainingBaseQuantity = takerRecord.RemainingBaseQuantity.Sub(
+		sdkmath.NewIntFromBigInt(trade.BaseQuantity))
+	takerRecord.RemainingSpendableBalance = takerRecord.RemainingSpendableBalance.Sub(
+		sdkmath.NewIntFromBigInt(trade.TakerSpends))
 
 	// Reduce maker
 	if !isMakerInverted {
-		makerRecord.RemainingBaseQuantity = makerRecord.RemainingBaseQuantity.Sub(sdkmath.NewIntFromBigInt(trade.BaseQuantity))
-		makerRecord.RemainingSpendableBalance = makerRecord.RemainingSpendableBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
+		makerRecord.RemainingBaseQuantity = makerRecord.RemainingBaseQuantity.Sub(
+			sdkmath.NewIntFromBigInt(trade.BaseQuantity))
+		makerRecord.RemainingSpendableBalance = makerRecord.RemainingSpendableBalance.Sub(
+			sdkmath.NewIntFromBigInt(trade.TakerReceives))
 	} else {
-		makerRecord.RemainingBaseQuantity = makerRecord.RemainingBaseQuantity.Sub(sdkmath.NewIntFromBigInt(trade.QuoteQuantity))
-		makerRecord.RemainingSpendableBalance = makerRecord.RemainingSpendableBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
+		makerRecord.RemainingBaseQuantity = makerRecord.RemainingBaseQuantity.Sub(
+			sdkmath.NewIntFromBigInt(trade.QuoteQuantity))
+		makerRecord.RemainingSpendableBalance = makerRecord.RemainingSpendableBalance.Sub(
+			sdkmath.NewIntFromBigInt(trade.TakerReceives))
 	}
 
 	k.logger(ctx).Debug(
