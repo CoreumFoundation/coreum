@@ -96,7 +96,7 @@ func (k Keeper) matchOrder(
 			return k.applyMatchingResult(ctx, mr)
 		case types.TIME_IN_FORCE_FOK:
 			// ensure full order fill
-			if takerRecord.RemainingQuantity.IsPositive() {
+			if takerRecord.RemainingBaseQuantity.IsPositive() {
 				return nil
 			}
 			return k.applyMatchingResult(ctx, mr)
@@ -145,14 +145,14 @@ func (k Keeper) initTakerRecord(
 	}
 
 	return types.OrderBookRecord{
-		OrderBookID:       orderBookID,
-		Side:              order.Side,
-		Price:             price,
-		OrderSequence:     orderSequence,
-		OrderID:           order.ID,
-		AccountNumber:     accNumber,
-		RemainingQuantity: order.Quantity,
-		RemainingBalance:  remainingBalance,
+		OrderBookID:               orderBookID,
+		Side:                      order.Side,
+		Price:                     price,
+		OrderSequence:             orderSequence,
+		OrderID:                   order.ID,
+		AccountNumber:             accNumber,
+		RemainingBaseQuantity:     order.Quantity,
+		RemainingSpendableBalance: remainingBalance,
 	}, nil
 }
 
@@ -244,16 +244,16 @@ func (k Keeper) mathcRecords(
 	)
 
 	// Reduce taker
-	takerRecord.RemainingQuantity = takerRecord.RemainingQuantity.Sub(sdkmath.NewIntFromBigInt(trade.BaseQuantity))
-	takerRecord.RemainingBalance = takerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerSpends))
+	takerRecord.RemainingBaseQuantity = takerRecord.RemainingBaseQuantity.Sub(sdkmath.NewIntFromBigInt(trade.BaseQuantity))
+	takerRecord.RemainingSpendableBalance = takerRecord.RemainingSpendableBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerSpends))
 
 	// Reduce maker
 	if !isMakerInverted {
-		makerRecord.RemainingQuantity = makerRecord.RemainingQuantity.Sub(sdkmath.NewIntFromBigInt(trade.BaseQuantity))
-		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
+		makerRecord.RemainingBaseQuantity = makerRecord.RemainingBaseQuantity.Sub(sdkmath.NewIntFromBigInt(trade.BaseQuantity))
+		makerRecord.RemainingSpendableBalance = makerRecord.RemainingSpendableBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
 	} else {
-		makerRecord.RemainingQuantity = makerRecord.RemainingQuantity.Sub(sdkmath.NewIntFromBigInt(trade.QuoteQuantity))
-		makerRecord.RemainingBalance = makerRecord.RemainingBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
+		makerRecord.RemainingBaseQuantity = makerRecord.RemainingBaseQuantity.Sub(sdkmath.NewIntFromBigInt(trade.QuoteQuantity))
+		makerRecord.RemainingSpendableBalance = makerRecord.RemainingSpendableBalance.Sub(sdkmath.NewIntFromBigInt(trade.TakerReceives))
 	}
 
 	k.logger(ctx).Debug(
@@ -284,16 +284,16 @@ func (k Keeper) mathcRecords(
 	return closeResult == closeTaker || closeResult == closeBoth, nil
 }
 
-// isOrderRecordExecutableAsMaker returns true if RemainingQuantity inside order is executable with order price.
-// Order with RemainingQuantity: 101 and Price: 0.397 is not executable as maker:
+// isOrderRecordExecutableAsMaker returns true if RemainingBaseQuantity inside order is executable with order price.
+// Order with RemainingBaseQuantity: 101 and Price: 0.397 is not executable as maker:
 // Qa' = floor(Qa / pd) * pd = floor(101 / 397) * 1000 = 0.
 //
-// Order with RemainingQuantity: 101 and Price: 0.39 is executable:
+// Order with RemainingBaseQuantity: 101 and Price: 0.39 is executable:
 // Qa' = floor(Qa / pd) * pd = floor(101 / 39) * 100 > 0.
 //
 // This func logic might be rewised if we introduce proper ticks for price & quantity.
 func isOrderRecordExecutableAsMaker(obRecord *types.OrderBookRecord) bool {
-	baseQuantity, _ := computeMaxIntExecutionQuantity(obRecord.Price.Rat(), obRecord.RemainingQuantity.BigInt())
+	baseQuantity, _ := computeMaxIntExecutionQuantity(obRecord.Price.Rat(), obRecord.RemainingBaseQuantity.BigInt())
 	return !cbig.IntEqZero(baseQuantity)
 }
 
@@ -331,17 +331,17 @@ func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecor
 		return OBRecord{
 			Side:         side,
 			Price:        price,
-			BaseQuantity: cbig.NewRatFromBigInt(obRecord.RemainingQuantity.BigInt()),
-			SpendBalance: cbig.NewRatFromBigInt(obRecord.RemainingBalance.BigInt()),
+			BaseQuantity: cbig.NewRatFromBigInt(obRecord.RemainingBaseQuantity.BigInt()),
+			SpendBalance: cbig.NewRatFromBigInt(obRecord.RemainingSpendableBalance.BigInt()),
 		}
 	}
 
-	baseQuantity := cbig.RatMul(cbig.NewRatFromBigInt(obRecord.RemainingQuantity.BigInt()), price)
+	baseQuantity := cbig.RatMul(cbig.NewRatFromBigInt(obRecord.RemainingBaseQuantity.BigInt()), price)
 	return OBRecord{
 		Side:         side.Opposite(),
 		Price:        cbig.RatInv(price),
 		BaseQuantity: baseQuantity,
-		SpendBalance: cbig.NewRatFromBigInt(obRecord.RemainingBalance.BigInt()),
+		SpendBalance: cbig.NewRatFromBigInt(obRecord.RemainingSpendableBalance.BigInt()),
 	}
 }
 
@@ -352,7 +352,7 @@ func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(
 ) (sdk.Coins, sdk.Coin, error) {
 	// Return non-executed balance
 	lockedCoins := sdk.NewCoins(
-		sdk.NewCoin(makerSpendsDenom, makerRecord.RemainingBalance),
+		sdk.NewCoin(makerSpendsDenom, makerRecord.RemainingSpendableBalance),
 	)
 	recordToCloseOrderData, err := k.getOrderData(ctx, makerRecord.OrderSequence)
 	if err != nil {
@@ -364,7 +364,7 @@ func (k Keeper) getMakerLockedAndExpectedToReceiveCoins(
 	}
 
 	expectedToReceiveAmt, err := types.ComputeLimitOrderExpectedToReceiveAmount(
-		makerRecord.Side, makerRecord.RemainingQuantity, makerRecord.Price,
+		makerRecord.Side, makerRecord.RemainingBaseQuantity, makerRecord.Price,
 	)
 	if err != nil {
 		return nil, sdk.Coin{}, err

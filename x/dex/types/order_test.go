@@ -152,7 +152,7 @@ func TestOrder_Validate(t *testing.T) {
 			name: "invalid_not_nil_remaining_quantity",
 			order: func() types.Order {
 				order := validOrder()
-				order.RemainingQuantity = sdkmath.NewInt(1)
+				order.RemainingBaseQuantity = sdkmath.NewInt(1)
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,
@@ -161,7 +161,7 @@ func TestOrder_Validate(t *testing.T) {
 			name: "invalid_not_nil_remaining_balance",
 			order: func() types.Order {
 				order := validOrder()
-				order.RemainingBalance = sdkmath.NewInt(1)
+				order.RemainingSpendableBalance = sdkmath.NewInt(1)
 				return order
 			}(),
 			wantErr: types.ErrInvalidInput,

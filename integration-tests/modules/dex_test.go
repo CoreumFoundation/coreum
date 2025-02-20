@@ -86,19 +86,19 @@ func TestLimitOrdersMatching(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.Equal(dextypes.Order{
-		Creator:           acc1.String(),
-		Type:              dextypes.ORDER_TYPE_LIMIT,
-		ID:                "id1",
-		Sequence:          sellOrderRes.Order.Sequence,
-		BaseDenom:         denom1,
-		QuoteDenom:        denom2,
-		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:          sdkmath.NewInt(100),
-		Side:              dextypes.SIDE_SELL,
-		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-		RemainingQuantity: sdkmath.NewInt(100),
-		RemainingBalance:  sdkmath.NewInt(100),
-		Reserve:           dexParamsRes.Params.OrderReserve,
+		Creator:                   acc1.String(),
+		Type:                      dextypes.ORDER_TYPE_LIMIT,
+		ID:                        "id1",
+		Sequence:                  sellOrderRes.Order.Sequence,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom2,
+		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:                  sdkmath.NewInt(100),
+		Side:                      dextypes.SIDE_SELL,
+		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(100),
+		RemainingSpendableBalance: sdkmath.NewInt(100),
+		Reserve:                   dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
 	// place buy order to match the sell
@@ -138,19 +138,19 @@ func TestLimitOrdersMatching(t *testing.T) {
 	requireT.NotNil(buyOrderRes.Order)
 
 	requireT.Equal(dextypes.Order{
-		Creator:           acc2.String(),
-		Type:              dextypes.ORDER_TYPE_LIMIT,
-		ID:                "id1", // same ID allowed for different users
-		Sequence:          buyOrderRes.Order.Sequence,
-		BaseDenom:         denom1,
-		QuoteDenom:        denom2,
-		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:          sdkmath.NewInt(300),
-		Side:              dextypes.SIDE_BUY,
-		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-		RemainingQuantity: sdkmath.NewInt(200),
-		RemainingBalance:  sdkmath.NewInt(22),
-		Reserve:           dexParamsRes.Params.OrderReserve,
+		Creator:                   acc2.String(),
+		Type:                      dextypes.ORDER_TYPE_LIMIT,
+		ID:                        "id1", // same ID allowed for different users
+		Sequence:                  buyOrderRes.Order.Sequence,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom2,
+		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
+		Quantity:                  sdkmath.NewInt(300),
+		Side:                      dextypes.SIDE_BUY,
+		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(200),
+		RemainingSpendableBalance: sdkmath.NewInt(22),
+		Reserve:                   dexParamsRes.Params.OrderReserve,
 	}, buyOrderRes.Order)
 
 	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
@@ -597,10 +597,10 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			GoodTil: &dextypes.GoodTil{
 				GoodTilBlockHeight: uint64(latestBlock.Height + 500),
 			},
-			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-			RemainingQuantity: sdkmath.NewInt(100),
-			RemainingBalance:  sdkmath.NewInt(100),
-			Reserve:           dexParamsRes.Params.OrderReserve,
+			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+			RemainingBaseQuantity:     sdkmath.NewInt(100),
+			RemainingSpendableBalance: sdkmath.NewInt(100),
+			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 	}
 	acc1OrderPlaceMsgs := ordersToPlaceMsgs(acc1Orders)
@@ -630,24 +630,24 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			GoodTil: &dextypes.GoodTil{
 				GoodTilBlockHeight: uint64(latestBlock.Height + 1000),
 			},
-			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-			RemainingQuantity: sdkmath.NewInt(10),
-			RemainingBalance:  sdkmath.NewInt(9960),
-			Reserve:           dexParamsRes.Params.OrderReserve,
+			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+			RemainingBaseQuantity:     sdkmath.NewInt(10),
+			RemainingSpendableBalance: sdkmath.NewInt(9960),
+			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 		{
-			Creator:           acc2.String(),
-			Type:              dextypes.ORDER_TYPE_LIMIT,
-			ID:                "id2",
-			BaseDenom:         denom1,
-			QuoteDenom:        denom2,
-			Price:             lo.ToPtr(dextypes.MustNewPriceFromString("997")),
-			Quantity:          sdkmath.NewInt(10),
-			Side:              dextypes.SIDE_BUY,
-			TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-			RemainingQuantity: sdkmath.NewInt(10),
-			RemainingBalance:  sdkmath.NewInt(9970),
-			Reserve:           dexParamsRes.Params.OrderReserve,
+			Creator:                   acc2.String(),
+			Type:                      dextypes.ORDER_TYPE_LIMIT,
+			ID:                        "id2",
+			BaseDenom:                 denom1,
+			QuoteDenom:                denom2,
+			Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("997")),
+			Quantity:                  sdkmath.NewInt(10),
+			Side:                      dextypes.SIDE_BUY,
+			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+			RemainingBaseQuantity:     sdkmath.NewInt(10),
+			RemainingSpendableBalance: sdkmath.NewInt(9970),
+			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 	}
 	acc2OrderPlaceMsgs := ordersToPlaceMsgs(acc2Orders)
@@ -1605,19 +1605,19 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.Equal(dextypes.Order{
-		Creator:           acc1.String(),
-		Type:              dextypes.ORDER_TYPE_LIMIT,
-		ID:                "id1",
-		Sequence:          sellOrderRes.Order.Sequence,
-		BaseDenom:         denom1,
-		QuoteDenom:        denom2,
-		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:          sdkmath.NewInt(100),
-		Side:              dextypes.SIDE_SELL,
-		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-		RemainingQuantity: sdkmath.NewInt(100),
-		RemainingBalance:  sdkmath.NewInt(100),
-		Reserve:           dexParamsRes.Params.OrderReserve,
+		Creator:                   acc1.String(),
+		Type:                      dextypes.ORDER_TYPE_LIMIT,
+		ID:                        "id1",
+		Sequence:                  sellOrderRes.Order.Sequence,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom2,
+		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:                  sdkmath.NewInt(100),
+		Side:                      dextypes.SIDE_SELL,
+		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(100),
+		RemainingSpendableBalance: sdkmath.NewInt(100),
+		Reserve:                   dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
 	// place buy order to match the sell
@@ -1756,19 +1756,19 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.Equal(dextypes.Order{
-		Creator:           acc1.String(),
-		Type:              dextypes.ORDER_TYPE_LIMIT,
-		ID:                "id1",
-		Sequence:          sellOrderRes.Order.Sequence,
-		BaseDenom:         denom1,
-		QuoteDenom:        denom2,
-		Price:             lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:          sdkmath.NewInt(100),
-		Side:              dextypes.SIDE_SELL,
-		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-		RemainingQuantity: sdkmath.NewInt(100),
-		RemainingBalance:  sdkmath.NewInt(100),
-		Reserve:           dexParamsRes.Params.OrderReserve,
+		Creator:                   acc1.String(),
+		Type:                      dextypes.ORDER_TYPE_LIMIT,
+		ID:                        "id1",
+		Sequence:                  sellOrderRes.Order.Sequence,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom2,
+		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:                  sdkmath.NewInt(100),
+		Side:                      dextypes.SIDE_SELL,
+		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(100),
+		RemainingSpendableBalance: sdkmath.NewInt(100),
+		Reserve:                   dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
 	// place buy order to match the sell

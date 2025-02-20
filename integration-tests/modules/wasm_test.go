@@ -3905,10 +3905,10 @@ func TestWASMDEXInContract(t *testing.T) {
 		GoodTil: &dextypes.GoodTil{
 			GoodTilBlockHeight: uint64(latestBlock.Height + 500),
 		},
-		TimeInForce:       dextypes.TIME_IN_FORCE_GTC,
-		RemainingQuantity: orderQuantity,
-		RemainingBalance:  orderQuantity,
-		Reserve:           dexParms.OrderReserve,
+		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     orderQuantity,
+		RemainingSpendableBalance: orderQuantity,
+		Reserve:                   dexParms.OrderReserve,
 	}
 	requireT.Equal(expectedOrder, wasmOrderRes.Order)
 

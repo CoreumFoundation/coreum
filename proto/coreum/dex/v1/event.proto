@@ -43,13 +43,13 @@ message EventOrderCreated {
   string id = 2 [(gogoproto.customname) = "ID"];
   // sequence is unique order sequence.
   uint64 sequence = 3;
-  // remaining_quantity is remaining filling quantity sell/buy.
-  string remaining_quantity = 4 [
+  // remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
+  string remaining_base_quantity = 4 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  // remaining_balance is remaining order balance.
-  string remaining_balance = 5 [
+  // remaining_spendable_balance - is balance up to which user wants to spend to execute the order.
+  string remaining_spendable_balance = 5 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
@@ -63,13 +63,13 @@ message EventOrderClosed {
   string id = 2 [(gogoproto.customname) = "ID"];
   // sequence is unique order sequence.
   uint64 sequence = 3;
-  // remaining_quantity is remaining filling quantity sell/buy.
-  string remaining_quantity = 4 [
+  // remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
+  string remaining_base_quantity = 4 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  // remaining_balance is remaining order balance.
-  string remaining_balance = 5 [
+  // remaining_spendable_balance - is balance up to which user wants to spend to execute the order.
+  string remaining_spendable_balance = 5 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
