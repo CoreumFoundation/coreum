@@ -11,6 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
+//nolint:funlen
 func (k Keeper) matchOrder(
 	ctx sdk.Context,
 	params types.Params,
@@ -100,10 +101,21 @@ func (k Keeper) matchOrder(
 			}
 			return k.applyMatchingResult(ctx, mr)
 		default:
-			return sdkerrors.Wrapf(types.ErrInvalidInput, "unsupported time in force: %s", takerOrder.TimeInForce.String())
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput,
+				"unsupported time in force: %s for limit order",
+				takerOrder.TimeInForce.String())
 		}
 	case types.ORDER_TYPE_MARKET:
-		return k.applyMatchingResult(ctx, mr)
+		switch takerOrder.TimeInForce {
+		case types.TIME_IN_FORCE_IOC:
+			return k.applyMatchingResult(ctx, mr)
+		default:
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput,
+				"unsupported time in force: %s for market order",
+				takerOrder.TimeInForce.String())
+		}
 	default:
 		return sdkerrors.Wrapf(
 			types.ErrInvalidInput, "unexpected order type: %s", takerOrder.Type.String(),
