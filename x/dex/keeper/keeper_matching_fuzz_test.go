@@ -316,6 +316,8 @@ func (fa *FuzzApp) GenOrder(
 		if randBoolWithPercent(rnd, fa.cfg.TimeInForceFOKPercent) {
 			timeInForce = types.TIME_IN_FORCE_FOK
 		}
+	} else if orderType == types.ORDER_TYPE_MARKET {
+		timeInForce = types.TIME_IN_FORCE_IOC
 	}
 
 	// the quantity can't be zero

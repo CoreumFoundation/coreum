@@ -215,13 +215,14 @@ func TestMarketOrdersMatching(t *testing.T) {
 
 	// place buy market order to match the sell
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
-		Sender:     acc2.String(),
-		Type:       dextypes.ORDER_TYPE_MARKET,
-		ID:         "id2",
-		BaseDenom:  denom1,
-		QuoteDenom: denom2,
-		Quantity:   sdkmath.NewInt(300),
-		Side:       dextypes.SIDE_BUY,
+		Sender:      acc2.String(),
+		Type:        dextypes.ORDER_TYPE_MARKET,
+		ID:          "id2",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Quantity:    sdkmath.NewInt(300),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_IOC,
 	}
 
 	_, err = client.BroadcastTx(
