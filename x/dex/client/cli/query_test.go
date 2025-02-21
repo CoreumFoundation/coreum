@@ -37,19 +37,19 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 
 	creator := validator1Address(testNetwork)
 	order1 := types.Order{
-		Creator:           creator.String(),
-		Type:              types.ORDER_TYPE_LIMIT,
-		ID:                "id1",
-		Sequence:          1,
-		BaseDenom:         denom1,
-		QuoteDenom:        denom2,
-		Price:             lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:          sdkmath.NewInt(100),
-		Side:              types.SIDE_SELL,
-		TimeInForce:       types.TIME_IN_FORCE_GTC,
-		RemainingQuantity: sdkmath.NewInt(100),
-		RemainingBalance:  sdkmath.NewInt(100),
-		Reserve:           resp.Params.OrderReserve,
+		Creator:                   creator.String(),
+		Type:                      types.ORDER_TYPE_LIMIT,
+		ID:                        "id1",
+		Sequence:                  1,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom2,
+		Price:                     lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:                  sdkmath.NewInt(100),
+		Side:                      types.SIDE_SELL,
+		TimeInForce:               types.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(100),
+		RemainingSpendableBalance: sdkmath.NewInt(100),
+		Reserve:                   resp.Params.OrderReserve,
 	}
 	placeOrder(ctx, requireT, testNetwork, order1)
 
@@ -75,19 +75,19 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 	}, orderBooksRes.OrderBooks)
 
 	order2 := types.Order{
-		Creator:           creator.String(),
-		Type:              types.ORDER_TYPE_LIMIT,
-		ID:                "id2",
-		Sequence:          2,
-		BaseDenom:         denom1,
-		QuoteDenom:        denom3,
-		Price:             lo.ToPtr(types.MustNewPriceFromString("124e-2")),
-		Quantity:          sdkmath.NewInt(100),
-		Side:              types.SIDE_SELL,
-		TimeInForce:       types.TIME_IN_FORCE_GTC,
-		RemainingQuantity: sdkmath.NewInt(100),
-		RemainingBalance:  sdkmath.NewInt(100),
-		Reserve:           resp.Params.OrderReserve,
+		Creator:                   creator.String(),
+		Type:                      types.ORDER_TYPE_LIMIT,
+		ID:                        "id2",
+		Sequence:                  2,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom3,
+		Price:                     lo.ToPtr(types.MustNewPriceFromString("124e-2")),
+		Quantity:                  sdkmath.NewInt(100),
+		Side:                      types.SIDE_SELL,
+		TimeInForce:               types.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(100),
+		RemainingSpendableBalance: sdkmath.NewInt(100),
+		Reserve:                   resp.Params.OrderReserve,
 	}
 	placeOrder(ctx, requireT, testNetwork, order2)
 
@@ -121,19 +121,19 @@ func TestCmdQueryAccountDenomOrdersCount(t *testing.T) {
 
 	creator := validator1Address(testNetwork)
 	order1 := types.Order{
-		Creator:           creator.String(),
-		Type:              types.ORDER_TYPE_LIMIT,
-		ID:                "id1",
-		Sequence:          1,
-		BaseDenom:         denom1,
-		QuoteDenom:        denom2,
-		Price:             lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:          sdkmath.NewInt(100),
-		Side:              types.SIDE_SELL,
-		TimeInForce:       types.TIME_IN_FORCE_GTC,
-		RemainingQuantity: sdkmath.NewInt(100),
-		RemainingBalance:  sdkmath.NewInt(100),
-		Reserve:           resp.Params.OrderReserve,
+		Creator:                   creator.String(),
+		Type:                      types.ORDER_TYPE_LIMIT,
+		ID:                        "id1",
+		Sequence:                  1,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom2,
+		Price:                     lo.ToPtr(types.MustNewPriceFromString("123e-2")),
+		Quantity:                  sdkmath.NewInt(100),
+		Side:                      types.SIDE_SELL,
+		TimeInForce:               types.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(100),
+		RemainingSpendableBalance: sdkmath.NewInt(100),
+		Reserve:                   resp.Params.OrderReserve,
 	}
 	placeOrder(ctx, requireT, testNetwork, order1)
 
@@ -159,18 +159,18 @@ func TestCmdQueryAccountDenomOrdersCount(t *testing.T) {
 	}, orderBooksRes.OrderBooks)
 
 	order2 := types.Order{
-		Creator:           creator.String(),
-		Type:              types.ORDER_TYPE_LIMIT,
-		ID:                "id2",
-		Sequence:          2,
-		BaseDenom:         denom1,
-		QuoteDenom:        denom3,
-		Price:             lo.ToPtr(types.MustNewPriceFromString("124e-2")),
-		Quantity:          sdkmath.NewInt(100),
-		Side:              types.SIDE_SELL,
-		TimeInForce:       types.TIME_IN_FORCE_GTC,
-		RemainingQuantity: sdkmath.NewInt(100),
-		RemainingBalance:  sdkmath.NewInt(100),
+		Creator:                   creator.String(),
+		Type:                      types.ORDER_TYPE_LIMIT,
+		ID:                        "id2",
+		Sequence:                  2,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom3,
+		Price:                     lo.ToPtr(types.MustNewPriceFromString("124e-2")),
+		Quantity:                  sdkmath.NewInt(100),
+		Side:                      types.SIDE_SELL,
+		TimeInForce:               types.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(100),
+		RemainingSpendableBalance: sdkmath.NewInt(100),
 	}
 	placeOrder(ctx, requireT, testNetwork, order2)
 

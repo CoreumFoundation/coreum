@@ -120,19 +120,19 @@ func (mr *MatchingResult) IncreaseTakerLimitsForRecord(
 	takerRecord *types.OrderBookRecord,
 ) error {
 	lockedCoin, err := types.ComputeLimitOrderLockedBalance(
-		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, *order.Price,
+		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingBaseQuantity, *order.Price,
 	)
 	if err != nil {
 		return err
 	}
 	// update taker record with the remaining balance
-	takerRecord.RemainingBalance = lockedCoin.Amount
+	takerRecord.RemainingSpendableBalance = lockedCoin.Amount
 
 	mr.FTActions.AddCreatorExpectedToSpend(lockedCoin)
 	mr.FTActions.AddIncreaseLocked(mr.TakerAddress, lockedCoin)
 
 	expectedToReceiveCoin, err := types.ComputeLimitOrderExpectedToReceiveBalance(
-		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingQuantity, *order.Price,
+		order.Side, order.BaseDenom, order.QuoteDenom, takerRecord.RemainingBaseQuantity, *order.Price,
 	)
 	if err != nil {
 		return err

@@ -38,8 +38,8 @@ func (gs GenesisState) Validate() error {
 		}
 
 		order.Sequence = 0
-		order.RemainingQuantity = sdkmath.Int{}
-		order.RemainingBalance = sdkmath.Int{}
+		order.RemainingBaseQuantity = sdkmath.Int{}
+		order.RemainingSpendableBalance = sdkmath.Int{}
 		order.Reserve = sdk.Coin{}
 
 		if err := order.Validate(); err != nil {

@@ -93,25 +93,25 @@ func TestInitAndExportGenesis(t *testing.T) {
 				GoodTil: &types.GoodTil{
 					GoodTilBlockHeight: 1000,
 				},
-				TimeInForce:       types.TIME_IN_FORCE_GTC,
-				RemainingQuantity: sdkmath.NewInt(90),
-				RemainingBalance:  sdkmath.NewInt(90),
-				Reserve:           prams.OrderReserve,
+				TimeInForce:               types.TIME_IN_FORCE_GTC,
+				RemainingBaseQuantity:     sdkmath.NewInt(90),
+				RemainingSpendableBalance: sdkmath.NewInt(90),
+				Reserve:                   prams.OrderReserve,
 			},
 			{
-				Creator:           acc2.String(),
-				Type:              types.ORDER_TYPE_LIMIT,
-				ID:                "id2",
-				Sequence:          2,
-				BaseDenom:         denom2,
-				QuoteDenom:        denom1,
-				Price:             lo.ToPtr(types.MustNewPriceFromString("3e3")),
-				Quantity:          sdkmath.NewInt(100),
-				Side:              types.SIDE_SELL,
-				TimeInForce:       types.TIME_IN_FORCE_GTC,
-				RemainingQuantity: sdkmath.NewInt(90),
-				RemainingBalance:  sdkmath.NewInt(90),
-				Reserve:           prams.OrderReserve,
+				Creator:                   acc2.String(),
+				Type:                      types.ORDER_TYPE_LIMIT,
+				ID:                        "id2",
+				Sequence:                  2,
+				BaseDenom:                 denom2,
+				QuoteDenom:                denom1,
+				Price:                     lo.ToPtr(types.MustNewPriceFromString("3e3")),
+				Quantity:                  sdkmath.NewInt(100),
+				Side:                      types.SIDE_SELL,
+				TimeInForce:               types.TIME_IN_FORCE_GTC,
+				RemainingBaseQuantity:     sdkmath.NewInt(90),
+				RemainingSpendableBalance: sdkmath.NewInt(90),
+				Reserve:                   prams.OrderReserve,
 			},
 			{
 				Creator:    acc2.String(),
@@ -126,10 +126,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 				GoodTil: &types.GoodTil{
 					GoodTilBlockHeight: 323,
 				},
-				TimeInForce:       types.TIME_IN_FORCE_GTC,
-				RemainingQuantity: sdkmath.NewInt(70000),
-				RemainingBalance:  sdkmath.NewInt(50),
-				Reserve:           prams.OrderReserve,
+				TimeInForce:               types.TIME_IN_FORCE_GTC,
+				RemainingBaseQuantity:     sdkmath.NewInt(70000),
+				RemainingSpendableBalance: sdkmath.NewInt(50),
+				Reserve:                   prams.OrderReserve,
 			},
 		},
 	}
@@ -215,8 +215,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// set the expected state
 	orderWithExisingOrderBook.Sequence = 4
-	orderWithExisingOrderBook.RemainingQuantity = sdkmath.NewInt(10000000)
-	orderWithExisingOrderBook.RemainingBalance = sdkmath.NewInt(40000000000)
+	orderWithExisingOrderBook.RemainingBaseQuantity = sdkmath.NewInt(10000000)
+	orderWithExisingOrderBook.RemainingSpendableBalance = sdkmath.NewInt(40000000000)
 	orderWithExisingOrderBook.Reserve = params.OrderReserve
 
 	// check that denom orders counters are incremented

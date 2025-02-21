@@ -165,10 +165,10 @@ func (i *OrderBookIterator) readOrderBookRecordFromIterator() (types.OrderBookRe
 		Price:         price,
 		OrderSequence: orderSequence,
 		// value attributes
-		OrderID:           storedRecord.OrderID,
-		AccountNumber:     storedRecord.AccountNumber,
-		RemainingQuantity: storedRecord.RemainingQuantity,
-		RemainingBalance:  storedRecord.RemainingBalance,
+		OrderID:                   storedRecord.OrderID,
+		AccountNumber:             storedRecord.AccountNumber,
+		RemainingBaseQuantity:     storedRecord.RemainingBaseQuantity,
+		RemainingSpendableBalance: storedRecord.RemainingSpendableBalance,
 	}, nil
 }
 

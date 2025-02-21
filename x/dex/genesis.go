@@ -71,14 +71,14 @@ func InitGenesis(
 		}
 
 		record := types.OrderBookRecord{
-			OrderBookID:       orderBookID,
-			Side:              order.Side,
-			Price:             *order.Price,
-			OrderSequence:     order.Sequence,
-			OrderID:           order.ID,
-			AccountNumber:     accNumber,
-			RemainingQuantity: order.RemainingQuantity,
-			RemainingBalance:  order.RemainingBalance,
+			OrderBookID:               orderBookID,
+			Side:                      order.Side,
+			Price:                     *order.Price,
+			OrderSequence:             order.Sequence,
+			OrderID:                   order.ID,
+			AccountNumber:             accNumber,
+			RemainingBaseQuantity:     order.RemainingBaseQuantity,
+			RemainingSpendableBalance: order.RemainingSpendableBalance,
 		}
 		if err := dexKeeper.SaveOrderWithOrderBookRecord(ctx, order, record); err != nil {
 			panic(errors.Wrap(err, "failed to set order with order book record"))

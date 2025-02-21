@@ -226,8 +226,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	// set expected values
 	sellOrder.Sequence = 1
-	sellOrder.RemainingQuantity = sdkmath.NewInt(10)
-	sellOrder.RemainingBalance = sdkmath.NewInt(10)
+	sellOrder.RemainingBaseQuantity = sdkmath.NewInt(10)
+	sellOrder.RemainingSpendableBalance = sdkmath.NewInt(10)
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
 	orderReserve := params.OrderReserve
@@ -261,8 +261,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	// set expected values
 	buyOrder.Sequence = 2
-	buyOrder.RemainingQuantity = sdkmath.NewInt(100)
-	buyOrder.RemainingBalance = sdkmath.NewInt(120)
+	buyOrder.RemainingBaseQuantity = sdkmath.NewInt(100)
+	buyOrder.RemainingSpendableBalance = sdkmath.NewInt(120)
 	buyOrder.Reserve = orderReserve
 	require.Equal(t, buyOrder, gotOrder)
 }
@@ -326,11 +326,11 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	}, events.OrderPlaced)
 
 	require.Equal(t, types.EventOrderCreated{
-		Creator:           sellOrder.Creator,
-		ID:                sellOrder.ID,
-		Sequence:          expectedSellOrderSequence,
-		RemainingQuantity: sellOrder.Quantity,
-		RemainingBalance:  sellLockedBalance.Amount,
+		Creator:                   sellOrder.Creator,
+		ID:                        sellOrder.ID,
+		Sequence:                  expectedSellOrderSequence,
+		RemainingBaseQuantity:     sellOrder.Quantity,
+		RemainingSpendableBalance: sellLockedBalance.Amount,
 	}, *events.OrderCreated)
 	require.Empty(t, events.OrdersClosed)
 	require.Empty(t, events.OrdersReduced)
@@ -348,11 +348,11 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.Nil(t, events.OrderCreated)
 	require.EqualValues(t, []types.EventOrderClosed{
 		{
-			Creator:           sellOrder.Creator,
-			ID:                sellOrder.ID,
-			Sequence:          expectedSellOrderSequence,
-			RemainingQuantity: sellOrder.Quantity,
-			RemainingBalance:  sellLockedBalance.Amount,
+			Creator:                   sellOrder.Creator,
+			ID:                        sellOrder.ID,
+			Sequence:                  expectedSellOrderSequence,
+			RemainingBaseQuantity:     sellOrder.Quantity,
+			RemainingSpendableBalance: sellLockedBalance.Amount,
 		},
 	}, events.OrdersClosed)
 	require.Empty(t, events.OrdersReduced)
@@ -432,11 +432,11 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	expectedSellOrderSequence = uint64(3)
 	expectedBuyOrderSequence := uint64(4)
 	require.Equal(t, types.EventOrderCreated{
-		Creator:           buyOrder.Creator,
-		ID:                buyOrder.ID,
-		Sequence:          expectedBuyOrderSequence,
-		RemainingQuantity: sdkmath.NewInt(4000), // filled partially
-		RemainingBalance:  sdkmath.NewInt(5200),
+		Creator:                   buyOrder.Creator,
+		ID:                        buyOrder.ID,
+		Sequence:                  expectedBuyOrderSequence,
+		RemainingBaseQuantity:     sdkmath.NewInt(4000), // filled partially
+		RemainingSpendableBalance: sdkmath.NewInt(5200),
 	}, *events.OrderCreated)
 
 	require.EqualValues(t, []types.EventOrderReduced{
@@ -458,11 +458,11 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 
 	require.EqualValues(t, []types.EventOrderClosed{
 		{
-			Creator:           sellOrder.Creator,
-			ID:                sellOrder.ID,
-			Sequence:          expectedSellOrderSequence,
-			RemainingQuantity: sdkmath.ZeroInt(),
-			RemainingBalance:  sdkmath.ZeroInt(),
+			Creator:                   sellOrder.Creator,
+			ID:                        sellOrder.ID,
+			Sequence:                  expectedSellOrderSequence,
+			RemainingBaseQuantity:     sdkmath.ZeroInt(),
+			RemainingSpendableBalance: sdkmath.ZeroInt(),
 		},
 	}, events.OrdersClosed)
 
@@ -470,7 +470,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrRecordNotFound)
 	buyOrder, err = dexKeeper.GetOrderByAddressAndID(sdkCtx, acc, buyOrder.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdkmath.NewInt(5200).String(), buyOrder.RemainingBalance.String())
+	require.Equal(t, sdkmath.NewInt(5200).String(), buyOrder.RemainingSpendableBalance.String())
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, buyOrder.ID))
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
@@ -656,8 +656,8 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 		fundOrderReserve(t, testApp, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
 		require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))
 		// fill order with the remaining quantity for assertions
-		order.RemainingQuantity = order.Quantity
-		order.RemainingBalance = lockedBalance.Amount
+		order.RemainingBaseQuantity = order.Quantity
+		order.RemainingSpendableBalance = lockedBalance.Amount
 		orders[i] = order
 	}
 	orders = fillReserveAndOrderSequence(t, sdkCtx, testApp, orders)
