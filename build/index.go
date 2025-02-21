@@ -17,29 +17,25 @@ var Commands = map[string]types.Command{
 	"build": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
 			coreum.BuildCored,
-			coreum.BuildExtendedCoredInDocker,
 		)
 		return nil
 	}, Description: "Builds cored binaries"},
-	"build/cored":     {Fn: coreum.BuildCored, Description: "Builds cored binary"},
-	"build/cored-ext": {Fn: coreum.BuildExtendedCoredInDocker, Description: "Builds extended cored binary"},
-	"generate":        {Fn: coreum.Generate, Description: "Generates artifacts"},
-	"setup":           {Fn: tools.InstallAll, Description: "Installs all the required tools"},
+	"build/cored": {Fn: coreum.BuildCored, Description: "Builds cored binary"},
+	"generate":    {Fn: coreum.Generate, Description: "Generates artifacts"},
+	"setup":       {Fn: tools.InstallAll, Description: "Installs all the required tools"},
 	"images": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
 			coreum.BuildCoredDockerImage,
-			coreum.BuildExtendedCoredDockerImage,
 			coreum.BuildGaiaDockerImage,
 			coreum.BuildHermesDockerImage,
 			coreum.BuildOsmosisDockerImage,
 		)
 		return nil
 	}, Description: "Builds cored docker images"},
-	"images/cored":     {Fn: coreum.BuildCoredDockerImage, Description: "Builds cored docker image"},
-	"images/cored-ext": {Fn: coreum.BuildExtendedCoredDockerImage, Description: "Builds extended cored docker image"},
-	"images/gaiad":     {Fn: coreum.BuildGaiaDockerImage, Description: "Builds gaia docker image"},
-	"images/hermes":    {Fn: coreum.BuildHermesDockerImage, Description: "Builds hermes docker image"},
-	"images/osmosis":   {Fn: coreum.BuildOsmosisDockerImage, Description: "Builds osmosis docker image"},
+	"images/cored":   {Fn: coreum.BuildCoredDockerImage, Description: "Builds cored docker image"},
+	"images/gaiad":   {Fn: coreum.BuildGaiaDockerImage, Description: "Builds gaia docker image"},
+	"images/hermes":  {Fn: coreum.BuildHermesDockerImage, Description: "Builds hermes docker image"},
+	"images/osmosis": {Fn: coreum.BuildOsmosisDockerImage, Description: "Builds osmosis docker image"},
 	"integration-tests": {
 		Fn:          coreum.RunAllIntegrationTests(false),
 		Description: "Runs all safe integration tests",

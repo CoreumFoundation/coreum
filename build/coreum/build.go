@@ -3,7 +3,6 @@ package coreum
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -22,16 +21,14 @@ import (
 )
 
 const (
-	blockchainName     = "coreum"
-	binaryName         = "cored"
-	extendedBinaryName = "cored-ext"
-	gaiaBinaryName     = "gaiad"
-	hermesBinaryName   = "hermes"
-	osmosisBinaryName  = "osmosisd"
-	repoPath           = "."
+	blockchainName    = "coreum"
+	binaryName        = "cored"
+	gaiaBinaryName    = "gaiad"
+	hermesBinaryName  = "hermes"
+	osmosisBinaryName = "osmosisd"
+	repoPath          = "."
 
 	binaryPath          = "bin/" + binaryName
-	extendedBinaryPath  = "bin/" + extendedBinaryName
 	gaiaBinaryPath      = "bin/" + gaiaBinaryName
 	hermesBinaryPath    = "bin/" + hermesBinaryName
 	osmosisBinaryPath   = "bin/" + osmosisBinaryName
@@ -52,7 +49,7 @@ func BuildCored(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildCoredLocally builds cored locally.
 func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
-	ldFlags, err := coredVersionLDFlags(ctx, defaultBuildTags, "")
+	ldFlags, err := coredVersionLDFlags(ctx, defaultBuildTags)
 	if err != nil {
 		return err
 	}
@@ -69,35 +66,7 @@ func BuildCoredLocally(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
-	return buildCoredInDocker(ctx, deps, crusttools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
-		binaryName, "")
-}
-
-// BuildExtendedCoredInDocker builds extended cored in docker.
-func BuildExtendedCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
-	f, err := os.OpenFile("go.mod", os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer f.Close()
-
-	_, err = f.WriteString("replace github.com/cometbft/cometbft => github.com/CoreumFoundation/cometbft " +
-		cometBFTCommit)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err := golang.Tidy(ctx, deps); err != nil {
-		return err
-	}
-
-	err = buildCoredInDocker(ctx, deps, crusttools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag},
-		extendedBinaryName, "ext")
-	if err != nil {
-		return err
-	}
-
-	return git.RollbackChanges(ctx, "go.mod", "go.sum", "go.work.sum")
+	return buildCoredInDocker(ctx, deps, crusttools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag})
 }
 
 // BuildGaiaDockerImage builds docker image of the gaia.
@@ -208,8 +177,6 @@ func buildCoredInDocker(
 	deps types.DepsFunc,
 	targetPlatform crusttools.TargetPlatform,
 	extraFlags []string,
-	binaryName string,
-	mod string,
 ) error {
 	if err := crusttools.Ensure(ctx, coreumtools.LibWASM, targetPlatform); err != nil {
 		return err
@@ -281,7 +248,7 @@ func buildCoredInDocker(
 	}
 	envs = append(envs, "CC="+cc)
 
-	versionLDFlags, err := coredVersionLDFlags(ctx, buildTags, mod)
+	versionLDFlags, err := coredVersionLDFlags(ctx, buildTags)
 	if err != nil {
 		return err
 	}
@@ -313,7 +280,7 @@ func Lint(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Lint(ctx, deps)
 }
 
-func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([]string, error) {
+func coredVersionLDFlags(ctx context.Context, buildTags []string) ([]string, error) {
 	hash, err := git.DirtyHeadHash(ctx)
 	if err != nil {
 		return nil, err
@@ -326,9 +293,7 @@ func coredVersionLDFlags(ctx context.Context, buildTags []string, mod string) ([
 	if version == "" {
 		version = hash
 	}
-	if mod != "" {
-		version += "+" + mod
-	}
+
 	ps := map[string]string{
 		"github.com/cosmos/cosmos-sdk/version.Name":    blockchainName,
 		"github.com/cosmos/cosmos-sdk/version.AppName": binaryName,
