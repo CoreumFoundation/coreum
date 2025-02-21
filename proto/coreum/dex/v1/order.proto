@@ -84,13 +84,13 @@ message Order {
   ];
   // side is order side.
   Side side = 9;
-  // TODO: rename to remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
-  string remaining_quantity = 10 [
+  // remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
+  string remaining_base_quantity = 10 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  // TODO: rename to remaining_spend_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).
-  string remaining_balance = 11 [
+  // remaining_spendable_balance - is balance up to which user wants to spend to execute the order.
+  string remaining_spendable_balance = 11 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
@@ -157,13 +157,13 @@ message OrderBookRecord {
   string order_id = 5 [(gogoproto.customname) = "OrderID"];
   // account_number is account number which corresponds the order creator.
   uint64 account_number = 6;
-  // TODO: rename to remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
-  string remaining_quantity = 7 [
+  // remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
+  string remaining_base_quantity = 7 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  // TODO: rename to remaining_spend_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution).
-  string remaining_balance = 8 [
+  // remaining_spendable_balance - is balance up to which user wants to spend to execute the order.
+  string remaining_spendable_balance = 8 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
@@ -175,13 +175,13 @@ message OrderBookRecordData {
   string order_id = 1 [(gogoproto.customname) = "OrderID"];
   // account_number is account number which corresponds the order creator.
   uint64 account_number = 2;
-  // remaining_quantity is remaining filling quantity sell/buy.
-  string remaining_quantity = 3 [
+  // remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
+  string remaining_base_quantity = 3 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  // remaining_balance is remaining order balance.
-  string remaining_balance = 4 [
+  // remaining_spendable_balance - is balance up to which user wants to spend to execute the order.
+  string remaining_spendable_balance = 4 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];

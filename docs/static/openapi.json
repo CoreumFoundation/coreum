@@ -10182,13 +10182,13 @@
           "$ref": "#/definitions/coreum.dex.v1.Side",
           "description": "side is order side."
         },
-        "remaining_quantity": {
+        "remaining_base_quantity": {
           "type": "string",
-          "description": "TODO: rename to remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy."
+          "description": "remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy."
         },
-        "remaining_balance": {
+        "remaining_spendable_balance": {
           "type": "string",
-          "description": "TODO: rename to remaining_spend_balance - is balance up to which user wants to spend to execute order (mostly needed for buy market order execution)."
+          "description": "remaining_spendable_balance - is balance up to which user wants to spend to execute the order."
         },
         "good_til": {
           "$ref": "#/definitions/coreum.dex.v1.GoodTil",

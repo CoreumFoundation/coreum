@@ -164,11 +164,11 @@ func (o Order) Validate() error {
 		)
 	}
 
-	if !o.RemainingQuantity.IsNil() {
+	if !o.RemainingBaseQuantity.IsNil() {
 		return sdkerrors.Wrap(ErrInvalidInput, "initial remaining quantity must be nil")
 	}
 
-	if !o.RemainingBalance.IsNil() {
+	if !o.RemainingSpendableBalance.IsNil() {
 		return sdkerrors.Wrap(ErrInvalidInput, "initial remaining balance must be nil")
 	}
 

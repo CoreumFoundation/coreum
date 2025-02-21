@@ -277,20 +277,20 @@ func (k Keeper) GetAccountsOrders(
 			}
 
 			return &types.Order{
-				Creator:           acc.String(),
-				Type:              types.ORDER_TYPE_LIMIT,
-				ID:                orderBookRecord.OrderID,
-				Sequence:          orderSequence,
-				BaseDenom:         orderBookData.BaseDenom,
-				QuoteDenom:        orderBookData.QuoteDenom,
-				Price:             &orderData.Price,
-				Quantity:          orderData.Quantity,
-				Side:              orderData.Side,
-				GoodTil:           orderData.GoodTil,
-				TimeInForce:       types.TIME_IN_FORCE_GTC,
-				RemainingQuantity: orderBookRecord.RemainingQuantity,
-				RemainingBalance:  orderBookRecord.RemainingBalance,
-				Reserve:           orderData.Reserve,
+				Creator:                   acc.String(),
+				Type:                      types.ORDER_TYPE_LIMIT,
+				ID:                        orderBookRecord.OrderID,
+				Sequence:                  orderSequence,
+				BaseDenom:                 orderBookData.BaseDenom,
+				QuoteDenom:                orderBookData.QuoteDenom,
+				Price:                     &orderData.Price,
+				Quantity:                  orderData.Quantity,
+				Side:                      orderData.Side,
+				GoodTil:                   orderData.GoodTil,
+				TimeInForce:               types.TIME_IN_FORCE_GTC,
+				RemainingBaseQuantity:     orderBookRecord.RemainingBaseQuantity,
+				RemainingSpendableBalance: orderBookRecord.RemainingSpendableBalance,
+				Reserve:                   orderData.Reserve,
 			}, nil
 		},
 		// constructor
@@ -638,11 +638,11 @@ func (k Keeper) createOrder(
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventOrderCreated{
-		Creator:           order.Creator,
-		ID:                order.ID,
-		Sequence:          order.Sequence,
-		RemainingQuantity: record.RemainingQuantity,
-		RemainingBalance:  record.RemainingBalance,
+		Creator:                   order.Creator,
+		ID:                        order.ID,
+		Sequence:                  order.Sequence,
+		RemainingBaseQuantity:     record.RemainingBaseQuantity,
+		RemainingSpendableBalance: record.RemainingSpendableBalance,
 	}); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderCreated: %s", err)
 	}
@@ -758,11 +758,11 @@ func (k Keeper) removeOrderByRecord(
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventOrderClosed{
-		Creator:           creator.String(),
-		ID:                record.OrderID,
-		Sequence:          record.OrderSequence,
-		RemainingQuantity: record.RemainingQuantity,
-		RemainingBalance:  record.RemainingBalance,
+		Creator:                   creator.String(),
+		ID:                        record.OrderID,
+		Sequence:                  record.OrderSequence,
+		RemainingBaseQuantity:     record.RemainingBaseQuantity,
+		RemainingSpendableBalance: record.RemainingSpendableBalance,
 	}); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderClosed: %s", err)
 	}
@@ -792,9 +792,9 @@ func (k Keeper) cancelOrder(ctx sdk.Context, acc sdk.AccAddress, orderID string)
 		return err
 	}
 
-	lockedCoins := sdk.NewCoins(sdk.NewCoin(order.GetSpendDenom(), order.RemainingBalance))
+	lockedCoins := sdk.NewCoins(sdk.NewCoin(order.GetSpendDenom(), order.RemainingSpendableBalance))
 	expectedToReceiveCoin, err := types.ComputeLimitOrderExpectedToReceiveBalance(
-		order.Side, order.BaseDenom, order.QuoteDenom, record.RemainingQuantity, *order.Price,
+		order.Side, order.BaseDenom, order.QuoteDenom, record.RemainingBaseQuantity, *order.Price,
 	)
 	if err != nil {
 		return err
@@ -835,10 +835,10 @@ func (k Keeper) saveOrderBookRecord(
 	}
 
 	return k.setDataToStore(ctx, key, &types.OrderBookRecordData{
-		OrderID:           record.OrderID,
-		AccountNumber:     record.AccountNumber,
-		RemainingQuantity: record.RemainingQuantity,
-		RemainingBalance:  record.RemainingBalance,
+		OrderID:                   record.OrderID,
+		AccountNumber:             record.AccountNumber,
+		RemainingBaseQuantity:     record.RemainingBaseQuantity,
+		RemainingSpendableBalance: record.RemainingSpendableBalance,
 	})
 }
 
@@ -879,20 +879,20 @@ func (k Keeper) getOrderWithRecordByAddressAndID(
 	}
 
 	return types.Order{
-			Creator:           acc.String(),
-			Type:              types.ORDER_TYPE_LIMIT,
-			ID:                orderID,
-			Sequence:          orderSequence,
-			BaseDenom:         orderBookData.BaseDenom,
-			QuoteDenom:        orderBookData.QuoteDenom,
-			Price:             &orderBookRecord.Price,
-			Quantity:          orderData.Quantity,
-			Side:              orderBookRecord.Side,
-			GoodTil:           orderData.GoodTil,
-			TimeInForce:       types.TIME_IN_FORCE_GTC,
-			RemainingQuantity: orderBookRecord.RemainingQuantity,
-			RemainingBalance:  orderBookRecord.RemainingBalance,
-			Reserve:           orderData.Reserve,
+			Creator:                   acc.String(),
+			Type:                      types.ORDER_TYPE_LIMIT,
+			ID:                        orderID,
+			Sequence:                  orderSequence,
+			BaseDenom:                 orderBookData.BaseDenom,
+			QuoteDenom:                orderBookData.QuoteDenom,
+			Price:                     &orderBookRecord.Price,
+			Quantity:                  orderData.Quantity,
+			Side:                      orderBookRecord.Side,
+			GoodTil:                   orderData.GoodTil,
+			TimeInForce:               types.TIME_IN_FORCE_GTC,
+			RemainingBaseQuantity:     orderBookRecord.RemainingBaseQuantity,
+			RemainingSpendableBalance: orderBookRecord.RemainingSpendableBalance,
+			Reserve:                   orderData.Reserve,
 		},
 		orderBookRecord,
 		nil
@@ -919,14 +919,14 @@ func (k Keeper) getOrderBookRecord(
 				orderBookID, side.String(), price.String(), orderSequence)
 	}
 	return types.OrderBookRecord{
-		OrderBookID:       orderBookID,
-		Side:              side,
-		Price:             price,
-		OrderSequence:     orderSequence,
-		OrderID:           val.OrderID,
-		AccountNumber:     val.AccountNumber,
-		RemainingQuantity: val.RemainingQuantity,
-		RemainingBalance:  val.RemainingBalance,
+		OrderBookID:               orderBookID,
+		Side:                      side,
+		Price:                     price,
+		OrderSequence:             orderSequence,
+		OrderID:                   val.OrderID,
+		AccountNumber:             val.AccountNumber,
+		RemainingBaseQuantity:     val.RemainingBaseQuantity,
+		RemainingSpendableBalance: val.RemainingSpendableBalance,
 	}, nil
 }
 
@@ -976,20 +976,20 @@ func (k Keeper) getPaginatedOrders(
 			}
 
 			return &types.Order{
-				Creator:           acc.String(),
-				Type:              types.ORDER_TYPE_LIMIT,
-				ID:                orderBookRecord.OrderID,
-				Sequence:          orderSequence,
-				BaseDenom:         orderBookData.BaseDenom,
-				QuoteDenom:        orderBookData.QuoteDenom,
-				Price:             &orderData.Price,
-				Quantity:          orderData.Quantity,
-				Side:              orderData.Side,
-				GoodTil:           orderData.GoodTil,
-				TimeInForce:       types.TIME_IN_FORCE_GTC,
-				RemainingQuantity: orderBookRecord.RemainingQuantity,
-				RemainingBalance:  orderBookRecord.RemainingBalance,
-				Reserve:           orderData.Reserve,
+				Creator:                   acc.String(),
+				Type:                      types.ORDER_TYPE_LIMIT,
+				ID:                        orderBookRecord.OrderID,
+				Sequence:                  orderSequence,
+				BaseDenom:                 orderBookData.BaseDenom,
+				QuoteDenom:                orderBookData.QuoteDenom,
+				Price:                     &orderData.Price,
+				Quantity:                  orderData.Quantity,
+				Side:                      orderData.Side,
+				GoodTil:                   orderData.GoodTil,
+				TimeInForce:               types.TIME_IN_FORCE_GTC,
+				RemainingBaseQuantity:     orderBookRecord.RemainingBaseQuantity,
+				RemainingSpendableBalance: orderBookRecord.RemainingSpendableBalance,
+				Reserve:                   orderData.Reserve,
 			}, nil
 		},
 		// constructor
@@ -1079,20 +1079,20 @@ func (k Keeper) getPaginatedOrderBookOrders(
 			}
 
 			return &types.Order{
-				Creator:           acc.String(),
-				Type:              types.ORDER_TYPE_LIMIT,
-				ID:                record.OrderID,
-				Sequence:          orderSequence,
-				BaseDenom:         baseDenom,
-				QuoteDenom:        quoteDenom,
-				Price:             &price,
-				Quantity:          orderData.Quantity,
-				Side:              side,
-				GoodTil:           orderData.GoodTil,
-				TimeInForce:       types.TIME_IN_FORCE_GTC,
-				RemainingQuantity: record.RemainingQuantity,
-				RemainingBalance:  record.RemainingBalance,
-				Reserve:           orderData.Reserve,
+				Creator:                   acc.String(),
+				Type:                      types.ORDER_TYPE_LIMIT,
+				ID:                        record.OrderID,
+				Sequence:                  orderSequence,
+				BaseDenom:                 baseDenom,
+				QuoteDenom:                quoteDenom,
+				Price:                     &price,
+				Quantity:                  orderData.Quantity,
+				Side:                      side,
+				GoodTil:                   orderData.GoodTil,
+				TimeInForce:               types.TIME_IN_FORCE_GTC,
+				RemainingBaseQuantity:     record.RemainingBaseQuantity,
+				RemainingSpendableBalance: record.RemainingSpendableBalance,
+				Reserve:                   orderData.Reserve,
 			}, nil
 		},
 		// constructor
