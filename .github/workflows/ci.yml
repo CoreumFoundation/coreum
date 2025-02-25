@@ -90,8 +90,6 @@ jobs:
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: ${{ runner.os }}-docker-${{ hashFiles('build/go.sum') }}
-      - name: Prepare dependencies
-        run: make dependencies
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
