@@ -112,4 +112,3 @@ It should also be mentioned that for development purposes testnet is more stable
 
 You can also find block explorers for each chain by this
 [link](https://docs.coreum.dev/docs/tools/blockchain-explorers).
-
