@@ -16,6 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
 	ibcwasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/ibc"
+	"github.com/CoreumFoundation/coreum/v5/testutil/event"
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 )
 
@@ -237,24 +239,53 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	requireT.NotEmpty(osmosisIBCPort)
 	t.Logf("Osmisis contrac IBC port:%s", osmosisIBCPort)
 
-	closerFunc := CreateIBCChannelsAndConnect(
-		ctx,
-		t,
-		coreumChain.Chain,
+	coreumIbcChannelClient := ibcchanneltypes.NewQueryClient(coreumChain.ClientContext)
+
+	_, srcConnectionID := coreumChain.AwaitForIBCClientAndConnectionIDs(ctx, t, osmosisChain.ChainSettings.ChainID)
+	msgChannelOpenInit := channeltypes.NewMsgChannelOpenInit(
 		coreumIBCPort,
-		osmosisChain,
-		osmosisIBCPort,
 		channelIBCVersion,
 		ibcchanneltypes.UNORDERED,
+		[]string{srcConnectionID},
+		osmosisIBCPort,
+		coreumChain.ChainContext.MustConvertToBech32Address(coreumCaller),
 	)
-	defer closerFunc()
+	res, err := chains.Coreum.BroadcastTxWithSigner(
+		ctx,
+		chains.Coreum.TxFactory().WithGas(500000),
+		coreumCaller,
+		msgChannelOpenInit,
+	)
+	requireT.NoError(err)
 
-	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(
-		ctx, t, coreumIBCPort, osmosisChain.ChainContext,
+	coreumToOsmosisChannelID, err := event.FindStringEventAttribute(
+		res.Events, ibcchanneltypes.EventTypeChannelOpenInit, ibcchanneltypes.AttributeKeyChannelID,
 	)
-	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(
-		ctx, t, osmosisIBCPort, coreumChain.ChainContext,
-	)
+	requireT.NoError(err)
+
+	osmosisToCoreumChannelID := ""
+
+	require.NoError(t, coreumChain.AwaitState(ctx, func(ctx context.Context) error {
+		ibcChanRes, err := coreumIbcChannelClient.Channel(ctx, &ibcchanneltypes.QueryChannelRequest{
+			PortId:    coreumIBCPort,
+			ChannelId: coreumToOsmosisChannelID,
+		})
+		if err != nil {
+			return retry.Retryable(errors.Errorf(
+				"IBC channel is not ready yet, %s",
+				err,
+			))
+		}
+		if ibcChanRes.Channel.State != ibcchanneltypes.OPEN {
+			return retry.Retryable(errors.Errorf(
+				"IBC channel is not open yet, it is still in %s",
+				ibcChanRes.Channel.State.String(),
+			))
+		}
+		osmosisToCoreumChannelID = ibcChanRes.Channel.Counterparty.ChannelId
+		return nil
+	}))
+
 	t.Logf(
 		"Channels are ready coreum channel ID:%s, osmosis channel ID:%s",
 		coreumToOsmosisChannelID,
