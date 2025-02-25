@@ -16,7 +16,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -242,7 +241,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	coreumIbcChannelClient := ibcchanneltypes.NewQueryClient(coreumChain.ClientContext)
 
 	_, srcConnectionID := coreumChain.AwaitForIBCClientAndConnectionIDs(ctx, t, osmosisChain.ChainSettings.ChainID)
-	msgChannelOpenInit := channeltypes.NewMsgChannelOpenInit(
+	msgChannelOpenInit := ibcchanneltypes.NewMsgChannelOpenInit(
 		coreumIBCPort,
 		channelIBCVersion,
 		ibcchanneltypes.UNORDERED,
