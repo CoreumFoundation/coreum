@@ -62,7 +62,10 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Go version used to build builder
-        run: go version
+        id: goversion
+        run: |
+          version=$(go version | awk '{print $3}')
+          echo "GO_VERSION=${version}" >> "$GITHUB_OUTPUT"
       - name: Checkout coreum
         uses: actions/checkout@v4
         with:
