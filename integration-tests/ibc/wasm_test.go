@@ -251,7 +251,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	)
 	res, err := chains.Coreum.BroadcastTxWithSigner(
 		ctx,
-		chains.Coreum.TxFactory().WithGas(500000),
+		chains.Coreum.TxFactoryAuto(),
 		coreumCaller,
 		msgChannelOpenInit,
 	)
@@ -291,7 +291,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		osmosisToCoreumChannelID,
 	)
 
-	t.Logf("Sendng two IBC transactions from coreum contract to osmosis contract")
+	t.Logf("Sending two IBC transactions from coreum contract to osmosis contract")
 	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
 	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 0)
 
@@ -305,7 +305,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
 	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
 
-	t.Logf("Sendng three IBC transactions from osmosis contract to coreum contract")
+	t.Logf("Sending three IBC transactions from osmosis contract to coreum contract")
 	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
 	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
 	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
