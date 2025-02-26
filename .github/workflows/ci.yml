@@ -72,12 +72,10 @@ jobs:
         with:
           persist-credentials: false
       - name: Make builder
-        run: |
-          ls
-          ${{ github.workspace }}/bin/coreum-builder build/me
+        run: ${{ github.workspace }}/bin/coreum-builder build/me
       - name: Retrieve go version
         id: goversion
-        run: echo "GO_VERSION=$(coreum/bin/go version)" >> $GITHUB_OUTPUT
+        run: echo "GO_VERSION=$(${{ github.workspace }}/bin/go version)" >> $GITHUB_OUTPUT
       - name: Print go version
         run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup go cache
@@ -109,10 +107,10 @@ jobs:
           # we need to cache code-hashes.json under the same key as the artifacts, since the invalidation condition
           # for both of them are the same.
           path: |
-            ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/* 
+            ${{ github.workspace }}/integration-tests/contracts/**/artifacts/* 
             ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/* 
             ~/.cache/crust/wasm/code-hashes.json
-          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
+          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
