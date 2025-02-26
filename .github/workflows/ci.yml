@@ -72,7 +72,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Make builder
-        run: coreum/bin/coreum-builder build/me
+        run: ${{ github.workspace }}coreum/bin/coreum-builder build/me
       - name: Retrieve go version
         id: goversion
         run: echo "GO_VERSION=$(coreum/bin/go version)" >> $GITHUB_OUTPUT
