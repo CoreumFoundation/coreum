@@ -1,6 +1,4 @@
 name: ci
-env:
-  ACTIONS_RESULTS_URL: https://github-cache-server.test.coreum.dev/
 on:
   push:
     branches: [ master ]
@@ -31,10 +29,12 @@ jobs:
           - ci_step: "lint"
             command: make lint
             linter-cache: true
+            wasm-cache: true
             codecov: false
           - ci_step: "test"
             command: make test
             linter-cache: false
+            wasm-cache: false
             codecov: true
             codecov-name: coreum
           - ci_step: "test-fuzz"
@@ -44,32 +44,40 @@ jobs:
           - ci_step: "integration tests coreum-modules"
             command: make integration-tests-modules
             linter-cache: false
+            wasm-cache: true
             codecov: true
             codecov-name: coreum-integration-tests-modules
           - ci_step: "integration tests coreum-stress"
             command: make integration-tests-stress
             linter-cache: false
+            wasm-cache: true
             codecov: false
           - ci_step: "integration tests coreum-ibc"
             command: make integration-tests-ibc
             linter-cache: false
+            wasm-cache: true
             codecov: false
           - ci_step: "integration tests coreum-upgrade-v4.0.0"
             command: make integration-tests-upgrade
             linter-cache: false
+            wasm-cache: true
             codecov: false
 
     runs-on: self-hosted
     steps:
       - name: Go version used to build builder
-        id: goversion
-        run: |
-          version=$(go version | awk '{print $3}')
-          echo "GO_VERSION=${version}" >> "$GITHUB_OUTPUT"
+        run: go version
       - name: Checkout coreum
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Make builder
+        run: coreum/bin/coreum-builder build/me
+      - name: Retrieve go version
+        id: goversion
+        run: echo "GO_VERSION=$(coreum/bin/go version)" >> $GITHUB_OUTPUT
+      - name: Print go version
+        run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup go cache
         uses: actions/cache@v4
         with:
@@ -93,6 +101,17 @@ jobs:
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: ${{ runner.os }}-docker-${{ hashFiles('build/go.sum') }}
+      - name: Setup smart contract build cache
+        uses: actions/cache@v4
+        with:
+          # we need to cache code-hashes.json under the same key as the artifacts, since the invalidation condition
+          # for both of them are the same.
+          path: |
+            ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/* 
+            ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/* 
+            ~/.cache/crust/wasm/code-hashes.json
+          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
+        if: ${{ matrix.wasm-cache }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Upload coverage reports to Codecov
