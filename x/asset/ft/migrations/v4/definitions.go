@@ -20,7 +20,7 @@ type ParamsKeeper interface {
 
 // MigrateDefinitions migrates asset ft definitions state.
 func MigrateDefinitions(ctx sdk.Context, keeper FTKeeper) error {
-	definisions := []types.Definition{}
+	definitions := []types.Definition{}
 	err := keeper.IterateAllDefinitions(ctx, func(def types.Definition) (bool, error) {
 		// for extension without ibc we add it because we apply the ft validation for the extension starting
 		// from the current version
@@ -32,7 +32,7 @@ func MigrateDefinitions(ctx sdk.Context, keeper FTKeeper) error {
 		if !def.IsFeatureEnabled(types.Feature_dex_unified_ref_amount_change) {
 			def.Features = append(def.Features, types.Feature_dex_unified_ref_amount_change)
 		}
-		definisions = append(definisions, def)
+		definitions = append(definitions, def)
 
 		return false, nil
 	})
@@ -41,7 +41,7 @@ func MigrateDefinitions(ctx sdk.Context, keeper FTKeeper) error {
 		return err
 	}
 
-	for _, def := range definisions {
+	for _, def := range definitions {
 		subunit, issuer, err := types.DeconstructDenom(def.Denom)
 		if err != nil {
 			return err
