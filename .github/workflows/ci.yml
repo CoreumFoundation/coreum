@@ -72,18 +72,48 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup go cache
-        uses: actions/cache@v4
+        uses: runs-on/cache@v4
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        env:
+          - name: STORAGE_DRIVER
+            value: "s3"
+          - name: STORAGE_S3_BUCKET
+            value: "self-hosted-runners-cache"
+          - name: STORAGE_S3_ACCESS_KEY
+            value: "1d37c623e84a44deadb804a695dbba0c"
+          - name: STORAGE_S3_SECRET_KEY
+            value: "e06595ccf17a47edbba897a59dbb31d5"
+          - name: STORAGE_S3_ENDPOINT
+            value: "s3.ca-east-tor.io.cloud.ovh.net"
+          - name: STORAGE_S3_PORT
+            value: "443"
+          - name: STORAGE_S3_USE_SSL
+            value: "true"
       - name: Setup crust cache
-        uses: actions/cache@v4
+        uses: runs-on/cache@v4
         with:
           path: |
             ~/.cache/crust
           key: ${{ runner.os }}-crust-${{ hashFiles('build/go.sum') }}
+        env:
+          - name: STORAGE_DRIVER
+            value: "s3"
+          - name: STORAGE_S3_BUCKET
+            value: "self-hosted-runners-cache"
+          - name: STORAGE_S3_ACCESS_KEY
+            value: "1d37c623e84a44deadb804a695dbba0c"
+          - name: STORAGE_S3_SECRET_KEY
+            value: "e06595ccf17a47edbba897a59dbb31d5"
+          - name: STORAGE_S3_ENDPOINT
+            value: "s3.ca-east-tor.io.cloud.ovh.net"
+          - name: STORAGE_S3_PORT
+            value: "443"
+          - name: STORAGE_S3_USE_SSL
+            value: "true"
       - name: Make builder
         run: ${{ github.workspace }}/bin/coreum-builder build/me
       - name: Retrieve go version
@@ -92,17 +122,32 @@ jobs:
       - name: Print go version
         run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup linter cache
-        uses: actions/cache@v4
+        uses: runs-on/cache@v4
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-go-linter-${{ steps.goversion.outputs.GO_VERSION }}
+        env:
+          - name: STORAGE_DRIVER
+            value: "s3"
+          - name: STORAGE_S3_BUCKET
+            value: "self-hosted-runners-cache"
+          - name: STORAGE_S3_ACCESS_KEY
+            value: "1d37c623e84a44deadb804a695dbba0c"
+          - name: STORAGE_S3_SECRET_KEY
+            value: "e06595ccf17a47edbba897a59dbb31d5"
+          - name: STORAGE_S3_ENDPOINT
+            value: "s3.ca-east-tor.io.cloud.ovh.net"
+          - name: STORAGE_S3_PORT
+            value: "443"
+          - name: STORAGE_S3_USE_SSL
+            value: "true"
       - name: Set docker cache
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: ${{ runner.os }}-docker-${{ hashFiles('build/go.sum') }}
       - name: Setup smart contract build cache
-        uses: actions/cache@v4
+        uses: runs-on/cache@v4
         with:
           # we need to cache code-hashes.json under the same key as the artifacts, since the invalidation condition
           # for both of them are the same.
@@ -111,6 +156,21 @@ jobs:
             ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/* 
             ~/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./**/*.rs') }}
+        env:
+          - name: STORAGE_DRIVER
+            value: "s3"
+          - name: STORAGE_S3_BUCKET
+            value: "self-hosted-runners-cache"
+          - name: STORAGE_S3_ACCESS_KEY
+            value: "1d37c623e84a44deadb804a695dbba0c"
+          - name: STORAGE_S3_SECRET_KEY
+            value: "e06595ccf17a47edbba897a59dbb31d5"
+          - name: STORAGE_S3_ENDPOINT
+            value: "s3.ca-east-tor.io.cloud.ovh.net"
+          - name: STORAGE_S3_PORT
+            value: "443"
+          - name: STORAGE_S3_USE_SSL
+            value: "true"
         if: ${{ matrix.wasm-cache }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
