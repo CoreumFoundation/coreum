@@ -1,4 +1,4 @@
-package v3
+package v4
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,22 +20,36 @@ type ParamsKeeper interface {
 
 // MigrateDefinitions migrates asset ft definitions state.
 func MigrateDefinitions(ctx sdk.Context, keeper FTKeeper) error {
-	return keeper.IterateAllDefinitions(ctx, func(def types.Definition) (bool, error) {
-		subunit, issuer, err := types.DeconstructDenom(def.Denom)
-		if err != nil {
-			return false, err
-		}
+	definitions := []types.Definition{}
+	err := keeper.IterateAllDefinitions(ctx, func(def types.Definition) (bool, error) {
 		// for extension without ibc we add it because we apply the ft validation for the extension starting
 		// from the current version
-		if !def.IsFeatureEnabled(types.Feature_extension) ||
-			def.IsFeatureEnabled(types.Feature_ibc) {
-			return false, nil
+		if def.IsFeatureEnabled(types.Feature_extension) &&
+			!def.IsFeatureEnabled(types.Feature_ibc) {
+			def.Features = append(def.Features, types.Feature_ibc)
 		}
 
-		def.Features = append(def.Features, types.Feature_ibc)
-		if err := keeper.SetDefinition(ctx, issuer, subunit, def); err != nil {
-			return false, err
+		if !def.IsFeatureEnabled(types.Feature_dex_unified_ref_amount_change) {
+			def.Features = append(def.Features, types.Feature_dex_unified_ref_amount_change)
 		}
+		definitions = append(definitions, def)
+
 		return false, nil
 	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, def := range definitions {
+		subunit, issuer, err := types.DeconstructDenom(def.Denom)
+		if err != nil {
+			return err
+		}
+		if err := keeper.SetDefinition(ctx, issuer, subunit, def); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
