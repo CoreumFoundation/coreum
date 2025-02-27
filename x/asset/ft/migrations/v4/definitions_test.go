@@ -1,4 +1,4 @@
-package v3_test
+package v4_test
 
 import (
 	"testing"
@@ -115,6 +115,7 @@ func TestMigrateDefinitions(t *testing.T) {
 			requireT.NoError(err)
 			if lo.Contains(settings.Features, types.Feature_extension) {
 				requireT.Contains(def.Features, types.Feature_ibc)
+				requireT.Contains(def.Features, types.Feature_dex_unified_ref_amount_change)
 			}
 		})
 	}

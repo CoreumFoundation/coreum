@@ -85,7 +85,11 @@ func (a *assetft) After(t *testing.T) {
 	requireT.NoError(err)
 
 	expectedToken := a.token
-	expectedToken.Features = append(expectedToken.Features, assetfttypes.Feature_ibc)
+	expectedToken.Features = append(
+		expectedToken.Features,
+		assetfttypes.Feature_ibc,
+		assetfttypes.Feature_dex_unified_ref_amount_change,
+	)
 
 	require.Equal(t, expectedToken, tokenRes.Token)
 }
