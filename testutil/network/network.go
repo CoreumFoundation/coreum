@@ -3,6 +3,7 @@ package network
 import (
 	"context"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -96,6 +97,12 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 	}
 
 	net, err := network.New(t, t.TempDir(), cfg)
+	// retry once if the address is already in use
+	if err != nil {
+		if strings.Contains(err.Error(), "address already in use") {
+			net, err = network.New(t, t.TempDir(), cfg)
+		}
+	}
 	require.NoError(t, err)
 	t.Cleanup(net.Cleanup)
 	return net
