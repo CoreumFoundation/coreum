@@ -56,6 +56,7 @@ func upgradeV4ToV5(t *testing.T) {
 		&gov{},
 		&dex{},
 		&assetft{},
+		&mint{},
 	}
 
 	for _, test := range tests {
