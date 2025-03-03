@@ -22,10 +22,11 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v5 v5.0.0-20250123052000-bcd32d0bb9f4
-	github.com/CoreumFoundation/crust v0.0.0-20250131082142-5bbfcc8a8961
+	github.com/CoreumFoundation/crust v0.0.0-20250303075037-6ed792e31df8
+	github.com/CoreumFoundation/crust/znet v0.0.0-20250303075037-6ed792e31df8
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
-	github.com/samber/lo v1.39.0
+	github.com/samber/lo v1.49.1
 )
 
 require (
@@ -177,6 +178,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/moby/sys/user v0.3.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
