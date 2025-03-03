@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	govparamkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/v5/app/upgrade"
@@ -23,7 +24,10 @@ const Name = "v5"
 
 // New makes an upgrade handler for v5 upgrade.
 func New(mm *module.Manager, configurator module.Configurator,
-	chosenNetwork config.NetworkConfig, govParamKeeper govparamkeeper.Keeper, dexKeeper dexkeeper.Keeper,
+	chosenNetwork config.NetworkConfig,
+	govParamKeeper govparamkeeper.Keeper,
+	dexKeeper dexkeeper.Keeper,
+	mintKeeper mintkeeper.Keeper,
 ) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
@@ -68,6 +72,10 @@ func New(mm *module.Manager, configurator module.Configurator,
 			dexParams.OrderReserve = sdk.NewInt64Coin(chosenNetwork.Denom(), 10_000_000)
 			//nolint:contextcheck // this is correct context passing.
 			if err = dexKeeper.SetParams(sdkCtx, dexParams); err != nil {
+				return nil, err
+			}
+
+			if err := migrateMintParams(ctx, mintKeeper); err != nil {
 				return nil, err
 			}
 
