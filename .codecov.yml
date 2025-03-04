@@ -1,3 +1,13 @@
 ignore:
   - "**/*.pb.go"
   - "**/*.pb.gw.go"
+flags:
+  coreum:
+    paths:
+      - ".*"
+    carryforward: true
+  coreum-integration-tests-modules:
+    paths:
+      - ".*"
+      - unit_2.py
+    carryforward: true
