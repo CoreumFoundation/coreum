@@ -68,6 +68,7 @@ jobs:
           flags: ${{ matrix.codecov-name }}
           fail_ci_if_error: true
           verbose: true
+          carryforward: true
         if: ${{ matrix.codecov }}
       - name: Dump docker logs on failure
         if: failure()
