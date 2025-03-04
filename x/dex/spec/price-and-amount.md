@@ -1,4 +1,75 @@
-# Price ticks
+# Price Tick Size  
+
+To provide a better trading experience, avoid rounding issues, and minimize remainders during order execution, we use [`price_tick_size`](https://www.investopedia.com/terms/t/tick.asp). A tick is the minimum price movement an asset can make, either upward or downward.
+
+Since tick size is set by the exchange where an asset is traded and is primarily based on its price (though it also depends on asset type and market conditions), we can derive a formula to calculate `price_tick_size` for any market. This calculation is based on the relationship of both assets against a common instrument. For example, to determine the `price_tick_size` for the **ETH/BTC** pair, we can use the prices of **ETH/USD** and **BTC/USD**.  
+
+To define an asset’s price on-chain, we introduce a parameter called `unified_ref_amount`. This represents the amount of the token’s **subunit** required to equal **1 USD**. For example, if BTC is priced at **$90,000**, then `unified_ref_amount` should be set to **0.0000111** (since **1 / 90,000 = 0.0000111**).  
+
+## How `unified_ref_amount` is Defined  
+
+1. **Coreum Native Assets**: If the token is issued on the Coreum chain, this variable can be set or updated by the token admin.  
+2. **IBC Tokens & Admin-less Tokens**: If the token is an IBC token or does not have an admin, this variable can be set or updated through chain governance.  
+3. **Default Value**: If `unified_ref_amount` is not explicitly set for a token, a default value of **10^6** is used.  
+
+## Formula  
+
+Let's say we have two assets: **AAA** and **BBB**.  
+To calculate `price_tick_size` for the **AAA/BBB** market, we use the following formula:  
+
+```
+price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB))
+```
+
+Where:  
+- `price_tick_exponent` is a coefficient that controls the price precision for a market. The current value of  `price_tick_exponent` is `-6`, but it can be changed through governance.
+- `round_pow10(x)` rounds `x` to the **closest power of 10** (positive or negative).  
+
+### `round_pow10` Behavior:  
+| Input | Output |
+| ----- | ------ |
+| 0.333 | 0.1    |
+| 0.55  | 1.0    |
+| 0.5   | 1.0    |
+| 0.499 | 0.1    |
+
+For more details on the logic behind this formula and the constants used, refer to the [Research](#research) section.  
+
+# Base Amount Step  
+
+To ensure smooth order execution and prevent excessively small trade sizes, we introduce the `base_amount_step`. This defines the smallest allowable step for the base asset inside a market. It prevents rounding issues, partial order cancellations, and improves consistency across markets. Unlike `price_tick_size`, which is defined per market, `base_amount_step` is defined per asset.  
+
+## Formula
+
+The **Base Amount Step** for a given asset **AAA** is calculated using the following formula:  
+
+```
+base_amount_step(AAA) = 10^base_amount_exponent * round_pow10(unified_ref_amount(AAA))
+```
+
+Where:  
+- `base_amount_exponent` is a coefficient that controls the granularity of the base asset amount step.  
+  The current value of `base_amount_exponent` is `-2`, but it can be changed through governance.  
+- `round_pow10(unified_ref_amount(AAA))` ensures that the step size aligns with the asset’s magnitude.  
+
+## Example Calculations  
+
+| Asset Price (USD) | `unified_ref_amount(AAA)` | `base_amount_step` |
+| ----------------- | ------------------------- | ------------------ |
+| $100              | 0.01                      | 0.0001             |
+| $5,000            | 0.0002                    | 0.000001           |
+| $0.05             | 20                        | 0.1                |
+
+This approach ensures that minimum trade sizes scale appropriately with asset value while maintaining a consistent precision level.  
+
+For more details on the logic behind this formula and the constants used, refer to the [Research](#research) section.  
+
+## Important
+
+**Changes to `unified_ref_amount`, `price_tick_exponent` or `base_amount_exponent` **do not** affect existing orders.**
+
+
+# Research
 
 ## CEX ticks
 
@@ -64,10 +135,6 @@
 Proposed Base Amount tick range in USD   `[0.01,0.1]`    => `round_up_pow10(ura_base * 0.01)=0.01*round_up_pow10(ura_base)`
 Proposed Quote Amount tick range in USD  `[10^-8,10^-7]` => `round_up_pow10(ura_quote * 10^-8)=10^-8*round_up_pow10(ura_quote)`
 
-### TODO: discuss:
-- discuss ranges. Ranges define which % of price change we consider significant. We can potentially increase 0.01 & 10^-8
-- which method of rounding we want to use (round up, round down, ceil, floor,bankers' rounding etc)
-
 However we don't use Quote Amount tick directly, we use price tick instead.
 `quote_tick = base_tick * price_tick` => `price_tick = quote_tick / base_tick`
 `price_tick = 10^-8*round_up_pow10(ura_quote) / 0.01*round_up_pow10(ura_base)`
@@ -91,3 +158,10 @@ To decrease rounding we can do it after all calculations, so
 - another approach we can use is to hardcode ticks, discuss gap in `Avg price to amount tick rule (Binance)`
 - to be implemented: allow setting of price tick per pair
 - potentially discrepancy is because CEXes don't want to decrease tick (e.g for price)
+### TODO: discuss:
+- discuss ranges. Ranges define which % of price change we consider significant. We can potentially increase 0.01 & 10^-8
+- which method of rounding we want to use (round up, round down, ceil, floor,bankers' rounding etc)
+
+References:
+- https://www.investopedia.com/terms/t/tick.asp
+- https://www.binance.us/trade-limits
