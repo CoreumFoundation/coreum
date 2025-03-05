@@ -137,36 +137,7 @@ it simultaneously checks the corresponding opposite order book (e.g., BBB/AAA) t
 price. This 2-way order book matching ensures that orders are filled at the most favorable rates available,
 whether within the same trading pair or its inverse, optimizing the trading experience.
 
-### Price tick and precision
-
-To provide a better trading experience we define the [price_tick](https://www.investopedia.com/terms/t/tick.asp) for
-each order book. The `price_tick` mostly depends on the price of the assets traded, that's why we can define the
-variable for a token used to define the order book `price_tick`. This variable is named `unified_ref_amount`.
-`unified_ref_amount` for token represents the amount of the token subunit you need to pay to buy 1 USD dollar. If the
-token is issued on the Coreum chain, that variable can be set/updated by the token admin. If the token is IBC token,
-or the token doesn't have and admin this variable can be set/updated by the chain governance. If the
-`unified_ref_amount` is not set for a token, the `unified_ref_amount` is equal to 10^6.
-
-The formula taken for the price tick is:
-
-```
-price_tick(base_denom/quote_denom) = 10^(floor(log10((unified_ref_amount(quote_denom) / unified_ref_amount(base_denom)))) + price_tick_exponent)
-```
-
-The `price_tick_exponent` is the coefficient used to give better price precision for the token orders. The default
-`price_tick_exponent` is `-8`, and can be updated by the governance.
-
-Tick size example:
-
-| unified_ref_amount(AAA) | unified_ref_amount(BBB) | price_tick(AAA/BBB) | price_tick(BBB/AAA) |    
-|-------------------------|-------------------------|---------------------|---------------------|
-| 10000.0                 | 10000.0                 | 10^-8               | 10^-8               | 
-| 3000.0                  | 20.0                    | 10^-11              | 10^-6               | 
-| 3100000.0               | 8.0                     | 10^-14              | 10^-3               |
-| 0.00017                 | 100.0                   | 10^-3               | 10^-14              |
-| 0.000001                | 10000000                | 10^5                | 10^-21              |
-
-The update of the `unified_ref_amount` doesn't affect the created orders.
+### [Price And Amount Limits](price-and-amount-limits.md)
 
 #### Price type
 
