@@ -170,7 +170,7 @@ Final formula:
 price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_half_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB))
 ```
 
-## Coreum ticks simulation
+## Examples
 
 | Base     | Quote | ura_base | ura_quote | amount_tick                                  | price_tick                                         |
 | -------- | ----- | -------- | --------- | -------------------------------------------- | -------------------------------------------------- |
