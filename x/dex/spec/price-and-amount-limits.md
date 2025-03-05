@@ -18,20 +18,20 @@ Let's say we have two assets: **AAA** and **BBB**.
 To calculate `price_tick_size` for the **AAA/BBB** market, we use the following formula:  
 
 ```
-price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_half_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB))
+price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB))
 ```
 
 Where:  
 - `price_tick_exponent` is a coefficient that controls the price precision for a market. The current value of  `price_tick_exponent` is `-6`, but it can be changed through governance.
-- `round_half_up_pow10(x)` rounds `x` to the **closest power of 10** (positive or negative).  
+- `round_up_pow10(x)` rounds `x` to the **closest power of 10** (positive or negative).  
 
-### `round_half_up_pow10` Behavior:
+### `round_up_pow10` Behavior:
 | Input | Output |
 | ----- | ------ |
-| 0.333 | 0.1    |
-| 0.55  | 1.0    |
+| 0.111 | 1.0    |
+| 0.1   | 0.1    |
 | 0.5   | 1.0    |
-| 0.499 | 0.1    |
+| 0.011 | 0.1    |
 
 For more details on the logic behind this formula and the constants used, refer to the [Research](#research) section.  
 
@@ -51,14 +51,6 @@ Where:
 - `base_amount_exponent` is a coefficient that controls the granularity of the base asset amount step.  
   The current value of `base_amount_exponent` is `-2`, but it can be changed through governance.  
 - `round_up_pow10(unified_ref_amount(AAA))` ensures that the step size aligns with the asset’s magnitude.  
-
-### `round_up_pow10` Behavior:
-| Input | Output |
-| ----- | ------ |
-| 0.333 | 1.0    |
-| 0.101 | 1.0    |
-| 0.1   | 0.1    |
-| 0.999 | 1.0    |
 
 This approach ensures that minimum trade sizes scale appropriately with asset value while maintaining a consistent precision level.  
 
@@ -162,21 +154,37 @@ Substituting our definitions:
 
 Refinements:
 1. Minimize error → Perform rounding once after division.  
-2. Use `round_half_up_pow10` instead of `round_up_pow10` for better precision.  
-3. Introduce `price_tick_exponent` as a new parameter. `price_tick_exponent = base_amount_exponent - quote_amount_exponent`
+2. Introduce `price_tick_exponent` as a new parameter. `price_tick_exponent = base_amount_exponent - quote_amount_exponent`
 
 Final formula: 
 ```
-price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_half_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB))
+price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB))
 ```
 
 ## Examples
 
-| Base     | Quote | ura_base | ura_quote | amount_tick                                  | price_tick                                         |
-| -------- | ----- | -------- | --------- | -------------------------------------------- | -------------------------------------------------- |
-| BTC      | USDT  | 0.000011 | 1.0       | 0.01*round_up_pow10(0.000011)=0.000001=10^-6 | 10^-6*round_half_up_pow10(1/0.000011)=0.1          |
-| ETH      | USDT  | 0.000333 | 1.0       | 0.01*round_up_pow10(0.000333)=0.00001=10^-5  | 10^-6*round_half_up_pow10(1/0.000333)=0.001        |
-| TRX      | USDT  | 4.5      | 1.0       | 0.01*round_up_pow10(4.5)=0.1=10^-1           | 10^-6*round_half_up_pow10(1/4.5)=0.0000001         |
-| PEPE     | USDT  | 80000    | 1.0       | 0.01*round_up_pow10(80000)=1000              | 10^-6*round_half_up_pow10(1.0/80000)=10^-11        |
-| Non-USDT |       |          |           |                                              |                                                    |
-| ETH      | BTC   | 0.000333 | 0.000011  | 0.01*(0.000333)=~0.00001=10^-5               | 10^-6*round_half_up_pow10(0.000011/0.000333)=10^-8 |
+| Base     | Quote | ura_base | ura_quote | amount_tick                                  | price_tick                                    |
+| -------- | ----- | -------- | --------- | -------------------------------------------- | --------------------------------------------- |
+| BTC      | USDT  | 0.000011 | 1.0       | 0.01*round_up_pow10(0.000011)=0.000001=10^-6 | 10^-6*round_up_pow10(1/0.000011)=0.1          |
+| ETH      | USDT  | 0.000333 | 1.0       | 0.01*round_up_pow10(0.000333)=0.00001=10^-5  | 10^-6*round_up_pow10(1/0.000333)=0.01         |
+| TRX      | USDT  | 4.5      | 1.0       | 0.01*round_up_pow10(4.5)=0.1=10^-1           | 10^-6*round_up_pow10(1/4.5)=0.000001          |
+| PEPE     | USDT  | 80000    | 1.0       | 0.01*round_up_pow10(80000)=1000              | 10^-6*round_up_pow10(1.0/80000)=10^-10        |
+| Non-USDT |       |          |           |                                              |                                               |
+| ETH      | BTC   | 0.000333 | 0.000011  | 0.01*(0.000333)=~0.00001=10^-5               | 10^-6*round_up_pow10(0.000011/0.000333)=10^-7 |
+
+As seen, these values largely align with or extend beyond the ranges observed on other exchanges.
+
+### Comparison with Other Exchanges for Non-USDT Pairs
+
+To validate the proposed tick sizes, let's compare with other exchanges.
+
+| Exchange   | Market  | Price Tick Size     | Base Amount Step   | Quote Amount Step |
+| ---------- | ------- | ------------------- | ------------------ | ----------------- |
+| Binance    | ETH/BTC | `0.00001 = 10^-5`   | `0.0001 = 10^-3`   | `10^-8`           |
+| OKX        | ETH/BTC | `0.00001 = 10^-5`   | `0.000001 = 10^-6` | `10^-11`          |
+| ByBit      | ETH/BTC | `0.000001 = 10^-6`  | `0.00001 = 10^-5`  | `10^-11`          |
+| Coreum DEX | ETH/BTC | `0.0000001 = 10^-7` | `0.00001 = 10^-5`  | `10^-12`          |
+
+## References:
+- [Investopedia: Tick Size](https://www.investopedia.com/terms/t/tick.asp)
+- [Binance Trading Limits](https://www.binance.us/trade-limits)

@@ -137,7 +137,7 @@ it simultaneously checks the corresponding opposite order book (e.g., BBB/AAA) t
 price. This 2-way order book matching ensures that orders are filled at the most favorable rates available,
 whether within the same trading pair or its inverse, optimizing the trading experience.
 
-### [Price Tick Size & Base Amount Step](price-and-amount.md)
+### [Price And Amount Limits](price-and-amount-limits.md)
 
 #### Price type
 
