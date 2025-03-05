@@ -180,29 +180,3 @@ price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_half_up_pow10(unified_
 | PEPE     | USDT  | 80000    | 1.0       | 0.01*round_up_pow10(80000)=1000              | 10^-6*round_half_up_pow10(1.0/80000)=10^-11        |
 | Non-USDT |       |          |           |                                              |                                                    |
 | ETH      | BTC   | 0.000333 | 0.000011  | 0.01*(0.000333)=~0.00001=10^-5               | 10^-6*round_half_up_pow10(0.000011/0.000333)=10^-8 |
-
-### Non USDT pairs:
-
-| Market  | Price (in quote) | Amount (in base)       | Total (in quote) |
-| ------- | ---------------- | ---------------------- | ---------------- |
-| Binance |                  |                        |                  |
-| ETH/BTC | 0.00001=10^-5    | 0.0001=10^-3   (~0.3$) | 10^-8            |
-|         |                  |                        |                  |
-| OKX     |                  |                        |                  |
-| ETH/BTC | 0.00001=10^-5    | 0.000001=10^-6         | 10^-11           |
-|         |                  |                        |                  |
-| ByBit   |                  |                        |                  |
-| ETH/BTC | 0.000001=10^-6   | 0.00001=10^-5          | 10^-11           |
-
-### TODO: Discuss:
-- potential issue caused by amount_tick for PEPE. We can change formula to use min(amount_tick,1) but it causes quote_tick to not be respected and more rounding
-- another approach we can use is to hardcode ticks, discuss gap in `Avg price to amount tick rule (Binance)`
-- to be implemented: allow setting of price tick per pair
-- potentially discrepancy is because CEXes don't want to decrease tick (e.g for price)
-### TODO: discuss:
-- discuss ranges. Ranges define which % of price change we consider significant. We can potentially increase 0.01 & 10^-8
-- which method of rounding we want to use (round up, round down, ceil, floor,bankers' rounding etc)
-
-References:
-- https://www.investopedia.com/terms/t/tick.asp
-- https://www.binance.us/trade-limits
