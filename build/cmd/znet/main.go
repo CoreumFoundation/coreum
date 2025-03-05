@@ -1,6 +1,6 @@
 package main
 
-import "github.com/CoreumFoundation/crust/pkg/znet"
+import "github.com/CoreumFoundation/crust/znet/pkg/znet"
 
 func main() {
 	znet.Main()
