@@ -13,9 +13,9 @@ import (
 	"github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/types"
-	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps"
-	"github.com/CoreumFoundation/crust/pkg/znet"
+	"github.com/CoreumFoundation/crust/znet/infra"
+	"github.com/CoreumFoundation/crust/znet/infra/apps"
+	"github.com/CoreumFoundation/crust/znet/pkg/znet"
 )
 
 // Test names.
