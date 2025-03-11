@@ -46,44 +46,6 @@ type (
 
 var setNetworkConfigOnce = sync.Once{}
 
-// FundedAccount is struct used for WithChainDenomFundedAccounts function.
-type FundedAccount struct {
-	Address sdk.AccAddress
-	Amount  sdkmath.Int
-}
-
-// WithChainDenomFundedAccounts adds the funded account the config genesis.
-func WithChainDenomFundedAccounts(fundedAccounts []FundedAccount) ConfigOption {
-	return func(cfg network.Config) (network.Config, error) {
-		genesisAppState := cfg.GenesisState
-
-		var bankState banktypes.GenesisState
-		cfg.Codec.MustUnmarshalJSON(genesisAppState[banktypes.ModuleName], &bankState)
-
-		var authState authtypes.GenesisState
-		cfg.Codec.MustUnmarshalJSON(genesisAppState[authtypes.ModuleName], &authState)
-
-		for _, fundedAccount := range fundedAccounts {
-			bankState.Balances = append(bankState.Balances, banktypes.Balance{
-				Address: fundedAccount.Address.String(),
-				Coins:   sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, fundedAccount.Amount)),
-			})
-
-			account := authtypes.NewBaseAccount(fundedAccount.Address, nil, 0, 0)
-			packedAccounts, err := authtypes.PackAccounts(authtypes.GenesisAccounts{account})
-			if err != nil {
-				panic(errors.Wrap(err, "can pack genesis accounts"))
-			}
-			authState.Accounts = append(authState.Accounts, packedAccounts...)
-		}
-
-		genesisAppState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankState)
-		genesisAppState[authtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&authState)
-
-		return cfg, nil
-	}
-}
-
 // New creates instance with fully configured cosmos network.
 // Accepts optional config, that will be used in place of the DefaultConfig() if provided.
 func New(t *testing.T, configs ...network.Config) *network.Network {
@@ -185,21 +147,6 @@ func DefaultConfig(t *testing.T) network.Config {
 		SigningAlgo:    string(hd.Secp256k1Type),
 		KeyringOptions: []keyring.Option{},
 	}
-}
-
-// ApplyConfigOptions updates the simapp configuration with the provided ConfigOptions.
-// We use the ApplyConfigOptions as separate function since the DefaultConfig set's the required
-// global variables required for the ConfigOptions.
-func ApplyConfigOptions(cfg network.Config, options ...ConfigOption) (network.Config, error) {
-	for _, option := range options {
-		var err error
-		cfg, err = option(cfg)
-		if err != nil {
-			return network.Config{}, err
-		}
-	}
-
-	return cfg, nil
 }
 
 func tempDir() string {
