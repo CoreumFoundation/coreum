@@ -265,51 +265,6 @@ func (s *App) GenTx(
 	return tx, nil
 }
 
-// SimulateFundAndSendTx simulates the tx, funds account and sends the tx to the simApp.
-func (s *App) SimulateFundAndSendTx(
-	ctx sdk.Context,
-	priv cryptotypes.PrivKey,
-	messages ...sdk.Msg,
-) (sdk.GasInfo, *sdk.Result, error) {
-	simTx, err := s.GenTx(
-		ctx,
-		sdk.NewCoin(constant.DenomDev, sdkmath.ZeroInt()),
-		0,
-		priv,
-		messages...,
-	)
-	if err != nil {
-		return sdk.GasInfo{}, nil, err
-	}
-	txCfg := s.TxConfig()
-	txBytes, err := txCfg.TxEncoder()(simTx)
-	if err != nil {
-		return sdk.GasInfo{}, nil, err
-	}
-
-	simGas, _, err := s.Simulate(txBytes)
-	if err != nil {
-		return sdk.GasInfo{}, nil, err
-	}
-	targetGas := sdkmath.NewInt(int64(simGas.GasUsed * 2))
-	minGasPrice := s.App.FeeModelKeeper.GetMinGasPrice(ctx)
-	fee := sdk.NewCoin(minGasPrice.Denom, minGasPrice.Amount.MulInt(targetGas).MulInt64(2).RoundInt())
-
-	accountAddress := sdk.AccAddress(priv.PubKey().Address())
-	err = s.FundAccount(ctx, accountAddress, sdk.NewCoins(fee))
-	if err != nil {
-		return sdk.GasInfo{}, nil, err
-	}
-
-	return s.SendTx(
-		ctx,
-		fee,
-		targetGas.Uint64(),
-		priv,
-		messages...,
-	)
-}
-
 // MintAndSendCoin mints coin to the mint module and sends them to the recipient.
 func (s *App) MintAndSendCoin(
 	t *testing.T,
