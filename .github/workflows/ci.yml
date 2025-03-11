@@ -110,7 +110,7 @@ jobs:
             ${{ github.workspace }}/integration-tests/contracts/**/artifacts/* 
             ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/* 
             ~/.cache/crust/wasm/code-hashes.json
-          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./**/*.rs') }}
+          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./**/*.rs', './**/Cargo.toml', './**/Cargo.lock') }}
         if: ${{ matrix.wasm-cache }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
