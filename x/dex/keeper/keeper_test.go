@@ -487,12 +487,12 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 	}{
 		{
 			name:          "valid_default_price",
-			price:         types.MustNewPriceFromString("1e-8"),
+			price:         types.MustNewPriceFromString("1e-6"),
 			wantTickError: false,
 		},
 		{
 			name:          "invalid_default_price",
-			price:         types.MustNewPriceFromString("1e-9"),
+			price:         types.MustNewPriceFromString("1e-7"),
 			wantTickError: true,
 		},
 		{
