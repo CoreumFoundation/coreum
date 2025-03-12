@@ -5,8 +5,9 @@ import (
 	"math/big"
 	"testing"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/stretchr/testify/assert"
+
+	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 )
 
 func Test_computePriceTick(t *testing.T) {
@@ -148,7 +149,10 @@ func Test_computePriceTick(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		name := fmt.Sprintf("baseURA=%d,quoteURA=%d,priceTickExponent=%d", tt.args.baseURA, tt.args.quoteURA, tt.args.priceTickExponent)
+		name := fmt.Sprintf(
+			"baseURA=%d,quoteURA=%d,priceTickExponent=%d",
+			tt.args.baseURA, tt.args.quoteURA, tt.args.priceTickExponent,
+		)
 		t.Run(name, func(t *testing.T) {
 			actual := computePriceTick(big.NewInt(tt.args.baseURA), big.NewInt(tt.args.quoteURA), tt.args.priceTickExponent)
 			assert.EqualValues(t, tt.want, actual, "want: %v actual: %v", tt.want, actual)

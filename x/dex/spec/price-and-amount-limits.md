@@ -21,7 +21,7 @@ Let's say we have two assets: **AAA** and **BBB**.
 To calculate `price_tick_size` for the **AAA/BBB** market, we use the following formula:  
 
 ```
-price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB))
+price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(BBB)/unified_ref_amount(AAA))
 ```
 
 Where:  
@@ -153,7 +153,7 @@ Since it is more convenient for users to work with `price_tick` instead of `quot
 `quote_amount=base_amount*price -> quote_tick = base_tick * price_tick -> price_tick = quote_tick / base_tick`
 
 Substituting our definitions:
-`price_tick=10^base_amount_exponent * round_up_pow10(unified_ref_amount(AAA)) / 10^quote_amount_exponent * round_up_pow10(unified_ref_amount(BBB)) = 10^(base_amount_exponent-quote_amount_exponent) * round_up_pow10(unified_ref_amount(AAA) / round_up_pow10(unified_ref_amount(BBB)` 
+`price_tick=10^base_amount_exponent * round_up_pow10(unified_ref_amount(BBB)) / 10^quote_amount_exponent * round_up_pow10(unified_ref_amount(AAA)) = 10^(base_amount_exponent-quote_amount_exponent) * round_up_pow10(unified_ref_amount(BBB) / round_up_pow10(unified_ref_amount(AAA)` 
 
 Refinements:
 1. Minimize error → Perform rounding once after division.  
@@ -161,7 +161,7 @@ Refinements:
 
 Final formula: 
 ```
-price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB))
+price_tick_size = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(BBB)/unified_ref_amount(AAA))
 ```
 
 ## Examples

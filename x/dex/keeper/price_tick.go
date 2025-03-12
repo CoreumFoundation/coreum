@@ -6,10 +6,11 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) getPriceTick(ctx sdk.Context, params types.Params, baseDenom, quoteDenom string) (*big.Rat, error) {
@@ -73,9 +74,13 @@ func validatePriceTick(price *big.Rat, priceTick *big.Rat) error {
 }
 
 // computePriceTick returns the price tick of a given ref amounts and price tick exponent.
-func computePriceTick(baseURA, quoteURA *big.Int, priceTickExponent int32) *big.Rat {
-	// price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB)) =
-	// 10^(price_tick_exponent + log10_round_up(unified_ref_amount(AAA)/unified_ref_amount(BBB))
+func computePriceTick(
+	baseURA,
+	quoteURA *big.Int,
+	priceTickExponent int32,
+) *big.Rat {
+	// price_tick_size = 10^price_tick_exponent * round_up_pow10(ura_quote/ura_base) =
+	// 10^(price_tick_exponent + log10_round_up(ura_quote/ura_base)
 	exponent := int64(priceTickExponent) + cbig.RatLog10RoundUp(cbig.NewRatFromBigInts(quoteURA, baseURA))
 
 	return cbig.RatTenToThePower(exponent)

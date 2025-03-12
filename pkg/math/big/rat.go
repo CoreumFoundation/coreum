@@ -24,7 +24,7 @@ func NewRatFromBigInts(num, denom *big.Int) *big.Rat {
 	return (&big.Rat{}).SetFrac(num, denom)
 }
 
-// IntTenToThePower returns 10 to the power of x as *big.Rat.
+// RatTenToThePower returns 10 to the power of x as *big.Rat.
 func RatTenToThePower(power int64) *big.Rat {
 	if power >= 0 {
 		return (&big.Rat{}).SetFrac(IntTenToThePower(big.NewInt(power)), big.NewInt(1))
@@ -38,7 +38,7 @@ func RatMul(x, y *big.Rat) *big.Rat {
 	return (&big.Rat{}).Mul(x, y)
 }
 
-// RatMul divides *big.Rat x by y and returns the result.
+// RatDiv divides *big.Rat x by y and returns the result.
 func RatDiv(x, y *big.Rat) *big.Rat {
 	return (&big.Rat{}).Mul(x, RatInv(y))
 }
@@ -56,8 +56,9 @@ func RatLog10RoundUp(val *big.Rat) int64 {
 	num := val.Num()
 	denom := val.Denom()
 
-	// exponent is difference between exponents in scientific notation (e.g. num: 30=3*10^1, denom: 900=9*10^2 => exponent = 2-1)
-	// to calculated exponent we use length of integers numbers.
+	// exponent is difference between exponents in scientific notation
+	// e.g. num: 30=3*10^1, denom: 900=9*10^2 => exponent = 2-1
+	// to calculated exponent we use length of a string representation of a number.
 	exponent := int64(len(num.String()) - len(denom.String()))
 
 	// special case, when val is already a power of 10, then we keep exponent as it is (since val is already rounded up)
