@@ -9,75 +9,6 @@ import (
 )
 
 func TestComputePriceTick(t *testing.T) {
-	// tests := []struct {
-	// 	name  string
-	// 	base  float64
-	// 	quote float64
-	// }{
-	// 	{
-	// 		name:  "3.0/27.123",
-	// 		base:  3.0,
-	// 		quote: 27.123,
-	// 	},
-	// 	{
-	// 		name:  "10000.0/10000.0",
-	// 		base:  10000.0,
-	// 		quote: 10000.0,
-	// 	},
-	// 	{
-	// 		name:  "3000.0/20.0",
-	// 		base:  3000.0,
-	// 		quote: 20.0,
-	// 	},
-	// 	{
-	// 		name:  "300000.0/20.0",
-	// 		base:  300000.0,
-	// 		quote: 20.0,
-	// 	},
-	// 	{
-	// 		name:  "2.0/2.0",
-	// 		base:  2.0,
-	// 		quote: 2.0,
-	// 	},
-	// 	{
-	// 		name:  "100.0/1.0",
-	// 		base:  100.0,
-	// 		quote: 1.0,
-	// 	},
-	// 	{
-	// 		name:  "3.0/1.0",
-	// 		base:  3.0,
-	// 		quote: 1.0,
-	// 	},
-	// 	{
-	// 		name:  "3100000.0/8.0",
-	// 		base:  3100000.0,
-	// 		quote: 8.0,
-	// 	},
-	// 	{
-	// 		name:  "0.00017/100",
-	// 		base:  0.00017,
-	// 		quote: 100,
-	// 	},
-	// 	{
-	// 		name:  "0.000001/10000000",
-	// 		base:  0.000001,
-	// 		quote: 10000000,
-	// 	},
-	// 	{
-	// 		name:  "100/1000000000000",
-	// 		base:  100,
-	// 		quote: 1000000000000,
-	// 	},
-	// }
-
-	// for _, tt := range tests {
-	// 	t.Run(tt.name, func(t *testing.T) {
-	// 		assertTickCalculations(t, tt.base, tt.quote)
-	// 		assertTickCalculations(t, tt.quote, tt.base)
-	// 	})
-	// }
-
 	type args struct {
 		baseURA           int64
 		quoteURA          int64
@@ -166,6 +97,53 @@ func TestComputePriceTick(t *testing.T) {
 				priceTickExponent: -6,
 			},
 			want: big.NewRat(1, 100_000), // RatLog10RoundUp(1_000_001/1_000_000) = 2
+		},
+		// Examples from spec/price-and-amount.md
+		// All amounts are represented as subunits on chain so they are multiplied by 10^6.
+		{
+			// BTC/USDT
+			args: args{
+				baseURA:           11,
+				quoteURA:          1_000_000,
+				priceTickExponent: -6,
+			},
+			want: big.NewRat(1, 10), // RatLog10RoundUp(1_000_000/11) = 5
+		},
+		{
+			// ETH/USDT
+			args: args{
+				baseURA:           333,
+				quoteURA:          1_000_000,
+				priceTickExponent: -6,
+			},
+			want: big.NewRat(1, 100), // RatLog10RoundUp(1_000_000/333) = 4
+		},
+		{
+			// TRX/USDT
+			args: args{
+				baseURA:           4_500_000,
+				quoteURA:          1_000_000,
+				priceTickExponent: -6,
+			},
+			want: big.NewRat(1, 1_000_000), // RatLog10RoundUp(1_000_000/4_500_000) = 0
+		},
+		{
+			// PEPE/USDT
+			args: args{
+				baseURA:           80_000 * 1_000_000,
+				quoteURA:          1_000_000,
+				priceTickExponent: -6,
+			},
+			want: big.NewRat(1, 10_000_000_000), // RatLog10RoundUp(1_000_000/(80_000*1_000_000)) = 0
+		},
+		{
+			// ETH/BTC
+			args: args{
+				baseURA:           333,
+				quoteURA:          11,
+				priceTickExponent: -6,
+			},
+			want: big.NewRat(1, 10_000_000), // RatLog10RoundUp(11/333) = -1
 		},
 	}
 	for _, tt := range tests {
