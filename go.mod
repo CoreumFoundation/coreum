@@ -3,6 +3,8 @@ module github.com/CoreumFoundation/coreum/v5
 go 1.23.3
 
 replace (
+	// The BuildQueryMethodCommand function of v2.0.0-beta.3 hardcoded EnumAsString as true
+	cosmossdk.io/client/v2 v2.0.0-beta.3 => cosmossdk.io/client/v2 v2.0.0-beta.1
 	// TODO(https://github.com/cosmos/rosetta/issues/76): Rosetta requires cosmossdk.io/core v0.12.0 erroneously but
 	// should use v0.11.0. The Cosmos build fails with types/context.go:65:29: undefined: comet.BlockInfo otherwise.
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
