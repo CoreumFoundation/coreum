@@ -18,17 +18,17 @@ func (k Keeper) getPriceTick(ctx sdk.Context, baseDenom, quoteDenom string) (*bi
 		return nil, err
 	}
 
-	baseDenomRefAmount, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
+	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	quoteDenomRefAmount, err := k.getAssetFTUnifiedRefAmount(ctx, quoteDenom, params.DefaultUnifiedRefAmount)
+	quoteURA, err := k.getAssetFTUnifiedRefAmount(ctx, quoteDenom, params.DefaultUnifiedRefAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	return ComputePriceTick(baseDenomRefAmount, quoteDenomRefAmount, params.PriceTickExponent), nil
+	return ComputePriceTick(baseURA.BigInt(), quoteURA.BigInt(), params.PriceTickExponent), nil
 }
 
 func (k Keeper) validatePriceTick(
@@ -74,14 +74,10 @@ func (k Keeper) getAssetFTUnifiedRefAmount(
 }
 
 // ComputePriceTick returns the price tick of a given ref amounts and price tick exponent.
-func ComputePriceTick(baseDenomRefAmount, quoteRefAmount sdkmath.LegacyDec, priceTickExponent int32) *big.Rat {
-	// 10^(floor(log10((quoteRefAmountRat / baseRefAmountRat))) + price_tick_exponent)
-	exponent := ratFloorLog10(
-		cbig.NewRatFromBigInts(quoteRefAmount.BigInt(), baseDenomRefAmount.BigInt()),
-	) + int(priceTickExponent)
-	if exponent < 0 {
-		return cbig.NewRatFromBigInts(big.NewInt(1), cbig.IntTenToThePower(big.NewInt(int64(-exponent))))
-	}
+func ComputePriceTick(baseURA, quoteURA *big.Int, priceTickExponent int32) *big.Rat {
+	// price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB)) =
+	// 10^(price_tick_exponent + log10_round_up(unified_ref_amount(AAA)/unified_ref_amount(BBB))
+	exponent := int64(priceTickExponent) + cbig.RatLog10RoundUp(cbig.NewRatFromBigInts(quoteURA, baseURA))
 
-	return cbig.NewRatFromBigInt(cbig.IntTenToThePower(big.NewInt(int64(exponent))))
+	return cbig.RatTenToThePower(exponent)
 }

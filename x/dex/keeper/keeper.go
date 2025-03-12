@@ -1,12 +1,9 @@
 package keeper
 
 import (
-	"math/big"
-
 	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/log"
-	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -16,7 +13,6 @@ import (
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/samber/lo"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -400,8 +396,6 @@ func (k Keeper) SetAccountDenomOrdersCount(
 ) error {
 	return k.setAccountDenomOrdersCount(ctx, accountDenomOrdersCount)
 }
-
-
 
 func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.Order) error {
 	if err := order.Validate(); err != nil {
@@ -1238,28 +1232,4 @@ func (k Keeper) getAccountDenomOrdersCounter(ctx sdk.Context, accNumber uint64, 
 // logger returns the Keeper logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
-}
-
-
-
-func ratFloorLog10(val *big.Rat) int {
-	num := val.Num()
-	denom := val.Denom()
-
-	// if val >= 1 the floor(log10(val)) value is equal to length of int part
-	if cbig.IntGTE(num, denom) {
-		return len(cbig.IntQuo(num, denom).Text(10)) - 1
-	}
-
-	// define the max exponent as dif or num and denom length
-	exponent := len(num.Text(10)) - len(denom.Text(10))
-	// if (val * 10^-exp) < 1 we need to decrease the exponent to get the correct floor(log10(val))
-	if cbig.RatLT(
-		cbig.RatMul(val, cbig.NewRatFromBigInt(cbig.IntTenToThePower(big.NewInt(int64(-exponent))))),
-		cbig.NewRatFromInt64(1),
-	) {
-		exponent--
-	}
-
-	return exponent
 }

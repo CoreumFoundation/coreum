@@ -19,9 +19,23 @@ func NewRatFromBigInts(nom, denom *big.Int) *big.Rat {
 	return (&big.Rat{}).SetFrac(nom, denom)
 }
 
+// IntTenToThePower returns 10 to the power of x as *big.Rat.
+func RatTenToThePower(power int64) *big.Rat {
+	if power >= 0 {
+		return (&big.Rat{}).SetFrac(IntTenToThePower(big.NewInt(power)), big.NewInt(1))
+	}
+
+	return (&big.Rat{}).SetFrac(big.NewInt(1), IntTenToThePower(big.NewInt(-power)))
+}
+
 // RatMul multiplies *big.Rat x by y and returns the result.
 func RatMul(x, y *big.Rat) *big.Rat {
 	return (&big.Rat{}).Mul(x, y)
+}
+
+// RatMul divides *big.Rat x by y and returns the result.
+func RatDiv(x, y *big.Rat) *big.Rat {
+	return (&big.Rat{}).Mul(x, RatInv(y))
 }
 
 // RatQuoWithIntRemainder divides x by y and returns the integer quotient and remainder as *big.Int.
@@ -30,6 +44,24 @@ func RatQuoWithIntRemainder(x, y *big.Rat) (*big.Int, *big.Int) {
 	denom := IntMul(x.Denom(), y.Num())
 	intPart := IntQuo(num, denom)
 	return intPart, IntSub(num, IntMul(intPart, denom))
+}
+
+// RatLog10RoundUp returns exponent of the largest power of 10 that is less than or equal to x.
+func RatLog10RoundUp(val *big.Rat) int64 {
+	num := val.Num()
+	denom := val.Denom()
+
+	// exponent is difference between exponents in scientific notation (e.g. num: 30=3*10^1, denom: 900=9*10^2 => exponent = 2-1)
+	// to calculated exponent we use length of integers numbers.
+	exponent := int64(len(num.String()) - len(denom.String()))
+
+	// special case, when val is already a power of 10, then we keep exponent as it is (since val is already rounded up)
+	if RatGTE(RatTenToThePower(exponent), val) {
+		return exponent
+	}
+
+	// otherwise we increment exponent by 1 to round up
+	return exponent + 1
 }
 
 // RatEQ returns true if x is equal to y.
