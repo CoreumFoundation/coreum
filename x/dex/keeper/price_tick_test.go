@@ -5,10 +5,11 @@ import (
 	"math/big"
 	"testing"
 
+	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestComputePriceTick(t *testing.T) {
+func Test_computePriceTick(t *testing.T) {
 	type args struct {
 		baseURA           int64
 		quoteURA          int64
@@ -149,8 +150,66 @@ func TestComputePriceTick(t *testing.T) {
 	for _, tt := range tests {
 		name := fmt.Sprintf("baseURA=%d,quoteURA=%d,priceTickExponent=%d", tt.args.baseURA, tt.args.quoteURA, tt.args.priceTickExponent)
 		t.Run(name, func(t *testing.T) {
-			actual := ComputePriceTick(big.NewInt(tt.args.baseURA), big.NewInt(tt.args.quoteURA), tt.args.priceTickExponent)
+			actual := computePriceTick(big.NewInt(tt.args.baseURA), big.NewInt(tt.args.quoteURA), tt.args.priceTickExponent)
 			assert.EqualValues(t, tt.want, actual, "want: %v actual: %v", tt.want, actual)
+		})
+	}
+}
+
+func Test_validatePriceTick(t *testing.T) {
+	type args struct {
+		price     *big.Rat
+		priceTick *big.Rat
+	}
+	tests := []struct {
+		args      args
+		wantError bool
+	}{
+		{
+			args: args{
+				price:     cbig.NewRatFromInts(123, 100), // 1.23
+				priceTick: cbig.NewRatFromInts(1, 100),   // 0.01
+			},
+			wantError: false,
+		},
+		{
+			args: args{
+				price:     cbig.NewRatFromInts(123, 1), // 123
+				priceTick: cbig.NewRatFromInts(1, 100), // 0.01
+			},
+			wantError: false,
+		},
+		{
+			args: args{
+				price:     cbig.NewRatFromInts(9, 100), // 0.09
+				priceTick: cbig.NewRatFromInts(1, 10),  // 0.1
+			},
+			wantError: true,
+		},
+		{
+			args: args{
+				price:     cbig.NewRatFromInts(12, 100), // 0.12
+				priceTick: cbig.NewRatFromInts(1, 10),   // 0.1
+			},
+			wantError: true,
+		},
+		{
+			args: args{
+				price:     cbig.NewRatFromInts(123, 1), // 123
+				priceTick: cbig.NewRatFromInts(10, 1),  // 10
+			},
+			wantError: true,
+		},
+	}
+	for _, tt := range tests {
+		name := fmt.Sprintf("price=%s,priceTick=%s", tt.args.price.String(), tt.args.priceTick.String())
+		t.Run(name, func(t *testing.T) {
+			err := validatePriceTick(tt.args.price, tt.args.priceTick)
+			if tt.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

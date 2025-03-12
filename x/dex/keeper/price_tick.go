@@ -12,12 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) getPriceTick(ctx sdk.Context, baseDenom, quoteDenom string) (*big.Rat, error) {
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (k Keeper) getPriceTick(ctx sdk.Context, params types.Params, baseDenom, quoteDenom string) (*big.Rat, error) {
 	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
 	if err != nil {
 		return nil, err
@@ -28,7 +23,7 @@ func (k Keeper) getPriceTick(ctx sdk.Context, baseDenom, quoteDenom string) (*bi
 		return nil, err
 	}
 
-	return ComputePriceTick(baseURA.BigInt(), quoteURA.BigInt(), params.PriceTickExponent), nil
+	return computePriceTick(baseURA.BigInt(), quoteURA.BigInt(), params.PriceTickExponent), nil
 }
 
 func (k Keeper) validatePriceTick(
@@ -37,21 +32,12 @@ func (k Keeper) validatePriceTick(
 	baseDenom, quoteDenom string,
 	price types.Price,
 ) error {
-	priceTickRat, err := k.getPriceTick(ctx, baseDenom, quoteDenom)
+	priceTickRat, err := k.getPriceTick(ctx, params, baseDenom, quoteDenom)
 	if err != nil {
 		return err
 	}
 
-	_, remainder := cbig.RatQuoWithIntRemainder(price.Rat(), priceTickRat)
-	if !cbig.IntEqZero(remainder) {
-		return sdkerrors.Wrapf(
-			types.ErrInvalidInput,
-			"invalid price %s, the price must be multiple of %s",
-			price.Rat().String(), priceTickRat.String(),
-		)
-	}
-
-	return nil
+	return validatePriceTick(price.Rat(), priceTickRat)
 }
 
 func (k Keeper) getAssetFTUnifiedRefAmount(
@@ -73,8 +59,21 @@ func (k Keeper) getAssetFTUnifiedRefAmount(
 	return *settings.UnifiedRefAmount, nil
 }
 
-// ComputePriceTick returns the price tick of a given ref amounts and price tick exponent.
-func ComputePriceTick(baseURA, quoteURA *big.Int, priceTickExponent int32) *big.Rat {
+func validatePriceTick(price *big.Rat, priceTick *big.Rat) error {
+	_, remainder := cbig.RatQuoWithIntRemainder(price, priceTick)
+	if !cbig.IntEqZero(remainder) {
+		return sdkerrors.Wrapf(
+			types.ErrInvalidInput,
+			"invalid price %s, the price must be multiple of %s",
+			price.String(), priceTick.String(),
+		)
+	}
+
+	return nil
+}
+
+// computePriceTick returns the price tick of a given ref amounts and price tick exponent.
+func computePriceTick(baseURA, quoteURA *big.Int, priceTickExponent int32) *big.Rat {
 	// price_tick_size(AAA/BBB) = 10^price_tick_exponent * round_up_pow10(unified_ref_amount(AAA)/unified_ref_amount(BBB)) =
 	// 10^(price_tick_exponent + log10_round_up(unified_ref_amount(AAA)/unified_ref_amount(BBB))
 	exponent := int64(priceTickExponent) + cbig.RatLog10RoundUp(cbig.NewRatFromBigInts(quoteURA, baseURA))

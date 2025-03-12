@@ -5,18 +5,23 @@ import (
 )
 
 // NewRatFromInt64 returns a *big.Rat from the provided int64 numerator.
-func NewRatFromInt64(nom int64) *big.Rat {
-	return (&big.Rat{}).SetFrac(big.NewInt(nom), big.NewInt(1))
+func NewRatFromInt64(num int64) *big.Rat {
+	return (&big.Rat{}).SetFrac(big.NewInt(num), big.NewInt(1))
+}
+
+// NewRatFromInts returns a *big.Rat from the provided int64 numerator.
+func NewRatFromInts(num, denom int64) *big.Rat {
+	return (&big.Rat{}).SetFrac(big.NewInt(num), big.NewInt(denom))
 }
 
 // NewRatFromBigInt returns a *big.Rat from the provided numerator.
-func NewRatFromBigInt(nom *big.Int) *big.Rat {
-	return (&big.Rat{}).SetFrac(nom, big.NewInt(1))
+func NewRatFromBigInt(num *big.Int) *big.Rat {
+	return (&big.Rat{}).SetFrac(num, big.NewInt(1))
 }
 
 // NewRatFromBigInts returns a *big.Rat from the provided numerator and denominator.
-func NewRatFromBigInts(nom, denom *big.Int) *big.Rat {
-	return (&big.Rat{}).SetFrac(nom, denom)
+func NewRatFromBigInts(num, denom *big.Int) *big.Rat {
+	return (&big.Rat{}).SetFrac(num, denom)
 }
 
 // IntTenToThePower returns 10 to the power of x as *big.Rat.

@@ -1,11 +1,13 @@
 # Price Tick Size  
 
-To provide a better trading experience, avoid rounding issues, and minimize remainders during order execution, we use [`price_tick_size`](https://www.investopedia.com/terms/t/tick.asp). A tick is the minimum price movement an asset can make, either upward or downward.
+To provide a better trading experience, avoid rounding issues, and minimize remainders during order execution, we use [`price_tick_size`](https://www.investopedia.com/terms/t/tick.asp). A tick is the minimum price movement an asset price can make, either upward or downward.
 
 Since tick size is set by the exchange where an asset is traded and is primarily based on its price (though it also depends on asset type and market conditions), we can derive a formula to calculate `price_tick_size` for any market. This calculation is based on the relationship of both assets against a common instrument. For example, to determine the `price_tick_size` for the **ETH/BTC** pair, we can use the prices of **ETH/USD** and **BTC/USD**.  
 
-TODO: https://reviewable.io/reviews/CoreumFoundation/coreum/1084#-OL9IKEn0aBRLMkfVVtB
-To define an asset’s price on-chain, we introduce a parameter called `unified_ref_amount`. This represents the amount of the token’s **subunit** required to equal **1 USD**. For example, if BTC is priced at **$90,000**, then `unified_ref_amount` should be set to **0.0000111** (since **1 / 90,000 = 0.0000111**).  
+To define an asset’s price on-chain, we introduce a parameter called `unified_ref_amount`. This represents the quantity of the token’s **subunit** that corresponds to **1 USD**. 
+
+For instance, if BTC is issued on Coreum with satoshi as its subunit (where **1 BTC = 100,000,000 satoshis**) and its market price is **$90,000**, then `unified_ref_amount` should be **0.0000111 BTC (or 1110 satoshis)**, since **1 BTC / 90,000 = 0.0000111 BTC**, which approximates **1 USD** in satoshi terms.
+
 
 ## How `unified_ref_amount` is Defined  
 
@@ -38,7 +40,7 @@ For more details on the logic behind this formula and the constants used, refer 
 
 # Base Amount Step  
 
-To ensure smooth order execution and prevent excessively small trade sizes, we introduce the `base_amount_step`. This defines the smallest allowable step for the base asset inside a market. It prevents rounding issues, partial order cancellations, and improves consistency across markets. Unlike `price_tick_size`, which is defined per market, `base_amount_step` is defined per asset.  
+To ensure smooth order execution and prevent excessively small trade sizes, we introduce the `base_amount_step`. This defines the smallest allowable step for the base asset inside a market. It prevents rounding issues, partial order cancellations during execution, and improves consistency across markets. Unlike `price_tick_size`, which is defined per market, `base_amount_step` is defined per asset.  
 
 ## Formula
 
@@ -61,7 +63,7 @@ For more details on the logic behind this formula and the constants used, refer 
 
 - Changes to `unified_ref_amount`, `price_tick_exponent` or `base_amount_exponent` **do not** affect existing orders.
 - `price_tick_size` and `base_amount_step` represent hard backend boundaries and may have more granular precision than end users need. Depending on the use case, applications can use less granular values to provide a better user experience. 
-- `base_amount_step` could be greater than 1 in some cases, and front-end applications should handle this properly. For example, a market may be represented where the quoted price is for a specific multiple of the base asset (e.g., **1000CAT/USDT** instead of **CAT/USDT**). This improves readability and prevents excessive decimal precision.  
+- `base_amount_step` could be greater than 1 in some cases, and front-end applications should handle this properly. For example, a market may be represented where the quoted price is for a specific multiple of the base asset (e.g., **kPEPE/USDT** instead of **PEPE/USDT**, kPEPE means 1000PEPE). This improves readability and prevents excessive decimal precision.
 
 # Research
 
