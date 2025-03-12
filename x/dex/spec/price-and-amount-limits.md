@@ -4,6 +4,7 @@ To provide a better trading experience, avoid rounding issues, and minimize rema
 
 Since tick size is set by the exchange where an asset is traded and is primarily based on its price (though it also depends on asset type and market conditions), we can derive a formula to calculate `price_tick_size` for any market. This calculation is based on the relationship of both assets against a common instrument. For example, to determine the `price_tick_size` for the **ETH/BTC** pair, we can use the prices of **ETH/USD** and **BTC/USD**.  
 
+TODO: https://reviewable.io/reviews/CoreumFoundation/coreum/1084#-OL9IKEn0aBRLMkfVVtB
 To define an asset’s price on-chain, we introduce a parameter called `unified_ref_amount`. This represents the amount of the token’s **subunit** required to equal **1 USD**. For example, if BTC is priced at **$90,000**, then `unified_ref_amount` should be set to **0.0000111** (since **1 / 90,000 = 0.0000111**).  
 
 ## How `unified_ref_amount` is Defined  
