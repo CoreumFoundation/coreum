@@ -24,7 +24,7 @@ Everyone is encouraged to run a chain locally for development and testing purpos
 
 Entire process of running local chain is automated by our tooling. The only prerequisites are:
 - `docker` installed from your favorite package manager
-- `go 1.21` or newer installed and available in your `PATH`
+- `go 1.23` or newer installed and available in your `PATH`
 
 ### Build binaries
 
