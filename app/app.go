@@ -621,6 +621,7 @@ func New(
 		app.ScopedICAHostKeeper,
 		bApp.MsgServiceRouter(),
 	)
+	app.ICAHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec,
