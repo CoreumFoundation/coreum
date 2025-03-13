@@ -19,6 +19,7 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcinterchainaccountstypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -82,6 +83,7 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		// ibc/applications/interchain_accounts
 		sdk.MsgTypeURL(&ibcinterchainaccountstypes.MsgRegisterInterchainAccount{}): {},
 		sdk.MsgTypeURL(&ibcinterchainaccountstypes.MsgSendTx{}):                    {},
+		sdk.MsgTypeURL(&icahosttypes.MsgModuleQuerySafe{}):                         {},
 
 		// internal cosmos
 		sdk.MsgTypeURL(&sdktestdatatypes.MsgCreateDog{}): {},
