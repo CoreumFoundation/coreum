@@ -50,7 +50,7 @@ func executeLintProtocCommand(ctx context.Context, deps types.DepsFunc, includeD
 	args := []string{
 		"--buf-lint_out=.",
 		"--buf-lint_opt=" + string(configLint),
-		"--plugin=%s" + tools.Path("bin/protoc-gen-buf-lint", tools.TargetPlatformLocal),
+		"--plugin=" + tools.Path("bin/protoc-gen-buf-lint", tools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {
