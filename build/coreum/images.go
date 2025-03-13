@@ -2,7 +2,6 @@ package coreum
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum/build/coreum/image"
@@ -90,7 +89,7 @@ func ensureReleasedBinaries(ctx context.Context, deps types.DepsFunc) error {
 			binaryTool,
 			tools.TargetPlatformLinuxLocalArchInDocker,
 			filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String()),
-			fmt.Sprintf("bin/%s", binaryTool)); err != nil {
+			"bin/"+string(binaryTool)); err != nil {
 			return err
 		}
 	}

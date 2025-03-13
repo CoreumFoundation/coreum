@@ -321,6 +321,7 @@ github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd h1:4nns+B+H
 github.com/CoreumFoundation/crust v0.0.0-20240531092943-bab690541bbd/go.mod h1:+tc+D5f9K7oNNtv8UazzNy8LheAhBG7UDc25JwY803Y=
 github.com/CoreumFoundation/crust v0.0.0-20241211095902-3aee46b7c4d6 h1:cDeGm1Iwenf8fbKQNui26L8tAZKUuYZ7F2PpwjTA2F0=
 github.com/CoreumFoundation/crust v0.0.0-20241211095902-3aee46b7c4d6/go.mod h1:+tc+D5f9K7oNNtv8UazzNy8LheAhBG7UDc25JwY803Y=
+github.com/CoreumFoundation/crust v0.0.0-20250313113233-d20e1817492e/go.mod h1:+tc+D5f9K7oNNtv8UazzNy8LheAhBG7UDc25JwY803Y=
 github.com/CosmWasm/wasmd v0.40.0-rc.1/go.mod h1:uacdue6EGn9JA1TqBNHB3iCe4PCIChuFT23AzIl2VME=
 github.com/CosmWasm/wasmvm v1.2.3/go.mod h1:vW/E3h8j9xBQs9bCoijDuawKo9kCtxOaS8N8J7KFtkc=
 github.com/CosmWasm/wasmvm v1.5.0/go.mod h1:fXB+m2gyh4v9839zlIXdMZGeLAxqUdYdFQqYsTha2hc=

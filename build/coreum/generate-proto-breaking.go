@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -98,8 +97,8 @@ func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 
 	args := []string{
 		"--buf-breaking_out=.",
-		fmt.Sprintf("--buf-breaking_opt=%s", configBuf),
-		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-buf-breaking", tools.TargetPlatformLocal)),
+		"--buf-breaking_opt=" + configBuf.String(),
+		"--plugin=" + tools.Path("bin/protoc-gen-buf-breaking", tools.TargetPlatformLocal),
 	}
 
 	args = append(args, includeArgs...)

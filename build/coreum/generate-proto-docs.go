@@ -2,7 +2,6 @@ package coreum
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -51,7 +50,7 @@ func executeProtocCommand(ctx context.Context, deps types.DepsFunc, includeDirs,
 
 	args := []string{
 		"--doc_out=docs",
-		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-doc", tools.TargetPlatformLocal)),
+		"--plugin=" + tools.Path("bin/protoc-gen-doc", tools.TargetPlatformLocal),
 		"--doc_opt=docs/api.tmpl.md,api.md",
 	}
 

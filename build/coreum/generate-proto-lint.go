@@ -3,7 +3,6 @@ package coreum
 import (
 	"context"
 	_ "embed"
-	"fmt"
 	"os/exec"
 	"path/filepath"
 
@@ -50,8 +49,8 @@ func executeLintProtocCommand(ctx context.Context, deps types.DepsFunc, includeD
 
 	args := []string{
 		"--buf-lint_out=.",
-		fmt.Sprintf("--buf-lint_opt=%s", configLint),
-		fmt.Sprintf("--plugin=%s", tools.Path("bin/protoc-gen-buf-lint", tools.TargetPlatformLocal)),
+		"--buf-lint_opt=" + string(configLint),
+		"--plugin=%s" + tools.Path("bin/protoc-gen-buf-lint", tools.TargetPlatformLocal),
 	}
 
 	for _, path := range includeDirs {

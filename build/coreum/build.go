@@ -144,11 +144,11 @@ func buildCoredInDocker(
 		const ccDockerDir = "/musl-gcc"
 		dockerVolumes = append(
 			dockerVolumes,
-			fmt.Sprintf("%s:%s", hostCCDirPath, ccDockerDir),
+			hostCCDirPath+":"+ccDockerDir,
 			// put the libwasmvm to the lib folder of the compiler
-			fmt.Sprintf("%s:%s", wasmHostDirPath, fmt.Sprintf("%s%s", ccDockerDir, wasmCCLibRelativeLibPath)),
+			wasmHostDirPath+":"+ccDockerDir+wasmCCLibRelativeLibPath,
 		)
-		cc = fmt.Sprintf("%s%s", ccDockerDir, ccRelativePath)
+		cc = ccDockerDir + ccRelativePath
 	case tools.OSDarwin:
 		buildTags = append(buildTags, "static_wasm")
 		switch targetPlatform {
@@ -160,12 +160,12 @@ func buildCoredInDocker(
 			return errors.Errorf("building is not possible for platform %s", targetPlatform)
 		}
 		wasmHostDirPath := tools.Path("lib/libwasmvmstatic_darwin.a", targetPlatform)
-		dockerVolumes = append(dockerVolumes, fmt.Sprintf("%s:%s", wasmHostDirPath, "/lib/libwasmvmstatic_darwin.a"))
+		dockerVolumes = append(dockerVolumes, wasmHostDirPath+":/lib/libwasmvmstatic_darwin.a")
 		envs = append(envs, "CGO_LDFLAGS=-L/lib")
 	default:
 		return errors.Errorf("building is not possible for platform %s", targetPlatform)
 	}
-	envs = append(envs, fmt.Sprintf("CC=%s", cc))
+	envs = append(envs, "CC="+cc)
 
 	versionLDFlags, err := coredVersionLDFlags(ctx, buildTags, mod)
 	if err != nil {

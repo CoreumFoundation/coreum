@@ -2,10 +2,10 @@ package coreum
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/samber/lo"
@@ -90,7 +90,7 @@ func runIntegrationTests(
 ) error {
 	flags := []string{
 		"-tags=integrationtests",
-		fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
+		"-parallel=" + strconv.Itoa(2*runtime.NumCPU()),
 		"-timeout=1h",
 	}
 	if runUnsafe {
