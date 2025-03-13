@@ -85,7 +85,7 @@ func CmdTxIssue() *cobra.Command {
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
 		//nolint:lll // breaking this down will make it look worse when printed to user screen.
-		Use:   fmt.Sprintf("issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features="+strings.Join(allowedFeatures, ",")+" --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri_hash e000624 --extension-code-id=1 --extension-label=my-extension --extension-funds=100000ABC-%s --extension-instantiation-msg={}", constant.AddressSampleTest),
+		Use:   fmt.Sprintf("issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features="+strings.Join(allowedFeatures, ",")+" --burn-rate=0.12 --send-commission-rate=0.2 --uri https://my-token-meta.invalid/1 --uri-hash e000624 --extension-code-id=1 --extension-label=my-extension --extension-funds=100000ABC-%s --extension-instantiation-msg={}", constant.AddressSampleTest),
 		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
