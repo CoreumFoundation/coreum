@@ -24,6 +24,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
@@ -319,6 +320,7 @@ func DefaultConfig() Config {
 			&ibcchanneltypes.MsgAcknowledgement{},
 
 			// ibc/ica
+			&icahosttypes.MsgModuleQuerySafe{},
 			&icacontrollertypes.MsgSendTx{},
 		},
 	)
