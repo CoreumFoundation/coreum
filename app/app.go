@@ -1439,18 +1439,6 @@ func (app *App) AutoCliOpts() autocli.AppOptions {
 	}
 }
 
-// GetMaccPerms returns a copy of the module account permissions
-//
-// NOTE: This is solely to be used for testing purposes.
-func GetMaccPerms() map[string][]string {
-	dupMaccPerms := make(map[string][]string)
-	for k, v := range maccPerms {
-		dupMaccPerms[k] = v
-	}
-
-	return dupMaccPerms
-}
-
 // initParamsKeeper init params keeper and its subspaces.
 func initParamsKeeper(
 	appCodec codec.BinaryCodec,
