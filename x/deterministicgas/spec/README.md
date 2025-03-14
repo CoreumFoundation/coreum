@@ -298,7 +298,6 @@ and the formula for them is
 | `/ibc.core.connection.v1.MsgConnectionOpenInit`                        |
 | `/ibc.core.connection.v1.MsgConnectionOpenTry`                         |
 | `/ibc.core.connection.v1.MsgUpdateParams`                              |
-| `/packetforward.v1.MsgUpdateParams`                                    |
 
 [//]: # (GENERATED DOC.)
 [//]: # (DO NOT EDIT MANUALLY!!!)
