@@ -890,6 +890,7 @@
     - [EventLeaveGroup](#cosmos.group.v1.EventLeaveGroup)
     - [EventProposalPruned](#cosmos.group.v1.EventProposalPruned)
     - [EventSubmitProposal](#cosmos.group.v1.EventSubmitProposal)
+    - [EventTallyError](#cosmos.group.v1.EventTallyError)
     - [EventUpdateGroup](#cosmos.group.v1.EventUpdateGroup)
     - [EventUpdateGroupPolicy](#cosmos.group.v1.EventUpdateGroupPolicy)
     - [EventVote](#cosmos.group.v1.EventVote)
@@ -15545,6 +15546,26 @@ EventSubmitProposal is an event emitted when a proposal is created.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `proposal_id` | [uint64](#uint64) |  |  `proposal_id is the unique ID of the proposal.`  |
+
+
+
+
+
+
+<a name="cosmos.group.v1.EventTallyError"></a>
+
+### EventTallyError
+
+```
+EventTallyError is an event emitted when a proposal tally failed with an error.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `proposal_id` | [uint64](#uint64) |  |  `proposal_id is the unique ID of the proposal.`  |
+| `error_message` | [string](#string) |  |  `error_message is the raw error output`  |
 
 
 

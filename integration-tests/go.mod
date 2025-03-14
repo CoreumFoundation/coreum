@@ -3,6 +3,8 @@ module github.com/CoreumFoundation/coreum/v5/integration-tests
 go 1.23.3
 
 replace (
+	// The BuildQueryMethodCommand function of v2.0.0-beta.3 hardcoded EnumAsString as true
+	cosmossdk.io/client/v2 v2.0.0-beta.3 => cosmossdk.io/client/v2 v2.0.0-beta.1
 	// cosmos keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/CoreumFoundation/coreum/v5 => ../
@@ -28,11 +30,11 @@ require (
 	github.com/CoreumFoundation/coreum/v5 v5.0.0-20241002100003-2dcad94c2fbc
 	github.com/CosmWasm/wasmd v0.54.0
 	github.com/cometbft/cometbft v0.38.17
-	github.com/cosmos/cosmos-sdk v0.50.11
+	github.com/cosmos/cosmos-sdk v0.50.13
 	github.com/cosmos/gogoproto v1.7.0
-	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.0.2
+	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.1.1
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v8 v8.0.0-20240626224216-94190a9816cc
-	github.com/cosmos/ibc-go/v8 v8.4.0
+	github.com/cosmos/ibc-go/v8 v8.7.0
 	github.com/google/uuid v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.39.0
@@ -47,7 +49,7 @@ require (
 	cloud.google.com/go/iam v1.1.10 // indirect
 	cloud.google.com/go/storage v1.43.0 // indirect
 	cosmossdk.io/api v0.7.6 // indirect
-	cosmossdk.io/client/v2 v2.0.0-beta.1 // indirect
+	cosmossdk.io/client/v2 v2.0.0-beta.3 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
 	cosmossdk.io/core v0.12.0 // indirect
 	cosmossdk.io/depinject v1.1.0 // indirect
@@ -92,7 +94,7 @@ require (
 	github.com/cosmos/iavl v1.2.4 // indirect
 	github.com/cosmos/ibc-go/modules/capability v1.0.1 // indirect
 	github.com/cosmos/ics23/go v0.11.0 // indirect
-	github.com/cosmos/ledger-cosmos-go v0.13.3 // indirect
+	github.com/cosmos/ledger-cosmos-go v0.14.0 // indirect
 	github.com/danieljoos/wincred v1.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
@@ -115,7 +117,7 @@ require (
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/glog v1.2.3 // indirect
+	github.com/golang/glog v1.2.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -209,9 +211,9 @@ require (
 	go.opentelemetry.io/otel/metric v1.32.0 // indirect
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/exp v0.0.0-20250215185904-eff6e970281f // indirect
-	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
