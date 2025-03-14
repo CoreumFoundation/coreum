@@ -10,7 +10,6 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/build/tools"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/types"
 	"github.com/CoreumFoundation/crust/znet/infra"
@@ -157,9 +156,6 @@ func defaultZNetConfig() *infra.ConfigFactory {
 		TimeoutCommit: 500 * time.Millisecond,
 		HomeDir:       filepath.Join(lo.Must(os.UserHomeDir()), ".crust", "znet"),
 		RootDir:       ".",
-		CoredUpgrades: map[string]string{
-			"v5": "cored",
-			"v4": string(tools.CoredV401),
-		},
+		CoredUpgrades: CoredUpgrades(),
 	}
 }
