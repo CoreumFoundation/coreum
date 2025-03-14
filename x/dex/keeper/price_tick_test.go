@@ -101,7 +101,8 @@ func Test_computePriceTick(t *testing.T) {
 			want: big.NewRat(1, 100_000), // RatLog10RoundUp(1_000_001/1_000_000) = 2
 		},
 		// Examples from spec/price-and-amount.md
-		// All amounts are represented as subunits on chain so they are multiplied by 10^6.
+		// All amounts are represented as subunits on chain.
+		// For simplicity we consider that all of them are issued with precision of 10^6.
 		{
 			// BTC/USDT
 			args: args{
@@ -160,60 +161,55 @@ func Test_computePriceTick(t *testing.T) {
 	}
 }
 
-func Test_validatePriceTick(t *testing.T) {
+func Test_isPriceTickValid(t *testing.T) {
 	type args struct {
 		price     *big.Rat
 		priceTick *big.Rat
 	}
 	tests := []struct {
-		args      args
-		wantError bool
+		args args
+		want bool
 	}{
 		{
 			args: args{
 				price:     cbig.NewRatFromInts(123, 100), // 1.23
 				priceTick: cbig.NewRatFromInts(1, 100),   // 0.01
 			},
-			wantError: false,
+			want: true,
 		},
 		{
 			args: args{
 				price:     cbig.NewRatFromInts(123, 1), // 123
 				priceTick: cbig.NewRatFromInts(1, 100), // 0.01
 			},
-			wantError: false,
+			want: true,
 		},
 		{
 			args: args{
 				price:     cbig.NewRatFromInts(9, 100), // 0.09
 				priceTick: cbig.NewRatFromInts(1, 10),  // 0.1
 			},
-			wantError: true,
+			want: false,
 		},
 		{
 			args: args{
 				price:     cbig.NewRatFromInts(12, 100), // 0.12
 				priceTick: cbig.NewRatFromInts(1, 10),   // 0.1
 			},
-			wantError: true,
+			want: false,
 		},
 		{
 			args: args{
 				price:     cbig.NewRatFromInts(123, 1), // 123
 				priceTick: cbig.NewRatFromInts(10, 1),  // 10
 			},
-			wantError: true,
+			want: false,
 		},
 	}
 	for _, tt := range tests {
 		name := fmt.Sprintf("price=%s,priceTick=%s", tt.args.price.String(), tt.args.priceTick.String())
 		t.Run(name, func(t *testing.T) {
-			err := isPriceTickValid(tt.args.price, tt.args.priceTick)
-			if tt.wantError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
+			assert.Equal(t, tt.want, isPriceTickValid(tt.args.price, tt.args.priceTick))
 		})
 	}
 }
