@@ -230,7 +230,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 			_, err := testApp.EndBlocker(sdkCtx)
 			require.NoError(t, err)
 
-			// don't limit the price tick
+			// don't limit the price tick since we want to test wide range of prices
 			params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 			require.NoError(t, err)
 			params.PriceTickExponent = int32(types.MinExp)

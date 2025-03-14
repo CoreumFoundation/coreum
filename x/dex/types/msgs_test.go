@@ -70,6 +70,24 @@ func TestMsgUpdateParams_ValidateBasic(t *testing.T) {
 			wantErr: types.ErrInvalidInput,
 		},
 		{
+			name: "invalid_zero_quantity_step_exponent",
+			msg: func() types.MsgUpdateParams {
+				msg := validMsg()
+				msg.Params.QuantityStepExponent = 0
+				return msg
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid_positive_quantity_step_exponent",
+			msg: func() types.MsgUpdateParams {
+				msg := validMsg()
+				msg.Params.QuantityStepExponent = 1
+				return msg
+			}(),
+			wantErr: types.ErrInvalidInput,
+		},
+		{
 			name: "invalid_max_orders_per_denom",
 			msg: func() types.MsgUpdateParams {
 				msg := validMsg()

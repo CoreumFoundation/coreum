@@ -4924,7 +4924,8 @@ Params keeps gov manageable parameters.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `default_unified_ref_amount` | [string](#string) |  |  `default_unified_ref_amount is the default approximate amount you need to buy 1USD, used to for tokens without custom value`  |
-| `price_tick_exponent` | [int32](#int32) |  |  `price_tick_exponent is the exponent used for the price tick calculation`  |
+| `price_tick_exponent` | [int32](#int32) |  |  `price_tick_exponent is the exponent used in price tick calculation formula`  |
+| `quantity_step_exponent` | [int32](#int32) |  |  `quantity_step_exponent is the exponent used in quantity step calculation formula`  |
 | `max_orders_per_denom` | [uint64](#uint64) |  |  `max_orders_per_denom is the maximum number of orders per denom the user can have`  |
 | `order_reserve` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  `order_reserve is the reserve required to save the order in the order book`  |
 
