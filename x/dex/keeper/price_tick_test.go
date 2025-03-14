@@ -208,7 +208,7 @@ func Test_validatePriceTick(t *testing.T) {
 	for _, tt := range tests {
 		name := fmt.Sprintf("price=%s,priceTick=%s", tt.args.price.String(), tt.args.priceTick.String())
 		t.Run(name, func(t *testing.T) {
-			err := validatePriceTick(tt.args.price, tt.args.priceTick)
+			err := isPriceTickValid(tt.args.price, tt.args.priceTick)
 			if tt.wantError {
 				assert.Error(t, err)
 			} else {
