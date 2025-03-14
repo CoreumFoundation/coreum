@@ -84,7 +84,7 @@ func NewFuzzApp(
 
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
-	params.PriceTickExponent = int32(-10) // use low but not too much
+	params.PriceTickExponent = int32(-6) // use low but not too much
 
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
