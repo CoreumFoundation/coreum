@@ -48,6 +48,7 @@ To ensure smooth order execution and prevent excessively small trade sizes, we i
 
 The **Base Amount Step** for a given asset **AAA** is calculated using the following formula:
 
+// TODO: Quantity step can't be less than 1 (at least)
 ```
 base_amount_step(AAA) = 10^base_amount_step_exponent * round_up_pow10(unified_ref_amount(AAA))
 ```
