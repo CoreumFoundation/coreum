@@ -36,6 +36,7 @@ var (
 	_ extendedMsg = &MsgClawback{}
 	_ extendedMsg = &MsgSetWhitelistedLimit{}
 	_ extendedMsg = &MsgTransferAdmin{}
+	_ extendedMsg = &MsgClearAdmin{}
 	_ extendedMsg = &MsgUpgradeTokenV1{}
 	_ extendedMsg = &MsgUpdateParams{}
 	_ extendedMsg = &MsgUpdateDEXUnifiedRefAmount{}
@@ -55,6 +56,9 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgSetWhitelistedLimit{}, ModuleName+"/MsgSetWhitelistedLimit")
 	legacy.RegisterAminoMsg(cdc, &MsgUpgradeTokenV1{}, ModuleName+"/MsgUpgradeTokenV1")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, ModuleName+"/MsgUpdateParams")
+	legacy.RegisterAminoMsg(cdc, &MsgClawback{}, ModuleName+"/MsgClawback")
+	legacy.RegisterAminoMsg(cdc, &MsgClearAdmin{}, ModuleName+"/MsgClearAdmin")
+	legacy.RegisterAminoMsg(cdc, &MsgTransferAdmin{}, ModuleName+"/MsgTransferAdmin")
 	legacy.RegisterAminoMsg(
 		cdc, &MsgUpdateDEXUnifiedRefAmount{}, ModuleName+"/MsgUpdateDEXUnifiedRefAmount",
 	)
