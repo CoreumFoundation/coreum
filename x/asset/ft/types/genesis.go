@@ -33,6 +33,18 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	for _, balance := range gs.DEXExpectedToReceiveBalances {
+		if err := ValidateAssetCoins(balance.Coins); err != nil {
+			return err
+		}
+	}
+
+	for _, ptu := range gs.PendingTokenUpgrades {
+		if _, _, err := DeconstructDenom(ptu.Denom); err != nil {
+			return err
+		}
+	}
+
 	for _, settings := range gs.DEXSettings {
 		if err := ValidateDEXSettings(settings.DEXSettings); err != nil {
 			return err
