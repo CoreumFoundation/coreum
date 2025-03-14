@@ -734,6 +734,7 @@ func TestDEXProposalParamChange(t *testing.T) {
 	newParams := initialParams
 	newParams.DefaultUnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("33.01")
 	newParams.PriceTickExponent = -33
+	newParams.QuantityStepExponent = -15
 	newParams.OrderReserve = sdk.NewInt64Coin(initialParams.OrderReserve.Denom, 1)
 
 	chain.Governance.ProposalFromMsgAndVote(

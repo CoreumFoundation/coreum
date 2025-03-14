@@ -14,6 +14,9 @@ var (
 	// KeyPriceTickExponent represents the price tick exponent param key.
 	KeyPriceTickExponent = []byte("PriceTickExponent")
 
+	// QuantityStepExponent represents the quantity step exponent param key.
+	KeyQuantityStepExponent = []byte("QuantityStepExponent")
+
 	// KeyMaxOrdersPerDenom represents the max orders per denom param key.
 	KeyMaxOrdersPerDenom = []byte("MaxOrdersPerDenom")
 
@@ -26,6 +29,7 @@ func DefaultParams() Params {
 	return Params{
 		DefaultUnifiedRefAmount: sdkmath.LegacyMustNewDecFromStr("1000000"),
 		PriceTickExponent:       -6,
+		QuantityStepExponent:    -2,
 		MaxOrdersPerDenom:       100,
 		OrderReserve:            sdk.NewInt64Coin(sdk.DefaultBondDenom, 10_000_000),
 	}
@@ -44,6 +48,11 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			KeyPriceTickExponent,
 			&m.PriceTickExponent,
 			validatePriceTickExponent,
+		),
+		paramtypes.NewParamSetPair(
+			KeyQuantityStepExponent,
+			&m.QuantityStepExponent,
+			validateQuantityStepExponent,
 		),
 		paramtypes.NewParamSetPair(
 			KeyMaxOrdersPerDenom,
@@ -68,6 +77,10 @@ func (m Params) ValidateBasic() error {
 		return err
 	}
 
+	if err := validateQuantityStepExponent(m.QuantityStepExponent); err != nil {
+		return err
+	}
+
 	if err := validateMaxOrdersPerDenom(m.MaxOrdersPerDenom); err != nil {
 		return err
 	}
@@ -89,12 +102,27 @@ func validateDefaultUnifiedRefAmount(i interface{}) error {
 func validatePriceTickExponent(i interface{}) error {
 	exp, ok := i.(int32)
 	if !ok {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T", i)
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T, expected: int", i)
 	}
 	if exp >= 0 {
 		return sdkerrors.Wrap(
 			ErrInvalidInput,
 			"price tick exponent must be negative",
+		)
+	}
+
+	return nil
+}
+
+func validateQuantityStepExponent(i interface{}) error {
+	exp, ok := i.(int32)
+	if !ok {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T, expected: int", i)
+	}
+	if exp >= 0 {
+		return sdkerrors.Wrap(
+			ErrInvalidInput,
+			"quantity step exponent must be negative",
 		)
 	}
 

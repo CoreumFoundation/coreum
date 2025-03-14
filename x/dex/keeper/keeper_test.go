@@ -92,7 +92,8 @@ func TestKeeper_UpdateParams(t *testing.T) {
 
 	newPrams := gotParams
 	newPrams.DefaultUnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("33.33")
-	newPrams.PriceTickExponent = -33
+	newPrams.PriceTickExponent = gotParams.PriceTickExponent - 2
+	newPrams.QuantityStepExponent = gotParams.QuantityStepExponent - 1
 	newPrams.OrderReserve = sdk.NewInt64Coin(sdk.DefaultBondDenom, 313)
 
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())

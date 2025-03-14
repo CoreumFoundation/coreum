@@ -22,9 +22,9 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 	testApp := simapp.New()
 	lock := sync.Mutex{}
 
-	// don't limit the price tick
 	sdkCtx, _, _ := testApp.BeginNextBlock()
 
+	// don't limit the price tick
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(f, err)
 	params.PriceTickExponent = int32(types.MinExp)
