@@ -23,7 +23,7 @@ var (
 const (
 	// MaxNumLen is max allowed num part length.
 	MaxNumLen = 19
-	// MinExp is the max allowed exponent. Technically it's limited by MinInt8 (-128) + `MaxNumLen` (required for
+	// MinExp is the min allowed exponent. Technically it's limited by MinInt8 (-128) + `MaxNumLen` (required for
 	//	normalization). But to make the range value easier for understanding and still keeping enough precision we set
 	//	it to -100.
 	MinExp = int8(-100)
