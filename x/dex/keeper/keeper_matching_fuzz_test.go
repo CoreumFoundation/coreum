@@ -86,7 +86,8 @@ func NewFuzzApp(
 
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
-	// use smaller values than default ones in case we decide to decrease it
+
+	// use smaller values than default ones to allow wider range of values for price and quantity inside this test.
 	params.PriceTickExponent -= 10
 	params.QuantityStepExponent -= 10
 
@@ -253,7 +254,12 @@ func (fa *FuzzApp) PlaceOrdersAndAssertFinalState(
 	}
 	cancelAllOrdersAndAssertState(t, sdkCtx, fa.testApp)
 
-	require.LessOrEqual(t, float64(fa.failedPlaceOrderCount), float64(fa.cfg.OrdersCount)*0.8, "More than 80% of orders failed to be placed")
+	require.LessOrEqual(
+		t,
+		float64(fa.failedPlaceOrderCount),
+		float64(fa.cfg.OrdersCount)*0.8,
+		"More than 80% of orders failed to be placed",
+	)
 }
 
 func (fa *FuzzApp) GenOrder(
@@ -326,7 +332,7 @@ func (fa *FuzzApp) GenOrder(
 		timeInForce = types.TIME_IN_FORCE_IOC
 	}
 
-	// the quantity can't be zero
+	// the quantity can't be zero, also multiply by 1 billion to respect quantity step
 	quantity := uint64((rnd.Int63n(1_000_000) + 1) * 1_000_000_000)
 
 	var orderIDSuffix string
