@@ -14,7 +14,7 @@ var (
 	// KeyPriceTickExponent represents the price tick exponent param key.
 	KeyPriceTickExponent = []byte("PriceTickExponent")
 
-	// QuantityStepExponent represents the quantity step exponent param key.
+	// KeyQuantityStepExponent represents the quantity step exponent param key.
 	KeyQuantityStepExponent = []byte("QuantityStepExponent")
 
 	// KeyMaxOrdersPerDenom represents the max orders per denom param key.

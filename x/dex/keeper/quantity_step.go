@@ -5,6 +5,7 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
