@@ -608,7 +608,6 @@ func New(
 		keys[packetforwardtypes.StoreKey],
 		nil, // will be zero-value here, reference is set later on with SetTransferKeeper.
 		app.IBCKeeper.ChannelKeeper,
-		app.DistrKeeper,
 		app.BankKeeper,
 		app.HooksICS4Wrapper, // Wrap IBC hooks with PFM.
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -803,7 +802,6 @@ func New(
 		app.PacketForwardKeeper,
 		0,
 		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
-		packetforwardkeeper.DefaultRefundTransferPacketTimeoutTimestamp,
 	)
 	ibcTransferStack = wibctransfer.NewPurposeMiddleware(ibcTransferStack)
 
@@ -1455,7 +1453,6 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName).WithKeyTable(ibctransfertypes.ParamKeyTable())
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName).WithKeyTable(icacontrollertypes.ParamKeyTable())
 	paramsKeeper.Subspace(icahosttypes.SubModuleName).WithKeyTable(icahosttypes.ParamKeyTable())
-	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
 
 	return paramsKeeper
 }
