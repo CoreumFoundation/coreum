@@ -416,13 +416,13 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 	}
 
 	// quantity
-	if err := validateQuantityStep(order.Quantity.BigInt(), baseURA.BigInt(), params.QuantityStepExponent); err != nil {
+	if err := validateQuantityStep(order.Quantity.BigInt(), baseURA, params.QuantityStepExponent); err != nil {
 		return err
 	}
 
 	// price
 	if order.Type == types.ORDER_TYPE_LIMIT {
-		if err := validatePriceTick(order.Price.Rat(), baseURA.BigInt(), quoteURA.BigInt(), params.PriceTickExponent); err != nil {
+		if err := validatePriceTick(order.Price.Rat(), baseURA, quoteURA, params.PriceTickExponent); err != nil {
 			return err
 		}
 	}
