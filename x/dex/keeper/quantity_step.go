@@ -4,16 +4,21 @@ import (
 	"math/big"
 
 	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-func validateQuantityStep(quantity *big.Int, baseURA *big.Int, quantityStepExponent int32) error {
-	quantityStep := computeQuantityStep(quantity, quantityStepExponent)
+func validateQuantityStep(quantity *big.Int, baseURA sdkmath.LegacyDec, quantityStepExponent int32) error {
+	baseURABigInt := baseURA.BigInt()
+
+	// Since LegacyDec is multiplied by 10^LegacyPrecision when converting to BigInt,
+	// we have to divide by same number by subtracting LegacyPrecision from exponent.
+	quantityStep := computeQuantityStep(baseURABigInt, quantityStepExponent-sdkmath.LegacyPrecision)
 	if !isQuantityStepValid(quantity, quantityStep) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidInput,
-			"invalid quantity %s, the quantity must be multiple of %s",
+			"invalid quantity %s, has to be multiple of quantity step: %s",
 			quantity.String(), quantityStep.String(),
 		)
 	}

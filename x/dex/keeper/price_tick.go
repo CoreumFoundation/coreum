@@ -4,17 +4,20 @@ import (
 	"math/big"
 
 	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-func validatePriceTick(price *big.Rat, baseURA, quoteURA *big.Int, priceTickExponent int32) error {
-	priceTick := computePriceTick(baseURA, quoteURA, priceTickExponent)
+func validatePriceTick(price *big.Rat, baseURA, quoteURA sdkmath.LegacyDec, priceTickExponent int32) error {
+	// Both baseURA & quoteURA are multiplied by 10^LegacyPrecision when converting to BigInt,
+	// but since we divide one by other we can pass them as is.
+	priceTick := computePriceTick(baseURA.BigInt(), quoteURA.BigInt(), priceTickExponent)
 	if !isPriceTickValid(price, priceTick) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidInput,
-			"invalid price %s, the price must be multiple of %s",
+			"invalid price %s, has to be multiple of price tick: %s",
 			price.String(), priceTick.String(),
 		)
 	}

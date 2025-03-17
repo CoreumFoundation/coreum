@@ -1,6 +1,7 @@
 # Price Tick Size
 
 #### TODO: Rename base_amount_step -> quantity_step
+#### TODO: give example why we need price tick
 
 To provide a better trading experience, avoid rounding issues, and minimize remainders during order execution, we use [`price_tick`](https://www.investopedia.com/terms/t/tick.asp). A tick is the minimum price movement an asset price can make, either upward or downward.
 

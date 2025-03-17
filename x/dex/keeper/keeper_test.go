@@ -478,70 +478,83 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.True(t, dexExpectedToReceiveBalance.IsZero())
 }
 
-func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
+func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 	tests := []struct {
-		name                string
-		price               types.Price
-		baseDenomRefAmount  *sdkmath.LegacyDec
-		quoteDenomRefAmount *sdkmath.LegacyDec
-		wantTickError       bool
+		name              string
+		price             *types.Price
+		quantity          *sdkmath.Int
+		baseURA           *sdkmath.LegacyDec
+		quoteURA          *sdkmath.LegacyDec
+		wantQuantityError bool
+		wantPriceError    bool
 	}{
 		{
-			name:          "valid_default_price",
-			price:         types.MustNewPriceFromString("1e-6"),
-			wantTickError: false,
+			name:           "valid_default_URAs",
+			price:          lo.ToPtr(types.MustNewPriceFromString("1e-6")),
+			wantPriceError: false,
 		},
 		{
-			name:          "invalid_default_price",
-			price:         types.MustNewPriceFromString("1e-7"),
-			wantTickError: true,
+			name:              "invalid_quantity_default_URAs",
+			quantity:          lo.ToPtr(sdkmath.NewInt(10)),
+			wantQuantityError: true,
 		},
 		{
-			name:               "valid_base_custom",
-			price:              types.MustNewPriceFromString("33e-6"),
-			baseDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
-			wantTickError:      false,
+			name:           "invalid_price_default_URAs",
+			price:          lo.ToPtr(types.MustNewPriceFromString("1e-7")),
+			wantPriceError: true,
 		},
 		{
-			name:                "valid_quote_custom",
-			price:               types.MustNewPriceFromString("1e-6"),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000")),
-			wantTickError:       false,
+			name:           "invalid_price2_default_URAs",
+			price:          lo.ToPtr(types.MustNewPriceFromString("100000001e-7")),
+			wantPriceError: true,
 		},
 		{
-			name:                "valid_both_custom",
-			price:               types.MustNewPriceFromString("14e-3"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("1")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100")),
-			wantTickError:       false,
+			name:    "valid_custom_base_URA",
+			price:   lo.ToPtr(types.MustNewPriceFromString("33e-6")),
+			baseURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
 		},
 		{
-			name:                "valid_both_custom_tick_greater_than_one",
-			price:               types.MustNewPriceFromString("14e1"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
-			wantTickError:       false,
+			name:     "valid_custom_quote_URA",
+			price:    lo.ToPtr(types.MustNewPriceFromString("1e-6")),
+			quoteURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000")),
 		},
 		{
-			name:                "invalid_both_custom_tick_greater_than_one",
-			price:               types.MustNewPriceFromString("14"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.00001")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
-			wantTickError:       true,
+			name:     "valid_custom_both_URA",
+			price:    lo.ToPtr(types.MustNewPriceFromString("14e-3")),
+			baseURA:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("1")),
+			quoteURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100")),
 		},
 		{
-			name:                "valid_both_custom_base_less_than_one",
-			price:               types.MustNewPriceFromString("3e33"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000")),
-			wantTickError:       false,
+			name:     "valid_custom_both_URA_tick_greater_than_one",
+			price:    lo.ToPtr(types.MustNewPriceFromString("14e1")),
+			baseURA:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
+			quoteURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
 		},
 		{
-			name:                "invalid_both_custom_base_less_than_one",
-			price:               types.MustNewPriceFromString("3e32"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000000")),
-			wantTickError:       true,
+			name:           "invalid_price_custom_both_URA_tick_greater_than_one",
+			price:          lo.ToPtr(types.MustNewPriceFromString("14")),
+			baseURA:        lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.00001")),
+			quoteURA:       lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
+			wantPriceError: true,
+		},
+		{
+			name:              "invalid_quantity_custom_base_URA_quantity_step_greater_than_one",
+			quantity:          lo.ToPtr(sdkmath.NewInt(123)),
+			baseURA:           lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
+			wantQuantityError: true,
+		},
+		{
+			name:     "valid_custom_both_URA_base_URA_less_than_one",
+			price:    lo.ToPtr(types.MustNewPriceFromString("3e33")),
+			baseURA:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
+			quoteURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000")),
+		},
+		{
+			name:           "invalid_price_custom_both_URA_base_URA_less_than_one",
+			price:          lo.ToPtr(types.MustNewPriceFromString("3e32")),
+			baseURA:        lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
+			quoteURA:       lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000000")),
+			wantPriceError: true,
 		},
 	}
 	for _, tt := range tests {
@@ -549,16 +562,26 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			testApp := simapp.New()
 			sdkCtx := testApp.BaseApp.NewContext(false)
 
-			if tt.baseDenomRefAmount != nil {
+			if tt.baseURA != nil {
 				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
-					UnifiedRefAmount: tt.baseDenomRefAmount,
+					UnifiedRefAmount: tt.baseURA,
 				}))
 			}
 
-			if tt.quoteDenomRefAmount != nil {
+			if tt.quoteURA != nil {
 				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
-					UnifiedRefAmount: tt.quoteDenomRefAmount,
+					UnifiedRefAmount: tt.quoteURA,
 				}))
+			}
+
+			price := types.MustNewPriceFromString("1e3")
+			quantity := sdkmath.NewInt(1_000_000)
+
+			if tt.price != nil {
+				price = *tt.price
+			}
+			if tt.quantity != nil {
+				quantity = *tt.quantity
 			}
 
 			acc, _ := testApp.GenAccount(sdkCtx)
@@ -568,8 +591,8 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 				ID:          uuid.Generate().String(),
 				BaseDenom:   denom1,
 				QuoteDenom:  denom2,
-				Price:       &tt.price,
-				Quantity:    sdkmath.NewInt(1_000),
+				Price:       &price,
+				Quantity:    quantity,
 				Side:        types.SIDE_SELL,
 				TimeInForce: types.TIME_IN_FORCE_GTC,
 			}
@@ -578,8 +601,10 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 			fundOrderReserve(t, testApp, sdkCtx, acc)
 			err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
-			if tt.wantTickError {
-				require.ErrorContains(t, err, "the price must be multiple of")
+			if tt.wantPriceError {
+				require.ErrorContains(t, err, "has to be multiple of price tick")
+			} else if tt.wantQuantityError {
+				require.ErrorContains(t, err, "has to be multiple of quantity step")
 			} else {
 				require.NoError(t, err)
 			}
