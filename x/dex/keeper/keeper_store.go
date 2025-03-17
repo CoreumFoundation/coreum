@@ -22,7 +22,7 @@ func (k Keeper) decrementUint64Counter(ctx sdk.Context, key []byte) (uint64, err
 
 	// trying to decrement value below zero is an invalid action.
 	if val.Value == 0 {
-		return 0, sdkerrors.Wrapf(types.ErrInvalidState, "trying to increment counter when it is already zero")
+		return 0, sdkerrors.Wrapf(types.ErrInvalidState, "trying to decrement counter when it is already zero")
 	}
 	val.Value--
 
