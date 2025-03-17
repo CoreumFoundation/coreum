@@ -102,7 +102,7 @@ func placeRandomOrderAndAssertOrdering(
 		BaseDenom:   baseDenom,
 		QuoteDenom:  quoteDenom,
 		Price:       &price,
-		Quantity:    sdkmath.NewInt(1),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        side,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
