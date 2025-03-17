@@ -220,7 +220,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 		BaseDenom:  denomWithExtension,
 		QuoteDenom: denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -242,7 +242,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 		BaseDenom:  denom2,
 		QuoteDenom: denomWithExtension,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -291,7 +291,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 		BaseDenom:  denom,
 		QuoteDenom: denom2, // the denom2 is not allowed
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -313,7 +313,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 		BaseDenom:  denom,
 		QuoteDenom: denom3, // the denom3 is allowed
 		Price:      lo.ToPtr(types.MustNewPriceFromString("7e-4")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -362,7 +362,7 @@ func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 		BaseDenom:  denomWithBurn,
 		QuoteDenom: denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -403,7 +403,7 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 		BaseDenom:  denomToStake,
 		QuoteDenom: denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -458,7 +458,7 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 		BaseDenom:  denomToStake,
 		QuoteDenom: denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -505,7 +505,7 @@ func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
 		BaseDenom:  denomWithBurnRate,
 		QuoteDenom: denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -550,7 +550,7 @@ func TestKeeper_PlaceOrderWithCommissionRate(t *testing.T) {
 		BaseDenom:  denomWithCommissionRate,
 		QuoteDenom: denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sdkmath.NewInt(1_000_000),
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
