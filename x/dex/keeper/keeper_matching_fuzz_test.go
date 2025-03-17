@@ -85,8 +85,8 @@ func NewFuzzApp(
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
 	// use smaller values than default ones in case we decide to decrease it
-	params.PriceTickExponent = params.PriceTickExponent - 5
-	params.QuantityStepExponent = params.QuantityStepExponent - 5
+	params.PriceTickExponent -= 5
+	params.QuantityStepExponent -= 5
 
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 

@@ -601,11 +601,12 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 			testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 			fundOrderReserve(t, testApp, sdkCtx, acc)
 			err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
-			if tt.wantPriceError {
+			switch {
+			case tt.wantPriceError:
 				require.ErrorContains(t, err, "has to be multiple of price tick")
-			} else if tt.wantQuantityError {
+			case tt.wantQuantityError:
 				require.ErrorContains(t, err, "has to be multiple of quantity step")
-			} else {
+			default:
 				require.NoError(t, err)
 			}
 		})
