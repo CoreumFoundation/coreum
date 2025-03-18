@@ -164,7 +164,7 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 			BaseDenom:   item.baseDenom,
 			QuoteDenom:  item.quoteDenom,
 			Price:       &price,
-			Quantity:    sdkmath.NewInt(1),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}
@@ -298,7 +298,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  ft1Whitelisting,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -371,7 +371,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		BaseDenom:  denom1,
 		QuoteDenom: ft1Whitelisting,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-		Quantity:   sdkmath.NewInt(5_000),
+		Quantity:   sdkmath.NewInt(5_000_000),
 		Side:       types.SIDE_BUY,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: uint64(sdkCtx.BlockHeight() + 1),
@@ -434,8 +434,8 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		Creator:                   buyOrder.Creator,
 		ID:                        buyOrder.ID,
 		Sequence:                  expectedBuyOrderSequence,
-		RemainingBaseQuantity:     sdkmath.NewInt(4000), // filled partially
-		RemainingSpendableBalance: sdkmath.NewInt(5200),
+		RemainingBaseQuantity:     sdkmath.NewInt(4_000_000), // filled partially
+		RemainingSpendableBalance: sdkmath.NewInt(5_200_000),
 	}, *events.OrderCreated)
 
 	require.EqualValues(t, []types.EventOrderReduced{
@@ -443,15 +443,15 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 			Creator:      sellOrder.Creator,
 			ID:           sellOrder.ID,
 			Sequence:     expectedSellOrderSequence,
-			SentCoin:     sdk.NewCoin(sellOrder.BaseDenom, sdkmath.NewIntFromUint64(1000)),
-			ReceivedCoin: sdk.NewCoin(sellOrder.QuoteDenom, sdkmath.NewIntFromUint64(1200)),
+			SentCoin:     sdk.NewCoin(sellOrder.BaseDenom, sdkmath.NewIntFromUint64(1_000_000)),
+			ReceivedCoin: sdk.NewCoin(sellOrder.QuoteDenom, sdkmath.NewIntFromUint64(1_200_000)),
 		},
 		{
 			Creator:      buyOrder.Creator,
 			ID:           buyOrder.ID,
 			Sequence:     expectedBuyOrderSequence,
-			SentCoin:     sdk.NewCoin(buyOrder.QuoteDenom, sdkmath.NewIntFromUint64(1200)),
-			ReceivedCoin: sdk.NewCoin(buyOrder.BaseDenom, sdkmath.NewIntFromUint64(1000)),
+			SentCoin:     sdk.NewCoin(buyOrder.QuoteDenom, sdkmath.NewIntFromUint64(1_200_000)),
+			ReceivedCoin: sdk.NewCoin(buyOrder.BaseDenom, sdkmath.NewIntFromUint64(1_000_000)),
 		},
 	}, events.OrdersReduced)
 
@@ -469,7 +469,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrRecordNotFound)
 	buyOrder, err = dexKeeper.GetOrderByAddressAndID(sdkCtx, acc, buyOrder.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdkmath.NewInt(5200).String(), buyOrder.RemainingSpendableBalance.String())
+	require.Equal(t, sdkmath.NewInt(5_200_000).String(), buyOrder.RemainingSpendableBalance.String())
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, buyOrder.ID))
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
@@ -1011,7 +1011,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 			BaseDenom:   denoms[0],
 			QuoteDenom:  denoms[1],
 			Price:       lo.ToPtr(types.MustNewPriceFromString("1e-1")),
-			Quantity:    sdkmath.NewInt(1_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}
@@ -1030,7 +1030,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 			BaseDenom:   denoms[1],
 			QuoteDenom:  denoms[0],
 			Price:       lo.ToPtr(types.MustNewPriceFromString("11e1")),
-			Quantity:    sdkmath.NewInt(1_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}
@@ -1049,7 +1049,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 			BaseDenom:   denoms[0],
 			QuoteDenom:  denoms[2],
 			Price:       lo.ToPtr(types.MustNewPriceFromString("12e1")),
-			Quantity:    sdkmath.NewInt(1_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}

@@ -29,14 +29,7 @@ import (
 )
 
 var (
-	AmountDisallowedTrigger               = sdkmath.NewInt(7)
-	AmountBurningTrigger                  = sdkmath.NewInt(101)
-	AmountMintingTrigger                  = sdkmath.NewInt(105)
-	AmountIgnoreBurnRateTrigger           = sdkmath.NewInt(108)
-	AmountIgnoreSendCommissionRateTrigger = sdkmath.NewInt(109)
-	AmountBlockSmartContractTrigger       = sdkmath.NewInt(111)
-	AmountDEXExpectToSpendTrigger         = sdkmath.NewInt(103)
-	AmountDEXExpectToReceiveTrigger       = sdkmath.NewInt(104)
+	AmountBlockSmartContractTrigger = sdkmath.NewInt(testcontracts.AmountBlockSmartContractTrigger)
 )
 
 // TestAssetFTExtensionIssue tests extension issue functionality of fungible tokens.
@@ -143,7 +136,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 	requireT.EqualValues("12", balance.Balance.Amount.String())
 
 	// sending 7 will fail
-	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, AmountDisallowedTrigger))
+	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(testcontracts.AmountDisallowedTrigger)))
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
@@ -629,7 +622,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount: sdk.NewCoins(sdk.Coin{
 			Denom:  unburnable,
-			Amount: AmountBurningTrigger,
+			Amount: sdkmath.NewInt(testcontracts.AmountBurningTrigger),
 		}),
 	}
 
@@ -690,7 +683,7 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	// burn tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(burnableDenom, AmountBurningTrigger)
+	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(testcontracts.AmountBurningTrigger))
 
 	burnMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
@@ -786,7 +779,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount: sdk.NewCoins(sdk.Coin{
 			Denom:  unmintableDenom,
-			Amount: AmountMintingTrigger,
+			Amount: sdkmath.NewInt(testcontracts.AmountMintingTrigger),
 		}),
 	}
 
@@ -846,7 +839,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	// mint tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	mintCoin := sdk.NewCoin(mintableDenom, AmountMintingTrigger)
+	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(testcontracts.AmountMintingTrigger))
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   issuer.String(),
@@ -872,7 +865,7 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 
 	// mint tokens to recipient
-	mintCoin = sdk.NewCoin(mintableDenom, AmountMintingTrigger)
+	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(testcontracts.AmountMintingTrigger))
 	mintMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
@@ -1527,7 +1520,7 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, AmountIgnoreBurnRateTrigger)),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(testcontracts.AmountIgnoreBurnRateTrigger))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -1674,7 +1667,7 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, AmountIgnoreSendCommissionRateTrigger)),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(testcontracts.AmountIgnoreSendCommissionRateTrigger))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -1820,7 +1813,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 		BaseDenom:   denomWithExtension,
 		QuoteDenom:  chain.ChainSettings.Denom,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
-		Quantity:    AmountDEXExpectToReceiveTrigger,
+		Quantity:    sdkmath.NewInt(testcontracts.AmountDEXExpectToReceiveTrigger),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1867,7 +1860,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 		BaseDenom:   denomWithExtension,
 		QuoteDenom:  chain.ChainSettings.Denom,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
-		Quantity:    AmountDEXExpectToSpendTrigger,
+		Quantity:    sdkmath.NewInt(testcontracts.AmountDEXExpectToSpendTrigger),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
