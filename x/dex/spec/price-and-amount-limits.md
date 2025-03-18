@@ -1,4 +1,3 @@
-
 # Problem
 
 In our system, all balances are stored and operated as integers. This means that during order matching and execution, all calculations must be performed using integer values. This approach is not unique to our system—centralized exchanges (CEXes) and traditional finance exchanges also use integers as the underlying type for calculations to ensure precise execution and avoid rounding errors.
@@ -72,7 +71,7 @@ Where:
 - `price_tick_exponent` is a coefficient that controls the price precision for a market. The current value of  `price_tick_exponent` is `-6`, but it can be changed through governance.
 - `ceil(log10(unified_ref_amount(BBB)/unified_ref_amount(AAA)))` ensures that price step size takes into account both asset magnitude
 
-For more details on the logic behind this formula and the constants used, refer to the [Research](#research) section.
+For more details on the logic behind this formula and the constants used, refer to the [Theoretical Justification](#Theoretical-Justification) section.
 
 # Quantity Step (Base Quantity Step)
 
@@ -93,7 +92,7 @@ Where:
 
 This approach ensures that minimum trade sizes scale appropriately with asset value while maintaining a consistent precision level.
 
-For more details on the logic behind this formula and the constants used, refer to the [Research](#research) section.
+For more details on the logic behind this formula and the constants used, refer to the [Theoretical Justification](#Theoretical-Justification) section.
 
 ## **Important**
 
@@ -101,7 +100,7 @@ For more details on the logic behind this formula and the constants used, refer 
 - `price_tick` and `quantity_step` represent hard backend boundaries and may have more granular precision than end users need. Depending on the use case, applications can use less granular values to provide a better user experience.
 - `quantity_step` could be greater than 1 in some cases, and front-end applications should handle this properly. For example, a market may be represented where the quoted price is for a specific multiple of the base asset (e.g., **kPEPE/USDT** instead of **PEPE/USDT**, kPEPE means 1000PEPE, [reference](https://app.hyperliquid.xyz/trade/kPEPE)). This improves readability and prevents excessive decimal precision.
 
-# Research
+# Theoretical Justification
 
 ## Other Exchange Ticks
 
