@@ -9,6 +9,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
+// defaultQuantityStep is currently equal to 
 var defaultQuantityStep = func() sdkmath.Int {
 	p := types.DefaultParams()
 	return sdkmath.NewIntFromBigInt(keeper.ComputeQuantityStep(p.DefaultUnifiedRefAmount.BigInt(), p.QuantityStepExponent))
