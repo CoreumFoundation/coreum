@@ -27,10 +27,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-const (
-	IDDEXOrderSuffixTrigger = "blocked"
-)
-
 type FuzzAppConfig struct {
 	AccountsCount                 int
 	AssetFTDefaultDenomsCount     int
@@ -337,7 +333,7 @@ func (fa *FuzzApp) GenOrder(
 
 	var orderIDSuffix string
 	if randBoolWithPercent(rnd, fa.cfg.ProhibitedExtensionOrderPercent) {
-		orderIDSuffix = IDDEXOrderSuffixTrigger
+		orderIDSuffix = testcontracts.IDDexOrderSuffixTrigger
 	}
 
 	return types.Order{

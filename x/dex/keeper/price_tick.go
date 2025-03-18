@@ -13,7 +13,7 @@ import (
 func validatePriceTick(price *big.Rat, baseURA, quoteURA sdkmath.LegacyDec, priceTickExponent int32) error {
 	// Both baseURA & quoteURA are multiplied by 10^LegacyPrecision when converting to BigInt,
 	// but since we divide one by other we can pass them as is.
-	priceTick := computePriceTick(baseURA.BigInt(), quoteURA.BigInt(), priceTickExponent)
+	priceTick := ComputePriceTick(baseURA.BigInt(), quoteURA.BigInt(), priceTickExponent)
 	if !isPriceTickValid(price, priceTick) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidInput,
@@ -30,14 +30,13 @@ func isPriceTickValid(price *big.Rat, priceTick *big.Rat) bool {
 	return cbig.IntEqZero(remainder)
 }
 
-// computePriceTick returns the price tick of a given ref amounts and price tick exponent.
-func computePriceTick(
+// ComputePriceTick calculates price tick for a market by base & quote unified_ref_amount and price_tick_exponent.
+func ComputePriceTick(
 	baseURA,
 	quoteURA *big.Int,
 	priceTickExponent int32,
 ) *big.Rat {
-	// price_tick = 10^price_tick_exponent * round_up_pow10(ura_quote/ura_base) =
-	// 10^(price_tick_exponent + log10_round_up(ura_quote/ura_base)
+	// price_tick = 10^(price_tick_exponent + ceil(log10(unified_ref_amount(BBB)/unified_ref_amount(AAA))))
 	exponent := int64(priceTickExponent) + cbig.RatLog10RoundUp(cbig.NewRatFromBigInts(quoteURA, baseURA))
 
 	return cbig.RatTenToThePower(exponent)

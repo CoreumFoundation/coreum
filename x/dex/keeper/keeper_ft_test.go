@@ -31,8 +31,8 @@ const (
 )
 
 var (
-	AmountDEXExpectToSpendTrigger   = sdkmath.NewInt(103)
-	AmountDEXExpectToReceiveTrigger = sdkmath.NewInt(104)
+	AmountDEXExpectToSpendTrigger   = sdkmath.NewInt(testcontracts.AmountDEXExpectToSpendTrigger)
+	AmountDEXExpectToReceiveTrigger = sdkmath.NewInt(testcontracts.AmountDEXExpectToReceiveTrigger)
 )
 
 func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
@@ -82,7 +82,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				BaseDenom:   denomWithExtension,
 				QuoteDenom:  denom2,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
-				Quantity:    sdkmath.NewInt(10),
+				Quantity:    defaultQuantityStep,
 				Side:        types.SIDE_SELL,
 				TimeInForce: types.TIME_IN_FORCE_GTC,
 			},
