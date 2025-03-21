@@ -95,7 +95,7 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult) {
 		baseQuantityRat = makerMaxBaseQuantityRat
 	}
 
-	// But for matching executeion we use integers.
+	// But for matching execution we use integers.
 	// TODO(ysv): Take zero quantity into consideration.
 	trade.BaseQuantity, trade.QuoteQuantity = computeMaxIntExecutionQuantity(
 		trade.Price,
