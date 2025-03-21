@@ -35,7 +35,7 @@ func TestCmdPlaceOrder(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -43,7 +43,7 @@ func TestCmdPlaceOrder(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	})
@@ -54,7 +54,7 @@ func TestCmdPlaceOrderWithGoodTilBlockHeight(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -62,7 +62,7 @@ func TestCmdPlaceOrderWithGoodTilBlockHeight(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 		GoodTil: &types.GoodTil{
@@ -76,7 +76,7 @@ func TestCmdPlaceOrderWithGoodTilBlockTime(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -84,7 +84,7 @@ func TestCmdPlaceOrderWithGoodTilBlockTime(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 		GoodTil: &types.GoodTil{
@@ -98,7 +98,7 @@ func TestCmdPlaceOrderWithGoodTilBlockHeightAndGoodTilBlockTime(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -106,7 +106,7 @@ func TestCmdPlaceOrderWithGoodTilBlockHeightAndGoodTilBlockTime(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 		GoodTil: &types.GoodTil{
@@ -121,7 +121,7 @@ func TestCmdPlaceOrderWithTimeInForceGTC(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -129,7 +129,7 @@ func TestCmdPlaceOrderWithTimeInForceGTC(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	})
@@ -140,7 +140,7 @@ func TestCmdPlaceOrderWithTimeInForceIOC(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -148,7 +148,7 @@ func TestCmdPlaceOrderWithTimeInForceIOC(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_IOC,
 	})
@@ -159,7 +159,7 @@ func TestCmdPlaceOrderWithTimeInForceFOK(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -167,7 +167,7 @@ func TestCmdPlaceOrderWithTimeInForceFOK(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_FOK,
 	})
@@ -178,14 +178,14 @@ func TestCmdCancelOrder(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 	order := types.Order{
 		ID:          "id1",
 		Type:        types.ORDER_TYPE_LIMIT,
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -210,14 +210,14 @@ func TestCmdCancelOrdersByDenom(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(100))
+	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1_000_000))
 	order := types.Order{
 		ID:          "id1",
 		Type:        types.ORDER_TYPE_LIMIT,
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}

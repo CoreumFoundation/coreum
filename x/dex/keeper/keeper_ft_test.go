@@ -118,7 +118,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				BaseDenom:   denom2,
 				QuoteDenom:  denomWithExtension,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
-				Quantity:    sdkmath.NewInt(10),
+				Quantity:    defaultQuantityStep,
 				Side:        types.SIDE_BUY,
 				TimeInForce: types.TIME_IN_FORCE_GTC,
 			},
