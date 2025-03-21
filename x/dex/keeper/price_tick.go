@@ -17,7 +17,7 @@ func validatePriceTick(price *big.Rat, baseURA, quoteURA sdkmath.LegacyDec, pric
 	if !isPriceTickValid(price, priceTick) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidInput,
-			"invalid price %s, has to be multiple of price tick: %s", // Better error here for users.
+			"invalid price %s, has to be multiple of price tick: %s", // TODO: Better error here for users because it shows rational now.
 			price.String(), priceTick.String(),
 		)
 	}

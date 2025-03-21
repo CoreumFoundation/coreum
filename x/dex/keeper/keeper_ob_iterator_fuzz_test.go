@@ -4,7 +4,6 @@ import (
 	"sync"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/docker/distribution/uuid"
 	"github.com/stretchr/testify/require"
@@ -102,7 +101,7 @@ func placeRandomOrderAndAssertOrdering(
 		BaseDenom:   baseDenom,
 		QuoteDenom:  quoteDenom,
 		Price:       &price,
-		Quantity:    sdkmath.NewInt(1_000_000),
+		Quantity:    defaultQuantityStep,
 		Side:        side,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}

@@ -226,9 +226,9 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if tt.name != "buy_combined" {
-			continue
-		}
+		// if tt.name != "buy_combined" {
+		// 	continue
+		// }
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
 			sdkCtx := testApp.BaseApp.NewContext(false)
@@ -263,7 +263,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 						quantity = sdkmath.NewIntFromBigInt(cbig.IntMul(price.Rat().Denom(), big.NewInt(1_000_000)))
 					} else {
 						// for the sell side we use constant to test the min and max price
-						quantity = sdkmath.NewInt(1_000_000)
+						quantity = defaultQuantityStep
 					}
 					order := types.Order{
 						Creator:     acc.String(),
