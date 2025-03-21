@@ -192,6 +192,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	price := lo.ToPtr(types.MustNewPriceFromString("12e-1"))
 	acc, _ := testApp.GenAccount(sdkCtx)
 
+	sellQuantity := sdkmath.NewInt(1_000_000)
 	sellOrder := types.Order{
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
@@ -199,7 +200,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
 		Price:      price,
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sellQuantity,
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -225,8 +226,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	// set expected values
 	sellOrder.Sequence = 1
-	sellOrder.RemainingBaseQuantity = sdkmath.NewInt(10)
-	sellOrder.RemainingSpendableBalance = sdkmath.NewInt(10)
+	sellOrder.RemainingBaseQuantity = sellQuantity
+	sellOrder.RemainingSpendableBalance = sellQuantity
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
 	orderReserve := params.OrderReserve
@@ -235,6 +236,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	// check same buy with the buy order
 
+	buyQuantity := sdkmath.NewInt(1_000_000)
 	buyOrder := types.Order{
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
@@ -242,7 +244,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		BaseDenom:   denom2,
 		QuoteDenom:  denom3,
 		Price:       price,
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    buyQuantity,
 		Side:        types.SIDE_BUY,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -260,8 +262,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	// set expected values
 	buyOrder.Sequence = 2
-	buyOrder.RemainingBaseQuantity = sdkmath.NewInt(100)
-	buyOrder.RemainingSpendableBalance = sdkmath.NewInt(120)
+	buyOrder.RemainingBaseQuantity = buyQuantity
+	buyOrder.RemainingSpendableBalance = sdkmath.NewInt(1_200_000)
 	buyOrder.Reserve = orderReserve
 	require.Equal(t, buyOrder, gotOrder)
 }
@@ -509,9 +511,17 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 			wantPriceError: true,
 		},
 		{
-			name:    "valid_custom_base_URA",
-			price:   lo.ToPtr(types.MustNewPriceFromString("33e-6")),
-			baseURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
+			name:              "invalid_quantity_custom_base_URA",
+			price:             lo.ToPtr(types.MustNewPriceFromString("33e-6")),
+			quantity:          lo.ToPtr(sdkmath.NewInt(10_000)), // Since base URA is 33e-6, quantity step is 100_000.
+			baseURA:           lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
+			wantQuantityError: true,
+		},
+		{
+			name:     "valid_custom_base_URA",
+			price:    lo.ToPtr(types.MustNewPriceFromString("33e-6")),
+			quantity: lo.ToPtr(sdkmath.NewInt(100_000)), // Since base URA is 33e-6, quantity step is 100_000.
+			baseURA:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
 		},
 		{
 			name:     "valid_custom_quote_URA",
@@ -654,7 +664,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
 			Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-			Quantity:   sdkmath.NewInt(1000),
+			Quantity:   defaultQuantityStep,
 			Side:       types.SIDE_SELL,
 			GoodTil: &types.GoodTil{
 				GoodTilBlockHeight: 1000,
@@ -668,7 +678,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			BaseDenom:   denom1,
 			QuoteDenom:  denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("11e-1")),
-			Quantity:    sdkmath.NewInt(100),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_BUY,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
@@ -822,7 +832,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -847,7 +857,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom2,
 		QuoteDenom:  denom3,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -874,7 +884,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom3,
 		QuoteDenom:  denom1,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_BUY,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -903,7 +913,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom3,
 		QuoteDenom:  denom1,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_BUY,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -924,7 +934,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(10_000),
+		Quantity:    defaultQuantityStep.MulRaw(10),
 		Side:        types.SIDE_BUY,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
