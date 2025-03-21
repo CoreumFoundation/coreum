@@ -293,6 +293,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	ft1Whitelisting, err := testApp.AssetFTKeeper.Issue(sdkCtx, issuanceSettings)
 	require.NoError(t, err)
 
+	sellQuantity := sdkmath.NewInt(1_000_000)
 	sellOrder := types.Order{
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
@@ -300,7 +301,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  ft1Whitelisting,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    defaultQuantityStep,
+		Quantity:    sellQuantity,
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -366,6 +367,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	)
 	require.True(t, dexExpectedToReceiveBalance.IsZero())
 
+	buyQuantity := sdkmath.NewInt(5_000_000)
 	buyOrder := types.Order{
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
@@ -373,7 +375,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		BaseDenom:  denom1,
 		QuoteDenom: ft1Whitelisting,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-		Quantity:   sdkmath.NewInt(5_000_000),
+		Quantity:   buyQuantity,
 		Side:       types.SIDE_BUY,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: uint64(sdkCtx.BlockHeight() + 1),
