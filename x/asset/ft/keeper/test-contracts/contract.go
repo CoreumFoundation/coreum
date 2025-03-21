@@ -17,9 +17,9 @@ const (
 	AmountMintingTrigger                  = 105
 	AmountIgnoreBurnRateTrigger           = 108
 	AmountIgnoreSendCommissionRateTrigger = 109
-	AmountBlockIbcTrigger                 = 110
+	AmountBlockIBCTrigger                 = 110
 	AmountBlockSmartContractTrigger       = 111
-	IDDexOrderSuffixTrigger               = "blocked"
+	IDDEXOrderSuffixTrigger               = "blocked"
 	AmountDEXExpectToSpendTrigger         = 103_000_000
 	AmountDEXExpectToReceiveTrigger       = 104_000_000
 )

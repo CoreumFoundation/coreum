@@ -298,7 +298,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  ft1Whitelisting,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -575,7 +575,7 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 			}
 
 			price := types.MustNewPriceFromString("1e3")
-			quantity := sdkmath.NewInt(1_000_000)
+			quantity := defaultQuantityStep
 
 			if tt.price != nil {
 				price = *tt.price
@@ -629,7 +629,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			BaseDenom:   denom1,
 			QuoteDenom:  denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-			Quantity:    sdkmath.NewInt(1_000_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
@@ -640,7 +640,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			BaseDenom:  denom3,
 			QuoteDenom: denom2,
 			Price:      lo.ToPtr(types.MustNewPriceFromString("14e-1")),
-			Quantity:   sdkmath.NewInt(1_000_000),
+			Quantity:   defaultQuantityStep,
 			Side:       types.SIDE_BUY,
 			GoodTil: &types.GoodTil{
 				GoodTilBlockHeight: 32,
@@ -754,7 +754,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 			BaseDenom:   denom1,
 			QuoteDenom:  denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-			Quantity:    sdkmath.NewInt(1_000_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
@@ -765,7 +765,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 			BaseDenom:   denom3,
 			QuoteDenom:  denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-			Quantity:    sdkmath.NewInt(1_000_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_BUY,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},

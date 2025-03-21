@@ -250,6 +250,7 @@ func (fa *FuzzApp) PlaceOrdersAndAssertFinalState(
 	}
 	cancelAllOrdersAndAssertState(t, sdkCtx, fa.testApp)
 
+	// Additional check to make sure we have reasonable percentage of successful order placements.
 	require.LessOrEqual(
 		t,
 		float64(fa.failedPlaceOrderCount),
@@ -294,7 +295,7 @@ func (fa *FuzzApp) GenOrder(
 		priceNum := rnd.Uint32()
 
 		// generate price exponent in order not to overflow the sdkmath.Int when fund accounts
-		priceExp := int8(randIntInRange(rnd, 5, 10))
+		priceExp := int8(randIntInRange(rnd, -5, 10))
 
 		v, ok := buildNumExpPrice(uint64(priceNum), priceExp)
 		// since we use Uint32 as num it never exceed the max num length
@@ -333,7 +334,7 @@ func (fa *FuzzApp) GenOrder(
 
 	var orderIDSuffix string
 	if randBoolWithPercent(rnd, fa.cfg.ProhibitedExtensionOrderPercent) {
-		orderIDSuffix = testcontracts.IDDexOrderSuffixTrigger
+		orderIDSuffix = testcontracts.IDDEXOrderSuffixTrigger
 	}
 
 	return types.Order{

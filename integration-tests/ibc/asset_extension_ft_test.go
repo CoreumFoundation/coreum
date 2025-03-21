@@ -77,7 +77,7 @@ func TestExtensionIBCFailsWithIBCProhibitedAmount(t *testing.T) {
 		t,
 		coreumChain.TxFactory().WithGas(500_000),
 		coreumIssuer,
-		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(testcontracts.AmountBlockIbcTrigger)),
+		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(testcontracts.AmountBlockIBCTrigger)),
 		gaiaChain.ChainContext,
 		gaiaChain.GenAccount(),
 	)
