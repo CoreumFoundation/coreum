@@ -9,10 +9,10 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-// defaultQuantityStep is currently equal to 
+// defaultQuantityStep is currently equal to 10000 for default UnifiedRefAmount=10^6 and QuantityStepExponent=-2.
 var defaultQuantityStep = func() sdkmath.Int {
 	p := types.DefaultParams()
-	return sdkmath.NewIntFromBigInt(keeper.ComputeQuantityStep(p.DefaultUnifiedRefAmount.BigInt(), p.QuantityStepExponent))
+	return sdkmath.NewIntFromBigInt(keeper.ComputeQuantityStep(p.DefaultUnifiedRefAmount.BigInt(), p.QuantityStepExponent-sdkmath.LegacyPrecision))
 }()
 
 var defaultPriceTick = func() *big.Rat {
