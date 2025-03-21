@@ -551,82 +551,81 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantErrorContains: "3759000denom2 is not available, available 3758000denom2",
 		},
 
-		// STOPPED HERE.
 		// TODO: Figure out behavior in this case. Because we can possibly create an order
-		// {
-		// 	name: "match_limit_directOB_maker_sell_taker_buy_close_maker_with_partial_filling",
-		// 	balances: func(testSet TestSet) map[string]sdk.Coins {
-		// 		return map[string]sdk.Coins{
-		// 			testSet.acc1.String(): sdk.NewCoins(
-		// 				testSet.orderReserve,
-		// 				sdk.NewInt64Coin(denom1, 1005),
-		// 			),
-		// 			testSet.acc2.String(): sdk.NewCoins(
-		// 				testSet.orderReserve,
-		// 				sdk.NewInt64Coin(denom2, 3760),
-		// 			),
-		// 		}
-		// 	},
-		// 	orders: func(testSet TestSet) []types.Order {
-		// 		return []types.Order{
-		// 			{
-		// 				Creator:    testSet.acc1.String(),
-		// 				Type:       types.ORDER_TYPE_LIMIT,
-		// 				ID:         "id1",
-		// 				BaseDenom:  denom1,
-		// 				QuoteDenom: denom2,
-		// 				Price:      lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-		// 				// only 1000 will be filled
-		// 				Quantity:    sdkmath.NewInt(1005),
-		// 				Side:        types.SIDE_SELL,
-		// 				TimeInForce: types.TIME_IN_FORCE_GTC,
-		// 			},
-		// 			{
-		// 				Creator:     testSet.acc2.String(),
-		// 				Type:        types.ORDER_TYPE_LIMIT,
-		// 				ID:          "id2",
-		// 				BaseDenom:   denom1,
-		// 				QuoteDenom:  denom2,
-		// 				Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-		// 				Quantity:    sdkmath.NewInt(10000),
-		// 				Side:        types.SIDE_BUY,
-		// 				TimeInForce: types.TIME_IN_FORCE_GTC,
-		// 			},
-		// 		}
-		// 	},
-		// 	wantOrders: func(testSet TestSet) []types.Order {
-		// 		return []types.Order{
-		// 			{
-		// 				Creator:     testSet.acc2.String(),
-		// 				Type:        types.ORDER_TYPE_LIMIT,
-		// 				ID:          "id2",
-		// 				BaseDenom:   denom1,
-		// 				QuoteDenom:  denom2,
-		// 				Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-		// 				Quantity:    sdkmath.NewInt(10000),
-		// 				Side:        types.SIDE_BUY,
-		// 				TimeInForce: types.TIME_IN_FORCE_GTC,
-		// 				// 10000 - 1000
-		// 				RemainingBaseQuantity: sdkmath.NewInt(9000),
-		// 				// (10000 - 1000) * 376e-3 = 3384
-		// 				RemainingSpendableBalance: sdkmath.NewInt(3384),
-		// 			},
-		// 		}
-		// 	},
-		// 	wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
-		// 		return map[string]sdk.Coins{
-		// 			testSet.acc1.String(): sdk.NewCoins(
-		// 				testSet.orderReserve,
-		// 				sdk.NewInt64Coin(denom1, 5),
-		// 				sdk.NewInt64Coin(denom2, 375),
-		// 			),
-		// 			testSet.acc2.String(): sdk.NewCoins(
-		// 				sdk.NewInt64Coin(denom1, 1000),
-		// 				sdk.NewInt64Coin(denom2, 1),
-		// 			),
-		// 		}
-		// 	},
-		// },
+		{
+			name: "match_limit_directOB_maker_sell_taker_buy_close_maker_with_partial_filling",
+			balances: func(testSet TestSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					testSet.acc1.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(denom1, 1005),
+					),
+					testSet.acc2.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(denom2, 3760),
+					),
+				}
+			},
+			orders: func(testSet TestSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:    testSet.acc1.String(),
+						Type:       types.ORDER_TYPE_LIMIT,
+						ID:         "id1",
+						BaseDenom:  denom1,
+						QuoteDenom: denom2,
+						Price:      lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						// only 1000 will be filled
+						Quantity:    sdkmath.NewInt(1005),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+					{
+						Creator:     testSet.acc2.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id2",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:    sdkmath.NewInt(10000),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+				}
+			},
+			wantOrders: func(testSet TestSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     testSet.acc2.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id2",
+						BaseDenom:   denom1,
+						QuoteDenom:  denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:    sdkmath.NewInt(10000),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+						// 10000 - 1000
+						RemainingBaseQuantity: sdkmath.NewInt(9000),
+						// (10000 - 1000) * 376e-3 = 3384
+						RemainingSpendableBalance: sdkmath.NewInt(3384),
+					},
+				}
+			},
+			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					testSet.acc1.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(denom1, 5),
+						sdk.NewInt64Coin(denom2, 375),
+					),
+					testSet.acc2.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(denom1, 1000),
+						sdk.NewInt64Coin(denom2, 1),
+					),
+				}
+			},
+		},
 		{
 			name: "match_limit_directOB_maker_sell_taker_buy_close_taker_and_cancel_maker_remainer",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
