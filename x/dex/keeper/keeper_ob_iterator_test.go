@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/docker/distribution/uuid"
 	"github.com/stretchr/testify/require"
@@ -252,15 +251,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 					price := types.MustNewPriceFromString(priceStr)
 					acc, _ := testApp.GenAccount(sdkCtx)
 
-					var quantity sdkmath.Int
-					if tt.side == types.SIDE_BUY {
-						// make the locked balance as Int for any side also multiply by 1_000_000 to respect quantity step
-						// quantity = sdkmath.NewIntFromBigInt(cbig.IntMul(price.Rat().Denom(), big.NewInt(1_000_000)))
-						quantity = defaultQuantityStep
-					} else {
-						// for the sell side we use constant to test the min and max price
-						quantity = defaultQuantityStep
-					}
+					quantity := defaultQuantityStep
 					order := types.Order{
 						Creator:     acc.String(),
 						Type:        types.ORDER_TYPE_LIMIT,

@@ -13,12 +13,12 @@ import (
 func validatePriceTick(price *big.Rat, baseURA, quoteURA sdkmath.LegacyDec, priceTickExponent int32) error {
 	// Both baseURA & quoteURA are multiplied by 10^LegacyPrecision when converting to BigInt,
 	// but since we divide one by other we can pass them as is.
-	priceTick := ComputePriceTick(baseURA.BigInt(), quoteURA.BigInt(), priceTickExponent)
+	priceTick, exponent := ComputePriceTick(baseURA.BigInt(), quoteURA.BigInt(), priceTickExponent)
 	if !isPriceTickValid(price, priceTick) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidInput,
-			"invalid price %s, has to be multiple of price tick: %s", // TODO: Better error here for users because it shows rational now.
-			price.String(), priceTick.String(),
+			"invalid price, has to be multiple of price tick: 10^%d",
+			exponent,
 		)
 	}
 
@@ -35,9 +35,9 @@ func ComputePriceTick(
 	baseURA,
 	quoteURA *big.Int,
 	priceTickExponent int32,
-) *big.Rat {
+) (*big.Rat, int64) {
 	// price_tick = 10^(price_tick_exponent + ceil(log10(unified_ref_amount(BBB)/unified_ref_amount(AAA))))
 	exponent := int64(priceTickExponent) + cbig.RatLog10RoundUp(cbig.NewRatFromBigInts(quoteURA, baseURA))
 
-	return cbig.RatTenToThePower(exponent)
+	return cbig.RatTenToThePower(exponent), exponent
 }
