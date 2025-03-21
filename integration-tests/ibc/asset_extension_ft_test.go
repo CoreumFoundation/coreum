@@ -71,13 +71,17 @@ func TestExtensionIBCFailsWithIBCProhibitedAmount(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	transferCoin := sdk.NewCoin(
+		assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer),
+		sdkmath.NewInt(testcontracts.AmountBlockIBCTrigger),
+	)
 	gaiaChain := chains.Gaia
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
 		coreumChain.TxFactory().WithGas(500_000),
 		coreumIssuer,
-		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(testcontracts.AmountBlockIBCTrigger)),
+		transferCoin,
 		gaiaChain.ChainContext,
 		gaiaChain.GenAccount(),
 	)

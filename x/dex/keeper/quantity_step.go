@@ -15,12 +15,12 @@ func validateQuantityStep(quantity *big.Int, baseURA sdkmath.LegacyDec, quantity
 
 	// Since LegacyDec is multiplied by 10^LegacyPrecision when converting to BigInt,
 	// we have to divide by same number by subtracting LegacyPrecision from exponent.
-	quantityStep := ComputeQuantityStep(baseURABigInt, quantityStepExponent-sdkmath.LegacyPrecision)
+	quantityStep, exponent := ComputeQuantityStep(baseURABigInt, quantityStepExponent-sdkmath.LegacyPrecision)
 	if !isQuantityStepValid(quantity, quantityStep) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidInput,
-			"invalid quantity %s, has to be multiple of quantity step: %s",
-			quantity.String(), quantityStep.String(),
+			"invalid quantity, has to be multiple of quantity step: 10^%d",
+			exponent,
 		)
 	}
 
@@ -33,12 +33,12 @@ func isQuantityStepValid(quantity *big.Int, quantityStep *big.Int) bool {
 }
 
 // ComputeQuantityStep returns quantity step for an asset by unified_ref_amount and price_tick_exponent.
-func ComputeQuantityStep(baseURA *big.Int, quantityStepExponent int32) *big.Int {
+func ComputeQuantityStep(baseURA *big.Int, quantityStepExponent int32) (*big.Int, int64) {
 	// quantity_step = max(1, 10^(quantity_step_exponent + ceil(log10(unified_ref_amount))))
 	exponent := int64(quantityStepExponent) + cbig.RatLog10RoundUp(cbig.NewRatFromBigInt(baseURA))
-	if exponent <= 0 {
-		return big.NewInt(1)
+	if exponent < 0 {
+		exponent = 0
 	}
 
-	return cbig.IntTenToThePower(big.NewInt(exponent))
+	return cbig.IntTenToThePower(big.NewInt(exponent)), exponent
 }

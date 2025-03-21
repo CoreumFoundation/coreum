@@ -318,7 +318,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
-			name: "partially_fillable_orders_accepted_for_creation", // TODO: Not sure if this is correct behavior but that is how it works now
+			// TODO: Not sure if this is correct behavior but that is how it works now.
+			name: "partially_fillable_orders_accepted_for_creation",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
@@ -545,7 +546,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				}
 			},
 			// we fill the id1 first, so the used balance from id2 is 1_000_000 * 375e-3 = 375_000
-			// to fill remaining part we need (10_000_000 - 1_000_000) * 376e-3 = 3_384_000, so total expected to send 3_384_00 + 375_000 = 3_759_000
+			// to fill remaining part we need (10_000_000 - 1_000_000) * 376e-3 = 3_384_000,
+			// so total expected to send 3_384_00 + 375_000 = 3_759_000
 			wantErrorContains: "3759000denom2 is not available, available 3758000denom2",
 		},
 
