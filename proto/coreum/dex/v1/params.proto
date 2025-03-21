@@ -13,8 +13,11 @@ message Params {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
-  // price_tick_exponent is the exponent used for the price tick calculation
+  // price_tick_exponent is the exponent used in price tick calculation formula
   int32 price_tick_exponent = 2;
+
+  // quantity_step_exponent is the exponent used in quantity step calculation formula
+  int32 quantity_step_exponent = 5;
 
   // max_orders_per_denom is the maximum number of orders per denom the user can have
   uint64 max_orders_per_denom = 3;

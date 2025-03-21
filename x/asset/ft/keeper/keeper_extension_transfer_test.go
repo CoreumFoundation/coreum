@@ -24,13 +24,13 @@ import (
 )
 
 var (
-	AmountDisallowedTrigger               = sdkmath.NewInt(7)
-	AmountBurningTrigger                  = sdkmath.NewInt(101)
-	AmountMintingTrigger                  = sdkmath.NewInt(105)
-	AmountIgnoreBurnRateTrigger           = sdkmath.NewInt(108)
-	AmountIgnoreSendCommissionRateTrigger = sdkmath.NewInt(109)
-	AmountDEXExpectToSpendTrigger         = sdkmath.NewInt(103)
-	AmountDEXExpectToReceiveTrigger       = sdkmath.NewInt(104)
+	AmountDisallowedTrigger               = sdkmath.NewInt(testcontracts.AmountDisallowedTrigger)
+	AmountBurningTrigger                  = sdkmath.NewInt(testcontracts.AmountBurningTrigger)
+	AmountMintingTrigger                  = sdkmath.NewInt(testcontracts.AmountMintingTrigger)
+	AmountIgnoreBurnRateTrigger           = sdkmath.NewInt(testcontracts.AmountIgnoreBurnRateTrigger)
+	AmountIgnoreSendCommissionRateTrigger = sdkmath.NewInt(testcontracts.AmountIgnoreSendCommissionRateTrigger)
+	AmountDEXExpectToSpendTrigger         = sdkmath.NewInt(testcontracts.AmountDEXExpectToSpendTrigger)
+	AmountDEXExpectToReceiveTrigger       = sdkmath.NewInt(testcontracts.AmountDEXExpectToReceiveTrigger)
 )
 
 func TestKeeper_Extension_Issue(t *testing.T) {

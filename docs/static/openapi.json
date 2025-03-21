@@ -10239,7 +10239,12 @@
         "price_tick_exponent": {
           "type": "integer",
           "format": "int32",
-          "title": "price_tick_exponent is the exponent used for the price tick calculation"
+          "title": "price_tick_exponent is the exponent used in price tick calculation formula"
+        },
+        "quantity_step_exponent": {
+          "type": "integer",
+          "format": "int32",
+          "title": "quantity_step_exponent is the exponent used in quantity step calculation formula"
         },
         "max_orders_per_denom": {
           "type": "string",
