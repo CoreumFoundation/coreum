@@ -16,7 +16,6 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/group"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -137,10 +136,6 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2_500),
 
 		// gov
-		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):         constantGasFunc(6_000),
-		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}): constantGasFunc(9_000),
-		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(85_000),
-
 		MsgToMsgURL(&govtypesv1.MsgVote{}):           constantGasFunc(6_000),
 		MsgToMsgURL(&govtypesv1.MsgVoteWeighted{}):   constantGasFunc(6_500),
 		MsgToMsgURL(&govtypesv1.MsgDeposit{}):        constantGasFunc(65_000),
@@ -158,9 +153,6 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&group.MsgUpdateGroupPolicyMetadata{}):       constantGasFunc(15_000),
 		MsgToMsgURL(&group.MsgWithdrawProposal{}):                constantGasFunc(22_000),
 		MsgToMsgURL(&group.MsgLeaveGroup{}):                      constantGasFunc(17_500),
-		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):                  constantGasFunc(6000),
-		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}):          constantGasFunc(9000),
-		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):               constantGasFunc(85000),
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25_000),
@@ -245,8 +237,6 @@ func DefaultConfig() Config {
 			// gov
 			// MsgSubmitProposal is defined as nondeterministic because it runs a proposal handler function
 			// specific for each proposal and those functions consume unknown amount of gas.
-			&govtypesv1beta1.MsgSubmitProposal{},
-
 			&govtypesv1.MsgSubmitProposal{},
 			&govtypesv1.MsgCancelProposal{},
 			&govtypesv1.MsgExecLegacyContent{},
