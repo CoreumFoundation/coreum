@@ -668,6 +668,7 @@ func New(
 		// TODO(v5): Remove once IBC upgrades to the new param management mechanism.
 		// Check ibc-go/modules/core/02-client/types/params.go
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
+		//nolint:staticcheck // we keep the deprecated function until we are sure that we don't need it.
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
