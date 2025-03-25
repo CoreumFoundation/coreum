@@ -56,7 +56,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 		ctx,
 		proposer,
 		[]sdk.Msg{&banktypes.MsgSend{
-			FromAddress: proposer.String(),
+			FromAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 			ToAddress:   depositor.String(),
 			Amount:      []sdk.Coin{chain.NewCoin(sdkmath.NewInt(1))},
 		}},
@@ -204,7 +204,7 @@ func TestExpeditedGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 		ctx,
 		proposer,
 		[]sdk.Msg{&banktypes.MsgSend{
-			FromAddress: proposer.String(),
+			FromAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 			ToAddress:   depositor.String(),
 			Amount:      []sdk.Coin{chain.NewCoin(sdkmath.NewInt(1))},
 		}},
@@ -304,7 +304,7 @@ func TestGovCancelProposal(t *testing.T) {
 		ctx,
 		proposer,
 		[]sdk.Msg{&banktypes.MsgSend{
-			FromAddress: proposer.String(),
+			FromAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 			ToAddress:   depositor.String(),
 			Amount:      []sdk.Coin{chain.NewCoin(sdkmath.NewInt(1))},
 		}},
