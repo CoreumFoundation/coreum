@@ -202,8 +202,8 @@ cosmossdk.io/client/v2 v2.0.0-beta.3 h1:+TTuH0DwQYsUq2JFAl3fDZzKq5gQG7nt3dAattkj
 cosmossdk.io/client/v2 v2.0.0-beta.3/go.mod h1:CZcL41HpJPOOayTCO28j8weNBQprG+SRiKX39votypo=
 cosmossdk.io/collections v0.4.0 h1:PFmwj2W8szgpD5nOd8GWH6AbYNi1f2J6akWXJ7P5t9s=
 cosmossdk.io/collections v0.4.0/go.mod h1:oa5lUING2dP+gdDquow+QjlF45eL1t4TJDypgGd+tv0=
-cosmossdk.io/core v0.12.0 h1:aFuvkG6eDv0IQC+UDjx86wxNWVAxdCFk7OABJ1Vh4RU=
-cosmossdk.io/core v0.12.0/go.mod h1:LaTtayWBSoacF5xNzoF8tmLhehqlA9z1SWiPuNC6X1w=
+cosmossdk.io/core v0.11.1 h1:h9WfBey7NAiFfIcUhDVNS503I2P2HdZLebJlUIs8LPA=
+cosmossdk.io/core v0.11.1/go.mod h1:OJzxcdC+RPrgGF8NJZR2uoQr56tc7gfBKhiKeDO7hH0=
 cosmossdk.io/depinject v1.1.0 h1:wLan7LG35VM7Yo6ov0jId3RHWCGRhe8E8bsuARorl5E=
 cosmossdk.io/depinject v1.1.0/go.mod h1:kkI5H9jCGHeKeYWXTqYdruogYrEeWvBQCw1Pj4/eCFI=
 cosmossdk.io/errors v1.0.1 h1:bzu+Kcr0kS/1DuPBtUFdWjzLqyUuCiyHjyJB6srBV/0=
@@ -239,10 +239,10 @@ github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a h1:1vgtS45y86pyFZ/n2RBHjKQhHRDK1VQek7NHbkPfkGU=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/crust v0.0.0-20250314062359-bb73ecc3c544 h1:jkgqWZSDOqK8uLf6jmMAksN5eGcXRquvlHLZo1IAnJE=
-github.com/CoreumFoundation/crust v0.0.0-20250314062359-bb73ecc3c544/go.mod h1:I4P6KSAz/2xuahoszoMF3NunSjTGXNaglTyzpLFzgDc=
-github.com/CoreumFoundation/crust/znet v0.0.0-20250314062359-bb73ecc3c544 h1:+S12tBpCemZy1yatJVkN5Lp3hvyZvkH0JV/E8D9gvOQ=
-github.com/CoreumFoundation/crust/znet v0.0.0-20250314062359-bb73ecc3c544/go.mod h1:1uW088JPJ+p+BiV38mER9qsiBbsgUJfDLS894gOsiHg=
+github.com/CoreumFoundation/crust v0.0.0-20250325094056-4b78e13c978a h1:I/d2Z83n6MuI+oDXa/behv2Plc1R+W3YvAoofsHw9lY=
+github.com/CoreumFoundation/crust v0.0.0-20250325094056-4b78e13c978a/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
+github.com/CoreumFoundation/crust/znet v0.0.0-20250325094056-4b78e13c978a h1:U/h+Dh7W/816SgGnq5EN4kCakQhUd7yXeLHFqPbDBbM=
+github.com/CoreumFoundation/crust/znet v0.0.0-20250325094056-4b78e13c978a/go.mod h1:8Y6yKhrJUppv/UntGI21JQhTyn0PLyqlxIEiOv4diU0=
 github.com/CosmWasm/wasmd v0.54.0 h1:/txsBehV1xnAi46H1xwuuY6D4NySujBy+wa5+ryItS8=
 github.com/CosmWasm/wasmd v0.54.0/go.mod h1:8Zu/rj6RHbJ8Gx0WdqsGeHvgnEQb0rqchpqhgMxASRU=
 github.com/CosmWasm/wasmvm/v2 v2.2.2 h1:MaQMtaZN8L08N0uAlBlOICP+GWolibJsajHGo3fQ03w=

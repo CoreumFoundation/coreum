@@ -19,9 +19,9 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
-	github.com/CoreumFoundation/coreum/v5 v5.0.0-20250123052000-bcd32d0bb9f4
-	github.com/CoreumFoundation/crust v0.0.0-20250314062359-bb73ecc3c544
-	github.com/CoreumFoundation/crust/znet v0.0.0-20250314062359-bb73ecc3c544
+	github.com/CoreumFoundation/coreum/v5 v5.0.0-20250325092415-36505c89c3fb
+	github.com/CoreumFoundation/crust v0.0.0-20250325094056-4b78e13c978a
+	github.com/CoreumFoundation/crust/znet v0.0.0-20250325094056-4b78e13c978a
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.49.1
@@ -43,7 +43,7 @@ require (
 	cloud.google.com/go/storage v1.49.0 // indirect
 	cosmossdk.io/api v0.7.6 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
-	cosmossdk.io/core v0.12.0 // indirect
+	cosmossdk.io/core v0.11.1 // indirect
 	cosmossdk.io/depinject v1.1.0 // indirect
 	cosmossdk.io/errors v1.0.1 // indirect
 	cosmossdk.io/log v1.5.0 // indirect
@@ -183,7 +183,6 @@ require (
 	github.com/minio/highwayhash v1.0.3 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
-	github.com/moby/sys/user v0.3.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
