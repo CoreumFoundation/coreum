@@ -45,10 +45,9 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&govtypesv1.MsgCancelProposal{}): {},
 
 		// ibc/core/client
-		sdk.MsgTypeURL(&ibcclienttypes.MsgCreateClient{}):  {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateClient{}):  {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}): {},
-		//nolint:staticcheck // it is here so the list is complete.
+		sdk.MsgTypeURL(&ibcclienttypes.MsgCreateClient{}):       {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateClient{}):       {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}):      {},
 		sdk.MsgTypeURL(&ibcclienttypes.MsgSubmitMisbehaviour{}): {},
 		sdk.MsgTypeURL(&ibcclienttypes.MsgIBCSoftwareUpgrade{}): {},
 		sdk.MsgTypeURL(&ibcclienttypes.MsgRecoverClient{}):      {},
