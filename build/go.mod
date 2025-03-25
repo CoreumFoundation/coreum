@@ -20,8 +20,8 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v5 v5.0.0-20250325092415-36505c89c3fb
-	github.com/CoreumFoundation/crust v0.0.0-20250325094056-4b78e13c978a
-	github.com/CoreumFoundation/crust/znet v0.0.0-20250325094056-4b78e13c978a
+	github.com/CoreumFoundation/crust v0.0.0-20250325111106-1ceef3a161fe
+	github.com/CoreumFoundation/crust/znet v0.0.0-20250325111106-1ceef3a161fe
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.49.1
