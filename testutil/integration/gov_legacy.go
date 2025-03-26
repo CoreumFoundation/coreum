@@ -276,7 +276,6 @@ func (g GovernanceLegacy) WaitForVotingToFinalize(
 	if err != nil {
 		return proposal.Status, errors.WithStack(err)
 	}
-	//nolint:staticcheck
 	if blockRes.Block.Header.Time.Before(proposal.VotingEndTime) {
 		waitCtx, waitCancel := context.WithTimeout(
 			ctx,

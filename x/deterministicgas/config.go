@@ -94,7 +94,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9_000),
 		MsgToMsgURL(&assetfttypes.MsgTransferAdmin{}):       constantGasFunc(10_000),
 		MsgToMsgURL(&assetfttypes.MsgClearAdmin{}):          constantGasFunc(8_500),
-		// TODO(v5): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
+		// TODO(v6): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
 		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):            constantGasFunc(25_000),
 		MsgToMsgURL(&assetfttypes.MsgUpdateDEXUnifiedRefAmount{}): constantGasFunc(10_000),
 		MsgToMsgURL(&assetfttypes.MsgUpdateDEXWhitelistedDenoms{}): updateDEXWhitelistedDenomsGasFunc(
