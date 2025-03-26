@@ -11,7 +11,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
@@ -209,11 +208,7 @@ func TypeAssertMessages(msg sdk.Msg) (msgCoins sdk.Coins, hasExtension, notExten
 		}
 	case *govv1.MsgSubmitProposal:
 		coins = typedMsg.InitialDeposit
-	case *govv1beta1.MsgSubmitProposal:
-		coins = typedMsg.InitialDeposit
 	case *govv1.MsgDeposit:
-		coins = typedMsg.Amount
-	case *govv1beta1.MsgDeposit:
 		coins = typedMsg.Amount
 	case *authz.MsgExec:
 		msgs, err := typedMsg.GetMessages()
