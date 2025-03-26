@@ -7,6 +7,8 @@ import (
 )
 
 // OrderBookRecord is a single order book record, it combines both key and value from the store.
+//
+//nolint:tagliatelle
 type OrderBookRecord struct {
 	// order_book_id is order book ID.
 	OrderBookID uint32 `json:"order_book_id,omitempty"`
