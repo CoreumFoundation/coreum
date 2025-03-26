@@ -879,7 +879,7 @@ func isDataDynamicItemUpdateAllowed(
 	for _, editor := range item.Editors {
 		switch editor {
 		case types.DataEditor_admin:
-			// TODO(v5) use admin instead of issuer once the admin is introduced
+			// TODO(v6) use admin instead of issuer once the admin is introduced
 			if classDefinition.IsIssuer(sender) {
 				return true, nil
 			}
