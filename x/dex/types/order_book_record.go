@@ -1,6 +1,10 @@
 package types
 
-import cosmossdk_io_math "cosmossdk.io/math"
+import (
+	"encoding/json"
+
+	cosmossdk_io_math "cosmossdk.io/math"
+)
 
 // OrderBookRecord is a single order book record, it combines both key and value from the store.
 type OrderBookRecord struct {
@@ -20,4 +24,12 @@ type OrderBookRecord struct {
 	RemainingBaseQuantity cosmossdk_io_math.Int `json:"remaining_base_quantity"`
 	// remaining_spendable_balance - is balance up to which user wants to spend to execute the order.
 	RemainingSpendableBalance cosmossdk_io_math.Int `json:"remaining_spendable_balance"`
+}
+
+func (o *OrderBookRecord) String() string {
+	serialized, err := json.Marshal(o)
+	if err != nil {
+		return err.Error()
+	}
+	return string(serialized)
 }
