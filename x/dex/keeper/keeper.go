@@ -13,6 +13,7 @@ import (
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/samber/lo"
 
+	"github.com/CoreumFoundation/coreum/v5/pkg/store"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -1088,6 +1089,71 @@ func (k Keeper) saveOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID
 
 func (k Keeper) removeOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID string) error {
 	return k.storeService.OpenKVStore(ctx).Delete(types.CreateOrderIDToSequenceKey(accNumber, orderID))
+}
+
+func (k Keeper) reserveOrderID(ctx sdk.Context, accNumber uint64, orderID string, orderSequence uint64) error {
+	key := types.CreateReserveOrderIDKey(accNumber, orderID)
+	exists, err := k.storeService.OpenKVStore(ctx).Has(key)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "order id already used")
+	}
+	return k.setDataToStore(ctx, key, &gogotypes.UInt64Value{Value: orderSequence})
+}
+
+// ExportReserveOrderIDs returns all the order ids that is ever used.
+// It will be used in genesis export.
+func (k Keeper) ExportReserveOrderIDs(
+	ctx sdk.Context,
+) ([]*types.GenesisReservedOrderIDs, error) {
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.ReserveOrderIDKeyPrefix)
+	pagination := &query.PageRequest{
+		Limit: query.PaginationMaxLimit,
+	}
+	reservedOrderIDs, _, err := query.GenericFilteredPaginate(
+		k.cdc,
+		store,
+		pagination,
+		// onResult
+		func(key []byte, value *gogotypes.UInt64Value) (*types.GenesisReservedOrderIDs, error) {
+			return &types.GenesisReservedOrderIDs{
+				Key:   key,
+				Value: value.Value,
+			}, nil
+		},
+		// constructor
+		func() *gogotypes.UInt64Value {
+			return &gogotypes.UInt64Value{}
+		},
+	)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate reseved order ids: %s", err)
+	}
+
+	return reservedOrderIDs, nil
+}
+
+// ImportAllOrderIDsToSequence returns all the order ids that is ever used.
+// It will be used in genesis export.
+func (k Keeper) ImportAllOrderIDsToSequence(
+	ctx sdk.Context,
+	reservedOrderIDs []*types.GenesisReservedOrderIDs,
+) error {
+	for _, id := range reservedOrderIDs {
+		key := store.JoinKeys(types.ReserveOrderIDKeyPrefix, id.Key)
+		err := k.setDataToStore(
+			ctx,
+			key,
+			&gogotypes.UInt64Value{Value: id.Value})
+		if err != nil {
+			return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to import reseved order id:%v ,err: %s", id, err)
+		}
+	}
+
+	return nil
 }
 
 func (k Keeper) getOrderSequenceByID(ctx sdk.Context, accNumber uint64, orderID string) (uint64, error) {
