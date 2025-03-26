@@ -158,9 +158,6 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&group.MsgUpdateGroupPolicyMetadata{}):       constantGasFunc(15_000),
 		MsgToMsgURL(&group.MsgWithdrawProposal{}):                constantGasFunc(22_000),
 		MsgToMsgURL(&group.MsgLeaveGroup{}):                      constantGasFunc(17_500),
-		MsgToMsgURL(&govtypesv1beta1.MsgVote{}):                  constantGasFunc(6000),
-		MsgToMsgURL(&govtypesv1beta1.MsgVoteWeighted{}):          constantGasFunc(9000),
-		MsgToMsgURL(&govtypesv1beta1.MsgDeposit{}):               constantGasFunc(85000),
 
 		// nft
 		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(25_000),
