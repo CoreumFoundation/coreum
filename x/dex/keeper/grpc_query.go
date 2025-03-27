@@ -25,6 +25,10 @@ type QueryKeeper interface {
 		ctx sdk.Context,
 		pagination *query.PageRequest,
 	) ([]types.OrderBookData, *query.PageResponse, error)
+	OrderBook(
+		ctx context.Context,
+		request *types.QueryOrderBookRequest,
+	) (*types.QueryOrderBookResponse, error)
 	GetOrderBookOrders(
 		ctx sdk.Context,
 		baseDenom, quoteDenom string,
@@ -87,6 +91,15 @@ func (qs QueryService) OrderBooks(
 		OrderBooks: orderBooks,
 		Pagination: pageRes,
 	}, nil
+}
+
+// OrderBook queries order book details.
+func (qs QueryService) OrderBook(
+	ctx context.Context,
+	request *types.QueryOrderBookRequest,
+) (*types.QueryOrderBookResponse, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // OrderBookOrders queries order book orders.

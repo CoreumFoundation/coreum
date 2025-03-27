@@ -32,6 +32,11 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/coreum/dex/v1/order-books";
   }
+  // OrderBook queries order book details.
+  rpc OrderBook(QueryOrderBookRequest) returns (QueryOrderBookResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/coreum/dex/v1/order-book";
+  }
   // OrderBookOrders queries order book orders.
   rpc OrderBookOrders(QueryOrderBookOrdersRequest) returns (QueryOrderBookOrdersResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
@@ -89,6 +94,28 @@ message QueryOrderBooksRequest {
 message QueryOrderBooksResponse {
   repeated OrderBookData order_books = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryOrderBookRequest defines the request type for the `OrderBook` query.
+message QueryOrderBookRequest {
+  // base_denom is base order book denom.
+  string base_denom = 1;
+  // quote_denom is quote order book denom
+  string quote_denom = 2;
+}
+
+// QueryOrderBookResponse defines the response type for the `OrderBooks` query.
+message QueryOrderBookResponse {
+  // price_tick is the minimum price movement an asset price can make, either upward or downward.
+  string price_tick = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+  // quantity_step is the the smallest allowable step for the base asset inside a market.
+  string quantity_step = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryOrderBookOrdersRequest defines the request type for the `OrderBookOrders` query.
