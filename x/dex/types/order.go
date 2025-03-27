@@ -133,6 +133,12 @@ func (o Order) Validate() error {
 				"it's required to specify the time in force for the limit order",
 			)
 		}
+		if o.Price == nil {
+			return sdkerrors.Wrap(
+				ErrInvalidInput,
+				"price cannot be empty for the limit order",
+			)
+		}
 		if _, err := o.ComputeLimitOrderLockedBalance(); err != nil {
 			return err
 		}
