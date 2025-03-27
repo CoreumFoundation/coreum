@@ -88,7 +88,7 @@ func InitGenesis(
 		panic(errors.Wrap(err, "failed to set order sequence"))
 	}
 
-	if err := dexKeeper.ImportAllOrderIDsToSequence(ctx, genState.GetReservedOrderIds()); err != nil {
+	if err := dexKeeper.ImportReservedOrderIDs(ctx, genState.GetReservedOrderIds()); err != nil {
 		panic(errors.Wrap(err, "failed to import reserved order ids"))
 	}
 
