@@ -211,7 +211,6 @@
     - [GoodTil](#coreum.dex.v1.GoodTil)
     - [Order](#coreum.dex.v1.Order)
     - [OrderBookData](#coreum.dex.v1.OrderBookData)
-    - [OrderBookRecord](#coreum.dex.v1.OrderBookRecord)
     - [OrderBookRecordData](#coreum.dex.v1.OrderBookRecordData)
     - [OrderData](#coreum.dex.v1.OrderData)
   
@@ -4761,32 +4760,6 @@ OrderBookData is a order book data used by order for the store.
 | ----- | ---- | ----- | ----------- |
 | `base_denom` | [string](#string) |  |  `base_denom is base order book denom.`  |
 | `quote_denom` | [string](#string) |  |  `quote_denom is quote order book denom`  |
-
-
-
-
-
-
-<a name="coreum.dex.v1.OrderBookRecord"></a>
-
-### OrderBookRecord
-
-```
-OrderBookRecord is a single order book record, it combines both key and value from the store.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `order_book_id` | [uint32](#uint32) |  |  `order_book_id is order book ID.`  |
-| `side` | [Side](#coreum.dex.v1.Side) |  |  `side is order side.`  |
-| `price` | [string](#string) |  |  `price is order book record price.`  |
-| `order_sequence` | [uint64](#uint64) |  |  `order_sequence is order sequence.`  |
-| `order_id` | [string](#string) |  |  `order ID provided by the creator.`  |
-| `account_number` | [uint64](#uint64) |  |  `account_number is account number which corresponds the order creator.`  |
-| `remaining_base_quantity` | [string](#string) |  |  `remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.`  |
-| `remaining_spendable_balance` | [string](#string) |  |  `remaining_spendable_balance - is balance up to which user wants to spend to execute the order.`  |
 
 
 
