@@ -1136,8 +1136,8 @@ func (k Keeper) ExportReserveOrderIDs(
 	return reservedOrderIDs, nil
 }
 
-// ImportReservedOrderIDs returns all the order ids that is ever used.
-// It will be used in genesis export.
+// ImportReservedOrderIDs imports all the order ids that is ever used.
+// It will only be used in genesis.
 func (k Keeper) ImportReservedOrderIDs(
 	ctx sdk.Context,
 	reservedOrderIDs []*types.GenesisReservedOrderIDs,
