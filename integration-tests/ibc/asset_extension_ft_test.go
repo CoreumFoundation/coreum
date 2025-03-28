@@ -27,12 +27,6 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 )
 
-const (
-	AmountIgnoreBurnRateTrigger           = 108
-	AmountIgnoreSendCommissionRateTrigger = 109
-	AmountBlockIBCTrigger                 = 110
-)
-
 func TestExtensionIBCFailsWithIBCProhibitedAmount(t *testing.T) {
 	t.Parallel()
 
@@ -77,13 +71,17 @@ func TestExtensionIBCFailsWithIBCProhibitedAmount(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	transferCoin := sdk.NewCoin(
+		assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer),
+		sdkmath.NewInt(testcontracts.AmountBlockIBCTrigger),
+	)
 	gaiaChain := chains.Gaia
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
 		coreumChain.TxFactory().WithGas(500_000),
 		coreumIssuer,
-		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdkmath.NewInt(AmountBlockIBCTrigger)),
+		transferCoin,
 		gaiaChain.ChainContext,
 		gaiaChain.GenAccount(),
 	)
@@ -899,7 +897,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 	// ********** Coreum to Gaia **********
 	// IBC transfer trigger amount that ignores send commission rate.
-	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreSendCommissionRateTrigger))
+	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(testcontracts.AmountIgnoreSendCommissionRateTrigger))
 	burntAmount = issueMsg.BurnRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).RoundInt()
 	receiveCoinGaia := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
@@ -923,7 +921,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	)
 
 	// IBC transfer trigger amount that ignores burn rate.
-	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreBurnRateTrigger))
+	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(testcontracts.AmountIgnoreBurnRateTrigger))
 	sendCommissionAmount = issueMsg.SendCommissionRate.Mul(sdkmath.LegacyNewDecFromInt(sendCoin.Amount)).RoundInt()
 	receiveCoinGaia = sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
@@ -979,7 +977,7 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		},
 	)
 
-	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(AmountIgnoreSendCommissionRateTrigger))
+	sendCoin = sdk.NewCoin(denom, sdkmath.NewInt(testcontracts.AmountIgnoreSendCommissionRateTrigger))
 	receiveCoinGaia = sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
 	// ********** Gaia to Coreum (send back) **********

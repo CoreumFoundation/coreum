@@ -38,6 +38,11 @@ func IntQuo(x, y *big.Int) *big.Int {
 	return (&big.Int{}).Quo(x, y)
 }
 
+// IntRem returns remainder of x/y.
+func IntRem(x, y *big.Int) *big.Int {
+	return (&big.Int{}).Rem(x, y)
+}
+
 // IntTenToThePower returns 10 to the power of x.
 func IntTenToThePower(x *big.Int) *big.Int {
 	return (&big.Int{}).Exp(big.NewInt(10), x, nil)

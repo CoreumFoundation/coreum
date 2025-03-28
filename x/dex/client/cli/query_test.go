@@ -13,6 +13,8 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
+var defaultQuantity = sdkmath.NewInt(1_000_000)
+
 func TestQueryParams(t *testing.T) {
 	requireT := require.New(t)
 
@@ -30,7 +32,7 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1000))
+	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity.MulRaw(10))
 
 	var resp types.QueryParamsResponse
 	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryParams(), []string{}, &resp)
@@ -44,11 +46,11 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 		BaseDenom:                 denom1,
 		QuoteDenom:                denom2,
 		Price:                     lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:                  sdkmath.NewInt(100),
+		Quantity:                  defaultQuantity,
 		Side:                      types.SIDE_SELL,
 		TimeInForce:               types.TIME_IN_FORCE_GTC,
-		RemainingBaseQuantity:     sdkmath.NewInt(100),
-		RemainingSpendableBalance: sdkmath.NewInt(100),
+		RemainingBaseQuantity:     defaultQuantity,
+		RemainingSpendableBalance: defaultQuantity,
 		Reserve:                   resp.Params.OrderReserve,
 	}
 	placeOrder(ctx, requireT, testNetwork, order1)
@@ -82,11 +84,11 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 		BaseDenom:                 denom1,
 		QuoteDenom:                denom3,
 		Price:                     lo.ToPtr(types.MustNewPriceFromString("124e-2")),
-		Quantity:                  sdkmath.NewInt(100),
+		Quantity:                  defaultQuantity,
 		Side:                      types.SIDE_SELL,
 		TimeInForce:               types.TIME_IN_FORCE_GTC,
-		RemainingBaseQuantity:     sdkmath.NewInt(100),
-		RemainingSpendableBalance: sdkmath.NewInt(100),
+		RemainingBaseQuantity:     defaultQuantity,
+		RemainingSpendableBalance: defaultQuantity,
 		Reserve:                   resp.Params.OrderReserve,
 	}
 	placeOrder(ctx, requireT, testNetwork, order2)
@@ -114,7 +116,7 @@ func TestCmdQueryAccountDenomOrdersCount(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	denom1 := issueFT(ctx, requireT, testNetwork, sdkmath.NewInt(1000))
+	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity.MulRaw(10))
 
 	var resp types.QueryParamsResponse
 	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryParams(), []string{}, &resp)
@@ -128,11 +130,11 @@ func TestCmdQueryAccountDenomOrdersCount(t *testing.T) {
 		BaseDenom:                 denom1,
 		QuoteDenom:                denom2,
 		Price:                     lo.ToPtr(types.MustNewPriceFromString("123e-2")),
-		Quantity:                  sdkmath.NewInt(100),
+		Quantity:                  defaultQuantity,
 		Side:                      types.SIDE_SELL,
 		TimeInForce:               types.TIME_IN_FORCE_GTC,
-		RemainingBaseQuantity:     sdkmath.NewInt(100),
-		RemainingSpendableBalance: sdkmath.NewInt(100),
+		RemainingBaseQuantity:     defaultQuantity,
+		RemainingSpendableBalance: defaultQuantity,
 		Reserve:                   resp.Params.OrderReserve,
 	}
 	placeOrder(ctx, requireT, testNetwork, order1)
@@ -166,11 +168,11 @@ func TestCmdQueryAccountDenomOrdersCount(t *testing.T) {
 		BaseDenom:                 denom1,
 		QuoteDenom:                denom3,
 		Price:                     lo.ToPtr(types.MustNewPriceFromString("124e-2")),
-		Quantity:                  sdkmath.NewInt(100),
+		Quantity:                  defaultQuantity,
 		Side:                      types.SIDE_SELL,
 		TimeInForce:               types.TIME_IN_FORCE_GTC,
-		RemainingBaseQuantity:     sdkmath.NewInt(100),
-		RemainingSpendableBalance: sdkmath.NewInt(100),
+		RemainingBaseQuantity:     defaultQuantity,
+		RemainingSpendableBalance: defaultQuantity,
 	}
 	placeOrder(ctx, requireT, testNetwork, order2)
 

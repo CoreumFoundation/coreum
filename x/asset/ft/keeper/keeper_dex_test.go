@@ -1039,7 +1039,7 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 	}
 	extensionDenom, err := ftKeeper.Issue(ctx, settingsWithExtension)
 	requireT.NoError(err)
-	coinWithExtension := sdk.NewCoin(extensionDenom, sdkmath.NewInt(200))
+	coinWithExtension := sdk.NewCoin(extensionDenom, AmountDEXExpectToSpendTrigger.MulRaw(2))
 	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, acc, coinWithExtension))
 	coinWithoutExtension := sdk.NewInt64Coin(denom1, 123)
 	testApp.MintAndSendCoin(t, ctx, acc, sdk.NewCoins(coinWithoutExtension))
