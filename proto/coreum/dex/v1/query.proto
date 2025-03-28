@@ -108,12 +108,12 @@ message QueryOrderBookRequest {
 message QueryOrderBookResponse {
   // price_tick is the minimum price movement an asset price can make, either upward or downward.
   string price_tick = 1 [
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.customtype) = "Price",
     (gogoproto.nullable) = false
   ];
   // quantity_step is the the smallest allowable step for the base asset inside a market.
   string quantity_step = 2 [
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }

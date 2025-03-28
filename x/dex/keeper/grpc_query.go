@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
@@ -25,10 +26,10 @@ type QueryKeeper interface {
 		ctx sdk.Context,
 		pagination *query.PageRequest,
 	) ([]types.OrderBookData, *query.PageResponse, error)
-	OrderBook(
-		ctx context.Context,
-		request *types.QueryOrderBookRequest,
-	) (*types.QueryOrderBookResponse, error)
+	GetOrderBook(
+		ctx sdk.Context,
+		baseDenom, quoteDenom string,
+	) (*types.Price, *sdkmath.Int, error)
 	GetOrderBookOrders(
 		ctx sdk.Context,
 		baseDenom, quoteDenom string,
@@ -96,10 +97,17 @@ func (qs QueryService) OrderBooks(
 // OrderBook queries order book details.
 func (qs QueryService) OrderBook(
 	ctx context.Context,
-	request *types.QueryOrderBookRequest,
+	req *types.QueryOrderBookRequest,
 ) (*types.QueryOrderBookResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	priceTick, quantityStep, err := qs.keeper.GetOrderBook(sdk.UnwrapSDKContext(ctx), req.BaseDenom, req.QuoteDenom)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryOrderBookResponse{
+		PriceTick:    *priceTick,
+		QuantityStep: *quantityStep,
+	}, nil
 }
 
 // OrderBookOrders queries order book orders.
