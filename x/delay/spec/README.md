@@ -2,7 +2,7 @@
 
 ## Abstract
 
-This document descibes the functionality of the `delay` module. It is responsible for delayed execution of the predefined logic. Developers may specify a data structure and corresponding handler (logic). Then, this data structure might be created at any time (e.g. when transaction message is executed) and stored to be executed later at particular time, when new block with the matching block time is created.
+This document describes the functionality of the `delay` module. It is responsible for delayed execution of the predefined logic. Developers may specify a data structure and corresponding handler (logic). Then, this data structure might be created at any time (e.g. when transaction message is executed) and stored to be executed later at particular time, when new block with the matching block time is created.
 
 ## State
 

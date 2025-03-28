@@ -17,7 +17,7 @@ We have also created the `assetnft` module (this module), to allow public users 
 their own custom behavior.
 
 In other words the `assetnft` module defines the custom behavior for NFTs, enforces that behavior by injecting
-custom logic into `wnft` module, and keeps most NFT related information on the `original nft moduel`.
+custom logic into `wnft` module, and keeps most NFT related information on the `original nft module`.
 
 This design means that some portion of data relating to NFTs will live in this module, and some will live in the
 `original nft module`, so to get the final NFT functionality one should be aware and understand that they should
@@ -37,9 +37,9 @@ We will discuss each feature separately.
 ### Minting
 The minting is enabled for all issued NFT classes. The minting allows to mint a token for an NFT class by the issuer of the class.
 There are two data types that can be used for NFT minting `DataBytes` and `DataDynamic`. The `DataBytes` contains immutable data bytes
-array. The `DataDynamic` contains the list of the `DataDynamicItem` which can be updated depending on item's `editors`. 
-Currently supported `DataEditors` are  `admin` and `owner`. If only one editor is set for the item, only that editor can update the 
-item's `data` using the`MsgUpdateData`. If both, both can update the `data`. If the `editors` list is empty no one can update the `data`. 
+array. The `DataDynamic` contains the list of the `DataDynamicItem` which can be updated depending on item's `editors`.
+Currently supported `DataEditors` are  `admin` and `owner`. If only one editor is set for the item, only that editor can update the
+item's `data` using the`MsgUpdateData`. If both, both can update the `data`. If the `editors` list is empty no one can update the `data`.
 
 ### Burning
 If this feature is enabled, it allows the holders of the token to burn the tokens they hold.
