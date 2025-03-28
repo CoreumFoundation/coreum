@@ -1,0 +1,29 @@
+[type.js]
+extend-glob = ["*.js"]
+check-file = false
+
+
+[type.go]
+extend-glob = ["*.go"]
+check-file = false
+
+[type.rs]
+extend-glob = ["*.rs"]
+check-file = false
+
+[type.mod]
+extend-glob = ["*.mod"]
+check-file = false
+
+
+[default.extend-words]
+# app/docs/modules/coreum-dex/coreum-dex.mdx
+pn = "pn"
+
+# app/docs/tutorials/ISO20022/ISO20022-Client/ISO20022-Client.mdx
+BA = "BA"
+Othr = "Othr"
+
+
+[default]
+check-filename = false
