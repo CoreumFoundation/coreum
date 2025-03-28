@@ -724,7 +724,7 @@ type MsgClient interface {
 	// NOTE:
 	// class whitelist does not affect the individual nft whitelisting.
 	// ie. if specific whitelist is granted for an NFT, that whitelist will
-	// still be valid, ater we add and remove it from the class whitelist.
+	// still be valid, after we add and remove it from the class whitelist.
 	RemoveFromClassWhitelist(ctx context.Context, in *MsgRemoveFromClassWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// ClassFreeze freezes all NFTs of a class held by an account.
 	ClassFreeze(ctx context.Context, in *MsgClassFreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
@@ -887,7 +887,7 @@ type MsgServer interface {
 	// NOTE:
 	// class whitelist does not affect the individual nft whitelisting.
 	// ie. if specific whitelist is granted for an NFT, that whitelist will
-	// still be valid, ater we add and remove it from the class whitelist.
+	// still be valid, after we add and remove it from the class whitelist.
 	RemoveFromClassWhitelist(context.Context, *MsgRemoveFromClassWhitelist) (*EmptyResponse, error)
 	// ClassFreeze freezes all NFTs of a class held by an account.
 	ClassFreeze(context.Context, *MsgClassFreeze) (*EmptyResponse, error)

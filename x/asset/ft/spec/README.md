@@ -208,7 +208,7 @@ Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled 
 
 ### BlockSmartContract
 
-If the BlockSmartContract is enabled, then the token cannot be transferred to any smart contract. The execption is the
+If the BlockSmartContract is enabled, then the token cannot be transferred to any smart contract. The exception is the
 case where
 the smart contract is the issuer of the token, in which case the transfer to the issuer contract can take place.
 
@@ -727,7 +727,7 @@ To upgrade the token and **disable IBC**, use this command:
 
 ```console
 cored tx assetft upgrade-v1 [denom] --ibc-enabled=false --from [sender]
-``` 
+```
 
 ## Querying the upgrade status
 
