@@ -140,35 +140,6 @@ message OrderBookData {
   string quote_denom = 2;
 }
 
-// OrderBookRecord is a single order book record, it combines both key and value from the store.
-message OrderBookRecord {
-  // order_book_id is order book ID.
-  uint32 order_book_id = 1 [(gogoproto.customname) = "OrderBookID"];
-  // side is order side.
-  Side side = 2;
-  // price is order book record price.
-  string price = 3 [
-    (gogoproto.customtype) = "Price",
-    (gogoproto.nullable) = false
-  ];
-  // order_sequence is order sequence.
-  uint64 order_sequence = 4;
-  // order ID provided by the creator.
-  string order_id = 5 [(gogoproto.customname) = "OrderID"];
-  // account_number is account number which corresponds the order creator.
-  uint64 account_number = 6;
-  // remaining_base_quantity - is remaining quantity of base denom which user wants to sell or buy.
-  string remaining_base_quantity = 7 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
-  ];
-  // remaining_spendable_balance - is balance up to which user wants to spend to execute the order.
-  string remaining_spendable_balance = 8 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
-  ];
-}
-
 // OrderBookRecordData is a single order book record used for the store.
 message OrderBookRecordData {
   // order ID provided by the creator.

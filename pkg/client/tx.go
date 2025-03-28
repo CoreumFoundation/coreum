@@ -411,7 +411,7 @@ func blockHeightFromResponse(res *cmtservice.GetLatestBlockResponse) int64 {
 		return res.SdkBlock.Header.Height
 	}
 
-	return res.Block.Header.Height
+	return res.Block.Header.Height //nolint:staticcheck
 }
 
 // GetGasPrice returns the current gas price of the chain.

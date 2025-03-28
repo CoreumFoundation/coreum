@@ -70,7 +70,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, input banktypes.Input, outputs []
 		outputCoinsSum = outputCoinsSum.Add(output.Coins...)
 		recipient, err := sdk.AccAddressFromBech32(output.Address)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "invalid address %s", input.Address)
+			return sdkerrors.Wrapf(err, "invalid address %s", output.Address)
 		}
 		for _, coin := range output.Coins {
 			def, err := k.getDefinitionOrNil(ctx, coin.Denom)

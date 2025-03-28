@@ -3,8 +3,6 @@ module github.com/CoreumFoundation/coreum/v5/integration-tests
 go 1.23.3
 
 replace (
-	// The BuildQueryMethodCommand function of v2.0.0-beta.3 hardcoded EnumAsString as true
-	cosmossdk.io/client/v2 v2.0.0-beta.3 => cosmossdk.io/client/v2 v2.0.0-beta.1
 	// cosmos keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/CoreumFoundation/coreum/v5 => ../
