@@ -4,6 +4,7 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
@@ -226,7 +227,7 @@ func (k Keeper) publishMatchingEvents(
 
 	for _, evt := range events {
 		if err := ctx.EventManager().EmitTypedEvent(&evt); err != nil {
-			return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderReduced: %s", err)
+			return sdkerrors.Wrapf(cosmoserrors.ErrIO, "failed to emit event EventOrderReduced: %s", err)
 		}
 	}
 

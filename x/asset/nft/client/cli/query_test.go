@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -182,7 +183,7 @@ func issueClass(
 	return types.BuildClassID(symbol, validator.Address)
 }
 
-func decodeAnyDataFromAmino(t *testing.T, clientCtx client.Context, anyData *codectypes.Any, ptr any) {
+func decodeAnyDataFromAmino(t *testing.T, clientCtx client.Context, anyData *codectypes.Any, ptr proto.Message) {
 	jsonData, err := anyData.MarshalJSON()
 	require.NoError(t, err)
 
@@ -191,6 +192,7 @@ func decodeAnyDataFromAmino(t *testing.T, clientCtx client.Context, anyData *cod
 		Type  string          `json:"type"`
 		Value json.RawMessage `json:"value"`
 	}
+
 	require.NoError(t, clientCtx.LegacyAmino.UnmarshalJSON(jsonData, &aData))
-	require.NoError(t, clientCtx.LegacyAmino.UnmarshalJSON(aData.Value, ptr))
+	require.NoError(t, clientCtx.Codec.UnmarshalJSON(aData.Value, ptr))
 }
