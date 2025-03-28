@@ -28,9 +28,11 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
 	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
+	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex/keeper"
 	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -573,9 +575,9 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 
 	// issue assetft
 	acc1 := chain.GenAccount()
-	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 9))
 	acc2 := chain.GenAccount()
-	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
+	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 9))
 
 	// create acc1 orders
 	latestBlock, err := chain.LatestBlockHeader(ctx)
@@ -583,6 +585,13 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 
 	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
 	requireT.NoError(err)
+
+	// TODO: Improve this after merging Yaroslav's changes
+	quantityStep, _ := keeper.ComputeQuantityStep(
+		dexParamsRes.Params.DefaultUnifiedRefAmount.BigInt(),
+		dexParamsRes.Params.QuantityStepExponent-sdkmath.LegacyPrecision,
+	)
+	defaultQuantityStep := sdkmath.NewIntFromBigInt(quantityStep)
 
 	acc1Orders := []dextypes.Order{
 		{
@@ -592,14 +601,14 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
 			Price:      lo.ToPtr(dextypes.MustNewPriceFromString("999")),
-			Quantity:   sdkmath.NewInt(100),
+			Quantity:   defaultQuantityStep.MulRaw(100),
 			Side:       dextypes.SIDE_SELL,
 			GoodTil: &dextypes.GoodTil{
 				GoodTilBlockHeight: uint64(latestBlock.Height + 500),
 			},
 			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-			RemainingBaseQuantity:     sdkmath.NewInt(100),
-			RemainingSpendableBalance: sdkmath.NewInt(100),
+			RemainingBaseQuantity:     defaultQuantityStep.MulRaw(100),
+			RemainingSpendableBalance: defaultQuantityStep.MulRaw(100),
 			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 	}
@@ -625,14 +634,14 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
 			Price:      lo.ToPtr(dextypes.MustNewPriceFromString("996")),
-			Quantity:   sdkmath.NewInt(10),
+			Quantity:   defaultQuantityStep.MulRaw(10),
 			Side:       dextypes.SIDE_BUY,
 			GoodTil: &dextypes.GoodTil{
 				GoodTilBlockHeight: uint64(latestBlock.Height + 1000),
 			},
 			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-			RemainingBaseQuantity:     sdkmath.NewInt(10),
-			RemainingSpendableBalance: sdkmath.NewInt(9960),
+			RemainingBaseQuantity:     defaultQuantityStep.MulRaw(10),
+			RemainingSpendableBalance: defaultQuantityStep.MulRaw(9960),
 			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 		{
@@ -642,11 +651,11 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			BaseDenom:                 denom1,
 			QuoteDenom:                denom2,
 			Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("997")),
-			Quantity:                  sdkmath.NewInt(10),
+			Quantity:                  defaultQuantityStep.MulRaw(10),
 			Side:                      dextypes.SIDE_BUY,
 			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-			RemainingBaseQuantity:     sdkmath.NewInt(10),
-			RemainingSpendableBalance: sdkmath.NewInt(9970),
+			RemainingBaseQuantity:     defaultQuantityStep.MulRaw(10),
+			RemainingSpendableBalance: defaultQuantityStep.MulRaw(9970),
 			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 	}
@@ -674,6 +683,23 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 		BaseDenom:  denom2,
 		QuoteDenom: denom1,
 	})
+
+	orderBookRes, err := dexClient.OrderBook(ctx, &dextypes.QueryOrderBookRequest{
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+	})
+	requireT.NoError(err)
+	require.Equal(t,
+		fmt.Sprintf("1e%d", dexParamsRes.Params.PriceTickExponent), // 1e-6
+		orderBookRes.PriceTick.String(),
+	)
+	require.Equal(t,
+		cbig.RatMul(
+			cbig.NewRatFromInts(dexParamsRes.Params.DefaultUnifiedRefAmount.RoundInt64(), 1),
+			cbig.RatTenToThePower(int64(dexParamsRes.Params.QuantityStepExponent)),
+		).Num().String(), // 10000
+		orderBookRes.QuantityStep.String(),
+	)
 
 	// check order book orders query
 	orderBookOrdersRes, err := dexClient.OrderBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{

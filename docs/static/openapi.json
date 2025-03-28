@@ -1074,6 +1074,45 @@
         ]
       }
     },
+    "/coreum/dex/v1/order-book": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBook",
+        "parameters": [
+          {
+            "name": "base_denom",
+            "description": "base_denom is base order book denom.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "quote_denom",
+            "description": "quote_denom is quote order book denom",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.dex.v1.QueryOrderBookResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "OrderBook queries order book details.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/coreum/dex/v1/order-books": {
       "get": {
         "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBooks",
@@ -10283,6 +10322,20 @@
         }
       },
       "description": "QueryOrderBookOrdersResponse defines the response type for the `OrderBookOrders` query."
+    },
+    "coreum.dex.v1.QueryOrderBookResponse": {
+      "type": "object",
+      "properties": {
+        "price_tick": {
+          "type": "string",
+          "description": "price_tick is the minimum price movement an asset price can make, either upward or downward."
+        },
+        "quantity_step": {
+          "type": "string",
+          "description": "quantity_step is the the smallest allowable step for the base asset inside a market."
+        }
+      },
+      "description": "QueryOrderBookResponse defines the response type for the `OrderBooks` query."
     },
     "coreum.dex.v1.QueryOrderBooksResponse": {
       "type": "object",
