@@ -71,6 +71,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Spell Check Repo
+        uses: crate-ci/typos@v1.30.2
+        with:
+            config: ./.typos.yaml
       - name: Setup go cache
         uses: actions/cache@v4
         with:
@@ -107,8 +111,8 @@ jobs:
           # we need to cache code-hashes.json under the same key as the artifacts, since the invalidation condition
           # for both of them are the same.
           path: |
-            ${{ github.workspace }}/integration-tests/contracts/**/artifacts/* 
-            ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/* 
+            ${{ github.workspace }}/integration-tests/contracts/**/artifacts/*
+            ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/*
             ~/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./**/*.rs', './**/Cargo.toml', './**/Cargo.lock') }}
         if: ${{ matrix.wasm-cache }}
