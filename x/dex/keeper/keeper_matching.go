@@ -6,6 +6,7 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
@@ -42,7 +43,7 @@ func (k Keeper) matchOrder(
 		ID:       takerOrder.ID,
 		Sequence: takerRecord.OrderSequence,
 	}); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventOrderPlaced: %s", err)
+		return sdkerrors.Wrapf(cosmoserrors.ErrIO, "failed to emit event EventOrderPlaced: %s", err)
 	}
 
 	mr, err := NewMatchingResult(takerOrder)

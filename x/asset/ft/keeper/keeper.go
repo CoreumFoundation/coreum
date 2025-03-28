@@ -169,7 +169,9 @@ func (k Keeper) GetDefinition(ctx sdk.Context, denom string) (types.Definition, 
 		return types.Definition{}, sdkerrors.Wrapf(types.ErrTokenNotFound, "denom: %s", denom)
 	}
 	var definition types.Definition
-	k.cdc.MustUnmarshal(bz, &definition)
+	if err := k.cdc.Unmarshal(bz, &definition); err != nil {
+		return types.Definition{}, sdkerrors.Wrap(err, "error unmarshalling definition")
+	}
 
 	return definition, nil
 }

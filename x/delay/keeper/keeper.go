@@ -167,6 +167,7 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 
 	// messages will be returned from this iterator in the execution time ascending order
 	iter := store.Iterator(nil, nil)
+	defer iter.Close()
 
 	blockTime := ctx.BlockTime()
 	for ; iter.Valid(); iter.Next() {
@@ -247,6 +248,7 @@ func (k Keeper) ExecuteBlockItems(ctx sdk.Context) error {
 
 	// messages will be returned from this iterator in the execution time ascending order
 	iter := store.Iterator(nil, nil)
+	defer iter.Close()
 
 	currentHeight := uint64(ctx.BlockHeight())
 	for ; iter.Valid(); iter.Next() {
