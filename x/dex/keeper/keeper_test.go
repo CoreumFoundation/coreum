@@ -420,9 +420,11 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.True(t, dexExpectedToReceiveBalance.IsZero())
 
 	// now place both orders to let them match partially
+	sellOrder.ID = "id3"
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
 
 	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
+	buyOrder.ID = "id4"
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
 	events = readOrderEvents(t, sdkCtx)
 

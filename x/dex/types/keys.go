@@ -39,6 +39,10 @@ var (
 	AccountDenomOrdersCountKeyPrefix = []byte{0x09}
 	// AccountDenomOrderSequenceKeyPrefix defines the key prefix for the account denom order sequence.
 	AccountDenomOrderSequenceKeyPrefix = []byte{0x10}
+
+	// ReserveOrderIDKeyPrefix defines the key prefix for all order ids used by an account to ensure
+	// global uniqueness per account.
+	ReserveOrderIDKeyPrefix = []byte{0x11}
 )
 
 // CreateOrderBookKey creates order book key.
@@ -83,6 +87,16 @@ func CreateOrderKey(orderSequence uint64) []byte {
 // CreateOrderIDToSequenceKey creates order ID to sequence key.
 func CreateOrderIDToSequenceKey(accountNumber uint64, orderID string) []byte {
 	return store.JoinKeys(CreateOrderIDToSequenceKeyPrefix(accountNumber), []byte(orderID))
+}
+
+// CreateReserveOrderIDKey creates reserved order ID key.
+// This used to ensure that is globally unique per user.
+func CreateReserveOrderIDKey(accountNumber uint64, orderID string) []byte {
+	return store.JoinKeys(
+		ReserveOrderIDKeyPrefix,
+		store.AppendUint64ToOrderedBytes(make([]byte, 0), accountNumber),
+		[]byte(orderID),
+	)
 }
 
 // CreateOrderIDToSequenceKeyPrefix creates order ID to sequence key prefix.

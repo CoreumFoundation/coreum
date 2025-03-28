@@ -329,6 +329,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 	// now update settings to remove all limit and place orderReceiveDenom2
 	require.NoError(t, testApp.AssetFTKeeper.UpdateDEXWhitelistedDenoms(sdkCtx, issuer, denom, nil))
 	fundOrderReserve(t, testApp, sdkCtx, acc)
+	orderReceiveDenom2.ID = uuid.Generate().String()
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2))
 }
 
