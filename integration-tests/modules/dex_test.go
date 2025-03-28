@@ -675,6 +675,23 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 		QuoteDenom: denom1,
 	})
 
+	orderBookRes, err := dexClient.OrderBook(ctx, &dextypes.QueryOrderBookRequest{
+		BaseDenom:  denom1,
+		QuoteDenom: denom2,
+	})
+	requireT.NoError(err)
+	require.Equal(t,
+		fmt.Sprintf("1e%d", dexParamsRes.Params.PriceTickExponent), // 1e-6
+		orderBookRes.PriceTick.String(),
+	)
+	require.Equal(t,
+		cbig.RatMul(
+			cbig.NewRatFromInts(dexParamsRes.Params.DefaultUnifiedRefAmount.RoundInt64(), 1),
+			cbig.RatTenToThePower(int64(dexParamsRes.Params.QuantityStepExponent)),
+		).Num().String(), // 10000
+		orderBookRes.QuantityStep.String(),
+	)
+
 	// check order book orders query
 	orderBookOrdersRes, err := dexClient.OrderBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
 		BaseDenom:  denom1,
