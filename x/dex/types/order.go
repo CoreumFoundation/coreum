@@ -79,6 +79,8 @@ func NewOrderFromMsgPlaceOrder(msg MsgPlaceOrder) (Order, error) {
 }
 
 // Validate validates order object.
+//
+//nolint:funlen // breaking down this function will make it less readable.
 func (o Order) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(o.Creator); err != nil {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid address: %s", o.Creator)
@@ -131,6 +133,12 @@ func (o Order) Validate() error {
 			return sdkerrors.Wrap(
 				ErrInvalidInput,
 				"it's required to specify the time in force for the limit order",
+			)
+		}
+		if o.Price == nil {
+			return sdkerrors.Wrap(
+				ErrInvalidInput,
+				"price cannot be empty for the limit order",
 			)
 		}
 		if _, err := o.ComputeLimitOrderLockedBalance(); err != nil {

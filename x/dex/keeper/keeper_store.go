@@ -90,7 +90,7 @@ func (k Keeper) setDataToStore(
 ) error {
 	bz, err := k.cdc.Marshal(val)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to marshal %T, err: %s", err, val)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to marshal %T, err: %s", val, err)
 	}
 	return k.storeService.OpenKVStore(ctx).Set(key, bz)
 }
@@ -109,7 +109,7 @@ func (k Keeper) getDataFromStore(
 	}
 
 	if err := k.cdc.Unmarshal(bz, val); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to unmarshal %T, err: %s", err, val)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to unmarshal %T, err: %s", val, err)
 	}
 
 	return nil
