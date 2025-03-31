@@ -295,7 +295,7 @@ func TestOrderCancellation(t *testing.T) {
 	bankSendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   acc1.String(),
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom1, 100)),
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom1, 1_000_000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -309,7 +309,7 @@ func TestOrderCancellation(t *testing.T) {
 	setWhitelistedLimitMsg := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewInt64Coin(denom2, 10),
+		Coin:    sdk.NewInt64Coin(denom2, 100_000),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -326,7 +326,7 @@ func TestOrderCancellation(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -454,7 +454,7 @@ func TestOrderTilBlockHeight(t *testing.T) {
 		BaseDenom:  denom1,
 		QuoteDenom: "denom2",
 		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:   sdkmath.NewInt(100),
+		Quantity:   sdkmath.NewInt(100_000),
 		Side:       dextypes.SIDE_SELL,
 		GoodTil: lo.ToPtr(dextypes.GoodTil{
 			GoodTilBlockHeight: uint64(latestBlock.Height + 20),
@@ -523,7 +523,7 @@ func TestOrderTilBlockTime(t *testing.T) {
 		BaseDenom:  denom1,
 		QuoteDenom: "denom2",
 		Price:      lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:   sdkmath.NewInt(100),
+		Quantity:   sdkmath.NewInt(100_000),
 		Side:       dextypes.SIDE_SELL,
 		GoodTil: lo.ToPtr(dextypes.GoodTil{
 			GoodTilBlockTime: lo.ToPtr(latestBlock.Time.Add(10 * time.Second)),
@@ -573,9 +573,9 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 
 	// issue assetft
 	acc1 := chain.GenAccount()
-	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 10))
 	acc2 := chain.GenAccount()
-	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
+	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 10))
 
 	// create acc1 orders
 	latestBlock, err := chain.LatestBlockHeader(ctx)
@@ -592,14 +592,14 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
 			Price:      lo.ToPtr(dextypes.MustNewPriceFromString("999")),
-			Quantity:   sdkmath.NewInt(100),
+			Quantity:   sdkmath.NewInt(100_000),
 			Side:       dextypes.SIDE_SELL,
 			GoodTil: &dextypes.GoodTil{
 				GoodTilBlockHeight: uint64(latestBlock.Height + 500),
 			},
 			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-			RemainingBaseQuantity:     sdkmath.NewInt(100),
-			RemainingSpendableBalance: sdkmath.NewInt(100),
+			RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+			RemainingSpendableBalance: sdkmath.NewInt(100_000),
 			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 	}
@@ -625,14 +625,14 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
 			Price:      lo.ToPtr(dextypes.MustNewPriceFromString("996")),
-			Quantity:   sdkmath.NewInt(10),
+			Quantity:   sdkmath.NewInt(10_000),
 			Side:       dextypes.SIDE_BUY,
 			GoodTil: &dextypes.GoodTil{
 				GoodTilBlockHeight: uint64(latestBlock.Height + 1000),
 			},
 			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-			RemainingBaseQuantity:     sdkmath.NewInt(10),
-			RemainingSpendableBalance: sdkmath.NewInt(9960),
+			RemainingBaseQuantity:     sdkmath.NewInt(10_000),
+			RemainingSpendableBalance: sdkmath.NewInt(9_960_000),
 			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 		{
@@ -642,11 +642,11 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 			BaseDenom:                 denom1,
 			QuoteDenom:                denom2,
 			Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("997")),
-			Quantity:                  sdkmath.NewInt(10),
+			Quantity:                  sdkmath.NewInt(10_000),
 			Side:                      dextypes.SIDE_BUY,
 			TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-			RemainingBaseQuantity:     sdkmath.NewInt(10),
-			RemainingSpendableBalance: sdkmath.NewInt(9970),
+			RemainingBaseQuantity:     sdkmath.NewInt(10_000),
+			RemainingSpendableBalance: sdkmath.NewInt(9_970_000),
 			Reserve:                   dexParamsRes.Params.OrderReserve,
 		},
 	}
