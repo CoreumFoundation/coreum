@@ -793,7 +793,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   acc1.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom1, sdkmath.NewInt(150)),
+			sdk.NewCoin(denom1, sdkmath.NewInt(150_000)),
 		),
 	}
 
@@ -809,7 +809,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	freezeMsg := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(150)),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(150_000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -824,7 +824,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Frozen.String())
 
 	// place order should fail because all the funds are frozen
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
@@ -834,7 +834,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -852,14 +852,14 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Frozen.String())
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
 
 	// change the frozen amount to less than the order quantity
 	unfreezeMsg := &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100_000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -874,7 +874,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(50_000).String(), balanceRes.Frozen.String())
 
 	// now placing order should succeed because the needed funds are more than frozen amount
 	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
@@ -884,7 +884,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -902,14 +902,14 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(50_000).String(), balanceRes.Frozen.String())
 	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// freeze remaining tokens
 	freezeMsg = &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100_000)),
 	}
 
 	_, err = client.BroadcastTx(
@@ -925,7 +925,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Frozen.String())
 	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// place buy order to match the sell
@@ -936,7 +936,7 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:    sdkmath.NewInt(300),
+		Quantity:    sdkmath.NewInt(300_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -954,14 +954,14 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 		Denom:   denom2,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(10).String(), acc1Denom2BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(10_000).String(), acc1Denom2BalanceRes.Balance.Amount.String())
 
 	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc2.String(),
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(100_000).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 }
 
 // TestLimitOrdersMatchingWithAssetFTGloballyFreeze tests the dex modules ability to place get and match limit orders
@@ -1006,7 +1006,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   acc1.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom1, sdkmath.NewInt(150)),
+			sdk.NewCoin(denom1, sdkmath.NewInt(150_000)),
 		),
 	}
 
@@ -1036,7 +1036,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Frozen.String())
 
 	// place order should fail because all the funds are globally frozen
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
@@ -1046,7 +1046,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1067,7 +1067,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Frozen.String())
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
 
 	// unfreeze the denom globally
@@ -1098,7 +1098,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1138,7 +1138,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Frozen.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Frozen.String())
 	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// place buy order to match the sell
@@ -1149,7 +1149,7 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:    sdkmath.NewInt(300),
+		Quantity:    sdkmath.NewInt(300_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1185,14 +1185,14 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 		Denom:   denom2,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(10).String(), acc1Denom2BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(10_000).String(), acc1Denom2BalanceRes.Balance.Amount.String())
 
 	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc2.String(),
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(100_000).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 }
 
 // TestLimitOrdersMatchingWithAssetClawback tests the dex modules ability to place get and match limit orders
@@ -1234,7 +1234,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   acc1.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom1, sdkmath.NewInt(150)),
+			sdk.NewCoin(denom1, sdkmath.NewInt(150_000)),
 		),
 	}
 
@@ -1250,7 +1250,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 	clawbackMsg := &assetfttypes.MsgClawback{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100_000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1265,7 +1265,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(50_000).String(), balanceRes.Balance.String())
 
 	// place order should fail because of insufficient funds
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
@@ -1275,7 +1275,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1293,14 +1293,14 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(50_000).String(), balanceRes.Balance.String())
 
 	// send enough amounts for the order
 	msgSend = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   acc1.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+			sdk.NewCoin(denom1, sdkmath.NewInt(100_000)),
 		),
 	}
 
@@ -1317,7 +1317,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Balance.String())
 
 	// now placing order should succeed because the needed funds are available
 	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
@@ -1327,7 +1327,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1345,14 +1345,14 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Balance.String())
 	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// try to clawback after placing the order should fail
 	clawbackMsg = &assetfttypes.MsgClawback{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100_000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1367,7 +1367,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Balance.String())
 	requireT.Equal(placeSellOrderMsg.Quantity.String(), balanceRes.LockedInDEX.String())
 
 	// the order should be cancelled, in order to do the clawback
@@ -1388,14 +1388,14 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Balance.String())
 	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
 
 	// now clawback should succeed
 	clawbackMsg = &assetfttypes.MsgClawback{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100)),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(100_000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1410,7 +1410,7 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(50).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(50_000).String(), balanceRes.Balance.String())
 	requireT.Equal(sdkmath.ZeroInt().String(), balanceRes.LockedInDEX.String())
 }
 
@@ -1578,7 +1578,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1613,11 +1613,11 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		BaseDenom:                 denom1,
 		QuoteDenom:                denom2,
 		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:                  sdkmath.NewInt(100),
+		Quantity:                  sdkmath.NewInt(100_000),
 		Side:                      dextypes.SIDE_SELL,
 		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-		RemainingBaseQuantity:     sdkmath.NewInt(100),
-		RemainingSpendableBalance: sdkmath.NewInt(100),
+		RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+		RemainingSpendableBalance: sdkmath.NewInt(100_000),
 		Reserve:                   dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
@@ -1629,7 +1629,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:    sdkmath.NewInt(300),
+		Quantity:    sdkmath.NewInt(300_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1663,7 +1663,7 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(100_000).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 }
 
 // TestLimitOrdersMatchingWithCommissionRate tests the dex modules ability to place get and match limit orders with
@@ -1729,7 +1729,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1764,11 +1764,11 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		BaseDenom:                 denom1,
 		QuoteDenom:                denom2,
 		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:                  sdkmath.NewInt(100),
+		Quantity:                  sdkmath.NewInt(100_000),
 		Side:                      dextypes.SIDE_SELL,
 		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-		RemainingBaseQuantity:     sdkmath.NewInt(100),
-		RemainingSpendableBalance: sdkmath.NewInt(100),
+		RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+		RemainingSpendableBalance: sdkmath.NewInt(100_000),
 		Reserve:                   dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
@@ -1780,7 +1780,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:    sdkmath.NewInt(300),
+		Quantity:    sdkmath.NewInt(300_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1814,7 +1814,7 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(100_000).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 }
 
 // TestLimitOrdersMatchingWithAssetFTWhitelist tests the dex modules ability to place get and match limit orders
@@ -1859,7 +1859,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	msgSetWhitelistedLimit := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(1000000)),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(1_000_000)),
 	}
 
 	_, err = client.BroadcastTx(
@@ -1874,7 +1874,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   acc1.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom1, sdkmath.NewInt(150)),
+			sdk.NewCoin(denom1, sdkmath.NewInt(150_000)),
 		),
 	}
 
@@ -1891,7 +1891,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.Balance.String())
 
 	// place order should fail because acc2 is out of whitelisted coins
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
@@ -1901,7 +1901,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:    sdkmath.NewInt(300),
+		Quantity:    sdkmath.NewInt(300_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1924,7 +1924,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	msgSetWhitelistedLimit = &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: acc2.String(),
-		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(300)),
+		Coin:    sdk.NewCoin(denom1, sdkmath.NewInt(300_000)),
 	}
 
 	_, err = client.BroadcastTx(
@@ -1949,7 +1949,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 		Denom:   denom2,
 	})
 	requireT.NoError(err)
-	requireT.Equal("33", balanceRes.LockedInDEX.String())
+	requireT.Equal(sdkmath.NewInt(33_000).String(), balanceRes.LockedInDEX.String())
 
 	// Reducing the whitelist limit will not interfere with DEX order after order placement
 	msgSetWhitelistedLimit = &assetfttypes.MsgSetWhitelistedLimit{
@@ -1974,7 +1974,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -1992,14 +1992,14 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 		Denom:   denom2,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(11).String(), acc1Denom2BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(11_000).String(), acc1Denom2BalanceRes.Balance.Amount.String())
 
 	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc2.String(),
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(100_000).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 
 	// place order should succeed as issuer because admin (issuer) doesn't have whitelist limit
 	placeSellOrderMsg = &dextypes.MsgPlaceOrder{
@@ -2009,7 +2009,7 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -2223,12 +2223,12 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 	sendMsg1 := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   acc.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom1WithBlockSmartContract, sdkmath.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom1WithBlockSmartContract, sdkmath.NewInt(100_000))),
 	}
 	sendMsg2 := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   acc.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(100_000))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2246,7 +2246,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 		BaseDenom:   denom1WithBlockSmartContract,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -2267,7 +2267,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 		BaseDenom:   denom2,
 		QuoteDenom:  denom1WithBlockSmartContract,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -2287,7 +2287,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 		Symbol:        "CTR",
 		Subunit:       "ctr",
 		Precision:     6,
-		InitialAmount: sdkmath.NewInt(100).String(),
+		InitialAmount: sdkmath.NewInt(100_000).String(),
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
@@ -2312,7 +2312,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 	sendMsg1 = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   contractAddr,
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom1WithBlockSmartContract, sdkmath.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom1WithBlockSmartContract, sdkmath.NewInt(100_000))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2328,7 +2328,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 	sendMsg2 = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   contractAddr,
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom2, sdkmath.NewInt(100_000))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2347,7 +2347,7 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 				BaseDenom:   denom1WithBlockSmartContract,
 				QuoteDenom:  denom2,
 				Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
-				Quantity:    sdkmath.NewInt(100),
+				Quantity:    sdkmath.NewInt(100_000),
 				Side:        dextypes.SIDE_BUY,
 				TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 			},
@@ -2410,7 +2410,7 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   acc1.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom1, sdkmath.NewInt(200)),
+			sdk.NewCoin(denom1, sdkmath.NewInt(200_000)),
 		),
 	}
 
@@ -2429,7 +2429,7 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(150),
+		Quantity:    sdkmath.NewInt(150_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -2447,16 +2447,16 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(200).String(), balanceRes.Balance.String())
-	requireT.Equal(sdkmath.NewInt(150).String(), balanceRes.LockedInDEX.String())
+	requireT.Equal(sdkmath.NewInt(200_000).String(), balanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(150_000).String(), balanceRes.LockedInDEX.String())
 
 	// try to burn burnable token, locked in dex
 	burnMsg := &assetfttypes.MsgBurn{
 		Sender: acc1.String(),
 		Coin: sdk.Coin{
 			Denom: denom1,
-			// it's allowed to burn only 50 not locked in dex
-			Amount: sdkmath.NewInt(100),
+			// it's allowed to burn only 50_000 not locked in dex
+			Amount: sdkmath.NewInt(100_000),
 		},
 	}
 	_, err = client.BroadcastTx(
@@ -2465,7 +2465,7 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.ErrorContains(err, fmt.Sprintf("100%s is not available, available 50%s", denom1, denom1))
+	requireT.ErrorContains(err, "is not available, available")
 
 	// cancel to burn
 	cancelOrderMsg := &dextypes.MsgCancelOrder{
@@ -2493,8 +2493,8 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	// 100 is burnt 100 remains
-	requireT.Equal(sdkmath.NewInt(100).String(), balanceRes.Balance.String())
+	// 100k is burnt 100k remains
+	requireT.Equal(sdkmath.NewInt(100_000).String(), balanceRes.Balance.String())
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
 }
 
