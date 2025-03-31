@@ -48,12 +48,12 @@ func TestLimitOrdersMatching(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -66,7 +66,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(1_000_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -93,11 +93,11 @@ func TestLimitOrdersMatching(t *testing.T) {
 		BaseDenom:                 denom1,
 		QuoteDenom:                denom2,
 		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:                  sdkmath.NewInt(100),
+		Quantity:                  sdkmath.NewInt(1_000_000),
 		Side:                      dextypes.SIDE_SELL,
 		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-		RemainingBaseQuantity:     sdkmath.NewInt(100),
-		RemainingSpendableBalance: sdkmath.NewInt(100),
+		RemainingBaseQuantity:     sdkmath.NewInt(1_000_000),
+		RemainingSpendableBalance: sdkmath.NewInt(1_000_000),
 		Reserve:                   dexParamsRes.Params.OrderReserve,
 	}, sellOrderRes.Order)
 
@@ -109,7 +109,7 @@ func TestLimitOrdersMatching(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:    sdkmath.NewInt(300),
+		Quantity:    sdkmath.NewInt(3_000_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -145,11 +145,11 @@ func TestLimitOrdersMatching(t *testing.T) {
 		BaseDenom:                 denom1,
 		QuoteDenom:                denom2,
 		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
-		Quantity:                  sdkmath.NewInt(300),
+		Quantity:                  sdkmath.NewInt(3_000_000),
 		Side:                      dextypes.SIDE_BUY,
 		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
-		RemainingBaseQuantity:     sdkmath.NewInt(200),
-		RemainingSpendableBalance: sdkmath.NewInt(22),
+		RemainingBaseQuantity:     sdkmath.NewInt(2_000_000),
+		RemainingSpendableBalance: sdkmath.NewInt(220_000),
 		Reserve:                   dexParamsRes.Params.OrderReserve,
 	}, buyOrderRes.Order)
 
@@ -158,14 +158,14 @@ func TestLimitOrdersMatching(t *testing.T) {
 		Denom:   denom2,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(10).String(), acc1Denom2BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(100_000).String(), acc1Denom2BalanceRes.Balance.Amount.String())
 
 	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: acc2.String(),
 		Denom:   denom1,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdkmath.NewInt(100).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+	requireT.Equal(sdkmath.NewInt(1_000_000).String(), acc2Denom1BalanceRes.Balance.Amount.String())
 }
 
 // TestMarketOrdersMatching tests the dex modules ability to place match market orders.
@@ -182,12 +182,12 @@ func TestMarketOrdersMatching(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(1_000_000)),
 	})
 
 	acc2 := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(1_000_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -200,7 +200,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
 		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 	}
@@ -220,7 +220,7 @@ func TestMarketOrdersMatching(t *testing.T) {
 		ID:          "id2",
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
-		Quantity:    sdkmath.NewInt(300),
+		Quantity:    sdkmath.NewInt(300_000),
 		Side:        dextypes.SIDE_BUY,
 		TimeInForce: dextypes.TIME_IN_FORCE_IOC,
 	}
@@ -238,11 +238,11 @@ func TestMarketOrdersMatching(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(
-		sdkmath.NewInt(999900).String(),
+		sdkmath.NewInt(900_000).String(),
 		acc1BalancesRes.Balances.AmountOf(denom1).String(),
 	)
 	requireT.Equal(
-		sdkmath.NewInt(10).String(),
+		sdkmath.NewInt(10_000).String(),
 		acc1BalancesRes.Balances.AmountOf(denom2).String(),
 	)
 
@@ -251,11 +251,11 @@ func TestMarketOrdersMatching(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(
-		sdkmath.NewInt(100).String(),
+		sdkmath.NewInt(100_000).String(),
 		acc2BalancesRes.Balances.AmountOf(denom1).String(),
 	)
 	requireT.Equal(
-		sdkmath.NewInt(999990).String(),
+		sdkmath.NewInt(990_000).String(),
 		acc2BalancesRes.Balances.AmountOf(denom2).String(),
 	)
 }
