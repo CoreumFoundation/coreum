@@ -28,11 +28,9 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
 	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/keeper"
 	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -586,12 +584,7 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
 	requireT.NoError(err)
 
-	// TODO: Improve this after merging Yaroslav's changes
-	quantityStep, _ := keeper.ComputeQuantityStep(
-		dexParamsRes.Params.DefaultUnifiedRefAmount.BigInt(),
-		dexParamsRes.Params.QuantityStepExponent-sdkmath.LegacyPrecision,
-	)
-	defaultQuantityStep := sdkmath.NewIntFromBigInt(quantityStep)
+	defaultQuantityStep := sdkmath.NewInt(10000)
 
 	acc1Orders := []dextypes.Order{
 		{
@@ -694,12 +687,11 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 		orderBookRes.PriceTick.String(),
 	)
 	require.Equal(t,
-		cbig.RatMul(
-			cbig.NewRatFromInts(dexParamsRes.Params.DefaultUnifiedRefAmount.RoundInt64(), 1),
-			cbig.RatTenToThePower(int64(dexParamsRes.Params.QuantityStepExponent)),
-		).Num().String(), // 10000
+		defaultQuantityStep.String(),
 		orderBookRes.QuantityStep.String(),
 	)
+	require.Equal(t, dexParamsRes.Params.DefaultUnifiedRefAmount.String(), orderBookRes.BaseDenomUnifiedRefAmount.String())
+	require.Equal(t, dexParamsRes.Params.DefaultUnifiedRefAmount.String(), orderBookRes.QuoteDenomUnifiedRefAmount.String())
 
 	// check order book orders query
 	orderBookOrdersRes, err := dexClient.OrderBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{

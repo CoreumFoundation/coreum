@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"errors"
-	"fmt"
 
 	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
@@ -178,31 +177,36 @@ func (k Keeper) GetOrderBooks(
 func (k Keeper) GetOrderBook(
 	ctx sdk.Context,
 	baseDenom, quoteDenom string,
-) (*types.Price, *sdkmath.Int, error) {
+) (*types.QueryOrderBookResponse, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	quoteURA, err := k.getAssetFTUnifiedRefAmount(ctx, quoteDenom, params.DefaultUnifiedRefAmount)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	baseURABigInt := baseURA.BigInt()
 	quoteURABigInt := quoteURA.BigInt()
 	_, priceTickExponent := ComputePriceTick(baseURABigInt, quoteURABigInt, params.PriceTickExponent)
 	quantityStep, _ := ComputeQuantityStep(baseURABigInt, params.QuantityStepExponent-sdkmath.LegacyPrecision)
 	quantityStepRes := sdkmath.NewIntFromBigInt(quantityStep)
-	// FIXME: Fix price priceTick calculation
-	priceTick, err := types.NewPriceFromString(fmt.Sprintf("1e%d", priceTickExponent))
+	priceTick, err := types.NewPrice(1, int8(priceTickExponent))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return &priceTick, &quantityStepRes, nil
+
+	return &types.QueryOrderBookResponse{
+		PriceTick:                  priceTick,
+		QuantityStep:               quantityStepRes,
+		BaseDenomUnifiedRefAmount:  &baseURA,
+		QuoteDenomUnifiedRefAmount: &quoteURA,
+	}, nil
 }
 
 // GetOrderBookOrders returns order book records sorted by price asc. For the buy side it's expected to use the reverse

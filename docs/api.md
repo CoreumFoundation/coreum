@@ -5067,6 +5067,8 @@ QueryOrderBookResponse defines the response type for the `OrderBooks` query.
 | ----- | ---- | ----- | ----------- |
 | `price_tick` | [string](#string) |  |  `price_tick is the minimum price movement an asset price can make, either upward or downward.`  |
 | `quantity_step` | [string](#string) |  |  `quantity_step is the the smallest allowable step for the base asset inside a market.`  |
+| `base_denom_unified_ref_amount` | [string](#string) |  |  `base_denom_unified_ref_amount is the base denom approximate amount you need to buy 1USD, used to define the price tick size`  |
+| `quote_denom_unified_ref_amount` | [string](#string) |  |  `quote_denom_unified_ref_amount is the quote denom approximate amount you need to buy 1USD, used to define the price tick size`  |
 
 
 
