@@ -1,6 +1,6 @@
 # Problem
 
-In our system, all balances are stored and operated as integers. This means that during order matching and execution, all calculations must be performed using integer values. This approach is not unique to our system—centralized exchanges (CEXes) and traditional finance exchanges also use integers as the underlying type for calculations to ensure precise execution and avoid rounding errors.
+In our system, all balances are stored and operated as integers. This means that during order matching and execution, all calculations must be performed using integer values. This approach is not unique to our system and centralized exchanges (CEXes), traditional finance exchanges also use integers as the underlying type for calculations to ensure precise execution and avoid rounding errors.
 
 If we were to rely solely on this requirement, order creation would only need to follow two simple rules:
 - `base_quantity` must be an integer.
