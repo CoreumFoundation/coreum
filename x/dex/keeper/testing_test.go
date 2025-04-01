@@ -16,14 +16,3 @@ var defaultQuantityStep = func() sdkmath.Int {
 	)
 	return sdkmath.NewIntFromBigInt(quantityStep)
 }()
-
-//nolint:dupword
-// var defaultPriceTick = func() *big.Rat {
-// 	p := types.DefaultParams()
-// 	priceTick, _ := keeper.ComputePriceTick(
-// 		p.DefaultUnifiedRefAmount.BigInt(),
-// 		p.DefaultUnifiedRefAmount.BigInt(),
-// 		p.PriceTickExponent,
-// 	)
-// 	return priceTick
-// }

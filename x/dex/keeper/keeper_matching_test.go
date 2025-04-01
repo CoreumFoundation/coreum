@@ -551,7 +551,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantErrorContains: "3759000denom2 is not available, available 3758000denom2",
 		},
 
-		// TODO: Figure out behavior in this case. Because we can possibly create an order
+		// TODO: Figure out behavior in this case. Because we can possibly create an order,
+		// but it seems to violate quote quantity step rule.
 		{
 			name: "match_limit_directOB_maker_sell_taker_buy_close_maker_with_partial_filling",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
