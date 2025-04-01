@@ -11,7 +11,6 @@ exclude = [
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-doctest = false
 
 [features]
 cosmwasm_2_0 = ["cosmwasm-std/cosmwasm_2_0"]
