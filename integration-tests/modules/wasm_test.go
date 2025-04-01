@@ -3845,7 +3845,7 @@ func TestWASMDEXInContract(t *testing.T) {
 
 	// ********** Place Order **********
 
-	orderQuantity := sdkmath.NewInt(100)
+	orderQuantity := sdkmath.NewInt(100_000)
 	placeOrderPayload, err := json.Marshal(map[dexMethod]placeOrderBodyDEXRequest{
 		dexMethodPlaceOrder: {
 			Order: dextypes.MsgPlaceOrder{

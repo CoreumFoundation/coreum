@@ -1752,12 +1752,11 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 			AddRaw(2 * 500_000),
 	})
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000). // message + order reserve
-							Add(dexReserver.Amount),
+		Amount: sdkmath.NewInt(500_000).Add(dexReserver.Amount), // message + order reserve
 	})
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(500_000).
-			AddRaw(100).
+			AddRaw(200_000_000).
 			Add(dexReserver.Amount), // message  + balance to place an order + order reserve
 	})
 
@@ -1771,7 +1770,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 		Symbol:        "EXABC",
 		Subunit:       "extabc",
 		Precision:     6,
-		InitialAmount: sdkmath.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1_000_000_000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_extension,
 		},
@@ -1796,7 +1795,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   acc1.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denomWithExtension, sdkmath.NewInt(400))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denomWithExtension, sdkmath.NewInt(400_000_000))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1826,7 +1825,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 	requireT.ErrorContains(err, "wasm error: DEX order placement is failed")
 
 	// update to allowed
-	placeSellOrderMsg.Quantity = sdkmath.NewInt(100)
+	placeSellOrderMsg.Quantity = sdkmath.NewInt(100_000_000)
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc1),
@@ -1841,7 +1840,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.True(acc1BalanceRes.ExpectedToReceiveInDEX.IsZero())
-	requireT.Equal(sdkmath.NewInt(100).String(), acc1BalanceRes.LockedInDEX.String())
+	requireT.Equal(sdkmath.NewInt(100_000_000).String(), acc1BalanceRes.LockedInDEX.String())
 
 	// place buy order from acc2
 
@@ -1873,7 +1872,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 	requireT.ErrorContains(err, "wasm error: DEX order placement is failed")
 
 	// update to allowed
-	placeBuyOrderMsg.Quantity = sdkmath.NewInt(100)
+	placeBuyOrderMsg.Quantity = sdkmath.NewInt(100_000_000)
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(acc2),
@@ -1889,7 +1888,7 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 	})
 	requireT.NoError(err)
 	// bought expected quantity
-	requireT.Equal(sdkmath.NewInt(100).String(), acc2BalanceRes.Balance.String())
+	requireT.Equal(sdkmath.NewInt(100_000_000).String(), acc2BalanceRes.Balance.String())
 	requireT.True(acc2BalanceRes.LockedInDEX.IsZero())
 	requireT.True(acc2BalanceRes.ExpectedToReceiveInDEX.IsZero())
 

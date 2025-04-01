@@ -2058,7 +2058,7 @@ func TestCancelOrdersByDenom(t *testing.T) {
 
 	ordersCount := int(dexParamsRes.Params.MaxOrdersPerDenom)
 
-	amtPerOrder := sdkmath.NewInt(100)
+	amtPerOrder := sdkmath.NewInt(100_000)
 	placeMsgs := lo.RepeatBy(ordersCount, func(_ int) sdk.Msg {
 		return &dextypes.MsgPlaceOrder{
 			Sender:     acc1.String(),
