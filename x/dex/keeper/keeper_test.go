@@ -844,21 +844,22 @@ func TestKeeper_GetOrderBook(t *testing.T) {
 	fundOrderReserve(t, testApp, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))
 
-	priceTick, quantityStep, err := testApp.DEXKeeper.GetOrderBook(sdkCtx, denom1, denom2)
+	res, err := testApp.DEXKeeper.GetOrderBook(sdkCtx, denom1, denom2)
 	require.NoError(t, err)
-	require.NotNil(t, priceTick)
-	require.NotNil(t, quantityStep)
+	require.NotNil(t, res)
 	require.Equal(t,
 		fmt.Sprintf("1e%d", params.PriceTickExponent), // 1e-6
-		priceTick.String(),
+		res.PriceTick.String(),
 	)
 	require.Equal(t,
 		cbig.RatMul(
 			cbig.NewRatFromInts(params.DefaultUnifiedRefAmount.RoundInt64(), 1),
 			cbig.RatTenToThePower(int64(params.QuantityStepExponent)),
 		).Num().String(), // 10000
-		quantityStep.String(),
+		res.QuantityStep.String(),
 	)
+	require.Equal(t, params.DefaultUnifiedRefAmount.String(), res.BaseDenomUnifiedRefAmount.String())
+	require.Equal(t, params.DefaultUnifiedRefAmount.String(), res.QuoteDenomUnifiedRefAmount.String())
 }
 
 func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *testing.T) {

@@ -116,6 +116,10 @@ message QueryOrderBookResponse {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+  // base_denom_unified_ref_amount is the base denom approximate amount you need to buy 1USD, used to define the price tick size
+  string base_denom_unified_ref_amount = 3 [(gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"];
+  // quote_denom_unified_ref_amount is the quote denom approximate amount you need to buy 1USD, used to define the price tick size
+  string quote_denom_unified_ref_amount = 4 [(gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"];
 }
 
 // QueryOrderBookOrdersRequest defines the request type for the `OrderBookOrders` query.

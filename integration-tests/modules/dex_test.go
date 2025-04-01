@@ -685,12 +685,11 @@ func TestOrderBooksAndOrdersQueries(t *testing.T) {
 		orderBookRes.PriceTick.String(),
 	)
 	require.Equal(t,
-		cbig.RatMul(
-			cbig.NewRatFromInts(dexParamsRes.Params.DefaultUnifiedRefAmount.RoundInt64(), 1),
-			cbig.RatTenToThePower(int64(dexParamsRes.Params.QuantityStepExponent)),
-		).Num().String(), // 10000
+		defaultQuantityStep.String(),
 		orderBookRes.QuantityStep.String(),
 	)
+	require.Equal(t, dexParamsRes.Params.DefaultUnifiedRefAmount.String(), orderBookRes.BaseDenomUnifiedRefAmount.String())
+	require.Equal(t, dexParamsRes.Params.DefaultUnifiedRefAmount.String(), orderBookRes.QuoteDenomUnifiedRefAmount.String())
 
 	// check order book orders query
 	orderBookOrdersRes, err := dexClient.OrderBookOrders(ctx, &dextypes.QueryOrderBookOrdersRequest{
