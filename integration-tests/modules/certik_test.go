@@ -44,8 +44,9 @@ func TestCertikPoc(t *testing.T) {
 			AddRaw(1_000_000_000_000),
 	})
 	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000_000). // message + order reserve
-							Add(dexReserver.Amount),
+		// message + order reserve
+		Amount: sdkmath.NewInt(500_000_000).
+			Add(dexReserver.Amount),
 	})
 	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
 		Amount: sdkmath.NewInt(500_000_000).
@@ -58,7 +59,7 @@ func TestCertikPoc(t *testing.T) {
 	)
 	requireT.NoError(err1)
 
-	//issue tokenA
+	// issue tokenA
 	issueMsgA := &assetfttypes.MsgIssue{
 		Issuer:        admin.String(),
 		Symbol:        "TKNA",
@@ -118,7 +119,7 @@ func TestCertikPoc(t *testing.T) {
 		issueMsgB,
 	)
 	requireT.NoError(err)
-	//get extension contract addr
+	// get extension contract addr
 	denomBTokenRes, err := assetFTClint.Token(ctx, &assetfttypes.QueryTokenRequest{
 		Denom: denomB,
 	})
@@ -142,6 +143,7 @@ func TestCertikPoc(t *testing.T) {
 	_, err = sendFromAdmin(ctx, chain, admin, acc2.String(), denomA, sdkmath.NewInt(100000))
 	requireT.NoError(err)
 	_, err = sendFromAdmin(ctx, chain, admin, acc2.String(), denomB, sdkmath.NewInt(100000))
+	requireT.NoError(err)
 	printBalanceResponse := func(prefix string, res *assetfttypes.QueryBalanceResponse) {
 		t.Log(prefix + ":")
 		t.Log("  Balance: " + res.Balance.String())
@@ -220,7 +222,8 @@ func TestCertikPoc(t *testing.T) {
 
 	t.Log("-----------------------")
 }
-func checkBalance(ctx context.Context, assetFTClint assetfttypes.QueryClient, acc1 string, acc2 string, cw string, denomA string, denomB string) (
+
+func checkBalance(ctx context.Context, assetFTClint assetfttypes.QueryClient, acc1, acc2, cw, denomA, denomB string) (
 	*assetfttypes.QueryBalanceResponse, // acc1A
 	*assetfttypes.QueryBalanceResponse, // acc1B
 	*assetfttypes.QueryBalanceResponse, // acc2A
@@ -255,7 +258,14 @@ func checkBalance(ctx context.Context, assetFTClint assetfttypes.QueryClient, ac
 
 	return acc1ABalanceRes, acc1BBalanceRes, acc2ABalanceRes, acc2BBalanceRes, cwABalanceRes, cwBBalanceRes
 }
-func placeBuyOrder(ctx context.Context, chain integration.CoreumChain, acc sdk.AccAddress, id string, denomA string, denomB string, price string, amount sdkmath.Int) (*sdk.TxResponse, error) {
+
+func placeBuyOrder(
+	ctx context.Context,
+	chain integration.CoreumChain,
+	acc sdk.AccAddress,
+	id, denomA, denomB, price string,
+	amount sdkmath.Int,
+) (*sdk.TxResponse, error) {
 	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc.String(),
 		Type:        dextypes.ORDER_TYPE_LIMIT,
@@ -275,7 +285,13 @@ func placeBuyOrder(ctx context.Context, chain integration.CoreumChain, acc sdk.A
 	)
 	return resp, err
 }
-func placeSellOrder(ctx context.Context, chain integration.CoreumChain, acc sdk.AccAddress, id string, denomA string, denomB string, price string, amount sdkmath.Int) (*sdk.TxResponse, error) {
+
+func placeSellOrder(
+	ctx context.Context,
+	chain integration.CoreumChain,
+	acc sdk.AccAddress, id, denomA, denomB, price string,
+	amount sdkmath.Int,
+) (*sdk.TxResponse, error) {
 	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
 		Sender:      acc.String(),
 		Type:        dextypes.ORDER_TYPE_LIMIT,
@@ -295,7 +311,15 @@ func placeSellOrder(ctx context.Context, chain integration.CoreumChain, acc sdk.
 	)
 	return resp, err
 }
-func sendFromAdmin(ctx context.Context, chain integration.CoreumChain, admin sdk.AccAddress, to string, denom string, amount sdkmath.Int) (*sdk.TxResponse, error) {
+
+func sendFromAdmin(
+	ctx context.Context,
+	chain integration.CoreumChain,
+	admin sdk.AccAddress,
+	to string,
+	denom string,
+	amount sdkmath.Int,
+) (*sdk.TxResponse, error) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   to,
