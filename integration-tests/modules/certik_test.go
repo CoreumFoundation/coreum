@@ -221,6 +221,8 @@ func TestCertikPoc(t *testing.T) {
 	printBalanceResponse("cwB", cwBBalanceRes)
 
 	t.Log("-----------------------")
+
+	requireT.Equal("99", acc1ABalanceRes.LockedInDEX.String())
 }
 
 func checkBalance(ctx context.Context, assetFTClint assetfttypes.QueryClient, acc1, acc2, cw, denomA, denomB string) (

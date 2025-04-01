@@ -197,10 +197,6 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
 		return nil
 	}
 
-	if err := k.assetFTKeeper.DEXExecuteActions(ctx, mr.FTActions); err != nil {
-		return err
-	}
-
 	for _, item := range mr.RecordsToRemove {
 		if err := k.removeOrderByRecord(ctx, item.Address, *item.Record); err != nil {
 			return err
@@ -211,6 +207,10 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
 		if err := k.saveOrderBookRecord(ctx, *mr.RecordToUpdate); err != nil {
 			return err
 		}
+	}
+
+	if err := k.assetFTKeeper.DEXExecuteActions(ctx, mr.FTActions); err != nil {
+		return err
 	}
 
 	return k.publishMatchingEvents(ctx, mr)
