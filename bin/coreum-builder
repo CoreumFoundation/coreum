@@ -22,7 +22,7 @@ fi
 case "$1" in
 
    "znet")
-      MODULE="github.com/CoreumFoundation/crust"
+      MODULE="github.com/CoreumFoundation/crust/znet"
       VERSION_TMPL='{{ if or (.Replace) (eq .Version "") }}devel{{ else }}{{ .Version }}{{ end }}'
       ZNET_VERSION=$(go list -m -f "$VERSION_TMPL" "$MODULE")
       ZNET_BIN="$REPO/bin/.cache/znet-${ZNET_VERSION}"
