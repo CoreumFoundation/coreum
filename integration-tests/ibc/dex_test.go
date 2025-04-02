@@ -23,8 +23,6 @@ import (
 )
 
 func TestIBCDexLimitOrdersMatching(t *testing.T) {
-	// TODO: Update crust version with proper order quantities.
-	t.SkipNow()
 	t.Parallel()
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
