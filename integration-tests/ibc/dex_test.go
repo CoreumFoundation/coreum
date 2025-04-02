@@ -45,7 +45,7 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
-		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
+		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1_000_000)), // coin for the fees
 	})
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
@@ -68,8 +68,8 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 	denom1 := issueFT(ctx, t, coreumChain, coreumIssuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_ibc)
 	denom2 := "denom2"
 
-	sendCoin := sdk.NewCoin(denom1, sdkmath.NewInt(1000))
-	halfCoin := sdk.NewCoin(denom1, sdkmath.NewInt(500))
+	sendCoin := sdk.NewCoin(denom1, sdkmath.NewInt(100_000))
+	halfCoin := sdk.NewCoin(denom1, sdkmath.NewInt(50_000))
 	msgSend := &banktypes.MsgSend{
 		FromAddress: coreumIssuer.String(),
 		ToAddress:   coreumSender.String(),

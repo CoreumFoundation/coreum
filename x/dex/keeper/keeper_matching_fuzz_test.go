@@ -27,10 +27,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-const (
-	IDDEXOrderSuffixTrigger = "blocked"
-)
-
 type FuzzAppConfig struct {
 	AccountsCount                 int
 	AssetFTDefaultDenomsCount     int
@@ -72,6 +68,8 @@ type FuzzApp struct {
 	denoms   []string
 	ftDenoms []string
 	sides    []types.Side
+
+	failedPlaceOrderCount int
 }
 
 func NewFuzzApp(
@@ -84,7 +82,10 @@ func NewFuzzApp(
 
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
-	params.PriceTickExponent = int32(-6) // use low but not too much
+
+	// use smaller values than default ones to allow wider range of values for price and quantity inside this test.
+	params.PriceTickExponent -= 10
+	params.QuantityStepExponent -= 10
 
 	require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
@@ -248,6 +249,14 @@ func (fa *FuzzApp) PlaceOrdersAndAssertFinalState(
 		})
 	}
 	cancelAllOrdersAndAssertState(t, sdkCtx, fa.testApp)
+
+	// Additional check to make sure we have reasonable percentage of successful order placements.
+	require.LessOrEqual(
+		t,
+		float64(fa.failedPlaceOrderCount),
+		float64(fa.cfg.OrdersCount)*0.8,
+		"More than 80% of orders failed to be placed",
+	)
 }
 
 func (fa *FuzzApp) GenOrder(
@@ -276,11 +285,6 @@ func (fa *FuzzApp) GenOrder(
 
 	side := getAnyItemByIndex(fa.sides, uint8(rnd.Uint32()))
 
-	priceNum := rnd.Uint32()
-
-	// generate price exponent in order not to overflow the sdkmath.Int when fund accounts
-	priceExp := int8(randIntInRange(rnd, -10, 10))
-
 	var (
 		price       *types.Price
 		goodTil     *types.GoodTil
@@ -288,6 +292,11 @@ func (fa *FuzzApp) GenOrder(
 	)
 
 	if orderType == types.ORDER_TYPE_LIMIT { //nolint:nestif  // the ifs are simple to check the percents mostly
+		priceNum := rnd.Uint32()
+
+		// generate price exponent in order not to overflow the sdkmath.Int when fund accounts
+		priceExp := int8(randIntInRange(rnd, -5, 10))
+
 		v, ok := buildNumExpPrice(uint64(priceNum), priceExp)
 		// since we use Uint32 as num it never exceed the max num length
 		require.True(t, ok)
@@ -320,15 +329,12 @@ func (fa *FuzzApp) GenOrder(
 		timeInForce = types.TIME_IN_FORCE_IOC
 	}
 
-	// the quantity can't be zero
-	quantity := rnd.Uint64()
-	if quantity == 0 {
-		quantity = 1
-	}
+	// the quantity can't be zero, also multiply by 1 billion to respect quantity step
+	quantity := uint64((rnd.Int63n(1_000_000) + 1) * 1_000_000_000)
 
 	var orderIDSuffix string
 	if randBoolWithPercent(rnd, fa.cfg.ProhibitedExtensionOrderPercent) {
-		orderIDSuffix = IDDEXOrderSuffixTrigger
+		orderIDSuffix = testcontracts.IDDEXOrderSuffixTrigger
 	}
 
 	return types.Order{
@@ -483,6 +489,7 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 
 	trialCtx := simapp.CopyContextWithMultiStore(sdkCtx) // copy to dry run and don't change state if error
 	if err := fa.testApp.DEXKeeper.PlaceOrder(trialCtx, order); err != nil {
+		fa.failedPlaceOrderCount++
 		t.Logf("Placement failed, err: %s", err.Error())
 		creator := sdk.MustAccAddressFromBech32(order.Creator)
 		switch {
@@ -560,7 +567,8 @@ func (fa *FuzzApp) PlaceOrder(t *testing.T, sdkCtx sdk.Context, order types.Orde
 		case sdkerrors.IsOf(err, assetfttypes.ErrExtensionCallFailed):
 			t.Logf("Placement has failed due to extension call error: %v", err.Error())
 			return
-		case strings.Contains(err.Error(), "the price must be multiple of"), // price tick
+		case strings.Contains(err.Error(), "has to be multiple of price tick"),
+			strings.Contains(err.Error(), "has to be multiple of quantity step"),
 			strings.Contains(err.Error(), "good til block"),
 			strings.Contains(err.Error(), "it's prohibited to save more than"),
 			strings.Contains(err.Error(), "not whitelisted for"): // whitelisted denoms
