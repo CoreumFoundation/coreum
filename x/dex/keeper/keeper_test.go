@@ -816,7 +816,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 	}, orderBooks)
 }
 
-func TestKeeper_GetOrderBook(t *testing.T) {
+func TestKeeper_GetOrderBookParams(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
 	dexKeeper := testApp.DEXKeeper
