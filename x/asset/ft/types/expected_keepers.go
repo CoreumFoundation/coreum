@@ -37,6 +37,7 @@ type BankKeeper interface {
 	) error
 	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	LockedCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
+	HasSupply(ctx context.Context, denom string) bool
 }
 
 // DelayKeeper defines methods required from the delay keeper.

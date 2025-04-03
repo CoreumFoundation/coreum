@@ -442,6 +442,14 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 		return err
 	}
 
+	if !k.assetFTKeeper.HasSupply(ctx, order.BaseDenom) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "base denom %s does not exist", order.BaseDenom)
+	}
+
+	if !k.assetFTKeeper.HasSupply(ctx, order.QuoteDenom) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "quote denom %s does not exist", order.QuoteDenom)
+	}
+
 	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, order.BaseDenom, params.DefaultUnifiedRefAmount)
 	if err != nil {
 		return err
