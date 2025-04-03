@@ -1074,9 +1074,9 @@
         ]
       }
     },
-    "/coreum/dex/v1/order-book": {
+    "/coreum/dex/v1/order-book-params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBook",
+        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBookParams",
         "parameters": [
           {
             "name": "base_denom",
@@ -1097,7 +1097,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/coreum.dex.v1.QueryOrderBookResponse"
+              "$ref": "#/definitions/coreum.dex.v1.QueryOrderBookParamsResponse"
             }
           },
           "default": {
@@ -1107,7 +1107,7 @@
             }
           }
         },
-        "summary": "OrderBook queries order book details.",
+        "summary": "OrderBookParams queries order book params.",
         "tags": [
           "Query"
         ]
@@ -10323,7 +10323,7 @@
       },
       "description": "QueryOrderBookOrdersResponse defines the response type for the `OrderBookOrders` query."
     },
-    "coreum.dex.v1.QueryOrderBookResponse": {
+    "coreum.dex.v1.QueryOrderBookParamsResponse": {
       "type": "object",
       "properties": {
         "price_tick": {
@@ -10336,14 +10336,14 @@
         },
         "base_denom_unified_ref_amount": {
           "type": "string",
-          "title": "base_denom_unified_ref_amount is the base denom approximate amount you need to buy 1USD, used to define the price tick size"
+          "title": "base_denom_unified_ref_amount is needed to define price tick \u0026 quantity step of base denom"
         },
         "quote_denom_unified_ref_amount": {
           "type": "string",
-          "title": "quote_denom_unified_ref_amount is the quote denom approximate amount you need to buy 1USD, used to define the price tick size"
+          "title": "quote_denom_unified_ref_amount is needed to define price tick \u0026 quantity step of quote denom"
         }
       },
-      "description": "QueryOrderBookResponse defines the response type for the `OrderBooks` query."
+      "description": "QueryOrderBookParamsResponse defines the response type for the `OrderBookParams` query."
     },
     "coreum.dex.v1.QueryOrderBooksResponse": {
       "type": "object",

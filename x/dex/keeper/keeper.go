@@ -173,11 +173,11 @@ func (k Keeper) GetOrderBooks(
 	}), pageRes, nil
 }
 
-// GetOrderBook returns order book details.
-func (k Keeper) GetOrderBook(
+// GetOrderBookParams returns order book params.
+func (k Keeper) GetOrderBookParams(
 	ctx sdk.Context,
 	baseDenom, quoteDenom string,
-) (*types.QueryOrderBookResponse, error) {
+) (*types.QueryOrderBookParamsResponse, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		return nil, err
@@ -201,7 +201,7 @@ func (k Keeper) GetOrderBook(
 		return nil, err
 	}
 
-	return &types.QueryOrderBookResponse{
+	return &types.QueryOrderBookParamsResponse{
 		PriceTick:                  priceTick,
 		QuantityStep:               quantityStepRes,
 		BaseDenomUnifiedRefAmount:  &baseURA,

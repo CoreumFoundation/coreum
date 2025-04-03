@@ -226,8 +226,8 @@
     - [QueryAccountDenomOrdersCountResponse](#coreum.dex.v1.QueryAccountDenomOrdersCountResponse)
     - [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest)
     - [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse)
-    - [QueryOrderBookRequest](#coreum.dex.v1.QueryOrderBookRequest)
-    - [QueryOrderBookResponse](#coreum.dex.v1.QueryOrderBookResponse)
+    - [QueryOrderBookParamsRequest](#coreum.dex.v1.QueryOrderBookParamsRequest)
+    - [QueryOrderBookParamsResponse](#coreum.dex.v1.QueryOrderBookParamsResponse)
     - [QueryOrderBooksRequest](#coreum.dex.v1.QueryOrderBooksRequest)
     - [QueryOrderBooksResponse](#coreum.dex.v1.QueryOrderBooksResponse)
     - [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest)
@@ -5006,12 +5006,12 @@ QueryOrderBookOrdersResponse defines the response type for the `OrderBookOrders`
 
 
 
-<a name="coreum.dex.v1.QueryOrderBookRequest"></a>
+<a name="coreum.dex.v1.QueryOrderBookParamsRequest"></a>
 
-### QueryOrderBookRequest
+### QueryOrderBookParamsRequest
 
 ```
-QueryOrderBookRequest defines the request type for the `OrderBook` query.
+QueryOrderBookParamsRequest defines the request type for the `OrderBookParams` query.
 ```
 
 
@@ -5026,12 +5026,12 @@ QueryOrderBookRequest defines the request type for the `OrderBook` query.
 
 
 
-<a name="coreum.dex.v1.QueryOrderBookResponse"></a>
+<a name="coreum.dex.v1.QueryOrderBookParamsResponse"></a>
 
-### QueryOrderBookResponse
+### QueryOrderBookParamsResponse
 
 ```
-QueryOrderBookResponse defines the response type for the `OrderBooks` query.
+QueryOrderBookParamsResponse defines the response type for the `OrderBookParams` query.
 ```
 
 
@@ -5040,8 +5040,8 @@ QueryOrderBookResponse defines the response type for the `OrderBooks` query.
 | ----- | ---- | ----- | ----------- |
 | `price_tick` | [string](#string) |  |  `price_tick is the minimum price movement an asset price can make, either upward or downward.`  |
 | `quantity_step` | [string](#string) |  |  `quantity_step is the the smallest allowable step for the base asset inside a market.`  |
-| `base_denom_unified_ref_amount` | [string](#string) |  |  `base_denom_unified_ref_amount is the base denom approximate amount you need to buy 1USD, used to define the price tick size`  |
-| `quote_denom_unified_ref_amount` | [string](#string) |  |  `quote_denom_unified_ref_amount is the quote denom approximate amount you need to buy 1USD, used to define the price tick size`  |
+| `base_denom_unified_ref_amount` | [string](#string) |  |  `base_denom_unified_ref_amount is needed to define price tick & quantity step of base denom`  |
+| `quote_denom_unified_ref_amount` | [string](#string) |  |  `quote_denom_unified_ref_amount is needed to define price tick & quantity step of quote denom`  |
 
 
 
@@ -5220,7 +5220,7 @@ Query defines the gRPC query service.
 | `Order` | [QueryOrderRequest](#coreum.dex.v1.QueryOrderRequest) | [QueryOrderResponse](#coreum.dex.v1.QueryOrderResponse) | `Order queries order by creator and ID.` | GET|/coreum/dex/v1/orders/{creator}/{id} |
 | `Orders` | [QueryOrdersRequest](#coreum.dex.v1.QueryOrdersRequest) | [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse) | `Orders queries creator orders.` | GET|/coreum/dex/v1/orders/{creator} |
 | `OrderBooks` | [QueryOrderBooksRequest](#coreum.dex.v1.QueryOrderBooksRequest) | [QueryOrderBooksResponse](#coreum.dex.v1.QueryOrderBooksResponse) | `OrderBooks queries order books.` | GET|/coreum/dex/v1/order-books |
-| `OrderBook` | [QueryOrderBookRequest](#coreum.dex.v1.QueryOrderBookRequest) | [QueryOrderBookResponse](#coreum.dex.v1.QueryOrderBookResponse) | `OrderBook queries order book details.` | GET|/coreum/dex/v1/order-book |
+| `OrderBookParams` | [QueryOrderBookParamsRequest](#coreum.dex.v1.QueryOrderBookParamsRequest) | [QueryOrderBookParamsResponse](#coreum.dex.v1.QueryOrderBookParamsResponse) | `OrderBookParams queries order book params.` | GET|/coreum/dex/v1/order-book-params |
 | `OrderBookOrders` | [QueryOrderBookOrdersRequest](#coreum.dex.v1.QueryOrderBookOrdersRequest) | [QueryOrderBookOrdersResponse](#coreum.dex.v1.QueryOrderBookOrdersResponse) | `OrderBookOrders queries order book orders.` | GET|/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders |
 | `AccountDenomOrdersCount` | [QueryAccountDenomOrdersCountRequest](#coreum.dex.v1.QueryAccountDenomOrdersCountRequest) | [QueryAccountDenomOrdersCountResponse](#coreum.dex.v1.QueryAccountDenomOrdersCountResponse) | `AccountDenomOrdersCount queries account denom orders count.` | GET|/coreum/dex/v1/accounts/{account}/denoms/{denom}/orders-count |
 

@@ -844,7 +844,7 @@ func TestKeeper_GetOrderBook(t *testing.T) {
 	fundOrderReserve(t, testApp, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))
 
-	res, err := testApp.DEXKeeper.GetOrderBook(sdkCtx, denom1, denom2)
+	res, err := testApp.DEXKeeper.GetOrderBookParams(sdkCtx, denom1, denom2)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	require.Equal(t,
