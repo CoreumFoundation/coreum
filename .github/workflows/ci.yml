@@ -40,6 +40,7 @@ jobs:
           - ci_step: "test-fuzz"
             command: make test-fuzz
             linter-cache: false
+            wasm-cache: true
             codecov: false
           - ci_step: "integration tests coreum-modules"
             command: make integration-tests-modules
