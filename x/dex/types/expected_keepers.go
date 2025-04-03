@@ -39,3 +39,7 @@ type DelayKeeper interface {
 	RemoveExecuteAtBlock(ctx sdk.Context, id string, height uint64) error
 	RemoveExecuteAfter(ctx sdk.Context, id string, time time.Time) error
 }
+
+type BankKeeper interface {
+	HasSupply(ctx context.Context, denom string) bool
+}
