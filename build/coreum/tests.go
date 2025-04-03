@@ -102,6 +102,8 @@ func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 
 // TestFuzz run fuzz tests in coreum repo.
 func TestFuzz(ctx context.Context, deps types.DepsFunc) error {
+	deps(CompileAllSmartContracts)
+
 	return golang.TestFuzz(ctx, deps, time.Minute)
 }
 
