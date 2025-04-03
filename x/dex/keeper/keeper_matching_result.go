@@ -209,6 +209,7 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
 		}
 	}
 
+	// the call to smart contract is the last call here to avoid reentrancy vulnerability.
 	if err := k.assetFTKeeper.DEXExecuteActions(ctx, mr.FTActions); err != nil {
 		return err
 	}
