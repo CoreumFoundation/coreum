@@ -30,6 +30,7 @@ type AssetFTKeeper interface {
 	GetSpendableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) (sdk.Coin, error)
 	GetDEXSettings(ctx sdk.Context, denom string) (dextypes.DEXSettings, error)
 	ValidateDEXCancelOrdersByDenomIsAllowed(ctx sdk.Context, addr sdk.AccAddress, denom string) error
+	HasSupply(ctx sdk.Context, denom string) bool
 }
 
 // DelayKeeper defines methods required from the delay keeper.
@@ -38,8 +39,4 @@ type DelayKeeper interface {
 	ExecuteAfter(ctx sdk.Context, id string, data proto.Message, time time.Time) error
 	RemoveExecuteAtBlock(ctx sdk.Context, id string, height uint64) error
 	RemoveExecuteAfter(ctx sdk.Context, id string, time time.Time) error
-}
-
-type BankKeeper interface {
-	HasSupply(ctx context.Context, denom string) bool
 }
