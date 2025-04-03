@@ -28,7 +28,6 @@ type Keeper struct {
 	accountQueryServer types.AccountQueryServer
 	assetFTKeeper      types.AssetFTKeeper
 	delayKeeper        types.DelayKeeper
-	bankKeeper         types.BankKeeper
 	authority          string
 }
 
@@ -40,7 +39,6 @@ func NewKeeper(
 	accountQueryServer types.AccountQueryServer,
 	assetFTKeeper types.AssetFTKeeper,
 	delayKeeper types.DelayKeeper,
-	bankKeeper types.BankKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -51,7 +49,6 @@ func NewKeeper(
 		assetFTKeeper:      assetFTKeeper,
 		authority:          authority,
 		delayKeeper:        delayKeeper,
-		bankKeeper:         bankKeeper,
 	}
 }
 
@@ -457,11 +454,11 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 		return err
 	}
 
-	if !k.bankKeeper.HasSupply(ctx, order.BaseDenom) {
+	if !k.assetFTKeeper.HasSupply(ctx, order.BaseDenom) {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "base denom %s does not exist", order.BaseDenom)
 	}
 
-	if !k.bankKeeper.HasSupply(ctx, order.QuoteDenom) {
+	if !k.assetFTKeeper.HasSupply(ctx, order.QuoteDenom) {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "quote denom %s does not exist", order.QuoteDenom)
 	}
 

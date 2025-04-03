@@ -809,7 +809,6 @@ func New(
 		authkeeper.NewQueryServer(app.AccountKeeper),
 		app.AssetFTKeeper,
 		app.DelayKeeper,
-		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	if err := delayRouter.RegisterHandler(
