@@ -115,7 +115,6 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			// TODO: Probably move default order quantity to some const.
 			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{

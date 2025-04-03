@@ -204,8 +204,8 @@ func (k Keeper) GetOrderBookParams(
 	return &types.QueryOrderBookParamsResponse{
 		PriceTick:                  priceTick,
 		QuantityStep:               quantityStepRes,
-		BaseDenomUnifiedRefAmount:  &baseURA,
-		QuoteDenomUnifiedRefAmount: &quoteURA,
+		BaseDenomUnifiedRefAmount:  baseURA,
+		QuoteDenomUnifiedRefAmount: quoteURA,
 	}, nil
 }
 

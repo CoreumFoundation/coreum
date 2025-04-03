@@ -117,9 +117,15 @@ message QueryOrderBookParamsResponse {
     (gogoproto.nullable) = false
   ];
   // base_denom_unified_ref_amount is needed to define price tick & quantity step of base denom
-  string base_denom_unified_ref_amount = 3 [(gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"];
+  string base_denom_unified_ref_amount = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
   // quote_denom_unified_ref_amount is needed to define price tick & quantity step of quote denom
-  string quote_denom_unified_ref_amount = 4 [(gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"];
+  string quote_denom_unified_ref_amount = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryOrderBookOrdersRequest defines the request type for the `OrderBookOrders` query.

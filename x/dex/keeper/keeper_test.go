@@ -20,7 +20,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
 	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
@@ -819,30 +818,9 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 func TestKeeper_GetOrderBookParams(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
-	dexKeeper := testApp.DEXKeeper
-
-	acc1, _ := testApp.GenAccount(sdkCtx)
-
-	order := types.Order{
-		Creator:     acc1.String(),
-		Type:        types.ORDER_TYPE_LIMIT,
-		ID:          uuid.Generate().String(),
-		BaseDenom:   denom1,
-		QuoteDenom:  denom2,
-		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    defaultQuantityStep,
-		Side:        types.SIDE_SELL,
-		TimeInForce: types.TIME_IN_FORCE_GTC,
-	}
 
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
-
-	lockedBalance, err := order.ComputeLimitOrderLockedBalance()
-	require.NoError(t, err)
-	testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator), sdk.NewCoins(lockedBalance))
-	fundOrderReserve(t, testApp, sdkCtx, sdk.MustAccAddressFromBech32(order.Creator))
-	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, order))
 
 	res, err := testApp.DEXKeeper.GetOrderBookParams(sdkCtx, denom1, denom2)
 	require.NoError(t, err)
@@ -851,13 +829,7 @@ func TestKeeper_GetOrderBookParams(t *testing.T) {
 		fmt.Sprintf("1e%d", params.PriceTickExponent), // 1e-6
 		res.PriceTick.String(),
 	)
-	require.Equal(t,
-		cbig.RatMul(
-			cbig.NewRatFromInts(params.DefaultUnifiedRefAmount.RoundInt64(), 1),
-			cbig.RatTenToThePower(int64(params.QuantityStepExponent)),
-		).Num().String(), // 10000
-		res.QuantityStep.String(),
-	)
+	require.Equal(t, "10000", res.QuantityStep.String())
 	require.Equal(t, params.DefaultUnifiedRefAmount.String(), res.BaseDenomUnifiedRefAmount.String())
 	require.Equal(t, params.DefaultUnifiedRefAmount.String(), res.QuoteDenomUnifiedRefAmount.String())
 }

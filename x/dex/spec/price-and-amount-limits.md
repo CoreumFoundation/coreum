@@ -81,7 +81,6 @@ To ensure smooth order execution and prevent excessively small trade sizes, we i
 
 The **Quantity Step** for a given asset **AAA** is calculated using the following formula:
 
-// TODO: Quantity step can't be less than 1 (at least)
 ```
 quantity_step(AAA) = max(1, 10^(quantity_step_exponent + ceil(log10(unified_ref_amount(AAA)))))
 ```
