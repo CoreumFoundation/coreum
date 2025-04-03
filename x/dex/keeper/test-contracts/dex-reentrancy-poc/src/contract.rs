@@ -6,7 +6,6 @@ use crate::msg::{
     TransferContext,
 };
 use crate::state::{DENOM, EXTRA_DATA};
-use coreum_wasm_sdk::deprecated::core::CoreumResult;
 use coreum_wasm_sdk::types::cosmos::bank::v1beta1::MsgSend;
 use coreum_wasm_sdk::types::cosmos::base::v1beta1::Coin;
 use cosmwasm_std::{entry_point, to_json_binary, CosmosMsg};
@@ -24,7 +23,7 @@ pub fn instantiate(
     _env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> CoreumResult<ContractError> {
+) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     DENOM.save(deps.storage, &msg.denom)?;
@@ -44,12 +43,12 @@ pub fn execute(
     _env: Env,
     _info: MessageInfo,
     msg: ExecuteMsg,
-) -> CoreumResult<ContractError> {
+) -> Result<Response, ContractError> {
     match msg {}
 }
 
 #[entry_point]
-pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> CoreumResult<ContractError> {
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
         SudoMsg::ExtensionTransfer {
             sender,
@@ -85,13 +84,12 @@ pub fn sudo_extension_transfer(
     _: Uint128,
     _: Uint128,
     _: TransferContext,
-) -> CoreumResult<ContractError> {
+) -> Result<Response, ContractError> {
     if amount.is_zero() {
         return Err(ContractError::InvalidAmountError {});
     }
 
-    let denom = DENOM.load(deps.storage)?; //tokenB
-                                           // let denom_a = EXTRA_DATA.load(deps.storage)?;
+    let denom = DENOM.load(deps.storage)?;
     if recipient == env.contract.address.as_str() {
         return Ok(Response::new()
             .add_attribute("method", "execute_transfer")
@@ -118,7 +116,7 @@ pub fn sudo_extension_place_order(
     order: DEXOrder,
     _: Coin,
     _: Coin,
-) -> CoreumResult<ContractError> {
+) -> Result<Response, ContractError> {
     if order.id == "hackid0" {
         let order = MsgPlaceOrder {
             sender: env.contract.address.to_string(),
@@ -127,7 +125,7 @@ pub fn sudo_extension_place_order(
             base_denom: order.base_denom,
             quote_denom: order.quote_denom,
             price: order.price.unwrap(),
-            quantity: "150".into(),
+            quantity: "150000000".into(),
             side: Side::Buy as i32,
             good_til: None,
             time_in_force: TimeInForce::Gtc as i32,
