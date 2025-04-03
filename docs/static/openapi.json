@@ -1074,6 +1074,45 @@
         ]
       }
     },
+    "/coreum/dex/v1/order-book-params": {
+      "get": {
+        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBookParams",
+        "parameters": [
+          {
+            "name": "base_denom",
+            "description": "base_denom is base order book denom.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "quote_denom",
+            "description": "quote_denom is quote order book denom",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/coreum.dex.v1.QueryOrderBookParamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "OrderBookParams queries order book params.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/coreum/dex/v1/order-books": {
       "get": {
         "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBooks",
@@ -10283,6 +10322,28 @@
         }
       },
       "description": "QueryOrderBookOrdersResponse defines the response type for the `OrderBookOrders` query."
+    },
+    "coreum.dex.v1.QueryOrderBookParamsResponse": {
+      "type": "object",
+      "properties": {
+        "price_tick": {
+          "type": "string",
+          "description": "price_tick is the minimum price movement an asset price can make, either upward or downward."
+        },
+        "quantity_step": {
+          "type": "string",
+          "description": "quantity_step is the the smallest allowable step for the base asset inside a market."
+        },
+        "base_denom_unified_ref_amount": {
+          "type": "string",
+          "title": "base_denom_unified_ref_amount is needed to define price tick \u0026 quantity step of base denom"
+        },
+        "quote_denom_unified_ref_amount": {
+          "type": "string",
+          "title": "quote_denom_unified_ref_amount is needed to define price tick \u0026 quantity step of quote denom"
+        }
+      },
+      "description": "QueryOrderBookParamsResponse defines the response type for the `OrderBookParams` query."
     },
     "coreum.dex.v1.QueryOrderBooksResponse": {
       "type": "object",

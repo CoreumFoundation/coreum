@@ -45,6 +45,21 @@ type Price struct {
 	num uint64
 }
 
+// NewPrice returns new instance of the Price.
+func NewPrice(num uint64, exp int8) (Price, error) {
+	if exp == 0 {
+		return Price{}, errors.New("zero exponent is prohibited")
+	}
+	// the range check is required for the normalization
+	if exp < MinExp || exp > MaxExp {
+		return Price{}, errors.Errorf("invalid exponent %d, must be in the rage %d:%d", exp, MinExp, MaxExp)
+	}
+	return Price{
+		exp: exp,
+		num: num,
+	}, nil
+}
+
 // NewPriceFromString returns new instance of the Price from string.
 func NewPriceFromString(str string) (Price, error) {
 	if !priceRegex.MatchString(str) {

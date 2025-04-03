@@ -173,6 +173,42 @@ func (k Keeper) GetOrderBooks(
 	}), pageRes, nil
 }
 
+// GetOrderBookParams returns order book params.
+func (k Keeper) GetOrderBookParams(
+	ctx sdk.Context,
+	baseDenom, quoteDenom string,
+) (*types.QueryOrderBookParamsResponse, error) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
+	if err != nil {
+		return nil, err
+	}
+	quoteURA, err := k.getAssetFTUnifiedRefAmount(ctx, quoteDenom, params.DefaultUnifiedRefAmount)
+	if err != nil {
+		return nil, err
+	}
+	baseURABigInt := baseURA.BigInt()
+	quoteURABigInt := quoteURA.BigInt()
+	_, priceTickExponent := ComputePriceTick(baseURABigInt, quoteURABigInt, params.PriceTickExponent)
+	quantityStep, _ := ComputeQuantityStep(baseURABigInt, params.QuantityStepExponent-sdkmath.LegacyPrecision)
+	quantityStepRes := sdkmath.NewIntFromBigInt(quantityStep)
+	priceTick, err := types.NewPrice(1, int8(priceTickExponent))
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryOrderBookParamsResponse{
+		PriceTick:                  priceTick,
+		QuantityStep:               quantityStepRes,
+		BaseDenomUnifiedRefAmount:  baseURA,
+		QuoteDenomUnifiedRefAmount: quoteURA,
+	}, nil
+}
+
 // GetOrderBookOrders returns order book records sorted by price asc. For the buy side it's expected to use the reverse
 // pagination, and sort the orders by the order sequence asc additionally on the client side.
 func (k Keeper) GetOrderBookOrders(

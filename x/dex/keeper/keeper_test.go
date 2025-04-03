@@ -815,6 +815,25 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 	}, orderBooks)
 }
 
+func TestKeeper_GetOrderBookParams(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContext(false)
+
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
+
+	res, err := testApp.DEXKeeper.GetOrderBookParams(sdkCtx, denom1, denom2)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.Equal(t,
+		fmt.Sprintf("1e%d", params.PriceTickExponent), // 1e-6
+		res.PriceTick.String(),
+	)
+	require.Equal(t, "10000", res.QuantityStep.String())
+	require.Equal(t, params.DefaultUnifiedRefAmount.String(), res.BaseDenomUnifiedRefAmount.String())
+	require.Equal(t, params.DefaultUnifiedRefAmount.String(), res.QuoteDenomUnifiedRefAmount.String())
+}
+
 func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
