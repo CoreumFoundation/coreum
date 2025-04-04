@@ -27,6 +27,21 @@ func TestQueryParams(t *testing.T) {
 	requireT.Equal(types.DefaultParams(), resp.Params)
 }
 
+func TestQueryOrderBookParams(t *testing.T) {
+	requireT := require.New(t)
+
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+
+	var resp types.QueryOrderBookParamsResponse
+	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryOrderBookParams(), []string{"denom1", "denom2"}, &resp)
+	requireT.Equal("1e-6", resp.PriceTick.String())
+	requireT.Equal("10000", resp.QuantityStep.String())
+	requireT.Equal("1000000", resp.BaseDenomUnifiedRefAmount.TruncateInt().String())
+	requireT.Equal("1000000", resp.QuoteDenomUnifiedRefAmount.TruncateInt().String())
+}
+
 func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)

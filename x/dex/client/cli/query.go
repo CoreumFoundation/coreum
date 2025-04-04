@@ -28,6 +28,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(CmdQueryOrder())
 	cmd.AddCommand(CmdQueryOrders())
 	cmd.AddCommand(CmdQueryOrderBooks())
+	cmd.AddCommand(CmdQueryOrderBookParams())
 	cmd.AddCommand(CmdQueryOrderBookOrders())
 	cmd.AddCommand(CmdQueryAccountDenomOrdersCount())
 
@@ -186,6 +187,42 @@ $ %[1]s query %s order-books
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "order-books")
+
+	return cmd
+}
+
+// CmdQueryOrderBookParams returns the QueryOrderBookParams cobra command.
+func CmdQueryOrderBookParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "order-book-params [base_denom] [quote_denom]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query order book params",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query order book params.
+
+Example:
+$ %[1]s query %s order-book-params denom1 denom2 
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.OrderBookParams(cmd.Context(), &types.QueryOrderBookParamsRequest{
+				BaseDenom:  args[0],
+				QuoteDenom: args[1],
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
