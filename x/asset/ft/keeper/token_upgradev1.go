@@ -6,6 +6,7 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 )
@@ -94,7 +95,9 @@ func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgrad
 		return err
 	}
 
-	def.Features = append(def.Features, types.Feature_ibc)
+	if !lo.Contains(def.Features, types.Feature_ibc) {
+		def.Features = append(def.Features, types.Feature_ibc)
+	}
 	def.Version = tokenUpgradeV1Version
 	if err := k.SetDefinition(ctx, issuer, subunit, def); err != nil {
 		return err
