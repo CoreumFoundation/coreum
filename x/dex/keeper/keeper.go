@@ -1,9 +1,12 @@
 package keeper
 
 import (
+	"errors"
+
 	sdkstore "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -13,6 +16,7 @@ import (
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/samber/lo"
 
+	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -167,6 +171,42 @@ func (k Keeper) GetOrderBooks(
 	return lo.Map(orderBookWithIDs, func(orderBookWithID types.OrderBookDataWithID, _ int) types.OrderBookData {
 		return orderBookWithID.Data
 	}), pageRes, nil
+}
+
+// GetOrderBookParams returns order book params.
+func (k Keeper) GetOrderBookParams(
+	ctx sdk.Context,
+	baseDenom, quoteDenom string,
+) (*types.QueryOrderBookParamsResponse, error) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
+	if err != nil {
+		return nil, err
+	}
+	quoteURA, err := k.getAssetFTUnifiedRefAmount(ctx, quoteDenom, params.DefaultUnifiedRefAmount)
+	if err != nil {
+		return nil, err
+	}
+	baseURABigInt := baseURA.BigInt()
+	quoteURABigInt := quoteURA.BigInt()
+	_, priceTickExponent := ComputePriceTick(baseURABigInt, quoteURABigInt, params.PriceTickExponent)
+	quantityStep, _ := ComputeQuantityStep(baseURABigInt, params.QuantityStepExponent-sdkmath.LegacyPrecision)
+	quantityStepRes := sdkmath.NewIntFromBigInt(quantityStep)
+	priceTick, err := types.NewPrice(1, int8(priceTickExponent))
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryOrderBookParamsResponse{
+		PriceTick:                  priceTick,
+		QuantityStep:               quantityStepRes,
+		BaseDenomUnifiedRefAmount:  baseURA,
+		QuoteDenomUnifiedRefAmount: quoteURA,
+	}, nil
 }
 
 // GetOrderBookOrders returns order book records sorted by price asc. For the buy side it's expected to use the reverse
@@ -402,16 +442,30 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 		return err
 	}
 
+	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, order.BaseDenom, params.DefaultUnifiedRefAmount)
+	if err != nil {
+		return err
+	}
+	quoteURA, err := k.getAssetFTUnifiedRefAmount(ctx, order.QuoteDenom, params.DefaultUnifiedRefAmount)
+	if err != nil {
+		return err
+	}
+
+	// quantity
+	if err := validateQuantityStep(order.Quantity.BigInt(), baseURA, params.QuantityStepExponent); err != nil {
+		return err
+	}
+
 	// price
 	if order.Type == types.ORDER_TYPE_LIMIT {
-		if err := k.validatePriceTick(ctx, params, order.BaseDenom, order.QuoteDenom, *order.Price); err != nil {
+		if err := validatePriceTick(order.Price.Rat(), baseURA, quoteURA, params.PriceTickExponent); err != nil {
 			return err
 		}
 	}
 
 	// good til
 	if order.GoodTil != nil {
-		if err := k.validateGoodTil(ctx, order); err != nil {
+		if err := validateGoodTil(ctx, order); err != nil {
 			return err
 		}
 	}
@@ -419,29 +473,23 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 	return nil
 }
 
-func (k Keeper) validateGoodTil(ctx sdk.Context, order types.Order) error {
-	if order.GoodTil.GoodTilBlockHeight > 0 {
-		currentHeight := ctx.BlockHeight()
-		if order.GoodTil.GoodTilBlockHeight <= uint64(currentHeight) {
-			return sdkerrors.Wrapf(
-				types.ErrInvalidInput,
-				"good til block height %d must be greater than current block height %d",
-				order.GoodTil.GoodTilBlockHeight, currentHeight,
-			)
+func (k Keeper) getAssetFTUnifiedRefAmount(
+	ctx sdk.Context,
+	denom string,
+	defaultVal sdkmath.LegacyDec,
+) (sdkmath.LegacyDec, error) {
+	settings, err := k.assetFTKeeper.GetDEXSettings(ctx, denom)
+	if err != nil {
+		if !errors.Is(err, assetfttypes.ErrDEXSettingsNotFound) {
+			return sdkmath.LegacyDec{}, err
 		}
+		return defaultVal, nil
 	}
-	if order.GoodTil.GoodTilBlockTime != nil {
-		currentTime := ctx.BlockTime()
-		if !order.GoodTil.GoodTilBlockTime.After(currentTime) {
-			return sdkerrors.Wrapf(
-				types.ErrInvalidInput,
-				"good til block time %s must be greater than current block time %s",
-				order.GoodTil.GoodTilBlockTime, currentTime,
-			)
-		}
+	if settings.UnifiedRefAmount == nil {
+		return defaultVal, nil
 	}
 
-	return nil
+	return *settings.UnifiedRefAmount, nil
 }
 
 func (k Keeper) getOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom string) (uint32, error) {

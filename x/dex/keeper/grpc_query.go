@@ -25,6 +25,10 @@ type QueryKeeper interface {
 		ctx sdk.Context,
 		pagination *query.PageRequest,
 	) ([]types.OrderBookData, *query.PageResponse, error)
+	GetOrderBookParams(
+		ctx sdk.Context,
+		baseDenom, quoteDenom string,
+	) (*types.QueryOrderBookParamsResponse, error)
 	GetOrderBookOrders(
 		ctx sdk.Context,
 		baseDenom, quoteDenom string,
@@ -87,6 +91,14 @@ func (qs QueryService) OrderBooks(
 		OrderBooks: orderBooks,
 		Pagination: pageRes,
 	}, nil
+}
+
+// OrderBookParams queries order book params.
+func (qs QueryService) OrderBookParams(
+	ctx context.Context,
+	req *types.QueryOrderBookParamsRequest,
+) (*types.QueryOrderBookParamsResponse, error) {
+	return qs.keeper.GetOrderBookParams(sdk.UnwrapSDKContext(ctx), req.BaseDenom, req.QuoteDenom)
 }
 
 // OrderBookOrders queries order book orders.
