@@ -1154,6 +1154,76 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	require.NoError(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc1, denoms[0]))
 }
 
+func TestKeeper_IssueTokenWhenIssueFeeIsLocked(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Height: 100,
+		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
+	})
+	dexKeeper := testApp.DEXKeeper
+	assetFTKeeper := testApp.AssetFTKeeper
+
+	acc, _ := testApp.GenAccount(sdkCtx)
+	issuer, _ := testApp.GenAccount(sdkCtx)
+
+	issuanceSettings := assetfttypes.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Subunit:       "abcext",
+		Precision:     6,
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
+		},
+	}
+	abc, err := testApp.AssetFTKeeper.Issue(sdkCtx, issuanceSettings)
+	require.NoError(t, err)
+
+	sellOrder := types.Order{
+		Creator:     acc.String(),
+		Type:        types.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  abc,
+		Price:       lo.ToPtr(types.MustNewPriceFromString("1e5")),
+		Quantity:    defaultQuantityStep,
+		Side:        types.SIDE_BUY,
+		TimeInForce: types.TIME_IN_FORCE_GTC,
+	}
+	buyLockedBalance, err := sellOrder.ComputeLimitOrderLockedBalance()
+	require.NoError(t, err)
+	testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(buyLockedBalance))
+	fundOrderReserve(t, testApp, sdkCtx, acc)
+	// place order
+	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
+
+	// Use ABC token as Issue Fee
+	bankKeeper := testApp.BankKeeper
+	balanceBefore := bankKeeper.GetBalance(sdkCtx, acc, abc)
+	t.Logf("user2's ABC balance before:%s", balanceBefore.String())
+	ftParams := assetfttypes.DefaultParams()
+	ftParams.IssueFee = sdk.NewInt64Coin(abc, buyLockedBalance.Amount.Int64())
+	require.NoError(t, assetFTKeeper.SetParams(sdkCtx, ftParams))
+	settings2 := assetfttypes.IssueSettings{
+		Issuer:        acc,
+		Symbol:        "DEF",
+		Description:   "DEF Desc",
+		Subunit:       "def",
+		Precision:     8,
+		InitialAmount: sdkmath.NewInt(777),
+		Features:      []assetfttypes.Feature{assetfttypes.Feature_freezing},
+		URI:           "https://my-class-meta.invalid/1",
+		URIHash:       "content-hash",
+	}
+	// burn ABC token by creating DEF token
+	_, err = assetFTKeeper.Issue(sdkCtx, settings2)
+	require.ErrorContains(t, err, "out of funds to pay for issue fee")
+
+	balanceAfter := bankKeeper.GetBalance(sdkCtx, acc, abc)
+	t.Logf("user2's ABC balance after:%s", balanceAfter.String())
+}
+
 func getSorterOrderBookOrders(
 	t *testing.T,
 	testApp *simapp.App,

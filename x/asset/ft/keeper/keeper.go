@@ -235,12 +235,12 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", err
 	}
 	if params.IssueFee.IsPositive() {
-		if err := k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
+		if err = k.burnIssueFee(ctx, settings, params); err != nil {
 			return "", err
 		}
 	}
 
-	if err := k.SetSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
+	if err = k.SetSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
 	}
 
@@ -256,7 +256,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		Admin:              settings.Issuer.String(),
 	}
 
-	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
+	if err = k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
 	}
 
@@ -295,7 +295,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		definition.ExtensionCWAddress = contractAddress.String()
 	}
 
-	if err := k.SetDenomMetadata(
+	if err = k.SetDenomMetadata(
 		ctx,
 		denom,
 		settings.Symbol,
@@ -307,7 +307,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", err
 	}
 
-	if err := k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition); err != nil {
+	if err = k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition); err != nil {
 		return "", err
 	}
 
@@ -325,7 +325,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		}
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventIssued{
+	if err = ctx.EventManager().EmitTypedEvent(&types.EventIssued{
 		Denom:              denom,
 		Issuer:             settings.Issuer.String(),
 		Symbol:             settings.Symbol,
@@ -351,6 +351,28 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 	)
 
 	return denom, nil
+}
+
+func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, params types.Params) error {
+	def, err := k.getDefinitionOrNil(ctx, params.IssueFee.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", params.IssueFee)
+	}
+
+	if def == nil {
+		if err = k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
+			return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
+		}
+
+		if err = k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
+			return err
+		}
+	} else {
+		if err = k.burnIfSpendable(ctx, settings.Issuer, *def, params.IssueFee.Amount); err != nil {
+			return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
+		}
+	}
+	return nil
 }
 
 // SetSymbol saves the symbol to store.
