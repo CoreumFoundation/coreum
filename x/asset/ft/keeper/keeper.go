@@ -235,8 +235,12 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", err
 	}
 	if params.IssueFee.IsPositive() {
-		if err := k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
-			return "", err
+		def, err := k.GetDefinition(ctx, params.IssueFee.Denom)
+		if err != nil {
+			return "", sdkerrors.Wrapf(err, "not able to get token info for denom:%s", params.IssueFee)
+		}
+		if err = k.burnIfSpendable(ctx, settings.Issuer, def, params.IssueFee.Amount); err != nil {
+			return "", sdkerrors.Wrap(err, "out of funds to pay for issue fee")
 		}
 	}
 
