@@ -88,11 +88,11 @@ func (k Keeper) matchOrder(
 				return err
 			}
 
-			if err := k.applyMatchingResult(ctx, mr); err != nil {
+			if err := k.createOrder(ctx, params, takerOrder, takerRecord); err != nil {
 				return err
 			}
 
-			return k.createOrder(ctx, params, takerOrder, takerRecord)
+			return k.applyMatchingResult(ctx, mr)
 		case types.TIME_IN_FORCE_IOC:
 			return k.applyMatchingResult(ctx, mr)
 		case types.TIME_IN_FORCE_FOK:
