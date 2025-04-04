@@ -2518,9 +2518,9 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
 }
 
-// TestReentrancyBug tests to make sure that reentrancy bug does not exist in DEX. It might happen
-// because the control is given to smart contract in middle of an order placement.
-func TestReentrancyBug(t *testing.T) {
+// TestReentrancyVulnerability tests to make sure that reentrancy bug does not exist in DEX. It might happen
+// if the control is given to smart contract in middle of an order placement.
+func TestReentrancyVulnerability(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -2661,6 +2661,7 @@ func TestReentrancyBug(t *testing.T) {
 		Denom:   denomA,
 	})
 	requireT.NoError(err)
+	// if reentrancy bug exists, orders might match multiple times, and LockedInDEX might be 89000000
 	requireT.Equal("99000000", acc1ABalanceRes.LockedInDEX.String())
 }
 
