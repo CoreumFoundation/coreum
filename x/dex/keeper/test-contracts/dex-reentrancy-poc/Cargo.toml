@@ -1,0 +1,42 @@
+[package]
+name = "dex-reentrancy-poc"
+version = "0.1.0"
+authors = ["Coreum"]
+edition = "2021"
+
+exclude = [
+  "dex-reentrancy-poc.wasm",
+  "checksums.txt",
+]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+cosmwasm_2_0 = ["cosmwasm-std/cosmwasm_2_0"]
+library = []
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[profile.test]
+incremental = true
+
+[dependencies]
+coreum-wasm-sdk = {git = "https://github.com/CoreumFoundation/coreum-wasm-sdk.git", branch = "main"}
+cosmwasm-schema = "2.1.4"
+cosmwasm-std = { version = "2.1.4", features = ["cosmwasm_2_0"] }
+cw-storage-plus = "2.0.0"
+cw-utils = "2.0.0"
+cw2 = "2.0.0"
+schemars = "0.8.21"
+serde = { version = "1.0.193", features = ["derive"] }
+thiserror = "1.0.50"

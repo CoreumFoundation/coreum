@@ -34,15 +34,6 @@ type sudoExtensionPlaceOrderMsg struct {
 // adjusting locked balances, and updating expected to receive balances. It performs necessary
 // validations and updates the state accordingly based on the provided actions.
 func (k Keeper) DEXExecuteActions(ctx sdk.Context, actions types.DEXActions) error {
-	if err := k.DEXCheckOrderAmounts(
-		ctx,
-		actions.Order,
-		actions.CreatorExpectedToSpend,
-		actions.CreatorExpectedToReceive,
-	); err != nil {
-		return err
-	}
-
 	for _, lock := range actions.IncreaseLocked {
 		if err := k.DEXIncreaseLocked(ctx, lock.Address, lock.Coin); err != nil {
 			return err
@@ -79,7 +70,12 @@ func (k Keeper) DEXExecuteActions(ctx sdk.Context, actions types.DEXActions) err
 		}
 	}
 
-	return nil
+	return k.DEXCheckOrderAmounts(
+		ctx,
+		actions.Order,
+		actions.CreatorExpectedToSpend,
+		actions.CreatorExpectedToReceive,
+	)
 }
 
 // DEXDecreaseLimits decreases the DEX limits.

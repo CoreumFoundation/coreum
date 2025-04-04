@@ -197,10 +197,6 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
 		return nil
 	}
 
-	if err := k.assetFTKeeper.DEXExecuteActions(ctx, mr.FTActions); err != nil {
-		return err
-	}
-
 	for _, item := range mr.RecordsToRemove {
 		if err := k.removeOrderByRecord(ctx, item.Address, *item.Record); err != nil {
 			return err
@@ -213,7 +209,12 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
 		}
 	}
 
-	return k.publishMatchingEvents(ctx, mr)
+	if err := k.publishMatchingEvents(ctx, mr); err != nil {
+		return err
+	}
+
+	// the call to smart contract is the last call here to avoid reentrancy vulnerability.
+	return k.assetFTKeeper.DEXExecuteActions(ctx, mr.FTActions)
 }
 
 func (k Keeper) publishMatchingEvents(
