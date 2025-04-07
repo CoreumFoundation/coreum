@@ -69,9 +69,9 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
         ),
         SudoMsg::ExtensionPlaceOrder {
             order,
-            expected_to_spend,
-            expected_to_receive,
-        } => sudo_extension_place_order(deps, env, order, expected_to_spend, expected_to_receive),
+            spent,
+            received,
+        } => sudo_extension_place_order(deps, env, order, spent, received),
     }
 }
 

@@ -86,9 +86,9 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> CoreumResult<ContractError
         ),
         SudoMsg::ExtensionPlaceOrder {
             order,
-            expected_to_spend,
-            expected_to_receive,
-        } => sudo_extension_place_order(order, expected_to_spend, expected_to_receive),
+            spent,
+            received,
+        } => sudo_extension_place_order(order, spent, received),
     }
 }
 
@@ -180,12 +180,12 @@ pub fn sudo_extension_transfer(
 
 pub fn sudo_extension_place_order(
     order: DEXOrder,
-    expected_to_spend: Coin,
-    expected_to_receive: Coin,
+    spent: Coin,
+    received: Coin,
 ) -> CoreumResult<ContractError> {
     if order.id.ends_with(ID_DEX_ORDER_SUFFIX_TRIGGER)
-        || expected_to_spend.amount == AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER.to_string()
-        || expected_to_receive.amount == AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER.to_string()
+        || spent.amount == AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER.to_string()
+        || received.amount == AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER.to_string()
     {
         return Err(ContractError::DEXOrderPlacementError {});
     }
