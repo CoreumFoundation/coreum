@@ -63,7 +63,7 @@ func CreateIssuerTokensPrefix(issuer sdk.AccAddress) []byte {
 
 // CreateSymbolKey creates the key for a ft symbol.
 func CreateSymbolKey(addr []byte, symbol string) []byte {
-	return store.JoinKeys(store.JoinKeys(SymbolKeyPrefix, addr), []byte(symbol))
+	return store.JoinKeys(store.JoinKeys(SymbolKeyPrefix, address.MustLengthPrefix(addr)), []byte(symbol))
 }
 
 // CreateFrozenBalancesKey creates the key for an account's frozen balances.
