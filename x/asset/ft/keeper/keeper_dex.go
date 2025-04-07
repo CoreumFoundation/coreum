@@ -22,8 +22,6 @@ import (
 const ExtensionPlaceOrderMethod = "extension_place_order"
 
 // sudoExtensionPlaceOrderMsg contains the fields passed to extension method call.
-//
-//nolint:tagliatelle // these will be exposed to rust and must be snake case.
 type sudoExtensionPlaceOrderMsg struct {
 	Order    types.DEXOrder `json:"order"`
 	Spent    sdk.Coin       `json:"spent"`
@@ -425,7 +423,11 @@ func (k Keeper) dexCheckExpectedToSpend(
 		return err
 	}
 
-	return k.validateCoinSpendable(ctx, order.Creator, *spendDef, expectedToSpend.Amount)
+	if err = k.validateCoinSpendable(ctx, order.Creator, *spendDef, expectedToSpend.Amount); err != nil {
+		return sdkerrors.Wrapf(types.ErrDEXInsufficientSpendableBalance, "err: %s", err)
+	}
+
+	return nil
 }
 
 func (k Keeper) dexInvokeAssetExtensionWithSpentAmount(
