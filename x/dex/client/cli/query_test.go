@@ -33,6 +33,8 @@ func TestCmdQueryOrderBooksAndOrders(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity.MulRaw(10))
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom3 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	var resp types.QueryParamsResponse
 	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryParams(), []string{}, &resp)
@@ -117,6 +119,8 @@ func TestCmdQueryAccountDenomOrdersCount(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity.MulRaw(10))
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom3 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	var resp types.QueryParamsResponse
 	coreumclitestutil.ExecQueryCmd(t, ctx, cli.CmdQueryParams(), []string{}, &resp)

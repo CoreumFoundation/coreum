@@ -2,6 +2,7 @@ package dex_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -29,22 +30,22 @@ func TestInitAndExportGenesis(t *testing.T) {
 	acc2, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
-	const (
-		denom1 = "denom1"
-		denom2 = "denom2"
-	)
-	settings := assetfttypes.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "SMB",
-		Subunit:       "sut",
-		Precision:     1,
-		InitialAmount: sdkmath.NewInt(100),
-		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_dex_order_cancellation,
-		},
-	}
-	denom3, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
-	requireT.NoError(err)
+	denoms := lo.Times(3, func(i int) string {
+		subunit := fmt.Sprintf("denom%d", i)
+		settings := assetfttypes.IssueSettings{
+			Issuer:        issuer,
+			Symbol:        strings.ToUpper(subunit),
+			Subunit:       subunit,
+			Precision:     1,
+			InitialAmount: sdkmath.NewInt(100),
+			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_dex_order_cancellation,
+			},
+		}
+		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, settings)
+		requireT.NoError(err)
+		return denom
+	})
 
 	prams := types.DefaultParams()
 	genState := types.GenesisState{
@@ -53,29 +54,29 @@ func TestInitAndExportGenesis(t *testing.T) {
 			{
 				ID: 0,
 				Data: types.OrderBookData{
-					BaseDenom:  denom1,
-					QuoteDenom: denom2,
+					BaseDenom:  denoms[0],
+					QuoteDenom: denoms[1],
 				},
 			},
 			{
 				ID: 1,
 				Data: types.OrderBookData{
-					BaseDenom:  denom2,
-					QuoteDenom: denom1,
+					BaseDenom:  denoms[1],
+					QuoteDenom: denoms[0],
 				},
 			},
 			{
 				ID: 2,
 				Data: types.OrderBookData{
-					BaseDenom:  denom2,
-					QuoteDenom: denom3,
+					BaseDenom:  denoms[1],
+					QuoteDenom: denoms[2],
 				},
 			},
 			{
 				ID: 3,
 				Data: types.OrderBookData{
-					BaseDenom:  denom3,
-					QuoteDenom: denom2,
+					BaseDenom:  denoms[2],
+					QuoteDenom: denoms[1],
 				},
 			},
 		},
@@ -85,8 +86,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 				Type:       types.ORDER_TYPE_LIMIT,
 				ID:         "id1",
 				Sequence:   1,
-				BaseDenom:  denom1,
-				QuoteDenom: denom2,
+				BaseDenom:  denoms[0],
+				QuoteDenom: denoms[1],
 				Price:      lo.ToPtr(types.MustNewPriceFromString("1e-2")),
 				Quantity:   sdkmath.NewInt(100),
 				Side:       types.SIDE_BUY,
@@ -103,8 +104,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 				Type:                      types.ORDER_TYPE_LIMIT,
 				ID:                        "id2",
 				Sequence:                  2,
-				BaseDenom:                 denom2,
-				QuoteDenom:                denom1,
+				BaseDenom:                 denoms[1],
+				QuoteDenom:                denoms[0],
 				Price:                     lo.ToPtr(types.MustNewPriceFromString("3e3")),
 				Quantity:                  sdkmath.NewInt(100),
 				Side:                      types.SIDE_SELL,
@@ -118,8 +119,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 				Type:       types.ORDER_TYPE_LIMIT,
 				ID:         "id3",
 				Sequence:   3,
-				BaseDenom:  denom2,
-				QuoteDenom: denom3,
+				BaseDenom:  denoms[1],
+				QuoteDenom: denoms[2],
 				Price:      lo.ToPtr(types.MustNewPriceFromString("11111e12")),
 				Quantity:   sdkmath.NewInt(10000000),
 				Side:       types.SIDE_BUY,
@@ -187,10 +188,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// check that imported state is valid
 
-	denom2Count, err := dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom2)
+	denom2Count, err := dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denoms[1])
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), denom2Count)
-	denom3Count, err := dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom3)
+	denom3Count, err := dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denoms[2])
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), denom3Count)
 
@@ -200,8 +201,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          "id4",
 		Sequence:    0,
-		BaseDenom:   denom2,
-		QuoteDenom:  denom3,
+		BaseDenom:   denoms[1],
+		QuoteDenom:  denoms[2],
 		Price:       lo.ToPtr(types.MustNewPriceFromString("4e3")),
 		Quantity:    sdkmath.NewInt(10000000),
 		Side:        types.SIDE_BUY,
@@ -220,10 +221,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 	orderWithExisingOrderBook.Reserve = params.OrderReserve
 
 	// check that denom orders counters are incremented
-	denom2Count, err = dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom2)
+	denom2Count, err = dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denoms[1])
 	require.NoError(t, err)
 	require.Equal(t, uint64(3), denom2Count)
-	denom3Count, err = dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denom3)
+	denom3Count, err = dexKeeper.GetAccountDenomOrdersCount(sdkCtx, acc2, denoms[2])
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), denom3Count)
 
@@ -248,8 +249,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 		Creator:     acc1.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          "id5",
-		BaseDenom:   denom1,
-		QuoteDenom:  denom3,
+		BaseDenom:   denoms[0],
+		QuoteDenom:  denoms[2],
 		Price:       lo.ToPtr(types.MustNewPriceFromString("4e3")),
 		Quantity:    sdkmath.NewInt(10000000),
 		Side:        types.SIDE_BUY,
@@ -262,10 +263,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, orderWithNewOrderBook))
 
 	// check that order books are generated correctly
-	denom1ToDenom3OrderBookID, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, denom1, denom3)
+	denom1ToDenom3OrderBookID, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, denoms[0], denoms[2])
 	require.NoError(t, err)
 	require.Equal(t, uint32(4), denom1ToDenom3OrderBookID)
-	denom3ToDenom1OrderBookID, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, denom3, denom1)
+	denom3ToDenom1OrderBookID, err := dexKeeper.GetOrderBookIDByDenoms(sdkCtx, denoms[2], denoms[0])
 	require.NoError(t, err)
 	require.Equal(t, uint32(5), denom3ToDenom1OrderBookID)
 
@@ -274,7 +275,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, acc1Orders, 3)
 
-	require.NoError(t, dexKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc2, denom3))
+	require.NoError(t, dexKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc2, denoms[2]))
 
 	acc1Orders, _, err = dexKeeper.GetOrders(sdkCtx, acc2, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	require.NoError(t, err)
