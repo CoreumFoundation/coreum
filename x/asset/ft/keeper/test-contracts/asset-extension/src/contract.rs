@@ -31,8 +31,8 @@ const AMOUNT_IGNORE_SEND_COMMISSION_RATE_TRIGGER: Uint128 = Uint128::new(109);
 const AMOUNT_BLOCK_IBC_TRIGGER: Uint128 = Uint128::new(110);
 const AMOUNT_BLOCK_SMART_CONTRACT_TRIGGER: Uint128 = Uint128::new(111);
 const ID_DEX_ORDER_SUFFIX_TRIGGER: &str = "blocked";
-const AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER: Uint128 = Uint128::new(103);
-const AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER: Uint128 = Uint128::new(104);
+const AMOUNT_DEX_EXPECT_TO_SPEND_TRIGGER: Uint128 = Uint128::new(103_000_000);
+const AMOUNT_DEX_EXPECT_TO_RECEIVE_TRIGGER: Uint128 = Uint128::new(104_000_000);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

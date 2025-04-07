@@ -3789,6 +3789,10 @@ func TestWASMDEXInContract(t *testing.T) {
 	requireT.Equal(
 		dexParms.PriceTickExponent, wasmParamsRes.Params.PriceTickExponent,
 	)
+	// TODO: Uncomment after proto & wasm-sdk merge.
+	// requireT.Equal(
+	// 	dexParms.QuantityStepExponent, wasmParamsRes.Params.QuantityStepExponent,
+	// )
 
 	// ********** Query and update asset FT DEX settings **********
 
@@ -3841,7 +3845,7 @@ func TestWASMDEXInContract(t *testing.T) {
 
 	// ********** Place Order **********
 
-	orderQuantity := sdkmath.NewInt(100)
+	orderQuantity := sdkmath.NewInt(100_000)
 	placeOrderPayload, err := json.Marshal(map[dexMethod]placeOrderBodyDEXRequest{
 		dexMethodPlaceOrder: {
 			Order: dextypes.MsgPlaceOrder{

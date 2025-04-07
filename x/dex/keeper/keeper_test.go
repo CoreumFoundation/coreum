@@ -92,7 +92,8 @@ func TestKeeper_UpdateParams(t *testing.T) {
 
 	newPrams := gotParams
 	newPrams.DefaultUnifiedRefAmount = sdkmath.LegacyMustNewDecFromStr("33.33")
-	newPrams.PriceTickExponent = -33
+	newPrams.PriceTickExponent = gotParams.PriceTickExponent - 2
+	newPrams.QuantityStepExponent = gotParams.QuantityStepExponent - 1
 	newPrams.OrderReserve = sdk.NewInt64Coin(sdk.DefaultBondDenom, 313)
 
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -163,7 +164,7 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 			BaseDenom:   item.baseDenom,
 			QuoteDenom:  item.quoteDenom,
 			Price:       &price,
-			Quantity:    sdkmath.NewInt(1),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}
@@ -191,6 +192,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	price := lo.ToPtr(types.MustNewPriceFromString("12e-1"))
 	acc, _ := testApp.GenAccount(sdkCtx)
 
+	sellQuantity := sdkmath.NewInt(1_000_000)
 	sellOrder := types.Order{
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
@@ -198,7 +200,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		BaseDenom:  denom1,
 		QuoteDenom: denom2,
 		Price:      price,
-		Quantity:   sdkmath.NewInt(10),
+		Quantity:   sellQuantity,
 		Side:       types.SIDE_SELL,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: 390,
@@ -224,8 +226,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	// set expected values
 	sellOrder.Sequence = 1
-	sellOrder.RemainingBaseQuantity = sdkmath.NewInt(10)
-	sellOrder.RemainingSpendableBalance = sdkmath.NewInt(10)
+	sellOrder.RemainingBaseQuantity = sellQuantity
+	sellOrder.RemainingSpendableBalance = sellQuantity
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
 	orderReserve := params.OrderReserve
@@ -234,6 +236,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	// check same buy with the buy order
 
+	buyQuantity := sdkmath.NewInt(1_000_000)
 	buyOrder := types.Order{
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
@@ -241,7 +244,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		BaseDenom:   denom2,
 		QuoteDenom:  denom3,
 		Price:       price,
-		Quantity:    sdkmath.NewInt(100),
+		Quantity:    buyQuantity,
 		Side:        types.SIDE_BUY,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -259,8 +262,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 	// set expected values
 	buyOrder.Sequence = 2
-	buyOrder.RemainingBaseQuantity = sdkmath.NewInt(100)
-	buyOrder.RemainingSpendableBalance = sdkmath.NewInt(120)
+	buyOrder.RemainingBaseQuantity = buyQuantity
+	buyOrder.RemainingSpendableBalance = sdkmath.NewInt(1_200_000)
 	buyOrder.Reserve = orderReserve
 	require.Equal(t, buyOrder, gotOrder)
 }
@@ -290,6 +293,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	ft1Whitelisting, err := testApp.AssetFTKeeper.Issue(sdkCtx, issuanceSettings)
 	require.NoError(t, err)
 
+	sellQuantity := sdkmath.NewInt(1_000_000)
 	sellOrder := types.Order{
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
@@ -297,7 +301,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		BaseDenom:   denom1,
 		QuoteDenom:  ft1Whitelisting,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    sellQuantity,
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -363,6 +367,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	)
 	require.True(t, dexExpectedToReceiveBalance.IsZero())
 
+	buyQuantity := sdkmath.NewInt(5_000_000)
 	buyOrder := types.Order{
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
@@ -370,7 +375,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		BaseDenom:  denom1,
 		QuoteDenom: ft1Whitelisting,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-		Quantity:   sdkmath.NewInt(5_000),
+		Quantity:   buyQuantity,
 		Side:       types.SIDE_BUY,
 		GoodTil: &types.GoodTil{
 			GoodTilBlockHeight: uint64(sdkCtx.BlockHeight() + 1),
@@ -435,8 +440,8 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		Creator:                   buyOrder.Creator,
 		ID:                        buyOrder.ID,
 		Sequence:                  expectedBuyOrderSequence,
-		RemainingBaseQuantity:     sdkmath.NewInt(4000), // filled partially
-		RemainingSpendableBalance: sdkmath.NewInt(5200),
+		RemainingBaseQuantity:     sdkmath.NewInt(4_000_000), // filled partially
+		RemainingSpendableBalance: sdkmath.NewInt(5_200_000),
 	}, *events.OrderCreated)
 
 	require.EqualValues(t, []types.EventOrderReduced{
@@ -444,15 +449,15 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 			Creator:      sellOrder.Creator,
 			ID:           sellOrder.ID,
 			Sequence:     expectedSellOrderSequence,
-			SentCoin:     sdk.NewCoin(sellOrder.BaseDenom, sdkmath.NewIntFromUint64(1000)),
-			ReceivedCoin: sdk.NewCoin(sellOrder.QuoteDenom, sdkmath.NewIntFromUint64(1200)),
+			SentCoin:     sdk.NewCoin(sellOrder.BaseDenom, sdkmath.NewIntFromUint64(1_000_000)),
+			ReceivedCoin: sdk.NewCoin(sellOrder.QuoteDenom, sdkmath.NewIntFromUint64(1_200_000)),
 		},
 		{
 			Creator:      buyOrder.Creator,
 			ID:           buyOrder.ID,
 			Sequence:     expectedBuyOrderSequence,
-			SentCoin:     sdk.NewCoin(buyOrder.QuoteDenom, sdkmath.NewIntFromUint64(1200)),
-			ReceivedCoin: sdk.NewCoin(buyOrder.BaseDenom, sdkmath.NewIntFromUint64(1000)),
+			SentCoin:     sdk.NewCoin(buyOrder.QuoteDenom, sdkmath.NewIntFromUint64(1_200_000)),
+			ReceivedCoin: sdk.NewCoin(buyOrder.BaseDenom, sdkmath.NewIntFromUint64(1_000_000)),
 		},
 	}, events.OrdersReduced)
 
@@ -470,7 +475,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrRecordNotFound)
 	buyOrder, err = dexKeeper.GetOrderByAddressAndID(sdkCtx, acc, buyOrder.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdkmath.NewInt(5200).String(), buyOrder.RemainingSpendableBalance.String())
+	require.Equal(t, sdkmath.NewInt(5_200_000).String(), buyOrder.RemainingSpendableBalance.String())
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, buyOrder.ID))
 	// check unlocking
 	dexLockedBalance = assetFTKeeper.GetDEXLockedBalance(sdkCtx, acc, buyLockedBalance.Denom)
@@ -479,70 +484,91 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.True(t, dexExpectedToReceiveBalance.IsZero())
 }
 
-func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
+func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 	tests := []struct {
-		name                string
-		price               types.Price
-		baseDenomRefAmount  *sdkmath.LegacyDec
-		quoteDenomRefAmount *sdkmath.LegacyDec
-		wantTickError       bool
+		name              string
+		price             *types.Price
+		quantity          *sdkmath.Int
+		baseURA           *sdkmath.LegacyDec
+		quoteURA          *sdkmath.LegacyDec
+		wantQuantityError bool
+		wantPriceError    bool
 	}{
 		{
-			name:          "valid_default_price",
-			price:         types.MustNewPriceFromString("1e-6"),
-			wantTickError: false,
+			name:           "valid_default_URAs",
+			price:          lo.ToPtr(types.MustNewPriceFromString("1e-6")),
+			wantPriceError: false,
 		},
 		{
-			name:          "invalid_default_price",
-			price:         types.MustNewPriceFromString("1e-7"),
-			wantTickError: true,
+			name:              "invalid_quantity_default_URAs",
+			quantity:          lo.ToPtr(sdkmath.NewInt(10)),
+			wantQuantityError: true,
 		},
 		{
-			name:               "valid_base_custom",
-			price:              types.MustNewPriceFromString("33e-6"),
-			baseDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
-			wantTickError:      false,
+			name:           "invalid_price_default_URAs",
+			price:          lo.ToPtr(types.MustNewPriceFromString("1e-7")),
+			wantPriceError: true,
 		},
 		{
-			name:                "valid_quote_custom",
-			price:               types.MustNewPriceFromString("1e-6"),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000")),
-			wantTickError:       false,
+			name:           "invalid_price2_default_URAs",
+			price:          lo.ToPtr(types.MustNewPriceFromString("100000001e-7")),
+			wantPriceError: true,
 		},
 		{
-			name:                "valid_both_custom",
-			price:               types.MustNewPriceFromString("14e-3"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("1")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100")),
-			wantTickError:       false,
+			name:              "invalid_quantity_custom_base_URA",
+			price:             lo.ToPtr(types.MustNewPriceFromString("33e-6")),
+			quantity:          lo.ToPtr(sdkmath.NewInt(10_000)), // Since base URA is 33e-6, quantity step is 100_000.
+			baseURA:           lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
+			wantQuantityError: true,
 		},
 		{
-			name:                "valid_both_custom_tick_greater_than_one",
-			price:               types.MustNewPriceFromString("14e1"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
-			wantTickError:       false,
+			name:     "valid_custom_base_URA",
+			price:    lo.ToPtr(types.MustNewPriceFromString("33e-6")),
+			quantity: lo.ToPtr(sdkmath.NewInt(100_000)), // Since base URA is 33e-6, quantity step is 100_000.
+			baseURA:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
 		},
 		{
-			name:                "invalid_both_custom_tick_greater_than_one",
-			price:               types.MustNewPriceFromString("14"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.00001")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
-			wantTickError:       true,
+			name:     "valid_custom_quote_URA",
+			price:    lo.ToPtr(types.MustNewPriceFromString("1e-6")),
+			quoteURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000")),
 		},
 		{
-			name:                "valid_both_custom_base_less_than_one",
-			price:               types.MustNewPriceFromString("3e33"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000")),
-			wantTickError:       false,
+			name:     "valid_custom_both_URA",
+			price:    lo.ToPtr(types.MustNewPriceFromString("14e-3")),
+			baseURA:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("1")),
+			quoteURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100")),
 		},
 		{
-			name:                "invalid_both_custom_base_less_than_one",
-			price:               types.MustNewPriceFromString("3e32"),
-			baseDenomRefAmount:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
-			quoteDenomRefAmount: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000000")),
-			wantTickError:       true,
+			name:     "valid_custom_both_URA_tick_greater_than_one",
+			price:    lo.ToPtr(types.MustNewPriceFromString("14e1")),
+			baseURA:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.01")),
+			quoteURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
+		},
+		{
+			name:           "invalid_price_custom_both_URA_tick_greater_than_one",
+			price:          lo.ToPtr(types.MustNewPriceFromString("14")),
+			baseURA:        lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.00001")),
+			quoteURA:       lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10303.3")),
+			wantPriceError: true,
+		},
+		{
+			name:              "invalid_quantity_custom_base_URA_quantity_step_greater_than_one",
+			quantity:          lo.ToPtr(sdkmath.NewInt(123)),
+			baseURA:           lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("10000000")),
+			wantQuantityError: true,
+		},
+		{
+			name:     "valid_custom_both_URA_base_URA_less_than_one",
+			price:    lo.ToPtr(types.MustNewPriceFromString("3e33")),
+			baseURA:  lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
+			quoteURA: lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000")),
+		},
+		{
+			name:           "invalid_price_custom_both_URA_base_URA_less_than_one",
+			price:          lo.ToPtr(types.MustNewPriceFromString("3e32")),
+			baseURA:        lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("0.000000000000000001")),
+			quoteURA:       lo.ToPtr(sdkmath.LegacyMustNewDecFromStr("100000000000000000000000")),
+			wantPriceError: true,
 		},
 	}
 	for _, tt := range tests {
@@ -550,16 +576,26 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			testApp := simapp.New()
 			sdkCtx := testApp.BaseApp.NewContext(false)
 
-			if tt.baseDenomRefAmount != nil {
+			if tt.baseURA != nil {
 				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
-					UnifiedRefAmount: tt.baseDenomRefAmount,
+					UnifiedRefAmount: tt.baseURA,
 				}))
 			}
 
-			if tt.quoteDenomRefAmount != nil {
+			if tt.quoteURA != nil {
 				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
-					UnifiedRefAmount: tt.quoteDenomRefAmount,
+					UnifiedRefAmount: tt.quoteURA,
 				}))
+			}
+
+			price := types.MustNewPriceFromString("1e3")
+			quantity := defaultQuantityStep
+
+			if tt.price != nil {
+				price = *tt.price
+			}
+			if tt.quantity != nil {
+				quantity = *tt.quantity
 			}
 
 			acc, _ := testApp.GenAccount(sdkCtx)
@@ -569,8 +605,8 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 				ID:          uuid.Generate().String(),
 				BaseDenom:   denom1,
 				QuoteDenom:  denom2,
-				Price:       &tt.price,
-				Quantity:    sdkmath.NewInt(1_000),
+				Price:       &price,
+				Quantity:    quantity,
 				Side:        types.SIDE_SELL,
 				TimeInForce: types.TIME_IN_FORCE_GTC,
 			}
@@ -579,9 +615,12 @@ func TestKeeper_PlaceOrderWithPriceTick(t *testing.T) {
 			testApp.MintAndSendCoin(t, sdkCtx, acc, sdk.NewCoins(lockedBalance))
 			fundOrderReserve(t, testApp, sdkCtx, acc)
 			err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
-			if tt.wantTickError {
-				require.ErrorContains(t, err, "the price must be multiple of")
-			} else {
+			switch {
+			case tt.wantPriceError:
+				require.ErrorContains(t, err, "has to be multiple of price tick")
+			case tt.wantQuantityError:
+				require.ErrorContains(t, err, "has to be multiple of quantity step")
+			default:
 				require.NoError(t, err)
 			}
 		})
@@ -604,7 +643,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			BaseDenom:   denom1,
 			QuoteDenom:  denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-			Quantity:    sdkmath.NewInt(2000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
@@ -615,7 +654,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			BaseDenom:  denom3,
 			QuoteDenom: denom2,
 			Price:      lo.ToPtr(types.MustNewPriceFromString("14e-1")),
-			Quantity:   sdkmath.NewInt(3000),
+			Quantity:   defaultQuantityStep,
 			Side:       types.SIDE_BUY,
 			GoodTil: &types.GoodTil{
 				GoodTilBlockHeight: 32,
@@ -629,7 +668,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			BaseDenom:  denom1,
 			QuoteDenom: denom2,
 			Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-			Quantity:   sdkmath.NewInt(1000),
+			Quantity:   defaultQuantityStep,
 			Side:       types.SIDE_SELL,
 			GoodTil: &types.GoodTil{
 				GoodTilBlockHeight: 1000,
@@ -643,7 +682,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			BaseDenom:   denom1,
 			QuoteDenom:  denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("11e-1")),
-			Quantity:    sdkmath.NewInt(100),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_BUY,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
@@ -729,7 +768,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 			BaseDenom:   denom1,
 			QuoteDenom:  denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-			Quantity:    sdkmath.NewInt(10),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
@@ -740,7 +779,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 			BaseDenom:   denom3,
 			QuoteDenom:  denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("13e-1")),
-			Quantity:    sdkmath.NewInt(10),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_BUY,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		},
@@ -778,6 +817,25 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 	}, orderBooks)
 }
 
+func TestKeeper_GetOrderBookParams(t *testing.T) {
+	testApp := simapp.New()
+	sdkCtx := testApp.BaseApp.NewContext(false)
+
+	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+	require.NoError(t, err)
+
+	res, err := testApp.DEXKeeper.GetOrderBookParams(sdkCtx, denom1, denom2)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.Equal(t,
+		fmt.Sprintf("1e%d", params.PriceTickExponent), // 1e-6
+		res.PriceTick.String(),
+	)
+	require.Equal(t, "10000", res.QuantityStep.String())
+	require.Equal(t, params.DefaultUnifiedRefAmount.String(), res.BaseDenomUnifiedRefAmount.String())
+	require.Equal(t, params.DefaultUnifiedRefAmount.String(), res.QuoteDenomUnifiedRefAmount.String())
+}
+
 func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
@@ -797,7 +855,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -822,7 +880,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom2,
 		QuoteDenom:  denom3,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_SELL,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -849,7 +907,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom3,
 		QuoteDenom:  denom1,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_BUY,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -878,7 +936,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom3,
 		QuoteDenom:  denom1,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(1_000),
+		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_BUY,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -899,7 +957,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		BaseDenom:   denom1,
 		QuoteDenom:  denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
-		Quantity:    sdkmath.NewInt(10_000),
+		Quantity:    defaultQuantityStep.MulRaw(10),
 		Side:        types.SIDE_BUY,
 		TimeInForce: types.TIME_IN_FORCE_GTC,
 	}
@@ -986,7 +1044,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 			BaseDenom:   denoms[0],
 			QuoteDenom:  denoms[1],
 			Price:       lo.ToPtr(types.MustNewPriceFromString("1e-1")),
-			Quantity:    sdkmath.NewInt(1_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}
@@ -1005,7 +1063,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 			BaseDenom:   denoms[1],
 			QuoteDenom:  denoms[0],
 			Price:       lo.ToPtr(types.MustNewPriceFromString("11e1")),
-			Quantity:    sdkmath.NewInt(1_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}
@@ -1024,7 +1082,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 			BaseDenom:   denoms[0],
 			QuoteDenom:  denoms[2],
 			Price:       lo.ToPtr(types.MustNewPriceFromString("12e1")),
-			Quantity:    sdkmath.NewInt(1_000),
+			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
 			TimeInForce: types.TIME_IN_FORCE_GTC,
 		}

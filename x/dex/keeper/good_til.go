@@ -9,6 +9,31 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
+func validateGoodTil(ctx sdk.Context, order types.Order) error {
+	if order.GoodTil.GoodTilBlockHeight > 0 {
+		currentHeight := ctx.BlockHeight()
+		if order.GoodTil.GoodTilBlockHeight <= uint64(currentHeight) {
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput,
+				"good til block height %d must be greater than current block height %d",
+				order.GoodTil.GoodTilBlockHeight, currentHeight,
+			)
+		}
+	}
+	if order.GoodTil.GoodTilBlockTime != nil {
+		currentTime := ctx.BlockTime()
+		if !order.GoodTil.GoodTilBlockTime.After(currentTime) {
+			return sdkerrors.Wrapf(
+				types.ErrInvalidInput,
+				"good til block time %s must be greater than current block time %s",
+				order.GoodTil.GoodTilBlockTime, currentTime,
+			)
+		}
+	}
+
+	return nil
+}
+
 func (k Keeper) delayGoodTilCancellation(
 	ctx sdk.Context,
 	goodTil types.GoodTil,
