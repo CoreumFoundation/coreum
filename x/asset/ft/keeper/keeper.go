@@ -599,7 +599,13 @@ func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom str
 	if err != nil {
 		return sdk.Coin{}, err
 	}
-	if isGloballyFrozen {
+
+	def, err := k.GetDefinition(ctx, denom)
+	if err != nil {
+		return sdk.Coin{}, sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
+	}
+
+	if isGloballyFrozen && !def.HasAdminPrivileges(addr) {
 		return k.bankKeeper.GetBalance(ctx, addr, denom), nil
 	}
 	return k.frozenAccountBalanceStore(ctx, addr).Balance(denom), nil
