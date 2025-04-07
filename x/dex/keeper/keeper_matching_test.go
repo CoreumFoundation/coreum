@@ -6528,7 +6528,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 	}
 }
 
-func genTestSet(t *testing.T, sdkCtx sdk.Context, testApp *simapp.App) TestSet {
+func genTestSet(t require.TestingT, sdkCtx sdk.Context, testApp *simapp.App) TestSet {
 	acc1, _ := testApp.GenAccount(sdkCtx)
 	acc2, _ := testApp.GenAccount(sdkCtx)
 	acc3, _ := testApp.GenAccount(sdkCtx)

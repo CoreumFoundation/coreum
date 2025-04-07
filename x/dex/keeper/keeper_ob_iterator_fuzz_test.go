@@ -22,6 +22,7 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 	lock := sync.Mutex{}
 
 	sdkCtx, _, _ := testApp.BeginNextBlock()
+	testSet := genTestSet(f, sdkCtx, testApp)
 
 	// don't limit the price tick
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
@@ -40,7 +41,7 @@ func FuzzSaveSellOrderAndReadWithSorting(f *testing.F) {
 		}
 		lock.Lock()
 		defer lock.Unlock()
-		placeRandomOrderAndAssertOrdering(t, testApp, num, exp, types.SIDE_SELL)
+		placeRandomOrderAndAssertOrdering(t, testApp, testSet.denom1, testSet.denom2, num, exp, types.SIDE_SELL)
 	})
 }
 
@@ -64,6 +65,8 @@ func FuzzSaveBuyOrderAndReadWithSorting(f *testing.F) {
 	_, err = testApp.EndBlocker(sdkCtx)
 	require.NoError(f, err)
 
+	testSet := genTestSet(f, sdkCtx, testApp)
+
 	f.Fuzz(func(t *testing.T, num uint64, exp int8) {
 		// to prevent fast fail, because of out of sdkmath.Int range in the bank keeper at the time of the funding
 		// we limit the exponent.
@@ -72,20 +75,18 @@ func FuzzSaveBuyOrderAndReadWithSorting(f *testing.F) {
 		}
 		lock.Lock()
 		defer lock.Unlock()
-		placeRandomOrderAndAssertOrdering(t, testApp, num, exp, types.SIDE_BUY)
+		placeRandomOrderAndAssertOrdering(t, testApp, testSet.denom1, testSet.denom2, num, exp, types.SIDE_BUY)
 	})
 }
 
 func placeRandomOrderAndAssertOrdering(
 	t *testing.T,
 	testApp *simapp.App,
+	baseDenom, quoteDenom string,
 	num uint64,
 	exp int8,
 	side types.Side,
 ) {
-	baseDenom := denom1
-	quoteDenom := denom2
-
 	price, ok := buildNumExpPrice(num, exp)
 	if !ok {
 		t.Skip()

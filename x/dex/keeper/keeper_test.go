@@ -110,6 +110,7 @@ func TestKeeper_UpdateParams(t *testing.T) {
 func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	type denomsToOrderBookIDs struct {
 		baseDenom                   string
@@ -121,36 +122,36 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 	for _, item := range []denomsToOrderBookIDs{
 		// save with asc denoms ordering
 		{
-			baseDenom:                   denom1,
-			quoteDenom:                  denom2,
+			baseDenom:                   testSet.denom1,
+			quoteDenom:                  testSet.denom2,
 			expectedSelfOrderBookID:     uint32(1),
 			expectedOppositeOrderBookID: uint32(2),
 		},
 		// save one more time to check that returns the same
 		{
-			baseDenom:                   denom1,
-			quoteDenom:                  denom2,
+			baseDenom:                   testSet.denom1,
+			quoteDenom:                  testSet.denom2,
 			expectedSelfOrderBookID:     uint32(1),
 			expectedOppositeOrderBookID: uint32(2),
 		},
 		// inverse denom
 		{
-			baseDenom:                   denom2,
-			quoteDenom:                  denom1,
+			baseDenom:                   testSet.denom2,
+			quoteDenom:                  testSet.denom1,
 			expectedSelfOrderBookID:     uint32(2),
 			expectedOppositeOrderBookID: uint32(1),
 		},
 		// save with desc denoms ordering
 		{
-			baseDenom:                   denom3,
-			quoteDenom:                  denom2,
+			baseDenom:                   testSet.denom3,
+			quoteDenom:                  testSet.denom2,
 			expectedSelfOrderBookID:     uint32(4),
 			expectedOppositeOrderBookID: uint32(3),
 		},
 		// inverse denom
 		{
-			baseDenom:                   denom2,
-			quoteDenom:                  denom3,
+			baseDenom:                   testSet.denom2,
+			quoteDenom:                  testSet.denom3,
 			expectedSelfOrderBookID:     uint32(3),
 			expectedOppositeOrderBookID: uint32(4),
 		},
@@ -187,6 +188,8 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
+	testSet := genTestSet(t, sdkCtx, testApp)
+
 	dexKeeper := testApp.DEXKeeper
 
 	price := lo.ToPtr(types.MustNewPriceFromString("12e-1"))
@@ -197,8 +200,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
-		BaseDenom:  denom1,
-		QuoteDenom: denom2,
+		BaseDenom:  testSet.denom1,
+		QuoteDenom: testSet.denom2,
 		Price:      price,
 		Quantity:   sellQuantity,
 		Side:       types.SIDE_SELL,
@@ -241,8 +244,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          uuid.Generate().String(),
-		BaseDenom:   denom2,
-		QuoteDenom:  denom3,
+		BaseDenom:   testSet.denom2,
+		QuoteDenom:  testSet.denom3,
 		Price:       price,
 		Quantity:    buyQuantity,
 		Side:        types.SIDE_BUY,
@@ -274,32 +277,21 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		Height: 100,
 		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
+
 	dexKeeper := testApp.DEXKeeper
 	assetFTKeeper := testApp.AssetFTKeeper
 
 	acc, _ := testApp.GenAccount(sdkCtx)
-	issuer, _ := testApp.GenAccount(sdkCtx)
-
-	issuanceSettings := assetfttypes.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "DEFEXT",
-		Subunit:       "defext",
-		Precision:     6,
-		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
-		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_whitelisting,
-		},
-	}
-	ft1Whitelisting, err := testApp.AssetFTKeeper.Issue(sdkCtx, issuanceSettings)
-	require.NoError(t, err)
+	issuer := testSet.issuer
 
 	sellQuantity := sdkmath.NewInt(1_000_000)
 	sellOrder := types.Order{
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          "id1",
-		BaseDenom:   denom1,
-		QuoteDenom:  ft1Whitelisting,
+		BaseDenom:   testSet.denom1,
+		QuoteDenom:  testSet.ftDenomWhitelisting1,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:    sellQuantity,
 		Side:        types.SIDE_SELL,
@@ -372,8 +364,8 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         "id2",
-		BaseDenom:  denom1,
-		QuoteDenom: ft1Whitelisting,
+		BaseDenom:  testSet.denom1,
+		QuoteDenom: testSet.ftDenomWhitelisting1,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 		Quantity:   buyQuantity,
 		Side:       types.SIDE_BUY,
@@ -573,15 +565,17 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
 			sdkCtx := testApp.BaseApp.NewContext(false)
+			testSet := genTestSet(t, sdkCtx, testApp)
 
+			baseDenom, quoteDenom := testSet.denom1, testSet.denom2
 			if tt.baseURA != nil {
-				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
+				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, baseDenom, assetfttypes.DEXSettings{
 					UnifiedRefAmount: tt.baseURA,
 				}))
 			}
 
 			if tt.quoteURA != nil {
-				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
+				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, quoteDenom, assetfttypes.DEXSettings{
 					UnifiedRefAmount: tt.quoteURA,
 				}))
 			}
@@ -601,8 +595,8 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 				Creator:     acc.String(),
 				Type:        types.ORDER_TYPE_LIMIT,
 				ID:          uuid.Generate().String(),
-				BaseDenom:   denom1,
-				QuoteDenom:  denom2,
+				BaseDenom:   baseDenom,
+				QuoteDenom:  quoteDenom,
 				Price:       &price,
 				Quantity:    quantity,
 				Side:        types.SIDE_SELL,
