@@ -25,12 +25,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-const (
-	denom1 = "denom1"
-	denom2 = "denom2"
-	denom3 = "denom3"
-)
-
 type OrderPlacementEvents struct {
 	OrderPlaced   types.EventOrderPlaced
 	OrdersReduced []types.EventOrderReduced
@@ -1111,7 +1105,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	// try to cancel from not admin
 	require.ErrorIs(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, acc1, acc1, denoms[1]), cosmoserrors.ErrUnauthorized)
 
-	// cancel orders fro admin
+	// cancel orders from admin
 	require.NoError(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc1, denoms[1]))
 
 	require.True(t, reflect.DeepEqual(
@@ -1128,10 +1122,10 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, orders, 5)
-	// check that there are not orders with the denom2
+	// check that there are not orders with the denom[1]
 	for _, order := range orders {
 		for _, denom := range order.Denoms() {
-			require.NotEqual(t, denom2, denom)
+			require.NotEqual(t, denoms[1], denom)
 		}
 	}
 
