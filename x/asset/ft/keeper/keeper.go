@@ -839,6 +839,7 @@ func (k Keeper) ClearAdmin(ctx sdk.Context, sender sdk.AccAddress, denom string)
 	return nil
 }
 
+// HasSupply checks if the supply of denom exists in store.
 func (k Keeper) HasSupply(ctx context.Context, denom string) bool {
 	return k.bankKeeper.HasSupply(ctx, denom)
 }
