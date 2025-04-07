@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"strings"
 	"testing"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -26,9 +27,9 @@ type TestSet struct {
 	acc2 sdk.AccAddress
 	acc3 sdk.AccAddress
 
-	issuer               sdk.AccAddress
-	ftDenomWhitelisting1 string
-	ftDenomWhitelisting2 string
+	issuer                                     sdk.AccAddress
+	denom1, denom2, denom3                     string
+	ftDenomWhitelisting1, ftDenomWhitelisting2 string
 
 	orderReserve sdk.Coin
 }
@@ -6534,6 +6535,19 @@ func genTestSet(t *testing.T, sdkCtx sdk.Context, testApp *simapp.App) TestSet {
 
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
+	denoms := make([]string, 0)
+	for _, subunits := range []string{"denom1", "denom2", "denom3"} {
+		denom, err := testApp.AssetFTKeeper.Issue(sdkCtx, assetfttypes.IssueSettings{
+			Issuer:        issuer,
+			Subunit:       subunits,
+			Symbol:        strings.ToUpper(subunits),
+			Precision:     6,
+			InitialAmount: sdkmath.NewIntWithDecimal(1, 20),
+		})
+		require.NoError(t, err)
+		denoms = append(denoms, denom)
+	}
+
 	ftDenomWhitelisting1, err := testApp.AssetFTKeeper.Issue(sdkCtx, assetfttypes.IssueSettings{
 		Issuer:        issuer,
 		Subunit:       "ftwhitelisting1",
@@ -6567,6 +6581,9 @@ func genTestSet(t *testing.T, sdkCtx sdk.Context, testApp *simapp.App) TestSet {
 		acc3: acc3,
 
 		issuer:               issuer,
+		denom1:               denoms[0],
+		denom2:               denoms[1],
+		denom3:               denoms[2],
 		ftDenomWhitelisting1: ftDenomWhitelisting1,
 		ftDenomWhitelisting2: ftDenomWhitelisting2,
 

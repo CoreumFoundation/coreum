@@ -454,6 +454,7 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 		return err
 	}
 
+	// TODO: add this validation to orderbook params query ? Do we need to check it by regexp ?
 	if !k.assetFTKeeper.HasSupply(ctx, order.BaseDenom) {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "base denom %s does not exist", order.BaseDenom)
 	}
