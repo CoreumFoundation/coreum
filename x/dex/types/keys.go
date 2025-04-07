@@ -45,6 +45,9 @@ var (
 	ReserveOrderIDKeyPrefix = []byte{0x11}
 )
 
+// StoreTrue keeps a value used by stores to indicate that key is present.
+var StoreTrue = []byte{0x01}
+
 // CreateOrderBookKey creates order book key.
 func CreateOrderBookKey(baseDenom, quoteDenom string) ([]byte, error) {
 	// join with length here to prevent the issue described in the `JoinKeysWithLength` comment.

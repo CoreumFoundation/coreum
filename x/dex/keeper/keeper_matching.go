@@ -38,10 +38,6 @@ func (k Keeper) matchOrder(
 	}
 	takerOrder.Sequence = takerRecord.OrderSequence
 
-	if err := k.reserveOrderID(ctx, accNumber, takerOrder.ID, takerOrder.Sequence); err != nil {
-		return err
-	}
-
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventOrderPlaced{
 		Creator:  takerOrder.Creator,
 		ID:       takerOrder.ID,

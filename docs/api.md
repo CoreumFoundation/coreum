@@ -203,7 +203,6 @@
   
 - [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
     - [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount)
-    - [GenesisReservedOrderIDs](#coreum.dex.v1.GenesisReservedOrderIDs)
     - [GenesisState](#coreum.dex.v1.GenesisState)
     - [OrderBookDataWithID](#coreum.dex.v1.OrderBookDataWithID)
   
@@ -4615,22 +4614,6 @@ AccountDenomOrderCount is a count of orders per account and denom.
 
 
 
-<a name="coreum.dex.v1.GenesisReservedOrderIDs"></a>
-
-### GenesisReservedOrderIDs
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `key` | [bytes](#bytes) |  |    |
-| `value` | [uint64](#uint64) |  |    |
-
-
-
-
-
-
 <a name="coreum.dex.v1.GenesisState"></a>
 
 ### GenesisState
@@ -4648,7 +4631,7 @@ GenesisState defines the module genesis state.
 | `orders` | [Order](#coreum.dex.v1.Order) | repeated |    |
 | `order_sequence` | [uint64](#uint64) |  |  `order_sequence is current order sequence;`  |
 | `accounts_denoms_orders_counts` | [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount) | repeated |    |
-| `reserved_order_ids` | [GenesisReservedOrderIDs](#coreum.dex.v1.GenesisReservedOrderIDs) | repeated |    |
+| `reserved_order_ids` | [bytes](#bytes) | repeated |    |
 
 
 
