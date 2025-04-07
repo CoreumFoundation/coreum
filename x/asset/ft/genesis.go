@@ -36,6 +36,18 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			URIHash:            token.URIHash,
 		}
 
+		if err := k.SetDenomMetadata(
+			ctx,
+			token.Denom,
+			token.Symbol,
+			token.Description,
+			token.URI,
+			token.URIHash,
+			token.Precision,
+		); err != nil {
+			panic(err)
+		}
+
 		if err := k.SetDefinition(ctx, issuer, subunit, definition); err != nil {
 			panic(err)
 		}
