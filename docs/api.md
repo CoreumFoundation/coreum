@@ -4633,6 +4633,7 @@ GenesisState defines the module genesis state.
 | `orders` | [Order](#coreum.dex.v1.Order) | repeated |    |
 | `order_sequence` | [uint64](#uint64) |  |  `order_sequence is current order sequence;`  |
 | `accounts_denoms_orders_counts` | [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount) | repeated |    |
+| `reserved_order_ids` | [bytes](#bytes) | repeated |    |
 
 
 

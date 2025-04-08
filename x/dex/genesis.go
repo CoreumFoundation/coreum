@@ -88,6 +88,10 @@ func InitGenesis(
 		panic(errors.Wrap(err, "failed to set order sequence"))
 	}
 
+	if err := dexKeeper.ImportReservedOrderIDs(ctx, genState.GetReservedOrderIds()); err != nil {
+		panic(errors.Wrap(err, "failed to import reserved order ids"))
+	}
+
 	for _, accountDenomOrdersCount := range genState.AccountsDenomsOrdersCounts {
 		if err := dexKeeper.SetAccountDenomOrdersCount(ctx, accountDenomOrdersCount); err != nil {
 			panic(errors.Wrap(err, "failed to set accounts denoms orders counts"))
@@ -124,11 +128,17 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(errors.Wrap(err, "failed to get params"))
 	}
 
+	reservedOrderIDs, err := k.ExportReserveOrderIDs(ctx)
+	if err != nil {
+		panic(errors.Wrap(err, "failed to fetch all reserved order IDs"))
+	}
+
 	return &types.GenesisState{
 		Params:                     params,
 		Orders:                     orders,
 		OrderBooks:                 orderBooksWithID,
 		OrderSequence:              orderSequence,
 		AccountsDenomsOrdersCounts: accountsDenomsOrdersCounts,
+		ReservedOrderIds:           reservedOrderIDs,
 	}
 }
