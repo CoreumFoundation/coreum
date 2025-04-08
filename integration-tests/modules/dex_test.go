@@ -289,7 +289,7 @@ func TestOrderCancellation(t *testing.T) {
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6))
-	denom2Whitelisting := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_whitelisting)
+	denom2Whtlst := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_whitelisting)
 
 	// fund acc1
 	bankSendMsg := &banktypes.MsgSend{
@@ -309,7 +309,7 @@ func TestOrderCancellation(t *testing.T) {
 	setWhitelistedLimitMsg := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: acc1.String(),
-		Coin:    sdk.NewInt64Coin(denom2Whitelisting, 100_000),
+		Coin:    sdk.NewInt64Coin(denom2Whtlst, 100_000),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -324,7 +324,7 @@ func TestOrderCancellation(t *testing.T) {
 		Type:        dextypes.ORDER_TYPE_LIMIT,
 		ID:          "id1",
 		BaseDenom:   denom1,
-		QuoteDenom:  denom2Whitelisting,
+		QuoteDenom:  denom2Whtlst,
 		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
 		Quantity:    sdkmath.NewInt(100_000),
 		Side:        dextypes.SIDE_SELL,
@@ -349,7 +349,7 @@ func TestOrderCancellation(t *testing.T) {
 
 	balanceDenom2Res, err := assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
-		Denom:   denom2Whitelisting,
+		Denom:   denom2Whtlst,
 	})
 	requireT.NoError(err)
 	requireT.True(balanceDenom2Res.LockedInDEX.IsZero())
@@ -372,7 +372,7 @@ func TestOrderCancellation(t *testing.T) {
 
 	countRes, err = dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
 		Account: acc1.String(),
-		Denom:   denom2Whitelisting,
+		Denom:   denom2Whtlst,
 	})
 	requireT.NoError(err)
 	requireT.Equal(uint64(1), countRes.Count)
@@ -403,7 +403,7 @@ func TestOrderCancellation(t *testing.T) {
 
 	balanceDenom2Res, err = assetFTClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
 		Account: acc1.String(),
-		Denom:   denom2Whitelisting,
+		Denom:   denom2Whtlst,
 	})
 	requireT.NoError(err)
 	// check that nothing is locked
@@ -419,7 +419,7 @@ func TestOrderCancellation(t *testing.T) {
 
 	countRes, err = dexClient.AccountDenomOrdersCount(ctx, &dextypes.QueryAccountDenomOrdersCountRequest{
 		Account: acc1.String(),
-		Denom:   denom2Whitelisting,
+		Denom:   denom2Whtlst,
 	})
 	requireT.NoError(err)
 	requireT.Equal(uint64(0), countRes.Count)
