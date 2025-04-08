@@ -217,7 +217,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	// try to place the sellOrder one more time
 	err = dexKeeper.PlaceOrder(sdkCtx, sellOrder)
 	require.ErrorIs(t, err, types.ErrInvalidInput)
-	require.ErrorContains(t, err, "is already created")
+	require.ErrorContains(t, err, "order id already used")
 
 	gotOrder, err := dexKeeper.GetOrderByAddressAndID(
 		sdkCtx, sdk.MustAccAddressFromBech32(sellOrder.Creator), sellOrder.ID,
@@ -425,9 +425,11 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.True(t, dexExpectedToReceiveBalance.IsZero())
 
 	// now place both orders to let them match partially
+	sellOrder.ID = "id3"
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
 
 	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
+	buyOrder.ID = "id4"
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
 	events = readOrderEvents(t, sdkCtx)
 

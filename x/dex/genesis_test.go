@@ -138,6 +138,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	for _, order := range genState.Orders {
 		creator := sdk.MustAccAddressFromBech32(order.Creator)
 		accNum := testApp.AccountKeeper.GetAccount(sdkCtx, creator).GetAccountNumber()
+		genState.ReservedOrderIds = append(genState.ReservedOrderIds, types.CreateReserveOrderIDKey(accNum, order.ID))
 		for _, denom := range order.Denoms() {
 			key := fmt.Sprintf("%d%s", accNum, denom)
 			count, ok := accountDenomToAccountDenomOrdersCount[key]
