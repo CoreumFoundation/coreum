@@ -125,7 +125,7 @@ pub fn sudo_extension_place_order(
             base_denom: order.base_denom,
             quote_denom: order.quote_denom,
             price: order.price.unwrap(),
-            quantity: "150000000".into(),
+            quantity: "1500000".into(),
             side: Side::Buy as i32,
             good_til: None,
             time_in_force: TimeInForce::Gtc as i32,

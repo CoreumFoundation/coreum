@@ -47,7 +47,7 @@ func RunAllIntegrationTests(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsModules returns function running modules integration tests.
 func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts, CompileDexSmartContracts,
+		deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts, CompileDEXSmartContracts,
 			BuildCoredLocally, BuildCoredDockerImage)
 
 		znetConfig := defaultZNetConfig()
@@ -74,7 +74,7 @@ func RunIntegrationTestsStress(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsIBC returns function running IBC integration tests.
 func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileDexSmartContracts,
+		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileDEXSmartContracts,
 			BuildCoredLocally, BuildCoredDockerImage, BuildGaiaDockerImage, BuildOsmosisDockerImage,
 			BuildHermesDockerImage)
 
@@ -88,7 +88,7 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsUpgrade returns function running upgrade integration tests.
 func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileDexSmartContracts,
+		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileDEXSmartContracts,
 			CompileModulesSmartContracts, BuildCoredLocally, BuildCoredDockerImage, BuildGaiaDockerImage,
 			BuildOsmosisDockerImage, BuildHermesDockerImage)
 
