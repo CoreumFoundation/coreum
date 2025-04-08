@@ -183,21 +183,13 @@ func (k Keeper) GetOrderBookParams(
 	ctx sdk.Context,
 	baseDenom, quoteDenom string,
 ) (*types.QueryOrderBookParamsResponse, error) {
-	params, err := k.GetParams(ctx)
-	if err != nil {
+	if err := k.validateDenomPair(ctx, baseDenom, quoteDenom); err != nil {
 		return nil, err
 	}
 
-	if baseDenom == "" {
-		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "base denom can't be empty")
-	}
-
-	if quoteDenom == "" {
-		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "quote denom can't be empty")
-	}
-
-	if baseDenom == quoteDenom {
-		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "base and quote denoms must be different")
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
@@ -459,13 +451,8 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 		return err
 	}
 
-	// TODO: add this validation to orderbook params query ? Do we need to check it by regexp ?
-	if !k.assetFTKeeper.HasSupply(ctx, order.BaseDenom) {
-		return sdkerrors.Wrapf(types.ErrInvalidInput, "base denom %s does not exist", order.BaseDenom)
-	}
-
-	if !k.assetFTKeeper.HasSupply(ctx, order.QuoteDenom) {
-		return sdkerrors.Wrapf(types.ErrInvalidInput, "quote denom %s does not exist", order.QuoteDenom)
+	if err := k.validateDenomPair(ctx, order.BaseDenom, order.QuoteDenom); err != nil {
+		return err
 	}
 
 	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, order.BaseDenom, params.DefaultUnifiedRefAmount)
@@ -494,6 +481,30 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 		if err := validateGoodTil(ctx, order); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (k Keeper) validateDenomPair(ctx sdk.Context, baseDenom, quoteDenom string) error {
+	if baseDenom == "" {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "base denom can't be empty")
+	}
+
+	if quoteDenom == "" {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "quote denom can't be empty")
+	}
+
+	if baseDenom == quoteDenom {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "base and quote denoms must be different")
+	}
+
+	if !k.assetFTKeeper.HasSupply(ctx, baseDenom) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "base denom %s does not exist", baseDenom)
+	}
+
+	if !k.assetFTKeeper.HasSupply(ctx, quoteDenom) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "quote denom %s does not exist", quoteDenom)
 	}
 
 	return nil
