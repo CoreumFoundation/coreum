@@ -1,13 +1,14 @@
 package types
 
 import (
-	context "context"
+	"context"
 	"time"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	proto "github.com/cosmos/gogoproto/proto"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 )
 
 // AccountKeeper defines the expected account keeper interface.
@@ -42,6 +43,11 @@ type BankKeeper interface {
 // DelayKeeper defines methods required from the delay keeper.
 type DelayKeeper interface {
 	DelayExecution(ctx sdk.Context, id string, data proto.Message, delay time.Duration) error
+}
+
+// StakingKeeper defines the expected staking interface.
+type StakingKeeper interface {
+	GetParams(ctx context.Context) (params stakingtypes.Params, err error)
 }
 
 // WasmPermissionedKeeper defines methods required from the WASM permissioned keeper.

@@ -431,6 +431,7 @@ func New(
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
 		app.DelayKeeper,
+		app.StakingKeeper,
 		// pointer is used here because there is cycle in keeper dependencies:
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,

@@ -41,6 +41,7 @@ type Keeper struct {
 	storeService           sdkstore.KVStoreService
 	bankKeeper             types.BankKeeper
 	delayKeeper            types.DelayKeeper
+	stakingKeeper          types.StakingKeeper
 	wasmKeeper             cwasmtypes.WasmKeeper
 	wasmPermissionedKeeper types.WasmPermissionedKeeper
 	accountKeeper          types.AccountKeeper
@@ -53,6 +54,7 @@ func NewKeeper(
 	storeService sdkstore.KVStoreService,
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
+	stakingKeeper types.StakingKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
 	wasmPermissionedKeeper types.WasmPermissionedKeeper,
 	accountKeeper types.AccountKeeper,
@@ -63,6 +65,7 @@ func NewKeeper(
 		storeService:           storeService,
 		bankKeeper:             bankKeeper,
 		delayKeeper:            delayKeeper,
+		stakingKeeper:          stakingKeeper,
 		wasmKeeper:             wasmKeeper,
 		wasmPermissionedKeeper: wasmPermissionedKeeper,
 		accountKeeper:          accountKeeper,
@@ -354,24 +357,23 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 }
 
 func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, params types.Params) error {
-	def, err := k.getDefinitionOrNil(ctx, params.IssueFee.Denom)
+	stakingParams, err := k.stakingKeeper.GetParams(ctx)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", params.IssueFee)
+		return sdkerrors.Wrap(err, "not able to get staking params")
 	}
 
-	if def == nil {
-		if err = k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
-			return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
-		}
-
-		if err = k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
-			return err
-		}
-	} else {
-		if err = k.burnIfSpendable(ctx, settings.Issuer, *def, params.IssueFee.Amount); err != nil {
-			return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
-		}
+	if params.IssueFee.Denom != stakingParams.BondDenom {
+		return sdkerrors.Wrapf(err, "not able to burn %s for issue fee, only %s is accepted", params.IssueFee.Denom, stakingParams.BondDenom)
 	}
+
+	if err = k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
+		return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
+	}
+
+	if err = k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
