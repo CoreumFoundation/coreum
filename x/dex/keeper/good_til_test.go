@@ -22,7 +22,7 @@ func TestKeeper_GoodTil(t *testing.T) {
 	initialBlockTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	tests := []struct {
 		name string
-		// height to orderstestSet.
+		// height to orders
 		orders      func(testSet TestSet) map[uint64][]types.Order
 		wantOrders  func(testSet TestSet) []types.Order
 		startHeight uint64
