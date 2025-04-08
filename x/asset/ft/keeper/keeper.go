@@ -600,12 +600,12 @@ func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom str
 		return sdk.Coin{}, err
 	}
 
-	def, err := k.GetDefinition(ctx, denom)
+	def, err := k.getDefinitionOrNil(ctx, denom)
 	if err != nil {
 		return sdk.Coin{}, sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if def.HasAdminPrivileges(addr) {
+	if def != nil && def.HasAdminPrivileges(addr) {
 		return sdk.NewCoin(denom, sdkmath.ZeroInt()), nil
 	}
 
