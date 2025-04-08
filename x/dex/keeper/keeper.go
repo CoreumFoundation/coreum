@@ -183,6 +183,18 @@ func (k Keeper) GetOrderBookParams(
 		return nil, err
 	}
 
+	if baseDenom == "" {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "base denom can't be empty")
+	}
+
+	if quoteDenom == "" {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "quote denom can't be empty")
+	}
+
+	if baseDenom == quoteDenom {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "base and quote denoms must be different")
+	}
+
 	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
 	if err != nil {
 		return nil, err
