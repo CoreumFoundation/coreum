@@ -16,6 +16,7 @@ message GenesisState {
   // order_sequence is current order sequence;
   uint64 order_sequence = 4;
   repeated AccountDenomOrdersCount accounts_denoms_orders_counts = 5 [(gogoproto.nullable) = false];
+  repeated bytes reserved_order_ids = 6;
 }
 
 // OrderBookDataWithID is a order book data with it's corresponding ID.

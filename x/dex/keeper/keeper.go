@@ -16,6 +16,7 @@ import (
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/samber/lo"
 
+	"github.com/CoreumFoundation/coreum/v5/pkg/store"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
@@ -71,6 +72,10 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 
 	accNumber, err := k.getAccountNumber(ctx, creator)
 	if err != nil {
+		return err
+	}
+
+	if err := k.reserveOrderID(ctx, accNumber, order.ID); err != nil {
 		return err
 	}
 
@@ -1148,6 +1153,52 @@ func (k Keeper) saveOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID
 
 func (k Keeper) removeOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID string) error {
 	return k.storeService.OpenKVStore(ctx).Delete(types.CreateOrderIDToSequenceKey(accNumber, orderID))
+}
+
+func (k Keeper) reserveOrderID(ctx sdk.Context, accNumber uint64, orderID string) error {
+	key := types.CreateReserveOrderIDKey(accNumber, orderID)
+	kvStore := k.storeService.OpenKVStore(ctx)
+	exists, err := kvStore.Has(key)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "order id already used")
+	}
+	return kvStore.Set(key, types.StoreTrue)
+}
+
+// ExportReserveOrderIDs returns all the order ids that is ever used.
+// It will be used in genesis export.
+func (k Keeper) ExportReserveOrderIDs(
+	ctx sdk.Context,
+) ([][]byte, error) {
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.ReserveOrderIDKeyPrefix)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+	keys := make([][]byte, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		keys = append(keys, iterator.Value())
+	}
+	return keys, nil
+}
+
+// ImportReservedOrderIDs imports all the order ids that is ever used.
+// It will only be used in genesis.
+func (k Keeper) ImportReservedOrderIDs(
+	ctx sdk.Context,
+	orderKeys [][]byte,
+) error {
+	str := k.storeService.OpenKVStore(ctx)
+	for _, k := range orderKeys {
+		key := store.JoinKeys(types.ReserveOrderIDKeyPrefix, k)
+		if err := str.Set(key, types.StoreTrue); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (k Keeper) getOrderSequenceByID(ctx sdk.Context, accNumber uint64, orderID string) (uint64, error) {
