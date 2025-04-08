@@ -34,8 +34,8 @@ func CompileAssetExtensionSmartContracts(ctx context.Context, deps types.DepsFun
 	return compileWasmDir(WasmAssetExtensionDir, deps)
 }
 
-// CompileDexSmartContracts compiles asset smart contracts.
-func CompileDexSmartContracts(ctx context.Context, deps types.DepsFunc) error {
+// CompileDEXSmartContracts compiles asset smart contracts.
+func CompileDEXSmartContracts(ctx context.Context, deps types.DepsFunc) error {
 	return compileWasmDir(WasmDexDir, deps)
 }
 

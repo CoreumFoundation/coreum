@@ -88,6 +88,11 @@ func (k Keeper) matchOrder(
 				return err
 			}
 
+			// In partial match case, we should create an order for the remaining part, and it makes sense to happen
+			// after finalizing the match, but since a call to smart contract happens in applyMatchingResult, it will be
+			// created before that. (The reason is explained inside DEXExecuteActions function) So, smart contract will
+			// see the match already happened, and it can calculate what the state was before the match, with the data
+			// passed to it.
 			if err := k.createOrder(ctx, params, takerOrder, takerRecord); err != nil {
 				return err
 			}

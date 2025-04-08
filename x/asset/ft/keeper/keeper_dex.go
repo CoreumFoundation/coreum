@@ -77,6 +77,10 @@ func (k Keeper) DEXExecuteActions(ctx sdk.Context, actions types.DEXActions) err
 		}
 	}
 
+	// The actual call to the smart contract should always be the last line, because when the wasm calls the contract,
+	// it can return some messages that will be executed right away before finalizing order. It can be called
+	// recursively either unlimited times, or inject orders that might match before finalizing original order which
+	// causes errors in calculations and other attacks.
 	return k.DEXInvokeAssetExtension(
 		ctx,
 		actions.Order,
@@ -115,11 +119,11 @@ func (k Keeper) DEXCheckOrderAmounts(
 
 // DEXInvokeAssetExtension invokes the smart contract place order.
 func (k Keeper) DEXInvokeAssetExtension(ctx sdk.Context, order types.DEXOrder, spent, received sdk.Coin) error {
-	if err := k.dexInvokeAssetExtensionWithSpentAmount(ctx, order, spent, received); err != nil {
+	if err := k.dexInvokeAssetExtensionWithAmount(ctx, order, spent, received, spent.Denom); err != nil {
 		return err
 	}
 
-	return k.dexInvokeAssetExtensionWithReceivedAmount(ctx, order, spent, received)
+	return k.dexInvokeAssetExtensionWithAmount(ctx, order, spent, received, received.Denom)
 }
 
 // SetDEXSettings sets the DEX settings of a specified denom.
@@ -430,32 +434,6 @@ func (k Keeper) dexCheckExpectedToSpend(
 	return nil
 }
 
-func (k Keeper) dexInvokeAssetExtensionWithSpentAmount(
-	ctx sdk.Context,
-	order types.DEXOrder,
-	spent, received sdk.Coin,
-) error {
-	spendDef, err := k.getDefinitionOrNil(ctx, spent.Denom)
-	if err != nil {
-		return err
-	}
-	if spendDef == nil {
-		return nil
-	}
-
-	if spendDef.IsFeatureEnabled(types.Feature_extension) {
-		extensionContract, err := sdk.AccAddressFromBech32(spendDef.ExtensionCWAddress)
-		if err != nil {
-			return err
-		}
-		return k.invokeAssetExtensionPlaceOrderMethod(
-			ctx, extensionContract, order, spent, received,
-		)
-	}
-
-	return nil
-}
-
 func (k Keeper) dexCheckExpectedToReceive(
 	ctx sdk.Context,
 	order types.DEXOrder,
@@ -476,12 +454,13 @@ func (k Keeper) dexCheckExpectedToReceive(
 	return k.validateCoinReceivable(ctx, order.Creator, *receiveDef, expectedToReceive.Amount)
 }
 
-func (k Keeper) dexInvokeAssetExtensionWithReceivedAmount(
+func (k Keeper) dexInvokeAssetExtensionWithAmount(
 	ctx sdk.Context,
 	order types.DEXOrder,
 	spent, received sdk.Coin,
+	assetExtensionDenom string,
 ) error {
-	receiveDef, err := k.getDefinitionOrNil(ctx, received.Denom)
+	receiveDef, err := k.getDefinitionOrNil(ctx, assetExtensionDenom)
 	if err != nil {
 		return err
 	}
