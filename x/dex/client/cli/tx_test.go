@@ -25,17 +25,13 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-const (
-	denom2 = "denom2"
-	denom3 = "denom3"
-)
-
 func TestCmdPlaceOrder(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -55,6 +51,7 @@ func TestCmdPlaceOrderWithGoodTilBlockHeight(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -77,6 +74,7 @@ func TestCmdPlaceOrderWithGoodTilBlockTime(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -99,6 +97,7 @@ func TestCmdPlaceOrderWithGoodTilBlockHeightAndGoodTilBlockTime(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -122,6 +121,7 @@ func TestCmdPlaceOrderWithTimeInForceGTC(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -141,6 +141,7 @@ func TestCmdPlaceOrderWithTimeInForceIOC(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -160,6 +161,7 @@ func TestCmdPlaceOrderWithTimeInForceFOK(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
 
 	placeOrder(ctx, requireT, testNetwork, types.Order{
 		ID:          "id1",
@@ -179,6 +181,8 @@ func TestCmdCancelOrder(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+
 	order := types.Order{
 		ID:          "id1",
 		Type:        types.ORDER_TYPE_LIMIT,
@@ -211,6 +215,8 @@ func TestCmdCancelOrdersByDenom(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 	denom1 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+	denom2 := issueFT(ctx, requireT, testNetwork, defaultQuantity)
+
 	order := types.Order{
 		ID:          "id1",
 		Type:        types.ORDER_TYPE_LIMIT,
