@@ -2706,28 +2706,6 @@ func placeOrder(
 	)
 }
 
-func sendFromAdmin(
-	ctx context.Context,
-	chain integration.CoreumChain,
-	admin sdk.AccAddress,
-	to string,
-	denom string,
-	amount sdkmath.Int,
-) (*sdk.TxResponse, error) {
-	sendMsg := &banktypes.MsgSend{
-		FromAddress: admin.String(),
-		ToAddress:   to,
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, amount)),
-	}
-	resp, err := client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(admin),
-		chain.TxFactoryAuto(),
-		sendMsg,
-	)
-	return resp, err
-}
-
 // TestTradeByAdmin tests trades by admin without limits like frozen amount.
 func TestTradeByAdmin(t *testing.T) {
 	t.Parallel()
