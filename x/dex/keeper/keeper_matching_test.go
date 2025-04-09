@@ -255,7 +255,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "1000000testSet.denom1 is not available, available 999000testSet.denom1",
+			wantErrorContains: "1000000denom1 is not available, available 999000denom1",
 		},
 		{
 			name: "not_fillable_orders_cancelled_right_after_creation",
@@ -549,7 +549,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			// we fill the id1 first, so the used balance from id2 is 1_000_000 * 375e-3 = 375_000
 			// to fill remaining part we need (10_000_000 - 1_000_000) * 376e-3 = 3_384_000,
 			// so total expected to send 3_384_00 + 375_000 = 3_759_000
-			wantErrorContains: "3759000testSet.denom2 is not available, available 3758000testSet.denom2",
+			wantErrorContains: "3759000denom2 is not available, available 3758000denom2",
 		},
 
 		// TODO: Figure out behavior in this case. Because we can possibly create an order,
@@ -941,7 +941,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "10000testSet.denom1 is not available, available 9999testSet.denom1",
+			wantErrorContains: "10000denom1 is not available, available 9999testSet.denom1",
 		},
 		{
 			name: "match_limit_directOB_maker_buy_taker_sell_close_taker",
@@ -2115,7 +2115,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "10000testSet.denom2 is not available, available 9999testSet.denom2",
+			wantErrorContains: "10000denom2 is not available, available 9999denom2",
 		},
 		{
 			name: "match_limit_invertedOB_maker_sell_taker_sell_close_maker_with_partial_filling",
@@ -2433,7 +2433,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "26491testSet.denom1 is not available, available 26490testSet.denom1",
+			wantErrorContains: "26491denom1 is not available, available 26490denom1",
 		},
 		{
 			name: "match_limit_invertedOB_maker_buy_taker_buy_close_taker_with_partial_filling",
