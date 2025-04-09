@@ -363,7 +363,7 @@ func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, para
 	}
 
 	if params.IssueFee.Denom != stakingParams.BondDenom {
-		return sdkerrors.Wrapf(err, "not able to burn %s for issue fee, only %s is accepted",
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidCoins, "not able to burn %s for issue fee, only %s is accepted",
 			params.IssueFee.Denom, stakingParams.BondDenom)
 	}
 
