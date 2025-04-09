@@ -363,18 +363,15 @@ func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, para
 	}
 
 	if params.IssueFee.Denom != stakingParams.BondDenom {
-		return sdkerrors.Wrapf(err, "not able to burn %s for issue fee, only %s is accepted", params.IssueFee.Denom, stakingParams.BondDenom)
+		return sdkerrors.Wrapf(err, "not able to burn %s for issue fee, only %s is accepted",
+			params.IssueFee.Denom, stakingParams.BondDenom)
 	}
 
 	if err = k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
 		return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
 	}
 
-	if err = k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
-		return err
-	}
-
-	return nil
+	return k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee))
 }
 
 // SetSymbol saves the symbol to store.
