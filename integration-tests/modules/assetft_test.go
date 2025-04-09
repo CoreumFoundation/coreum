@@ -7654,6 +7654,97 @@ func TestAssetFTTransferAdminFreezeAdminAccount(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
+// TestAssetFTTransferAdminToUserWithFrozenAmount checks if frozen amount of a fungible tokens after transferring admin
+// to a user with already frozen amount is zero.
+func TestAssetFTTransferAdminToUserWithFrozenAmount(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	clientCtx := chain.ClientContext
+
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgTransferAdmin{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: sdkmath.OneInt(),
+	})
+
+	// Issue the new fungible token
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1100),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   admin.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdkmath.NewInt(1000)),
+		),
+	}
+
+	denom := assetfttypes.BuildDenom("uabc", issuer)
+
+	// freeze 400 tokens before becoming admin
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
+	}
+
+	// Transfer administration of fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  issuer.String(),
+		Account: admin.String(),
+		Denom:   assetfttypes.BuildDenom(msg.Subunit, issuer),
+	}
+
+	msgList := []sdk.Msg{
+		msg, msgSend, freezeMsg, transferAdminMsg,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+
+	requireT.NoError(err)
+
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	assertT.Equal(issuer.String(), adminTransferredEvts[0].PreviousAdmin)
+	assertT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	frozenBalance, err := ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: admin.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.ZeroInt()), frozenBalance.Balance)
+}
+
 // TestAssetFTTransferAdminGloballyFreeze checks global freeze functionality of fungible tokens
 // after transferring admin.
 func TestAssetFTTransferAdminGloballyFreeze(t *testing.T) {
