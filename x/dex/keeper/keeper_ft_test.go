@@ -41,6 +41,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
@@ -80,7 +81,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				Type:        types.ORDER_TYPE_LIMIT,
 				ID:          uuid.Generate().String(),
 				BaseDenom:   denomWithExtension,
-				QuoteDenom:  denom2,
+				QuoteDenom:  testSet.denom2,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
 				Quantity:    defaultQuantityStep,
 				Side:        types.SIDE_SELL,
@@ -98,7 +99,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				Type:        types.ORDER_TYPE_LIMIT,
 				ID:          uuid.Generate().String(),
 				BaseDenom:   denomWithExtension,
-				QuoteDenom:  denom2,
+				QuoteDenom:  testSet.denom2,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
 				Quantity:    AmountDEXExpectToSpendTrigger,
 				Side:        types.SIDE_SELL,
@@ -115,7 +116,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				}(),
 				Type:        types.ORDER_TYPE_LIMIT,
 				ID:          uuid.Generate().String(),
-				BaseDenom:   denom2,
+				BaseDenom:   testSet.denom2,
 				QuoteDenom:  denomWithExtension,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
 				Quantity:    defaultQuantityStep,
@@ -133,7 +134,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 				}(),
 				Type:        types.ORDER_TYPE_LIMIT,
 				ID:          uuid.Generate().String(),
-				BaseDenom:   denom2,
+				BaseDenom:   testSet.denom2,
 				QuoteDenom:  denomWithExtension,
 				Price:       lo.ToPtr(types.MustNewPriceFromString("1")),
 				Quantity:    AmountDEXExpectToReceiveTrigger,
@@ -196,6 +197,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	acc, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
@@ -218,7 +220,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denomWithExtension,
-		QuoteDenom: denom2,
+		QuoteDenom: testSet.denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   defaultQuantityStep,
 		Side:       types.SIDE_SELL,
@@ -239,7 +241,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
-		BaseDenom:  denom2,
+		BaseDenom:  testSet.denom2,
 		QuoteDenom: denomWithExtension,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   defaultQuantityStep,
@@ -262,6 +264,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	acc, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
@@ -277,7 +280,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 		},
 		DEXSettings: &assetfttypes.DEXSettings{
 			WhitelistedDenoms: []string{
-				denom3,
+				testSet.denom3,
 			},
 		},
 	}
@@ -289,7 +292,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom,
-		QuoteDenom: denom2, // the denom2 is not allowed
+		QuoteDenom: testSet.denom2, // the denom2 is not allowed
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   defaultQuantityStep,
 		Side:       types.SIDE_SELL,
@@ -303,7 +306,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 	require.NoError(t, testApp.BankKeeper.SendCoins(sdkCtx, issuer, acc, sdk.NewCoins(lockedBalance)))
 	fundOrderReserve(t, testApp, sdkCtx, acc)
 	require.ErrorContains(
-		t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2), "denom denom2 not whitelisted",
+		t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2), "locking coins for DEX is prohibited, denom",
 	)
 
 	orderReceiveDenom3 := types.Order{
@@ -311,7 +314,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denom,
-		QuoteDenom: denom3, // the denom3 is allowed
+		QuoteDenom: testSet.denom3, // the denom3 is allowed
 		Price:      lo.ToPtr(types.MustNewPriceFromString("7e-4")),
 		Quantity:   defaultQuantityStep,
 		Side:       types.SIDE_SELL,
@@ -329,6 +332,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 	// now update settings to remove all limit and place orderReceiveDenom2
 	require.NoError(t, testApp.AssetFTKeeper.UpdateDEXWhitelistedDenoms(sdkCtx, issuer, denom, nil))
 	fundOrderReserve(t, testApp, sdkCtx, acc)
+	orderReceiveDenom2.ID = uuid.Generate().String()
 	require.NoError(t, testApp.DEXKeeper.PlaceOrder(sdkCtx, orderReceiveDenom2))
 }
 
@@ -338,6 +342,7 @@ func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	acc, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
@@ -360,7 +365,7 @@ func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denomWithBurn,
-		QuoteDenom: denom2,
+		QuoteDenom: testSet.denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   defaultQuantityStep,
 		Side:       types.SIDE_SELL,
@@ -383,6 +388,7 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	acc, _ := testApp.GenAccount(sdkCtx)
 	validatorOwner, _ := testApp.GenAccount(sdkCtx)
@@ -401,7 +407,7 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denomToStake,
-		QuoteDenom: denom2,
+		QuoteDenom: testSet.denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   defaultQuantityStep,
 		Side:       types.SIDE_SELL,
@@ -456,7 +462,7 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denomToStake,
-		QuoteDenom: denom2,
+		QuoteDenom: testSet.denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   defaultQuantityStep,
 		Side:       types.SIDE_SELL,
@@ -480,6 +486,7 @@ func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	acc, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
@@ -503,7 +510,7 @@ func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denomWithBurnRate,
-		QuoteDenom: denom2,
+		QuoteDenom: testSet.denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   defaultQuantityStep,
 		Side:       types.SIDE_SELL,
@@ -528,6 +535,7 @@ func TestKeeper_PlaceOrderWithCommissionRate(t *testing.T) {
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	acc, _ := testApp.GenAccount(sdkCtx)
 	issuer, _ := testApp.GenAccount(sdkCtx)
@@ -548,7 +556,7 @@ func TestKeeper_PlaceOrderWithCommissionRate(t *testing.T) {
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
 		BaseDenom:  denomWithCommissionRate,
-		QuoteDenom: denom2,
+		QuoteDenom: testSet.denom2,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:   defaultQuantityStep,
 		Side:       types.SIDE_SELL,

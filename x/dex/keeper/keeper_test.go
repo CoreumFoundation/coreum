@@ -25,12 +25,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
-const (
-	denom1 = "denom1"
-	denom2 = "denom2"
-	denom3 = "denom3"
-)
-
 type OrderPlacementEvents struct {
 	OrderPlaced   types.EventOrderPlaced
 	OrdersReduced []types.EventOrderReduced
@@ -110,6 +104,7 @@ func TestKeeper_UpdateParams(t *testing.T) {
 func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	type denomsToOrderBookIDs struct {
 		baseDenom                   string
@@ -121,36 +116,36 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 	for _, item := range []denomsToOrderBookIDs{
 		// save with asc denoms ordering
 		{
-			baseDenom:                   denom1,
-			quoteDenom:                  denom2,
+			baseDenom:                   testSet.denom1,
+			quoteDenom:                  testSet.denom2,
 			expectedSelfOrderBookID:     uint32(1),
 			expectedOppositeOrderBookID: uint32(2),
 		},
 		// save one more time to check that returns the same
 		{
-			baseDenom:                   denom1,
-			quoteDenom:                  denom2,
+			baseDenom:                   testSet.denom1,
+			quoteDenom:                  testSet.denom2,
 			expectedSelfOrderBookID:     uint32(1),
 			expectedOppositeOrderBookID: uint32(2),
 		},
 		// inverse denom
 		{
-			baseDenom:                   denom2,
-			quoteDenom:                  denom1,
+			baseDenom:                   testSet.denom2,
+			quoteDenom:                  testSet.denom1,
 			expectedSelfOrderBookID:     uint32(2),
 			expectedOppositeOrderBookID: uint32(1),
 		},
 		// save with desc denoms ordering
 		{
-			baseDenom:                   denom3,
-			quoteDenom:                  denom2,
+			baseDenom:                   testSet.denom3,
+			quoteDenom:                  testSet.denom2,
 			expectedSelfOrderBookID:     uint32(4),
 			expectedOppositeOrderBookID: uint32(3),
 		},
 		// inverse denom
 		{
-			baseDenom:                   denom2,
-			quoteDenom:                  denom3,
+			baseDenom:                   testSet.denom2,
+			quoteDenom:                  testSet.denom3,
 			expectedSelfOrderBookID:     uint32(3),
 			expectedOppositeOrderBookID: uint32(4),
 		},
@@ -187,6 +182,8 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
+	testSet := genTestSet(t, sdkCtx, testApp)
+
 	dexKeeper := testApp.DEXKeeper
 
 	price := lo.ToPtr(types.MustNewPriceFromString("12e-1"))
@@ -197,8 +194,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         uuid.Generate().String(),
-		BaseDenom:  denom1,
-		QuoteDenom: denom2,
+		BaseDenom:  testSet.denom1,
+		QuoteDenom: testSet.denom2,
 		Price:      price,
 		Quantity:   sellQuantity,
 		Side:       types.SIDE_SELL,
@@ -217,7 +214,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	// try to place the sellOrder one more time
 	err = dexKeeper.PlaceOrder(sdkCtx, sellOrder)
 	require.ErrorIs(t, err, types.ErrInvalidInput)
-	require.ErrorContains(t, err, "is already created")
+	require.ErrorContains(t, err, "order id already used")
 
 	gotOrder, err := dexKeeper.GetOrderByAddressAndID(
 		sdkCtx, sdk.MustAccAddressFromBech32(sellOrder.Creator), sellOrder.ID,
@@ -241,8 +238,8 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          uuid.Generate().String(),
-		BaseDenom:   denom2,
-		QuoteDenom:  denom3,
+		BaseDenom:   testSet.denom2,
+		QuoteDenom:  testSet.denom3,
 		Price:       price,
 		Quantity:    buyQuantity,
 		Side:        types.SIDE_BUY,
@@ -274,32 +271,21 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		Height: 100,
 		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
+
 	dexKeeper := testApp.DEXKeeper
 	assetFTKeeper := testApp.AssetFTKeeper
 
 	acc, _ := testApp.GenAccount(sdkCtx)
-	issuer, _ := testApp.GenAccount(sdkCtx)
-
-	issuanceSettings := assetfttypes.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "DEFEXT",
-		Subunit:       "defext",
-		Precision:     6,
-		InitialAmount: sdkmath.NewIntWithDecimal(1, 10),
-		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_whitelisting,
-		},
-	}
-	ft1Whitelisting, err := testApp.AssetFTKeeper.Issue(sdkCtx, issuanceSettings)
-	require.NoError(t, err)
+	issuer := testSet.issuer
 
 	sellQuantity := sdkmath.NewInt(1_000_000)
 	sellOrder := types.Order{
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          "id1",
-		BaseDenom:   denom1,
-		QuoteDenom:  ft1Whitelisting,
+		BaseDenom:   testSet.denom1,
+		QuoteDenom:  testSet.ftDenomWhitelisting1,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:    sellQuantity,
 		Side:        types.SIDE_SELL,
@@ -372,8 +358,8 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		Creator:    acc.String(),
 		Type:       types.ORDER_TYPE_LIMIT,
 		ID:         "id2",
-		BaseDenom:  denom1,
-		QuoteDenom: ft1Whitelisting,
+		BaseDenom:  testSet.denom1,
+		QuoteDenom: testSet.ftDenomWhitelisting1,
 		Price:      lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 		Quantity:   buyQuantity,
 		Side:       types.SIDE_BUY,
@@ -425,9 +411,11 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.True(t, dexExpectedToReceiveBalance.IsZero())
 
 	// now place both orders to let them match partially
+	sellOrder.ID = "id3"
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, sellOrder))
 
 	sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
+	buyOrder.ID = "id4"
 	require.NoError(t, dexKeeper.PlaceOrder(sdkCtx, buyOrder))
 	events = readOrderEvents(t, sdkCtx)
 
@@ -573,15 +561,17 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
 			sdkCtx := testApp.BaseApp.NewContext(false)
+			testSet := genTestSet(t, sdkCtx, testApp)
 
+			baseDenom, quoteDenom := testSet.denom1, testSet.denom2
 			if tt.baseURA != nil {
-				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom1, assetfttypes.DEXSettings{
+				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, baseDenom, assetfttypes.DEXSettings{
 					UnifiedRefAmount: tt.baseURA,
 				}))
 			}
 
 			if tt.quoteURA != nil {
-				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, denom2, assetfttypes.DEXSettings{
+				require.NoError(t, testApp.AssetFTKeeper.SetDEXSettings(sdkCtx, quoteDenom, assetfttypes.DEXSettings{
 					UnifiedRefAmount: tt.quoteURA,
 				}))
 			}
@@ -601,8 +591,8 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 				Creator:     acc.String(),
 				Type:        types.ORDER_TYPE_LIMIT,
 				ID:          uuid.Generate().String(),
-				BaseDenom:   denom1,
-				QuoteDenom:  denom2,
+				BaseDenom:   baseDenom,
+				QuoteDenom:  quoteDenom,
 				Price:       &price,
 				Quantity:    quantity,
 				Side:        types.SIDE_SELL,
@@ -628,6 +618,8 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
+	testSet := genTestSet(t, sdkCtx, testApp)
+
 	dexKeeper := testApp.DEXKeeper
 
 	acc1, _ := testApp.GenAccount(sdkCtx)
@@ -638,8 +630,8 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			Creator:     acc1.String(),
 			Type:        types.ORDER_TYPE_LIMIT,
 			ID:          uuid.Generate().String(),
-			BaseDenom:   denom1,
-			QuoteDenom:  denom2,
+			BaseDenom:   testSet.denom1,
+			QuoteDenom:  testSet.denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
@@ -649,8 +641,8 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			Creator:    acc1.String(),
 			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
-			BaseDenom:  denom3,
-			QuoteDenom: denom2,
+			BaseDenom:  testSet.denom3,
+			QuoteDenom: testSet.denom2,
 			Price:      lo.ToPtr(types.MustNewPriceFromString("14e-1")),
 			Quantity:   defaultQuantityStep,
 			Side:       types.SIDE_BUY,
@@ -663,8 +655,8 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			Creator:    acc1.String(),
 			Type:       types.ORDER_TYPE_LIMIT,
 			ID:         uuid.Generate().String(),
-			BaseDenom:  denom1,
-			QuoteDenom: denom2,
+			BaseDenom:  testSet.denom1,
+			QuoteDenom: testSet.denom2,
 			Price:      lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 			Quantity:   defaultQuantityStep,
 			Side:       types.SIDE_SELL,
@@ -677,8 +669,8 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 			Creator:     acc2.String(),
 			Type:        types.ORDER_TYPE_LIMIT,
 			ID:          uuid.Generate().String(),
-			BaseDenom:   denom1,
-			QuoteDenom:  denom2,
+			BaseDenom:   testSet.denom1,
+			QuoteDenom:  testSet.denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("11e-1")),
 			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_BUY,
@@ -722,8 +714,8 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 	// get order book orders
 	denom1To2Orders, pageRes, err := testApp.DEXKeeper.GetOrderBookOrders(
 		sdkCtx,
-		denom1,
-		denom2,
+		testSet.denom1,
+		testSet.denom2,
 		types.SIDE_SELL,
 		&query.PageRequest{
 			Offset:     0,
@@ -738,8 +730,8 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 
 	denom1To2Orders, _, err = testApp.DEXKeeper.GetOrderBookOrders(
 		sdkCtx,
-		denom1,
-		denom2,
+		testSet.denom1,
+		testSet.denom2,
 		types.SIDE_SELL,
 		&query.PageRequest{
 			Limit: query.PaginationMaxLimit,
@@ -754,6 +746,8 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 func TestKeeper_GetOrderBooks(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
+	testSet := genTestSet(t, sdkCtx, testApp)
+
 	dexKeeper := testApp.DEXKeeper
 
 	acc1, _ := testApp.GenAccount(sdkCtx)
@@ -763,8 +757,8 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 			Creator:     acc1.String(),
 			Type:        types.ORDER_TYPE_LIMIT,
 			ID:          uuid.Generate().String(),
-			BaseDenom:   denom1,
-			QuoteDenom:  denom2,
+			BaseDenom:   testSet.denom1,
+			QuoteDenom:  testSet.denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_SELL,
@@ -774,8 +768,8 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 			Creator:     acc1.String(),
 			Type:        types.ORDER_TYPE_LIMIT,
 			ID:          uuid.Generate().String(),
-			BaseDenom:   denom3,
-			QuoteDenom:  denom2,
+			BaseDenom:   testSet.denom3,
+			QuoteDenom:  testSet.denom2,
 			Price:       lo.ToPtr(types.MustNewPriceFromString("13e-1")),
 			Quantity:    defaultQuantityStep,
 			Side:        types.SIDE_BUY,
@@ -801,16 +795,16 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 	require.Equal(t, uint64(4), pageRes.Total)
 	require.Equal(t, []types.OrderBookData{
 		{
-			BaseDenom:  denom1,
-			QuoteDenom: denom2,
+			BaseDenom:  testSet.denom1,
+			QuoteDenom: testSet.denom2,
 		},
 		{
-			BaseDenom:  denom2,
-			QuoteDenom: denom1,
+			BaseDenom:  testSet.denom2,
+			QuoteDenom: testSet.denom1,
 		},
 		{
-			BaseDenom:  denom2,
-			QuoteDenom: denom3,
+			BaseDenom:  testSet.denom2,
+			QuoteDenom: testSet.denom3,
 		},
 	}, orderBooks)
 }
@@ -818,11 +812,12 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 func TestKeeper_GetOrderBookParams(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
+	testSet := genTestSet(t, sdkCtx, testApp)
 
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
 
-	res, err := testApp.DEXKeeper.GetOrderBookParams(sdkCtx, denom1, denom2)
+	res, err := testApp.DEXKeeper.GetOrderBookParams(sdkCtx, testSet.denom1, testSet.denom2)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	require.Equal(t,
@@ -837,6 +832,9 @@ func TestKeeper_GetOrderBookParams(t *testing.T) {
 func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContext(false)
+	testSet := genTestSet(t, sdkCtx, testApp)
+
+	denom1, denom2, denom3 := testSet.denom1, testSet.denom2, testSet.denom3
 
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
@@ -850,8 +848,8 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		Creator:     acc1.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          uuid.Generate().String(),
-		BaseDenom:   denom1,
-		QuoteDenom:  denom2,
+		BaseDenom:   testSet.denom1,
+		QuoteDenom:  testSet.denom2,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_SELL,
@@ -865,8 +863,8 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 
 	require.True(t, reflect.DeepEqual(
 		map[string]uint64{
-			denom1: 1,
-			denom2: 1,
+			testSet.denom1: 1,
+			testSet.denom2: 1,
 		},
 		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
 	))
@@ -875,8 +873,8 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 		Creator:     acc1.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          uuid.Generate().String(),
-		BaseDenom:   denom2,
-		QuoteDenom:  denom3,
+		BaseDenom:   testSet.denom2,
+		QuoteDenom:  testSet.denom3,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("12e-1")),
 		Quantity:    defaultQuantityStep,
 		Side:        types.SIDE_SELL,
@@ -890,9 +888,9 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 
 	require.True(t, reflect.DeepEqual(
 		map[string]uint64{
-			denom1: 1,
-			denom2: 2,
-			denom3: 1,
+			testSet.denom1: 1,
+			testSet.denom2: 2,
+			testSet.denom3: 1,
 		},
 		getAccountDenomsOrdersCount(t, testApp, sdkCtx, acc1),
 	))
@@ -1109,7 +1107,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	// try to cancel from not admin
 	require.ErrorIs(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, acc1, acc1, denoms[1]), cosmoserrors.ErrUnauthorized)
 
-	// cancel orders fro admin
+	// cancel orders from admin
 	require.NoError(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc1, denoms[1]))
 
 	require.True(t, reflect.DeepEqual(
@@ -1126,10 +1124,10 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, orders, 5)
-	// check that there are not orders with the denom2
+	// check that there are not orders with the denom[1]
 	for _, order := range orders {
 		for _, denom := range order.Denoms() {
-			require.NotEqual(t, denom2, denom)
+			require.NotEqual(t, denoms[1], denom)
 		}
 	}
 
