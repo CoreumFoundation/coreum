@@ -919,11 +919,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom2, 3_760),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 9999),
+						sdk.NewInt64Coin(testSet.denom1, 99_999),
 					),
 				}
 			},
@@ -936,7 +936,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -947,14 +947,14 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
 				}
 			},
 			wantErrorContains: func(testSet TestSet) string {
-				return fmt.Sprintf("10000%s is not available, available 9999%s", testSet.denom1, testSet.denom1)
+				return fmt.Sprintf("100000%s is not available, available 99999%s", testSet.denom1, testSet.denom1)
 			},
 		},
 		{
@@ -963,10 +963,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 3760)),
+						sdk.NewInt64Coin(testSet.denom2, 37_600)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 				}
 			},
@@ -979,7 +979,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -990,7 +990,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1005,22 +1005,22 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
-						// 10000 - 1000
-						RemainingBaseQuantity: sdkmath.NewInt(9000),
-						// 376e-3 * 10000 - 376e-3 * 1000 = 3384
-						RemainingSpendableBalance: sdkmath.NewInt(3384),
+						// 100k - 10k
+						RemainingBaseQuantity: sdkmath.NewInt(90_000),
+						// 376e-3 * 90_000 = 33840
+						RemainingSpendableBalance: sdkmath.NewInt(33_840),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 1000)),
+					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 10_000)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom2, 37600),
 					),
 				}
 			},
@@ -2130,7 +2130,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				}
 			},
 			wantErrorContains: func(testSet TestSet) string {
-				return fmt.Sprintf("10000denom2 is not available, available 9999denom2", testSet.denom2, testSet.denom2)
+				return fmt.Sprintf("10000%s is not available, available 9999%s", testSet.denom2, testSet.denom2)
 			},
 		},
 		{
@@ -2450,7 +2450,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				}
 			},
 			wantErrorContains: func(testSet TestSet) string {
-				return fmt.Sprintf("26491denom1 is not available, available 26490denom1", testSet.denom1, testSet.denom1)
+				return fmt.Sprintf("26491%s is not available, available 26490%s", testSet.denom1, testSet.denom1)
 			},
 		},
 		{
@@ -6410,7 +6410,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if tt.name == "match_limit_directOB_maker_buy_taker_sell_close_maker" {
+		if tt.name == "match_limit_directOB_maker_buy_taker_sell_close_taker" {
 			break
 		}
 		t.Run(tt.name, func(t *testing.T) {
