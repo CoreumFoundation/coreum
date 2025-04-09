@@ -1152,12 +1152,13 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	require.NoError(t, testApp.DEXKeeper.CancelOrdersByDenom(sdkCtx, issuer, acc1, denoms[0]))
 }
 
-func TestKeeper_IssueTokenWhenIssueFeeIsLocked(t *testing.T) {
+func TestKeeper_IssueTokenWithDifferentIssueFeeThanBoundDenom(t *testing.T) {
 	testApp := simapp.New()
 	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Height: 100,
 		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
 	})
+	testSet := genTestSet(t, sdkCtx, testApp)
 	dexKeeper := testApp.DEXKeeper
 	assetFTKeeper := testApp.AssetFTKeeper
 
@@ -1182,7 +1183,7 @@ func TestKeeper_IssueTokenWhenIssueFeeIsLocked(t *testing.T) {
 		Creator:     acc.String(),
 		Type:        types.ORDER_TYPE_LIMIT,
 		ID:          "id1",
-		BaseDenom:   denom1,
+		BaseDenom:   testSet.denom1,
 		QuoteDenom:  abc,
 		Price:       lo.ToPtr(types.MustNewPriceFromString("1e5")),
 		Quantity:    defaultQuantityStep,
@@ -1216,7 +1217,7 @@ func TestKeeper_IssueTokenWhenIssueFeeIsLocked(t *testing.T) {
 	}
 	// burn ABC token by creating DEF token
 	_, err = assetFTKeeper.Issue(sdkCtx, settings2)
-	require.ErrorContains(t, err, "out of funds to pay for issue fee")
+	require.ErrorIs(t, err, cosmoserrors.ErrInvalidCoins)
 
 	balanceAfter := bankKeeper.GetBalance(sdkCtx, acc, abc)
 	t.Logf("user2's ABC balance after:%s", balanceAfter.String())
