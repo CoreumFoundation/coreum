@@ -226,6 +226,8 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
 			sdkCtx := testApp.BaseApp.NewContext(false)
+			testSet := genTestSet(t, sdkCtx, testApp)
+
 			_, err := testApp.EndBlocker(sdkCtx)
 			require.NoError(t, err)
 
@@ -235,8 +237,8 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 			params.PriceTickExponent = int32(types.MinExp)
 			require.NoError(t, testApp.DEXKeeper.SetParams(sdkCtx, params))
 
-			baseDenom := denom1
-			quoteDenom := denom2
+			baseDenom := testSet.denom1
+			quoteDenom := testSet.denom2
 			var (
 				orderBookID        uint32
 				orderBookIsCreated bool

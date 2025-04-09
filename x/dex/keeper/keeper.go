@@ -16,6 +16,7 @@ import (
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/samber/lo"
 
+	"github.com/CoreumFoundation/coreum/v5/pkg/store"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
@@ -71,6 +72,10 @@ func (k Keeper) PlaceOrder(ctx sdk.Context, order types.Order) error {
 
 	accNumber, err := k.getAccountNumber(ctx, creator)
 	if err != nil {
+		return err
+	}
+
+	if err := k.reserveOrderID(ctx, accNumber, order.ID); err != nil {
 		return err
 	}
 
@@ -178,21 +183,13 @@ func (k Keeper) GetOrderBookParams(
 	ctx sdk.Context,
 	baseDenom, quoteDenom string,
 ) (*types.QueryOrderBookParamsResponse, error) {
-	params, err := k.GetParams(ctx)
-	if err != nil {
+	if err := k.validateDenomPair(ctx, baseDenom, quoteDenom); err != nil {
 		return nil, err
 	}
 
-	if baseDenom == "" {
-		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "base denom can't be empty")
-	}
-
-	if quoteDenom == "" {
-		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "quote denom can't be empty")
-	}
-
-	if baseDenom == quoteDenom {
-		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "base and quote denoms must be different")
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, baseDenom, params.DefaultUnifiedRefAmount)
@@ -454,6 +451,10 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 		return err
 	}
 
+	if err := k.validateDenomPair(ctx, order.BaseDenom, order.QuoteDenom); err != nil {
+		return err
+	}
+
 	baseURA, err := k.getAssetFTUnifiedRefAmount(ctx, order.BaseDenom, params.DefaultUnifiedRefAmount)
 	if err != nil {
 		return err
@@ -480,6 +481,30 @@ func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.
 		if err := validateGoodTil(ctx, order); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (k Keeper) validateDenomPair(ctx sdk.Context, baseDenom, quoteDenom string) error {
+	if baseDenom == "" {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "base denom can't be empty")
+	}
+
+	if quoteDenom == "" {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "quote denom can't be empty")
+	}
+
+	if baseDenom == quoteDenom {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "base and quote denoms must be different")
+	}
+
+	if !k.assetFTKeeper.HasSupply(ctx, baseDenom) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "base denom %s does not exist", baseDenom)
+	}
+
+	if !k.assetFTKeeper.HasSupply(ctx, quoteDenom) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "quote denom %s does not exist", quoteDenom)
 	}
 
 	return nil
@@ -1148,6 +1173,52 @@ func (k Keeper) saveOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID
 
 func (k Keeper) removeOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID string) error {
 	return k.storeService.OpenKVStore(ctx).Delete(types.CreateOrderIDToSequenceKey(accNumber, orderID))
+}
+
+func (k Keeper) reserveOrderID(ctx sdk.Context, accNumber uint64, orderID string) error {
+	key := types.CreateReserveOrderIDKey(accNumber, orderID)
+	kvStore := k.storeService.OpenKVStore(ctx)
+	exists, err := kvStore.Has(key)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return sdkerrors.Wrap(types.ErrInvalidInput, "order id already used")
+	}
+	return kvStore.Set(key, types.StoreTrue)
+}
+
+// ExportReserveOrderIDs returns all the order ids that is ever used.
+// It will be used in genesis export.
+func (k Keeper) ExportReserveOrderIDs(
+	ctx sdk.Context,
+) ([][]byte, error) {
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.ReserveOrderIDKeyPrefix)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+	keys := make([][]byte, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		keys = append(keys, iterator.Value())
+	}
+	return keys, nil
+}
+
+// ImportReservedOrderIDs imports all the order ids that is ever used.
+// It will only be used in genesis.
+func (k Keeper) ImportReservedOrderIDs(
+	ctx sdk.Context,
+	orderKeys [][]byte,
+) error {
+	str := k.storeService.OpenKVStore(ctx)
+	for _, k := range orderKeys {
+		key := store.JoinKeys(types.ReserveOrderIDKeyPrefix, k)
+		if err := str.Set(key, types.StoreTrue); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (k Keeper) getOrderSequenceByID(ctx sdk.Context, accNumber uint64, orderID string) (uint64, error) {

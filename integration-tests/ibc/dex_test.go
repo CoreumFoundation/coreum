@@ -66,7 +66,7 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 	})
 
 	denom1 := issueFT(ctx, t, coreumChain, coreumIssuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_ibc)
-	denom2 := "denom2"
+	denom2 := issueFT(ctx, t, coreumChain, coreumIssuer, sdkmath.NewIntWithDecimal(1, 6))
 
 	sendCoin := sdk.NewCoin(denom1, sdkmath.NewInt(100_000))
 	halfCoin := sdk.NewCoin(denom1, sdkmath.NewInt(50_000))
