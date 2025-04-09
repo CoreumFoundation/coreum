@@ -28,6 +28,7 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
 	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
+	"github.com/CoreumFoundation/coreum/v5/testutil/event"
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
@@ -2517,6 +2518,119 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 	// 100k is burnt 100k remains
 	requireT.Equal(sdkmath.NewInt(100_000).String(), balanceRes.Balance.String())
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
+}
+
+// TestTradeByAdmin tests trades by admin without limits like frozen amount.
+func TestTradeByAdmin(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	acc1 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+	})
+
+	acc2 := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(10_000_000),
+	})
+
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
+
+	admin := chain.GenAccount()
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+	})
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: acc2.String(),
+		ToAddress:   admin.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom2, sdkmath.NewInt(1_000_000)),
+		),
+	}
+
+	// freeze whole tokens before becoming admin
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  acc2.String(),
+		Account: admin.String(),
+		Coin:    sdk.NewCoin(denom2, sdkmath.NewInt(1_000_000)),
+	}
+
+	// Transfer administration of fungible token
+	transferAdminMsg := &assetfttypes.MsgTransferAdmin{
+		Sender:  acc2.String(),
+		Account: admin.String(),
+		Denom:   denom2,
+	}
+
+	msgList := []sdk.Msg{
+		msgSend, freezeMsg, transferAdminMsg,
+	}
+
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+
+	requireT.NoError(err)
+
+	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
+	requireT.NoError(err)
+	requireT.Equal(acc2.String(), adminTransferredEvts[0].PreviousAdmin)
+	requireT.Equal(admin.String(), adminTransferredEvts[0].CurrentAdmin)
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+		Quantity:    sdkmath.NewInt(1_000_000),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactoryAuto(),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	// place buy order to match the sell
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      admin.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1", // same ID allowed for different user
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+		Quantity:    sdkmath.NewInt(1_000_000),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactoryAuto(),
+		placeBuyOrderMsg,
+	)
+	// regardless of frozen amount, admin can trade
+	requireT.NoError(err)
 }
 
 func issueFT(
