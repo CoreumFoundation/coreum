@@ -2129,7 +2129,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			// wantErrorContains: "10000denom2 is not available, available 9999denom2",
+			wantErrorContains: func(testSet TestSet) string {
+				return fmt.Sprintf("10000denom2 is not available, available 9999denom2", testSet.denom2, testSet.denom2)
+			},
 		},
 		{
 			name: "match_limit_invertedOB_maker_sell_taker_sell_close_maker_with_partial_filling",
@@ -2447,7 +2449,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			// wantErrorContains: "26491denom1 is not available, available 26490denom1",
+			wantErrorContains: func(testSet TestSet) string {
+				return fmt.Sprintf("26491denom1 is not available, available 26490denom1", testSet.denom1, testSet.denom1)
+			},
 		},
 		{
 			name: "match_limit_invertedOB_maker_buy_taker_buy_close_taker_with_partial_filling",
@@ -4853,7 +4857,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			// wantErrorContains: "is not enough to receive 377",
+			wantErrorContains: func(testSet TestSet) string {
+				return "is not enough to receive 377"
+			},
 		},
 		{
 			name: "match_whitelisting_limit_directOB_maker_sell_taker_buy_close_maker",
@@ -5176,7 +5182,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			// wantErrorContains: "is not enough to receive 1000",
+			wantErrorContains: func(testSet TestSet) string {
+				return "is not enough to receive 1000"
+			},
 		},
 		{
 			name: "match_whitelisting_limit_directOB_maker_buy_taker_sell_close_maker",
