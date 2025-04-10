@@ -219,6 +219,10 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", err
 	}
 
+	if settings.InitialAmount.GT(types.MaxMintableAmount) {
+		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "initial amount is greater than maximum allowed")
+	}
+
 	err := types.ValidateSymbol(settings.Symbol)
 	if err != nil {
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
