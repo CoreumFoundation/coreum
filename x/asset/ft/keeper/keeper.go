@@ -449,6 +449,9 @@ func (k Keeper) SetDenomMetadata(
 
 // Mint mints new fungible token.
 func (k Keeper) Mint(ctx sdk.Context, sender, recipient sdk.AccAddress, coin sdk.Coin) error {
+	if coin.Amount.GT(types.MaxMintableAmount) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "minting amount is greater than maximum allowed")
+	}
 	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
