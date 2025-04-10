@@ -47,8 +47,8 @@ func RunAllIntegrationTests(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsModules returns function running modules integration tests.
 func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
-			BuildCoredDockerImage)
+		deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts, CompileDEXSmartContracts,
+			BuildCoredLocally, BuildCoredDockerImage)
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored}
@@ -74,8 +74,9 @@ func RunIntegrationTestsStress(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsIBC returns function running IBC integration tests.
 func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, BuildCoredLocally,
-			BuildCoredDockerImage, BuildGaiaDockerImage, BuildOsmosisDockerImage, BuildHermesDockerImage)
+		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileDEXSmartContracts,
+			BuildCoredLocally, BuildCoredDockerImage, BuildGaiaDockerImage, BuildOsmosisDockerImage,
+			BuildHermesDockerImage)
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
@@ -87,9 +88,9 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsUpgrade returns function running upgrade integration tests.
 func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileModulesSmartContracts,
-			BuildCoredLocally, BuildCoredDockerImage, BuildGaiaDockerImage, BuildOsmosisDockerImage,
-			BuildHermesDockerImage)
+		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileDEXSmartContracts,
+			CompileModulesSmartContracts, BuildCoredLocally, BuildCoredDockerImage, BuildGaiaDockerImage,
+			BuildOsmosisDockerImage, BuildHermesDockerImage)
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}

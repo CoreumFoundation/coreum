@@ -32,6 +32,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
+	testcontracts "github.com/CoreumFoundation/coreum/v5/x/dex/keeper/test-contracts"
 	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 )
 
@@ -2518,6 +2519,191 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 	// 100k is burnt 100k remains
 	requireT.Equal(sdkmath.NewInt(100_000).String(), balanceRes.Balance.String())
 	requireT.Equal(sdkmath.NewInt(0).String(), balanceRes.LockedInDEX.String())
+}
+
+// TestDEXReentrancyViaExtension tests to make sure that reentrancy bug does not exist in DEX. It might happen
+// if the control is given to smart contract in middle of an order placement.
+func TestDEXReentrancyViaExtension(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	assetFTClint := assetfttypes.NewQueryClient(chain.ClientContext)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	dexReserver := dexParamsRes.Params.OrderReserve
+
+	admin := chain.GenAccount()
+	acc1 := chain.GenAccount()
+	acc2 := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+			AddRaw(10_000_000).
+			Add(dexReserver.Amount),
+	})
+	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
+		// message + order reserve
+		Amount: sdkmath.NewInt(5_000_000).
+			Add(dexReserver.Amount.MulRaw(3)),
+	})
+	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
+		Amount: sdkmath.NewInt(5_000_000).
+			AddRaw(1_000_000).
+			Add(dexReserver.Amount), // message + balance to place an order + order reserve
+	})
+
+	codeID, err1 := chain.Wasm.DeployWASMContract(
+		ctx, chain.TxFactory().WithSimulateAndExecute(true), admin, testcontracts.DexReentrancyPocWasm,
+	)
+	requireT.NoError(err1)
+
+	// issue tokenA
+	denomA := issueFT(ctx, t, chain, admin, sdkmath.NewIntWithDecimal(1, 8))
+
+	//nolint:tagliatelle // these will be exposed to rust and must be snake case.
+	issuanceMsg := struct {
+		ExtraData string `json:"extra_data"`
+	}{
+		ExtraData: denomA,
+	}
+
+	issuanceMsgBytes, err := json.Marshal(issuanceMsg)
+	requireT.NoError(err)
+
+	attachedFund := chain.NewCoin(sdkmath.NewInt(1_000_000))
+	issueMsgB := &assetfttypes.MsgIssue{
+		Issuer:        admin.String(),
+		Symbol:        "TKNB",
+		Subunit:       "ub",
+		Precision:     6,
+		Description:   "TKNB Description",
+		InitialAmount: sdkmath.NewIntWithDecimal(1, 8),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_extension,
+		},
+		URI:     "https://my-class-meta.invalid/1",
+		URIHash: "content-hash",
+		ExtensionSettings: &assetfttypes.ExtensionIssueSettings{
+			CodeId:      codeID,
+			Funds:       sdk.NewCoins(attachedFund),
+			Label:       "testing-reentrancy-bug",
+			IssuanceMsg: issuanceMsgBytes,
+		},
+	}
+
+	denomB := assetfttypes.BuildDenom(issueMsgB.Subunit, admin)
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactoryAuto(),
+		issueMsgB,
+	)
+	requireT.NoError(err)
+	// get extension contract addr
+	denomBTokenRes, err := assetFTClint.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denomB,
+	})
+	requireT.NoError(err)
+	tokenBExtensionAddress := denomBTokenRes.Token.ExtensionCWAddress
+
+	sendMsgs := make([]sdk.Msg, 0)
+	// send from admin to cw to place an order
+	sendMsgs = append(sendMsgs, &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   tokenBExtensionAddress,
+		Amount:      sdk.NewCoins(sdk.NewCoin("udevcore", dexReserver.Amount)),
+	})
+	sendMsgs = append(sendMsgs, &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   tokenBExtensionAddress,
+		Amount:      sdk.NewCoins(sdk.NewCoin(denomA, sdkmath.NewInt(5_000_000))),
+	})
+	sendMsgs = append(sendMsgs, &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   tokenBExtensionAddress,
+		Amount:      sdk.NewCoins(sdk.NewCoin(denomB, sdkmath.NewInt(5_000_000))),
+	})
+	// send from admin to acc1 to place an order
+	sendMsgs = append(sendMsgs, &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   acc1.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denomA, sdkmath.NewInt(5_000_000))),
+	})
+	sendMsgs = append(sendMsgs, &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   acc1.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denomB, sdkmath.NewInt(5_000_000))),
+	})
+	// send from admin to acc2 to place an order
+	sendMsgs = append(sendMsgs, &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   acc2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denomA, sdkmath.NewInt(5_000_000))),
+	})
+	sendMsgs = append(sendMsgs, &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   acc2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denomB, sdkmath.NewInt(5_000_000))),
+	})
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactoryAuto(),
+		sendMsgs...,
+	)
+	requireT.NoError(err)
+
+	// place 3 SELL order from acc1(SELL A(without extension) BUY B(with extension))
+	_, err = placeOrder(ctx, chain, acc1, dextypes.SIDE_SELL, "id1", denomA, denomB, "1", sdkmath.NewInt(1_200_000))
+	requireT.NoError(err)
+	_, err = placeOrder(ctx, chain, acc1, dextypes.SIDE_SELL, "id2", denomA, denomB, "1", sdkmath.NewInt(1_200_000))
+	requireT.NoError(err)
+	_, err = placeOrder(ctx, chain, acc1, dextypes.SIDE_SELL, "id3", denomA, denomB, "1e2", sdkmath.NewInt(990_000))
+	requireT.NoError(err)
+
+	// place BUY order from acc2(BUY A(without extension) SELL B(with extension))
+	_, err = placeOrder(ctx, chain, acc2, dextypes.SIDE_BUY, "hackid0", denomA, denomB, "1e1", sdkmath.NewInt(1_000_000))
+	requireT.NoError(err)
+
+	acc1ABalanceRes, err := assetFTClint.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: acc1.String(),
+		Denom:   denomA,
+	})
+	requireT.NoError(err)
+	// if reentrancy bug exists, orders might match multiple times, and LockedInDEX might be 89000000
+	requireT.Equal("990000", acc1ABalanceRes.LockedInDEX.String())
+}
+
+func placeOrder(
+	ctx context.Context,
+	chain integration.CoreumChain,
+	acc sdk.AccAddress,
+	side dextypes.Side,
+	id, denomA, denomB, price string,
+	amount sdkmath.Int,
+) (*sdk.TxResponse, error) {
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          id,
+		BaseDenom:   denomA,
+		QuoteDenom:  denomB,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString(price)),
+		Quantity:    amount,
+		Side:        side,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+	return client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc),
+		chain.TxFactoryAuto(),
+		placeBuyOrderMsg,
+	)
 }
 
 // TestTradeByAdmin tests trades by admin without limits like frozen amount.
