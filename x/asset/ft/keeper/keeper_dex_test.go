@@ -1087,8 +1087,14 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 
 	// try with prohibited balances
 	coinWithExtensionProhibitedToSpend := sdk.NewCoin(extensionDenom, AmountDEXExpectToSpendTrigger)
+	requireT.NoError(ftKeeper.DEXCheckOrderAmounts(
+		simapp.CopyContextWithMultiStore(ctx),
+		types.DEXOrder{Creator: acc},
+		coinWithExtensionProhibitedToSpend,
+		coinWithoutExtension,
+	))
 	requireT.ErrorContains(
-		ftKeeper.DEXCheckOrderAmounts(
+		ftKeeper.DEXInvokeAssetExtension(
 			simapp.CopyContextWithMultiStore(ctx),
 			types.DEXOrder{Creator: acc},
 			coinWithExtensionProhibitedToSpend,
@@ -1108,6 +1114,7 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 		),
 		types.ErrWhitelistedLimitExceeded,
 	)
+	// since DEXCheckOrderAmounts is failed, won't check DEXInvokeAssetExtension
 
 	whitelistedDenomBalance := bankKeeper.GetBalance(ctx, acc, extensionDenom)
 	requireT.NoError(
@@ -1115,8 +1122,14 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 			ctx, issuer, acc, whitelistedDenomBalance.Add(coinWithExtensionProhibitedToReceive),
 		),
 	)
+	requireT.NoError(ftKeeper.DEXCheckOrderAmounts(
+		simapp.CopyContextWithMultiStore(ctx),
+		types.DEXOrder{Creator: acc},
+		coinWithoutExtension,
+		coinWithExtensionProhibitedToReceive,
+	))
 	requireT.ErrorContains(
-		ftKeeper.DEXCheckOrderAmounts(
+		ftKeeper.DEXInvokeAssetExtension(
 			simapp.CopyContextWithMultiStore(ctx),
 			types.DEXOrder{Creator: acc},
 			coinWithoutExtension,
@@ -1136,4 +1149,5 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 		),
 		types.ErrWhitelistedLimitExceeded,
 	)
+	// since DEXCheckOrderAmounts is failed, won't check DEXInvokeAssetExtension
 }

@@ -34,12 +34,13 @@ jobs:
           - ci_step: "test"
             command: make test
             linter-cache: false
-            wasm-cache: false
+            wasm-cache: true
             codecov: true
             codecov-name: coreum
           - ci_step: "test-fuzz"
             command: make test-fuzz
             linter-cache: false
+            wasm-cache: true
             codecov: false
           - ci_step: "integration tests coreum-modules"
             command: make integration-tests-modules
@@ -110,7 +111,7 @@ jobs:
             ${{ github.workspace }}/integration-tests/contracts/**/artifacts/*
             ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/*
             ~/.cache/crust/wasm/code-hashes.json
-          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./**/*.rs', './**/Cargo.toml', './**/Cargo.lock') }}
+          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('**/*.rs', '**/Cargo.toml', '**/Cargo.lock') }}
         if: ${{ matrix.wasm-cache }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
