@@ -13,9 +13,10 @@ import (
 
 // Smart contract names.
 const (
-	WasmModulesDir     = repoPath + "/integration-tests/contracts/modules"
-	WasmIBCDir         = repoPath + "/integration-tests/contracts/ibc"
-	WasmAssetExtension = repoPath + "/x/asset/ft/keeper/test-contracts"
+	WasmModulesDir        = repoPath + "/integration-tests/contracts/modules"
+	WasmIBCDir            = repoPath + "/integration-tests/contracts/ibc"
+	WasmAssetExtensionDir = repoPath + "/x/asset/ft/keeper/test-contracts"
+	WasmDexDir            = repoPath + "/x/dex/keeper/test-contracts"
 )
 
 // CompileModulesSmartContracts compiles modules smart contracts.
@@ -30,7 +31,12 @@ func CompileIBCSmartContracts(ctx context.Context, deps types.DepsFunc) error {
 
 // CompileAssetExtensionSmartContracts compiles asset smart contracts.
 func CompileAssetExtensionSmartContracts(ctx context.Context, deps types.DepsFunc) error {
-	return compileWasmDir(WasmAssetExtension, deps)
+	return compileWasmDir(WasmAssetExtensionDir, deps)
+}
+
+// CompileDEXSmartContracts compiles asset smart contracts.
+func CompileDEXSmartContracts(ctx context.Context, deps types.DepsFunc) error {
+	return compileWasmDir(WasmDexDir, deps)
 }
 
 // CompileAllSmartContracts compiles all th smart contracts.
@@ -38,7 +44,8 @@ func CompileAllSmartContracts(ctx context.Context, deps types.DepsFunc) error {
 	allWasmDirectories := []string{
 		WasmModulesDir,
 		WasmIBCDir,
-		WasmAssetExtension,
+		WasmAssetExtensionDir,
+		WasmDexDir,
 	}
 	for _, dir := range allWasmDirectories {
 		if err := compileWasmDir(dir, deps); err != nil {

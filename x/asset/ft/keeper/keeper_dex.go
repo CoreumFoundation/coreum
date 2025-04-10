@@ -22,12 +22,10 @@ import (
 const ExtensionPlaceOrderMethod = "extension_place_order"
 
 // sudoExtensionPlaceOrderMsg contains the fields passed to extension method call.
-//
-//nolint:tagliatelle // these will be exposed to rust and must be snake case.
 type sudoExtensionPlaceOrderMsg struct {
-	Order             types.DEXOrder `json:"order"`
-	ExpectedToSpend   sdk.Coin       `json:"expected_to_spend"`
-	ExpectedToReceive sdk.Coin       `json:"expected_to_receive"`
+	Order    types.DEXOrder `json:"order"`
+	Spent    sdk.Coin       `json:"spent"`
+	Received sdk.Coin       `json:"received"`
 }
 
 // DEXExecuteActions executes a series of DEX actions which include checking order amounts,
@@ -79,7 +77,16 @@ func (k Keeper) DEXExecuteActions(ctx sdk.Context, actions types.DEXActions) err
 		}
 	}
 
-	return nil
+	// The actual call to the smart contract should always be the last line, because when the wasm calls the contract,
+	// it can return some messages that will be executed right away before finalizing order. It can be called
+	// recursively either unlimited times, or inject orders that might match before finalizing original order which
+	// causes errors in calculations and other attacks.
+	return k.DEXInvokeAssetExtension(
+		ctx,
+		actions.Order,
+		actions.CreatorExpectedToSpend,
+		actions.CreatorExpectedToReceive,
+	)
 }
 
 // DEXDecreaseLimits decreases the DEX limits.
@@ -108,6 +115,15 @@ func (k Keeper) DEXCheckOrderAmounts(
 	}
 
 	return k.dexCheckExpectedToReceive(ctx, order, expectedToSpend, expectedToReceive)
+}
+
+// DEXInvokeAssetExtension invokes the smart contract place order.
+func (k Keeper) DEXInvokeAssetExtension(ctx sdk.Context, order types.DEXOrder, spent, received sdk.Coin) error {
+	if err := k.dexInvokeAssetExtensionWithAmount(ctx, order, spent, received, spent.Denom); err != nil {
+		return err
+	}
+
+	return k.dexInvokeAssetExtensionWithAmount(ctx, order, spent, received, received.Denom)
 }
 
 // SetDEXSettings sets the DEX settings of a specified denom.
@@ -407,22 +423,12 @@ func (k Keeper) dexCheckExpectedToSpend(
 		return nil
 	}
 
-	if err := k.dexChecksForDenom(ctx, order.Creator, spendDef, expectedToReceive.Denom); err != nil {
+	if err = k.dexChecksForDenom(ctx, order.Creator, spendDef, expectedToReceive.Denom); err != nil {
 		return err
 	}
 
-	if err := k.validateCoinSpendable(ctx, order.Creator, *spendDef, expectedToSpend.Amount); err != nil {
+	if err = k.validateCoinSpendable(ctx, order.Creator, *spendDef, expectedToSpend.Amount); err != nil {
 		return sdkerrors.Wrapf(types.ErrDEXInsufficientSpendableBalance, "err: %s", err)
-	}
-
-	if spendDef.IsFeatureEnabled(types.Feature_extension) {
-		extensionContract, err := sdk.AccAddressFromBech32(spendDef.ExtensionCWAddress)
-		if err != nil {
-			return err
-		}
-		return k.invokeAssetExtensionPlaceOrderMethod(
-			ctx, extensionContract, order, expectedToSpend, expectedToReceive,
-		)
 	}
 
 	return nil
@@ -441,12 +447,25 @@ func (k Keeper) dexCheckExpectedToReceive(
 		return nil
 	}
 
-	if err := k.dexChecksForDenom(ctx, order.Creator, receiveDef, expectedToSpend.Denom); err != nil {
+	if err = k.dexChecksForDenom(ctx, order.Creator, receiveDef, expectedToSpend.Denom); err != nil {
 		return err
 	}
 
-	if err := k.validateCoinReceivable(ctx, order.Creator, *receiveDef, expectedToReceive.Amount); err != nil {
+	return k.validateCoinReceivable(ctx, order.Creator, *receiveDef, expectedToReceive.Amount)
+}
+
+func (k Keeper) dexInvokeAssetExtensionWithAmount(
+	ctx sdk.Context,
+	order types.DEXOrder,
+	spent, received sdk.Coin,
+	assetExtensionDenom string,
+) error {
+	receiveDef, err := k.getDefinitionOrNil(ctx, assetExtensionDenom)
+	if err != nil {
 		return err
+	}
+	if receiveDef == nil {
+		return nil
 	}
 
 	if receiveDef.IsFeatureEnabled(types.Feature_extension) {
@@ -455,7 +474,7 @@ func (k Keeper) dexCheckExpectedToReceive(
 			return err
 		}
 		return k.invokeAssetExtensionPlaceOrderMethod(
-			ctx, extensionContract, order, expectedToSpend, expectedToReceive,
+			ctx, extensionContract, order, spent, received,
 		)
 	}
 
@@ -466,13 +485,13 @@ func (k Keeper) invokeAssetExtensionPlaceOrderMethod(
 	ctx sdk.Context,
 	extensionContract sdk.AccAddress,
 	order types.DEXOrder,
-	expectedToSpend, expectedToReceive sdk.Coin,
+	spent, received sdk.Coin,
 ) error {
 	contractMsg := map[string]interface{}{
 		ExtensionPlaceOrderMethod: sudoExtensionPlaceOrderMsg{
-			Order:             order,
-			ExpectedToSpend:   expectedToSpend,
-			ExpectedToReceive: expectedToReceive,
+			Order:    order,
+			Spent:    spent,
+			Received: received,
 		},
 	}
 	contractMsgBytes, err := json.Marshal(contractMsg)

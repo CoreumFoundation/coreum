@@ -296,8 +296,8 @@ pub enum SudoMsg {
     },
     ExtensionPlaceOrder {
         order: DEXOrder,
-        expected_to_spend: Coin,
-        expected_to_receive: Coin,
+        spent: Coin,
+        received: Coin,
     },
 }
 
@@ -323,14 +323,14 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> CoreumResult<ContractError
         ),
         SudoMsg::ExtensionPlaceOrder {
             order,
-            expected_to_spend,
-            expected_to_receive,
+            spent,
+            received,
         } => sudo_extension_place_order(
             deps,
             env,
             order,
-            expected_to_spend,
-            expected_to_receive,
+            spent,
+            received,
         ),
     }
 }
