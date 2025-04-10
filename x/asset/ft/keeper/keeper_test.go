@@ -15,6 +15,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,12 @@ func TestKeeper_Issue(t *testing.T) {
 	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
+	stakingKeeper := testApp.StakingKeeper
 	bankKeeper := testApp.BankKeeper
+
+	stakingParams := stakingtypes.DefaultParams()
+	stakingParams.BondDenom = constant.DenomDev
+	requireT.NoError(stakingKeeper.SetParams(ctx, stakingParams))
 
 	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
@@ -231,7 +237,12 @@ func TestKeeper_Issue_EqualDisplayAndBaseDenom(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
+	stakingKeeper := testApp.StakingKeeper
 	ftKeeper := testApp.AssetFTKeeper
+
+	stakingParams := stakingtypes.DefaultParams()
+	stakingParams.BondDenom = constant.DenomDev
+	requireT.NoError(stakingKeeper.SetParams(ctx, stakingParams))
 
 	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
@@ -415,7 +426,12 @@ func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
 
+	stakingKeeper := testApp.StakingKeeper
 	ftKeeper := testApp.AssetFTKeeper
+
+	stakingParams := stakingtypes.DefaultParams()
+	stakingParams.BondDenom = constant.DenomDev
+	requireT.NoError(stakingKeeper.SetParams(ctx, stakingParams))
 
 	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
