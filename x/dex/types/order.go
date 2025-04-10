@@ -44,7 +44,9 @@ func (s Side) Validate() error {
 	case SIDE_SELL, SIDE_BUY:
 		return nil
 	default:
-		return sdkerrors.Wrapf(ErrInvalidInput, "only %s and %s sides are allowed", s.String(), s.String())
+		return sdkerrors.Wrapf(
+			ErrInvalidInput, "only %s and %s sides are allowed", SIDE_SELL.String(), SIDE_BUY.String(),
+		)
 	}
 }
 

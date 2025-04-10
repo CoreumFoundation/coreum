@@ -496,7 +496,7 @@ func (k Keeper) invokeAssetExtensionPlaceOrderMethod(
 	}
 	contractMsgBytes, err := json.Marshal(contractMsg)
 	if err != nil {
-		return errors.Wrapf(err, "failed to marshal contract msg")
+		return sdkerrors.Wrapf(err, "failed to marshal contract msg")
 	}
 
 	_, err = k.wasmPermissionedKeeper.Sudo(
