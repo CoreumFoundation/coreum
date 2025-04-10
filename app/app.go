@@ -425,19 +425,6 @@ func New(
 		logger,
 	)
 	app.WasmPermissionedKeeper = wasmkeeper.NewGovPermissionKeeper(&app.WasmKeeper)
-	app.AssetFTKeeper = assetftkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[assetfttypes.StoreKey]),
-		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
-		originalBankKeeper,
-		app.DelayKeeper,
-		// pointer is used here because there is cycle in keeper dependencies:
-		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
-		&app.WasmKeeper,
-		app.WasmPermissionedKeeper,
-		&app.AccountKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
 	if err := delayRouter.RegisterHandler(
 		&assetfttypes.DelayedTokenUpgradeV1{},
 		assetftkeeper.NewDelayTokenUpgradeV1Handler(app.AssetFTKeeper),
@@ -453,7 +440,8 @@ func New(
 		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
 		&app.WasmKeeper,
 		app.ModuleAccountAddrs(),
-		app.AssetFTKeeper,
+		// pointer is used here because there is cycle in keeper dependencies
+		&app.AssetFTKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		logger,
 	)
@@ -482,6 +470,21 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		interfaceRegistry.SigningContext().ValidatorAddressCodec(),
 		address.NewBech32Codec(config.ConsPrefixFromAddressPrefix(addressPrefix)),
+	)
+
+	app.AssetFTKeeper = assetftkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[assetfttypes.StoreKey]),
+		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
+		originalBankKeeper,
+		app.DelayKeeper,
+		app.StakingKeeper,
+		// pointer is used here because there is cycle in keeper dependencies:
+		// AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
+		&app.WasmKeeper,
+		app.WasmPermissionedKeeper,
+		&app.AccountKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	app.MintKeeper = mintkeeper.NewKeeper(

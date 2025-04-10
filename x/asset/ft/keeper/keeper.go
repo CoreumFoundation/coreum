@@ -42,6 +42,7 @@ type Keeper struct {
 	storeService           sdkstore.KVStoreService
 	bankKeeper             types.BankKeeper
 	delayKeeper            types.DelayKeeper
+	stakingKeeper          types.StakingKeeper
 	wasmKeeper             cwasmtypes.WasmKeeper
 	wasmPermissionedKeeper types.WasmPermissionedKeeper
 	accountKeeper          types.AccountKeeper
@@ -54,6 +55,7 @@ func NewKeeper(
 	storeService sdkstore.KVStoreService,
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
+	stakingKeeper types.StakingKeeper,
 	wasmKeeper cwasmtypes.WasmKeeper,
 	wasmPermissionedKeeper types.WasmPermissionedKeeper,
 	accountKeeper types.AccountKeeper,
@@ -64,6 +66,7 @@ func NewKeeper(
 		storeService:           storeService,
 		bankKeeper:             bankKeeper,
 		delayKeeper:            delayKeeper,
+		stakingKeeper:          stakingKeeper,
 		wasmKeeper:             wasmKeeper,
 		wasmPermissionedKeeper: wasmPermissionedKeeper,
 		accountKeeper:          accountKeeper,
@@ -236,12 +239,12 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", err
 	}
 	if params.IssueFee.IsPositive() {
-		if err := k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
+		if err = k.burnIssueFee(ctx, settings, params); err != nil {
 			return "", err
 		}
 	}
 
-	if err := k.SetSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
+	if err = k.SetSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
 	}
 
@@ -257,7 +260,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		Admin:              settings.Issuer.String(),
 	}
 
-	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
+	if err = k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
 	}
 
@@ -296,7 +299,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		definition.ExtensionCWAddress = contractAddress.String()
 	}
 
-	if err := k.SetDenomMetadata(
+	if err = k.SetDenomMetadata(
 		ctx,
 		denom,
 		settings.Symbol,
@@ -308,7 +311,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", err
 	}
 
-	if err := k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition); err != nil {
+	if err = k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition); err != nil {
 		return "", err
 	}
 
@@ -326,7 +329,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		}
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventIssued{
+	if err = ctx.EventManager().EmitTypedEvent(&types.EventIssued{
 		Denom:              denom,
 		Issuer:             settings.Issuer.String(),
 		Symbol:             settings.Symbol,
@@ -352,6 +355,24 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 	)
 
 	return denom, nil
+}
+
+func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, params types.Params) error {
+	stakingParams, err := k.stakingKeeper.GetParams(ctx)
+	if err != nil {
+		return sdkerrors.Wrap(err, "not able to get staking params")
+	}
+
+	if params.IssueFee.Denom != stakingParams.BondDenom {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidCoins, "not able to burn %s for issue fee, only %s is accepted",
+			params.IssueFee.Denom, stakingParams.BondDenom)
+	}
+
+	if err = k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
+		return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
+	}
+
+	return k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee))
 }
 
 // SetSymbol saves the symbol to store.
