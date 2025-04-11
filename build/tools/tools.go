@@ -39,6 +39,8 @@ const (
 	ProtocGenBufLint tools.Name = "protoc-gen-buf-lint"
 	// ProtocGenBufBreaking detects breaking changes in Protobuf files.
 	ProtocGenBufBreaking tools.Name = "protoc-gen-buf-breaking"
+	// TyposLint lints typos in all files.
+	TyposLint tools.Name = "typos-lint"
 )
 
 // Tools list of required binaries and libraries.
@@ -369,6 +371,29 @@ var Tools = []tools.Tool{
 		Version: "v1.26.1",
 		Package: "github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking",
 	},
+
+	tools.BinaryTool{
+		Name:    TyposLint,
+		Version: "v1.31.1",
+		Local:   true,
+		Sources: tools.Sources{
+			tools.TargetPlatformLinuxAMD64: {
+				URL:  "https://github.com/crate-ci/typos/releases/download/v1.31.1/typos-v1.31.1-x86_64-unknown-linux-musl.tar.gz",
+				Hash: "sha256:f683c2abeaff70379df7176110100e18150ecd17a4b9785c32908aca11929993",
+			},
+			tools.TargetPlatformDarwinAMD64: {
+				URL:  "https://github.com/crate-ci/typos/releases/download/v1.31.1/typos-v1.31.1-x86_64-apple-darwin.tar.gz",
+				Hash: "sha256:5e052ea461debbe03cfbdb2ed28cf0f12efdeda630cc23473db09ed795bf4f71",
+			},
+			tools.TargetPlatformDarwinARM64: {
+				URL:  "https://github.com/crate-ci/typos/releases/download/v1.31.1/typos-v1.31.1-aarch64-apple-darwin.tar.gz",
+				Hash: "sha256:a172195e1b1f1e011b3034913d1c87f0bbf0552a096b4ead0e3fa0620f4329cd",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/typos": "typos",
+		},
+	},
 }
 
 // EnsureBuf ensures that buf is available.
@@ -414,4 +439,9 @@ func EnsureProtocGenBufBreaking(ctx context.Context, deps types.DepsFunc) error 
 // EnsureBinary installs gaiad binary to crust cache.
 func EnsureBinary(ctx context.Context, deps types.DepsFunc) error {
 	return tools.Ensure(ctx, Gaia, tools.TargetPlatformLocal)
+}
+
+// EnsureTypos ensures that typos is available.
+func EnsureTypos(ctx context.Context, deps types.DepsFunc) error {
+	return tools.Ensure(ctx, TyposLint, tools.TargetPlatformLocal)
 }
