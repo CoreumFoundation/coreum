@@ -82,7 +82,7 @@ $ %s tx %s place-order ORDER_TYPE_LIMIT "my-order-id1" denom1 denom2 1000 SIDE_S
 
 			orderType, ok := types.OrderType_value[args[0]]
 			if !ok {
-				return errors.Errorf("unknown type '%s'", args[0])
+				return sdkerrors.Wrapf(types.ErrInvalidInput, "unknown type '%s'", args[0])
 			}
 
 			id := args[1]
@@ -91,12 +91,12 @@ $ %s tx %s place-order ORDER_TYPE_LIMIT "my-order-id1" denom1 denom2 1000 SIDE_S
 
 			quantity, ok := sdkmath.NewIntFromString(args[4])
 			if !ok {
-				return errors.New("invalid quantity")
+				return sdkerrors.Wrapf(types.ErrInvalidInput, "quantity is ivalid or too big")
 			}
 
 			side, ok := types.Side_value[args[5]]
 			if !ok {
-				return errors.Errorf("unknown side '%s'", args[5])
+				return sdkerrors.Wrapf(types.ErrInvalidInput, "unknown side '%s'", args[5])
 			}
 
 			priceStr, err := cmd.Flags().GetString(PriceFlag)
@@ -129,7 +129,8 @@ $ %s tx %s place-order ORDER_TYPE_LIMIT "my-order-id1" denom1 denom2 1000 SIDE_S
 			timeInForceString, err := cmd.Flags().GetString(TimeInForce)
 			timeInForceInt, ok := types.TimeInForce_value[timeInForceString]
 			if !ok {
-				return errors.Errorf(
+				return sdkerrors.Wrapf(
+					types.ErrInvalidInput,
 					"unknown TimeInForce '%s',available TimeInForces: %s",
 					timeInForceString, strings.Join(availableTimeInForces, ","),
 				)

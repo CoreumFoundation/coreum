@@ -96,7 +96,7 @@ func NewFuzzApp(
 
 	issuer, _ := testApp.GenAccount(sdkCtx)
 
-	mintedAmount := sdkmath.NewIntWithDecimal(1, 77)
+	mintedAmount := sdkmath.NewIntWithDecimal(1, 50)
 	denoms := lo.RepeatBy(cfg.NativeDenomCount, func(i int) string {
 		denom := fmt.Sprintf("native-denom-%d", i)
 		testApp.MintAndSendCoin(t, sdkCtx, issuer, sdk.NewCoins(sdk.NewCoin(denom, mintedAmount)))
