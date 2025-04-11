@@ -75,10 +75,6 @@ func New(mm *module.Manager, configurator module.Configurator,
 				return nil, err
 			}
 
-			if err := migrateMintParams(ctx, mintKeeper); err != nil {
-				return nil, err
-			}
-
 			return vmap, nil
 		},
 	}
