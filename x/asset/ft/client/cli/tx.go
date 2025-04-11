@@ -117,7 +117,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 				var ok bool
 				initialAmount, ok = sdkmath.NewIntFromString(args[3])
 				if !ok {
-					return sdkerrors.Wrap(err, "invalid initial_amount")
+					return sdkerrors.Wrapf(types.ErrInvalidInput, "initial_amount is not a number or is too big")
 				}
 			}
 
