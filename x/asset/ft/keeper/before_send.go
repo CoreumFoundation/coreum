@@ -7,7 +7,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/wasm"
@@ -225,7 +224,7 @@ func (k Keeper) invokeAssetExtensionExtensionTransferMethod(
 	}
 	contractMsgBytes, err := json.Marshal(contractMsg)
 	if err != nil {
-		return errors.Wrapf(err, "failed to marshal contract msg")
+		return sdkerrors.Wrapf(err, "failed to marshal contract msg")
 	}
 
 	_, err = k.wasmPermissionedKeeper.Sudo(
