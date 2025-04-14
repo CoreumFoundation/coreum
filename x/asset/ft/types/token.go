@@ -41,6 +41,9 @@ const (
 // MaxMintableAmount is the maximum amount of a coin that can be minted at a time.
 var MaxMintableAmount = sdkmath.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(50), nil))
 
+// MaxUnifiedRefAmount is the maximum value for unified ref amount.
+var MaxUnifiedRefAmount = sdkmath.LegacyNewDecFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(50), nil))
+
 func init() {
 	subunitRegex = regexp.MustCompile(subunitRegexStr)
 	symbolRegex = regexp.MustCompile(symbolRegexStr)
@@ -325,6 +328,10 @@ func ValidateDEXSettingsAccess(settings DEXSettings, def Definition) error {
 func ValidateUnifiedRefAmount(unifiedRefAmount sdkmath.LegacyDec) error {
 	if !unifiedRefAmount.IsPositive() {
 		return sdkerrors.Wrap(ErrInvalidInput, "unified ref amount must be positive")
+	}
+
+	if unifiedRefAmount.GT(MaxUnifiedRefAmount) {
+		return sdkerrors.Wrap(ErrInvalidInput, "unified ref amount is too big")
 	}
 
 	return nil
