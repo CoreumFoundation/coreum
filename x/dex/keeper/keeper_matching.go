@@ -62,7 +62,7 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		takerIsFilled, err = k.mathcRecords(ctx, cachedAccKeeper, mr, &takerRecord, &makerRecord, takerOrder)
+		takerIsFilled, err = k.matchRecords(ctx, cachedAccKeeper, mr, &takerRecord, &makerRecord, takerOrder)
 		if err != nil {
 			return err
 		}
@@ -203,7 +203,7 @@ func (k Keeper) getInitialRemainingBalance(
 	return remainingBalance.Amount, nil
 }
 
-func (k Keeper) mathcRecords(
+func (k Keeper) matchRecords(
 	ctx sdk.Context,
 	cachedAccKeeper cachedAccountKeeper,
 	mr *MatchingResult,
