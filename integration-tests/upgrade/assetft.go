@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
+	legacymoduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/legacy-modules"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
 	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
@@ -34,7 +34,7 @@ func (a *assetft) Before(t *testing.T) {
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
-		ctx, chain.TxFactoryAuto(), issuer, moduleswasm.AssetFTExtensionLegacyWASM,
+		ctx, chain.TxFactoryAuto(), issuer, legacymoduleswasm.AssetFTExtensionLegacyWASM,
 	)
 	requireT.NoError(err)
 

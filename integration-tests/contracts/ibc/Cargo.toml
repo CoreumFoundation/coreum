@@ -1,0 +1,35 @@
+[workspace]
+members = [
+    "ibc-call",
+    "ibc-hooks-counter",
+    "ibc-transfer",
+]
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[workspace.metadata.scripts]
+optimize = """docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.6
+"""
+
+[workspace.dependencies]
+cosmwasm-std = { version = "2.1.4", features = ["cosmwasm_2_0", "stargate"] }
+cosmwasm-schema = "2.1.4"
+cw-storage-plus = "2.0.0"
+cw2 = "2.0.0"
+thiserror = "1.0.59"
+cosmwasm-storage = "1.5.0"
+schemars = "0.8.10"
+serde = { version = "1.0.145", default-features = false, features = ["derive"] }
