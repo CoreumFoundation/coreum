@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
+	legacymoduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/legacy-modules"
 	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
 	"github.com/CoreumFoundation/coreum/v5/testutil/event"
@@ -1584,7 +1585,7 @@ func TestWASMFungibleTokenInContractLegacy(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		moduleswasm.FTLegacyWASM,
+		legacymoduleswasm.FTLegacyWASM,
 		integration.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
 			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
@@ -2596,7 +2597,7 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		moduleswasm.NFTLegacyWASM,
+		legacymoduleswasm.NFTLegacyWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerNFTInstantiatePayload,
@@ -2697,7 +2698,7 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		moduleswasm.NFTLegacyWASM,
+		legacymoduleswasm.NFTLegacyWASM,
 		integration.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerNFTInstantiatePayload,
@@ -3789,10 +3790,10 @@ func TestWASMDEXInContract(t *testing.T) {
 	requireT.Equal(
 		dexParms.PriceTickExponent, wasmParamsRes.Params.PriceTickExponent,
 	)
-	// TODO: Uncomment after proto & wasm-sdk merge.
-	// requireT.Equal(
-	// 	dexParms.QuantityStepExponent, wasmParamsRes.Params.QuantityStepExponent,
-	// )
+
+	requireT.Equal(
+		dexParms.QuantityStepExponent, wasmParamsRes.Params.QuantityStepExponent,
+	)
 
 	// ********** Query and update asset FT DEX settings **********
 

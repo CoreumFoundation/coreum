@@ -1,19 +1,13 @@
 [workspace]
 members = [
-    "ibc/ibc-call",
-    "ibc/ibc-hooks-counter",
-    "ibc/ibc-transfer",
-    "modules/asset-extension-legacy",
-    "modules/authz-nft-trade",
-    "modules/authz-stargate",
-    "modules/authz-transfer",
-    "modules/bank-send",
-    "modules/dex",
-    "modules/ft",
-    "modules/ft-legacy",
-    "modules/nft",
-    "modules/nft-legacy",
-    "modules/simple-state",
+    "authz-nft-trade",
+    "authz-stargate",
+    "authz-transfer",
+    "bank-send",
+    "dex",
+    "ft",
+    "nft",
+    "simple-state",
 ]
 resolver = "2"
 
@@ -41,10 +35,8 @@ cosmwasm-schema = "2.1.4"
 cw-storage-plus = "2.0.0"
 cw2 = "2.0.0"
 thiserror = "1.0.59"
-cosmwasm-storage = "1.5.0"
 schemars = "0.8.10"
-serde = { version = "1.0.145", default-features = false, features = ["derive"] }
-coreum-wasm-sdk = { git = "https://github.com/CoreumFoundation/coreum-wasm-sdk.git", rev = "7c9639bad0778abf40a3e9ffb1da6c52c9c36839" }
+coreum-wasm-sdk = "1.2.0"
 cw-utils = "2.0.0"
 cw-ownable = "2.1.0"
 prost = "0.12.6"
