@@ -219,6 +219,10 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		return "", err
 	}
 
+	if settings.InitialAmount.GT(types.MaxMintableAmount) {
+		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "initial amount is greater than maximum allowed")
+	}
+
 	err := types.ValidateSymbol(settings.Symbol)
 	if err != nil {
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
@@ -449,6 +453,9 @@ func (k Keeper) SetDenomMetadata(
 
 // Mint mints new fungible token.
 func (k Keeper) Mint(ctx sdk.Context, sender, recipient sdk.AccAddress, coin sdk.Coin) error {
+	if coin.Amount.GT(types.MaxMintableAmount) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "minting amount is greater than maximum allowed")
+	}
 	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)

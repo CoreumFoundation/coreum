@@ -2,6 +2,7 @@ package types
 
 import (
 	"math"
+	"math/big"
 	"regexp"
 	"strings"
 
@@ -36,6 +37,9 @@ const (
 	// MaxPrecision used when issuing a token.
 	MaxPrecision = 20
 )
+
+// MaxMintableAmount is the maximum amount of a coin that can be minted at a time.
+var MaxMintableAmount = sdkmath.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(50), nil))
 
 func init() {
 	subunitRegex = regexp.MustCompile(subunitRegexStr)
