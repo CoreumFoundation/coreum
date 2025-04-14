@@ -249,8 +249,9 @@ dependencies = [
 
 [[package]]
 name = "coreum-wasm-sdk"
-version = "1.1.0"
-source = "git+https://github.com/CoreumFoundation/coreum-wasm-sdk.git?rev=a0a00147d65b409bef2d86ebebf35959c96263c3#a0a00147d65b409bef2d86ebebf35959c96263c3"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c4fbd66984ad36b7c2b2a0f82d4f818517671776600faf8696946ae0e842320"
 dependencies = [
  "chrono",
  "coreum-std-derive",
