@@ -47,8 +47,8 @@ func RunAllIntegrationTests(runUnsafe bool) types.CommandFunc {
 // RunIntegrationTestsModules returns function running modules integration tests.
 func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileModulesSmartContracts, CompileAssetExtensionSmartContracts, CompileDEXSmartContracts,
-			BuildCoredLocally, BuildCoredDockerImage)
+		deps(CompileModulesSmartContracts, CompileLegacyModulesSmartContracts, CompileAssetExtensionSmartContracts,
+			CompileDEXSmartContracts, BuildCoredLocally, BuildCoredDockerImage)
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored}
@@ -89,8 +89,8 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 	return func(ctx context.Context, deps types.DepsFunc) error {
 		deps(CompileIBCSmartContracts, CompileAssetExtensionSmartContracts, CompileDEXSmartContracts,
-			CompileModulesSmartContracts, BuildCoredLocally, BuildCoredDockerImage, BuildGaiaDockerImage,
-			BuildOsmosisDockerImage, BuildHermesDockerImage)
+			CompileModulesSmartContracts, CompileLegacyModulesSmartContracts, BuildCoredLocally, BuildCoredDockerImage,
+			BuildGaiaDockerImage, BuildOsmosisDockerImage, BuildHermesDockerImage)
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}

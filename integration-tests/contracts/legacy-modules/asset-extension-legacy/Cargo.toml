@@ -17,11 +17,9 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = "1.5.4"
-cosmwasm-storage.workspace = true
-cw2 = "1.0.1"
+cosmwasm-std.workspace = true
+cw2.workspace = true
 thiserror.workspace = true
-#cosmwasm-schema = {git = "https://github.com/CosmWasm/cosmwasm" ,package="cosmwasm-schema", rev= "3f8bd842742bc94aa60f587f79dd66b782928b15"}
 cosmwasm-schema.workspace = true
-coreum-wasm-sdk = "1.0.0" # we use old version intentionally
-cw-storage-plus = "1.0.1"
+coreum-wasm-sdk.workspace = true
+cw-storage-plus.workspace = true

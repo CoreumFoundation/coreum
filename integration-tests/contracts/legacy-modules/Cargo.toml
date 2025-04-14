@@ -1,0 +1,35 @@
+[workspace]
+members = [
+    "asset-extension-legacy",
+    "ft-legacy",
+    "nft-legacy",
+]
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[workspace.metadata.scripts]
+optimize = """docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.6
+"""
+
+[workspace.dependencies]
+cosmwasm-std = "1.5.4"
+cosmwasm-schema = "2.1.4"
+cw-storage-plus = "1.1.0"
+cw2 = "1.0.1"
+thiserror = "1.0.59"
+schemars = "0.8.10"
+coreum-wasm-sdk = "1.0.0"
+cw-ownable = "0.5.1"
