@@ -35,10 +35,16 @@ func (a BurnAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authz.Accep
 		return authz.AcceptResponse{}, sdkerrors.ErrUnauthorized.Wrapf("requested amount is more than burn limit")
 	}
 
+	del := limitLeft.IsZero()
+	var updated *BurnAuthorization
+	if !del {
+		updated = &BurnAuthorization{BurnLimit: limitLeft}
+	}
+
 	return authz.AcceptResponse{
 		Accept:  true,
-		Delete:  limitLeft.IsZero(),
-		Updated: &BurnAuthorization{BurnLimit: limitLeft},
+		Delete:  del,
+		Updated: updated,
 	}, nil
 }
 
