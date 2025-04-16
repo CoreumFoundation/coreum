@@ -2450,16 +2450,17 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 			},
 		},
 		{
+			// TODO(v6): Revise this behavior. Shouldn't we return actual balance in error ?
 			name: "match_limit_invertedOB_maker_buy_taker_buy_insufficient_funds",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 381),
+						sdk.NewInt64Coin(testSet.denom2, 3_810),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 26490),
+						sdk.NewInt64Coin(testSet.denom1, 264_000),
 					),
 				}
 			},
@@ -2472,7 +2473,7 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2483,14 +2484,14 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
 				}
 			},
 			wantErrorContains: func(testSet TestSet) string {
-				return fmt.Sprintf("26491%s is not available, available 26490%s", testSet.denom1, testSet.denom1)
+				return fmt.Sprintf("264904%s is not available, available 264000%s", testSet.denom1, testSet.denom1)
 			},
 		},
 		{
@@ -2499,11 +2500,11 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 4234),
+						sdk.NewInt64Coin(testSet.denom2, 381_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 2650),
+						sdk.NewInt64Coin(testSet.denom1, 1_033_500),
 					),
 				}
 			},
@@ -2516,7 +2517,7 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:    sdkmath.NewInt(11111),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2527,7 +2528,7 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(390_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3006,7 +3007,7 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if tt.name != "match_limit_invertedOB_maker_buy_taker_buy_close_maker" {
+		if tt.name != "match_limit_invertedOB_maker_buy_taker_buy_close_taker_with_partial_filling" {
 			continue
 		}
 		t.Run(tt.name, func(t *testing.T) {
@@ -3018,10 +3019,7 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 func TestKeeper_MatchOrders_Other(t *testing.T) {
 	t.SkipNow()
 	tests := []tst{
-		// ******************** Inverted OB limit matching ********************
-
 		// ******************** Inverted OB market matching ********************
-
 		{
 			name: "match_market_invertedOB_maker_sell_taker_sell_close_both",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
