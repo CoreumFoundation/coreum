@@ -2182,7 +2182,10 @@ func TestKeeper_MatchOrders_DirectOBMarketMatching(t *testing.T) {
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 3_750)),
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 10_000), sdk.NewInt64Coin(testSet.denom2, 9_000)),
+					testSet.acc2.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
+						sdk.NewInt64Coin(testSet.denom2, 9_000),
+					),
 				}
 			},
 		},
