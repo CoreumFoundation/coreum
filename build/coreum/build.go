@@ -277,7 +277,6 @@ func Lint(ctx context.Context, deps types.DepsFunc) error {
 		lintProto,
 		lintTypos,
 		breakingProto,
-		lintTypos,
 	)
 	return golang.Lint(ctx, deps)
 }
