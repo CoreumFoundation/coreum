@@ -7,11 +7,12 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	coreumtools "github.com/CoreumFoundation/coreum/build/tools"
 	crusttools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
-	"github.com/pkg/errors"
 )
 
 //go:embed typos.toml
