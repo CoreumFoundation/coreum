@@ -72,7 +72,7 @@ pub fn execute(
         ExecuteMsg::SetWhitelistedLimit { account, amount } => {
             set_whitelisted_limit(deps, info, account, amount)
         }
-        ExecuteMsg::UpgradeTokenV1 { ibc_enabled } => upgrate_token_v1(deps, info, ibc_enabled),
+        ExecuteMsg::UpgradeTokenV1 { ibc_enabled } => upgrade_token_v1(deps, info, ibc_enabled),
     }
 }
 
@@ -220,7 +220,7 @@ fn set_whitelisted_limit(
         .add_message(msg))
 }
 
-fn upgrate_token_v1(
+fn upgrade_token_v1(
     deps: DepsMut,
     info: MessageInfo,
     ibc_enabled: bool,
