@@ -81,7 +81,7 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult) {
 	var closeRes CloseResult
 
 	// Note that we compare max execution quantities for each record as rational.
-	// Because if we do it using integers it may cause roudning and rational reminder
+	// Because if we do it using integers it may cause rounding and rational reminder
 	// of a bigger order might be executable with the next order.
 	switch cmp := takerMaxBaseQuantityRat.Cmp(makerMaxBaseQuantityRat); cmp {
 	case -1:
