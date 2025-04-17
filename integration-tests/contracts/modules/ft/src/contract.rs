@@ -98,7 +98,7 @@ pub fn execute(
         ExecuteMsg::TransferAdmin { account } => transfer_admin(deps, env, info, account),
         ExecuteMsg::ClearAdmin {} => clear_admin(deps, env, info),
         ExecuteMsg::UpgradeTokenV1 { ibc_enabled } => {
-            upgrate_token_v1(deps, env, info, ibc_enabled)
+            upgrade_token_v1(deps, env, info, ibc_enabled)
         }
     }
 }
@@ -354,7 +354,7 @@ fn clear_admin(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, C
         .add_message(CosmosMsg::Any(clear_admin.to_any())))
 }
 
-fn upgrate_token_v1(
+fn upgrade_token_v1(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,

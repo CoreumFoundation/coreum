@@ -23,7 +23,7 @@ pub enum QueryMsg {
         // for.
         channel: String,
     },
-    // GetTimeoutCount returns the number of timeouts have occured on
+    // GetTimeoutCount returns the number of timeouts have occurred on
     // the LOCAL channel `channel`.
     #[returns(crate::msg::GetCountResponse)]
     GetTimeoutCount { channel: String },
