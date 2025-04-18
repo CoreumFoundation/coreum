@@ -27,7 +27,7 @@ import (
 // Proper value for upgradeDelayInBlocks depends on block time and gov voting period.
 // upgradeDelayInBlocks*blockTime >= govVotingPeriod
 // Current value for govVotingPeriod is 20s and blockTime is customizable by flag and varies between 0.5s and 1s.
-const upgradeDelayInBlocks = 40
+const upgradeDelayInBlocks = 50
 
 type upgradeTest interface {
 	Before(t *testing.T)
@@ -154,7 +154,7 @@ func runUpgrade(
 	//nolint:staticcheck
 	retryCtx, cancel := context.WithTimeout(
 		ctx,
-		10*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height),
+		10*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height)+30*time.Second,
 	)
 	defer cancel()
 	//nolint:staticcheck
