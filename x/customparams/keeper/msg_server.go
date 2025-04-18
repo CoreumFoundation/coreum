@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/CoreumFoundation/coreum/v5/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v6/x/customparams/types"
 )
 
 var _ types.MsgServer = MsgServer{}

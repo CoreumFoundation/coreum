@@ -13,10 +13,10 @@ import (
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v5/app/upgrade"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
-	dexkeeper "github.com/CoreumFoundation/coreum/v5/x/dex/keeper"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/app/upgrade"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config"
+	dexkeeper "github.com/CoreumFoundation/coreum/v6/x/dex/keeper"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 // Name defines the upgrade name.

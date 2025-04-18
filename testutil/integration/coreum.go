@@ -13,11 +13,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/deterministicgas"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 // CoreumChain is configured coreum chain.

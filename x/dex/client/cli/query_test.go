@@ -7,10 +7,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	coreumclitestutil "github.com/CoreumFoundation/coreum/v5/testutil/cli"
-	"github.com/CoreumFoundation/coreum/v5/testutil/network"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/client/cli"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v6/testutil/cli"
+	"github.com/CoreumFoundation/coreum/v6/testutil/network"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/client/cli"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 var defaultQuantity = sdkmath.NewInt(1_000_000)

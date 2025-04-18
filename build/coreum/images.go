@@ -7,7 +7,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/build/coreum/image"
 	coreumtools "github.com/CoreumFoundation/coreum/build/tools"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
 	crusttools "github.com/CoreumFoundation/crust/build/tools"

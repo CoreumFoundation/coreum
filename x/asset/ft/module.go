@@ -16,11 +16,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/client/cli"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper"
-	v4 "github.com/CoreumFoundation/coreum/v5/x/asset/ft/migrations/v4"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/simulation"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/keeper"
+	v4 "github.com/CoreumFoundation/coreum/v6/x/asset/ft/migrations/v4"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/simulation"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 )
 
 var (

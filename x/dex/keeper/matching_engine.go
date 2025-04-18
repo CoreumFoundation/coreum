@@ -3,7 +3,7 @@ package keeper
 import (
 	"math/big"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
+	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
 )
 
 var marketOrderPrice = big.NewRat(-1, 1)
