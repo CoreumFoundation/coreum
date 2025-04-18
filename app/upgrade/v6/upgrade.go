@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/CoreumFoundation/coreum/v6/app/upgrade"
-	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 // Name defines the upgrade name.
@@ -19,9 +18,7 @@ func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
 		StoreUpgrades: store.StoreUpgrades{
-			Added: []string{
-				dextypes.StoreKey,
-			},
+			Added: []string{},
 		},
 		Upgrade: func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 			vmap, err := mm.RunMigrations(ctx, configurator, vm)
