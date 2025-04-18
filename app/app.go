@@ -134,7 +134,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/v6/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v6/app/upgrade"
-	appupgradev6 "github.com/CoreumFoundation/coreum/v6/app/upgrade/v5"
+	appupgradev6 "github.com/CoreumFoundation/coreum/v6/app/upgrade/v6"
 	"github.com/CoreumFoundation/coreum/v6/docs"
 	"github.com/CoreumFoundation/coreum/v6/pkg/config"
 	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
@@ -1181,10 +1181,6 @@ func New(
 		appupgradev6.New(
 			app.ModuleManager,
 			app.configurator,
-			ChosenNetwork,
-			app.GovKeeper,
-			app.DEXKeeper,
-			app.MintKeeper,
 		),
 	}
 

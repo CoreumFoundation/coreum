@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev6 "github.com/CoreumFoundation/coreum/v6/app/upgrade/v5"
+	appupgradev6 "github.com/CoreumFoundation/coreum/v6/app/upgrade/v6"
 	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
 	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
 )
@@ -154,7 +154,7 @@ func runUpgrade(
 	//nolint:staticcheck
 	retryCtx, cancel := context.WithTimeout(
 		ctx,
-		10*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height)+3*time.Minute,
+		6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height),
 	)
 	defer cancel()
 	//nolint:staticcheck
