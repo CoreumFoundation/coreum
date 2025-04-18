@@ -23,7 +23,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgTransferAdmin{},
 		&MsgClearAdmin{},
 		&MsgSetWhitelistedLimit{},
-		&MsgUpgradeTokenV1{},
 	)
 	registry.RegisterImplementations((*proto.Message)(nil),
 		&DelayedTokenUpgradeV1{},
