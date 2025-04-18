@@ -94,7 +94,7 @@ func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 
 		znetConfig := defaultZNetConfig()
 		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
-		znetConfig.CoredVersion = "v4.0.1"
+		znetConfig.CoredVersion = "v5.0.0"
 
 		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestUpgrade, TestIBC, TestModules)
 	}

@@ -148,7 +148,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper, am.bankKeeper))
 
 	m := keeper.NewMigrator(am.keeper, am.paramsKeeper)
-	if err := cfg.RegisterMigration(types.ModuleName, 4, m.Migrate4to5); err != nil {
+	if err := cfg.RegisterMigration(types.ModuleName, 5, m.Migrate5to6); err != nil {
 		panic(err)
 	}
 }
