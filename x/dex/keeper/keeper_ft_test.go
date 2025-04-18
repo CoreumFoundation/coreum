@@ -19,11 +19,11 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/testutil/event"
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/testutil/event"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	testcontracts "github.com/CoreumFoundation/coreum/v6/x/asset/ft/keeper/test-contracts"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 const (

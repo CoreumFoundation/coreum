@@ -8,10 +8,10 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/delay"
-	"github.com/CoreumFoundation/coreum/v5/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/delay"
+	"github.com/CoreumFoundation/coreum/v6/x/delay/types"
 )
 
 func TestInitAndExportGenesis(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	"github.com/docker/distribution/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {

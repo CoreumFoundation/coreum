@@ -19,9 +19,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev5 "github.com/CoreumFoundation/coreum/v5/app/upgrade/v5"
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
+	appupgradev6 "github.com/CoreumFoundation/coreum/v6/app/upgrade/v6"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
 )
 
 // Proper value for upgradeDelayInBlocks depends on block time and gov voting period.
@@ -43,26 +43,21 @@ func TestUpgrade(t *testing.T) {
 	infoRes, err := tmQueryClient.GetNodeInfo(ctx, &cmtservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
 
-	if strings.HasPrefix(infoRes.ApplicationVersion.Version, "v4.") {
-		upgradeV4ToV5(t)
+	if strings.HasPrefix(infoRes.ApplicationVersion.Version, "v5.") {
+		upgradeV5ToV6(t)
 		return
 	}
 	requireT.Failf("not supported cored version", "version: %s", infoRes.ApplicationVersion.Version)
 }
 
-func upgradeV4ToV5(t *testing.T) {
-	tests := []upgradeTest{
-		&cosmosSDKVersion{},
-		&gov{},
-		&dex{},
-		&assetft{},
-	}
+func upgradeV5ToV6(t *testing.T) {
+	tests := []upgradeTest{}
 
 	for _, test := range tests {
 		test.Before(t)
 	}
 
-	runUpgrade(t, appupgradev5.Name, upgradeDelayInBlocks)
+	runUpgrade(t, appupgradev6.Name, upgradeDelayInBlocks)
 
 	for _, test := range tests {
 		test.After(t)

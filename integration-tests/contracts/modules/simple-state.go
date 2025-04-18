@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	integrationtests "github.com/CoreumFoundation/coreum/v5/testutil/integration"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/testutil/integration"
 )
 
 // SimpleState is a structure used to initizlize the simple state contract

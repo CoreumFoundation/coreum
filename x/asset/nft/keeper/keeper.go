@@ -18,8 +18,8 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
-	pkgstore "github.com/CoreumFoundation/coreum/v5/pkg/store"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
+	pkgstore "github.com/CoreumFoundation/coreum/v6/pkg/store"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
 )
 
 // Keeper is the asset module non-fungible token nftKeeper.

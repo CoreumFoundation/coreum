@@ -7,7 +7,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/CoreumFoundation/coreum/v5/x/wnft/keeper"
+	"github.com/CoreumFoundation/coreum/v6/x/wnft/keeper"
 )
 
 // AppModuleBasic implements the basic application module for the wrapped nft module.

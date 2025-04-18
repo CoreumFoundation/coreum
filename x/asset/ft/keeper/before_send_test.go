@@ -13,10 +13,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
-	assetftkeeper "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v5/x/wibctransfer/types"
+	assetftkeeper "github.com/CoreumFoundation/coreum/v6/x/asset/ft/keeper"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v6/x/wasm/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v6/x/wibctransfer/types"
 )
 
 func TestApplyRate(t *testing.T) {

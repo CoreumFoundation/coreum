@@ -8,7 +8,7 @@ import "cosmos/query/v1/query.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v5/x/dex/types";
+option go_package = "github.com/CoreumFoundation/coreum/v6/x/dex/types";
 
 // Query defines the gRPC query service.
 service Query {

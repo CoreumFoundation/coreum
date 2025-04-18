@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
 )
 
 func TestSymbolAndIDValidation(t *testing.T) {

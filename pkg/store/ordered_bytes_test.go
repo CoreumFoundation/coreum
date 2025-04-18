@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/store"
+	"github.com/CoreumFoundation/coreum/v6/pkg/store"
 )
 
 func TestInt8ToAndFromOrderedBytes(t *testing.T) {

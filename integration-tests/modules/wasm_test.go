@@ -26,16 +26,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	legacymoduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/legacy-modules"
-	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/event"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
-	deterministicgastypes "github.com/CoreumFoundation/coreum/v5/x/deterministicgas/types"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	legacymoduleswasm "github.com/CoreumFoundation/coreum/v6/integration-tests/contracts/legacy-modules"
+	moduleswasm "github.com/CoreumFoundation/coreum/v6/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/event"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
+	deterministicgastypes "github.com/CoreumFoundation/coreum/v6/x/deterministicgas/types"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 // authz models

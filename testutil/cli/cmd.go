@@ -17,8 +17,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/app"
-	"github.com/CoreumFoundation/coreum/v5/testutil/network"
+	"github.com/CoreumFoundation/coreum/v6/app"
+	"github.com/CoreumFoundation/coreum/v6/testutil/network"
 )
 
 // ExecTxCmd is a func to execute tx cmd.

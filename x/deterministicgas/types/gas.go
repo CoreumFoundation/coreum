@@ -19,9 +19,9 @@ import (
 	"github.com/samber/lo"
 	googlegrpc "google.golang.org/grpc"
 
-	testutilconstant "github.com/CoreumFoundation/coreum/v5/testutil/constant"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
+	testutilconstant "github.com/CoreumFoundation/coreum/v6/testutil/constant"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/deterministicgas"
 )
 
 const (

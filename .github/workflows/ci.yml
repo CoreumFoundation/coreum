@@ -23,7 +23,7 @@ jobs:
           "integration tests coreum-modules",
           "integration tests coreum-stress",
           "integration tests coreum-ibc",
-          "integration tests coreum-upgrade-v4.0.0",
+          "integration tests coreum-upgrade-v5.0.0",
         ]
         include:
           - ci_step: "lint"
@@ -58,7 +58,7 @@ jobs:
             linter-cache: false
             wasm-cache: true
             codecov: false
-          - ci_step: "integration tests coreum-upgrade-v4.0.0"
+          - ci_step: "integration tests coreum-upgrade-v5.0.0"
             command: make integration-tests-upgrade
             linter-cache: false
             wasm-cache: true

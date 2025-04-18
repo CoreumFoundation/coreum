@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v4 "github.com/CoreumFoundation/coreum/v5/x/asset/ft/migrations/v4"
+	v4 "github.com/CoreumFoundation/coreum/v6/x/asset/ft/migrations/v4"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -20,7 +20,7 @@ func NewMigrator(ftKeeper Keeper, paramsKeeper v4.ParamsKeeper) Migrator {
 	}
 }
 
-// Migrate4to5 migrates from version 4 to 5.
-func (m Migrator) Migrate4to5(ctx sdk.Context) error {
-	return v4.MigrateDefinitions(ctx, m.ftKeeper)
+// Migrate5to6 migrates from version 5 to 6.
+func (m Migrator) Migrate5to6(ctx sdk.Context) error {
+	return nil
 }

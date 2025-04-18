@@ -25,15 +25,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/event"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
-	testcontracts "github.com/CoreumFoundation/coreum/v5/x/dex/keeper/test-contracts"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v6/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/event"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v6/x/customparams/types"
+	testcontracts "github.com/CoreumFoundation/coreum/v6/x/dex/keeper/test-contracts"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 // TestLimitOrdersMatching tests the dex modules ability to place get and match limit orders.

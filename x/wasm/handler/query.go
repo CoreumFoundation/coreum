@@ -15,8 +15,8 @@ import (
 	gogoproto "github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
 )
 
 // assetFTQuery represents asset ft module queries integrated with the wasm handler.

@@ -20,10 +20,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	testcontracts "github.com/CoreumFoundation/coreum/v6/x/asset/ft/keeper/test-contracts"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v6/x/wasm/types"
 )
 
 func TestKeeper_ValidateSpendableNotFT(t *testing.T) {
