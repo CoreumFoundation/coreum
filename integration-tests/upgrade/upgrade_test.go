@@ -27,7 +27,7 @@ import (
 // Proper value for upgradeDelayInBlocks depends on block time and gov voting period.
 // upgradeDelayInBlocks*blockTime >= govVotingPeriod
 // Current value for govVotingPeriod is 20s and blockTime is customizable by flag and varies between 0.5s and 1s.
-const upgradeDelayInBlocks = 50
+const upgradeDelayInBlocks = 40
 
 type upgradeTest interface {
 	Before(t *testing.T)
