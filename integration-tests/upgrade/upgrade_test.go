@@ -154,7 +154,7 @@ func runUpgrade(
 	//nolint:staticcheck
 	retryCtx, cancel := context.WithTimeout(
 		ctx,
-		6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height),
+		10*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height),
 	)
 	defer cancel()
 	//nolint:staticcheck
