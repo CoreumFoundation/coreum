@@ -22,8 +22,10 @@ import (
 )
 
 //go:embed proto-breaking.tmpl.json
+//nolint:unused
 var configBreakingTmpl string
 
+//nolint:deadcode,unused
 func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(golang.Tidy, coreumtools.EnsureProtoc, coreumtools.EnsureProtocGenBufBreaking)
 

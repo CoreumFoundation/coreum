@@ -4,7 +4,7 @@ package coreum.dex.v1;
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v5/x/dex/types";
+option go_package = "github.com/CoreumFoundation/coreum/v6/x/dex/types";
 
 // Params keeps gov manageable parameters.
 message Params {
