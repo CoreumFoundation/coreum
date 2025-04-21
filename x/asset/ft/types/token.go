@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
 )
 
 var (

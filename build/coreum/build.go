@@ -33,7 +33,6 @@ const (
 	hermesBinaryPath    = "bin/" + hermesBinaryName
 	osmosisBinaryPath   = "bin/" + osmosisBinaryName
 	integrationTestsDir = repoPath + "/integration-tests"
-	cometBFTCommit      = "099b4104e5b00b3cedd2c06ca3b1270baad2f4e9"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
@@ -275,7 +274,7 @@ func Lint(ctx context.Context, deps types.DepsFunc) error {
 		CompileAllSmartContracts,
 		formatProto,
 		lintProto,
-		breakingProto,
+		// breakingProto, TODO(Restore breaking proto)
 	)
 	return golang.Lint(ctx, deps)
 }

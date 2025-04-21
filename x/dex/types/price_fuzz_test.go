@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 func FuzzPriceFromRandomString(f *testing.F) {

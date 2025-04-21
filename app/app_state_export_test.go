@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
 )
 
 func TestAppStateExport(t *testing.T) {

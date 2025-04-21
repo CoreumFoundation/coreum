@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 //nolint:funlen

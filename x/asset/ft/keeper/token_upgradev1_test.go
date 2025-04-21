@@ -11,10 +11,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	assetft "github.com/CoreumFoundation/coreum/v5/x/asset/ft"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	assetft "github.com/CoreumFoundation/coreum/v6/x/asset/ft"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 )
 
 func TestTokenUpgradeV1(t *testing.T) {

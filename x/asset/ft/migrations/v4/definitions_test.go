@@ -12,10 +12,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
-	v4 "github.com/CoreumFoundation/coreum/v5/x/asset/ft/migrations/v4"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	testcontracts "github.com/CoreumFoundation/coreum/v6/x/asset/ft/keeper/test-contracts"
+	v4 "github.com/CoreumFoundation/coreum/v6/x/asset/ft/migrations/v4"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 )
 
 func TestMigrateDefinitions(t *testing.T) {

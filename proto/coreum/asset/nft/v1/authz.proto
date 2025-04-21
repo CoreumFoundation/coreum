@@ -5,7 +5,7 @@ import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types";
 
 // SendAuthorization allows the grantee to send specific NFTs from the granter's account.
 message SendAuthorization {

@@ -16,10 +16,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 type TestSet struct {
