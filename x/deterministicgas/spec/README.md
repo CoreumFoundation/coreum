@@ -145,7 +145,6 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/cosmos.group.v1.MsgWithdrawProposal`                                 | 22000                          |
 | `/cosmos.nft.v1beta1.MsgSend`                                          | 25000                          |
 | `/cosmos.slashing.v1beta1.MsgUnjail`                                   | 90000                          |
-| `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           | 157000                         |
 | `/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation`                 | 75000                          |
 | `/cosmos.staking.v1beta1.MsgCreateValidator`                           | 117000                         |
 | `/cosmos.staking.v1beta1.MsgDelegate`                                  | 83000                          |
@@ -242,6 +241,7 @@ and the formula for them is
 | `/cosmos.mint.v1beta1.MsgUpdateParams`                                 |
 | `/cosmos.slashing.v1beta1.MsgUpdateParams`                             |
 | `/cosmos.staking.v1beta1.MsgUpdateParams`                              |
+| `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           |
 | `/cosmos.upgrade.v1beta1.MsgCancelUpgrade`                             |
 | `/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade`                           |
 | `/cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses`                    |
