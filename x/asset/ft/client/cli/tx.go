@@ -65,7 +65,6 @@ func GetTxCmd() *cobra.Command {
 		CmdTxSetWhitelistedLimit(),
 		CmdTxTransferAdmin(),
 		CmdTxClearAdmin(),
-		CmdTxUpgradeV1(),
 		CmdGrantAuthorization(),
 		CmdUpdateDEXUnifiedRefAmount(),
 		CmdUpdateDEXWhitelistedDenoms(),
