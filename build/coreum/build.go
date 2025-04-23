@@ -16,6 +16,7 @@ import (
 	dockerbasic "github.com/CoreumFoundation/crust/build/docker/basic"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/lint"
 	crusttools "github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
@@ -276,7 +277,7 @@ func Lint(ctx context.Context, deps types.DepsFunc) error {
 		lintProto,
 		// breakingProto, TODO(Restore breaking proto)
 	)
-	return golang.Lint(ctx, deps)
+	return lint.Lint(ctx, deps)
 }
 
 func coredVersionLDFlags(ctx context.Context, buildTags []string) ([]string, error) {
