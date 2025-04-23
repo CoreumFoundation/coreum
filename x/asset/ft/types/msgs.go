@@ -37,7 +37,6 @@ var (
 	_ extendedMsg = &MsgSetWhitelistedLimit{}
 	_ extendedMsg = &MsgTransferAdmin{}
 	_ extendedMsg = &MsgClearAdmin{}
-	_ extendedMsg = &MsgUpgradeTokenV1{}
 	_ extendedMsg = &MsgUpdateParams{}
 	_ extendedMsg = &MsgUpdateDEXUnifiedRefAmount{}
 	_ extendedMsg = &MsgUpdateDEXWhitelistedDenoms{}
@@ -54,7 +53,6 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgGloballyFreeze{}, ModuleName+"/MsgGloballyFreeze")
 	legacy.RegisterAminoMsg(cdc, &MsgGloballyUnfreeze{}, ModuleName+"/MsgGloballyUnfreeze")
 	legacy.RegisterAminoMsg(cdc, &MsgSetWhitelistedLimit{}, ModuleName+"/MsgSetWhitelistedLimit")
-	legacy.RegisterAminoMsg(cdc, &MsgUpgradeTokenV1{}, ModuleName+"/MsgUpgradeTokenV1")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, ModuleName+"/MsgUpdateParams")
 	legacy.RegisterAminoMsg(cdc, &MsgClawback{}, ModuleName+"/MsgClawback")
 	legacy.RegisterAminoMsg(cdc, &MsgClearAdmin{}, ModuleName+"/MsgClearAdmin")
@@ -311,24 +309,6 @@ func (m MsgClearAdmin) ValidateBasic() error {
 	_, _, err := DeconstructDenom(m.Denom)
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// ValidateBasic checks that message fields are valid.
-func (m MsgUpgradeTokenV1) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	_, issuer, err := DeconstructDenom(m.Denom)
-	if err != nil {
-		return err
-	}
-
-	if issuer.String() != m.Sender {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only issuer can upgrade the denom")
 	}
 
 	return nil

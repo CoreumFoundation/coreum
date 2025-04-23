@@ -29,7 +29,6 @@ type assetFTMsg struct {
 	GloballyFreeze      *assetfttypes.MsgGloballyFreeze      `json:"GloballyFreeze"`
 	GloballyUnfreeze    *assetfttypes.MsgGloballyUnfreeze    `json:"GloballyUnfreeze"`
 	SetWhitelistedLimit *assetfttypes.MsgSetWhitelistedLimit `json:"SetWhitelistedLimit"`
-	UpgradeTokenV1      *assetfttypes.MsgUpgradeTokenV1      `json:"UpgradeTokenV1"`
 }
 
 // assetNFTMsgIssueClass defines message for the IssueClass method with string represented data field.
@@ -173,10 +172,6 @@ func decodeAssetFTMessage(assetFTMsg *assetFTMsg, sender string) (sdk.Msg, error
 	if assetFTMsg.SetWhitelistedLimit != nil {
 		assetFTMsg.SetWhitelistedLimit.Sender = sender
 		return assetFTMsg.SetWhitelistedLimit, nil
-	}
-	if assetFTMsg.UpgradeTokenV1 != nil {
-		assetFTMsg.UpgradeTokenV1.Sender = sender
-		return assetFTMsg.UpgradeTokenV1, nil
 	}
 
 	//nolint:nilnil // we are ok with this.
