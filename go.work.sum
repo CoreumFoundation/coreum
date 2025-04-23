@@ -997,7 +997,6 @@ github.com/CloudyKit/jet/v6 v6.2.0/go.mod h1:d3ypHeIRNo2+XyqnGA8s+aphtcVpjP5hPwP
 github.com/CoreumFoundation/cometbft v0.38.8-0.20240918091905-099b4104e5b0 h1:PIFuYXb4nHkYKbu7FkPa4HxTF891YdmDY3pixfTQ8RA=
 github.com/CoreumFoundation/cometbft v0.38.8-0.20240918091905-099b4104e5b0/go.mod h1:jHPx9vQpWzPHEAiYI/7EDKaB1NXhK6o3SArrrY8ExKc=
 github.com/CoreumFoundation/coreum/v4 v4.0.0-20240912071617-43930506e0a3/go.mod h1:3xSyRVosHkpO90zIot807kqxN59/XyU7qNuR/AIJPsc=
-github.com/CoreumFoundation/coreum/v5 v5.0.0-20250325092415-36505c89c3fb/go.mod h1:zrehSs/igxYQrqFdIo8jTMvLAgOYbRoEFU+3RZEKFWM=
 github.com/CoreumFoundation/crust v0.0.0-20240802131508-4a7584e019a8 h1:sCshAF6Gxal9XIvKda57AoKVvzh0GZ4UBFjM+SLjYA8=
 github.com/CoreumFoundation/crust v0.0.0-20240802131508-4a7584e019a8/go.mod h1:xCz+IXPyIDIIY+bg9rHy6wsoQ5dh82GusgUKZlIkD9s=
 github.com/CoreumFoundation/crust v0.0.0-20240806081012-2bce4a5dee4b h1:E5CnqYbWu2ex5iBqza21i8BWPiwaCYSCMVnZsyzVDt0=
@@ -1008,9 +1007,9 @@ github.com/CoreumFoundation/crust v0.0.0-20240910084945-51add516ee39/go.mod h1:j
 github.com/CoreumFoundation/crust v0.0.0-20240913053503-d54f466836c9/go.mod h1:E9Gyav98jDtWqIr+gAHu9onNQOFf/SGFsYhwbWtO87M=
 github.com/CoreumFoundation/crust v0.0.0-20241008134118-a7bc074eff93/go.mod h1:rRKCkQ1UpqmKUCsL6XCFQZCo0OXLRVNWCL9h4gt+pq4=
 github.com/CoreumFoundation/crust v0.0.0-20250325111106-1ceef3a161fe/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
-github.com/CoreumFoundation/crust v0.0.0-20250404130536-23de310e6eb8 h1:Hed06EDU5Lt6P89Sgfs/gKt0SIGJOpqt7NCKyGDsiiM=
-github.com/CoreumFoundation/crust v0.0.0-20250404130536-23de310e6eb8/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
+github.com/CoreumFoundation/crust v0.0.0-20250422105139-051d68f6bb18/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
 github.com/CoreumFoundation/crust/znet v0.0.0-20250325111106-1ceef3a161fe/go.mod h1:XVapwHb6v63p46hUZ7+Yfelm0/lA8xBiTqFkDlH/acM=
+github.com/CoreumFoundation/crust/znet v0.0.0-20250422105139-051d68f6bb18/go.mod h1:urqH0J2WRcRPrFmt5by8wdwonVkho26LpfeORXzx7sk=
 github.com/CosmWasm/wasmd v0.53.2 h1:c3MQjeQq+r+Zj2rPeW+c9kJmTevuNnZOIkiiCP/3bg4=
 github.com/CosmWasm/wasmvm/v2 v2.0.0/go.mod h1:su9lg5qLr7adV95eOfzjZWkGiky8WNaNIHDr7Fpu7Ck=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=

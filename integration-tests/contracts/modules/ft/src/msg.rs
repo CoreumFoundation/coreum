@@ -66,9 +66,6 @@ pub enum ExecuteMsg {
         account: String,
     },
     ClearAdmin {},
-    UpgradeTokenV1 {
-        ibc_enabled: bool,
-    },
 }
 
 #[cw_serde]

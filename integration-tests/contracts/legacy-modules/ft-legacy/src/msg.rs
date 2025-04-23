@@ -17,15 +17,31 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Mint { amount: u128, recipient: Option<String> },
-    Burn { amount: u128 },
-    Freeze { account: String, amount: u128 },
-    Unfreeze { account: String, amount: u128 },
-    SetFrozen { account: String, amount: u128 },
+    Mint {
+        amount: u128,
+        recipient: Option<String>,
+    },
+    Burn {
+        amount: u128,
+    },
+    Freeze {
+        account: String,
+        amount: u128,
+    },
+    Unfreeze {
+        account: String,
+        amount: u128,
+    },
+    SetFrozen {
+        account: String,
+        amount: u128,
+    },
     GloballyFreeze {},
     GloballyUnfreeze {},
-    SetWhitelistedLimit { account: String, amount: u128 },
-    UpgradeTokenV1 { ibc_enabled: bool },
+    SetWhitelistedLimit {
+        account: String,
+        amount: u128,
+    },
 }
 
 #[cw_serde]

@@ -81,7 +81,6 @@
     - [MsgUpdateDEXUnifiedRefAmount](#coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount)
     - [MsgUpdateDEXWhitelistedDenoms](#coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms)
     - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
-    - [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1)
   
     - [Msg](#coreum.asset.ft.v1.Msg)
   
@@ -2840,27 +2839,6 @@ MsgIssue defines message to issue new fungible token.
 
 
 
-
-<a name="coreum.asset.ft.v1.MsgUpgradeTokenV1"></a>
-
-### MsgUpgradeTokenV1
-
-```
-MsgUpgradeTokenV1 is the message upgrading token to V1.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  |    |
-| `denom` | [string](#string) |  |    |
-| `ibc_enabled` | [bool](#bool) |  |    |
-
-
-
-
-
  <!-- end messages -->
 
  <!-- end enums -->
@@ -2891,7 +2869,6 @@ Msg defines the Msg service.
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.` |  |
 | `TransferAdmin` | [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TransferAdmin changes admin of a fungible token.` |  |
 | `ClearAdmin` | [MsgClearAdmin](#coreum.asset.ft.v1.MsgClearAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `ClearAdmin removes admin of a fungible token.` |  |
-| `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
 | `UpdateDEXUnifiedRefAmount` | [MsgUpdateDEXUnifiedRefAmount](#coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXUnifiedRefAmount updates DEX unified ref amount.` |  |
 | `UpdateDEXWhitelistedDenoms` | [MsgUpdateDEXWhitelistedDenoms](#coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXWhitelistedDenoms updates DEX whitelisted denoms.` |  |

@@ -588,52 +588,6 @@ func TestClearAdmin(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
-func TestUpgradeV1(t *testing.T) {
-	requireT := require.New(t)
-	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
-	requireT.NoError(err)
-	app.ChosenNetwork = networkCfg
-	testNetwork := network.New(t)
-
-	token := types.Token{
-		Symbol:      "btc" + uuid.NewString()[:4],
-		Subunit:     "satoshi" + uuid.NewString()[:4],
-		Precision:   8,
-		Description: "description",
-		Features: []types.Feature{
-			types.Feature_freezing,
-			types.Feature_ibc,
-		},
-	}
-
-	ctx := testNetwork.Validators[0].ClientCtx
-	initialAmount := sdkmath.NewInt(777)
-	denom := issue(requireT, ctx, token, initialAmount, nil, testNetwork)
-
-	// --ibc-enabled is missing
-	args := append([]string{
-		denom,
-	}, txValidator1Args(testNetwork)...)
-	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpgradeV1(), args)
-	requireT.Error(err)
-
-	// upgrade the token with --ibc-enabled=true
-	args = append([]string{
-		denom,
-		fmt.Sprintf("--%s=true", cli.IBCEnabledFlag),
-	}, txValidator1Args(testNetwork)...)
-	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpgradeV1(), args)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-
-	// upgrade the token with --ibc-enabled=false
-	args = append([]string{
-		denom,
-		fmt.Sprintf("--%s=false", cli.IBCEnabledFlag),
-	}, txValidator1Args(testNetwork)...)
-	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpgradeV1(), args)
-	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
-}
-
 func TestUpdateDEXUnifiedRefAmount(t *testing.T) {
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
