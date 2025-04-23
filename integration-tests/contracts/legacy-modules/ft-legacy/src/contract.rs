@@ -72,13 +72,17 @@ pub fn execute(
         ExecuteMsg::SetWhitelistedLimit { account, amount } => {
             set_whitelisted_limit(deps, info, account, amount)
         }
-        ExecuteMsg::UpgradeTokenV1 { ibc_enabled } => upgrate_token_v1(deps, info, ibc_enabled),
     }
 }
 
 // ********** Transactions **********
 
-fn mint(deps: DepsMut, info: MessageInfo, amount: u128, recipient: Option<String>) -> CoreumResult<ContractError> {
+fn mint(
+    deps: DepsMut,
+    info: MessageInfo,
+    amount: u128,
+    recipient: Option<String>,
+) -> CoreumResult<ContractError> {
     assert_owner(deps.storage, &info.sender)?;
     let denom = DENOM.load(deps.storage)?;
     let msg = CoreumMsg::AssetFT(assetft::Msg::Mint {
@@ -220,26 +224,6 @@ fn set_whitelisted_limit(
         .add_message(msg))
 }
 
-fn upgrate_token_v1(
-    deps: DepsMut,
-    info: MessageInfo,
-    ibc_enabled: bool,
-) -> CoreumResult<ContractError> {
-    assert_owner(deps.storage, &info.sender)?;
-    let denom = DENOM.load(deps.storage)?;
-
-    let upgrade_msg = CoreumMsg::AssetFT(assetft::Msg::UpgradeTokenV1 {
-        denom: denom.clone(),
-        ibc_enabled: ibc_enabled.clone(),
-    });
-
-    Ok(Response::new()
-        .add_attribute("method", "upgrade_token_v1")
-        .add_attribute("denom", denom)
-        .add_attribute("ibc_enabled", ibc_enabled.to_string())
-        .add_message(upgrade_msg))
-}
-
 // ********** Queries **********
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -247,12 +231,16 @@ pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<B
         QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
         QueryMsg::Token {} => to_json_binary(&query_token(deps)?),
         QueryMsg::Tokens { issuer } => to_json_binary(&query_tokens(deps, issuer)?),
-        QueryMsg::FrozenBalance { account } => to_json_binary(&query_frozen_balance(deps, account)?),
+        QueryMsg::FrozenBalance { account } => {
+            to_json_binary(&query_frozen_balance(deps, account)?)
+        }
         QueryMsg::WhitelistedBalance { account } => {
             to_json_binary(&query_whitelisted_balance(deps, account)?)
         }
         QueryMsg::Balance { account } => to_json_binary(&query_balance(deps, account)?),
-        QueryMsg::FrozenBalances { account } => to_json_binary(&query_frozen_balances(deps, account)?),
+        QueryMsg::FrozenBalances { account } => {
+            to_json_binary(&query_frozen_balances(deps, account)?)
+        }
         QueryMsg::WhitelistedBalances { account } => {
             to_json_binary(&query_whitelisted_balances(deps, account)?)
         }

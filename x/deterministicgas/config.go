@@ -82,20 +82,18 @@ func DefaultConfig() Config {
 	storeConfig := storetypes.KVGasConfig()
 	cfg.gasByMsg = map[MsgURL]gasByMsgFunc{
 		// asset/ft
-		MsgToMsgURL(&assetfttypes.MsgIssue{}):               constantGasFunc(70_000),
-		MsgToMsgURL(&assetfttypes.MsgMint{}):                constantGasFunc(31_000),
-		MsgToMsgURL(&assetfttypes.MsgBurn{}):                constantGasFunc(35_000),
-		MsgToMsgURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(8_500),
-		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(8_500),
-		MsgToMsgURL(&assetfttypes.MsgSetFrozen{}):           constantGasFunc(8_500),
-		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5_000),
-		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(3_000),
-		MsgToMsgURL(&assetfttypes.MsgClawback{}):            constantGasFunc(28_500),
-		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(9_000),
-		MsgToMsgURL(&assetfttypes.MsgTransferAdmin{}):       constantGasFunc(10_000),
-		MsgToMsgURL(&assetfttypes.MsgClearAdmin{}):          constantGasFunc(8_500),
-		// TODO(v6): Once we add a new token upgrade MsgUpgradeTokenV2 we should remove this one and re-estimate gas.
-		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):            constantGasFunc(25_000),
+		MsgToMsgURL(&assetfttypes.MsgIssue{}):                     constantGasFunc(70_000),
+		MsgToMsgURL(&assetfttypes.MsgMint{}):                      constantGasFunc(31_000),
+		MsgToMsgURL(&assetfttypes.MsgBurn{}):                      constantGasFunc(35_000),
+		MsgToMsgURL(&assetfttypes.MsgFreeze{}):                    constantGasFunc(8_500),
+		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):                  constantGasFunc(8_500),
+		MsgToMsgURL(&assetfttypes.MsgSetFrozen{}):                 constantGasFunc(8_500),
+		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):            constantGasFunc(5_000),
+		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):          constantGasFunc(3_000),
+		MsgToMsgURL(&assetfttypes.MsgClawback{}):                  constantGasFunc(28_500),
+		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}):       constantGasFunc(9_000),
+		MsgToMsgURL(&assetfttypes.MsgTransferAdmin{}):             constantGasFunc(10_000),
+		MsgToMsgURL(&assetfttypes.MsgClearAdmin{}):                constantGasFunc(8_500),
 		MsgToMsgURL(&assetfttypes.MsgUpdateDEXUnifiedRefAmount{}): constantGasFunc(10_000),
 		MsgToMsgURL(&assetfttypes.MsgUpdateDEXWhitelistedDenoms{}): updateDEXWhitelistedDenomsGasFunc(
 			DEXUpdateWhitelistedDenomBaseGas, DEXWhitelistedPerDenomGas,

@@ -19,9 +19,9 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
-	github.com/CoreumFoundation/coreum/v6 v6.0.0-20250325092415-36505c89c3fb
+	github.com/CoreumFoundation/coreum/v6 v6.0.0-20250421142245-52bdcb2a0560
 	github.com/CoreumFoundation/crust v0.0.0-20250422105139-051d68f6bb18
-	github.com/CoreumFoundation/crust/znet v0.0.0-20250404130536-23de310e6eb8
+	github.com/CoreumFoundation/crust/znet v0.0.0-20250422105139-051d68f6bb18
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.49.1
@@ -57,7 +57,6 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
-	github.com/CoreumFoundation/coreum/v5 v5.0.0-20250325092415-36505c89c3fb // indirect
 	github.com/CosmWasm/wasmd v0.54.0 // indirect
 	github.com/CosmWasm/wasmvm/v2 v2.2.2 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
