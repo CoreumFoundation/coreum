@@ -67,7 +67,7 @@ pub fn ibc_packet_receive(
 ) -> Result<IbcReceiveResponse, Never> {
     // Regardless of if our processing of this packet works we need to
     // commit an ACK to the chain. As such, we wrap all handling logic
-    // in a seprate function and on error write out an error ack.
+    // in a separate function and on error write out an error ack.
     match do_ibc_packet_receive(deps, env, msg) {
         Ok(response) => Ok(response),
         Err(error) => Ok(IbcReceiveResponse::new()
