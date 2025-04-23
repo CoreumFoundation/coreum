@@ -303,22 +303,6 @@ func (ms MsgServer) ClearAdmin(goCtx context.Context, req *types.MsgClearAdmin) 
 	return &types.EmptyResponse{}, nil
 }
 
-// UpgradeTokenV1 stores a request to upgrade token to V1.
-func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgUpgradeTokenV1) (*types.EmptyResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	err = ms.keeper.AddDelayedTokenUpgradeV1(ctx, sender, req.Denom, req.IbcEnabled)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.EmptyResponse{}, nil
-}
-
 // UpdateParams is a governance operation that sets parameters of the module.
 func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
 	if err := ms.keeper.UpdateParams(sdk.UnwrapSDKContext(goCtx), req.Authority, req.Params); err != nil {

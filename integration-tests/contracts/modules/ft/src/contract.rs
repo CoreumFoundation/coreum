@@ -1,10 +1,10 @@
 use coreum_wasm_sdk::types::coreum::asset::ft::v1::{
     ExtensionIssueSettings, MsgBurn, MsgClawback, MsgClearAdmin, MsgFreeze, MsgGloballyFreeze,
     MsgGloballyUnfreeze, MsgIssue, MsgMint, MsgSetFrozen, MsgSetWhitelistedLimit, MsgTransferAdmin,
-    MsgUnfreeze, MsgUpgradeTokenV1, QueryBalanceRequest, QueryBalanceResponse,
-    QueryFrozenBalanceRequest, QueryFrozenBalanceResponse, QueryFrozenBalancesRequest,
-    QueryFrozenBalancesResponse, QueryParamsRequest, QueryParamsResponse, QueryTokenRequest,
-    QueryTokenResponse, QueryTokensRequest, QueryTokensResponse, QueryWhitelistedBalanceRequest,
+    MsgUnfreeze, QueryBalanceRequest, QueryBalanceResponse, QueryFrozenBalanceRequest,
+    QueryFrozenBalanceResponse, QueryFrozenBalancesRequest, QueryFrozenBalancesResponse,
+    QueryParamsRequest, QueryParamsResponse, QueryTokenRequest, QueryTokenResponse,
+    QueryTokensRequest, QueryTokensResponse, QueryWhitelistedBalanceRequest,
     QueryWhitelistedBalanceResponse, QueryWhitelistedBalancesRequest,
     QueryWhitelistedBalancesResponse,
 };
@@ -97,9 +97,6 @@ pub fn execute(
         }
         ExecuteMsg::TransferAdmin { account } => transfer_admin(deps, env, info, account),
         ExecuteMsg::ClearAdmin {} => clear_admin(deps, env, info),
-        ExecuteMsg::UpgradeTokenV1 { ibc_enabled } => {
-            upgrate_token_v1(deps, env, info, ibc_enabled)
-        }
     }
 }
 
@@ -352,28 +349,6 @@ fn clear_admin(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, C
         .add_attribute("method", "clear_admin")
         .add_attribute("denom", denom)
         .add_message(CosmosMsg::Any(clear_admin.to_any())))
-}
-
-fn upgrate_token_v1(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    ibc_enabled: bool,
-) -> Result<Response, ContractError> {
-    assert_owner(deps.storage, &info.sender)?;
-    let denom = DENOM.load(deps.storage)?;
-
-    let upgrade_token_v1 = MsgUpgradeTokenV1 {
-        sender: env.contract.address.to_string(),
-        denom: denom.clone(),
-        ibc_enabled,
-    };
-
-    Ok(Response::new()
-        .add_attribute("method", "upgrade_token_v1")
-        .add_attribute("denom", denom)
-        .add_attribute("ibc_enabled", ibc_enabled.to_string())
-        .add_message(CosmosMsg::Any(upgrade_token_v1.to_any())))
 }
 
 // ********** Queries **********

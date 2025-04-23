@@ -41,7 +41,7 @@ Currently, we have values for the above variables as follows:
 - `WriteCostPerByte`: 30
 
 To summarize user pays FixedGas as long as `GasForBytes + GasForSignatures <= TxBaseGas`.
-If `GasForBytes + GasForSignatures > TxBaseGas` user will have to pay anything above `TxBaseGas` on top of `FixedGas`. 
+If `GasForBytes + GasForSignatures > TxBaseGas` user will have to pay anything above `TxBaseGas` on top of `FixedGas`.
 
 As an example if the transaction has 1 signature on it and size is below
 2048 bytes, the user will not pay anything extra. Or user can have multiple signatures but fewer bytes then nothing extra should be paid.
@@ -68,7 +68,7 @@ TotalGas = 65000 +  max(0, (21480 - 2 * 1000 + 2050 * 10)) + 2 * 70000
 `
 
 ## Extensions
-If one of the follwoing messages contains a token which have the extension feature enabled, it will not be considered deterministic any more . The reason is that extensions invlove smart contract calls which are nondeterministic in nature. 
+If one of the following messages contains a token which have the extension feature enabled, it will not be considered deterministic any more . The reason is that extensions involve smart contract calls which are nondeterministic in nature.
 
  - `/ibc.applications.transfer.v1.MsgTransfer`
  - `/coreum.asset.ft.v1.MsgIssue`
@@ -77,8 +77,8 @@ If one of the follwoing messages contains a token which have the extension featu
  - `/cosmos.distribution.v1beta1.MsgCommunityPoolSpend`
  - `/cosmos.distribution.v1beta1.MsgFundCommunityPool`
  - `/cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount`
- - `/cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount`	
- - `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`        		
+ - `/cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount`
+ - `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`
 
 It should also be mentioned that this rule applies for all the messages inside `/cosmos.authz.v1beta1.MsgExec`
 
@@ -108,7 +108,6 @@ It should also be mentioned that this rule applies for all the messages inside `
 | `/coreum.asset.ft.v1.MsgTransferAdmin`                                 | 10000                          |
 | `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 8500                           |
 | `/coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount`                     | 10000                          |
-| `/coreum.asset.ft.v1.MsgUpgradeTokenV1`                                | 25000                          |
 | `/coreum.asset.nft.v1.MsgAddToClassWhitelist`                          | 7000                           |
 | `/coreum.asset.nft.v1.MsgAddToWhitelist`                               | 7000                           |
 | `/coreum.asset.nft.v1.MsgBurn`                                         | 26000                          |

@@ -52,9 +52,6 @@ service Msg {
   // ClearAdmin removes admin of a fungible token.
   rpc ClearAdmin(MsgClearAdmin) returns (EmptyResponse);
 
-  // TokenUpgradeV1 upgrades token to version V1.
-  rpc UpgradeTokenV1(MsgUpgradeTokenV1) returns (EmptyResponse);
-
   // UpdateParams is a governance operation to modify the parameters of the module.
   // NOTE: all parameters must be provided.
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
@@ -214,16 +211,6 @@ message MsgClearAdmin {
 
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string denom = 2;
-}
-
-// MsgUpgradeTokenV1 is the message upgrading token to V1.
-message MsgUpgradeTokenV1 {
-  option (cosmos.msg.v1.signer) = "sender";
-  option (amino.name) = "assetft/MsgUpgradeTokenV1";
-
-  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string denom = 2;
-  bool ibc_enabled = 3;
 }
 
 message MsgUpdateParams {
