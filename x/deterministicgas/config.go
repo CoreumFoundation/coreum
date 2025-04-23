@@ -32,11 +32,11 @@ import (
 	"github.com/hashicorp/go-metrics"
 	"github.com/samber/lo"
 
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
-	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v6/x/customparams/types"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v6/x/feemodel/types"
 )
 
 // These constants define gas for messages which have custom calculation logic.

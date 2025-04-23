@@ -6,8 +6,8 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 func validateQuantityStep(quantity *big.Int, baseURA sdkmath.LegacyDec, quantityStepExponent int32) error {

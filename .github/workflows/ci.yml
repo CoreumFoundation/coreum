@@ -23,7 +23,7 @@ jobs:
           "integration tests coreum-modules",
           "integration tests coreum-stress",
           "integration tests coreum-ibc",
-          "integration tests coreum-upgrade-v4.0.0",
+          "integration tests coreum-upgrade-v5.0.0",
         ]
         include:
           - ci_step: "lint"
@@ -58,7 +58,7 @@ jobs:
             linter-cache: false
             wasm-cache: true
             codecov: false
-          - ci_step: "integration tests coreum-upgrade-v4.0.0"
+          - ci_step: "integration tests coreum-upgrade-v5.0.0"
             command: make integration-tests-upgrade
             linter-cache: false
             wasm-cache: true
@@ -108,8 +108,9 @@ jobs:
           # we need to cache code-hashes.json under the same key as the artifacts, since the invalidation condition
           # for both of them are the same.
           path: |
-            ${{ github.workspace }}/integration-tests/contracts/**/artifacts/*
-            ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/*
+            ${{ github.workspace }}/integration-tests/contracts/**/artifacts/* 
+            ${{ github.workspace }}/x/asset/ft/keeper/test-contracts/**/artifacts/* 
+            ${{ github.workspace }}/x/dex/keeper/test-contracts/**/artifacts/* 
             ~/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('**/*.rs', '**/Cargo.toml', '**/Cargo.lock') }}
         if: ${{ matrix.wasm-cache }}

@@ -23,11 +23,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/event"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/event"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
 )
 
 // TestAssetNFTQueryParams queries parameters of asset/nft module.

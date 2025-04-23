@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v6/x/feemodel/types"
 )
 
 const afterFlag = "after"

@@ -16,8 +16,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 const (

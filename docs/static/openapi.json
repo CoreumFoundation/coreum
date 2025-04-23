@@ -13,7 +13,7 @@
   "paths": {
     "/coreum/asset/ft/v1/accounts/{account}/balances/frozen": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesFrozenBalances",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesFrozenBalances",
         "parameters": [
           {
             "name": "account",
@@ -83,7 +83,7 @@
     },
     "/coreum/asset/ft/v1/accounts/{account}/balances/frozen/{denom}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesFrozenBalance",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesFrozenBalance",
         "parameters": [
           {
             "name": "account",
@@ -122,7 +122,7 @@
     },
     "/coreum/asset/ft/v1/accounts/{account}/balances/summary/{denom}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesBalance",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesBalance",
         "parameters": [
           {
             "name": "account",
@@ -161,7 +161,7 @@
     },
     "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesWhitelistedBalances",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesWhitelistedBalances",
         "parameters": [
           {
             "name": "account",
@@ -231,7 +231,7 @@
     },
     "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted/{denom}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesWhitelistedBalance",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesWhitelistedBalance",
         "parameters": [
           {
             "name": "account",
@@ -270,7 +270,7 @@
     },
     "/coreum/asset/ft/v1/params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesParams",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -293,7 +293,7 @@
     },
     "/coreum/asset/ft/v1/tokens": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesTokens",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesTokens",
         "parameters": [
           {
             "name": "pagination.key",
@@ -362,7 +362,7 @@
     },
     "/coreum/asset/ft/v1/tokens/{denom}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesToken",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesToken",
         "parameters": [
           {
             "name": "denom",
@@ -393,7 +393,7 @@
     },
     "/coreum/asset/ft/v1/tokens/{denom}/dex-settings": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesDEXSettings",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesDEXSettings",
         "parameters": [
           {
             "name": "denom",
@@ -425,7 +425,7 @@
     },
     "/coreum/asset/ft/v1/tokens/{denom}/upgrade-statuses": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetFtTypesTokenUpgradeStatuses",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetFtTypesTokenUpgradeStatuses",
         "parameters": [
           {
             "name": "denom",
@@ -456,7 +456,7 @@
     },
     "/coreum/asset/nft/v1/classes": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesClasses",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesClasses",
         "parameters": [
           {
             "name": "pagination.key",
@@ -525,7 +525,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/burnt": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesBurntNFTsInClass",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesBurntNFTsInClass",
         "parameters": [
           {
             "name": "class_id",
@@ -594,7 +594,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/burnt/{nft_id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesBurntNFT",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesBurntNFT",
         "parameters": [
           {
             "name": "class_id",
@@ -631,7 +631,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/frozen": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesClassFrozenAccounts",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesClassFrozenAccounts",
         "parameters": [
           {
             "name": "class_id",
@@ -700,7 +700,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/frozen/{account}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesClassFrozen",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesClassFrozen",
         "parameters": [
           {
             "name": "class_id",
@@ -737,7 +737,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesFrozen",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesFrozen",
         "parameters": [
           {
             "name": "class_id",
@@ -774,7 +774,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesWhitelistedAccountsForNFT",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesWhitelistedAccountsForNFT",
         "parameters": [
           {
             "name": "class_id",
@@ -849,7 +849,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/{account}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesWhitelisted",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesWhitelisted",
         "parameters": [
           {
             "name": "class_id",
@@ -892,7 +892,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/whitelisted": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesClassWhitelistedAccounts",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesClassWhitelistedAccounts",
         "parameters": [
           {
             "name": "class_id",
@@ -961,7 +961,7 @@
     },
     "/coreum/asset/nft/v1/classes/{id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesClass",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesClass",
         "parameters": [
           {
             "name": "id",
@@ -993,7 +993,7 @@
     },
     "/coreum/asset/nft/v1/params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XAssetNftTypesParams",
+        "operationId": "GithubComCoreumFoundationCoreumV6XAssetNftTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1016,7 +1016,7 @@
     },
     "/coreum/customparams/v1/stakingparams": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XCustomparamsTypesStakingParams",
+        "operationId": "GithubComCoreumFoundationCoreumV6XCustomparamsTypesStakingParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1039,7 +1039,7 @@
     },
     "/coreum/dex/v1/accounts/{account}/denoms/{denom}/orders-count": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesAccountDenomOrdersCount",
+        "operationId": "GithubComCoreumFoundationCoreumV6XDexTypesAccountDenomOrdersCount",
         "parameters": [
           {
             "name": "account",
@@ -1076,7 +1076,7 @@
     },
     "/coreum/dex/v1/order-book-params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBookParams",
+        "operationId": "GithubComCoreumFoundationCoreumV6XDexTypesOrderBookParams",
         "parameters": [
           {
             "name": "base_denom",
@@ -1115,7 +1115,7 @@
     },
     "/coreum/dex/v1/order-books": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBooks",
+        "operationId": "GithubComCoreumFoundationCoreumV6XDexTypesOrderBooks",
         "parameters": [
           {
             "name": "pagination.key",
@@ -1178,7 +1178,7 @@
     },
     "/coreum/dex/v1/order-books/{base_denom}/{quote_denom}/orders": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrderBookOrders",
+        "operationId": "GithubComCoreumFoundationCoreumV6XDexTypesOrderBookOrders",
         "parameters": [
           {
             "name": "base_denom",
@@ -1268,7 +1268,7 @@
     },
     "/coreum/dex/v1/orders/{creator}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrders",
+        "operationId": "GithubComCoreumFoundationCoreumV6XDexTypesOrders",
         "parameters": [
           {
             "name": "creator",
@@ -1338,7 +1338,7 @@
     },
     "/coreum/dex/v1/orders/{creator}/{id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesOrder",
+        "operationId": "GithubComCoreumFoundationCoreumV6XDexTypesOrder",
         "parameters": [
           {
             "name": "creator",
@@ -1377,7 +1377,7 @@
     },
     "/coreum/dex/v1/params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XDexTypesParams",
+        "operationId": "GithubComCoreumFoundationCoreumV6XDexTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1400,7 +1400,7 @@
     },
     "/coreum/feemodel/v1/min_gas_price": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XFeemodelTypesMinGasPrice",
+        "operationId": "GithubComCoreumFoundationCoreumV6XFeemodelTypesMinGasPrice",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1423,7 +1423,7 @@
     },
     "/coreum/feemodel/v1/params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XFeemodelTypesParams",
+        "operationId": "GithubComCoreumFoundationCoreumV6XFeemodelTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1446,7 +1446,7 @@
     },
     "/coreum/feemodel/v1/recommended_gas_price": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV5XFeemodelTypesRecommendedGasPrice",
+        "operationId": "GithubComCoreumFoundationCoreumV6XFeemodelTypesRecommendedGasPrice",
         "parameters": [
           {
             "name": "after_blocks",

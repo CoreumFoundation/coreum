@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v6/x/feemodel/types"
 )
 
 // ParamsKeeper specifies methods of params keeper required by the migration.
