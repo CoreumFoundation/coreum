@@ -239,8 +239,8 @@ and the formula for them is
 | `/cosmos.group.v1.MsgVote`                                             |
 | `/cosmos.mint.v1beta1.MsgUpdateParams`                                 |
 | `/cosmos.slashing.v1beta1.MsgUpdateParams`                             |
-| `/cosmos.staking.v1beta1.MsgUpdateParams`                              |
 | `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           |
+| `/cosmos.staking.v1beta1.MsgUpdateParams`                              |
 | `/cosmos.upgrade.v1beta1.MsgCancelUpgrade`                             |
 | `/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade`                           |
 | `/cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses`                    |
