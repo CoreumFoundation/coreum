@@ -130,10 +130,10 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&stakingtypes.MsgUndelegate{},
-			&stakingtypes.MsgBeginRedelegate{},
 			&stakingtypes.MsgEditValidator{},
 		},
-		Amount: delegateAmount,
+		NondeterministicMessagesGas: 300_000, // to cover the redelegation
+		Amount:                      delegateAmount,
 	})
 
 	// Setup validator
@@ -210,12 +210,12 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	redelegateResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(redelegateMsg)),
+		chain.TxFactoryAuto(),
 		redelegateMsg,
 	)
 	require.NoError(t, err)
-	assert.Equal(t, int64(chain.GasLimitByMsgs(redelegateMsg)), redelegateResult.GasUsed)
-	t.Logf("Redelegation executed, txHash:%s", redelegateResult.TxHash)
+	assert.Equal(t, uint32(0), redelegateResult.Code)
+	t.Logf("Redelegation executed, txHash:%s, gasUsed:%d", redelegateResult.TxHash, redelegateResult.GasUsed)
 
 	ddResp, err = stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
 		DelegatorAddr: delegator.String(),

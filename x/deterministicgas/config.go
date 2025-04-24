@@ -174,7 +174,6 @@ func DefaultConfig() Config {
 		// staking
 		MsgToMsgURL(&stakingtypes.MsgDelegate{}):                  constantGasFunc(83_000),
 		MsgToMsgURL(&stakingtypes.MsgUndelegate{}):                constantGasFunc(112_000),
-		MsgToMsgURL(&stakingtypes.MsgBeginRedelegate{}):           constantGasFunc(157_000),
 		MsgToMsgURL(&stakingtypes.MsgCreateValidator{}):           constantGasFunc(117_000),
 		MsgToMsgURL(&stakingtypes.MsgEditValidator{}):             constantGasFunc(13_000),
 		MsgToMsgURL(&stakingtypes.MsgCancelUnbondingDelegation{}): constantGasFunc(75_000),
@@ -274,6 +273,7 @@ func DefaultConfig() Config {
 
 			// staking
 			&stakingtypes.MsgUpdateParams{}, // This is non-deterministic because all the gov proposals are non-deterministic anyway
+			&stakingtypes.MsgBeginRedelegate{},
 			&customparamstypes.MsgUpdateStakingParams{},
 
 			// slashing
