@@ -43,12 +43,12 @@ func (iter *Iterator) Valid() bool {
 	return iter.valid
 }
 
-// Error implements dbm.Iterator
+// Error implements dbm.Iterator.
 func (iter *Iterator) Error() error {
 	return nil
 }
 
-// Key implements dbm.Iterator
+// Key implements dbm.Iterator.
 func (iter *Iterator) Key() []byte {
 	if !iter.zeroCopy {
 		return bytes.Clone(iter.key)
@@ -56,7 +56,7 @@ func (iter *Iterator) Key() []byte {
 	return iter.key
 }
 
-// Value implements dbm.Iterator
+// Value implements dbm.Iterator.
 func (iter *Iterator) Value() []byte {
 	if !iter.zeroCopy {
 		return bytes.Clone(iter.value)
@@ -64,7 +64,7 @@ func (iter *Iterator) Value() []byte {
 	return iter.value
 }
 
-// Next implements dbm.Iterator
+// Next implements dbm.Iterator.
 func (iter *Iterator) Next() {
 	for len(iter.stack) > 0 {
 		// pop node
@@ -76,7 +76,7 @@ func (iter *Iterator) Next() {
 		afterStart := iter.start == nil || startCmp < 0
 		beforeEnd := iter.end == nil || bytes.Compare(key, iter.end) < 0
 
-		if node.IsLeaf() {
+		if node.IsLeaf() { //nolint:nestif
 			startOrAfter := afterStart || startCmp == 0
 			if startOrAfter && beforeEnd {
 				iter.key = key
@@ -106,7 +106,7 @@ func (iter *Iterator) Next() {
 	iter.valid = false
 }
 
-// Close implements dbm.Iterator
+// Close implements dbm.Iterator.
 func (iter *Iterator) Close() error {
 	iter.valid = false
 	iter.stack = nil

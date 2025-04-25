@@ -15,7 +15,7 @@ func (fn CloserFunc) Close() error {
 	return fn()
 }
 
-// Store wraps sdk's cachemulti.Store to add io.Closer interface
+// Store wraps sdk's cachemulti.Store to add io.Closer interface.
 type Store struct {
 	cachemulti.Store
 	io.Closer

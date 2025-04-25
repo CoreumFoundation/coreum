@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/alitto/pond"
-	"github.com/tidwall/wal"
+	walpkg "github.com/tidwall/wal"
 )
 
 const (
@@ -40,7 +40,7 @@ var errReadOnly = errors.New("db is read-only")
 // >  acc
 // >  ... other stores
 // > wal
-// ```
+// ```.
 type DB struct {
 	MultiTree
 	dir      string
@@ -62,7 +62,7 @@ type DB struct {
 	triggerStateSyncExport func(height int64)
 
 	// invariant: the LastIndex always match the current version of MultiTree
-	wal         *wal.Log
+	wal         *walpkg.Log
 	walChanSize int
 	walChan     chan *walEntry
 	walQuit     chan error
@@ -82,7 +82,7 @@ type DB struct {
 	snapshotWriterPool *pond.WorkerPool
 
 	// reusable write batch
-	wbatch wal.Batch
+	wbatch walpkg.Batch
 }
 
 type Options struct {
@@ -143,6 +143,7 @@ const (
 	SnapshotDirLen = len(SnapshotPrefix) + 20
 )
 
+//nolint:funlen
 func Load(dir string, opts Options) (*DB, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid options: %w", err)
@@ -187,7 +188,7 @@ func Load(dir string, opts Options) (*DB, error) {
 		return nil, err
 	}
 
-	wal, err := OpenWAL(walPath(dir), &wal.Options{NoCopy: true, NoSync: true})
+	wal, err := OpenWAL(walPath(dir), &walpkg.Options{NoCopy: true, NoSync: true})
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +199,7 @@ func Load(dir string, opts Options) (*DB, error) {
 		}
 	}
 
-	if opts.LoadForOverwriting && opts.TargetVersion > 0 {
+	if opts.LoadForOverwriting && opts.TargetVersion > 0 { //nolint:nestif
 		currentSnapshot, err := os.Readlink(currentPath(dir))
 		if err != nil {
 			return nil, fmt.Errorf("fail to read current version: %w", err)
@@ -402,7 +403,7 @@ func (db *DB) applyChangeSet(name string, changeSet ChangeSet) error {
 	return db.MultiTree.ApplyChangeSet(name, changeSet)
 }
 
-// checkAsyncTasks checks the status of background tasks non-blocking-ly and process the result
+// checkAsyncTasks checks the status of background tasks non-blocking-ly and process the result.
 func (db *DB) checkAsyncTasks() error {
 	return errors.Join(
 		db.checkAsyncCommit(),
@@ -410,7 +411,7 @@ func (db *DB) checkAsyncTasks() error {
 	)
 }
 
-// checkAsyncCommit check the quit signal of async wal writing
+// checkAsyncCommit check the quit signal of async wal writing.
 func (db *DB) checkAsyncCommit() error {
 	select {
 	case err := <-db.walQuit:
@@ -434,7 +435,8 @@ func (db *DB) CommittedVersion() (int64, error) {
 	return walVersion(lastIndex, db.initialVersion), nil
 }
 
-// checkBackgroundSnapshotRewrite check the result of background snapshot rewrite, cleans up the old snapshots and switches to a new multitree
+// checkBackgroundSnapshotRewrite check the result of background snapshot rewrite, cleans up the old
+// snapshots and switches to a new multitree.
 func (db *DB) checkBackgroundSnapshotRewrite() error {
 	// check the completeness of background snapshot rewriting
 	select {
@@ -488,7 +490,7 @@ func (db *DB) checkBackgroundSnapshotRewrite() error {
 	return nil
 }
 
-// pruneSnapshot prune the old snapshots
+// pruneSnapshot prune the old snapshots.
 func (db *DB) pruneSnapshots() {
 	// wait until last prune finish
 	db.pruneSnapshotLock.Lock()
@@ -539,7 +541,7 @@ func (db *DB) pruneSnapshots() {
 	}()
 }
 
-// Commit wraps SaveVersion to bump the version and writes the pending changes into log files to persist on disk
+// Commit wraps SaveVersion to bump the version and writes the pending changes into log files to persist on disk.
 func (db *DB) Commit() (int64, error) {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
@@ -554,7 +556,7 @@ func (db *DB) Commit() (int64, error) {
 	}
 
 	// write logs if enabled
-	if db.wal != nil {
+	if db.wal != nil { //nolint:nestif
 		entry := walEntry{index: walIndex(v, db.initialVersion), data: db.pendingLog}
 		if db.walChanSize >= 0 {
 			if db.walChan == nil {
@@ -597,7 +599,7 @@ func (db *DB) initAsyncCommit() {
 	go func() {
 		defer close(walQuit)
 
-		batch := wal.Batch{}
+		batch := walpkg.Batch{}
 		for {
 			entries := channelBatchRecv(walChan)
 			if len(entries) == 0 {
@@ -630,7 +632,7 @@ func (db *DB) initAsyncCommit() {
 	db.walQuit = walQuit
 }
 
-// WaitAsyncCommit waits for the completion of async commit
+// WaitAsyncCommit waits for the completion of async commit.
 func (db *DB) WaitAsyncCommit() error {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
@@ -720,7 +722,7 @@ func (db *DB) reloadMultiTree(mtree *MultiTree) error {
 	return db.applyWALEntry(db.pendingLog)
 }
 
-// rewriteIfApplicable execute the snapshot rewrite strategy according to current height
+// rewriteIfApplicable execute the snapshot rewrite strategy according to current height.
 func (db *DB) rewriteIfApplicable(height int64) {
 	if height%int64(db.snapshotInterval) != 0 {
 		return
@@ -951,7 +953,7 @@ func seekSnapshot(root string, targetVersion uint32) (int64, error) {
 	return snapshotVersion, nil
 }
 
-// firstSnapshotVersion returns the earliest snapshot name in the db
+// firstSnapshotVersion returns the earliest snapshot name in the db.
 func firstSnapshotVersion(root string) (int64, error) {
 	var found int64
 	if err := traverseSnapshots(root, true, func(version int64) (bool, error) {
@@ -980,7 +982,7 @@ func walPath(root string) string {
 //	commit_info
 //
 // current -> snapshot-0
-// ```
+// ```.
 func initEmptyDB(dir string, initialVersion uint32) error {
 	tmp := NewEmptyMultiTree(initialVersion, 0)
 	snapshotDir := snapshotName(0)
@@ -1044,7 +1046,7 @@ func traverseSnapshots(dir string, ascending bool, callback func(int64) (bool, e
 	return nil
 }
 
-// atomicRemoveDir is equavalent to `mv snapshot snapshot-tmp && rm -r snapshot-tmp`
+// atomicRemoveDir is equavalent to `mv snapshot snapshot-tmp && rm -r snapshot-tmp`.
 func atomicRemoveDir(path string) error {
 	tmpPath := path + TmpSuffix
 	if err := os.Rename(path, tmpPath); err != nil {
@@ -1084,7 +1086,7 @@ func GetLatestVersion(dir string) (int64, error) {
 		return 0, err
 	}
 
-	wal, err := OpenWAL(walPath(dir), &wal.Options{NoCopy: true})
+	wal, err := OpenWAL(walPath(dir), &walpkg.Options{NoCopy: true})
 	if err != nil {
 		return 0, err
 	}
@@ -1113,7 +1115,7 @@ func channelBatchRecv[T any](ch <-chan *T) []*T {
 	return result
 }
 
-func writeEntry(batch *wal.Batch, logger Logger, lastIndex uint64, entry *walEntry) error {
+func writeEntry(batch *walpkg.Batch, logger Logger, lastIndex uint64, entry *walEntry) error {
 	bz, err := entry.data.Marshal()
 	if err != nil {
 		return err

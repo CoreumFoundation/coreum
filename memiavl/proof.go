@@ -85,12 +85,15 @@ func (t *Tree) VerifyNonMembership(proof *ics23.CommitmentProof, key []byte) boo
 // existence proof, if that's what it is.
 func (t *Tree) createExistenceProof(key []byte) (*ics23.ExistenceProof, error) {
 	path, node, err := pathToLeaf(t.root, key)
+	if err != nil {
+		return nil, err
+	}
 	return &ics23.ExistenceProof{
 		Key:   node.Key(),
 		Value: node.Value(),
 		Leaf:  convertLeafOp(int64(node.Version())),
 		Path:  convertInnerOps(path),
-	}, err
+	}, nil
 }
 
 func convertLeafOp(version int64) *ics23.LeafOp {

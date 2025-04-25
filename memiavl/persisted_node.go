@@ -41,7 +41,7 @@ const (
 // - version    : 4
 // - key len    : 4
 // - key offset : 8
-// - hash       : 32
+// - hash       : 32.
 type PersistedNode struct {
 	snapshot *Snapshot
 	isLeaf   bool
@@ -221,7 +221,7 @@ func (node PersistedNode) GetByIndex(leafIndex uint32) ([]byte, []byte) {
 // >            = pre branches + pre trees
 // >            = total branches - sub branches + pre trees
 // >            = (index + 1) - (size - 1) + preTrees
-// >            = index + 2 - size + preTrees
+// >            = index + 2 - size + preTrees.
 func getStartLeaf(index, size, preTrees uint32) uint32 {
 	return index + 2 - size + preTrees
 }
@@ -230,7 +230,7 @@ func getStartLeaf(index, size, preTrees uint32) uint32 {
 //
 // > end leaf = start leaf + size - 1
 // >          = (index + 2 - size + preTrees) + size - 1
-// >          = index + 1 + preTrees
+// >          = index + 1 + preTrees.
 func getEndLeaf(index, preTrees uint32) uint32 {
 	return index + preTrees + 1
 }
@@ -242,7 +242,7 @@ func getEndLeaf(index, preTrees uint32) uint32 {
 // >             = (total branches - sub branches) + (key leaf - start leaf - 1) - 1
 // >             = (index+1 - (size-1)) + (key leaf - (index + 2 - size + preTrees) - 1) - 1
 // >             = (index - size + 2) + key leaf - index - 2 + size - preTrees - 2
-// >             = key leaf - preTrees - 2
+// >             = key leaf - preTrees - 2.
 func getLeftBranch(keyLeaf, preTrees uint32) uint32 {
 	return keyLeaf - preTrees - 2
 }

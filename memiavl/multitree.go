@@ -34,7 +34,7 @@ type NamedTree struct {
 // >   metadata
 // >  acc
 // >  other stores...
-// ```
+// ```.
 type MultiTree struct {
 	// if the tree is start from genesis, it's the initial version of the chain,
 	// if the tree is imported from snapshot, it's the imported version plus one,
@@ -111,7 +111,7 @@ func LoadMultiTree(dir string, zeroCopy bool, cacheSize int) (*MultiTree, error)
 	return mtree, nil
 }
 
-// TreeByName returns the tree by name, returns nil if not found
+// TreeByName returns the tree by name, returns nil if not found.
 func (t *MultiTree) TreeByName(name string) *Tree {
 	if i, ok := t.treesByName[name]; ok {
 		return t.trees[i].Tree
@@ -194,7 +194,7 @@ func (t *MultiTree) applyWALEntry(entry WALEntry) error {
 	return t.ApplyChangeSets(entry.Changesets)
 }
 
-// ApplyUpgrades store name upgrades
+// ApplyUpgrades store name upgrades.
 func (t *MultiTree) ApplyUpgrades(upgrades []*TreeNameUpgrade) error {
 	if len(upgrades) == 0 {
 		return nil
@@ -264,13 +264,13 @@ func (t *MultiTree) ApplyChangeSets(changeSets []*NamedChangeSet) error {
 	return nil
 }
 
-// WorkingCommitInfo returns the commit info for the working tree
+// WorkingCommitInfo returns the commit info for the working tree.
 func (t *MultiTree) WorkingCommitInfo() *CommitInfo {
 	version := nextVersion(t.lastCommitInfo.Version, t.initialVersion)
 	return t.buildCommitInfo(version)
 }
 
-// SaveVersion bumps the versions of all the stores and optionally returns the new app hash
+// SaveVersion bumps the versions of all the stores and optionally returns the new app hash.
 func (t *MultiTree) SaveVersion(updateCommitInfo bool) (int64, error) {
 	t.lastCommitInfo.Version = nextVersion(t.lastCommitInfo.Version, t.initialVersion)
 	for _, entry := range t.trees {
@@ -396,7 +396,7 @@ func (t *MultiTree) WriteSnapshotWithContext(ctx context.Context, dir string, wp
 	return WriteFileSync(filepath.Join(dir, MetadataFileName), bz)
 }
 
-// WriteFileSync calls `f.Sync` after before closing the file
+// WriteFileSync calls `f.Sync` after before closing the file.
 func WriteFileSync(name string, data []byte) error {
 	f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
@@ -430,7 +430,7 @@ func nextVersion(v int64, initialVersion uint32) int64 {
 	return v + 1
 }
 
-// walIndex converts version to wal index based on initial version
+// walIndex converts version to wal index based on initial version.
 func walIndex(v int64, initialVersion uint32) uint64 {
 	if initialVersion > 1 {
 		return uint64(v) - uint64(initialVersion) + 1
@@ -438,7 +438,7 @@ func walIndex(v int64, initialVersion uint32) uint64 {
 	return uint64(v)
 }
 
-// walVersion converts wal index to version, reverse of walIndex
+// walVersion converts wal index to version, reverse of walIndex.
 func walVersion(index uint64, initialVersion uint32) int64 {
 	if initialVersion > 1 {
 		return int64(index) + int64(initialVersion) - 1

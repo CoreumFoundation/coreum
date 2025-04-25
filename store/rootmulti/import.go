@@ -7,13 +7,12 @@ import (
 
 	"cosmossdk.io/errors"
 	"cosmossdk.io/store/snapshots/types"
+	"github.com/CoreumFaundation/coreum/memiavl"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	protoio "github.com/cosmos/gogoproto/io"
-
-	"github.com/CoreumFaundation/coreum/memiavl"
 )
 
-// Implements interface Snapshotter
+// Implements interface Snapshotter.
 func (rs *Store) Restore(
 	height uint64, format uint32, protoReader protoio.Reader,
 ) (types.SnapshotItem, error) {
@@ -33,7 +32,7 @@ func (rs *Store) Restore(
 }
 
 func (rs *Store) restore(
-	height uint64, format uint32, protoReader protoio.Reader,
+	height uint64, _ uint32, protoReader protoio.Reader,
 ) (types.SnapshotItem, error) {
 	importer, err := memiavl.NewMultiTreeImporter(rs.dir, height)
 	if err != nil {

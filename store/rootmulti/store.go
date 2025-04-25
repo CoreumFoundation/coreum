@@ -16,12 +16,11 @@ import (
 	"cosmossdk.io/store/rootmulti"
 	"cosmossdk.io/store/transient"
 	"cosmossdk.io/store/types"
-	dbm "github.com/cosmos/cosmos-db"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	"github.com/CoreumFaundation/coreum/memiavl"
 	"github.com/CoreumFaundation/coreum/store/cachemulti"
 	"github.com/CoreumFaundation/coreum/store/memiavlstore"
+	dbm "github.com/cosmos/cosmos-db"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const CommitInfoFileName = "commit_infos"
@@ -103,7 +102,7 @@ func (rs *Store) WorkingHash() []byte {
 	return commitInfo.Hash()
 }
 
-// Implements interface Committer
+// Implements interface Committer.
 func (rs *Store) Commit() types.CommitID {
 	if err := rs.flush(); err != nil {
 		panic(err)
@@ -139,7 +138,7 @@ func (rs *Store) Close() error {
 	return rs.db.Close()
 }
 
-// Implements interface Committer
+// Implements interface Committer.
 func (rs *Store) LastCommitID() types.CommitID {
 	if rs.lastCommitInfo == nil {
 		v, err := memiavl.GetLatestVersion(rs.dir)
@@ -152,35 +151,35 @@ func (rs *Store) LastCommitID() types.CommitID {
 	return rs.lastCommitInfo.CommitID()
 }
 
-// Implements interface Committer
+// Implements interface Committer.
 func (rs *Store) SetPruning(pruningtypes.PruningOptions) {
 }
 
-// SetMetrics sets the metrics gatherer for the store package
-func (rs *Store) SetMetrics(metrics metrics.StoreMetrics) {
+// SetMetrics sets the metrics gatherer for the store package.
+func (rs *Store) SetMetrics(_ metrics.StoreMetrics) {
 }
 
-// Implements interface Committer
+// Implements interface Committer.
 func (rs *Store) GetPruning() pruningtypes.PruningOptions {
 	return pruningtypes.NewPruningOptions(pruningtypes.PruningDefault)
 }
 
-// Implements interface Store
+// Implements interface Store.
 func (rs *Store) GetStoreType() types.StoreType {
 	return types.StoreTypeMulti
 }
 
-// Implements interface CacheWrapper
+// Implements interface CacheWrapper.
 func (rs *Store) CacheWrap() types.CacheWrap {
 	return rs.CacheMultiStore().(types.CacheWrap)
 }
 
-// Implements interface CacheWrapper
+// Implements interface CacheWrapper.
 func (rs *Store) CacheWrapWithTrace(_ io.Writer, _ types.TraceContext) types.CacheWrap {
 	return rs.CacheWrap()
 }
 
-// Implements interface MultiStore
+// Implements interface MultiStore.
 func (rs *Store) CacheMultiStore() types.CacheMultiStore {
 	stores := make(map[types.StoreKey]types.CacheWrapper)
 	for k, v := range rs.stores {
@@ -228,7 +227,7 @@ func (rs *Store) CacheMultiStoreWithVersion(version int64) (types.CacheMultiStor
 	return cachemulti.NewStore(stores, nil, nil, nil), nil
 }
 
-// Implements interface MultiStore
+// Implements interface MultiStore.
 func (rs *Store) GetStore(key types.StoreKey) types.Store {
 	s, ok := rs.stores[key]
 	if !ok {
@@ -237,7 +236,7 @@ func (rs *Store) GetStore(key types.StoreKey) types.Store {
 	return s
 }
 
-// Implements interface MultiStore
+// Implements interface MultiStore.
 func (rs *Store) GetKVStore(key types.StoreKey) types.KVStore {
 	s, ok := rs.GetStore(key).(types.KVStore)
 	if !ok {
@@ -246,37 +245,37 @@ func (rs *Store) GetKVStore(key types.StoreKey) types.KVStore {
 	return s
 }
 
-// Implements interface MultiStore
+// Implements interface MultiStore.
 func (rs *Store) TracingEnabled() bool {
 	return false
 }
 
-// Implements interface MultiStore
-func (rs *Store) SetTracer(w io.Writer) types.MultiStore {
+// Implements interface MultiStore.
+func (rs *Store) SetTracer(_ io.Writer) types.MultiStore {
 	return nil
 }
 
-// Implements interface MultiStore
+// Implements interface MultiStore.
 func (rs *Store) SetTracingContext(types.TraceContext) types.MultiStore {
 	return nil
 }
 
-// Implements interface MultiStore
+// Implements interface MultiStore.
 func (rs *Store) LatestVersion() int64 {
 	return rs.db.Version()
 }
 
 // Implements interface Snapshotter
-// not needed, memiavl manage its own snapshot/pruning strategy
-func (rs *Store) PruneSnapshotHeight(height int64) {
+// not needed, memiavl manage its own snapshot/pruning strategy.
+func (rs *Store) PruneSnapshotHeight(_ int64) {
 }
 
 // Implements interface Snapshotter
-// not needed, memiavl manage its own snapshot/pruning strategy
-func (rs *Store) SetSnapshotInterval(snapshotInterval uint64) {
+// not needed, memiavl manage its own snapshot/pruning strategy.
+func (rs *Store) SetSnapshotInterval(_ uint64) {
 }
 
-// Implements interface CommitMultiStore
+// Implements interface CommitMultiStore.
 func (rs *Store) MountStoreWithDB(key types.StoreKey, typ types.StoreType, _ dbm.DB) {
 	if key == nil {
 		panic("MountIAVLStore() key cannot be nil")
@@ -291,12 +290,12 @@ func (rs *Store) MountStoreWithDB(key types.StoreKey, typ types.StoreType, _ dbm
 	rs.keysByName[key.Name()] = key
 }
 
-// Implements interface CommitMultiStore
+// Implements interface CommitMultiStore.
 func (rs *Store) GetCommitStore(key types.StoreKey) types.CommitStore {
 	return rs.stores[key]
 }
 
-// Implements interface CommitMultiStore
+// Implements interface CommitMultiStore.
 func (rs *Store) GetCommitKVStore(key types.StoreKey) types.CommitKVStore {
 	store, ok := rs.GetCommitStore(key).(types.CommitKVStore)
 	if !ok {
@@ -312,13 +311,13 @@ func (rs *Store) LoadLatestVersion() error {
 	return rs.LoadVersionAndUpgrade(0, nil)
 }
 
-// Implements interface CommitMultiStore
+// Implements interface CommitMultiStore.
 func (rs *Store) LoadLatestVersionAndUpgrade(upgrades *types.StoreUpgrades) error {
 	return rs.LoadVersionAndUpgrade(0, upgrades)
 }
 
 // Implements interface CommitMultiStore
-// used by node startup with UpgradeStoreLoader
+// used by node startup with UpgradeStoreLoader.
 func (rs *Store) LoadVersionAndUpgrade(version int64, upgrades *types.StoreUpgrades) error {
 	if version > math.MaxUint32 {
 		return fmt.Errorf("version overflows uint32: %d", version)
@@ -391,7 +390,9 @@ func (rs *Store) LoadVersionAndUpgrade(version int64, upgrades *types.StoreUpgra
 	return nil
 }
 
-func (rs *Store) loadCommitStoreFromParams(db *memiavl.DB, key types.StoreKey, params storeParams) (types.CommitStore, error) {
+func (rs *Store) loadCommitStoreFromParams(
+	db *memiavl.DB, key types.StoreKey, params storeParams,
+) (types.CommitStore, error) {
 	switch params.typ {
 	case types.StoreTypeMulti:
 		panic("recursive MultiStores not yet supported")
@@ -423,34 +424,34 @@ func (rs *Store) loadCommitStoreFromParams(db *memiavl.DB, key types.StoreKey, p
 }
 
 // Implements interface CommitMultiStore
-// used by export cmd
+// used by export cmd.
 func (rs *Store) LoadVersion(ver int64) error {
 	return rs.LoadVersionAndUpgrade(ver, nil)
 }
 
 // SetInterBlockCache is a noop here because memiavl do caching on it's own, which works well with zero-copy.
-func (rs *Store) SetInterBlockCache(c types.MultiStorePersistentCache) {}
+func (rs *Store) SetInterBlockCache(_ types.MultiStorePersistentCache) {}
 
 // Implements interface CommitMultiStore
-// used by InitChain when the initial height is bigger than 1
+// used by InitChain when the initial height is bigger than 1.
 func (rs *Store) SetInitialVersion(version int64) error {
 	return rs.db.SetInitialVersion(version)
 }
 
-// Implements interface CommitMultiStore
-func (rs *Store) SetIAVLCacheSize(size int) {
+// Implements interface CommitMultiStore.
+func (rs *Store) SetIAVLCacheSize(_ int) {
 }
 
-// Implements interface CommitMultiStore
-func (rs *Store) SetIAVLDisableFastNode(disable bool) {
+// Implements interface CommitMultiStore.
+func (rs *Store) SetIAVLDisableFastNode(_ bool) {
 }
 
-// Implements interface CommitMultiStore
-func (rs *Store) SetIAVLSyncPruning(syncPruning bool) {
+// Implements interface CommitMultiStore.
+func (rs *Store) SetIAVLSyncPruning(_ bool) {
 }
 
-// Implements interface CommitMultiStore
-func (rs *Store) SetLazyLoading(lazyLoading bool) {
+// Implements interface CommitMultiStore.
+func (rs *Store) SetLazyLoading(_ bool) {
 }
 
 func (rs *Store) SetMemIAVLOptions(opts memiavl.Options) {
@@ -487,7 +488,7 @@ func (rs *Store) RollbackToVersion(target int64) error {
 	return err
 }
 
-// Implements interface CommitMultiStore
+// Implements interface CommitMultiStore.
 func (rs *Store) ListeningEnabled(key types.StoreKey) bool {
 	if ls, ok := rs.listeners[key]; ok {
 		return ls != nil
@@ -495,7 +496,7 @@ func (rs *Store) ListeningEnabled(key types.StoreKey) bool {
 	return false
 }
 
-// Implements interface CommitMultiStore
+// Implements interface CommitMultiStore.
 func (rs *Store) AddListeners(keys []types.StoreKey) {
 	for i := range keys {
 		listener := rs.listeners[keys[i]]
@@ -536,7 +537,7 @@ func (rs *Store) GetStoreByName(name string) types.Store {
 	return rs.GetCommitStore(key)
 }
 
-// Implements interface Queryable
+// Implements interface Queryable.
 func (rs *Store) Query(req *types.RequestQuery) (*types.ResponseQuery, error) {
 	version := req.Height
 	if version == 0 {
@@ -592,7 +593,7 @@ func (rs *Store) Query(req *types.RequestQuery) (*types.ResponseQuery, error) {
 
 // parsePath expects a format like /<storeName>[/<subpath>]
 // Must start with /, subpath may be empty
-// Returns error if it doesn't start with /
+// Returns error if it doesn't start with /.
 func parsePath(path string) (storeName string, subpath string, err error) {
 	if !strings.HasPrefix(path, "/") {
 		return storeName, subpath, errors.Wrapf(sdkerrors.ErrUnknownRequest, "invalid path: %s", path)
@@ -633,7 +634,7 @@ func mergeStoreInfos(commitInfo *types.CommitInfo, storeInfos []types.StoreInfo)
 	}
 }
 
-// amendCommitInfo add mem stores commit infos to keep it compatible with cosmos-sdk 0.46
+// amendCommitInfo add mem stores commit infos to keep it compatible with cosmos-sdk 0.46.
 func amendCommitInfo(commitInfo *types.CommitInfo, storeParams map[types.StoreKey]storeParams) *types.CommitInfo {
 	var extraStoreInfos []types.StoreInfo
 	for key := range storeParams {

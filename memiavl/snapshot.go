@@ -60,6 +60,8 @@ func NewEmptySnapshot(version uint32) *Snapshot {
 
 // OpenSnapshot parse the version number and the root node index from metadata file,
 // and mmap the other files.
+//
+//nolint:funlen
 func OpenSnapshot(snapshotDir string) (snapshot *Snapshot, err error) {
 	// read metadata file
 	bz, err := os.ReadFile(filepath.Join(snapshotDir, FileNameMetadata))
@@ -418,7 +420,7 @@ func writeSnapshot(
 		return err
 	}
 
-	if leaves > 0 {
+	if leaves > 0 { //nolint:nestif
 		if err := nodesWriter.Flush(); err != nil {
 			return err
 		}

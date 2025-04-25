@@ -24,12 +24,14 @@ type MultiTreeExporter struct {
 	exporter *Exporter
 }
 
-func NewMultiTreeExporter(dir string, version uint32, supportExportNonSnapshotVersion bool) (exporter *MultiTreeExporter, err error) {
+func NewMultiTreeExporter(
+	dir string, version uint32, supportExportNonSnapshotVersion bool,
+) (exporter *MultiTreeExporter, err error) {
 	var (
 		db    *DB
 		mtree *MultiTree
 	)
-	if supportExportNonSnapshotVersion {
+	if supportExportNonSnapshotVersion { //nolint:nestif
 		db, err = Load(dir, Options{
 			TargetVersion:       version,
 			ZeroCopy:            true,

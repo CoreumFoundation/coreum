@@ -18,7 +18,7 @@ func NewCache(cacheSize int) cache.Cache {
 	return cache.New(cacheSize)
 }
 
-// verify change sets by replay them to rebuild iavl tree and verify the root hashes
+// verify change sets by replay them to rebuild iavl tree and verify the root hashes.
 type Tree struct {
 	version, cowVersion uint32
 	// root node of empty tree is represented as `nil`
@@ -54,7 +54,7 @@ func NewEmptyTree(version uint64, cacheSize int) *Tree {
 	}
 }
 
-// New creates an empty tree at genesis version
+// New creates an empty tree at genesis version.
 func New(cacheSize int) *Tree {
 	return NewEmptyTree(0, cacheSize)
 }
@@ -156,7 +156,7 @@ func (t *Tree) remove(key []byte) {
 	}
 }
 
-// SaveVersion increases the version number and optionally updates the hashes
+// SaveVersion increases the version number and optionally updates the hashes.
 func (t *Tree) SaveVersion(updateHash bool) ([]byte, int64, error) {
 	if t.version == uint32(math.MaxUint32) {
 		return nil, 0, fmt.Errorf("version overflows uint32: %d", t.version)
@@ -171,7 +171,7 @@ func (t *Tree) SaveVersion(updateHash bool) ([]byte, int64, error) {
 	return hash, int64(t.version), nil
 }
 
-// Version returns the current tree version
+// Version returns the current tree version.
 func (t *Tree) Version() int64 {
 	return int64(t.version)
 }

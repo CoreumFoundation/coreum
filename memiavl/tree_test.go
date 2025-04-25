@@ -46,7 +46,9 @@ func init() {
 	}
 
 	ChangeSets = append(ChangeSets, changes)
-	ChangeSets = append(ChangeSets, ChangeSet{Pairs: []*KVPair{{Key: []byte("hello"), Delete: true}, {Key: []byte("hello19"), Delete: true}}})
+	ChangeSets = append(ChangeSets, ChangeSet{
+		Pairs: []*KVPair{{Key: []byte("hello"), Delete: true}, {Key: []byte("hello19"), Delete: true}},
+	})
 
 	changes = ChangeSet{}
 	for i := 0; i < 21; i++ {
@@ -66,7 +68,9 @@ func init() {
 	// generate ref hashes with ref impl
 	d := wrapper.NewDBWrapper(db.NewMemDB())
 	refTree := iavl.NewMutableTree(d, 0, true, log.NewNopLogger())
-	refTreeInitialVersion := iavl.NewMutableTree(d, 0, true, log.NewNopLogger(), iavl.InitialVersionOption(uint64(IAVLInitialVersion)))
+	refTreeInitialVersion := iavl.NewMutableTree(
+		d, 0, true, log.NewNopLogger(), iavl.InitialVersionOption(uint64(IAVLInitialVersion)),
+	)
 	for _, changes := range ChangeSets {
 		{
 			if err := applyChangeSetRef(refTreeInitialVersion, changes); err != nil {
@@ -273,7 +277,9 @@ func TestChangeSetMarshal(t *testing.T) {
 func TestGetByIndex(t *testing.T) {
 	changes := ChangeSet{}
 	for i := 0; i < 20; i++ {
-		changes.Pairs = append(changes.Pairs, &KVPair{Key: []byte(fmt.Sprintf("hello%02d", i)), Value: []byte(strconv.Itoa(i))})
+		changes.Pairs = append(changes.Pairs, &KVPair{
+			Key: []byte(fmt.Sprintf("hello%02d", i)), Value: []byte(strconv.Itoa(i)),
+		})
 	}
 
 	tree := New(0)

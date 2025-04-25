@@ -58,7 +58,7 @@ func (node *MemNode) Right() Node {
 	return node.right
 }
 
-// Mutate clones the node if it's version is smaller than or equal to cowVersion, otherwise modify in-place
+// Mutate clones the node if it's version is smaller than or equal to cowVersion, otherwise modify in-place.
 func (node *MemNode) Mutate(version, cowVersion uint32) *MemNode {
 	n := node
 	if node.version <= cowVersion {
@@ -107,6 +107,8 @@ func calcBalance(node Node) int {
 //	 L                   S
 //	/ \                 / \
 //	  LR               LR
+//
+//nolint:dupword
 func (node *MemNode) rotateRight(version, cowVersion uint32) *MemNode {
 	newSelf := node.left.Mutate(version, cowVersion)
 	node.left = node.left.Right()
@@ -123,6 +125,8 @@ func (node *MemNode) rotateRight(version, cowVersion uint32) *MemNode {
 //	    R         S
 //	   / \       / \
 //	 RL             RL
+//
+//nolint:dupword
 func (node *MemNode) rotateLeft(version, cowVersion uint32) *MemNode {
 	newSelf := node.right.Mutate(version, cowVersion)
 	node.right = node.right.Left()
@@ -139,7 +143,7 @@ func (node *MemNode) reBalance(version, cowVersion uint32) *MemNode {
 	case balance > 1:
 		leftBalance := calcBalance(node.left)
 		if leftBalance >= 0 {
-			// left left
+			//nolint:dupword // left left
 			return node.rotateRight(version, cowVersion)
 		}
 		// left right
@@ -148,7 +152,7 @@ func (node *MemNode) reBalance(version, cowVersion uint32) *MemNode {
 	case balance < -1:
 		rightBalance := calcBalance(node.right)
 		if rightBalance <= 0 {
-			// right right
+			//nolint:dupword // right right
 			return node.rotateLeft(version, cowVersion)
 		}
 		// right left
