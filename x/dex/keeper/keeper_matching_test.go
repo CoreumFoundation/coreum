@@ -3018,7 +3018,6 @@ func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
 
 func TestKeeper_MatchOrders_InvertedOBMarketMatching(t *testing.T) {
 	tests := []tst{
-		// ******************** Inverted OB market matching ********************
 		{
 			name: "match_market_invertedOB_maker_sell_taker_sell_close_both",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
@@ -3267,10 +3266,10 @@ func TestKeeper_MatchOrders_InvertedOBMarketMatching(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 999),
+						sdk.NewInt64Coin(testSet.denom2, 90_000),
 					),
 				}
 			},
@@ -3283,7 +3282,7 @@ func TestKeeper_MatchOrders_InvertedOBMarketMatching(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3293,7 +3292,7 @@ func TestKeeper_MatchOrders_InvertedOBMarketMatching(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
-						Quantity:    sdkmath.NewInt(999),
+						Quantity:    sdkmath.NewInt(90_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -3308,24 +3307,32 @@ func TestKeeper_MatchOrders_InvertedOBMarketMatching(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(7336),
-						RemainingSpendableBalance: sdkmath.NewInt(7336),
+						RemainingBaseQuantity:     sdkmath.NewInt(760_000),
+						RemainingSpendableBalance: sdkmath.NewInt(760_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 999)),
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 2664)),
+					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 90_000)),
+					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 240_000)),
 				}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
+func TestKeeper_MatchOrders_Other(t *testing.T) {
+	tests := []tst{
 		// ******************** Combined matching ********************
-
 		{
 			name: "match_limit_directOB_and_invertedOB_buy_close_invertedOB_taker_with_fifo_priority",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
