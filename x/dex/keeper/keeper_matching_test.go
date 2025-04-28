@@ -4407,8 +4407,6 @@ func TestKeeper_MatchOrders_DirectAndInvertedOB(t *testing.T) {
 	}
 }
 
-// TODO: rename unit tests and functions.
-
 func TestKeeper_MatchOrders_Other(t *testing.T) {
 	t.SkipNow()
 	tests := []tst{
@@ -6483,9 +6481,6 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.run(t)
 		})
-		// if tt.name == "match_market_directOB_and_invertedOB_sell_close_all_makers" {
-		// 	break
-		// }
 	}
 }
 
