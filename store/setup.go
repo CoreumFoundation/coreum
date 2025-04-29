@@ -35,25 +35,25 @@ func SetupMemIAVL(
 	cacheSize int,
 	baseAppOptions []func(*baseapp.BaseApp),
 ) []func(*baseapp.BaseApp) {
-	if cast.ToBool(appOpts.Get(FlagMemIAVL)) {
-		opts := memiavl.Options{
-			AsyncCommitBuffer:   cast.ToInt(appOpts.Get(FlagAsyncCommitBuffer)),
-			ZeroCopy:            cast.ToBool(appOpts.Get(FlagZeroCopy)),
-			SnapshotKeepRecent:  cast.ToUint32(appOpts.Get(FlagSnapshotKeepRecent)),
-			SnapshotInterval:    cast.ToUint32(appOpts.Get(FlagSnapshotInterval)),
-			CacheSize:           cacheSize,
-			SnapshotWriterLimit: cast.ToInt(appOpts.Get(FlagSnapshotWriterLimit)),
-		}
-
-		if opts.ZeroCopy {
-			// it's unsafe to cache zero-copied byte slices without copying them
-			sdk.SetAddrCacheEnabled(false)
-		}
-
-		// cms must be overridden before the other options, because they may use the cms,
-		// make sure the cms aren't be overridden by the other options later on.
-		baseAppOptions = append([]func(*baseapp.BaseApp){setMemIAVL(homePath, logger, opts, sdk46Compact, supportExportNonSnapshotVersion)}, baseAppOptions...)
+	//if cast.ToBool(appOpts.Get(FlagMemIAVL)) {
+	opts := memiavl.Options{
+		AsyncCommitBuffer:   cast.ToInt(100),
+		ZeroCopy:            cast.ToBool(true),
+		SnapshotKeepRecent:  cast.ToUint32(1),
+		SnapshotInterval:    cast.ToUint32(1000),
+		CacheSize:           cacheSize,
+		SnapshotWriterLimit: cast.ToInt(-1),
 	}
+
+	if opts.ZeroCopy {
+		// it's unsafe to cache zero-copied byte slices without copying them
+		sdk.SetAddrCacheEnabled(false)
+	}
+
+	// cms must be overridden before the other options, because they may use the cms,
+	// make sure the cms aren't be overridden by the other options later on.
+	baseAppOptions = append([]func(*baseapp.BaseApp){setMemIAVL(homePath, logger, opts, sdk46Compact, supportExportNonSnapshotVersion)}, baseAppOptions...)
+	//}
 
 	return baseAppOptions
 }

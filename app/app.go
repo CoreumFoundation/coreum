@@ -326,7 +326,7 @@ func New(
 	// relies on localhost client to be registered.
 	ibclocalhost.RegisterInterfaces(interfaceRegistry)
 
-	cacheSize := cast.ToInt(appOpts.Get(memiavlstore.FlagCacheSize))
+	cacheSize := cast.ToInt(102400)
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 	baseAppOptions = memiavlstore.SetupMemIAVL(logger, homePath, appOpts, false, false, cacheSize, baseAppOptions)
 
