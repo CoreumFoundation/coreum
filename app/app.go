@@ -131,6 +131,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
+	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/CoreumFoundation/coreum/v6/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v6/app/upgrade"
@@ -1220,6 +1221,8 @@ func New(
 		// want to panic here instead of logging a warning.
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
+
+	protoregistry.GlobalFiles = protoFiles
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
