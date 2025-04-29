@@ -239,8 +239,8 @@ github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a h1:1vgtS45y86pyFZ/n2RBHjKQhHRDK1VQek7NHbkPfkGU=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/crust v0.0.0-20250422105139-051d68f6bb18 h1:Dakkd1sHgL4RB+hcXJC815EyCfH45McG19zKVTPI5YY=
-github.com/CoreumFoundation/crust v0.0.0-20250422105139-051d68f6bb18/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
+github.com/CoreumFoundation/crust v0.0.0-20250428150205-f8b385a8d919 h1:FBknw0Rx4zgX8r01B0oFyuVAe6WBpQ6T4/3QlXkGzec=
+github.com/CoreumFoundation/crust v0.0.0-20250428150205-f8b385a8d919/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
 github.com/CoreumFoundation/crust/znet v0.0.0-20250422105139-051d68f6bb18 h1:Z8XPjq8DxpaGA8zl1pGTKRgBge/lojMyuekCCaIc+Gk=
 github.com/CoreumFoundation/crust/znet v0.0.0-20250422105139-051d68f6bb18/go.mod h1:urqH0J2WRcRPrFmt5by8wdwonVkho26LpfeORXzx7sk=
 github.com/CosmWasm/wasmd v0.54.0 h1:/txsBehV1xnAi46H1xwuuY6D4NySujBy+wa5+ryItS8=
