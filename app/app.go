@@ -219,6 +219,9 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
 }
 
+// protosMerged used to make sure proto files are merged only once.
+var protosMerged bool
+
 // App extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
@@ -1222,7 +1225,10 @@ func New(
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
 
-	protoregistry.GlobalFiles = protoFiles
+	if !protosMerged {
+		protoregistry.GlobalFiles = protoFiles
+		protosMerged = true
+	}
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
