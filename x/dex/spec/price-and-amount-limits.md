@@ -51,7 +51,6 @@ To define an asset’s price on-chain, we introduce a parameter called `unified_
 
 For instance, if BTC is issued on Coreum with satoshi as its subunit (where **1 BTC = 100,000,000 satoshis**) and its market price is **$90,000**, then `unified_ref_amount` should be **0.0000111 BTC (or 1110 satoshis)**, since **1 BTC / 90,000 = 0.0000111 BTC**, which approximates **1 USD** in satoshi terms.
 
-
 ## How `unified_ref_amount` is Defined
 
 1. **Coreum Native Assets**: If the token is issued on the Coreum chain, this variable can be set or updated by the token admin.
@@ -93,6 +92,12 @@ Where:
 This approach ensures that minimum trade sizes scale appropriately with asset value while maintaining a consistent precision level.
 
 For more details on the logic behind this formula and the constants used, refer to the [Theoretical Justification](#Theoretical-Justification) section.
+
+## Interactive Spreadsheet
+
+For a practical understanding and to experiment with different values, refer to the following Google Sheet where all formulas are implemented:
+
+[🔗 Price Tick Calculator Spreadsheet](https://docs.google.com/spreadsheets/d/1UL9Ni6VP_fmrXw4lv6snPcNyBTGYFFF085jGheivs9A)
 
 ## **Important**
 
