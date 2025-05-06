@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -219,8 +220,8 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
 }
 
-// protosMerged used to make sure proto files are merged only once.
-var protosMerged bool
+// mergeProtos used to make sure proto files are merged only once.
+var mergeProtos sync.Once
 
 // App extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
@@ -1225,10 +1226,9 @@ func New(
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
 
-	if !protosMerged {
+	mergeProtos.Do(func() {
 		protoregistry.GlobalFiles = protoFiles
-		protosMerged = true
-	}
+	})
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
