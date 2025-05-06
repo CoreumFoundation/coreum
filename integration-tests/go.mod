@@ -1,6 +1,8 @@
 module github.com/CoreumFoundation/coreum/v6/integration-tests
 
-go 1.23.3
+go 1.24
+
+toolchain go1.24.2
 
 replace (
 	// cosmos keyring

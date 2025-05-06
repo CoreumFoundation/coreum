@@ -1,6 +1,8 @@
 module github.com/CoreumFoundation/coreum/build
 
-go 1.23.3
+go 1.24
+
+toolchain go1.24.2
 
 replace github.com/CoreumFoundation/coreum/v6 => ../
 
@@ -20,8 +22,8 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v6 v6.0.0-20250421142245-52bdcb2a0560
-	github.com/CoreumFoundation/crust v0.0.0-20250428150205-f8b385a8d919
-	github.com/CoreumFoundation/crust/znet v0.0.0-20250422105139-051d68f6bb18
+	github.com/CoreumFoundation/crust v0.0.0-20250506105251-e7e4de369d47
+	github.com/CoreumFoundation/crust/znet v0.0.0-20250506105251-e7e4de369d47
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.49.1
