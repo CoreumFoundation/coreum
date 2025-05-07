@@ -2,9 +2,11 @@ module github.com/CoreumFoundation/coreum/build
 
 go 1.24
 
-toolchain go1.24.2
+toolchain go1.24.1
 
 replace github.com/CoreumFoundation/coreum/v6 => ../
+replace github.com/CoreumFoundation/crust => ../../crust
+replace github.com/CoreumFoundation/crust/znet => ../../crust/znet
 
 // CosmosSDK replacements
 replace (
