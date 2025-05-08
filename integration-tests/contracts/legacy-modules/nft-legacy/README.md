@@ -19,7 +19,7 @@ The contract can be instantiated with the following messages
 }
 ```
 
-The instantiantion of the contract will issue a new AssetNFT (and therefore become the issuer of the asset) with the values provided. The class_id of the new AssetNFT will be generated as {symbol}-{issuer_address}.
+The instantiation of the contract will issue a new AssetNFT (and therefore become the issuer of the asset) with the values provided. The class_id of the new AssetNFT will be generated as {symbol}-{issuer_address}.
 
 Features define what actions can be performed on the new non fungible token (These features are immutable in the future). Available features: Burning (0), Freezing(1), Whitelisting(2), Disable Sending(3).
 Royalty rate is a number between 0 and 1 (in String format). Whenever an NFT of this class is traded for a certain amount, the royalty fee will be multiplied by this amount and sent to the issuer of the NFT
