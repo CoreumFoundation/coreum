@@ -41,19 +41,24 @@ func TestAuthzDirectTransferFails(t *testing.T) {
 		Amount: sdk.NewCoins(chain.NewCoin(amountToSend)),
 	}
 
-	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			// Grantee signs the transaction, but granter is the sender, so fees are taken from the granter's account.
-			// In ante handler, fees are deducted before verifying signature, so funding granter to cover the fee is important,
-			// to verify that transaction is rejected due to invalid signature.
-			msgBankSend,
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: granter,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					// Grantee signs the transaction, but granter is the sender, so fees are taken from the granter's account.
+					// In ante handler, fees are deducted before verifying signature, so funding granter to cover the fee is important,
+					// to verify that transaction is rejected due to invalid signature.
+					msgBankSend,
+				},
+				Amount: amountToSend,
+			},
+		}, {
+			Acc: grantee, // this is done because account must exist to send transaction
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewIntFromUint64(1),
+			},
 		},
-		Amount: amountToSend,
-	})
-
-	// this is done because account must exist to send transaction
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdkmath.NewIntFromUint64(1),
 	})
 
 	// try to send from grantee directly
@@ -82,12 +87,28 @@ func TestAuthz(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	totalAmountToSend := sdkmath.NewInt(2_000)
-	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&authztypes.MsgGrant{},
-			&authztypes.MsgRevoke{},
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: granter,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&authztypes.MsgGrant{},
+					&authztypes.MsgRevoke{},
+					&authztypes.MsgGrant{},
+					&authztypes.MsgRevoke{},
+				},
+				Amount: totalAmountToSend.MulRaw(2),
+			},
+		}, {
+			Acc: grantee,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(40_000),
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+				},
+			},
 		},
-		Amount: totalAmountToSend,
 	})
 
 	// init the messages provisionally to use in the authztypes.MsgExec
@@ -98,21 +119,6 @@ func TestAuthz(t *testing.T) {
 		Amount: sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1_000))),
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
-
-	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&authztypes.MsgGrant{},
-			&authztypes.MsgRevoke{},
-		},
-		Amount: totalAmountToSend,
-	})
-
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(40_000),
-		Messages: []sdk.Msg{
-			msgBankSend,
-		},
-	})
 
 	// grant the bank send authorization
 	grantMsg, err := authztypes.NewMsgGrant(
@@ -213,9 +219,19 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
-		Messages: []sdk.Msg{grantMsg},
-		Amount:   sdkmath.NewInt(amountToSendFromMultisigAccount),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: granter,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{grantMsg},
+				Amount:   sdkmath.NewInt(amountToSendFromMultisigAccount),
+			},
+		}, {
+			Acc: multisigAddress,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(20_000),
+			},
+		},
 	})
 
 	_, err = client.BroadcastTx(
@@ -233,9 +249,6 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 		Amount:      coinsToSendToRecipient,
 	}
 	execMsg := authztypes.NewMsgExec(multisigAddress, []sdk.Msg{msgBankSend})
-	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(20_000),
-	})
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
@@ -293,11 +306,21 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	chain.FundAccountWithOptions(ctx, t, multisigAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			grantMsg,
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: multisigAddress,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					grantMsg,
+				},
+				Amount: sdkmath.NewInt(amountToSendFromMultisigAccount),
+			},
+		}, {
+			Acc: grantee,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(20_000),
+			},
 		},
-		Amount: sdkmath.NewInt(amountToSendFromMultisigAccount),
 	})
 
 	txRes, err := chain.SignAndBroadcastMultisigTx(
@@ -317,9 +340,6 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend})
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(20_000),
-	})
 
 	_, err = client.BroadcastTx(
 		ctx,
