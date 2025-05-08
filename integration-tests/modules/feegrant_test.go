@@ -30,16 +30,23 @@ func TestFeeGrant(t *testing.T) {
 	recipient := chain.GenAccount()
 	feegrantClient := feegrant.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&feegrant.MsgRevokeAllowance{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: granter,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+					&banktypes.MsgSend{},
+					&feegrant.MsgRevokeAllowance{},
+				},
+				Amount: sdkmath.NewInt(500_000),
+			},
+		}, {
+			Acc: grantee,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1),
+			},
 		},
-		Amount: sdkmath.NewInt(500_000),
-	})
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1),
 	})
 
 	basicAllowance, err := codectypes.NewAnyWithValue(&feegrant.BasicAllowance{
