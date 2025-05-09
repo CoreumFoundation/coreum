@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -131,6 +132,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
+	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/CoreumFoundation/coreum/v6/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v6/app/upgrade"
@@ -217,6 +219,9 @@ func init() {
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
 }
+
+// mergeProtos used to make sure proto files are merged only once.
+var mergeProtos sync.Once
 
 // App extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
@@ -1220,6 +1225,10 @@ func New(
 		// want to panic here instead of logging a warning.
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
+
+	mergeProtos.Do(func() {
+		protoregistry.GlobalFiles = protoFiles
+	})
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
