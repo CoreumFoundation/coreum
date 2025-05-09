@@ -11,6 +11,7 @@ import (
 
 	"cosmossdk.io/log"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
+	memiavlcfg "github.com/CoreumFaundation/coreum/store/config"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmcfg "github.com/cometbft/cometbft/config"
@@ -188,7 +189,9 @@ func initAppConfig() (string, interface{}) {
 
 	type CustomAppConfig struct {
 		serverconfig.Config
-		WASM WASMConfig
+		WASM      WASMConfig
+		MemIAVL   memiavlcfg.MemIAVLConfig `mapstructure:"memiavl"`
+		VersionDB VersionDBConfig          `mapstructure:"versiondb"`
 	}
 
 	defaultWasmNodeConfig := wasmtypes.DefaultNodeConfig()
@@ -198,6 +201,8 @@ func initAppConfig() (string, interface{}) {
 			QueryGasLimit:   defaultWasmNodeConfig.SmartQueryGasLimit,
 			MemoryCacheSize: defaultWasmNodeConfig.MemoryCacheSize,
 		},
+		MemIAVL:   memiavlcfg.DefaultMemIAVLConfig(),
+		VersionDB: DefaultVersionDBConfig(),
 	}
 
 	customAppTemplate := serverconfig.DefaultConfigTemplate + `
@@ -209,7 +214,7 @@ query_gas_limit = {{ .WASM.QueryGasLimit }}
 memory_cache_size = {{ .WASM.MemoryCacheSize }}
 `
 
-	return customAppTemplate, customAppConfig
+	return customAppTemplate + memiavlcfg.DefaultConfigTemplate + DefaultVersionDBTemplate, customAppConfig
 }
 
 func initRootCmd(
