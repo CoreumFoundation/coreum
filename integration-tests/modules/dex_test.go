@@ -49,13 +49,160 @@ func TestLimitOrdersMatching(t *testing.T) {
 	requireT.NoError(err)
 
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+	acc2 := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+			},
+		},
 	})
 
+	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
+	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6))
+
+	placeSellOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc1.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1",
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:    sdkmath.NewInt(1_000_000),
+		Side:        dextypes.SIDE_SELL,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc1),
+		chain.TxFactoryAuto(),
+		placeSellOrderMsg,
+	)
+	requireT.NoError(err)
+
+	sellOrderRes, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
+		Creator: placeSellOrderMsg.Sender,
+		Id:      placeSellOrderMsg.ID,
+	})
+	requireT.NoError(err)
+
+	requireT.Equal(dextypes.Order{
+		Creator:                   acc1.String(),
+		Type:                      dextypes.ORDER_TYPE_LIMIT,
+		ID:                        "id1",
+		Sequence:                  sellOrderRes.Order.Sequence,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom2,
+		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("1e-1")),
+		Quantity:                  sdkmath.NewInt(1_000_000),
+		Side:                      dextypes.SIDE_SELL,
+		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(1_000_000),
+		RemainingSpendableBalance: sdkmath.NewInt(1_000_000),
+		Reserve:                   dexParamsRes.Params.OrderReserve,
+	}, sellOrderRes.Order)
+
+	// place buy order to match the sell
+	placeBuyOrderMsg := &dextypes.MsgPlaceOrder{
+		Sender:      acc2.String(),
+		Type:        dextypes.ORDER_TYPE_LIMIT,
+		ID:          "id1", // same ID allowed for different user
+		BaseDenom:   denom1,
+		QuoteDenom:  denom2,
+		Price:       lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
+		Quantity:    sdkmath.NewInt(3_000_000),
+		Side:        dextypes.SIDE_BUY,
+		TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(acc2),
+		chain.TxFactoryAuto(),
+		placeBuyOrderMsg,
+	)
+	requireT.NoError(err)
+
+	// now query the sell order
+	_, err = dexClient.Order(ctx, &dextypes.QueryOrderRequest{
+		Creator: placeSellOrderMsg.Sender,
+		Id:      placeSellOrderMsg.ID,
+	})
+	requireT.ErrorContains(err, dextypes.ErrRecordNotFound.Error())
+
+	// check remaining buy order
+	buyOrderRes, err := dexClient.Order(ctx, &dextypes.QueryOrderRequest{
+		Creator: placeBuyOrderMsg.Sender,
+		Id:      placeBuyOrderMsg.ID,
+	})
+	requireT.NoError(err)
+	requireT.NotNil(buyOrderRes.Order)
+
+	requireT.Equal(dextypes.Order{
+		Creator:                   acc2.String(),
+		Type:                      dextypes.ORDER_TYPE_LIMIT,
+		ID:                        "id1", // same ID allowed for different users
+		Sequence:                  buyOrderRes.Order.Sequence,
+		BaseDenom:                 denom1,
+		QuoteDenom:                denom2,
+		Price:                     lo.ToPtr(dextypes.MustNewPriceFromString("11e-2")),
+		Quantity:                  sdkmath.NewInt(3_000_000),
+		Side:                      dextypes.SIDE_BUY,
+		TimeInForce:               dextypes.TIME_IN_FORCE_GTC,
+		RemainingBaseQuantity:     sdkmath.NewInt(2_000_000),
+		RemainingSpendableBalance: sdkmath.NewInt(220_000),
+		Reserve:                   dexParamsRes.Params.OrderReserve,
+	}, buyOrderRes.Order)
+
+	acc1Denom2BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc1.String(),
+		Denom:   denom2,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(100_000).String(), acc1Denom2BalanceRes.Balance.Amount.String())
+
+	acc2Denom1BalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: acc2.String(),
+		Denom:   denom1,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdkmath.NewInt(1_000_000).String(), acc2Denom1BalanceRes.Balance.Amount.String())
+}
+
+// TestLimitOrdersMatchingFast tests the dex modules ability to place get and match limit orders.
+func TestLimitOrdersMatchingFast(t *testing.T) {
+	t.Parallel()
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	dexClient := dextypes.NewQueryClient(chain.ClientContext)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	acc1 := chain.GenAccount()
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+			},
+		},
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -183,13 +330,20 @@ func TestMarketOrdersMatching(t *testing.T) {
 	requireT.NoError(err)
 
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(1_000_000)),
-	})
-
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(1_000_000)),
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(1_000_000)),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(1_000_000)),
+			},
+		},
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
@@ -275,19 +429,26 @@ func TestOrderCancellation(t *testing.T) {
 	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgSetWhitelistedLimit{},
-		},
-	})
-
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgCancelOrder{},
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+					&assetfttypes.MsgSetWhitelistedLimit{},
+				},
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&dextypes.MsgCancelOrder{},
+				},
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+			},
 		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6))
@@ -790,23 +951,31 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgFreeze{},
-			&assetfttypes.MsgUnfreeze{},
-			&assetfttypes.MsgFreeze{},
-		},
-	})
-
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
-	})
-
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+					&assetfttypes.MsgFreeze{},
+					&assetfttypes.MsgUnfreeze{},
+					&assetfttypes.MsgFreeze{},
+				},
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+			},
+		},
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
@@ -1002,24 +1171,32 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgGloballyFreeze{},
-			&assetfttypes.MsgGloballyUnfreeze{},
-			&assetfttypes.MsgGloballyFreeze{},
-			&assetfttypes.MsgGloballyUnfreeze{},
-		},
-	})
-
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
-	})
-
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+					&assetfttypes.MsgGloballyFreeze{},
+					&assetfttypes.MsgGloballyUnfreeze{},
+					&assetfttypes.MsgGloballyFreeze{},
+					&assetfttypes.MsgGloballyUnfreeze{},
+				},
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+			},
+		},
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
@@ -1232,22 +1409,29 @@ func TestLimitOrdersMatchingWithAssetClawback(t *testing.T) {
 	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgClawback{},
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgClawback{},
-			&assetfttypes.MsgClawback{},
-		},
-	})
-
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&dextypes.MsgCancelOrder{},
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+					&assetfttypes.MsgClawback{},
+					&banktypes.MsgSend{},
+					&assetfttypes.MsgClawback{},
+					&assetfttypes.MsgClawback{},
+				},
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&dextypes.MsgCancelOrder{},
+				},
+				Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
+			},
 		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_clawback)
@@ -1553,20 +1737,25 @@ func TestLimitOrdersMatchingWithBurnRate(t *testing.T) {
 	requireT.NoError(err)
 
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
-	})
-
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
-	})
 
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
+	issueFeeAmount := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgIssue{},
+				},
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)).Add(issueFeeAmount),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+			},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        acc1.String(),
@@ -1704,20 +1893,25 @@ func TestLimitOrdersMatchingWithCommissionRate(t *testing.T) {
 	requireT.NoError(err)
 
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
-	})
-
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
-	})
 
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
+	issueFeeAmount := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgIssue{},
+				},
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)).Add(issueFeeAmount),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+			},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:             acc1.String(),
@@ -1855,24 +2049,32 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgSetWhitelistedLimit{},
-			&assetfttypes.MsgSetWhitelistedLimit{},
-			&banktypes.MsgSend{},
-			&assetfttypes.MsgSetWhitelistedLimit{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
-	})
-
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
-	})
-
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgSetWhitelistedLimit{},
+					&assetfttypes.MsgSetWhitelistedLimit{},
+					&banktypes.MsgSend{},
+					&assetfttypes.MsgSetWhitelistedLimit{},
+				},
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(100_000)),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).Add(sdkmath.NewInt(100_000).MulRaw(2)),
+			},
+		},
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_whitelisting)
@@ -2057,29 +2259,41 @@ func TestCancelOrdersByDenom(t *testing.T) {
 	dexClient := dextypes.NewQueryClient(chain.ClientContext)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-		},
-		Amount: sdkmath.NewIntWithDecimal(1, 6), // amount to cover cancellation
-	})
-
 	acc1 := chain.GenAccount()
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: sdkmath.NewIntWithDecimal(1, 6), // amount to cover cancellation
+
+	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	ordersCount := int(dexParamsRes.Params.MaxOrdersPerDenom)
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+				},
+				Amount: sdkmath.NewIntWithDecimal(1, 6), // amount to cover cancellation
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewIntWithDecimal(1, 6), // amount to cover cancellation
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(ordersCount)).AddRaw(100_000 * int64(ordersCount)),
+			},
+		},
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 10), assetfttypes.Feature_dex_order_cancellation)
 	denom2 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 10), assetfttypes.Feature_dex_order_cancellation)
 
-	dexParamsRes, err := dexClient.Params(ctx, &dextypes.QueryParamsRequest{})
-	requireT.NoError(err)
-
 	latestBlock, err := chain.LatestBlockHeader(ctx)
 	requireT.NoError(err)
-
-	ordersCount := int(dexParamsRes.Params.MaxOrdersPerDenom)
 
 	amtPerOrder := sdkmath.NewInt(100_000)
 	placeMsgs := lo.RepeatBy(ordersCount, func(_ int) sdk.Msg {
@@ -2098,9 +2312,6 @@ func TestCancelOrdersByDenom(t *testing.T) {
 			}),
 			TimeInForce: dextypes.TIME_IN_FORCE_GTC,
 		}
-	})
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(int64(ordersCount)).AddRaw(100_000 * int64(ordersCount)),
 	})
 
 	// send required tokens to acc1
@@ -2204,23 +2415,30 @@ func TestAssetFTBlockSmartContractsFeatureWithDEX(t *testing.T) {
 	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
-	})
-
 	acc := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc, integration.BalancesOptions{
-		// 2 to place directly and 1 through the smart contract
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(3).
-			Add(sdkmath.NewInt(100_000).MulRaw(3)).
-			Add(chain.QueryDEXParams(ctx, t).OrderReserve.Amount),
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgIssue{},
+					&banktypes.MsgSend{},
+					&banktypes.MsgSend{},
+					&banktypes.MsgSend{},
+					&banktypes.MsgSend{},
+				},
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2),
+			},
+		}, {
+			Acc: acc,
+			Options: integration.BalancesOptions{
+				// 2 to place directly and 1 through the smart contract
+				Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(3).
+					Add(sdkmath.NewInt(100_000).MulRaw(3)).
+					Add(chain.QueryDEXParams(ctx, t).OrderReserve.Amount),
+			},
+		},
 	})
 
 	issue1Msg := &assetfttypes.MsgIssue{
@@ -2409,21 +2627,28 @@ func TestLimitOrdersMatchingWithAssetBurning(t *testing.T) {
 	requireT.NoError(err)
 
 	issuer := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-		},
-	})
-
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgBurn{},
-			&dextypes.MsgCancelOrder{},
-			&assetfttypes.MsgBurn{},
-			&assetfttypes.MsgBurn{},
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+				},
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgBurn{},
+					&dextypes.MsgCancelOrder{},
+					&assetfttypes.MsgBurn{},
+					&assetfttypes.MsgBurn{},
+				},
+				Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(1).Add(sdkmath.NewInt(100_000)),
+			},
 		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(1).Add(sdkmath.NewInt(100_000)),
 	})
 
 	denom1 := issueFT(ctx, t, chain, issuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_burning)
@@ -2541,20 +2766,31 @@ func TestDEXReentrancyViaExtension(t *testing.T) {
 	acc1 := chain.GenAccount()
 	acc2 := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			AddRaw(10_000_000).
-			Add(dexReserver.Amount),
-	})
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		// message + order reserve
-		Amount: sdkmath.NewInt(5_000_000).
-			Add(dexReserver.Amount.MulRaw(3)),
-	})
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(5_000_000).
-			AddRaw(1_000_000).
-			Add(dexReserver.Amount), // message + balance to place an order + order reserve
+	issueFeeAmount := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: issueFeeAmount.
+					AddRaw(10_000_000).
+					Add(dexReserver.Amount),
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				// message + order reserve
+				Amount: sdkmath.NewInt(5_000_000).
+					Add(dexReserver.Amount.MulRaw(3)),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(5_000_000).
+					AddRaw(1_000_000).
+					Add(dexReserver.Amount), // message + balance to place an order + order reserve
+			},
+		},
 	})
 
 	codeID, err1 := chain.Wasm.DeployWASMContract(
@@ -2719,22 +2955,30 @@ func TestTradeByAdmin(t *testing.T) {
 	requireT.NoError(err)
 
 	acc1 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
-	})
-
 	acc2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(10_000_000),
+	admin := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(10_000_000),
+			},
+		}, {
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
+			},
+		},
 	})
 
 	denom1 := issueFT(ctx, t, chain, acc1, sdkmath.NewIntWithDecimal(1, 6))
 	denom2 := issueFT(ctx, t, chain, acc2, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
-
-	admin := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: dexParamsRes.Params.OrderReserve.Amount.Add(sdkmath.NewInt(10_000_000)),
-	})
 
 	msgSend := &banktypes.MsgSend{
 		FromAddress: acc2.String(),
