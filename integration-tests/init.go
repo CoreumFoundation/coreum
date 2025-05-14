@@ -89,7 +89,7 @@ func init() {
 
 	ctx = context.Background()
 	if !runUnsafe {
-		ctx = integration.WithSkipUnsafe(ctx)
+		ctx = integration.WithSkipUnsafe(ctx) //nolint:fatcontext // one level of nesting is okay
 	}
 
 	// set the default staker mnemonic used in the dev znet by default
