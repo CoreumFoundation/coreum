@@ -677,7 +677,7 @@ func signTxWithMultipleSignatures(
 	for i, signer := range signers {
 		signerData := authsign.SignerData{
 			Address:       signer.String(),
-			ChainID:       chain.ChainContext.ChainSettings.ChainID,
+			ChainID:       chain.ChainSettings.ChainID,
 			AccountNumber: signerAccInfos[i].GetAccountNumber(),
 			Sequence:      signerAccInfos[i].GetSequence(),
 			PubKey:        sigs[i].PubKey,

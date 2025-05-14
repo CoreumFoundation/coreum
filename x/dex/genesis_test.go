@@ -23,7 +23,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	testApp := simapp.New()
 
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{})
 	dexKeeper := testApp.DEXKeeper
 
 	acc1, _ := testApp.GenAccount(sdkCtx)
@@ -177,15 +177,15 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// check imported state
 	params, err := dexKeeper.GetParams(sdkCtx)
 	requireT.NoError(err)
-	requireT.EqualValues(prams, params)
+	requireT.Equal(prams, params)
 
 	// check that export is equal import
 	exportedGenState := dex.ExportGenesis(sdkCtx, dexKeeper)
 	require.NoError(t, exportedGenState.Validate())
 
-	requireT.EqualValues(genState.Params, exportedGenState.Params)
-	requireT.EqualValues(genState.OrderBooks, exportedGenState.OrderBooks)
-	requireT.EqualValues(genState.Orders, exportedGenState.Orders)
+	requireT.Equal(genState.Params, exportedGenState.Params)
+	requireT.Equal(genState.OrderBooks, exportedGenState.OrderBooks)
+	requireT.Equal(genState.Orders, exportedGenState.Orders)
 
 	// check that imported state is valid
 
@@ -240,7 +240,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		if order.Creator == acc2.String() && order.ID == orderWithExisingOrderBook.ID {
 			orderFound = true
 			// the `orderWithExisingOrderBook` has the sequence eq to 4 to check that next sequence from imported is used
-			requireT.EqualValues(orderWithExisingOrderBook, order)
+			requireT.Equal(orderWithExisingOrderBook, order)
 		}
 	}
 	require.True(t, orderFound)

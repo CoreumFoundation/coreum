@@ -161,7 +161,7 @@ func TestApplyRate(t *testing.T) {
 				sdkmath.LegacyMustNewDecFromStr(tc.rate),
 				sdk.MustAccAddressFromBech32(tc.sender),
 				sdk.NewCoin("test", tc.amount))
-			assertT.EqualValues(tc.appliedRate.String(), appliedRate.String())
+			assertT.Equal(tc.appliedRate.String(), appliedRate.String())
 		})
 	}
 }

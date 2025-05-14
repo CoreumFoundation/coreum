@@ -25,7 +25,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	testApp := simapp.New()
 
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	nftKeeper := testApp.AssetNFTKeeper
 
 	// prepare the genesis data
@@ -167,13 +167,13 @@ func TestInitAndExportGenesis(t *testing.T) {
 	for _, definition := range classDefinitions {
 		storedDefinition, err := nftKeeper.GetClassDefinition(ctx, definition.ID)
 		requireT.NoError(err)
-		assertT.EqualValues(definition, storedDefinition)
+		assertT.Equal(definition, storedDefinition)
 	}
 
 	// params
 	params, err := nftKeeper.GetParams(ctx)
 	requireT.NoError(err)
-	assertT.EqualValues(types.DefaultParams(), params)
+	assertT.Equal(types.DefaultParams(), params)
 
 	// check that export is equal import
 	exportedGenState := nft.ExportGenesis(ctx, nftKeeper)

@@ -17,16 +17,16 @@ type QueryKeeper interface {
 	CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error)
 }
 
+// QueryService serves grpc requests for fee model.
+type QueryService struct {
+	keeper QueryKeeper
+}
+
 // NewQueryService creates query service.
 func NewQueryService(keeper QueryKeeper) QueryService {
 	return QueryService{
 		keeper: keeper,
 	}
-}
-
-// QueryService serves grpc requests for fee model.
-type QueryService struct {
-	keeper QueryKeeper
 }
 
 // MinGasPrice returns current minimum gas price required by the network.

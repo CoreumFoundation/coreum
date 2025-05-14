@@ -291,7 +291,8 @@ func (fa *FuzzApp) GenOrder(
 		timeInForce = types.TIME_IN_FORCE_UNSPECIFIED
 	)
 
-	if orderType == types.ORDER_TYPE_LIMIT { //nolint:nestif  // the ifs are simple to check the percents mostly
+	switch orderType {
+	case types.ORDER_TYPE_LIMIT: //nolint:nestif  // the ifs are simple to check the percents mostly
 		priceNum := rnd.Uint32()
 
 		// generate price exponent in order not to overflow the sdkmath.Int when fund accounts
@@ -325,7 +326,7 @@ func (fa *FuzzApp) GenOrder(
 		if randBoolWithPercent(rnd, fa.cfg.TimeInForceFOKPercent) {
 			timeInForce = types.TIME_IN_FORCE_FOK
 		}
-	} else if orderType == types.ORDER_TYPE_MARKET {
+	case types.ORDER_TYPE_MARKET:
 		timeInForce = types.TIME_IN_FORCE_IOC
 	}
 
@@ -398,7 +399,7 @@ func (fa *FuzzApp) FundAccountAndApplyFTFeatures(
 				math.MaxInt64,
 			)
 			require.NoError(t, err)
-			account := fa.testApp.App.AccountKeeper.NewAccount(sdkCtx, baseVestingAccount)
+			account := fa.testApp.AccountKeeper.NewAccount(sdkCtx, baseVestingAccount)
 			fa.testApp.AccountKeeper.SetAccount(sdkCtx, account)
 		}
 		t.Logf("Funding account: %s, %s", creator.String(), fundCoin.String())

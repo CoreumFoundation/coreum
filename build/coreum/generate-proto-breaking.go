@@ -25,7 +25,7 @@ import (
 //nolint:unused
 var configBreakingTmpl string
 
-//nolint:deadcode,unused
+//nolint:unused
 func breakingProto(ctx context.Context, deps types.DepsFunc) error {
 	deps(golang.Tidy, coreumtools.EnsureProtoc, coreumtools.EnsureProtocGenBufBreaking)
 

@@ -14,7 +14,7 @@ import (
 func TestKeeper_InitAndExportGenesis(t *testing.T) {
 	testApp := simapp.New()
 	keeper := testApp.CustomParamsKeeper
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	genState := types.GenesisState{
 		StakingParams: types.StakingParams{

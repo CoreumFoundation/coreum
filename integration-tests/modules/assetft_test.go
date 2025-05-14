@@ -141,7 +141,7 @@ func TestAssetFTIssue(t *testing.T) {
 			metadata, err := bankClient.DenomMetadata(ctx, &banktypes.QueryDenomMetadataRequest{Denom: denom})
 			requireT.NoError(err)
 
-			requireT.EqualValues(expectedMetadata, metadata.Metadata)
+			requireT.Equal(expectedMetadata, metadata.Metadata)
 		})
 	}
 }
@@ -1077,7 +1077,7 @@ func TestSpendableBalanceQuery(t *testing.T) {
 		ctx,
 		&banktypes.QuerySpendableBalanceByDenomRequest{
 			Address: recipient2.String(),
-			Denom:   chain.Chain.ChainSettings.Denom,
+			Denom:   chain.ChainSettings.Denom,
 		})
 	requireT.NoError(err)
 	requireT.Equal(amountToFund.String(), recipient2SpendableBalance.Balance.Amount.String())
@@ -1252,14 +1252,14 @@ func TestAssetFTMint(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(
+	assertT.Equal(
 		mintCoin.Add(sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000))).String(),
 		balance.GetBalance().String(),
 	)
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
+	assertT.Equal(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 
 	// mint tokens to recipient
 	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(10))
@@ -1281,11 +1281,11 @@ func TestAssetFTMint(t *testing.T) {
 		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom},
 	)
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin.String(), balance.GetBalance().String())
+	assertT.Equal(mintCoin.String(), balance.GetBalance().String())
 
 	newSupply2, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin, newSupply2.GetAmount().Sub(newSupply.GetAmount()))
+	assertT.Equal(mintCoin, newSupply2.GetAmount().Sub(newSupply.GetAmount()))
 
 	// sending to smart contract is blocked so minting to it should fail
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
@@ -1494,11 +1494,11 @@ func TestAssetFTBurn(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(300)).String(), balance.GetBalance().String())
+	assertT.Equal(sdk.NewCoin(burnableDenom, sdkmath.NewInt(300)).String(), balance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
+	assertT.Equal(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
 }
 
 // TestAssetFTBurnRate tests burn rate functionality of fungible tokens.
@@ -2219,7 +2219,7 @@ func TestAssetFTFreeze(t *testing.T) {
 
 	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(0),
@@ -2232,13 +2232,13 @@ func TestAssetFTFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), frozenBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)), frozenBalance.Balance)
 
 	frozenBalances, err := ftClient.FrozenBalances(ctx, &assetfttypes.QueryFrozenBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), frozenBalances.Balances)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), frozenBalances.Balances)
 
 	// try to send more than available (650) (600 is available)
 	recipient2 := chain.GenAccount()
@@ -2328,7 +2328,7 @@ func TestAssetFTFreeze(t *testing.T) {
 
 	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(400),
@@ -2393,7 +2393,7 @@ func TestAssetFTFreeze(t *testing.T) {
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(setFrozenMsg))
 	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(200),
@@ -2405,7 +2405,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(250)), frozenBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(250)), frozenBalance.Balance)
 
 	// unfreeze 250 tokens and observer current frozen amount is zero
 	unfreezeMsg = &assetfttypes.MsgUnfreeze{
@@ -2424,7 +2424,7 @@ func TestAssetFTFreeze(t *testing.T) {
 
 	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(250),
@@ -2502,7 +2502,7 @@ func TestAssetFTClawback(t *testing.T) {
 	// query account balance before clawback
 	bankRes, err := bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(account, denom))
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), bankRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), bankRes.Balance.String())
 
 	// try to pass non-issuer signature to clawback msg
 	clawbackMsg := &assetfttypes.MsgClawback{
@@ -2536,7 +2536,7 @@ func TestAssetFTClawback(t *testing.T) {
 
 	fungibleTokenClawbackEvts, err := event.FindTypedEvents[*assetfttypes.EventAmountClawedBack](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventAmountClawedBack{
+	assertT.Equal(&assetfttypes.EventAmountClawedBack{
 		Account: account.String(),
 		Denom:   denom,
 		Amount:  sdkmath.NewInt(400),
@@ -2545,7 +2545,7 @@ func TestAssetFTClawback(t *testing.T) {
 	// query account balance after clawback
 	bankRes, err = bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(account, denom))
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(600)).String(), bankRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(600)).String(), bankRes.Balance.String())
 
 	// try to clawback more than available (650) (600 is available)
 	coinsToClawback := sdk.NewCoin(denom, sdkmath.NewInt(650))
@@ -2635,7 +2635,7 @@ func TestAssetFTClawbackWithTextualSigning(t *testing.T) {
 	// query account balance before clawback
 	bankRes, err := bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(account, denom))
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), bankRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), bankRes.Balance.String())
 
 	// try to pass non-issuer signature to clawback msg
 	clawbackMsg := &assetfttypes.MsgClawback{
@@ -2669,7 +2669,7 @@ func TestAssetFTClawbackWithTextualSigning(t *testing.T) {
 
 	fungibleTokenClawbackEvts, err := event.FindTypedEvents[*assetfttypes.EventAmountClawedBack](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventAmountClawedBack{
+	assertT.Equal(&assetfttypes.EventAmountClawedBack{
 		Account: account.String(),
 		Denom:   denom,
 		Amount:  sdkmath.NewInt(400),
@@ -2678,7 +2678,7 @@ func TestAssetFTClawbackWithTextualSigning(t *testing.T) {
 	// query account balance after clawback
 	bankRes, err = bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(account, denom))
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(600)).String(), bankRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(600)).String(), bankRes.Balance.String())
 
 	// try to clawback more than available (650) (600 is available)
 	coinsToClawback := sdk.NewCoin(denom, sdkmath.NewInt(650))
@@ -3518,13 +3518,13 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), whitelistedBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)), whitelistedBalance.Balance)
 
 	whitelistedBalances, err := ftClient.WhitelistedBalances(ctx, &assetfttypes.QueryWhitelistedBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), whitelistedBalances.Balances)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), whitelistedBalances.Balances)
 
 	// try to receive more than whitelisted (600) (possible 400)
 	sendMsg = &banktypes.MsgSend{
@@ -3595,7 +3595,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(401)), whitelistedBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(401)), whitelistedBalance.Balance)
 
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
@@ -3623,7 +3623,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.ZeroInt()), whitelistedBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.ZeroInt()), whitelistedBalance.Balance)
 
 	// Send something to issuer, it should succeed despite the fact that issuer is not whitelisted
 	sendMsg = &banktypes.MsgSend{
@@ -4235,14 +4235,14 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues("240", freezingRes.GetBalance().Amount.String())
+	requireT.Equal("240", freezingRes.GetBalance().Amount.String())
 
 	whitelistingRes, err := assetftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
 		Account: recipient.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues("921", whitelistingRes.GetBalance().Amount.String())
+	requireT.Equal("921", whitelistingRes.GetBalance().Amount.String())
 }
 
 // TestAuthzMintAuthorizationLimit tests the authz MintLimitAuthorization msg works as expected.
@@ -4324,7 +4324,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 
 	supply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
-	requireT.EqualValues("501", supply.Amount.Amount.String())
+	requireT.Equal("501", supply.Amount.Amount.String())
 
 	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
 		Granter: granter.String(),
@@ -4334,7 +4334,7 @@ func TestAuthzMintAuthorizationLimit(t *testing.T) {
 	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetfttypes.MintAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
-	requireT.EqualValues("499", updatedGrant.MintLimit.AmountOf(denom).String())
+	requireT.Equal("499", updatedGrant.MintLimit.AmountOf(denom).String())
 
 	// try to mint exceeding limit
 	msgMint = &assetfttypes.MsgMint{
@@ -4584,8 +4584,8 @@ func TestAuthzMintAuthorizationLimit_MultipleCoins(t *testing.T) {
 	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetfttypes.BurnAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
-	requireT.EqualValues("499", updatedGrant.BurnLimit.AmountOf(denom1).String())
-	requireT.EqualValues("1000", updatedGrant.BurnLimit.AmountOf(denom2).String())
+	requireT.Equal("499", updatedGrant.BurnLimit.AmountOf(denom1).String())
+	requireT.Equal("1000", updatedGrant.BurnLimit.AmountOf(denom2).String())
 }
 
 // TestAuthzBurnAuthorizationLimit tests the authz BurnLimitAuthorization msg works as expected.
@@ -4664,7 +4664,7 @@ func TestAuthzBurnAuthorizationLimit(t *testing.T) {
 
 	supply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
-	requireT.EqualValues("9499", supply.Amount.Amount.String())
+	requireT.Equal("9499", supply.Amount.Amount.String())
 
 	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
 		Granter: granter.String(),
@@ -4674,7 +4674,7 @@ func TestAuthzBurnAuthorizationLimit(t *testing.T) {
 	requireT.Len(gransRes.Grants, 1)
 	updatedGrant := assetfttypes.BurnAuthorization{}
 	chain.ClientContext.Codec().MustUnmarshal(gransRes.Grants[0].Authorization.Value, &updatedGrant)
-	requireT.EqualValues("499", updatedGrant.BurnLimit.AmountOf(denom).String())
+	requireT.Equal("499", updatedGrant.BurnLimit.AmountOf(denom).String())
 
 	// try to burn exceeding limit
 	msgBurn = &assetfttypes.MsgBurn{
@@ -4723,7 +4723,7 @@ func TestAuthzBurnAuthorizationLimit(t *testing.T) {
 
 	supply, err = bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
-	requireT.EqualValues("9000", supply.Amount.Amount.String())
+	requireT.Equal("9000", supply.Amount.Amount.String())
 }
 
 // TestAuthzBurnAuthorizationLimit_GrantFromNonIssuer tests the authz BurnLimitAuthorization msg works as expected if
@@ -4932,7 +4932,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	// verify balance of token was not affected by either burn rate or send commission rate
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: denom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(1500)).String(), balance.GetBalance().String())
+	assertT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1500)).String(), balance.GetBalance().String())
 }
 
 // TestAssetFTBurnRate_OnBurning verifies that both burn rate and send commission rate are not applied when a
@@ -5027,14 +5027,14 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// verify issuer balance after burning was not affected by the send commission rate
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(800)).String(), issuerBalance.GetBalance().String())
+	assertT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(800)).String(), issuerBalance.GetBalance().String())
 	// verify recipient balance after burning was not affected by the burn rate
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), recipientBalance.GetBalance().String())
+	assertT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), recipientBalance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
 	// verify the total supply
-	assertT.EqualValues(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
+	assertT.Equal(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
 }
 
 // TestAssetFTFreezeAndBurn verifies that it is not possible to burn more tokens - outside of freezing limit.
@@ -5140,7 +5140,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// verify recipient balance after burning
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(350)).String(), recipientBalance.GetBalance().String())
+	assertT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(350)).String(), recipientBalance.GetBalance().String())
 
 	// recipient tries to burn more token than allowed (left from unfrozen balance). Tx should fail
 	_, err = client.BroadcastTx(
@@ -5157,7 +5157,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom},
 	)
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(350)).String(), recipientBalance.GetBalance().String())
+	assertT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(350)).String(), recipientBalance.GetBalance().String())
 }
 
 // TestAssetFTFreeze_WithRates verifies freezing with both burn and send commission rates applied
@@ -6394,7 +6394,7 @@ func assertCoinDistribution(
 
 	supply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(total)).String(), supply.Amount.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(total)).String(), supply.Amount.String())
 }
 
 // TestAssetFTTransferAdmin checks transfer admin functionality of fungible tokens.
@@ -6495,7 +6495,7 @@ func TestAssetFTTransferAdmin(t *testing.T) {
 
 	fungibleTokenTransferAdminEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventAdminTransferred{
+	assertT.Equal(&assetfttypes.EventAdminTransferred{
 		Denom:         denom,
 		PreviousAdmin: issuer.String(),
 		CurrentAdmin:  admin.String(),
@@ -6506,7 +6506,7 @@ func TestAssetFTTransferAdmin(t *testing.T) {
 		Denom: denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(admin.String(), token.Token.Admin)
+	requireT.Equal(admin.String(), token.Token.Admin)
 
 	// try to pass issuer signature which is not admin anymore to freeze msg
 	freezeMsg := &assetfttypes.MsgFreeze{
@@ -6540,7 +6540,7 @@ func TestAssetFTTransferAdmin(t *testing.T) {
 
 	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(0),
@@ -6784,14 +6784,14 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: admin.String(), Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(
+	assertT.Equal(
 		mintCoin.Add(sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000))).String(),
 		balance.GetBalance().String(),
 	)
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
+	assertT.Equal(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 
 	// mint tokens to recipient as original issuer which is not admin anymore
 	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(10))
@@ -6829,11 +6829,11 @@ func TestAssetFTTransferAdminMint(t *testing.T) {
 		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom},
 	)
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin.String(), balance.GetBalance().String())
+	assertT.Equal(mintCoin.String(), balance.GetBalance().String())
 
 	newSupply2, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin, newSupply2.GetAmount().Sub(newSupply.GetAmount()))
+	assertT.Equal(mintCoin, newSupply2.GetAmount().Sub(newSupply.GetAmount()))
 
 	// sending to smart contract is blocked so minting to it should fail
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
@@ -7154,11 +7154,11 @@ func TestAssetFTTransferAdminBurn(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: admin.String(), Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(400)).String(), balance.GetBalance().String())
+	assertT.Equal(sdk.NewCoin(burnableDenom, sdkmath.NewInt(400)).String(), balance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(burnCoin.Add(burnCoin), oldSupply.GetAmount().Sub(newSupply.GetAmount()))
+	assertT.Equal(burnCoin.Add(burnCoin), oldSupply.GetAmount().Sub(newSupply.GetAmount()))
 }
 
 // TestAssetFTTransferAdminFreeze checks freeze functionality of fungible tokens after transferring admin.
@@ -7328,7 +7328,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 
 	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(0),
@@ -7341,13 +7341,13 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), frozenBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)), frozenBalance.Balance)
 
 	frozenBalances, err := ftClient.FrozenBalances(ctx, &assetfttypes.QueryFrozenBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), frozenBalances.Balances)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), frozenBalances.Balances)
 
 	// try to send more than available (650) (600 is available)
 	recipient2 := chain.GenAccount()
@@ -7451,7 +7451,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 
 	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(400),
@@ -7516,7 +7516,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(setFrozenMsg))
 	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(200),
@@ -7528,7 +7528,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(250)), frozenBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(250)), frozenBalance.Balance)
 
 	// unfreeze 250 tokens and observer current frozen amount is zero
 	unfreezeMsg = &assetfttypes.MsgUnfreeze{
@@ -7547,7 +7547,7 @@ func TestAssetFTTransferAdminFreeze(t *testing.T) {
 
 	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(250),
@@ -7742,7 +7742,7 @@ func TestAssetFTTransferAdminToUserWithFrozenAmount(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.ZeroInt()), frozenBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.ZeroInt()), frozenBalance.Balance)
 }
 
 // TestAssetFTTransferAdminGloballyFreeze checks global freeze functionality of fungible tokens
@@ -8105,7 +8105,7 @@ func TestAssetFTTransferAdminClawback(t *testing.T) {
 
 	adminTransferredEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminTransferred](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventAdminTransferred{
+	assertT.Equal(&assetfttypes.EventAdminTransferred{
 		Denom:         denom,
 		PreviousAdmin: issuer.String(),
 		CurrentAdmin:  admin.String(),
@@ -8114,7 +8114,7 @@ func TestAssetFTTransferAdminClawback(t *testing.T) {
 	// query account balance before clawback
 	bankRes, err := bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(account, denom))
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), bankRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), bankRes.Balance.String())
 
 	// try to pass non-admin signature to clawback msg
 	clawbackMsg := &assetfttypes.MsgClawback{
@@ -8163,7 +8163,7 @@ func TestAssetFTTransferAdminClawback(t *testing.T) {
 
 	amountClawedBackEvts, err := event.FindTypedEvents[*assetfttypes.EventAmountClawedBack](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventAmountClawedBack{
+	assertT.Equal(&assetfttypes.EventAmountClawedBack{
 		Account: account.String(),
 		Denom:   denom,
 		Amount:  sdkmath.NewInt(400),
@@ -8172,7 +8172,7 @@ func TestAssetFTTransferAdminClawback(t *testing.T) {
 	// query account balance after clawback
 	bankRes, err = bankClient.Balance(ctx, banktypes.NewQueryBalanceRequest(account, denom))
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(600)).String(), bankRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(600)).String(), bankRes.Balance.String())
 
 	// try to clawback more than available (650) (600 is available)
 	coinsToClawback := sdk.NewCoin(denom, sdkmath.NewInt(650))
@@ -8367,13 +8367,13 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), whitelistedBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)), whitelistedBalance.Balance)
 
 	whitelistedBalances, err := ftClient.WhitelistedBalances(ctx, &assetfttypes.QueryWhitelistedBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), whitelistedBalances.Balances)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), whitelistedBalances.Balances)
 
 	// try to receive more than whitelisted (600) (possible 400)
 	sendMsg = &banktypes.MsgSend{
@@ -8444,7 +8444,7 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(401)), whitelistedBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(401)), whitelistedBalance.Balance)
 
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
@@ -8472,7 +8472,7 @@ func TestAssetFTTransferAdminWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.ZeroInt()), whitelistedBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.ZeroInt()), whitelistedBalance.Balance)
 
 	// Send something to admin, it should succeed despite the fact that admin is not whitelisted
 	sendMsg = &banktypes.MsgSend{
@@ -8725,7 +8725,7 @@ func TestAssetFTClearAdmin(t *testing.T) {
 
 	fungibleTokenClearAdminEvts, err := event.FindTypedEvents[*assetfttypes.EventAdminCleared](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventAdminCleared{
+	assertT.Equal(&assetfttypes.EventAdminCleared{
 		Denom:         denom,
 		PreviousAdmin: issuer.String(),
 	}, fungibleTokenClearAdminEvts[0])

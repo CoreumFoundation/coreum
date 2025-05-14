@@ -785,7 +785,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		Address: contractAddr,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(admin.String(), contractInfo.Admin)
+	requireT.Equal(admin.String(), contractInfo.Admin)
 
 	// update admin
 	msgUpdateAdmin := &wasmtypes.MsgUpdateAdmin{
@@ -807,7 +807,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		Address: contractAddr,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(newAdmin.String(), contractInfo.Admin)
+	requireT.Equal(newAdmin.String(), contractInfo.Admin)
 	requireT.EqualValues(chain.GasLimitByMsgs(msgUpdateAdmin), res.GasUsed)
 
 	// clear admin
@@ -829,7 +829,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		Address: contractAddr,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues("", contractInfo.Admin)
+	requireT.Empty(contractInfo.Admin)
 	requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
 }
 
@@ -1109,7 +1109,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		Id:      "id-1",
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(ownerResp.Owner, contractAddrAuthzNftTrade)
+	requireT.Equal(ownerResp.Owner, contractAddrAuthzNftTrade)
 
 	// Accept the offer
 	acceptNftOfferPayload, err := json.Marshal(map[authzNFTMethod]authzAcceptNFTOfferRequest{
@@ -1141,7 +1141,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		Id:      "id-1",
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(ownerResp.Owner, receiver.String())
+	requireT.Equal(ownerResp.Owner, receiver.String())
 }
 
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all Coreum fungible token messages

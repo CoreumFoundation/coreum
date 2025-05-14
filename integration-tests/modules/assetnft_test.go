@@ -1291,7 +1291,7 @@ func TestAssetNFTClassFreeze(t *testing.T) {
 		msgFreeze,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(int64(chain.GasLimitByMsgs(msgFreeze)), res.GasUsed)
+	requireT.Equal(int64(chain.GasLimitByMsgs(msgFreeze)), res.GasUsed)
 
 	queryRes, err := nftClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
 		ClassId: classID,
@@ -1357,7 +1357,7 @@ func TestAssetNFTClassFreeze(t *testing.T) {
 		msgUnfreeze,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(int64(chain.GasLimitByMsgs(msgUnfreeze)), res.GasUsed)
+	requireT.Equal(int64(chain.GasLimitByMsgs(msgUnfreeze)), res.GasUsed)
 
 	queryRes, err = nftClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
 		ClassId: classID,
@@ -2494,7 +2494,7 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 		Id:      nftID,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(ownerResp.Owner, recipient.String())
+	requireT.Equal(ownerResp.Owner, recipient.String())
 
 	// assert granted
 	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
