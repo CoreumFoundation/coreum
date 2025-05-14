@@ -297,16 +297,24 @@ func TestExtensionIBCAssetFTFreezing(t *testing.T) {
 	})
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgFreeze{},
+
+	coreumChain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: coreumIssuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgFreeze{},
+				},
+				Amount: issueFee.
+					Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+					Add(sdkmath.NewInt(500_000)),
+			},
+		}, {
+			Acc: coreumSender,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(2 * 500_000),
+			},
 		},
-		Amount: issueFee.
-			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdkmath.NewInt(500_000)),
-	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(2 * 500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -694,7 +702,8 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
 		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
 			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdkmath.NewInt(3 * 500_000)),
+			Add(sdkmath.NewInt(3 * 500_000)).
+			Add(sdkmath.NewInt(500_000)),
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaRecipient,
@@ -756,10 +765,6 @@ func TestExtensionIBCAssetFTRejectedTransfer(t *testing.T) {
 	requireT.Equal("0", resp.Balance.Amount.String())
 
 	// test that the reverse transfer from gaia to coreum is blocked too
-
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000),
-	})
 
 	sendToCoreumCoin := sdk.NewCoin(ibcGaiaDenom, sendToGaiaCoin.Amount)
 	res, err := coreumChain.ExecuteIBCTransfer(
@@ -831,13 +836,20 @@ func TestExtensionIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 	coreumIssuer := coreumChain.GenAccount()
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Amount: issueFee.Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
-									Add(sdkmath.NewInt(2 * 500_000)),
-	})
 
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(3 * 500_000),
+	coreumChain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: coreumIssuer,
+			Options: integration.BalancesOptions{
+				Amount: issueFee.Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+											Add(sdkmath.NewInt(2 * 500_000)),
+			},
+		}, {
+			Acc: coreumSender,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(3 * 500_000),
+			},
+		},
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1042,18 +1054,26 @@ func TestExtensionIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgFreeze{},
-			&assetfttypes.MsgSetWhitelistedLimit{},
-			&assetfttypes.MsgSetWhitelistedLimit{},
+
+	coreumChain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: coreumIssuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgFreeze{},
+					&assetfttypes.MsgSetWhitelistedLimit{},
+					&assetfttypes.MsgSetWhitelistedLimit{},
+				},
+				Amount: issueFee.
+					Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+					Add(sdkmath.NewInt(2 * 500_000)),
+			},
+		}, {
+			Acc: coreumSender,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(500_000),
+			},
 		},
-		Amount: issueFee.
-			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdkmath.NewInt(2 * 500_000)),
-	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000),
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1193,18 +1213,25 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
 
-		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgFreeze{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
+		coreumChain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+			{
+				Acc: coreumIssuer,
+				Options: integration.BalancesOptions{
+					Messages: []sdk.Msg{
+						&assetfttypes.MsgFreeze{},
+						&assetfttypes.MsgSetWhitelistedLimit{},
+						&assetfttypes.MsgSetWhitelistedLimit{},
+					},
+					Amount: issueFee.
+						Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+						Add(sdkmath.NewInt(2 * 500_000)),
+				},
+			}, {
+				Acc: coreumSender,
+				Options: integration.BalancesOptions{
+					Amount: sdkmath.NewInt(500_000),
+				},
 			},
-			Amount: issueFee.
-				Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
-				Add(sdkmath.NewInt(2 * 500_000)),
-		})
-		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-			Amount: sdkmath.NewInt(500_000),
 		})
 
 		codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1385,13 +1412,21 @@ func TestExtensionIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T)
 	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Amount: issueFee.
-			Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
-			Add(sdkmath.NewInt(2 * 500_000)),
-	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000),
+
+	coreumChain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: coreumIssuer,
+			Options: integration.BalancesOptions{
+				Amount: issueFee.
+					Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+					Add(sdkmath.NewInt(2 * 500_000)),
+			},
+		}, {
+			Acc: coreumSender,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(500_000),
+			},
+		},
 	})
 
 	codeID, err := chains.Coreum.Wasm.DeployWASMContract(
@@ -1521,13 +1556,20 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
 
-		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-			Amount: issueFee.
-				Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
-				Add(sdkmath.NewInt(2 * 500_000)),
-		})
-		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-			Amount: sdkmath.NewInt(500_000),
+		coreumChain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+			{
+				Acc: coreumIssuer,
+				Options: integration.BalancesOptions{
+					Amount: issueFee.
+						Add(sdkmath.NewInt(1_000_000)). // added one million for contract upload
+						Add(sdkmath.NewInt(2 * 500_000)),
+				},
+			}, {
+				Acc: coreumSender,
+				Options: integration.BalancesOptions{
+					Amount: sdkmath.NewInt(500_000),
+				},
+			},
 		})
 
 		codeID, err := chains.Coreum.Wasm.DeployWASMContract(
