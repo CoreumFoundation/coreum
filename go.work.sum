@@ -1010,6 +1010,8 @@ github.com/CoreumFoundation/crust v0.0.0-20250325111106-1ceef3a161fe/go.mod h1:6
 github.com/CoreumFoundation/crust v0.0.0-20250422105139-051d68f6bb18/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
 github.com/CoreumFoundation/crust/znet v0.0.0-20250325111106-1ceef3a161fe/go.mod h1:XVapwHb6v63p46hUZ7+Yfelm0/lA8xBiTqFkDlH/acM=
 github.com/CoreumFoundation/crust/znet v0.0.0-20250422105139-051d68f6bb18/go.mod h1:urqH0J2WRcRPrFmt5by8wdwonVkho26LpfeORXzx7sk=
+github.com/CoreumFoundation/crust/znet v0.0.0-20250516105723-2116089a3b36 h1:1Inl0lNRR6QMrvBz0OQY/mUS9GNHfsX40LoPsWQr5pM=
+github.com/CoreumFoundation/crust/znet v0.0.0-20250516105723-2116089a3b36/go.mod h1:mGXKXTmOMlK0EPDZXkyo9h5xWiGgDKBbi3EVN5hY1dU=
 github.com/CosmWasm/wasmd v0.53.2 h1:c3MQjeQq+r+Zj2rPeW+c9kJmTevuNnZOIkiiCP/3bg4=
 github.com/CosmWasm/wasmvm/v2 v2.0.0/go.mod h1:su9lg5qLr7adV95eOfzjZWkGiky8WNaNIHDr7Fpu7Ck=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
