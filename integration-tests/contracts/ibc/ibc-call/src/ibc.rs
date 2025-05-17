@@ -70,10 +70,9 @@ pub fn ibc_packet_receive(
     // in a separate function and on error write out an error ack.
     match do_ibc_packet_receive(deps, env, msg) {
         Ok(response) => Ok(response),
-        Err(error) => Ok(IbcReceiveResponse::new()
+        Err(error) => Ok(IbcReceiveResponse::new(make_ack_fail(error.to_string()))
             .add_attribute("method", "ibc_packet_receive")
-            .add_attribute("error", error.to_string())
-            .set_ack(make_ack_fail(error.to_string()))),
+            .add_attribute("error", error.to_string())),
     }
 }
 
@@ -93,10 +92,9 @@ pub fn do_ibc_packet_receive(
 
 fn execute_increment(deps: DepsMut, channel: String) -> Result<IbcReceiveResponse, ContractError> {
     let count = try_increment(deps, channel)?;
-    Ok(IbcReceiveResponse::new()
+    Ok(IbcReceiveResponse::new(make_ack_success())
         .add_attribute("method", "execute_increment")
-        .add_attribute("count", count.to_string())
-        .set_ack(make_ack_success()))
+        .add_attribute("count", count.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_json_binary, Binary, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Response, StdError,
-    StdResult,
+    to_json_binary, Binary, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Response,
+    StdError, StdResult,
 };
 use cw2::set_contract_version;
 
@@ -56,7 +56,9 @@ pub fn try_increment(deps: DepsMut, channel: String) -> Result<u32, StdError> {
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount { channel } => to_json_binary(&query_count(deps, channel)?),
-        QueryMsg::GetTimeoutCount { channel } => to_json_binary(&query_timeout_count(deps, channel)?),
+        QueryMsg::GetTimeoutCount { channel } => {
+            to_json_binary(&query_timeout_count(deps, channel)?)
+        }
     }
 }
 
