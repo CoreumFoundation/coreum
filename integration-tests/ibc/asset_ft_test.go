@@ -1431,7 +1431,6 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 }
 
 func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
-	t.SkipNow()
 	t.Parallel()
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
