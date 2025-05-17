@@ -45,6 +45,12 @@ type BalancesOptions struct {
 	Amount                      sdkmath.Int
 }
 
+// AccWithBalancesOptions is the input type for the FundAccountWithOptionsFast.
+type AccWithBalancesOptions struct {
+	Acc     sdk.AccAddress
+	Options BalancesOptions
+}
+
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
 // It panics if unsupported message type specified.
 func (c CoreumChain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
@@ -119,6 +125,26 @@ func (c CoreumChain) FundAccountWithOptions(
 		Address: address,
 		Amount:  c.NewCoin(amount),
 	})
+}
+
+// FundAccountsWithOptions computes the needed balances and fund accounts with it.
+func (c CoreumChain) FundAccountsWithOptions(
+	ctx context.Context,
+	t *testing.T,
+	accWithBalancesOptions []AccWithBalancesOptions,
+) {
+	t.Helper()
+
+	fundedAccounts := make([]FundedAccount, len(accWithBalancesOptions))
+	for i, accWithBalancesOption := range accWithBalancesOptions {
+		amount := c.ComputeNeededBalanceFromOptions(accWithBalancesOption.Options)
+		fundedAccounts[i] = FundedAccount{
+			Address: accWithBalancesOption.Acc,
+			Amount:  c.NewCoin(amount),
+		}
+	}
+
+	c.Faucet.FundAccounts(ctx, t, fundedAccounts...)
 }
 
 // CreateValidator creates a new validator on the chain and returns the staker addresses,
