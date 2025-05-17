@@ -7,3 +7,7 @@ use .
 use ./build
 
 use ./integration-tests
+
+use store
+
+use memiavl
