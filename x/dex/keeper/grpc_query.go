@@ -47,6 +47,13 @@ type QueryService struct {
 	keeper QueryKeeper
 }
 
+// NewQueryService initiates the new instance of query service.
+func NewQueryService(keeper QueryKeeper) QueryService {
+	return QueryService{
+		keeper: keeper,
+	}
+}
+
 // Params queries the parameters of x/asset/ft module.
 func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	params, err := qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx))
@@ -117,13 +124,6 @@ func (qs QueryService) OrderBookOrders(
 		Orders:     orders,
 		Pagination: pageRes,
 	}, nil
-}
-
-// NewQueryService initiates the new instance of query service.
-func NewQueryService(keeper QueryKeeper) QueryService {
-	return QueryService{
-		keeper: keeper,
-	}
 }
 
 // Order queries order by creator and ID.

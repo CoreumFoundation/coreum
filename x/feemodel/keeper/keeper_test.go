@@ -80,7 +80,7 @@ func TestMinGasPrice(t *testing.T) {
 
 	require.NoError(t, keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(20))))
 	minGasPrice = keeper.GetMinGasPrice(ctx)
-	assert.EqualValues(t, "20.000000000000000000", minGasPrice.Amount.String())
+	assert.Equal(t, "20.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)
 }
 
@@ -133,8 +133,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.03215
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is max discount")
-				assertT.EqualValues(high.Amount, model.CalculateGasPriceWithMaxDiscount(), "high amount is max discount")
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is max discount")
+				assertT.Equal(high.Amount, model.CalculateGasPriceWithMaxDiscount(), "high amount is max discount")
 			},
 		},
 		{
@@ -147,8 +147,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.03215
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
-				assertT.EqualValues(high.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Equal(high.Amount, model.CalculateGasPriceWithMaxDiscount())
 			},
 		},
 		{
@@ -161,7 +161,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.032203830017345169
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount())
 				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
 				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64())
 			},
@@ -176,7 +176,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.043154704024898720
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount())
 				assertT.Greater(
 					high.Amount.MustFloat64(),
 					model.CalculateGasPriceWithMaxDiscount().MustFloat64(),
@@ -199,7 +199,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.032203835927155826
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount())
 				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
 				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64())
 			},
@@ -214,7 +214,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.034857583137282673
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount())
 				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
 				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64())
 			},
@@ -229,8 +229,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.03215
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
-				assertT.EqualValues(high.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Equal(high.Amount, model.CalculateGasPriceWithMaxDiscount())
 			},
 		},
 		{
@@ -243,8 +243,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.03215
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
-				assertT.EqualValues(high.Amount, model.CalculateGasPriceWithMaxDiscount(), "high amount is equal to max discount")
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
+				assertT.Equal(high.Amount, model.CalculateGasPriceWithMaxDiscount(), "high amount is equal to max discount")
 			},
 		},
 		{
@@ -280,7 +280,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 22.475936159292449688
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
+				assertT.Equal(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
 				assertT.Greater(
 					high.Amount.MustFloat64(),
 					model.Params().InitialGasPrice.MustFloat64()*300,

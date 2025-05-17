@@ -216,41 +216,6 @@ func (g Governance) VoteAllWeighted(
 	})
 }
 
-func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sdk.Msg) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-g.muCh:
-		defer func() {
-			g.muCh <- struct{}{}
-		}()
-	}
-
-	txHashes := make([]string, 0, len(g.stakerAccounts))
-	for _, staker := range g.stakerAccounts {
-		msg := msgFunc(staker)
-		txf := g.chainCtx.TxFactoryAuto()
-
-		clientCtx := g.chainCtx.ClientContext.WithAwaitTx(false)
-
-		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
-		if err != nil {
-			return err
-		}
-		txHashes = append(txHashes, res.TxHash)
-	}
-
-	// await for the first error
-	for _, txHash := range txHashes {
-		_, err := client.AwaitTx(ctx, g.chainCtx.ClientContext, txHash)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // WaitForVotingToFinalize waits for the proposal status to change to final.
 // Final statuses are: StatusPassed, StatusRejected or StatusFailed.
 func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint64) (govtypesv1.ProposalStatus, error) {
@@ -325,4 +290,39 @@ func (g Governance) QueryGovParams(ctx context.Context) (*govtypesv1.Params, err
 	}
 
 	return govParams.Params, nil
+}
+
+func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sdk.Msg) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-g.muCh:
+		defer func() {
+			g.muCh <- struct{}{}
+		}()
+	}
+
+	txHashes := make([]string, 0, len(g.stakerAccounts))
+	for _, staker := range g.stakerAccounts {
+		msg := msgFunc(staker)
+		txf := g.chainCtx.TxFactoryAuto()
+
+		clientCtx := g.chainCtx.ClientContext.WithAwaitTx(false)
+
+		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
+		if err != nil {
+			return err
+		}
+		txHashes = append(txHashes, res.TxHash)
+	}
+
+	// await for the first error
+	for _, txHash := range txHashes {
+		_, err := client.AwaitTx(ctx, g.chainCtx.ClientContext, txHash)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

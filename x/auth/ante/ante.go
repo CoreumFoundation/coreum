@@ -55,7 +55,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	}
 
 	if options.GovKeeper == nil {
-		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "Gov keeper is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "gov keeper is required for ante builder")
 	}
 
 	if options.SignModeHandler == nil {

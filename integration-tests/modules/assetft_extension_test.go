@@ -103,14 +103,14 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		Denom:   chain.ChainSettings.Denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(contractBalance.GetBalance().String(), attachedFund.String())
+	requireT.Equal(contractBalance.GetBalance().String(), attachedFund.String())
 
 	// assert correct label is applied.
 	contractInfo, err := wasmClient.ContractInfo(
 		ctx, &wasmtypes.QueryContractInfoRequest{Address: token.Token.ExtensionCWAddress},
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(issueMsg.ExtensionSettings.Label, contractInfo.Label)
+	requireT.Equal(issueMsg.ExtensionSettings.Label, contractInfo.Label)
 
 	recipient := chain.GenAccount()
 	// sending 1 will succeed
@@ -133,7 +133,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues("12", balance.Balance.Amount.String())
+	requireT.Equal("12", balance.Balance.Amount.String())
 
 	// sending 7 will fail
 	sendMsg.Amount = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(testcontracts.AmountDisallowedTrigger)))
@@ -149,7 +149,7 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues("12", balance.Balance.Amount.String())
+	requireT.Equal("12", balance.Balance.Amount.String())
 
 	queryRes, err := wasmClient.SmartContractState(ctx, &wasmtypes.QuerySmartContractStateRequest{
 		Address:   token.Token.ExtensionCWAddress,
@@ -173,10 +173,10 @@ func TestAssetFTExtensionIssue(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues("7", balance.Balance.Amount.String())
+	requireT.Equal("7", balance.Balance.Amount.String())
 	skipChecksStr, err := event.FindStringEventAttribute(res.Events, "wasm", "skip_checks")
 	requireT.NoError(err)
-	requireT.EqualValues("self_recipient", skipChecksStr)
+	requireT.Equal("self_recipient", skipChecksStr)
 }
 
 // TestAssetFTExtensionWhitelist checks extension whitelist functionality of fungible tokens.
@@ -346,13 +346,13 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), whitelistedBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)), whitelistedBalance.Balance)
 
 	whitelistedBalances, err := ftClient.WhitelistedBalances(ctx, &assetfttypes.QueryWhitelistedBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), whitelistedBalances.Balances)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), whitelistedBalances.Balances)
 
 	// reverse whitelisted amount
 	sendMsg = &banktypes.MsgSend{
@@ -482,7 +482,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 
 	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
+	assertT.Equal(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
 		PreviousAmount: sdkmath.NewInt(0),
@@ -495,7 +495,7 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(925)), frozenBalance.Balance)
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(925)), frozenBalance.Balance)
 
 	// try to send more than available (76) (75 is available)
 	recipient2 := chain.GenAccount()
@@ -726,11 +726,11 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(797)).String(), balance.GetBalance().String())
+	assertT.Equal(sdk.NewCoin(burnableDenom, sdkmath.NewInt(797)).String(), balance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(burnCoin.String(), oldSupply.GetAmount().Sub(newSupply.GetAmount()).String())
+	assertT.Equal(burnCoin.String(), oldSupply.GetAmount().Sub(newSupply.GetAmount()).String())
 }
 
 // TestAssetFTExtensionMint checks extension mint functionality of fungible tokens.
@@ -888,14 +888,14 @@ func TestAssetFTExtensionMint(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(
+	assertT.Equal(
 		mintCoin.Add(sdk.NewCoin(mintableDenom, sdkmath.NewInt(790))).String(),
 		balance.GetBalance().String(),
 	)
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
+	assertT.Equal(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 
 	// mint tokens to recipient
 	mintCoin = sdk.NewCoin(mintableDenom, sdkmath.NewInt(testcontracts.AmountMintingTrigger))
@@ -917,11 +917,11 @@ func TestAssetFTExtensionMint(t *testing.T) {
 		&banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: mintableDenom},
 	)
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin.String(), balance.GetBalance().String())
+	assertT.Equal(mintCoin.String(), balance.GetBalance().String())
 
 	newSupply2, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin.String(), newSupply2.GetAmount().Sub(newSupply.GetAmount()).String())
+	assertT.Equal(mintCoin.String(), newSupply2.GetAmount().Sub(newSupply.GetAmount()).String())
 
 	// sending to smart contract is blocked so minting to it should fail
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(

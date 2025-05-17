@@ -132,7 +132,7 @@ func TestExport(t *testing.T) {
 	var decodedGenesis types.GenesisState
 	require.NoError(t, cdc.UnmarshalJSON(module.ExportGenesis(sdk.Context{}, cdc), &decodedGenesis))
 
-	assert.EqualValues(t, state, decodedGenesis)
+	assert.Equal(t, state, decodedGenesis)
 }
 
 func TestEndBlock(t *testing.T) {

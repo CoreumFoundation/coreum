@@ -275,7 +275,7 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 func genesisCommand(txConfig client.TxConfig, basicManager module.BasicManager, cmds ...*cobra.Command) *cobra.Command {
 	cmd := genutilcli.GenesisCoreCommand(txConfig, basicManager, app.DefaultNodeHome)
 
-	for _, sub_cmd := range cmds { //nolint:revive,stylecheck // sdk code copy
+	for _, sub_cmd := range cmds { //nolint:revive,staticcheck // sdk code copy
 		cmd.AddCommand(sub_cmd)
 	}
 	return cmd

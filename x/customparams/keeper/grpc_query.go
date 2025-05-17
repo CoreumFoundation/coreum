@@ -15,16 +15,16 @@ type QueryKeeper interface {
 	GetStakingParams(ctx sdk.Context) (types.StakingParams, error)
 }
 
+// QueryService serves grpc requests for the model.
+type QueryService struct {
+	keeper QueryKeeper
+}
+
 // NewQueryService creates query service.
 func NewQueryService(keeper QueryKeeper) QueryService {
 	return QueryService{
 		keeper: keeper,
 	}
-}
-
-// QueryService serves grpc requests for the model.
-type QueryService struct {
-	keeper QueryKeeper
 }
 
 // StakingParams returns staking params of the model.

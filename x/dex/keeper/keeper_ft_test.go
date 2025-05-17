@@ -37,7 +37,7 @@ var (
 
 func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -193,7 +193,7 @@ func TestKeeper_PlaceOrderWithExtension(t *testing.T) {
 
 func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -260,7 +260,7 @@ func TestKeeper_PlaceOrderWithDEXBlockFeature(t *testing.T) {
 
 func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -338,7 +338,7 @@ func TestKeeper_PlaceOrderWithRestrictDEXFeature(t *testing.T) {
 
 func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -384,7 +384,7 @@ func TestKeeper_PlaceOrderWithBurning(t *testing.T) {
 
 func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -482,7 +482,7 @@ func TestKeeper_PlaceOrderWithStaking(t *testing.T) {
 
 func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -531,7 +531,7 @@ func TestKeeper_PlaceOrderWithBurnRate(t *testing.T) {
 
 func TestKeeper_PlaceOrderWithCommissionRate(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})

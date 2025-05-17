@@ -77,7 +77,7 @@ func readOrderEvents(
 
 func TestKeeper_UpdateParams(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 	dexKeeper := testApp.DEXKeeper
 
 	gotParams, err := dexKeeper.GetParams(sdkCtx)
@@ -103,7 +103,7 @@ func TestKeeper_UpdateParams(t *testing.T) {
 
 func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 	testSet := genTestSet(t, sdkCtx, testApp)
 
 	type denomsToOrderBookIDs struct {
@@ -181,7 +181,7 @@ func TestKeeper_PlaceOrder_OrderBookIDs(t *testing.T) {
 
 func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 	testSet := genTestSet(t, sdkCtx, testApp)
 
 	dexKeeper := testApp.DEXKeeper
@@ -267,7 +267,7 @@ func TestKeeper_PlaceAndGetOrderByID(t *testing.T) {
 
 func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Height: 100,
 		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
 	})
@@ -334,7 +334,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 	require.NoError(t, dexKeeper.CancelOrder(sdkCtx, acc, sellOrder.ID))
 	events = readOrderEvents(t, sdkCtx)
 	require.Nil(t, events.OrderCreated)
-	require.EqualValues(t, []types.EventOrderClosed{
+	require.Equal(t, []types.EventOrderClosed{
 		{
 			Creator:                   sellOrder.Creator,
 			ID:                        sellOrder.ID,
@@ -430,7 +430,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		RemainingSpendableBalance: sdkmath.NewInt(5_200_000),
 	}, *events.OrderCreated)
 
-	require.EqualValues(t, []types.EventOrderReduced{
+	require.Equal(t, []types.EventOrderReduced{
 		{
 			Creator:      sellOrder.Creator,
 			ID:           sellOrder.ID,
@@ -447,7 +447,7 @@ func TestKeeper_PlaceAndCancelOrder(t *testing.T) {
 		},
 	}, events.OrdersReduced)
 
-	require.EqualValues(t, []types.EventOrderClosed{
+	require.Equal(t, []types.EventOrderClosed{
 		{
 			Creator:                   sellOrder.Creator,
 			ID:                        sellOrder.ID,
@@ -560,7 +560,7 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
-			sdkCtx := testApp.BaseApp.NewContext(false)
+			sdkCtx := testApp.NewContext(false)
 			testSet := genTestSet(t, sdkCtx, testApp)
 
 			baseDenom, quoteDenom := testSet.denom1, testSet.denom2
@@ -617,7 +617,7 @@ func TestKeeper_PlaceOrder_PriceTickAndQuantityStep(t *testing.T) {
 
 func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 	testSet := genTestSet(t, sdkCtx, testApp)
 
 	dexKeeper := testApp.DEXKeeper
@@ -745,7 +745,7 @@ func TestKeeper_GetOrdersAndOrderBookOrders(t *testing.T) {
 
 func TestKeeper_GetOrderBooks(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 	testSet := genTestSet(t, sdkCtx, testApp)
 
 	dexKeeper := testApp.DEXKeeper
@@ -811,7 +811,7 @@ func TestKeeper_GetOrderBooks(t *testing.T) {
 
 func TestKeeper_GetOrderBookParams(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 	testSet := genTestSet(t, sdkCtx, testApp)
 
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
@@ -831,7 +831,7 @@ func TestKeeper_GetOrderBookParams(t *testing.T) {
 
 func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 	testSet := genTestSet(t, sdkCtx, testApp)
 
 	denom1, denom2, denom3 := testSet.denom1, testSet.denom2, testSet.denom3
@@ -987,7 +987,7 @@ func TestKeeper_PlaceAndCancelOrderWithMaxAllowedAccountDenomOrdersCount(t *test
 
 func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 
 	params, err := testApp.DEXKeeper.GetParams(sdkCtx)
 	require.NoError(t, err)
@@ -1154,7 +1154,7 @@ func TestKeeper_PlaceAndCancelOrdersByDenom(t *testing.T) {
 
 func TestKeeper_IssueTokenWithDifferentIssueFeeThanBoundDenom(t *testing.T) {
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Height: 100,
 		Time:   time.Date(2023, 3, 2, 1, 11, 12, 13, time.UTC),
 	})

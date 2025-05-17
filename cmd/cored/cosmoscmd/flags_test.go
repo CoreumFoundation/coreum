@@ -70,7 +70,7 @@ func TestModifyArgs(t *testing.T) {
 			} else {
 				requireT.NoError(err)
 			}
-			requireT.EqualValues(tc.expected, tc.input)
+			requireT.Equal(tc.expected, tc.input)
 		})
 	}
 }

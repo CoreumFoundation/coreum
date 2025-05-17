@@ -365,32 +365,6 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 	return denom, nil
 }
 
-func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, params types.Params) error {
-	if err := k.checkIssueFeeIsLimitedToCore(ctx, params); err != nil {
-		return err
-	}
-
-	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
-		return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
-	}
-
-	return k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee))
-}
-
-func (k Keeper) checkIssueFeeIsLimitedToCore(ctx sdk.Context, params types.Params) error {
-	stakingParams, err := k.stakingKeeper.GetParams(ctx)
-	if err != nil {
-		return sdkerrors.Wrap(err, "not able to get staking params")
-	}
-
-	if params.IssueFee.Denom != stakingParams.BondDenom {
-		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidCoins, "not able to burn %s for issue fee, only %s is accepted",
-			params.IssueFee.Denom, stakingParams.BondDenom)
-	}
-
-	return nil
-}
-
 // SetSymbol saves the symbol to store.
 func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
 	symbol = types.NormalizeSymbolForKey(symbol)
@@ -1300,4 +1274,30 @@ func (k Keeper) validateWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress,
 // logger returns the Keeper logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
+}
+
+func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, params types.Params) error {
+	if err := k.checkIssueFeeIsLimitedToCore(ctx, params); err != nil {
+		return err
+	}
+
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
+		return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
+	}
+
+	return k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee))
+}
+
+func (k Keeper) checkIssueFeeIsLimitedToCore(ctx sdk.Context, params types.Params) error {
+	stakingParams, err := k.stakingKeeper.GetParams(ctx)
+	if err != nil {
+		return sdkerrors.Wrap(err, "not able to get staking params")
+	}
+
+	if params.IssueFee.Denom != stakingParams.BondDenom {
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidCoins, "not able to burn %s for issue fee, only %s is accepted",
+			params.IssueFee.Denom, stakingParams.BondDenom)
+	}
+
+	return nil
 }

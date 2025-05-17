@@ -30,7 +30,7 @@ func TestKeeper_ValidateSpendableNotFT(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false)
+	ctx := testApp.NewContext(false)
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -71,7 +71,7 @@ func TestKeeper_DEXExpectedToReceive(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -167,7 +167,7 @@ func TestKeeper_DEXLocked(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -197,7 +197,7 @@ func TestKeeper_DEXLocked(t *testing.T) {
 		math.MaxInt64,
 	)
 	requireT.NoError(err)
-	account := testApp.App.AccountKeeper.NewAccount(ctx, baseVestingAccount)
+	account := testApp.AccountKeeper.NewAccount(ctx, baseVestingAccount)
 	testApp.AccountKeeper.SetAccount(ctx, account)
 	requireT.NoError(bankKeeper.SendCoins(ctx, issuer, acc, sdk.NewCoins(vestingCoin)))
 	// check vesting locked amount
@@ -343,7 +343,7 @@ func TestKeeper_DEXBlockSmartContracts(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -424,7 +424,7 @@ func TestKeeper_DEXSettings_BlockDEX(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -479,7 +479,7 @@ func TestKeeper_DEXSettings_WhitelistedDenom(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -611,7 +611,7 @@ func TestKeeper_DEXLimitsWithGlobalFreeze(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false)
+	ctx := testApp.NewContext(false)
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -700,7 +700,7 @@ func TestKeeper_LockedNotFT(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false)
+	ctx := testApp.NewContext(false)
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -717,7 +717,7 @@ func TestKeeper_LockedNotFT(t *testing.T) {
 		math.MaxInt64,
 	)
 	requireT.NoError(err)
-	account := testApp.App.AccountKeeper.NewAccount(ctx, baseVestingAccount)
+	account := testApp.AccountKeeper.NewAccount(ctx, baseVestingAccount)
 	testApp.AccountKeeper.SetAccount(ctx, account)
 	requireT.NoError(bankKeeper.SendCoins(ctx, faucet, acc, sdk.NewCoins(vestingCoin)))
 	// check bank locked amount
@@ -761,7 +761,7 @@ func TestKeeper_UpdateDEXUnifiedRefAmount(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -880,7 +880,7 @@ func TestKeeper_UpdateDEXWhitelistedDenoms(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -1006,7 +1006,7 @@ func TestKeeper_DEXExtensions(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})

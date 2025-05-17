@@ -446,6 +446,39 @@ func (k Keeper) SetAccountDenomOrdersCount(
 	return k.setAccountDenomOrdersCount(ctx, accountDenomOrdersCount)
 }
 
+// ExportReserveOrderIDs returns all the order ids that is ever used.
+// It will be used in genesis export.
+func (k Keeper) ExportReserveOrderIDs(
+	ctx sdk.Context,
+) ([][]byte, error) {
+	moduleStore := k.storeService.OpenKVStore(ctx)
+	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.ReserveOrderIDKeyPrefix)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+	keys := make([][]byte, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		keys = append(keys, iterator.Value())
+	}
+	return keys, nil
+}
+
+// ImportReservedOrderIDs imports all the order ids that is ever used.
+// It will only be used in genesis.
+func (k Keeper) ImportReservedOrderIDs(
+	ctx sdk.Context,
+	orderKeys [][]byte,
+) error {
+	str := k.storeService.OpenKVStore(ctx)
+	for _, k := range orderKeys {
+		key := store.JoinKeys(types.ReserveOrderIDKeyPrefix, k)
+		if err := str.Set(key, types.StoreTrue); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.Order) error {
 	if err := order.Validate(); err != nil {
 		return err
@@ -1186,39 +1219,6 @@ func (k Keeper) reserveOrderID(ctx sdk.Context, accNumber uint64, orderID string
 		return sdkerrors.Wrap(types.ErrInvalidInput, "order id already used")
 	}
 	return kvStore.Set(key, types.StoreTrue)
-}
-
-// ExportReserveOrderIDs returns all the order ids that is ever used.
-// It will be used in genesis export.
-func (k Keeper) ExportReserveOrderIDs(
-	ctx sdk.Context,
-) ([][]byte, error) {
-	moduleStore := k.storeService.OpenKVStore(ctx)
-	store := prefix.NewStore(runtime.KVStoreAdapter(moduleStore), types.ReserveOrderIDKeyPrefix)
-	iterator := store.Iterator(nil, nil)
-	defer iterator.Close()
-	keys := make([][]byte, 0)
-	for ; iterator.Valid(); iterator.Next() {
-		keys = append(keys, iterator.Value())
-	}
-	return keys, nil
-}
-
-// ImportReservedOrderIDs imports all the order ids that is ever used.
-// It will only be used in genesis.
-func (k Keeper) ImportReservedOrderIDs(
-	ctx sdk.Context,
-	orderKeys [][]byte,
-) error {
-	str := k.storeService.OpenKVStore(ctx)
-	for _, k := range orderKeys {
-		key := store.JoinKeys(types.ReserveOrderIDKeyPrefix, k)
-		if err := str.Set(key, types.StoreTrue); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (k Keeper) getOrderSequenceByID(ctx sdk.Context, accNumber uint64, orderID string) (uint64, error) {

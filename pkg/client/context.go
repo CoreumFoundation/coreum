@@ -85,6 +85,15 @@ func DefaultContextConfig() ContextConfig {
 	}
 }
 
+// Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
+// to provide better implementation.
+type Context struct {
+	config             ContextConfig
+	clientCtx          client.Context
+	awaitTx            bool
+	unsignedSimulation bool
+}
+
 // NewContext returns new context.
 func NewContext(contextConfig ContextConfig, modules ...module.AppModuleBasic) Context {
 	encodingConfig := config.NewEncodingConfig(modules...)
@@ -104,15 +113,6 @@ func NewContextFromCosmosContext(contextConfig ContextConfig, cosmosContext clie
 		config:    contextConfig,
 		clientCtx: cosmosContext,
 	}
-}
-
-// Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
-// to provide better implementation.
-type Context struct {
-	config             ContextConfig
-	clientCtx          client.Context
-	awaitTx            bool
-	unsignedSimulation bool
 }
 
 // SDKContext returns wrapped SDK context.

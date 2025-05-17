@@ -168,14 +168,14 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		editValidatorMsg,
 	)
 	require.NoError(t, err)
-	assert.EqualValues(t, int64(chain.GasLimitByMsgs(editValidatorMsg)), editValidatorRes.GasUsed)
+	assert.Equal(t, int64(chain.GasLimitByMsgs(editValidatorMsg)), editValidatorRes.GasUsed)
 
 	valResp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validatorAddress.String(),
 	})
 
 	require.NoError(t, err)
-	assert.EqualValues(t, updatedDetail, valResp.GetValidator().Description.Details)
+	assert.Equal(t, updatedDetail, valResp.GetValidator().Description.Details)
 
 	// Delegate coins
 	delegateMsg := &stakingtypes.MsgDelegate{
@@ -354,7 +354,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.EqualValues(t, editValidatorMsg.Description.Details, valResp.GetValidator().Description.Details)
+	assert.Equal(t, editValidatorMsg.Description.Details, valResp.GetValidator().Description.Details)
 }
 
 // TestUnbondAndCancelUnbondingDelegation checks that it is possible to unbond and cancel unbonding delegation.

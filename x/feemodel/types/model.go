@@ -11,16 +11,16 @@ func DefaultModel() Model {
 	}
 }
 
+// Model executes fee model.
+type Model struct {
+	params ModelParams
+}
+
 // NewModel creates model.
 func NewModel(params ModelParams) Model {
 	return Model{
 		params: params,
 	}
-}
-
-// Model executes fee model.
-type Model struct {
-	params ModelParams
 }
 
 // Params returns fee model params.

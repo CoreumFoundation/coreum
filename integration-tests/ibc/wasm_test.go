@@ -226,7 +226,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		Address: coreumContractAddr,
 	})
 	requireT.NoError(err)
-	coreumIBCPort := coreumContractInfoRes.ContractInfo.IBCPortID
+	coreumIBCPort := coreumContractInfoRes.IBCPortID
 	requireT.NotEmpty(coreumIBCPort)
 	t.Logf("Coreum contrac IBC port:%s", coreumIBCPort)
 
@@ -234,7 +234,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		Address: osmosisContractAddr,
 	})
 	requireT.NoError(err)
-	osmosisIBCPort := osmosisContractInfoRes.ContractInfo.IBCPortID
+	osmosisIBCPort := osmosisContractInfoRes.IBCPortID
 	requireT.NotEmpty(osmosisIBCPort)
 	t.Logf("Osmisis contrac IBC port:%s", osmosisIBCPort)
 
@@ -247,7 +247,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		ibcchanneltypes.UNORDERED,
 		[]string{srcConnectionID},
 		osmosisIBCPort,
-		coreumChain.ChainContext.MustConvertToBech32Address(coreumCaller),
+		coreumChain.MustConvertToBech32Address(coreumCaller),
 	)
 	res, err := chains.Coreum.BroadcastTxWithSigner(
 		ctx,

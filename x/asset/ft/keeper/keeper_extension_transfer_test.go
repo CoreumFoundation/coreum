@@ -37,7 +37,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -77,18 +77,18 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 
 	gotToken, err := ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
-	requireT.EqualValues(denom, gotToken.Denom)
-	requireT.EqualValues(settings.Issuer.String(), gotToken.Issuer)
-	requireT.EqualValues(settings.Symbol, gotToken.Symbol)
-	requireT.EqualValues(settings.Description, gotToken.Description)
-	requireT.EqualValues(strings.ToLower(settings.Subunit), gotToken.Subunit)
-	requireT.EqualValues(settings.Precision, gotToken.Precision)
-	requireT.EqualValues([]types.Feature{types.Feature_extension}, gotToken.Features)
-	requireT.EqualValues(sdkmath.LegacyNewDec(0), gotToken.BurnRate)
-	requireT.EqualValues(sdkmath.LegacyNewDec(0), gotToken.SendCommissionRate)
+	requireT.Equal(denom, gotToken.Denom)
+	requireT.Equal(settings.Issuer.String(), gotToken.Issuer)
+	requireT.Equal(settings.Symbol, gotToken.Symbol)
+	requireT.Equal(settings.Description, gotToken.Description)
+	requireT.Equal(strings.ToLower(settings.Subunit), gotToken.Subunit)
+	requireT.Equal(settings.Precision, gotToken.Precision)
+	requireT.Equal([]types.Feature{types.Feature_extension}, gotToken.Features)
+	requireT.Equal(sdkmath.LegacyNewDec(0), gotToken.BurnRate)
+	requireT.Equal(sdkmath.LegacyNewDec(0), gotToken.SendCommissionRate)
 	requireT.EqualValues(types.CurrentTokenVersion, gotToken.Version)
-	requireT.EqualValues(settings.URI, gotToken.URI)
-	requireT.EqualValues(settings.URIHash, gotToken.URIHash)
+	requireT.Equal(settings.URI, gotToken.URI)
+	requireT.Equal(settings.URIHash, gotToken.URIHash)
 	requireT.Len(gotToken.ExtensionCWAddress, 66)
 
 	contractAddress, err := sdk.AccAddressFromBech32(gotToken.ExtensionCWAddress)
@@ -105,7 +105,7 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	err = bankKeeper.SendCoins(ctx, settings.Issuer, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(2))))
 	requireT.NoError(err)
 	balance := bankKeeper.GetBalance(ctx, receiver, denom)
-	requireT.EqualValues("2", balance.Amount.String())
+	requireT.Equal("2", balance.Amount.String())
 
 	// send 7 coin will fail.
 	// the test contract is written as such that sending 7 will fail.
@@ -114,14 +114,14 @@ func TestKeeper_Extension_Issue(t *testing.T) {
 	)
 	requireT.ErrorIs(err, types.ErrExtensionCallFailed)
 	balance = bankKeeper.GetBalance(ctx, receiver, denom)
-	requireT.EqualValues("2", balance.Amount.String())
+	requireT.Equal("2", balance.Amount.String())
 }
 
 func TestKeeper_Extension_IBC(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -201,7 +201,7 @@ func TestKeeper_Extension_Whitelist(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -278,7 +278,7 @@ func TestKeeper_Extension_FreezeUnfreeze(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -363,7 +363,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -420,7 +420,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceBefore := bankKeeper.GetBalance(ctx, unburnableDenomExtensionCWAddress, unburnableDenom)
 	totalSupplyBefore, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(676), totalSupplyBefore.Supply.AmountOf(unburnableDenom))
+	requireT.Equal(sdkmath.NewInt(676), totalSupplyBefore.Supply.AmountOf(unburnableDenom))
 
 	// try to burn unburnable token from the issuer account
 	err = bankKeeper.SendCoins(ctx, issuer, issuer, coinsToBurn)
@@ -430,7 +430,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceAfter := bankKeeper.GetBalance(ctx, unburnableDenomExtensionCWAddress, unburnableDenom)
 	totalSupplyAfter, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(575), totalSupplyAfter.Supply.AmountOf(unburnableDenom))
+	requireT.Equal(sdkmath.NewInt(575), totalSupplyAfter.Supply.AmountOf(unburnableDenom))
 
 	// the amount should be burnt
 	requireT.Equal(
@@ -477,7 +477,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceBefore = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
 	totalSupplyBefore, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(777), totalSupplyBefore.Supply.AmountOf(burnableDenom))
+	requireT.Equal(sdkmath.NewInt(777), totalSupplyBefore.Supply.AmountOf(burnableDenom))
 
 	// try to burn as non-issuer
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
@@ -489,7 +489,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceAfter = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
 	totalSupplyAfter, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(676), totalSupplyAfter.Supply.AmountOf(burnableDenom))
+	requireT.Equal(sdkmath.NewInt(676), totalSupplyAfter.Supply.AmountOf(burnableDenom))
 
 	// the amount should be burnt
 	requireT.Equal(
@@ -506,7 +506,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceBefore = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
 	totalSupplyBefore, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(676), totalSupplyBefore.Supply.AmountOf(burnableDenom))
+	requireT.Equal(sdkmath.NewInt(676), totalSupplyBefore.Supply.AmountOf(burnableDenom))
 
 	// burn tokens and check balance and total supply
 	err = bankKeeper.SendCoins(ctx, issuer, issuer, sdk.NewCoins(
@@ -518,7 +518,7 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	cwExtensionBalanceAfter = bankKeeper.GetBalance(ctx, extensionCWAddress, burnableDenom)
 	totalSupplyAfter, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(575), totalSupplyAfter.Supply.AmountOf(burnableDenom))
+	requireT.Equal(sdkmath.NewInt(575), totalSupplyAfter.Supply.AmountOf(burnableDenom))
 
 	// the amount should be burnt
 	requireT.Equal(
@@ -532,11 +532,11 @@ func TestKeeper_Extension_Burn(t *testing.T) {
 	)
 
 	balance := bankKeeper.GetBalance(ctx, issuer, burnableDenom)
-	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(474)), balance)
+	requireT.Equal(sdk.NewCoin(burnableDenom, sdkmath.NewInt(474)), balance)
 
 	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(575), totalSupply.Supply.AmountOf(burnableDenom))
+	requireT.Equal(sdkmath.NewInt(575), totalSupply.Supply.AmountOf(burnableDenom))
 
 	// try to freeze the issuer (issuer can't be frozen)
 	err = ftKeeper.Freeze(ctx, issuer, issuer, sdk.NewCoin(burnableDenom, sdkmath.NewInt(600)))
@@ -555,7 +555,7 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -632,29 +632,29 @@ func TestKeeper_Extension_Mint(t *testing.T) {
 	requireT.NoError(err)
 
 	balance := bankKeeper.GetBalance(ctx, addr, mintableDenom)
-	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(757)), balance)
+	requireT.Equal(sdk.NewCoin(mintableDenom, sdkmath.NewInt(757)), balance)
 
 	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(987), totalSupply.Supply.AmountOf(mintableDenom))
+	requireT.Equal(sdkmath.NewInt(987), totalSupply.Supply.AmountOf(mintableDenom))
 
 	// mint to another account
 	err = bankKeeper.SendCoins(ctx, addr, randomAddr, coinsToMint)
 	requireT.NoError(err)
 
 	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
-	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(335)), balance)
+	requireT.Equal(sdk.NewCoin(mintableDenom, sdkmath.NewInt(335)), balance)
 
 	totalSupply, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(1092), totalSupply.Supply.AmountOf(mintableDenom))
+	requireT.Equal(sdkmath.NewInt(1092), totalSupply.Supply.AmountOf(mintableDenom))
 }
 
 func TestKeeper_Extension_BurnRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -742,7 +742,7 @@ func TestKeeper_Extension_BurnRate_BankMultiSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -938,7 +938,7 @@ func TestKeeper_Extension_SendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -1057,7 +1057,7 @@ func TestKeeper_Extension_ClearAdmin(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})

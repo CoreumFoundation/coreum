@@ -130,24 +130,24 @@ func New(options ...Option) *App {
 // BeginNextBlock begins new SimApp block and returns the ctx of the new block.
 func (s *App) BeginNextBlock() (sdk.Context, sdk.BeginBlock, error) {
 	header := tmproto.Header{
-		Height:  s.App.LastBlockHeight() + 1,
+		Height:  s.LastBlockHeight() + 1,
 		Time:    time.Now(),
 		AppHash: []byte(appHash),
 	}
 	ctx := s.NewContextLegacy(false, header)
-	beginBlock, err := s.App.BeginBlocker(ctx)
+	beginBlock, err := s.BeginBlocker(ctx)
 	return ctx, beginBlock, err
 }
 
 // BeginNextBlockAtTime begins new SimApp block and returns the ctx of the new block with given time.
 func (s *App) BeginNextBlockAtTime(blockTime time.Time) (sdk.Context, sdk.BeginBlock, error) {
 	header := tmproto.Header{
-		Height:  s.App.LastBlockHeight() + 1,
+		Height:  s.LastBlockHeight() + 1,
 		Time:    blockTime,
 		AppHash: []byte(appHash),
 	}
 	ctx := s.NewContextLegacy(false, header)
-	beginBlock, err := s.App.BeginBlocker(ctx)
+	beginBlock, err := s.BeginBlocker(ctx)
 	return ctx, beginBlock, err
 }
 
@@ -159,7 +159,7 @@ func (s *App) BeginNextBlockAtHeight(height int64) (sdk.Context, sdk.BeginBlock,
 		AppHash: []byte(appHash),
 	}
 	ctx := s.NewContextLegacy(false, header)
-	beginBlock, err := s.App.BeginBlocker(ctx)
+	beginBlock, err := s.BeginBlocker(ctx)
 	return ctx, beginBlock, err
 }
 
@@ -187,19 +187,19 @@ func (s *App) FinalizeBlockAtTime(blockTime time.Time) error {
 func (s *App) GenAccount(ctx sdk.Context) (sdk.AccAddress, *secp256k1.PrivKey) {
 	privateKey := secp256k1.GenPrivKey()
 	accountAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	account := s.App.AccountKeeper.NewAccountWithAddress(ctx, accountAddress)
-	s.App.AccountKeeper.SetAccount(ctx, account)
+	account := s.AccountKeeper.NewAccountWithAddress(ctx, accountAddress)
+	s.AccountKeeper.SetAccount(ctx, account)
 
 	return accountAddress, privateKey
 }
 
 // FundAccount mints and sends the coins to the provided App account.
 func (s *App) FundAccount(ctx sdk.Context, address sdk.AccAddress, balances sdk.Coins) error {
-	if err := s.App.BankKeeper.MintCoins(ctx, minttypes.ModuleName, balances); err != nil {
+	if err := s.BankKeeper.MintCoins(ctx, minttypes.ModuleName, balances); err != nil {
 		return errors.Wrap(err, "can't mint in simapp")
 	}
 
-	if err := s.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, address, balances); err != nil {
+	if err := s.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, address, balances); err != nil {
 		return errors.Wrap(err, "can't send funding coins in simapp")
 	}
 
@@ -222,7 +222,7 @@ func (s *App) SendTx(
 	}
 
 	txCfg := s.TxConfig()
-	return s.App.SimDeliver(txCfg.TxEncoder(), tx)
+	return s.SimDeliver(txCfg.TxEncoder(), tx)
 }
 
 // GenTx generates a tx from messages.
@@ -234,7 +234,7 @@ func (s *App) GenTx(
 	messages ...sdk.Msg,
 ) (sdk.Tx, error) {
 	signerAddress := sdk.AccAddress(priv.PubKey().Address())
-	account := s.App.AccountKeeper.GetAccount(ctx, signerAddress)
+	account := s.AccountKeeper.GetAccount(ctx, signerAddress)
 	if account == nil {
 		return nil, errors.Errorf(
 			"the account %s doesn't exist, check that it's created or state committed",
