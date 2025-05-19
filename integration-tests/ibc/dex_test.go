@@ -15,11 +15,11 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 func TestIBCDexLimitOrdersMatching(t *testing.T) {
@@ -49,20 +49,28 @@ func TestIBCDexLimitOrdersMatching(t *testing.T) {
 	})
 
 	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
-	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
+
+	coreumChain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: coreumIssuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgIssue{},
+					&banktypes.MsgSend{},
+					&banktypes.MsgSend{},
+				},
+				Amount: issueFee,
+			},
+		}, {
+			Acc: coreumSender,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&ibctransfertypes.MsgTransfer{},
+					&ibctransfertypes.MsgTransfer{},
+				},
+				Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).AddRaw(200_000),
+			},
 		},
-		Amount: issueFee,
-	})
-	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&ibctransfertypes.MsgTransfer{},
-			&ibctransfertypes.MsgTransfer{},
-		},
-		Amount: dexParamsRes.Params.OrderReserve.Amount.MulRaw(2).AddRaw(200_000),
 	})
 
 	denom1 := issueFT(ctx, t, coreumChain, coreumIssuer, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_ibc)

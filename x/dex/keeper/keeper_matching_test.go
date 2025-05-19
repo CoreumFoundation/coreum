@@ -16,10 +16,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 type TestSet struct {
@@ -38,20 +38,159 @@ func (t TestSet) orderReserveTimes(times int64) sdk.Coin {
 	return sdk.NewCoin(t.orderReserve.Denom, t.orderReserve.Amount.MulRaw(times))
 }
 
-func TestKeeper_MatchOrders(t *testing.T) {
-	t.SkipNow()
-	tests := []struct {
-		name                          string
-		balances                      func(testSet TestSet) map[string]sdk.Coins
-		whitelistedBalances           func(testSet TestSet) map[string]sdk.Coins
-		orders                        func(testSet TestSet) []types.Order
-		wantOrders                    func(testSet TestSet) []types.Order
-		wantAvailableBalances         func(testSet TestSet) map[string]sdk.Coins
-		wantExpectedToReceiveBalances func(testSet TestSet) map[string]sdk.Coins
-		wantErrorContains             string
-	}{
-		// ******************** No matching ********************
+type tst struct {
+	name                          string
+	balances                      func(testSet TestSet) map[string]sdk.Coins
+	whitelistedBalances           func(testSet TestSet) map[string]sdk.Coins
+	orders                        func(testSet TestSet) []types.Order
+	wantOrders                    func(testSet TestSet) []types.Order
+	wantAvailableBalances         func(testSet TestSet) map[string]sdk.Coins
+	wantExpectedToReceiveBalances func(testSet TestSet) map[string]sdk.Coins
+	wantErrorContains             func(testSet TestSet) string
+}
 
+func (tt tst) run(t *testing.T) {
+	logger := log.NewTestLogger(t)
+	testApp := simapp.New(simapp.WithCustomLogger(logger))
+	sdkCtx := testApp.BaseApp.NewContext(false)
+
+	testSet := genTestSet(t, sdkCtx, testApp)
+	t.Logf(
+		"Test set: acc1: %s, acc2: %s, acc3: %s",
+		testSet.acc1, testSet.acc2, testSet.acc3,
+	)
+
+	if tt.whitelistedBalances != nil {
+		for addr, coins := range tt.whitelistedBalances(testSet) {
+			testApp.AssetFTKeeper.SetWhitelistedBalances(sdkCtx, sdk.MustAccAddressFromBech32(addr), coins)
+		}
+	}
+
+	for addr, coins := range tt.balances(testSet) {
+		testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(addr), coins)
+	}
+
+	orderBooksIDs := make(map[uint32]struct{})
+	initialOrders := tt.orders(testSet)
+
+	ordersDenoms := make(map[string]struct{}, 0)
+	for i, order := range initialOrders {
+		ordersDenoms[order.BaseDenom] = struct{}{}
+		ordersDenoms[order.QuoteDenom] = struct{}{}
+		availableBalancesBefore, err := getAvailableBalances(sdkCtx, testApp, sdk.MustAccAddressFromBech32(order.Creator))
+		require.NoError(t, err)
+
+		// use new event manager for each order
+		sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
+		gasBefore := sdkCtx.GasMeter().GasConsumed()
+		err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
+		if err != nil && tt.wantErrorContains != nil {
+			require.True(t, sdkerrors.IsOf(
+				err,
+				assetfttypes.ErrDEXInsufficientSpendableBalance, assetfttypes.ErrWhitelistedLimitExceeded,
+			))
+			expectedErr := tt.wantErrorContains(testSet)
+			require.ErrorContains(t, err, expectedErr)
+			return
+		}
+		gasAfter := sdkCtx.GasMeter().GasConsumed()
+		t.Logf("Used gas for order %d placement: %d", i, gasAfter-gasBefore)
+		require.NoError(t, err)
+		assertOrderPlacementResult(t, sdkCtx, testApp, availableBalancesBefore, order)
+		orderBooksID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, order.BaseDenom, order.QuoteDenom)
+		require.NoError(t, err)
+		orderBooksIDs[orderBooksID] = struct{}{}
+	}
+	if tt.wantErrorContains != nil {
+		expectedErr := tt.wantErrorContains(testSet)
+		require.Failf(t, "expected error not found", expectedErr)
+	}
+
+	orders := make([]types.Order, 0)
+	for orderBookID := range orderBooksIDs {
+		orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_BUY)...)
+		orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_SELL)...)
+	}
+	wantOrders := tt.wantOrders(testSet)
+	// set order reserve and order sequence for all orders
+	wantOrders = fillReserveAndOrderSequence(t, sdkCtx, testApp, wantOrders)
+	require.ElementsMatch(t, wantOrders, orders, "orders do not match: \n%s", cmp.Diff(wantOrders, orders))
+
+	availableBalances := make(map[string]sdk.Coins)
+	lockedBalances := make(map[string]sdk.Coins)
+	expectedToReceiveBalances := make(map[string]sdk.Coins)
+	for addr := range tt.balances(testSet) {
+		addrBalances := testApp.BankKeeper.GetAllBalances(sdkCtx, sdk.MustAccAddressFromBech32(addr))
+		addrFTLockedBalances := sdk.NewCoins()
+		for _, balance := range addrBalances {
+			lockedBalance := testApp.AssetFTKeeper.GetDEXLockedBalance(
+				sdkCtx, sdk.MustAccAddressFromBech32(addr), balance.Denom,
+			)
+			addrFTLockedBalances = addrFTLockedBalances.Add(lockedBalance)
+			addrBalances = addrBalances.Sub(lockedBalance)
+		}
+
+		addrFTExpectedToReceiveBalances := sdk.NewCoins()
+		for denom := range ordersDenoms {
+			addrFTExpectedToReceiveBalance := testApp.AssetFTKeeper.GetDEXExpectedToReceivedBalance(
+				sdkCtx, sdk.MustAccAddressFromBech32(addr), denom,
+			)
+			addrFTExpectedToReceiveBalances = addrFTExpectedToReceiveBalances.Add(addrFTExpectedToReceiveBalance)
+		}
+
+		availableBalances[addr] = addrBalances
+		lockedBalances[addr] = addrFTLockedBalances
+		expectedToReceiveBalances[addr] = addrFTExpectedToReceiveBalances
+	}
+	availableBalances = removeEmptyBalances(availableBalances)
+	lockedBalances = removeEmptyBalances(lockedBalances)
+	expectedToReceiveBalances = removeEmptyBalances(expectedToReceiveBalances)
+
+	wantAvailableBalances := tt.wantAvailableBalances(testSet)
+	require.True(
+		t,
+		reflect.DeepEqual(wantAvailableBalances, availableBalances),
+		"available balances do not match: %v", cmp.Diff(wantAvailableBalances, availableBalances),
+	)
+
+	// by default must be empty
+	wantExpectedToReceiveBalances := make(map[string]sdk.Coins)
+	if tt.wantExpectedToReceiveBalances != nil {
+		wantExpectedToReceiveBalances = tt.wantExpectedToReceiveBalances(testSet)
+	}
+
+	require.True(
+		t,
+		reflect.DeepEqual(wantExpectedToReceiveBalances, expectedToReceiveBalances),
+		"expected to receive balances do not match: %v", cmp.Diff(wantAvailableBalances, availableBalances),
+	)
+
+	// check that balance locked in the orders correspond the balance locked in the asset ft
+	orderLockedBalances := make(map[string]sdk.Coins)
+	for _, order := range orders {
+		coins, ok := orderLockedBalances[order.Creator]
+		if !ok {
+			coins = sdk.NewCoins()
+		}
+		coins = coins.Add(sdk.NewCoin(order.GetSpendDenom(), order.RemainingSpendableBalance))
+		params, err := testApp.DEXKeeper.GetParams(sdkCtx)
+		require.NoError(t, err)
+		// add reserve for each order
+		coins = coins.Add(params.OrderReserve)
+		orderLockedBalances[order.Creator] = coins
+	}
+	orderLockedBalances = removeEmptyBalances(orderLockedBalances)
+	require.True(
+		t,
+		reflect.DeepEqual(lockedBalances, orderLockedBalances),
+		"want: %v, got: %v", lockedBalances, orderLockedBalances,
+	)
+
+	cancelAllOrdersAndAssertState(t, sdkCtx, testApp)
+}
+
+func TestKeeper_MatchOrders_NoMatching(t *testing.T) {
+	tests := []tst{
 		{
 			name: "no_match_limit_directOB_and_invertedOB_buy_and_sell",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
@@ -231,7 +370,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
-			name: "try_to_match_limit_directOB_lack_of_balance",
+			name: "match_limit_directOB_lack_of_balance",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
@@ -255,7 +394,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "1000000testSet.denom1 is not available, available 999000testSet.denom1",
+			wantErrorContains: func(testSet TestSet) string {
+				return fmt.Sprintf("1000000%s is not available, available 999000%s", testSet.denom1, testSet.denom1)
+			},
 		},
 		{
 			name: "not_fillable_orders_cancelled_right_after_creation",
@@ -291,8 +432,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:         "id2",
 						BaseDenom:  testSet.denom1,
 						QuoteDenom: testSet.denom2,
-						Price:      lo.ToPtr(types.MustNewPriceFromString("376e-5")),
-						// not fillable since 10_000*376e-5 = 37.6
+						Price:      lo.ToPtr(types.MustNewPriceFromString("333e-5")),
+						// not fillable since 10_000*333e-5 = 33.3
 						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
@@ -318,8 +459,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{}
 			},
 		},
+
+		// TODO(v6): Revise this behavior.
 		{
-			// TODO: Not sure if this is correct behavior but that is how it works now.
 			name: "partially_fillable_orders_accepted_for_creation",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
@@ -369,9 +511,17 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
+func TestKeeper_MatchOrders_DirectOBLimitMatching(t *testing.T) {
+	tests := []tst{
 		// ******************** Direct OB limit matching ********************
-
 		{
 			name: "match_limit_directOB_maker_sell_taker_buy_close_maker",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
@@ -507,7 +657,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
-			name: "try_to_match_limit_directOB_maker_sell_taker_buy_insufficient_funds",
+			name: "match_limit_directOB_maker_sell_taker_buy_insufficient_funds",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
@@ -549,18 +699,94 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			// we fill the id1 first, so the used balance from id2 is 1_000_000 * 375e-3 = 375_000
 			// to fill remaining part we need (10_000_000 - 1_000_000) * 376e-3 = 3_384_000,
 			// so total expected to send 3_384_00 + 375_000 = 3_759_000
-			wantErrorContains: "3759000testSet.denom2 is not available, available 3758000testSet.denom2",
+			wantErrorContains: func(testSet TestSet) string {
+				return fmt.Sprintf("3759000%s is not available, available 3758000%s", testSet.denom2, testSet.denom2)
+			},
 		},
 
-		// TODO: Figure out behavior in this case. Because we can possibly create an order,
-		// but it seems to violate quote quantity step rule.
+		// TODO(v6): Revise this behavior.
+		// we can possibly create an order, but it seems to violate quote quantity step rule.
+		// {
+		// 	name: "match_limit_directOB_maker_sell_taker_buy_close_maker_with_partial_filling",
+		// 	balances: func(testSet TestSet) map[string]sdk.Coins {
+		// 		return map[string]sdk.Coins{
+		// 			testSet.acc1.String(): sdk.NewCoins(
+		// 				testSet.orderReserve,
+		// 				sdk.NewInt64Coin(testSet.denom1, 1005),
+		// 			),
+		// 			testSet.acc2.String(): sdk.NewCoins(
+		// 				testSet.orderReserve,
+		// 				sdk.NewInt64Coin(testSet.denom2, 3760),
+		// 			),
+		// 		}
+		// 	},
+		// 	orders: func(testSet TestSet) []types.Order {
+		// 		return []types.Order{
+		// 			{
+		// 				Creator:    testSet.acc1.String(),
+		// 				Type:       types.ORDER_TYPE_LIMIT,
+		// 				ID:         "id1",
+		// 				BaseDenom:  testSet.denom1,
+		// 				QuoteDenom: testSet.denom2,
+		// 				Price:      lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+		// 				// only 1000 will be filled
+		// 				Quantity:    sdkmath.NewInt(1005),
+		// 				Side:        types.SIDE_SELL,
+		// 				TimeInForce: types.TIME_IN_FORCE_GTC,
+		// 			},
+		// 			{
+		// 				Creator:     testSet.acc2.String(),
+		// 				Type:        types.ORDER_TYPE_LIMIT,
+		// 				ID:          "id2",
+		// 				BaseDenom:   testSet.denom1,
+		// 				QuoteDenom:  testSet.denom2,
+		// 				Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+		// 				Quantity:    sdkmath.NewInt(10000),
+		// 				Side:        types.SIDE_BUY,
+		// 				TimeInForce: types.TIME_IN_FORCE_GTC,
+		// 			},
+		// 		}
+		// 	},
+		// 	wantOrders: func(testSet TestSet) []types.Order {
+		// 		return []types.Order{
+		// 			{
+		// 				Creator:     testSet.acc2.String(),
+		// 				Type:        types.ORDER_TYPE_LIMIT,
+		// 				ID:          "id2",
+		// 				BaseDenom:   testSet.denom1,
+		// 				QuoteDenom:  testSet.denom2,
+		// 				Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+		// 				Quantity:    sdkmath.NewInt(10000),
+		// 				Side:        types.SIDE_BUY,
+		// 				TimeInForce: types.TIME_IN_FORCE_GTC,
+		// 				// 10000 - 1000
+		// 				RemainingBaseQuantity: sdkmath.NewInt(9000),
+		// 				// (10000 - 1000) * 376e-3 = 3384
+		// 				RemainingSpendableBalance: sdkmath.NewInt(3384),
+		// 			},
+		// 		}
+		// 	},
+		// 	wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
+		// 		return map[string]sdk.Coins{
+		// 			testSet.acc1.String(): sdk.NewCoins(
+		// 				testSet.orderReserve,
+		// 				sdk.NewInt64Coin(testSet.denom1, 5),
+		// 				sdk.NewInt64Coin(testSet.denom2, 375),
+		// 			),
+		// 			testSet.acc2.String(): sdk.NewCoins(
+		// 				sdk.NewInt64Coin(testSet.denom1, 1000),
+		// 				sdk.NewInt64Coin(testSet.denom2, 1),
+		// 			),
+		// 		}
+		// 	},
+		// },
 		{
-			name: "match_limit_directOB_maker_sell_taker_buy_close_maker_with_partial_filling",
+			name: "match_limit_directOB_maker_sell_taker_buy_close_taker",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1005),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
@@ -571,147 +797,13 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			orders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:    testSet.acc1.String(),
-						Type:       types.ORDER_TYPE_LIMIT,
-						ID:         "id1",
-						BaseDenom:  testSet.denom1,
-						QuoteDenom: testSet.denom2,
-						Price:      lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						// only 1000 will be filled
-						Quantity:    sdkmath.NewInt(1005),
-						Side:        types.SIDE_SELL,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-					},
-					{
-						Creator:     testSet.acc2.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id2",
-						BaseDenom:   testSet.denom1,
-						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(10000),
-						Side:        types.SIDE_BUY,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-					},
-				}
-			},
-			wantOrders: func(testSet TestSet) []types.Order {
-				return []types.Order{
-					{
-						Creator:     testSet.acc2.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id2",
-						BaseDenom:   testSet.denom1,
-						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(10000),
-						Side:        types.SIDE_BUY,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-						// 10000 - 1000
-						RemainingBaseQuantity: sdkmath.NewInt(9000),
-						// (10000 - 1000) * 376e-3 = 3384
-						RemainingSpendableBalance: sdkmath.NewInt(3384),
-					},
-				}
-			},
-			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 5),
-						sdk.NewInt64Coin(testSet.denom2, 375),
-					),
-					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 1000),
-						sdk.NewInt64Coin(testSet.denom2, 1),
-					),
-				}
-			},
-		},
-		{
-			name: "match_limit_directOB_maker_sell_taker_buy_close_taker_and_cancel_maker_remainer",
-			balances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 438),
-					),
-					testSet.acc2.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
-					),
-				}
-			},
-			orders: func(testSet TestSet) []types.Order {
-				return []types.Order{
-					{
-						Creator:     testSet.acc1.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id1",
-						BaseDenom:   testSet.denom1,
-						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("397e-3")),
-						Quantity:    sdkmath.NewInt(1101),
-						Side:        types.SIDE_BUY,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-					},
-					{
-						Creator:     testSet.acc2.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id2",
-						BaseDenom:   testSet.denom1,
-						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(1001),
-						Side:        types.SIDE_SELL,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-					},
-				}
-			},
-			wantOrders: func(testSet TestSet) []types.Order {
-				return []types.Order{}
-			},
-			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
-						sdk.NewInt64Coin(testSet.denom2, 41),
-					),
-					testSet.acc2.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 397),
-					),
-				}
-			},
-			wantExpectedToReceiveBalances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{}
-			},
-		},
-		{
-			name: "match_limit_directOB_maker_sell_taker_buy_close_taker",
-			balances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
-					),
-					testSet.acc2.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 377),
-					),
-				}
-			},
-			orders: func(testSet TestSet) []types.Order {
-				return []types.Order{
-					{
 						Creator:     testSet.acc1.String(),
 						Type:        types.ORDER_TYPE_LIMIT,
 						ID:          "id1",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -722,7 +814,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(1001),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -737,40 +829,40 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 						// 10000 - 1000
-						RemainingBaseQuantity: sdkmath.NewInt(9000),
+						RemainingBaseQuantity: sdkmath.NewInt(90_000),
 						// 10000 - 1000
-						RemainingSpendableBalance: sdkmath.NewInt(9000),
+						RemainingSpendableBalance: sdkmath.NewInt(90_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 375),
+						sdk.NewInt64Coin(testSet.denom2, 3750),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
-						sdk.NewInt64Coin(testSet.denom2, 2),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
+						sdk.NewInt64Coin(testSet.denom2, 10),
 					),
 				}
 			},
 		},
 		{
-			name: "match_limit_directOB_maker_sell_taker_buy_close_taker_with_partial_filling",
+			name: "match_limit_directOB_maker_sell_taker_buy_partially_fillable_taker_fully_cancelled",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 1005),
+						sdk.NewInt64Coin(testSet.denom2, 100),
 					),
 				}
 			},
@@ -782,20 +874,89 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id1",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Price:       lo.ToPtr(types.MustNewPriceFromString("374e-5")),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
 					{
 						Creator:    testSet.acc2.String(),
 						Type:       types.ORDER_TYPE_LIMIT,
-						ID:         "id2",
+						ID:         "id1",
 						BaseDenom:  testSet.denom1,
 						QuoteDenom: testSet.denom2,
-						Price:      lo.ToPtr(types.MustNewPriceFromString("1")),
-						// only 1000 will be filled
-						Quantity:    sdkmath.NewInt(1005),
+						Price:      lo.ToPtr(types.MustNewPriceFromString("376e-5")),
+						// not fully fillable since 20_000 * 376e-5 = 75.2, but 12_500 * 376e-5 = 47.
+						// However with maker price it is not fillable at all
+						Quantity:    sdkmath.NewInt(20_000),
+						Side:        types.SIDE_BUY,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+				}
+			},
+			wantOrders: func(testSet TestSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:                   testSet.acc1.String(),
+						Type:                      types.ORDER_TYPE_LIMIT,
+						ID:                        "id1",
+						BaseDenom:                 testSet.denom1,
+						QuoteDenom:                testSet.denom2,
+						Price:                     lo.ToPtr(types.MustNewPriceFromString("374e-5")),
+						Quantity:                  sdkmath.NewInt(100_000),
+						Side:                      types.SIDE_SELL,
+						TimeInForce:               types.TIME_IN_FORCE_GTC,
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(100_000),
+					},
+				}
+			},
+			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					testSet.acc2.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(testSet.denom2, 100),
+					),
+				}
+			},
+		},
+		{
+			name: "match_limit_directOB_maker_sell_taker_buy_partially_matchable_taker_filled_fully",
+			balances: func(testSet TestSet) map[string]sdk.Coins {
+				return map[string]sdk.Coins{
+					testSet.acc1.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
+					),
+					testSet.acc2.String(): sdk.NewCoins(
+						testSet.orderReserve,
+						sdk.NewInt64Coin(testSet.denom2, 100),
+					),
+				}
+			},
+			orders: func(testSet TestSet) []types.Order {
+				return []types.Order{
+					{
+						Creator:     testSet.acc1.String(),
+						Type:        types.ORDER_TYPE_LIMIT,
+						ID:          "id1",
+						BaseDenom:   testSet.denom1,
+						QuoteDenom:  testSet.denom2,
+						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-5")),
+						Quantity:    sdkmath.NewInt(100_000),
+						Side:        types.SIDE_SELL,
+						TimeInForce: types.TIME_IN_FORCE_GTC,
+					},
+					{
+						Creator:    testSet.acc2.String(),
+						Type:       types.ORDER_TYPE_LIMIT,
+						ID:         "id1",
+						BaseDenom:  testSet.denom1,
+						QuoteDenom: testSet.denom2,
+						Price:      lo.ToPtr(types.MustNewPriceFromString("376e-5")),
+						// not fully fillable since 20_000 * 376e-5 = 75.2, but 12_500 * 376e-5 = 47.
+						// However, using maker price it is fillable 20_00 * 375e-5 = 75
+						Quantity:    sdkmath.NewInt(20_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -809,25 +970,24 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id1",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-5")),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
-						// 10000 - 1000
-						RemainingBaseQuantity: sdkmath.NewInt(9000),
-						// 10000 - 1000
-						RemainingSpendableBalance: sdkmath.NewInt(9000),
+						// 100k - 20k
+						RemainingBaseQuantity: sdkmath.NewInt(80_000),
+						// 100k - 20k
+						RemainingSpendableBalance: sdkmath.NewInt(80_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 375)),
+					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 75)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
-						// 630 = (1005*1) - (1000*0.375). Where 1005 is amount locked and 375 amount spent.
-						sdk.NewInt64Coin(testSet.denom2, 630),
+						sdk.NewInt64Coin(testSet.denom1, 20_000),
+						sdk.NewInt64Coin(testSet.denom2, 100-75),
 					),
 				}
 			},
@@ -838,11 +998,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom2, 3760),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 				}
 			},
@@ -855,7 +1015,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -866,7 +1026,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -881,13 +1041,13 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
-						// 10000 - 1000
-						RemainingBaseQuantity: sdkmath.NewInt(9000),
-						// 10000 - 1000
-						RemainingSpendableBalance: sdkmath.NewInt(9000),
+						// 100k - 10k
+						RemainingBaseQuantity: sdkmath.NewInt(90_000),
+						// 100k - 10k
+						RemainingSpendableBalance: sdkmath.NewInt(90_000),
 					},
 				}
 			},
@@ -895,23 +1055,23 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 376)),
+					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 3760)),
 				}
 			},
 		},
 		{
-			name: "try_to_match_limit_directOB_maker_buy_taker_sell_insufficient_funds",
+			name: "match_limit_directOB_maker_buy_taker_sell_insufficient_funds",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom2, 3_760),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 9999),
+						sdk.NewInt64Coin(testSet.denom1, 99_999),
 					),
 				}
 			},
@@ -924,7 +1084,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -935,13 +1095,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
 				}
 			},
-			wantErrorContains: "10000testSet.denom1 is not available, available 9999testSet.denom1",
+			wantErrorContains: func(testSet TestSet) string {
+				return fmt.Sprintf("100000%s is not available, available 99999%s", testSet.denom1, testSet.denom1)
+			},
 		},
 		{
 			name: "match_limit_directOB_maker_buy_taker_sell_close_taker",
@@ -949,10 +1111,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 3760)),
+						sdk.NewInt64Coin(testSet.denom2, 37_600)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 				}
 			},
@@ -965,7 +1127,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -976,7 +1138,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -991,22 +1153,22 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
-						// 10000 - 1000
-						RemainingBaseQuantity: sdkmath.NewInt(9000),
-						// 376e-3 * 10000 - 376e-3 * 1000 = 3384
-						RemainingSpendableBalance: sdkmath.NewInt(3384),
+						// 100k - 10k
+						RemainingBaseQuantity: sdkmath.NewInt(90_000),
+						// 376e-3 * 90_000 = 33840
+						RemainingSpendableBalance: sdkmath.NewInt(33_840),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 1000)),
+					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 10_000)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom2, 3_760),
 					),
 				}
 			},
@@ -1017,11 +1179,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 3750),
+						sdk.NewInt64Coin(testSet.denom2, 37_500),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 				}
 			},
@@ -1034,7 +1196,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1045,7 +1207,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1060,36 +1222,37 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
-						// 10000 - 1000
-						RemainingBaseQuantity: sdkmath.NewInt(9000),
+						// 100k - 10k
+						RemainingBaseQuantity: sdkmath.NewInt(90_000),
 						// 375e-3 * 10000 - 375e-3 * 1000 = 3375
-						RemainingSpendableBalance: sdkmath.NewInt(3375),
+						RemainingSpendableBalance: sdkmath.NewInt(33_750),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 1000)),
+					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 10_000)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 375),
+						sdk.NewInt64Coin(testSet.denom2, 3750),
 					),
 				}
 			},
 		},
 		{
+			// STOPPED HERE.
 			name: "match_limit_directOB_maker_sell_taker_buy_close_both",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 100)),
+						sdk.NewInt64Coin(testSet.denom1, 100_000)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 50),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 				}
 			},
@@ -1102,7 +1265,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1113,7 +1276,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1126,30 +1289,30 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 50),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 100),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 				}
 			},
 		},
 		{
-			name: "match_limit_directOB_close_two_makers_sell_and_and_taker_buy_with_remainder",
+			name: "match_limit_directOB_close_two_makers_sell_and_taker_buy_with_remainder",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 50),
+						sdk.NewInt64Coin(testSet.denom1, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 50),
+						sdk.NewInt64Coin(testSet.denom1, 50_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 60),
+						sdk.NewInt64Coin(testSet.denom2, 60_000),
 					),
 				}
 			},
@@ -1163,7 +1326,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(50),
+						Quantity:    sdkmath.NewInt(50_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1174,7 +1337,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(50),
+						Quantity:    sdkmath.NewInt(50_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1187,7 +1350,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("6e-1")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1200,16 +1363,16 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 25),
+						sdk.NewInt64Coin(testSet.denom2, 25_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 25),
+						sdk.NewInt64Coin(testSet.denom2, 25_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 100),
-						sdk.NewInt64Coin(testSet.denom2, 10),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
+						sdk.NewInt64Coin(testSet.denom2, 10_000),
 					),
 				}
 			},
@@ -1220,15 +1383,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 50),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 50),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 200),
+						sdk.NewInt64Coin(testSet.denom1, 200_000),
 					),
 				}
 			},
@@ -1242,7 +1405,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1253,7 +1416,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1265,7 +1428,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("4e-1")),
-						Quantity:    sdkmath.NewInt(200),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1278,15 +1441,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 100),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 100),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 100),
+						sdk.NewInt64Coin(testSet.denom2, 100_000),
 					),
 				}
 			},
@@ -1297,11 +1460,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(4),
-						sdk.NewInt64Coin(testSet.denom2, 754+752+4+752),
+						sdk.NewInt64Coin(testSet.denom2, 75_400+75_200+71_000+75_200),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 5000),
+						sdk.NewInt64Coin(testSet.denom1, 500_000),
 					),
 				}
 			},
@@ -1314,7 +1477,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("377e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1325,7 +1488,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1336,8 +1499,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id3",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("4e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Price:       lo.ToPtr(types.MustNewPriceFromString("355e-3")),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1349,7 +1512,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1360,7 +1523,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("37e-2")),
-						Quantity:    sdkmath.NewInt(5000),
+						Quantity:    sdkmath.NewInt(500_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1374,12 +1537,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:                        "id3",
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
-						Price:                     lo.ToPtr(types.MustNewPriceFromString("4e-3")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Price:                     lo.ToPtr(types.MustNewPriceFromString("355e-3")),
+						Quantity:                  sdkmath.NewInt(200_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(4),
+						RemainingBaseQuantity:     sdkmath.NewInt(200_000),
+						RemainingSpendableBalance: sdkmath.NewInt(71_000),
 					},
 					{
 						Creator:     testSet.acc1.String(),
@@ -1388,12 +1551,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 						// partially executed
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(376),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(37_600),
 					},
 				}
 			},
@@ -1401,11 +1564,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 5000),
+						sdk.NewInt64Coin(testSet.denom1, 500_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 1882), // 1882 = (754+752+4+752)-4-376
+						// executed id1: 200k*0.377 id2: 200k*0.376 and id4(partially): 100k*0.376
+						sdk.NewInt64Coin(testSet.denom2, 188_200),
 					),
 				}
 			},
@@ -1416,11 +1580,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(4),
-						sdk.NewInt64Coin(testSet.denom1, 2000+2000+1000+2000),
+						sdk.NewInt64Coin(testSet.denom1, 200_000+200_000+100_000+200_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 1890),
+						sdk.NewInt64Coin(testSet.denom2, 189_000),
 					),
 				}
 			},
@@ -1433,7 +1597,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1444,19 +1608,19 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
-					// remains unmatched price is too low
+					// remains unmatched price is too high
 					{
 						Creator:     testSet.acc1.String(),
 						Type:        types.ORDER_TYPE_LIMIT,
 						ID:          "id3",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("4e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Price:       lo.ToPtr(types.MustNewPriceFromString("399e-3")),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1468,7 +1632,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1479,7 +1643,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("378e-3")),
-						Quantity:    sdkmath.NewInt(5000),
+						Quantity:    sdkmath.NewInt(500_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1493,12 +1657,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:                        "id3",
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
-						Price:                     lo.ToPtr(types.MustNewPriceFromString("4e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Price:                     lo.ToPtr(types.MustNewPriceFromString("399e-3")),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(100_000),
 					},
 
 					{
@@ -1508,11 +1672,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:                  sdkmath.NewInt(2000),
+						Quantity:                  sdkmath.NewInt(200_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(100_000),
 					},
 				}
 			},
@@ -1520,30 +1684,37 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 1878),
+						sdk.NewInt64Coin(testSet.denom2, 187_800),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 5000),
-						sdk.NewInt64Coin(testSet.denom2, 12),
+						sdk.NewInt64Coin(testSet.denom1, 500_000),
+						sdk.NewInt64Coin(testSet.denom2, 1_200),
 					),
 				}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
-		// ******************** Direct OB market matching ********************
-
+func TestKeeper_MatchOrders_DirectOBMarketMatching(t *testing.T) {
+	tests := []tst{
 		{
 			name: "match_market_directOB_maker_sell_taker_buy_close_both",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						// no reserve is needed for market
-						sdk.NewInt64Coin(testSet.denom2, 3750),
+						sdk.NewInt64Coin(testSet.denom2, 375_000),
 					),
 				}
 			},
@@ -1556,7 +1727,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1566,7 +1737,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -1579,12 +1750,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 375),
+						sdk.NewInt64Coin(testSet.denom2, 37_500),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 						// Locked full balance and returned remainer: 3750 - 375 = 3375
-						sdk.NewInt64Coin(testSet.denom2, 3375),
+						sdk.NewInt64Coin(testSet.denom2, 337_500),
 					),
 				}
 			},
@@ -1595,11 +1766,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(4),
-						sdk.NewInt64Coin(testSet.denom1, 4*1000),
+						sdk.NewInt64Coin(testSet.denom1, 4*100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						// no reserve is needed for market
-						sdk.NewInt64Coin(testSet.denom2, 375+555+777),
+						sdk.NewInt64Coin(testSet.denom2, 37_500+55_500+77_700),
 					),
 				}
 			},
@@ -1612,7 +1783,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1623,7 +1794,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("555e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1634,7 +1805,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("777e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1646,7 +1817,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("777e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1656,7 +1827,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id5",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(3000),
+						Quantity:    sdkmath.NewInt(300_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -1671,11 +1842,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("777e-3")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(100_000),
 					},
 				}
 			},
@@ -1683,10 +1854,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(3),
-						sdk.NewInt64Coin(testSet.denom2, 375+555+777),
+						sdk.NewInt64Coin(testSet.denom2, 37_500+55_500+77_700),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 3000),
+						sdk.NewInt64Coin(testSet.denom1, 300_000),
 					),
 				}
 			},
@@ -1697,7 +1868,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1001),
+						sdk.NewInt64Coin(testSet.denom1, 110_000),
 					),
 				}
 			},
@@ -1710,7 +1881,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1721,7 +1892,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -1736,32 +1907,33 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(100_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 1)), // 1000 locked by the order
+					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 10_000)), // 10k locked by the order
 				}
 			},
 		},
 		{
+			// TODO(v6): Revise this behavior.
 			name: "match_market_directOB_maker_sell_taker_buy_with_partially_filling",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 2000),
+						sdk.NewInt64Coin(testSet.denom1, 200_000),
 					),
-					// the account has coins to cover just one order and remainder,
+					// the account has coins to cover one order fully and 100 is not enough for 2nd one,
 					// also not reserve is needed for the market order
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 375+7),
+						sdk.NewInt64Coin(testSet.denom2, 37_500+37_500),
 					),
 				}
 			},
@@ -1774,7 +1946,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1785,7 +1957,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1795,7 +1967,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id3",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -1810,11 +1982,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(375),
+						RemainingSpendableBalance: sdkmath.NewInt(375),
 					},
 				}
 			},
@@ -1822,11 +1994,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 375),
+						sdk.NewInt64Coin(testSet.denom2, 37_500+37_459),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 1000),
-						sdk.NewInt64Coin(testSet.denom2, 7),
+						sdk.NewInt64Coin(testSet.denom1, 199_625),
+						sdk.NewInt64Coin(testSet.denom2, 41),
 					),
 				}
 			},
@@ -1837,10 +2009,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom2, 376_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000),
 					),
 				}
 			},
@@ -1853,7 +2025,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1863,7 +2035,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -1876,11 +2048,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
+						sdk.NewInt64Coin(testSet.denom2, 338_400),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 9000),
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom1, 900_000),
+						sdk.NewInt64Coin(testSet.denom2, 37_600),
 					),
 				}
 			},
@@ -1891,10 +2064,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom2, 376_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 9999),
+						sdk.NewInt64Coin(testSet.denom1, 990_000),
 					),
 				}
 			},
@@ -1907,7 +2080,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1917,24 +2090,36 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
 				}
 			},
 			wantOrders: func(testSet TestSet) []types.Order {
-				return []types.Order{}
+				return []types.Order{
+					{
+						Creator:                   testSet.acc1.String(),
+						Type:                      types.ORDER_TYPE_LIMIT,
+						ID:                        "id1",
+						BaseDenom:                 testSet.denom1,
+						QuoteDenom:                testSet.denom2,
+						Price:                     lo.ToPtr(types.MustNewPriceFromString("376e-3")),
+						Quantity:                  sdkmath.NewInt(1_000_000),
+						Side:                      types.SIDE_BUY,
+						TimeInForce:               types.TIME_IN_FORCE_GTC,
+						RemainingBaseQuantity:     sdkmath.NewInt(10_000),
+						RemainingSpendableBalance: sdkmath.NewInt(3_760),
+					},
+				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 990_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 8999),
-						sdk.NewInt64Coin(testSet.denom2, 376),
+						sdk.NewInt64Coin(testSet.denom2, 372_240),
 					),
 				}
 			},
@@ -1945,10 +2130,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 375+999), // 999 should be filled
+						sdk.NewInt64Coin(testSet.denom2, 3_750+9_000), // 3_750 should be spent
 					),
 				}
 			},
@@ -1961,7 +2146,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -1971,7 +2156,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -1980,43 +2165,51 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			wantOrders: func(testSet TestSet) []types.Order {
 				return []types.Order{
 					{
-						Creator:     testSet.acc1.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id1",
-						BaseDenom:   testSet.denom1,
-						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
-						Side:        types.SIDE_SELL,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-						// 10000 - 1000
-						RemainingBaseQuantity: sdkmath.NewInt(9000),
-						// 10000 - 1000
-						RemainingSpendableBalance: sdkmath.NewInt(9000),
+						Creator:                   testSet.acc1.String(),
+						Type:                      types.ORDER_TYPE_LIMIT,
+						ID:                        "id1",
+						BaseDenom:                 testSet.denom1,
+						QuoteDenom:                testSet.denom2,
+						Price:                     lo.ToPtr(types.MustNewPriceFromString("375e-3")),
+						Quantity:                  sdkmath.NewInt(100_000),
+						Side:                      types.SIDE_SELL,
+						TimeInForce:               types.TIME_IN_FORCE_GTC,
+						RemainingBaseQuantity:     sdkmath.NewInt(90_000),
+						RemainingSpendableBalance: sdkmath.NewInt(90_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 375)),
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 1000), sdk.NewInt64Coin(testSet.denom2, 999)),
+					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 3_750)),
+					testSet.acc2.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
+						sdk.NewInt64Coin(testSet.denom2, 9_000),
+					),
 				}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
-		// ******************** Inverted OB limit matching ********************
-
+func TestKeeper_MatchOrders_InvertedOBLimitMatching(t *testing.T) {
+	tests := []tst{
 		{
 			name: "match_limit_invertedOB_maker_sell_taker_sell_close_maker",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 10000),
+						sdk.NewInt64Coin(testSet.denom2, 100_000),
 					),
 				}
 			},
@@ -2029,7 +2222,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2040,7 +2233,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2055,11 +2248,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(9625),
-						RemainingSpendableBalance: sdkmath.NewInt(9625),
+						RemainingBaseQuantity:     sdkmath.NewInt(96250),
+						RemainingSpendableBalance: sdkmath.NewInt(96250),
 					},
 				}
 			},
@@ -2067,25 +2260,25 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 375),
+						sdk.NewInt64Coin(testSet.denom2, 3_750),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 				}
 			},
 		},
 		{
-			name: "try_to_match_limit_invertedOB_maker_sell_taker_sell_insufficient_funds",
+			name: "match_limit_invertedOB_maker_sell_taker_sell_insufficient_funds",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 9999),
+						sdk.NewInt64Coin(testSet.denom2, 90_000),
 					),
 				}
 			},
@@ -2098,7 +2291,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2109,93 +2302,28 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
 				}
 			},
-			wantErrorContains: "10000testSet.denom2 is not available, available 9999testSet.denom2",
-		},
-		{
-			name: "match_limit_invertedOB_maker_sell_taker_sell_close_maker_with_partial_filling",
-			balances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1001)),
-					testSet.acc2.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 10000),
-					),
-				}
-			},
-			orders: func(testSet TestSet) []types.Order {
-				return []types.Order{
-					{
-						Creator:     testSet.acc1.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id1",
-						BaseDenom:   testSet.denom1,
-						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1001),
-						Side:        types.SIDE_SELL,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-					},
-					{
-						Creator:     testSet.acc2.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id2",
-						BaseDenom:   testSet.denom2,
-						QuoteDenom:  testSet.denom1,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(10000),
-						Side:        types.SIDE_SELL,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-					},
-				}
-			},
-			wantOrders: func(testSet TestSet) []types.Order {
-				return []types.Order{
-					{
-						Creator:     testSet.acc2.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id2",
-						BaseDenom:   testSet.denom2,
-						QuoteDenom:  testSet.denom1,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(10000),
-						Side:        types.SIDE_SELL,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-
-						RemainingBaseQuantity:     sdkmath.NewInt(9625),
-						RemainingSpendableBalance: sdkmath.NewInt(9625),
-					},
-				}
-			},
-			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1),
-						sdk.NewInt64Coin(testSet.denom2, 375),
-					),
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 1000)),
-				}
+			wantErrorContains: func(testSet TestSet) string {
+				return fmt.Sprintf("100000%s is not available, available 90000%s", testSet.denom2, testSet.denom2)
 			},
 		},
 		{
+			// TODO(v6): Revise this behavior.
 			name: "match_limit_invertedOB_maker_sell_taker_sell_close_taker",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 999),
+						sdk.NewInt64Coin(testSet.denom2, 10_000),
 					),
 				}
 			},
@@ -2208,7 +2336,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2219,7 +2347,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(999),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2234,92 +2362,23 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(7336),
-						RemainingSpendableBalance: sdkmath.NewInt(7336),
+						RemainingBaseQuantity:     sdkmath.NewInt(73336),
+						RemainingSpendableBalance: sdkmath.NewInt(73336),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 999),
+						sdk.NewInt64Coin(testSet.denom2, 9999),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 2664),
-					),
-				}
-			},
-		},
-		{
-			name: "match_limit_invertedOB_maker_sell_taker_sell_close_taker_with_partial_filling",
-			balances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
-					),
-					testSet.acc2.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 1001),
-					),
-				}
-			},
-			orders: func(testSet TestSet) []types.Order {
-				return []types.Order{
-					{
-						Creator:     testSet.acc1.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id1",
-						BaseDenom:   testSet.denom1,
-						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
-						Side:        types.SIDE_SELL,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-					},
-					{
-						Creator:     testSet.acc2.String(),
-						Type:        types.ORDER_TYPE_LIMIT,
-						ID:          "id2",
-						BaseDenom:   testSet.denom2,
-						QuoteDenom:  testSet.denom1,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(1001),
-						Side:        types.SIDE_SELL,
-						TimeInForce: types.TIME_IN_FORCE_GTC,
-					},
-				}
-			},
-			wantOrders: func(testSet TestSet) []types.Order {
-				return []types.Order{
-					{
-						Creator:                   testSet.acc1.String(),
-						Type:                      types.ORDER_TYPE_LIMIT,
-						ID:                        "id1",
-						BaseDenom:                 testSet.denom1,
-						QuoteDenom:                testSet.denom2,
-						Price:                     lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:                  sdkmath.NewInt(10000),
-						Side:                      types.SIDE_SELL,
-						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(7336),
-						RemainingSpendableBalance: sdkmath.NewInt(7336),
-					},
-				}
-			},
-			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
-				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 999),
-					),
-					testSet.acc2.String(): sdk.NewCoins(
-						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 2664), // 2664 = 999 / 0.375, so 999 matched for price 0.375.
-						sdk.NewInt64Coin(testSet.denom2, 2),
+						sdk.NewInt64Coin(testSet.denom2, 1),
+						sdk.NewInt64Coin(testSet.denom1, 26_664),
 					),
 				}
 			},
@@ -2330,10 +2389,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 381)),
+						sdk.NewInt64Coin(testSet.denom2, 3_810)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 26506),
+						sdk.NewInt64Coin(testSet.denom1, 265_000),
 					),
 				}
 			},
@@ -2346,7 +2405,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2357,7 +2416,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(10002),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2372,11 +2431,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:                  sdkmath.NewInt(10002),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(9621),
-						RemainingSpendableBalance: sdkmath.NewInt(25496),
+						RemainingBaseQuantity:     sdkmath.NewInt(96_190),
+						RemainingSpendableBalance: sdkmath.NewInt(254_904),
 					},
 				}
 			},
@@ -2384,26 +2443,27 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 10),
-						sdk.NewInt64Coin(testSet.denom2, 381),
+						sdk.NewInt64Coin(testSet.denom1, 96),
+						sdk.NewInt64Coin(testSet.denom2, 3_810),
 					),
 				}
 			},
 		},
 		{
-			name: "try_to_match_limit_invertedOB_maker_buy_taker_buy_insufficient_funds",
+			// TODO(v6): Revise this behavior. Shouldn't we return actual balance in error ?
+			name: "match_limit_invertedOB_maker_buy_taker_buy_insufficient_funds",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 381),
+						sdk.NewInt64Coin(testSet.denom2, 3_810),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 26490),
+						sdk.NewInt64Coin(testSet.denom1, 264_000),
 					),
 				}
 			},
@@ -2416,7 +2476,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2427,13 +2487,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
 				}
 			},
-			wantErrorContains: "26491testSet.denom1 is not available, available 26490testSet.denom1",
+			wantErrorContains: func(testSet TestSet) string {
+				return fmt.Sprintf("264904%s is not available, available 264000%s", testSet.denom1, testSet.denom1)
+			},
 		},
 		{
 			name: "match_limit_invertedOB_maker_buy_taker_buy_close_taker_with_partial_filling",
@@ -2441,11 +2503,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 4234),
+						sdk.NewInt64Coin(testSet.denom2, 381_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 2650),
+						sdk.NewInt64Coin(testSet.denom1, 1_033_500),
 					),
 				}
 			},
@@ -2458,7 +2520,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:    sdkmath.NewInt(11111),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2469,7 +2531,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("265e-2")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(380_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2484,38 +2546,38 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:                  sdkmath.NewInt(11111),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(9111),
-						RemainingSpendableBalance: sdkmath.NewInt(3472),
+						RemainingBaseQuantity:     sdkmath.NewInt(3_000),
+						RemainingSpendableBalance: sdkmath.NewInt(1143),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 2000),
+						sdk.NewInt64Coin(testSet.denom1, 997_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 650),
-						sdk.NewInt64Coin(testSet.denom2, 762),
+						sdk.NewInt64Coin(testSet.denom1, 36_500),
+						sdk.NewInt64Coin(testSet.denom2, 379_857),
 					),
 				}
 			},
 		},
 		{
-			name: "match_limit_invertedOB_maker_buy_taker_sell_close_taker_with_same_price",
+			name: "match_limit_invertedOB_maker_sell_taker_sell_close_taker_with_same_price",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 1000),
+						sdk.NewInt64Coin(testSet.denom2, 10_000),
 					),
 				}
 			},
@@ -2528,7 +2590,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2539,7 +2601,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2554,22 +2616,22 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("2")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(9500),
-						RemainingSpendableBalance: sdkmath.NewInt(9500),
+						RemainingBaseQuantity:     sdkmath.NewInt(95_000),
+						RemainingSpendableBalance: sdkmath.NewInt(95_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 1000),
+						sdk.NewInt64Coin(testSet.denom2, 10_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 500),
+						sdk.NewInt64Coin(testSet.denom1, 5_000),
 					),
 				}
 			},
@@ -2580,11 +2642,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 500),
+						sdk.NewInt64Coin(testSet.denom1, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 1000),
+						sdk.NewInt64Coin(testSet.denom2, 100_000),
 					),
 				}
 			},
@@ -2597,7 +2659,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("2")),
-						Quantity:    sdkmath.NewInt(500),
+						Quantity:    sdkmath.NewInt(50_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2608,7 +2670,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2621,10 +2683,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 1000)),
+						sdk.NewInt64Coin(testSet.denom2, 100_000)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 500),
+						sdk.NewInt64Coin(testSet.denom1, 50_000),
 					),
 				}
 			},
@@ -2635,15 +2697,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 25),
+						sdk.NewInt64Coin(testSet.denom2, 25_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 25),
+						sdk.NewInt64Coin(testSet.denom2, 25_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 105),
+						sdk.NewInt64Coin(testSet.denom1, 105_000),
 					),
 				}
 			},
@@ -2657,7 +2719,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(50),
+						Quantity:    sdkmath.NewInt(50_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2668,7 +2730,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(50),
+						Quantity:    sdkmath.NewInt(50_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2681,7 +2743,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("21e-1")),
-						Quantity:    sdkmath.NewInt(50),
+						Quantity:    sdkmath.NewInt(50_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2694,14 +2756,14 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 50)),
+						sdk.NewInt64Coin(testSet.denom1, 50_000)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 50)),
+						sdk.NewInt64Coin(testSet.denom1, 50_000)),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 5),
-						sdk.NewInt64Coin(testSet.denom2, 50),
+						sdk.NewInt64Coin(testSet.denom1, 5_000),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 				}
 			},
@@ -2712,11 +2774,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(4),
-						sdk.NewInt64Coin(testSet.denom2, 754+752+4+752),
+						sdk.NewInt64Coin(testSet.denom2, 75_400+75_200+71_000+75_200),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 4995),
+						sdk.NewInt64Coin(testSet.denom1, 499_500),
 					),
 				}
 			},
@@ -2729,7 +2791,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("377e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2740,7 +2802,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2751,8 +2813,8 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id3",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("4e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Price:       lo.ToPtr(types.MustNewPriceFromString("355e-3")),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2764,7 +2826,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2775,7 +2837,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("27e-1")),
-						Quantity:    sdkmath.NewInt(1850),
+						Quantity:    sdkmath.NewInt(180_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2789,12 +2851,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:                        "id3",
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
-						Price:                     lo.ToPtr(types.MustNewPriceFromString("4e-3")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Price:                     lo.ToPtr(types.MustNewPriceFromString("355e-3")),
+						Quantity:                  sdkmath.NewInt(200_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(4),
+						RemainingBaseQuantity:     sdkmath.NewInt(200_000),
+						RemainingSpendableBalance: sdkmath.NewInt(71_000),
 					},
 					{
 						Creator:     testSet.acc1.String(),
@@ -2803,12 +2865,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 						// part was used
-						RemainingBaseQuantity:     sdkmath.NewInt(1125),
-						RemainingSpendableBalance: sdkmath.NewInt(423),
+						RemainingBaseQuantity:     sdkmath.NewInt(121_875),
+						RemainingSpendableBalance: sdkmath.NewInt(45_825),
 					},
 				}
 			},
@@ -2816,12 +2878,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 4875),
+						sdk.NewInt64Coin(testSet.denom1, 478_125),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 120),
-						sdk.NewInt64Coin(testSet.denom2, 1835),
+						sdk.NewInt64Coin(testSet.denom1, 21_375),
+						sdk.NewInt64Coin(testSet.denom2, 179_975),
 					),
 				}
 			},
@@ -2832,11 +2894,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(4),
-						sdk.NewInt64Coin(testSet.denom1, 2000+2000+1000+2000),
+						sdk.NewInt64Coin(testSet.denom1, 200_000+200_000+200_000+200_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 1880),
+						sdk.NewInt64Coin(testSet.denom2, 190_000),
 					),
 				}
 			},
@@ -2849,7 +2911,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2860,19 +2922,19 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
-					// remains unmatched price is too low
+					// remains unmatched price is too high
 					{
 						Creator:     testSet.acc1.String(),
 						Type:        types.ORDER_TYPE_LIMIT,
 						ID:          "id3",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Price:       lo.ToPtr(types.MustNewPriceFromString("4e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Price:       lo.ToPtr(types.MustNewPriceFromString("455e-3")),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2884,7 +2946,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:    sdkmath.NewInt(2000),
+						Quantity:    sdkmath.NewInt(200_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2895,7 +2957,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("26e-1")),
-						Quantity:    sdkmath.NewInt(1880),
+						Quantity:    sdkmath.NewInt(190_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2909,12 +2971,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:                        "id3",
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
-						Price:                     lo.ToPtr(types.MustNewPriceFromString("4e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Price:                     lo.ToPtr(types.MustNewPriceFromString("455e-3")),
+						Quantity:                  sdkmath.NewInt(200_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(200_000),
+						RemainingSpendableBalance: sdkmath.NewInt(200_000),
 					},
 					{
 						Creator:                   testSet.acc1.String(),
@@ -2923,11 +2985,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("376e-3")),
-						Quantity:                  sdkmath.NewInt(2000),
+						Quantity:                  sdkmath.NewInt(200_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(94_250),
+						RemainingSpendableBalance: sdkmath.NewInt(94_250),
 					},
 				}
 			},
@@ -2935,30 +2997,38 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 1878),
+						sdk.NewInt64Coin(testSet.denom2, 189_962),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 5000),
-						sdk.NewInt64Coin(testSet.denom2, 2),
+						sdk.NewInt64Coin(testSet.denom1, 505_750),
+						sdk.NewInt64Coin(testSet.denom2, 38),
 					),
 				}
 			},
 		},
+	}
 
-		// ******************** Inverted OB market matching ********************
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
+func TestKeeper_MatchOrders_InvertedOBMarketMatching(t *testing.T) {
+	tests := []tst{
 		{
 			name: "match_market_invertedOB_maker_sell_taker_sell_close_both",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						// no reserve is needed for market
-						sdk.NewInt64Coin(testSet.denom2, 10000),
+						sdk.NewInt64Coin(testSet.denom2, 1_000_000),
 					),
 				}
 			},
@@ -2971,7 +3041,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -2981,7 +3051,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -2994,11 +3064,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 375),
+						sdk.NewInt64Coin(testSet.denom2, 37_500),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 1000),
-						sdk.NewInt64Coin(testSet.denom2, 9625),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
+						sdk.NewInt64Coin(testSet.denom2, 962_500),
 					),
 				}
 			},
@@ -3009,10 +3079,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 9999),
+						sdk.NewInt64Coin(testSet.denom2, 990_000),
 					),
 				}
 			},
@@ -3025,7 +3095,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3035,7 +3105,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -3048,11 +3118,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 375),
+						sdk.NewInt64Coin(testSet.denom2, 375_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 1000),
-						sdk.NewInt64Coin(testSet.denom2, 9624),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000),
+						sdk.NewInt64Coin(testSet.denom2, 615_000),
 					),
 				}
 			},
@@ -3063,11 +3133,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 381),
+						sdk.NewInt64Coin(testSet.denom2, 38_100),
 					),
-					// ceil(10101*(1/381e-3))
+					// 132_000 > 50_000*(1/381e-3)
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 26512),
+						sdk.NewInt64Coin(testSet.denom1, 132_000),
 					),
 				}
 			},
@@ -3080,7 +3150,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("381e-3")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3090,7 +3160,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
-						Quantity:    sdkmath.NewInt(10101),
+						Quantity:    sdkmath.NewInt(50_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -3103,11 +3173,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 25512),
-						sdk.NewInt64Coin(testSet.denom2, 381),
+						sdk.NewInt64Coin(testSet.denom1, 32_000),
+						sdk.NewInt64Coin(testSet.denom2, 38_100),
 					),
 				}
 			},
@@ -3118,10 +3188,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 380),
+						sdk.NewInt64Coin(testSet.denom2, 380_000),
 					),
 					// not enough balance to cover both orders so id2 will be matched partially.
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 100+900-1)),
+					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 100_000+900_000-1)),
 				}
 			},
 			orders: func(testSet TestSet) []types.Order {
@@ -3133,7 +3203,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("38e-2")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3144,7 +3214,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("38e-2")),
-						Quantity:    sdkmath.NewInt(900),
+						Quantity:    sdkmath.NewInt(900_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3154,7 +3224,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id3",
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
-						Quantity:    sdkmath.NewInt(1001),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -3169,7 +3239,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("38e-2")),
-						Quantity:                  sdkmath.NewInt(900),
+						Quantity:                  sdkmath.NewInt(900_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
 						RemainingBaseQuantity:     sdkmath.NewInt(50),
@@ -3181,11 +3251,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 100+850),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000-50),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						sdk.NewInt64Coin(testSet.denom1, 49),
-						sdk.NewInt64Coin(testSet.denom2, 38+323),
+						sdk.NewInt64Coin(testSet.denom2, 380_000-19),
 					),
 				}
 			},
@@ -3196,10 +3266,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 999),
+						sdk.NewInt64Coin(testSet.denom2, 90_000),
 					),
 				}
 			},
@@ -3212,7 +3282,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3222,7 +3292,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id2",
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
-						Quantity:    sdkmath.NewInt(999),
+						Quantity:    sdkmath.NewInt(90_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -3237,39 +3307,46 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("375e-3")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(7336),
-						RemainingSpendableBalance: sdkmath.NewInt(7336),
+						RemainingBaseQuantity:     sdkmath.NewInt(760_000),
+						RemainingSpendableBalance: sdkmath.NewInt(760_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 999)),
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 2664)),
+					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 90_000)),
+					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 240_000)),
 				}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
-		// ******************** Combined matching ********************
-
+func TestKeeper_MatchOrders_DirectAndInvertedOB(t *testing.T) {
+	tests := []tst{
 		{
 			name: "match_limit_directOB_and_invertedOB_buy_close_invertedOB_taker_with_fifo_priority",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 500),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 100+10000),
+						sdk.NewInt64Coin(testSet.denom2, 10_000+1_000_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000),
 					),
 				}
 			},
@@ -3282,7 +3359,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3292,10 +3369,10 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:         "id2",
 						BaseDenom:  testSet.denom2,
 						QuoteDenom: testSet.denom1,
-						// better price 181e-2 sell ~= 0.55 Inverted OB buy, greater is better price
+						// better price 181e-2 sell ~= 0.55 > 0.5 Inverted OB buy, greater is better price
 						// order has fifo priority
 						Price:       lo.ToPtr(types.MustNewPriceFromString("181e-2")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3308,7 +3385,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						// better price 181e-2 sell ~= 0.55 Inverted OB buy, greater is better price
 						// will remain with the partial filling
 						Price:       lo.ToPtr(types.MustNewPriceFromString("181e-2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3319,7 +3396,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("49e-2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3334,11 +3411,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(500),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(50_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -3347,11 +3424,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("181e-2")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(4600),
-						RemainingSpendableBalance: sdkmath.NewInt(4600),
+						RemainingBaseQuantity:     sdkmath.NewInt(457_600),
+						RemainingSpendableBalance: sdkmath.NewInt(457_600),
 					},
 				}
 			},
@@ -3359,12 +3436,12 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 9955),
+						sdk.NewInt64Coin(testSet.denom1, 999_844),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 45),
-						sdk.NewInt64Coin(testSet.denom2, 5500),
+						sdk.NewInt64Coin(testSet.denom1, 156),
+						sdk.NewInt64Coin(testSet.denom2, 552_400),
 					),
 				}
 			},
@@ -3375,14 +3452,14 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 500+5000),
+						sdk.NewInt64Coin(testSet.denom1, 50_000+500_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 220),
+						sdk.NewInt64Coin(testSet.denom2, 22_000),
 					),
 				}
 			},
@@ -3395,7 +3472,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("21e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3408,7 +3485,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						// order "id1", "id2" and "id3" matches, but we fill partially only "id2"
 						//	with the best price and fifo priority
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3419,7 +3496,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3430,7 +3507,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("22e-1")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3445,11 +3522,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("21e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(100_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -3458,11 +3535,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(800),
-						RemainingSpendableBalance: sdkmath.NewInt(400),
+						RemainingBaseQuantity:     sdkmath.NewInt(80_000),
+						RemainingSpendableBalance: sdkmath.NewInt(40_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -3471,22 +3548,22 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(10000),
-						RemainingSpendableBalance: sdkmath.NewInt(5000),
+						RemainingBaseQuantity:     sdkmath.NewInt(1_000_000),
+						RemainingSpendableBalance: sdkmath.NewInt(500_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 200),
+						sdk.NewInt64Coin(testSet.denom2, 20_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 100),
-						sdk.NewInt64Coin(testSet.denom2, 20),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
+						sdk.NewInt64Coin(testSet.denom2, 2_000),
 					),
 				}
 			},
@@ -3497,15 +3574,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 1000+19000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000+1_900_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 825),
+						sdk.NewInt64Coin(testSet.denom2, 82_500),
 					),
 				}
 			},
@@ -3518,7 +3595,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3529,7 +3606,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3540,7 +3617,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("19e-1")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3551,7 +3628,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("55e-2")),
-						Quantity:    sdkmath.NewInt(1500),
+						Quantity:    sdkmath.NewInt(150_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3566,11 +3643,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(500),
-						RemainingSpendableBalance: sdkmath.NewInt(500),
+						RemainingBaseQuantity:     sdkmath.NewInt(50_000),
+						RemainingSpendableBalance: sdkmath.NewInt(50_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -3579,11 +3656,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("19e-1")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(10000),
-						RemainingSpendableBalance: sdkmath.NewInt(19000),
+						RemainingBaseQuantity:     sdkmath.NewInt(1_000_000),
+						RemainingSpendableBalance: sdkmath.NewInt(1_900_000),
 					},
 				}
 			},
@@ -3591,15 +3668,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 500),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 250),
+						sdk.NewInt64Coin(testSet.denom2, 25_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1500),
-						sdk.NewInt64Coin(testSet.denom2, 75),
+						sdk.NewInt64Coin(testSet.denom1, 150_000),
+						sdk.NewInt64Coin(testSet.denom2, 7_500),
 					),
 				}
 			},
@@ -3610,15 +3687,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 2100),
+						sdk.NewInt64Coin(testSet.denom2, 210_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 2100+10000),
+						sdk.NewInt64Coin(testSet.denom2, 210_000+1_000_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 				}
 			},
@@ -3633,7 +3710,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						Price:      lo.ToPtr(types.MustNewPriceFromString("21e-1")),
 						// order "id1", "id2" and "id3" matches, but we fill partially only "id1"
 						//	with the best price and fifo priority
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3644,7 +3721,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("21e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3655,7 +3732,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3666,7 +3743,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("19e-1")),
-						Quantity:    sdkmath.NewInt(10),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3681,11 +3758,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("21e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(990),
-						RemainingSpendableBalance: sdkmath.NewInt(2079),
+						RemainingBaseQuantity:     sdkmath.NewInt(90_000),
+						RemainingSpendableBalance: sdkmath.NewInt(189_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -3694,11 +3771,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("21e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(2100),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(210_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -3707,22 +3784,22 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(10000),
-						RemainingSpendableBalance: sdkmath.NewInt(10000),
+						RemainingBaseQuantity:     sdkmath.NewInt(1_000_000),
+						RemainingSpendableBalance: sdkmath.NewInt(1_000_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 10),
+						sdk.NewInt64Coin(testSet.denom1, 10_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 21),
+						sdk.NewInt64Coin(testSet.denom2, 21_000),
 					),
 				}
 			},
@@ -3733,15 +3810,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 5000),
+						sdk.NewInt64Coin(testSet.denom1, 500_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 25000),
+						sdk.NewInt64Coin(testSet.denom2, 2_500_000),
 					),
 				}
 			},
@@ -3754,7 +3831,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3766,7 +3843,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")), // 0.5 = 1/2 which is inversion of 2
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3777,7 +3854,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("4e-1")),
-						Quantity:    sdkmath.NewInt(25000),
+						Quantity:    sdkmath.NewInt(2_500_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3792,11 +3869,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(5000),
-						RemainingSpendableBalance: sdkmath.NewInt(2500),
+						RemainingBaseQuantity:     sdkmath.NewInt(500_000),
+						RemainingSpendableBalance: sdkmath.NewInt(250_000),
 					},
 				}
 			},
@@ -3804,14 +3881,14 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 20000),
+						sdk.NewInt64Coin(testSet.denom2, 2_000_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 5000),
+						sdk.NewInt64Coin(testSet.denom2, 500_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 12500),
+						sdk.NewInt64Coin(testSet.denom1, 1_250_000),
 					),
 				}
 			},
@@ -3822,15 +3899,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 500),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 100+10000),
+						sdk.NewInt64Coin(testSet.denom2, 10_000+1_000_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 100000),
+						sdk.NewInt64Coin(testSet.denom1, 10_000_000),
 					),
 				}
 			},
@@ -3843,7 +3920,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3854,7 +3931,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("181e-2")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3865,7 +3942,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("181e-2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3876,7 +3953,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("49e-2")),
-						Quantity:    sdkmath.NewInt(100000),
+						Quantity:    sdkmath.NewInt(10_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3891,11 +3968,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("49e-2")),
-						Quantity:                  sdkmath.NewInt(100000),
+						Quantity:                  sdkmath.NewInt(10_000_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(80719),
-						RemainingSpendableBalance: sdkmath.NewInt(80719),
+						RemainingBaseQuantity:     sdkmath.NewInt(8_071_900),
+						RemainingSpendableBalance: sdkmath.NewInt(8_071_900),
 					},
 				}
 			},
@@ -3903,13 +3980,13 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 18281),
+						sdk.NewInt64Coin(testSet.denom1, 1_828_100),
 					),
-					testSet.acc3.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 10600)),
+					testSet.acc3.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 1_060_000)),
 				}
 			},
 		},
@@ -3919,15 +3996,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 1000+19000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000+1_900_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 82500)),
+						sdk.NewInt64Coin(testSet.denom2, 8_250_000)),
 				}
 			},
 			orders: func(testSet TestSet) []types.Order {
@@ -3939,7 +4016,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3950,7 +4027,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3961,7 +4038,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("19e-1")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3972,7 +4049,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("55e-2")),
-						Quantity:    sdkmath.NewInt(150000),
+						Quantity:    sdkmath.NewInt(15_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -3987,11 +4064,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("55e-2")),
-						Quantity:                  sdkmath.NewInt(150000),
+						Quantity:                  sdkmath.NewInt(15_000_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(129000),
-						RemainingSpendableBalance: sdkmath.NewInt(70950),
+						RemainingBaseQuantity:     sdkmath.NewInt(12_900_000),
+						RemainingSpendableBalance: sdkmath.NewInt(7_095_000),
 					},
 				}
 			},
@@ -3999,15 +4076,15 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 500),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 10500),
+						sdk.NewInt64Coin(testSet.denom2, 1_050_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 21000),
-						sdk.NewInt64Coin(testSet.denom2, 550),
+						sdk.NewInt64Coin(testSet.denom1, 2_100_000),
+						sdk.NewInt64Coin(testSet.denom2, 55_000),
 					),
 				}
 			},
@@ -4018,14 +4095,14 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 500),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 100+10000),
+						sdk.NewInt64Coin(testSet.denom2, 10_000+1_000_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 10000),
+						sdk.NewInt64Coin(testSet.denom1, 1_000_000),
 					),
 				}
 			},
@@ -4038,7 +4115,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4051,7 +4128,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						// better price 181e-2 sell ~= 0.55 Inverted OB buy, greater is better price
 						// order has fifo priority
 						Price:       lo.ToPtr(types.MustNewPriceFromString("181e-2")),
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4064,7 +4141,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						// better price 181e-2 sell ~= 0.55 Inverted OB buy, greater is better price
 						// will remain with the partial filling
 						Price:       lo.ToPtr(types.MustNewPriceFromString("181e-2")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4074,7 +4151,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id4",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -4089,11 +4166,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(500),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(50_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -4102,11 +4179,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("181e-2")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(4600),
-						RemainingSpendableBalance: sdkmath.NewInt(4600),
+						RemainingBaseQuantity:     sdkmath.NewInt(457_600),
+						RemainingSpendableBalance: sdkmath.NewInt(457_600),
 					},
 				}
 			},
@@ -4114,11 +4191,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 9955),
+						sdk.NewInt64Coin(testSet.denom1, 999_844),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 45),
-						sdk.NewInt64Coin(testSet.denom2, 5500),
+						sdk.NewInt64Coin(testSet.denom1, 156),
+						sdk.NewInt64Coin(testSet.denom2, 552_400),
 					),
 				}
 			},
@@ -4129,13 +4206,13 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000)),
+						sdk.NewInt64Coin(testSet.denom1, 100_000)),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 500+5000),
+						sdk.NewInt64Coin(testSet.denom1, 50_000+500_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 200),
+						sdk.NewInt64Coin(testSet.denom2, 20_000),
 					),
 				}
 			},
@@ -4148,7 +4225,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("21e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4161,7 +4238,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						// order "id1", "id2" and "id3" matches, but we fill partially only "id2"
 						//	with the best price and fifo priority
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4172,7 +4249,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4182,7 +4259,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id4",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(100),
+						Quantity:    sdkmath.NewInt(10_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -4197,11 +4274,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom1,
 						QuoteDenom:                testSet.denom2,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("21e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_SELL,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(1000),
-						RemainingSpendableBalance: sdkmath.NewInt(1000),
+						RemainingBaseQuantity:     sdkmath.NewInt(100_000),
+						RemainingSpendableBalance: sdkmath.NewInt(100_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -4210,11 +4287,11 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(1000),
+						Quantity:                  sdkmath.NewInt(100_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(800),
-						RemainingSpendableBalance: sdkmath.NewInt(400),
+						RemainingBaseQuantity:     sdkmath.NewInt(80_000),
+						RemainingSpendableBalance: sdkmath.NewInt(40_000),
 					},
 					{
 						Creator:                   testSet.acc2.String(),
@@ -4223,18 +4300,18 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:                 testSet.denom2,
 						QuoteDenom:                testSet.denom1,
 						Price:                     lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:                  sdkmath.NewInt(10000),
+						Quantity:                  sdkmath.NewInt(1_000_000),
 						Side:                      types.SIDE_BUY,
 						TimeInForce:               types.TIME_IN_FORCE_GTC,
-						RemainingBaseQuantity:     sdkmath.NewInt(10000),
-						RemainingSpendableBalance: sdkmath.NewInt(5000),
+						RemainingBaseQuantity:     sdkmath.NewInt(1_000_000),
+						RemainingSpendableBalance: sdkmath.NewInt(500_000),
 					},
 				}
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 200)),
-					testSet.acc3.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 100)),
+					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 20_000)),
+					testSet.acc3.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 10_000)),
 				}
 			},
 		},
@@ -4244,14 +4321,14 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom1, 1000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom1, 1000+19000),
+						sdk.NewInt64Coin(testSet.denom1, 100_000+1_900_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom2, 75000),
+						sdk.NewInt64Coin(testSet.denom2, 7_500_000),
 					),
 				}
 			},
@@ -4264,7 +4341,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4275,7 +4352,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("5e-1")),
-						Quantity:    sdkmath.NewInt(1000),
+						Quantity:    sdkmath.NewInt(100_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4286,7 +4363,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						BaseDenom:   testSet.denom2,
 						QuoteDenom:  testSet.denom1,
 						Price:       lo.ToPtr(types.MustNewPriceFromString("19e-1")),
-						Quantity:    sdkmath.NewInt(10000),
+						Quantity:    sdkmath.NewInt(1_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
 					},
@@ -4296,7 +4373,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 						ID:          "id4",
 						BaseDenom:   testSet.denom1,
 						QuoteDenom:  testSet.denom2,
-						Quantity:    sdkmath.NewInt(150000),
+						Quantity:    sdkmath.NewInt(15_000_000),
 						Side:        types.SIDE_BUY,
 						TimeInForce: types.TIME_IN_FORCE_IOC,
 					},
@@ -4309,22 +4386,31 @@ func TestKeeper_MatchOrders(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.denom2, 500),
+						sdk.NewInt64Coin(testSet.denom2, 50_000),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						testSet.orderReserveTimes(2),
-						sdk.NewInt64Coin(testSet.denom2, 10500),
+						sdk.NewInt64Coin(testSet.denom2, 1_050_000),
 					),
 					testSet.acc3.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.denom1, 21000),
-						sdk.NewInt64Coin(testSet.denom2, 64000),
+						sdk.NewInt64Coin(testSet.denom1, 2_100_000),
+						sdk.NewInt64Coin(testSet.denom2, 6_400_000),
 					),
 				}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
+func TestKeeper_MatchOrders_Other(t *testing.T) {
+	t.SkipNow()
+	tests := []tst{
 		// ******************** IOC matching ********************
-
 		{
 			name: "no_match_limit_sell_time_in_force_ioc",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
@@ -4839,7 +4925,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "is not enough to receive 377",
+			wantErrorContains: func(testSet TestSet) string {
+				return "is not enough to receive 377"
+			},
 		},
 		{
 			name: "match_whitelisting_limit_directOB_maker_sell_taker_buy_close_maker",
@@ -5111,7 +5199,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 			},
 		},
 		{
-			name: "try_to_match_whitelisting_limit_directOB_maker_sell_taker_buy_close_taker",
+			name: "match_whitelisting_limit_directOB_maker_sell_taker_buy_close_taker",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
@@ -5162,7 +5250,9 @@ func TestKeeper_MatchOrders(t *testing.T) {
 					},
 				}
 			},
-			wantErrorContains: "is not enough to receive 1000",
+			wantErrorContains: func(testSet TestSet) string {
+				return "is not enough to receive 1000"
+			},
 		},
 		{
 			name: "match_whitelisting_limit_directOB_maker_buy_taker_sell_close_maker",
@@ -6389,141 +6479,7 @@ func TestKeeper_MatchOrders(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logger := log.NewTestLogger(t)
-			testApp := simapp.New(simapp.WithCustomLogger(logger))
-			sdkCtx := testApp.BaseApp.NewContext(false)
-
-			testSet := genTestSet(t, sdkCtx, testApp)
-			t.Logf(
-				"Test set: acc1: %s, acc2: %s, acc3: %s",
-				testSet.acc1, testSet.acc2, testSet.acc3,
-			)
-
-			if tt.whitelistedBalances != nil {
-				for addr, coins := range tt.whitelistedBalances(testSet) {
-					testApp.AssetFTKeeper.SetWhitelistedBalances(sdkCtx, sdk.MustAccAddressFromBech32(addr), coins)
-				}
-			}
-
-			for addr, coins := range tt.balances(testSet) {
-				testApp.MintAndSendCoin(t, sdkCtx, sdk.MustAccAddressFromBech32(addr), coins)
-			}
-
-			orderBooksIDs := make(map[uint32]struct{})
-			initialOrders := tt.orders(testSet)
-
-			ordersDenoms := make(map[string]struct{}, 0)
-			for i, order := range initialOrders {
-				ordersDenoms[order.BaseDenom] = struct{}{}
-				ordersDenoms[order.QuoteDenom] = struct{}{}
-				availableBalancesBefore, err := getAvailableBalances(sdkCtx, testApp, sdk.MustAccAddressFromBech32(order.Creator))
-				require.NoError(t, err)
-
-				// use new event manager for each order
-				sdkCtx = sdkCtx.WithEventManager(sdk.NewEventManager())
-				gasBefore := sdkCtx.GasMeter().GasConsumed()
-				err = testApp.DEXKeeper.PlaceOrder(sdkCtx, order)
-				if err != nil && tt.wantErrorContains != "" {
-					require.True(t, sdkerrors.IsOf(
-						err,
-						assetfttypes.ErrDEXInsufficientSpendableBalance, assetfttypes.ErrWhitelistedLimitExceeded,
-					))
-					require.ErrorContains(t, err, tt.wantErrorContains)
-					return
-				}
-				gasAfter := sdkCtx.GasMeter().GasConsumed()
-				t.Logf("Used gas for order %d placement: %d", i, gasAfter-gasBefore)
-				require.NoError(t, err)
-				assertOrderPlacementResult(t, sdkCtx, testApp, availableBalancesBefore, order)
-				orderBooksID, err := testApp.DEXKeeper.GetOrderBookIDByDenoms(sdkCtx, order.BaseDenom, order.QuoteDenom)
-				require.NoError(t, err)
-				orderBooksIDs[orderBooksID] = struct{}{}
-			}
-			if tt.wantErrorContains != "" {
-				require.Failf(t, "expected error not found", tt.wantErrorContains)
-			}
-
-			orders := make([]types.Order, 0)
-			for orderBookID := range orderBooksIDs {
-				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_BUY)...)
-				orders = append(orders, getSorterOrderBookOrders(t, testApp, sdkCtx, orderBookID, types.SIDE_SELL)...)
-			}
-			wantOrders := tt.wantOrders(testSet)
-			// set order reserve and order sequence for all orders
-			wantOrders = fillReserveAndOrderSequence(t, sdkCtx, testApp, wantOrders)
-			require.ElementsMatch(t, wantOrders, orders, "orders do not match: \n%s", cmp.Diff(wantOrders, orders))
-
-			availableBalances := make(map[string]sdk.Coins)
-			lockedBalances := make(map[string]sdk.Coins)
-			expectedToReceiveBalances := make(map[string]sdk.Coins)
-			for addr := range tt.balances(testSet) {
-				addrBalances := testApp.BankKeeper.GetAllBalances(sdkCtx, sdk.MustAccAddressFromBech32(addr))
-				addrFTLockedBalances := sdk.NewCoins()
-				for _, balance := range addrBalances {
-					lockedBalance := testApp.AssetFTKeeper.GetDEXLockedBalance(
-						sdkCtx, sdk.MustAccAddressFromBech32(addr), balance.Denom,
-					)
-					addrFTLockedBalances = addrFTLockedBalances.Add(lockedBalance)
-					addrBalances = addrBalances.Sub(lockedBalance)
-				}
-
-				addrFTExpectedToReceiveBalances := sdk.NewCoins()
-				for denom := range ordersDenoms {
-					addrFTExpectedToReceiveBalance := testApp.AssetFTKeeper.GetDEXExpectedToReceivedBalance(
-						sdkCtx, sdk.MustAccAddressFromBech32(addr), denom,
-					)
-					addrFTExpectedToReceiveBalances = addrFTExpectedToReceiveBalances.Add(addrFTExpectedToReceiveBalance)
-				}
-
-				availableBalances[addr] = addrBalances
-				lockedBalances[addr] = addrFTLockedBalances
-				expectedToReceiveBalances[addr] = addrFTExpectedToReceiveBalances
-			}
-			availableBalances = removeEmptyBalances(availableBalances)
-			lockedBalances = removeEmptyBalances(lockedBalances)
-			expectedToReceiveBalances = removeEmptyBalances(expectedToReceiveBalances)
-
-			wantAvailableBalances := tt.wantAvailableBalances(testSet)
-			require.True(
-				t,
-				reflect.DeepEqual(wantAvailableBalances, availableBalances),
-				"available balances do not match: %v", cmp.Diff(wantAvailableBalances, availableBalances),
-			)
-
-			// by default must be empty
-			wantExpectedToReceiveBalances := make(map[string]sdk.Coins)
-			if tt.wantExpectedToReceiveBalances != nil {
-				wantExpectedToReceiveBalances = tt.wantExpectedToReceiveBalances(testSet)
-			}
-
-			require.True(
-				t,
-				reflect.DeepEqual(wantExpectedToReceiveBalances, expectedToReceiveBalances),
-				"expected to receive balances do not match: %v", cmp.Diff(wantAvailableBalances, availableBalances),
-			)
-
-			// check that balance locked in the orders correspond the balance locked in the asset ft
-			orderLockedBalances := make(map[string]sdk.Coins)
-			for _, order := range orders {
-				coins, ok := orderLockedBalances[order.Creator]
-				if !ok {
-					coins = sdk.NewCoins()
-				}
-				coins = coins.Add(sdk.NewCoin(order.GetSpendDenom(), order.RemainingSpendableBalance))
-				params, err := testApp.DEXKeeper.GetParams(sdkCtx)
-				require.NoError(t, err)
-				// add reserve for each order
-				coins = coins.Add(params.OrderReserve)
-				orderLockedBalances[order.Creator] = coins
-			}
-			orderLockedBalances = removeEmptyBalances(orderLockedBalances)
-			require.True(
-				t,
-				reflect.DeepEqual(lockedBalances, orderLockedBalances),
-				"want: %v, got: %v", lockedBalances, orderLockedBalances,
-			)
-
-			cancelAllOrdersAndAssertState(t, sdkCtx, testApp)
+			tt.run(t)
 		})
 	}
 }

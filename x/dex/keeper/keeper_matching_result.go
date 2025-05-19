@@ -7,8 +7,8 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/samber/lo"
 
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 // RecordToAddress maps an account address to an order book record.

@@ -3,8 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v2 "github.com/CoreumFoundation/coreum/v5/x/asset/nft/migrations/v2"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
+	v2 "github.com/CoreumFoundation/coreum/v6/x/asset/nft/migrations/v2"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
 )
 
 // Migrator is a struct for handling in-place store migrations.

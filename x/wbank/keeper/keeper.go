@@ -13,9 +13,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v5/x/wasm"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
-	"github.com/CoreumFoundation/coreum/v5/x/wbank/types"
+	"github.com/CoreumFoundation/coreum/v6/x/wasm"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v6/x/wasm/types"
+	"github.com/CoreumFoundation/coreum/v6/x/wbank/types"
 )
 
 // BaseKeeperWrapper is a wrapper of the cosmos-sdk bank module.

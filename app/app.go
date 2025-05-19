@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -131,43 +132,44 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
+	"google.golang.org/protobuf/reflect/protoregistry"
 
-	"github.com/CoreumFoundation/coreum/v5/app/openapi"
-	appupgrade "github.com/CoreumFoundation/coreum/v5/app/upgrade"
-	appupgradev5 "github.com/CoreumFoundation/coreum/v5/app/upgrade/v5"
-	"github.com/CoreumFoundation/coreum/v5/docs"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
-	assetft "github.com/CoreumFoundation/coreum/v5/x/asset/ft"
-	assetftkeeper "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	assetnft "github.com/CoreumFoundation/coreum/v5/x/asset/nft"
-	assetnftkeeper "github.com/CoreumFoundation/coreum/v5/x/asset/nft/keeper"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/auth/ante"
-	"github.com/CoreumFoundation/coreum/v5/x/customparams"
-	customparamskeeper "github.com/CoreumFoundation/coreum/v5/x/customparams/keeper"
-	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
-	"github.com/CoreumFoundation/coreum/v5/x/delay"
-	delaykeeper "github.com/CoreumFoundation/coreum/v5/x/delay/keeper"
-	delaytypes "github.com/CoreumFoundation/coreum/v5/x/delay/types"
-	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
-	deterministicgastypes "github.com/CoreumFoundation/coreum/v5/x/deterministicgas/types"
-	"github.com/CoreumFoundation/coreum/v5/x/dex"
-	dexkeeper "github.com/CoreumFoundation/coreum/v5/x/dex/keeper"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
-	"github.com/CoreumFoundation/coreum/v5/x/feemodel"
-	feemodelkeeper "github.com/CoreumFoundation/coreum/v5/x/feemodel/keeper"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
-	wasmcustomhandler "github.com/CoreumFoundation/coreum/v5/x/wasm/handler"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
-	"github.com/CoreumFoundation/coreum/v5/x/wbank"
-	wbankkeeper "github.com/CoreumFoundation/coreum/v5/x/wbank/keeper"
-	"github.com/CoreumFoundation/coreum/v5/x/wibctransfer"
-	wibctransferkeeper "github.com/CoreumFoundation/coreum/v5/x/wibctransfer/keeper"
-	"github.com/CoreumFoundation/coreum/v5/x/wnft"
-	wnftkeeper "github.com/CoreumFoundation/coreum/v5/x/wnft/keeper"
-	"github.com/CoreumFoundation/coreum/v5/x/wstaking"
+	"github.com/CoreumFoundation/coreum/v6/app/openapi"
+	appupgrade "github.com/CoreumFoundation/coreum/v6/app/upgrade"
+	appupgradev6 "github.com/CoreumFoundation/coreum/v6/app/upgrade/v6"
+	"github.com/CoreumFoundation/coreum/v6/docs"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
+	assetft "github.com/CoreumFoundation/coreum/v6/x/asset/ft"
+	assetftkeeper "github.com/CoreumFoundation/coreum/v6/x/asset/ft/keeper"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	assetnft "github.com/CoreumFoundation/coreum/v6/x/asset/nft"
+	assetnftkeeper "github.com/CoreumFoundation/coreum/v6/x/asset/nft/keeper"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/auth/ante"
+	"github.com/CoreumFoundation/coreum/v6/x/customparams"
+	customparamskeeper "github.com/CoreumFoundation/coreum/v6/x/customparams/keeper"
+	customparamstypes "github.com/CoreumFoundation/coreum/v6/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v6/x/delay"
+	delaykeeper "github.com/CoreumFoundation/coreum/v6/x/delay/keeper"
+	delaytypes "github.com/CoreumFoundation/coreum/v6/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v6/x/deterministicgas"
+	deterministicgastypes "github.com/CoreumFoundation/coreum/v6/x/deterministicgas/types"
+	"github.com/CoreumFoundation/coreum/v6/x/dex"
+	dexkeeper "github.com/CoreumFoundation/coreum/v6/x/dex/keeper"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/x/feemodel"
+	feemodelkeeper "github.com/CoreumFoundation/coreum/v6/x/feemodel/keeper"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v6/x/feemodel/types"
+	wasmcustomhandler "github.com/CoreumFoundation/coreum/v6/x/wasm/handler"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v6/x/wasm/types"
+	"github.com/CoreumFoundation/coreum/v6/x/wbank"
+	wbankkeeper "github.com/CoreumFoundation/coreum/v6/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/v6/x/wibctransfer"
+	wibctransferkeeper "github.com/CoreumFoundation/coreum/v6/x/wibctransfer/keeper"
+	"github.com/CoreumFoundation/coreum/v6/x/wnft"
+	wnftkeeper "github.com/CoreumFoundation/coreum/v6/x/wnft/keeper"
+	"github.com/CoreumFoundation/coreum/v6/x/wstaking"
 )
 
 const (
@@ -217,6 +219,9 @@ func init() {
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
 }
+
+// mergeProtos used to make sure proto files are merged only once.
+var mergeProtos sync.Once
 
 // App extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
@@ -1178,13 +1183,9 @@ func New(
 
 	/**** Upgrades ****/
 	upgrades := []appupgrade.Upgrade{
-		appupgradev5.New(
+		appupgradev6.New(
 			app.ModuleManager,
 			app.configurator,
-			ChosenNetwork,
-			app.GovKeeper,
-			app.DEXKeeper,
-			app.MintKeeper,
 		),
 	}
 
@@ -1224,6 +1225,10 @@ func New(
 		// want to panic here instead of logging a warning.
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
+
+	mergeProtos.Do(func() {
+		protoregistry.GlobalFiles = protoFiles
+	})
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {

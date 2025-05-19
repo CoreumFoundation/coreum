@@ -6,7 +6,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 
-	"github.com/CoreumFoundation/coreum/v5/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v6/x/wibctransfer/types"
 )
 
 var _ porttypes.IBCModule = PurposeMiddleware{}

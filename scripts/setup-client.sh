@@ -2,7 +2,7 @@
 
 set -e
 
-VERSION="v4.0.0"
+VERSION="v5.0.0"
 BIN_PATH="./cored"
 
 URL_LINUX_AMD64="https://github.com/CoreumFoundation/coreum/releases/download/${VERSION}/cored-linux-amd64"

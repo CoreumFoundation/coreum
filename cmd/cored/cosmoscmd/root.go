@@ -44,9 +44,9 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/CoreumFoundation/coreum/v5/app"
-	coreumclient "github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	"github.com/CoreumFoundation/coreum/v6/app"
+	coreumclient "github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config"
 )
 
 const ledgerAppName = "Coreum"
@@ -410,6 +410,7 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 				parentWriter: originalOutput,
 			}
 			clientCtx.Output = writer
+			cmd.SetOutput(writer)
 			if err := client.SetCmdClientContext(cmd, clientCtx); err != nil {
 				return errors.WithStack(err)
 			}
@@ -421,6 +422,7 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 
 			if writer.txRes.Code != 0 {
 				clientCtx.Output = originalOutput
+				cmd.SetOut(originalOutput)
 				clientCtx.OutputFormat = *originalOutputFormat
 				return errors.WithStack(clientCtx.PrintProto(writer.txRes))
 			}

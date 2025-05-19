@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 var _ types.MsgServer = MsgServer{}

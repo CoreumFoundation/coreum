@@ -3,7 +3,7 @@ package keeper
 import (
 	"math/big"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
+	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
 )
 
 var marketOrderPrice = big.NewRat(-1, 1)
@@ -81,7 +81,7 @@ func match(takerRecord, makerRecord OBRecord) (Trade, CloseResult) {
 	var closeRes CloseResult
 
 	// Note that we compare max execution quantities for each record as rational.
-	// Because if we do it using integers it may cause roudning and rational reminder
+	// Because if we do it using integers it may cause rounding and rational reminder
 	// of a bigger order might be executable with the next order.
 	switch cmp := takerMaxBaseQuantityRat.Cmp(makerMaxBaseQuantityRat); cmp {
 	case -1:

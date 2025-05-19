@@ -9,7 +9,7 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.
@@ -51,9 +51,6 @@ service Msg {
   rpc TransferAdmin(MsgTransferAdmin) returns (EmptyResponse);
   // ClearAdmin removes admin of a fungible token.
   rpc ClearAdmin(MsgClearAdmin) returns (EmptyResponse);
-
-  // TokenUpgradeV1 upgrades token to version V1.
-  rpc UpgradeTokenV1(MsgUpgradeTokenV1) returns (EmptyResponse);
 
   // UpdateParams is a governance operation to modify the parameters of the module.
   // NOTE: all parameters must be provided.
@@ -214,16 +211,6 @@ message MsgClearAdmin {
 
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string denom = 2;
-}
-
-// MsgUpgradeTokenV1 is the message upgrading token to V1.
-message MsgUpgradeTokenV1 {
-  option (cosmos.msg.v1.signer) = "sender";
-  option (amino.name) = "assetft/MsgUpgradeTokenV1";
-
-  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string denom = 2;
-  bool ibc_enabled = 3;
 }
 
 message MsgUpdateParams {

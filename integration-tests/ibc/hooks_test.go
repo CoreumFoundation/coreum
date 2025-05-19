@@ -19,9 +19,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	ibcwasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/ibc"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	ibcwasm "github.com/CoreumFoundation/coreum/v6/integration-tests/contracts/ibc"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
 )
 
 // TestIBCHooksCounterWASMCall tests ibc-hooks integration by deploying the ibc-hooks-counter WASM contract
@@ -324,7 +324,7 @@ func awaitHooksCounterContractState(
 		require.NoError(t, err)
 		queryCountOut, err := coreumChain.Wasm.QueryWASMContract(ctx, contractAddr, getCountPayload)
 		if err != nil {
-			if strings.Contains(err.Error(), "counter::state::Counter not found") {
+			if strings.Contains(err.Error(), "not found") {
 				return retry.Retryable(errors.New("counter is still not found for address: " + callerAddr))
 			}
 			require.NoError(t, err)
@@ -348,7 +348,7 @@ func awaitHooksCounterContractState(
 		require.NoError(t, err)
 		queryTotalFundsOut, err := coreumChain.Wasm.QueryWASMContract(ctx, contractAddr, getTotalFundsPayload)
 		if err != nil {
-			if strings.Contains(err.Error(), "counter::state::Counter not found") {
+			if strings.Contains(err.Error(), "not found") {
 				return retry.Retryable(errors.New("counter is still not found for address: " + callerAddr))
 			}
 			require.NoError(t, err)

@@ -14,13 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/wasm/handler"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/wasm/handler"
 )
 
 func TestGRPCQuerier(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 
 	testApp := simapp.New()

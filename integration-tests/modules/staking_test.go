@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	customparamstypes "github.com/CoreumFoundation/coreum/v5/x/customparams/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	customparamstypes "github.com/CoreumFoundation/coreum/v6/x/customparams/types"
 )
 
 // TestStakingProposalParamChange checks that staking param change proposal works correctly.
@@ -126,15 +126,6 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 
 	delegator := chain.GenAccount()
 	delegateAmount := sdkmath.NewInt(100)
-	chain.FundAccountWithOptions(ctx, t, delegator, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&stakingtypes.MsgDelegate{},
-			&stakingtypes.MsgUndelegate{},
-			&stakingtypes.MsgBeginRedelegate{},
-			&stakingtypes.MsgEditValidator{},
-		},
-		Amount: delegateAmount,
-	})
 
 	// Setup validator
 	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(
@@ -150,8 +141,24 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	chain.FundAccountWithOptions(ctx, t, validatorAccAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{editValidatorMsg},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: delegator,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&stakingtypes.MsgDelegate{},
+					&stakingtypes.MsgUndelegate{},
+					&stakingtypes.MsgEditValidator{},
+				},
+				NondeterministicMessagesGas: 300_000, // to cover the redelegation
+				Amount:                      delegateAmount,
+			},
+		}, {
+			Acc: validatorAccAddress,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{editValidatorMsg},
+			},
+		},
 	})
 
 	editValidatorRes, err := client.BroadcastTx(
@@ -210,12 +217,12 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	redelegateResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(redelegateMsg)),
+		chain.TxFactoryAuto(),
 		redelegateMsg,
 	)
 	require.NoError(t, err)
-	assert.Equal(t, int64(chain.GasLimitByMsgs(redelegateMsg)), redelegateResult.GasUsed)
-	t.Logf("Redelegation executed, txHash:%s", redelegateResult.TxHash)
+	assert.Equal(t, uint32(0), redelegateResult.Code)
+	t.Logf("Redelegation executed, txHash:%s, gasUsed:%d", redelegateResult.TxHash, redelegateResult.GasUsed)
 
 	ddResp, err = stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
 		DelegatorAddr: delegator.String(),

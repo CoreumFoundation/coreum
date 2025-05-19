@@ -13,12 +13,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/app"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v6/app"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v6/x/feemodel/types"
 )
 
 // stringsFlag allows setting a value multiple times to collect a list, as in -I=val1 -I=val2.
@@ -89,7 +89,7 @@ func init() {
 
 	ctx = context.Background()
 	if !runUnsafe {
-		ctx = integration.WithSkipUnsafe(ctx)
+		ctx = integration.WithSkipUnsafe(ctx) //nolint:fatcontext // one level of nesting is okay
 	}
 
 	// set the default staker mnemonic used in the dev znet by default

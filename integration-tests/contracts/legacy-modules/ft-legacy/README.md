@@ -18,7 +18,7 @@ The contract can be instantiated with the following messages
 }
 ```
 
-The instantiantion of the contract will issue a new AssetFT (and therefore become the issuer of the asset) with the values provided. The denom of the new AssetFT will be generated as {subunit}-{issuer_address}.
+The instantiation of the contract will issue a new AssetFT (and therefore become the issuer of the asset) with the values provided. The denom of the new AssetFT will be generated as {subunit}-{issuer_address}.
 
 Features define what actions can be performed on the new fungible token (These features are immutable in the future). Available features: Minting (0), Burning(1), Freezing(2), Whitelisting(3).
 Burn rate and send commission rate are numbers between 0 and 1 (in String format) which will be multiplied by send amount to determine how much is going to be burnt/sent to the token issuer on top of the send amount.

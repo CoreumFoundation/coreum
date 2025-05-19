@@ -18,14 +18,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/event"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	testcontracts "github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper/test-contracts"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v6/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/event"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	testcontracts "github.com/CoreumFoundation/coreum/v6/x/asset/ft/keeper/test-contracts"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 var (
@@ -194,19 +194,29 @@ func TestAssetFTExtensionWhitelist(t *testing.T) {
 	issuer := chain.GenAccount()
 	nonIssuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgSetWhitelistedLimit{},
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgSetWhitelistedLimit{},
+				},
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdkmath.NewInt(2)).
+					Add(sdkmath.NewInt(1_000_000)).    // added 1 million for smart contract upload
+					Add(sdkmath.NewInt(10 * 500_000)), // give 500k gas for each message since extensions are nondeterministic
+			},
+		}, {
+			Acc: nonIssuer,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1 * 500_000), // give 500k gas for each message since extensions are nondeterministic
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1 * 500_000), // give 500k gas for each message since extensions are nondeterministic
+			},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.Mul(sdkmath.NewInt(2)).
-			Add(sdkmath.NewInt(1_000_000)).    // added 1 million for smart contract upload
-			Add(sdkmath.NewInt(10 * 500_000)), // give 500k gas for each message since extensions are nondeterministic
-	})
-	chain.FundAccountWithOptions(ctx, t, nonIssuer, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1 * 500_000), // give 500k gas for each message since extensions are nondeterministic
-	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1 * 500_000), // give 500k gas for each message since extensions are nondeterministic
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -374,24 +384,34 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	randomAddress := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgFreeze{},
-			&assetfttypes.MsgFreeze{},
-			&assetfttypes.MsgUnfreeze{},
-			&assetfttypes.MsgUnfreeze{},
-			&assetfttypes.MsgUnfreeze{},
-		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
-			Add(sdkmath.NewInt(2 * 500_000)), // add 500k for each message with extenstion transfer
-	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(6 * 500_000), // add 500k for each message with extenstion transfer
-	})
-	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgFreeze{},
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgFreeze{},
+					&assetfttypes.MsgFreeze{},
+					&assetfttypes.MsgUnfreeze{},
+					&assetfttypes.MsgUnfreeze{},
+					&assetfttypes.MsgUnfreeze{},
+				},
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+					Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
+					Add(sdkmath.NewInt(2 * 500_000)), // add 500k for each message with extenstion transfer
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(6 * 500_000), // add 500k for each message with extenstion transfer
+			},
+		}, {
+			Acc: randomAddress,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgFreeze{},
+				},
+			},
 		},
 	})
 
@@ -533,15 +553,21 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 	recipient := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
-			Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
-			Add(sdkmath.NewInt(6 * 500_000)), // add 500k for each message with extenstion transfer
-	})
-
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(2 * 500_000), // add 500k for each message with extenstion transfer
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{},
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
+					Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
+					Add(sdkmath.NewInt(6 * 500_000)), // add 500k for each message with extenstion transfer
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(2 * 500_000), // add 500k for each message with extenstion transfer
+			},
+		},
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -721,18 +747,25 @@ func TestAssetFTExtensionMint(t *testing.T) {
 	recipient := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
-			Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
-			Add(sdkmath.NewInt(7 * 500_000)), // add 500k for each message with extenstion transfer
-	})
-
-	chain.FundAccountWithOptions(ctx, t, randomAddress, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1 * 500_000), // add 500k for each message with extenstion transfer
-	})
-
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1_000_000),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
+					Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
+					Add(sdkmath.NewInt(7 * 500_000)), // add 500k for each message with extenstion transfer
+			},
+		}, {
+			Acc: randomAddress,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1 * 500_000), // add 500k for each message with extenstion transfer
+			},
+		}, {
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1_000_000),
+			},
+		},
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1112,16 +1145,24 @@ func TestAssetFTExtensionIssuingSmartContractIsAllowedToSendAndReceive(t *testin
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
+	requireT := require.New(t)
+
 	admin := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	requireT := require.New(t)
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
-			Add(sdkmath.NewInt(1_000_000)),
-	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
+					Add(sdkmath.NewInt(1_000_000)),
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(500_000),
+			},
+		},
 	})
 
 	txf := chain.TxFactoryAuto()
@@ -1302,14 +1343,25 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
+	requireT := require.New(t)
+
 	admin := chain.GenAccount()
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	requireT := require.New(t)
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+					Add(sdkmath.NewInt(1_000_000)),
+			},
+		}, {
+			Acc: grantee,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(3 * 500_000),
+			},
+		},
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1416,10 +1468,6 @@ func TestAssetFTExtensionMintingAndSendingOnBehalfOfIssuingSmartContractIsPossib
 		},
 	})
 
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(3 * 500_000),
-	})
-
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
@@ -1448,16 +1496,25 @@ func TestAssetFTExtensionBurnRate(t *testing.T) {
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)). // added 1 million for smart contract upload
-			Add(sdkmath.NewInt(2 * 500_000)),
-	})
-	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(2 * 500_000),
-	})
-	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+					Add(sdkmath.NewInt(1_000_000)). // added 1 million for smart contract upload
+					Add(sdkmath.NewInt(2 * 500_000)),
+			},
+		}, {
+			Acc: recipient1,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(2 * 500_000),
+			},
+		}, {
+			Acc: recipient2,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(500_000),
+			},
+		},
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1590,16 +1647,25 @@ func TestAssetFTExtensionSendCommissionRate(t *testing.T) {
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)). // added 1 million for smart contract upload
-			Add(sdkmath.NewInt(2 * 500_000)),
-	})
-	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(2 * 500_000),
-	})
-	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1 * 500_000),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+					Add(sdkmath.NewInt(1_000_000)). // added 1 million for smart contract upload
+					Add(sdkmath.NewInt(2 * 500_000)),
+			},
+		}, {
+			Acc: recipient1,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(2 * 500_000),
+			},
+		}, {
+			Acc: recipient2,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1 * 500_000),
+			},
+		},
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(
@@ -1746,18 +1812,27 @@ func TestAssetFTExtensionDEX(t *testing.T) {
 	acc1 := chain.GenAccount()
 	acc2 := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			AddRaw(1_000_000). // added 1 million for smart contract upload
-			AddRaw(2 * 500_000),
-	})
-	chain.FundAccountWithOptions(ctx, t, acc1, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000).Add(dexReserver.Amount), // message + order reserve
-	})
-	chain.FundAccountWithOptions(ctx, t, acc2, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000).
-			AddRaw(200_000_000).
-			Add(dexReserver.Amount), // message  + balance to place an order + order reserve
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+					AddRaw(1_000_000). // added 1 million for smart contract upload
+					AddRaw(2 * 500_000),
+			},
+		}, {
+			Acc: acc1,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(500_000).Add(dexReserver.Amount), // message + order reserve
+			},
+		}, {
+			Acc: acc2,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(500_000).
+					AddRaw(200_000_000).
+					Add(dexReserver.Amount), // message  + balance to place an order + order reserve
+			},
+		},
 	})
 
 	codeID, err := chain.Wasm.DeployWASMContract(

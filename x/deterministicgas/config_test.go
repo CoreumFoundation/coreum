@@ -19,11 +19,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/CoreumFoundation/coreum/v5/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
-	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas/types"
+	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/deterministicgas"
+	"github.com/CoreumFoundation/coreum/v6/x/deterministicgas/types"
 )
 
 // To access private variable from github.com/cosmos/gogoproto we link it to local variable.
@@ -107,10 +107,10 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic and extension types accidentally,
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 84, nondeterministicMsgCount)
-	assert.Equal(t, 70, deterministicMsgCount)
+	assert.Equal(t, 85, nondeterministicMsgCount)
+	assert.Equal(t, 68, deterministicMsgCount)
 	assert.Equal(t, 12, extensionMsgCount)
-	assert.Equal(t, 142, nonExtensionMsgCount)
+	assert.Equal(t, 141, nonExtensionMsgCount)
 }
 
 func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {

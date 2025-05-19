@@ -13,9 +13,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 )
 
 func TestMain(m *testing.M) {
@@ -855,15 +855,6 @@ func TestAmino(t *testing.T) {
 				Coin:    coin,
 			},
 			wantAminoJSON: `{"type":"assetft/MsgSetWhitelistedLimit","value":{"account":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
-		},
-		{
-			name: sdk.MsgTypeURL(&types.MsgUpgradeTokenV1{}),
-			msg: &types.MsgUpgradeTokenV1{
-				Sender:     address,
-				Denom:      coin.Denom,
-				IbcEnabled: false,
-			},
-			wantAminoJSON: `{"type":"assetft/MsgUpgradeTokenV1","value":{"denom":"my-denom","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
 			name: sdk.MsgTypeURL(&types.MsgUpdateDEXUnifiedRefAmount{}),

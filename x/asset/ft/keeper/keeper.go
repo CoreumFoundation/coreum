@@ -21,10 +21,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/wasm"
-	cwasmtypes "github.com/CoreumFoundation/coreum/v5/x/wasm/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v5/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/wasm"
+	cwasmtypes "github.com/CoreumFoundation/coreum/v6/x/wasm/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v6/x/wibctransfer/types"
 )
 
 // ExtensionInstantiateMsg is the message passed to the extension cosmwasm contract.
@@ -98,6 +98,10 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
 	if k.authority != authority {
 		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+
+	if err := k.checkIssueFeeIsLimitedToCore(ctx, params); err != nil {
+		return err
 	}
 
 	return k.SetParams(ctx, params)
@@ -362,6 +366,18 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 }
 
 func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, params types.Params) error {
+	if err := k.checkIssueFeeIsLimitedToCore(ctx, params); err != nil {
+		return err
+	}
+
+	if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
+		return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
+	}
+
+	return k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee))
+}
+
+func (k Keeper) checkIssueFeeIsLimitedToCore(ctx sdk.Context, params types.Params) error {
 	stakingParams, err := k.stakingKeeper.GetParams(ctx)
 	if err != nil {
 		return sdkerrors.Wrap(err, "not able to get staking params")
@@ -372,11 +388,7 @@ func (k Keeper) burnIssueFee(ctx sdk.Context, settings types.IssueSettings, para
 			params.IssueFee.Denom, stakingParams.BondDenom)
 	}
 
-	if err = k.validateCoinIsNotLockedByDEXAndBank(ctx, settings.Issuer, params.IssueFee); err != nil {
-		return sdkerrors.Wrap(err, "out of funds to pay for issue fee")
-	}
-
-	return k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee))
+	return nil
 }
 
 // SetSymbol saves the symbol to store.

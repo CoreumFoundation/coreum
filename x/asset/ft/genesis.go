@@ -4,8 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/keeper"
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/keeper"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 )
 
 // InitGenesis initializes the asset module's state from a provided genesis state.

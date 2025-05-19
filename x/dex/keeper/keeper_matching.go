@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
-	"github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 //nolint:funlen
@@ -62,7 +62,7 @@ func (k Keeper) matchOrder(
 		if !matches {
 			break
 		}
-		takerIsFilled, err = k.mathcRecords(ctx, cachedAccKeeper, mr, &takerRecord, &makerRecord, takerOrder)
+		takerIsFilled, err = k.matchRecords(ctx, cachedAccKeeper, mr, &takerRecord, &makerRecord, takerOrder)
 		if err != nil {
 			return err
 		}
@@ -203,7 +203,7 @@ func (k Keeper) getInitialRemainingBalance(
 	return remainingBalance.Amount, nil
 }
 
-func (k Keeper) mathcRecords(
+func (k Keeper) matchRecords(
 	ctx sdk.Context,
 	cachedAccKeeper cachedAccountKeeper,
 	mr *MatchingResult,
@@ -303,7 +303,7 @@ func (k Keeper) mathcRecords(
 // Order with RemainingBaseQuantity: 101 and Price: 0.39 is executable:
 // Qa' = floor(Qa / pd) * pd = floor(101 / 39) * 100 > 0.
 //
-// This func logic might be rewised if we introduce proper ticks for price & quantity.
+// This func logic might be revised if we introduce proper ticks for price & quantity.
 func isOrderRecordExecutableAsMaker(obRecord *types.OrderBookRecord) bool {
 	baseQuantity, _ := computeMaxIntExecutionQuantity(obRecord.Price.Rat(), obRecord.RemainingBaseQuantity.BigInt())
 	return !cbig.IntEqZero(baseQuantity)
@@ -314,20 +314,20 @@ func isOrderRecordExecutableAsMaker(obRecord *types.OrderBookRecord) bool {
 // E.g.:
 //
 // original order: market=USD/BTC buy 50 USD for 0.04 BTC per USD
-// RemeaningBaseQuantity: 50 USD
-// RemeaningSpendBalance: 2 BTC
+// RemainingBaseQuantity: 50 USD
+// RemainingSpendBalance: 2 BTC
 //
 // inverted order: market=BTC/USD sell 2 BTC for 25 USD per BTC
-// RemeaningBaseQuantity: 2 BTC
-// RemeaningSpendBalance: 2 BTC
+// RemainingBaseQuantity: 2 BTC
+// RemainingSpendBalance: 2 BTC
 
 // original order: market=USD/BTC sell 50 USD for 0.04 BTC per USD
-// RemeaningBaseQuantity: 50 USD
-// RemeaningSpendBalance: 50 USD
+// RemainingBaseQuantity: 50 USD
+// RemainingSpendBalance: 50 USD
 //
 // inverted order: market=BTC/USD buy 2 BTC for 25 USD per BTC
-// RemeaningBaseQuantity: 2 BTC
-// RemeaningSpendBalance: 50 USD.
+// RemainingBaseQuantity: 2 BTC
+// RemainingSpendBalance: 50 USD.
 func newMatchingOBRecord(obRecord *types.OrderBookRecord, inverted bool) OBRecord {
 	side := sellOrderSide
 	if obRecord.Side == types.SIDE_BUY {

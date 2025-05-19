@@ -14,10 +14,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 )
 
 // TestGroupCreationAndBankSend creates group & group policy and then sends funds from group policy account.

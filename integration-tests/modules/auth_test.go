@@ -18,12 +18,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/v5/integration-tests/contracts/modules"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v6/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/deterministicgas"
 )
 
 // TestAuthFeeLimits verifies that invalid message gas won't be accepted.
@@ -245,6 +245,7 @@ func TestGasEstimation(t *testing.T) {
 	t.Parallel()
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
+	admin := chain.GenAccount()
 	singlesigAddress := chain.GenAccount()
 
 	multisigPublicKey1, _, err := chain.GenMultisigAccount(3, 2)
@@ -260,9 +261,21 @@ func TestGasEstimation(t *testing.T) {
 	require.NoError(t, err)
 
 	// For accounts to exist on chain we need to fund them at least with min amount (1ucore).
-	chain.FundAccountWithOptions(ctx, t, singlesigAddress, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
-	chain.FundAccountWithOptions(ctx, t, multisigAddress1, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
-	chain.FundAccountWithOptions(ctx, t, multisigAddress2, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc:     admin,
+			Options: integration.BalancesOptions{Amount: sdkmath.NewInt(1_000_000)},
+		}, {
+			Acc:     singlesigAddress,
+			Options: integration.BalancesOptions{Amount: sdkmath.NewInt(1)},
+		}, {
+			Acc:     multisigAddress1,
+			Options: integration.BalancesOptions{Amount: sdkmath.NewInt(1)},
+		}, {
+			Acc:     multisigAddress2,
+			Options: integration.BalancesOptions{Amount: sdkmath.NewInt(1)},
+		},
+	})
 
 	// For deterministic messages we are able to assert that gas estimation is equal to exact number.
 	testsDeterm := []struct {
@@ -364,8 +377,6 @@ func TestGasEstimation(t *testing.T) {
 
 	// For non-deterministic messages we need to deploy a contract.
 	// Any address could be admin since we are not going to execute it but just estimate.
-	admin := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{Amount: sdkmath.NewInt(1_000_000)})
 
 	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
 		Count: 1337,
@@ -578,12 +589,19 @@ func TestTxWithMultipleSignatures(t *testing.T) {
 		},
 	}
 
-	chain.FundAccountWithOptions(ctx, t, sender1, integration.BalancesOptions{
-		Amount:   sendAmount1.Amount,
-		Messages: msgs, // note that first signer pays fees for the whole tx.
-	})
-	chain.FundAccountWithOptions(ctx, t, sender2, integration.BalancesOptions{
-		Amount: sendAmount2.Amount,
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: sender1,
+			Options: integration.BalancesOptions{
+				Amount:   sendAmount1.Amount,
+				Messages: msgs, // note that first signer pays fees for the whole tx.
+			},
+		}, {
+			Acc: sender2,
+			Options: integration.BalancesOptions{
+				Amount: sendAmount2.Amount,
+			},
+		},
 	})
 
 	tx := signTxWithMultipleSignatures(ctx, t, chain, msgs, []sdk.AccAddress{sender1, sender2})

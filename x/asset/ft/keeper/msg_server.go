@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 )
 
 var _ types.MsgServer = MsgServer{}
@@ -296,22 +296,6 @@ func (ms MsgServer) ClearAdmin(goCtx context.Context, req *types.MsgClearAdmin) 
 	}
 
 	err = ms.keeper.ClearAdmin(ctx, sender, req.Denom)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.EmptyResponse{}, nil
-}
-
-// UpgradeTokenV1 stores a request to upgrade token to V1.
-func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgUpgradeTokenV1) (*types.EmptyResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	err = ms.keeper.AddDelayedTokenUpgradeV1(ctx, sender, req.Denom, req.IbcEnabled)
 	if err != nil {
 		return nil, err
 	}

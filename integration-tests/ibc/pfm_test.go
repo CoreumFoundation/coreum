@@ -13,8 +13,8 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
 )
 
 const (

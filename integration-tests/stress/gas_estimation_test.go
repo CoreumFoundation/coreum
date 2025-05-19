@@ -14,10 +14,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 )
 
 // TestBankSendEstimation is used to estimate gas required by each additional token present in bank send message.
@@ -83,13 +83,19 @@ func TestBankSendEstimation(t *testing.T) {
 		sendMsg.Amount = sendMsg.Amount.Add(sdk.NewCoin(denom, initialAmount))
 	}
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: deterministicMsgs,
-		Amount:   chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(nTokens).AddRaw(1_000_000_000),
-	})
-
-	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Amount: sdkmath.NewIntFromUint64(1_000_000_000),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: deterministicMsgs,
+				Amount:   chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(nTokens).AddRaw(1_000_000_000),
+			},
+		}, {
+			Acc: recipient1,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewIntFromUint64(1_000_000_000),
+			},
+		},
 	})
 
 	_, err := client.BroadcastTx(

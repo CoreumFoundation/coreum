@@ -13,11 +13,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v5/x/deterministicgas"
-	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v6/x/deterministicgas"
+	dextypes "github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
 // CoreumChain is configured coreum chain.
@@ -43,6 +43,12 @@ type BalancesOptions struct {
 	NondeterministicMessagesGas uint64
 	GasPrice                    sdkmath.LegacyDec
 	Amount                      sdkmath.Int
+}
+
+// AccWithBalancesOptions is the input type for the FundAccountWithOptionsFast.
+type AccWithBalancesOptions struct {
+	Acc     sdk.AccAddress
+	Options BalancesOptions
 }
 
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
@@ -119,6 +125,26 @@ func (c CoreumChain) FundAccountWithOptions(
 		Address: address,
 		Amount:  c.NewCoin(amount),
 	})
+}
+
+// FundAccountsWithOptions computes the needed balances and fund accounts with it.
+func (c CoreumChain) FundAccountsWithOptions(
+	ctx context.Context,
+	t *testing.T,
+	accWithBalancesOptions []AccWithBalancesOptions,
+) {
+	t.Helper()
+
+	fundedAccounts := make([]FundedAccount, len(accWithBalancesOptions))
+	for i, accWithBalancesOption := range accWithBalancesOptions {
+		amount := c.ComputeNeededBalanceFromOptions(accWithBalancesOption.Options)
+		fundedAccounts[i] = FundedAccount{
+			Address: accWithBalancesOption.Acc,
+			Amount:  c.NewCoin(amount),
+		}
+	}
+
+	c.Faucet.FundAccounts(ctx, t, fundedAccounts...)
 }
 
 // CreateValidator creates a new validator on the chain and returns the staker addresses,

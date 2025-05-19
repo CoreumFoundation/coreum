@@ -15,9 +15,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
 )
 
 // TestGovProposalWithDepositAndWeightedVotes - is a complex governance test which tests:
@@ -284,20 +284,28 @@ func TestGovCancelProposal(t *testing.T) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
+	// Create proposer depositor.
+	depositor := chain.GenAccount()
+
 	proposerBalance, err := gov.ComputeProposerBalance(ctx, false)
 	requireT.NoError(err)
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
-	chain.FundAccountWithOptions(ctx, t, proposer, integration.BalancesOptions{
-		Amount: proposerBalance.Amount.Add(sdkmath.NewInt(200_000)).Add(sdkmath.NewInt(1)),
-	})
 
-	// Create proposer depositor.
-	depositor := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, depositor, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&govtypesv1.MsgDeposit{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: proposer,
+			Options: integration.BalancesOptions{
+				Amount: proposerBalance.Amount.Add(sdkmath.NewInt(200_000)).Add(sdkmath.NewInt(1)),
+			},
+		}, {
+			Acc: depositor,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&govtypesv1.MsgDeposit{},
+				},
+				Amount: missingDepositAmount.Amount,
+			},
 		},
-		Amount: missingDepositAmount.Amount,
 	})
 
 	proposalMsg, err := gov.NewMsgSubmitProposal(

@@ -81,7 +81,6 @@
     - [MsgUpdateDEXUnifiedRefAmount](#coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount)
     - [MsgUpdateDEXWhitelistedDenoms](#coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms)
     - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
-    - [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1)
   
     - [Msg](#coreum.asset.ft.v1.Msg)
   
@@ -2840,27 +2839,6 @@ MsgIssue defines message to issue new fungible token.
 
 
 
-
-<a name="coreum.asset.ft.v1.MsgUpgradeTokenV1"></a>
-
-### MsgUpgradeTokenV1
-
-```
-MsgUpgradeTokenV1 is the message upgrading token to V1.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  |    |
-| `denom` | [string](#string) |  |    |
-| `ibc_enabled` | [bool](#bool) |  |    |
-
-
-
-
-
  <!-- end messages -->
 
  <!-- end enums -->
@@ -2891,7 +2869,6 @@ Msg defines the Msg service.
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.` |  |
 | `TransferAdmin` | [MsgTransferAdmin](#coreum.asset.ft.v1.MsgTransferAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TransferAdmin changes admin of a fungible token.` |  |
 | `ClearAdmin` | [MsgClearAdmin](#coreum.asset.ft.v1.MsgClearAdmin) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `ClearAdmin removes admin of a fungible token.` |  |
-| `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `TokenUpgradeV1 upgrades token to version V1.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided.` |  |
 | `UpdateDEXUnifiedRefAmount` | [MsgUpdateDEXUnifiedRefAmount](#coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXUnifiedRefAmount updates DEX unified ref amount.` |  |
 | `UpdateDEXWhitelistedDenoms` | [MsgUpdateDEXWhitelistedDenoms](#coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | `UpdateDEXWhitelistedDenoms updates DEX whitelisted denoms.` |  |
@@ -4066,7 +4043,7 @@ Msg defines the Msg service.
 | `AddToWhitelist` | [MsgAddToWhitelist](#coreum.asset.nft.v1.MsgAddToWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `AddToWhitelist sets the account as whitelisted to hold the NFT` |  |
 | `RemoveFromWhitelist` | [MsgRemoveFromWhitelist](#coreum.asset.nft.v1.MsgRemoveFromWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `RemoveFromWhitelist removes an account from whitelisted list of the NFT` |  |
 | `AddToClassWhitelist` | [MsgAddToClassWhitelist](#coreum.asset.nft.v1.MsgAddToClassWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `AddToClassWhitelist adds account as whitelist for all the NFTs in the class NOTE: class whitelist does not affect the individual nft whitelisting.` |  |
-| `RemoveFromClassWhitelist` | [MsgRemoveFromClassWhitelist](#coreum.asset.nft.v1.MsgRemoveFromClassWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `RemoveFromClassWhitelist removes account as whitelist for the entire class NOTE: class whitelist does not affect the individual nft whitelisting. ie. if specific whitelist is granted for an NFT, that whitelist will still be valid, ater we add and remove it from the class whitelist.` |  |
+| `RemoveFromClassWhitelist` | [MsgRemoveFromClassWhitelist](#coreum.asset.nft.v1.MsgRemoveFromClassWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `RemoveFromClassWhitelist removes account as whitelist for the entire class NOTE: class whitelist does not affect the individual nft whitelisting. ie. if specific whitelist is granted for an NFT, that whitelist will still be valid, after we add and remove it from the class whitelist.` |  |
 | `ClassFreeze` | [MsgClassFreeze](#coreum.asset.nft.v1.MsgClassFreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `ClassFreeze freezes all NFTs of a class held by an account.` |  |
 | `ClassUnfreeze` | [MsgClassUnfreeze](#coreum.asset.nft.v1.MsgClassUnfreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `ClassUnfreeze removes class-freeze on an account for an NFT class. NOTE: class unfreeze does not affect the individual nft freeze.` |  |
 | `UpdateParams` | [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | `UpdateParams is a governance operation that sets the parameters of the module. NOTE: all parameters must be provided.` |  |

@@ -15,9 +15,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
 )
 
 func TestFeeGrant(t *testing.T) {
@@ -30,16 +30,23 @@ func TestFeeGrant(t *testing.T) {
 	recipient := chain.GenAccount()
 	feegrantClient := feegrant.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
-			&banktypes.MsgSend{},
-			&feegrant.MsgRevokeAllowance{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: granter,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+					&banktypes.MsgSend{},
+					&feegrant.MsgRevokeAllowance{},
+				},
+				Amount: sdkmath.NewInt(500_000),
+			},
+		}, {
+			Acc: grantee,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1),
+			},
 		},
-		Amount: sdkmath.NewInt(500_000),
-	})
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1),
 	})
 
 	basicAllowance, err := codectypes.NewAnyWithValue(&feegrant.BasicAllowance{

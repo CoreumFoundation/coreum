@@ -26,9 +26,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/v5/app"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v6/app"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
 )
 
 type (
@@ -63,7 +63,7 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 	// Sometimes another process already binds the port to bind to.
 	// So we need to retry to used another random port.
 	// TODO: Remove the retry when upgrading to cosmos v0.52.x
-	retryCtx, retryCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	retryCtx, retryCancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer retryCancel()
 	err := retry.Do(retryCtx, 2*time.Second, func() error {
 		n, err := network.New(t, t.TempDir(), cfg)
@@ -109,7 +109,7 @@ func DefaultConfig(t *testing.T) network.Config {
 		WithInterfaceRegistry(tempApp.InterfaceRegistry()).
 		WithTxConfig(tempApp.TxConfig())
 
-	appState, err := devNetwork.Provider.AppState(context.Background(), clientCtx, tempApp.BasicModuleManager)
+	appState, err := devNetwork.Provider.AppState(t.Context(), clientCtx, tempApp.BasicModuleManager)
 	if err != nil {
 		panic(errors.Wrap(err, "can't get network's app state"))
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	cbig "github.com/CoreumFoundation/coreum/v5/pkg/math/big"
+	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
 )
 
 func Test_computePriceTick(t *testing.T) {

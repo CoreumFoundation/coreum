@@ -14,12 +14,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v5/integration-tests"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/testutil/event"
-	"github.com/CoreumFoundation/coreum/v5/testutil/integration"
-	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
-	deterministicgastypes "github.com/CoreumFoundation/coreum/v5/x/deterministicgas/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/testutil/event"
+	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
+	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	deterministicgastypes "github.com/CoreumFoundation/coreum/v6/x/deterministicgas/types"
 )
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
@@ -551,16 +551,23 @@ func TestTryBankMultiSendFromMultipleAccounts(t *testing.T) {
 	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 
 	// fund accounts
-	chain.FundAccountWithOptions(ctx, t, sender1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			multiSendMsg,
-			issue1Msg,
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: sender1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					multiSendMsg,
+					issue1Msg,
+				},
+				Amount: issueFee.Add(nativeAmountToSend.Amount),
+			},
+		}, {
+			Acc: sender2,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{issue2Msg},
+				Amount:   issueFee,
+			},
 		},
-		Amount: issueFee.Add(nativeAmountToSend.Amount),
-	})
-	chain.FundAccountWithOptions(ctx, t, sender2, integration.BalancesOptions{
-		Messages: []sdk.Msg{issue2Msg},
-		Amount:   issueFee,
 	})
 
 	// issue first fungible token
@@ -603,12 +610,20 @@ func TestBankCoreSend(t *testing.T) {
 
 	senderInitialAmount := sdkmath.NewInt(100)
 	recipientInitialAmount := sdkmath.NewInt(10)
-	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{}},
-		Amount:   senderInitialAmount,
-	})
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Amount: recipientInitialAmount,
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: sender,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{&banktypes.MsgSend{}},
+				Amount:   senderInitialAmount,
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Amount: recipientInitialAmount,
+			},
+		},
 	})
 
 	// transfer tokens from sender to recipient

@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v5/x/feemodel/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v6/x/feemodel/types"
 )
 
 // Factory is a re-export of the cosmos sdk tx.Factory type, to make usage of this package more convenient.

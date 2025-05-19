@@ -21,8 +21,8 @@ const (
 	Osmosis tools.Name = "osmosis"
 	// Hermes is an Inter-Blockchain Communication (IBC) relayer.
 	Hermes tools.Name = "hermes"
-	// CoredV401 is an older version of cored used for testing chain upgrades.
-	CoredV401 tools.Name = "cored-v4.0.1"
+	// CoredV500 is an older version of cored used for testing chain upgrades.
+	CoredV500 tools.Name = "cored-v5.0.0"
 	// Buf is a tool for working with Protocol Buffers.
 	Buf tools.Name = "buf"
 	// Protoc is the Protocol Buffers compiler.
@@ -169,20 +169,20 @@ var Tools = []tools.Tool{
 	// https://github.com/osmosis-labs/osmosis/releases
 	tools.BinaryTool{
 		Name:    Osmosis,
-		Version: "25.0.0",
+		Version: "29.0.2",
 		Sources: tools.Sources{
 			tools.TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v25.0.0/osmosisd-25.0.0-linux-amd64",
-				Hash: "sha256:842e23399e7e074a500f79b70edcd8131679b577aed7fe0dfd5803104f6245b7",
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v29.0.2/osmosisd-29.0.2-linux-amd64",
+				Hash: "sha256:9276c11c814c8b5731ef7b904c96530c6933e71b02e6eb11f99b4be2b9968c92",
 				Binaries: map[string]string{
-					"bin/osmosisd": "osmosisd-25.0.0-linux-amd64",
+					"bin/osmosisd": "osmosisd-29.0.2-linux-amd64",
 				},
 			},
 			tools.TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v25.0.0/osmosisd-25.0.0-linux-arm64",
-				Hash: "sha256:fa8bbddc5f2d0af80c29f6a5499f7adb27b221f20338fecdde2df803807a6508",
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v29.0.2/osmosisd-29.0.2-linux-arm64",
+				Hash: "sha256:e6a3c81ba5ba9da6598582d6c430618a4cb083c7552302412def141f846098d6",
 				Binaries: map[string]string{
-					"bin/osmosisd": "osmosisd-25.0.0-linux-arm64",
+					"bin/osmosisd": "osmosisd-29.0.2-linux-arm64",
 				},
 			},
 		},
@@ -209,49 +209,49 @@ var Tools = []tools.Tool{
 
 	// https://github.com/CoreumFoundation/coreum/releases
 	tools.BinaryTool{
-		Name:    CoredV401,
-		Version: "v4.0.1",
+		Name:    CoredV500,
+		Version: "v5.0.0",
 		Sources: tools.Sources{
 			tools.TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-amd64",
-				Hash: "sha256:fdbb6a0c393f1cad0d03c6357b6af2e840508ef3be7ab186f2caeee10d13ae73",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v5.0.0/cored-linux-amd64",
+				Hash: "sha256:6bdbd15f7159e9d0aef62369cb822acf57bad51c4c664f6736b95ecfb8250702",
 				Binaries: map[string]string{
-					"bin/cored-v4.0.1": "cored-linux-amd64",
+					"bin/cored-v5.0.0": "cored-linux-amd64",
 				},
 			},
 			tools.TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-arm64",
-				Hash: "sha256:ade147bf5a63259dae1b69762e3295600b5acd9f748b3cfba4d885dfaff15f1e",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v5.0.0/cored-linux-arm64",
+				Hash: "sha256:cee6aeb8043529cce43713f9213c8866f3c4745198a5b9ef44318d6b6728a380",
 				Binaries: map[string]string{
-					"bin/cored-v4.0.1": "cored-linux-arm64",
+					"bin/cored-v5.0.0": "cored-linux-arm64",
 				},
 			},
 			tools.TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-amd64",
-				Hash: "sha256:fdbb6a0c393f1cad0d03c6357b6af2e840508ef3be7ab186f2caeee10d13ae73",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v5.0.0/cored-linux-amd64",
+				Hash: "sha256:6bdbd15f7159e9d0aef62369cb822acf57bad51c4c664f6736b95ecfb8250702",
 				Binaries: map[string]string{
-					"bin/cored-v4.0.1": "cored-linux-amd64",
+					"bin/cored-v5.0.0": "cored-linux-amd64",
 				},
 			},
 			tools.TargetPlatformLinuxARM64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-arm64",
-				Hash: "sha256:ade147bf5a63259dae1b69762e3295600b5acd9f748b3cfba4d885dfaff15f1e",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v5.0.0/cored-linux-arm64",
+				Hash: "sha256:cee6aeb8043529cce43713f9213c8866f3c4745198a5b9ef44318d6b6728a380",
 				Binaries: map[string]string{
-					"bin/cored-v4.0.1": "cored-linux-arm64",
+					"bin/cored-v5.0.0": "cored-linux-arm64",
 				},
 			},
 			tools.TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-darwin-amd64",
-				Hash: "sha256:939ded112db693a3d929eaaec0814b8d318f0eed686491c1a9ddd07a09d82f44",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v5.0.0/cored-darwin-amd64",
+				Hash: "sha256:bb32768a1114733dc9a90db70a32dd8cd25828a725a57fc9831301ceb648c0f9",
 				Binaries: map[string]string{
-					"bin/cored-v4.0.1": "cored-darwin-amd64",
+					"bin/cored-v5.0.0": "cored-darwin-amd64",
 				},
 			},
 			tools.TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-darwin-arm64",
-				Hash: "sha256:3e90d12dafdb5d03c68d4e99d3da0f1d8d1b9bafb9cc42648efb24656de6e7bd",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v5.0.0/cored-darwin-arm64",
+				Hash: "sha256:8776d26dcd02694c927858da183e81a5cb51ec25aa6fa22d382d8b082ca57cc1",
 				Binaries: map[string]string{
-					"bin/cored-v4.0.1": "cored-darwin-arm64",
+					"bin/cored-v5.0.0": "cored-darwin-arm64",
 				},
 			},
 		},

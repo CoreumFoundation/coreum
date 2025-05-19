@@ -35,10 +35,16 @@ func (a MintAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authz.Accep
 		return authz.AcceptResponse{}, sdkerrors.ErrUnauthorized.Wrapf("requested amount is more than mint limit")
 	}
 
+	del := limitLeft.IsZero()
+	var updated *MintAuthorization
+	if !del {
+		updated = &MintAuthorization{MintLimit: limitLeft}
+	}
+
 	return authz.AcceptResponse{
 		Accept:  true,
-		Delete:  limitLeft.IsZero(),
-		Updated: &MintAuthorization{MintLimit: limitLeft},
+		Delete:  del,
+		Updated: updated,
 	}, nil
 }
 

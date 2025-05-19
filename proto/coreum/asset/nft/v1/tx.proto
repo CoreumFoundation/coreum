@@ -10,7 +10,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v5/x/asset/nft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v6/x/asset/nft/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.
@@ -40,7 +40,7 @@ service Msg {
   // NOTE:
   // class whitelist does not affect the individual nft whitelisting.
   // ie. if specific whitelist is granted for an NFT, that whitelist will
-  // still be valid, ater we add and remove it from the class whitelist.
+  // still be valid, after we add and remove it from the class whitelist.
   rpc RemoveFromClassWhitelist(MsgRemoveFromClassWhitelist) returns (EmptyResponse);
   // ClassFreeze freezes all NFTs of a class held by an account.
   rpc ClassFreeze(MsgClassFreeze) returns (EmptyResponse);
