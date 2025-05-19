@@ -324,7 +324,7 @@ func awaitHooksCounterContractState(
 		require.NoError(t, err)
 		queryCountOut, err := coreumChain.Wasm.QueryWASMContract(ctx, contractAddr, getCountPayload)
 		if err != nil {
-			if strings.Contains(err.Error(), "counter::state::Counter not found") {
+			if strings.Contains(err.Error(), "not found") {
 				return retry.Retryable(errors.New("counter is still not found for address: " + callerAddr))
 			}
 			require.NoError(t, err)
@@ -348,7 +348,7 @@ func awaitHooksCounterContractState(
 		require.NoError(t, err)
 		queryTotalFundsOut, err := coreumChain.Wasm.QueryWASMContract(ctx, contractAddr, getTotalFundsPayload)
 		if err != nil {
-			if strings.Contains(err.Error(), "counter::state::Counter not found") {
+			if strings.Contains(err.Error(), "not found") {
 				return retry.Retryable(errors.New("counter is still not found for address: " + callerAddr))
 			}
 			require.NoError(t, err)
