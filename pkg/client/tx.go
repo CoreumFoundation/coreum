@@ -199,10 +199,10 @@ func BuildTxForSimulation(
 	}
 	txBuilder, err := txf.BuildUnsignedTx(msgs...)
 	if err != nil {
-		panic(err)
+		return nil, errors.WithStack(err)
 	}
-	if err := txBuilder.SetSignatures(dummySigV2); err != nil {
-		panic(err)
+	if err = txBuilder.SetSignatures(dummySigV2); err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	return clientCtx.TxConfig().TxEncoder()(txBuilder.GetTx())
