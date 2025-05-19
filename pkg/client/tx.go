@@ -18,16 +18,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
+	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
@@ -169,8 +167,8 @@ func BuildTxForSimulation(
 		txf = txf.WithGasAdjustment(clientCtx.GasAdjustment())
 	}
 
+	signatureData := multisigtypes.NewMultisig(4)
 	var pubKey types.PubKey
-	var pubKeyAny *codectypes.Any
 	if !clientCtx.GetUnsignedSimulation() {
 		keyInfo, err := txf.Keybase().KeyByAddress(clientCtx.FromAddress())
 		if err != nil {
@@ -180,71 +178,34 @@ func BuildTxForSimulation(
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		pubKeyAny = keyInfo.PubKey
-	}
 
-	msgsAny := make([]*codectypes.Any, 0, len(msgs))
-	for _, msg := range msgs {
-		msgAny, err := codectypes.NewAnyWithValue(msg)
-		if err != nil {
-			return nil, errors.WithStack(err)
+		if multisigPubKey, ok := pubKey.(*multisig.LegacyAminoPubKey); ok {
+			multiSignatureData := make([]signing.SignatureData, 0, multisigPubKey.Threshold)
+			for range multisigPubKey.Threshold {
+				multiSignatureData = append(multiSignatureData, &signing.SingleSignatureData{
+					SignMode: txf.SignMode(),
+				})
+			}
+			signatureData = &signing.MultiSignatureData{
+				Signatures: multiSignatureData,
+			}
 		}
-		msgsAny = append(msgsAny, msgAny)
 	}
 
-	txBodyBytes, err := proto.Marshal(&sdktx.TxBody{
-		Messages: msgsAny,
-		Memo:     txf.Memo(),
-	})
+	dummySigV2 := signing.SignatureV2{
+		PubKey:   pubKey,
+		Data:     signatureData,
+		Sequence: txf.Sequence(),
+	}
+	txBuilder, err := txf.BuildUnsignedTx(msgs...)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		panic(err)
+	}
+	if err := txBuilder.SetSignatures(dummySigV2); err != nil {
+		panic(err)
 	}
 
-	var signatureData signing.SignatureData
-	if multisigPubKey, ok := pubKey.(*multisig.LegacyAminoPubKey); ok {
-		multiSignatureData := make([]signing.SignatureData, 0, multisigPubKey.Threshold)
-		for range multisigPubKey.Threshold {
-			multiSignatureData = append(multiSignatureData, &signing.SingleSignatureData{
-				SignMode: txf.SignMode(),
-			})
-		}
-		signatureData = &signing.MultiSignatureData{
-			Signatures: multiSignatureData,
-		}
-	} else {
-		signatureData = &signing.SingleSignatureData{
-			SignMode: txf.SignMode(),
-		}
-	}
-
-	modeInfo, signature := authtx.SignatureDataToModeInfoAndSig(signatureData)
-
-	simAuthInfoBytes, err := proto.Marshal(&sdktx.AuthInfo{
-		SignerInfos: []*sdktx.SignerInfo{
-			{
-				PublicKey: pubKeyAny,
-				ModeInfo:  modeInfo,
-				Sequence:  txf.Sequence(),
-			},
-		},
-		Fee: &sdktx.Fee{},
-	})
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	txBytes, err := proto.Marshal(&sdktx.TxRaw{
-		BodyBytes:     txBodyBytes,
-		AuthInfoBytes: simAuthInfoBytes,
-		Signatures: [][]byte{
-			signature,
-		},
-	})
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return txBytes, nil
+	return clientCtx.TxConfig().TxEncoder()(txBuilder.GetTx())
 }
 
 // BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
