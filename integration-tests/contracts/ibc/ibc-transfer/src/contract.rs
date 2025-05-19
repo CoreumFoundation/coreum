@@ -48,6 +48,7 @@ pub fn transfer(
         to_address,
         amount,
         timeout,
+        memo: None,
     }
     .into();
     let res = Response::new()
