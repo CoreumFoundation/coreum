@@ -192,7 +192,7 @@ func BuildTxForSimulation(
 		}
 	}
 
-	dummySigV2 := signing.SignatureV2{
+	signature := signing.SignatureV2{
 		PubKey:   pubKey,
 		Data:     signatureData,
 		Sequence: txf.Sequence(),
@@ -201,7 +201,7 @@ func BuildTxForSimulation(
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if err = txBuilder.SetSignatures(dummySigV2); err != nil {
+	if err = txBuilder.SetSignatures(signature); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
