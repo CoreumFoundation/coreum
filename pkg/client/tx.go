@@ -167,7 +167,9 @@ func BuildTxForSimulation(
 		txf = txf.WithGasAdjustment(clientCtx.GasAdjustment())
 	}
 
-	signatureData := multisigtypes.NewMultisig(4)
+	var signatureData signing.SignatureData = &signing.SingleSignatureData{
+		SignMode: txf.SignMode(),
+	}
 	var pubKey types.PubKey
 	if !clientCtx.GetUnsignedSimulation() {
 		keyInfo, err := txf.Keybase().KeyByAddress(clientCtx.FromAddress())
@@ -190,6 +192,9 @@ func BuildTxForSimulation(
 				Signatures: multiSignatureData,
 			}
 		}
+	} else {
+		// For unsigned simulation, signatureData doesn't matter. It should just not be nil
+		signatureData = multisigtypes.NewMultisig(4)
 	}
 
 	signature := signing.SignatureV2{
