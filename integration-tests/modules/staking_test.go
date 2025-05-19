@@ -126,15 +126,6 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 
 	delegator := chain.GenAccount()
 	delegateAmount := sdkmath.NewInt(100)
-	chain.FundAccountWithOptions(ctx, t, delegator, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&stakingtypes.MsgDelegate{},
-			&stakingtypes.MsgUndelegate{},
-			&stakingtypes.MsgEditValidator{},
-		},
-		NondeterministicMessagesGas: 300_000, // to cover the redelegation
-		Amount:                      delegateAmount,
-	})
 
 	// Setup validator
 	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(
@@ -150,8 +141,24 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	chain.FundAccountWithOptions(ctx, t, validatorAccAddress, integration.BalancesOptions{
-		Messages: []sdk.Msg{editValidatorMsg},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: delegator,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&stakingtypes.MsgDelegate{},
+					&stakingtypes.MsgUndelegate{},
+					&stakingtypes.MsgEditValidator{},
+				},
+				NondeterministicMessagesGas: 300_000, // to cover the redelegation
+				Amount:                      delegateAmount,
+			},
+		}, {
+			Acc: validatorAccAddress,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{editValidatorMsg},
+			},
+		},
 	})
 
 	editValidatorRes, err := client.BroadcastTx(
