@@ -979,21 +979,27 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 	recipient1 := chain.GenAccount()
 	assetNFTClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{},
-			&assetnfttypes.MsgFreeze{},
-			&assetnfttypes.MsgUnfreeze{},
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
-
-	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgBurn{},
-			&assetnfttypes.MsgBurn{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+					&nft.MsgSend{},
+					&assetnfttypes.MsgFreeze{},
+					&assetnfttypes.MsgUnfreeze{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+			},
+		}, {
+			Acc: recipient1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgBurn{},
+					&assetnfttypes.MsgBurn{},
+				},
+			},
 		},
 	})
 
@@ -1225,22 +1231,28 @@ func TestAssetNFTClassFreeze(t *testing.T) {
 	recipient1 := chain.GenAccount()
 	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{},
-			&assetnfttypes.MsgClassFreeze{},
-			&assetnfttypes.MsgClassUnfreeze{},
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
-
-	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
-			&nft.MsgSend{},
-			&nft.MsgSend{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+					&nft.MsgSend{},
+					&assetnfttypes.MsgClassFreeze{},
+					&assetnfttypes.MsgClassUnfreeze{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+			},
+		}, {
+			Acc: recipient1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+				},
+			},
 		},
 	})
 
@@ -1403,22 +1415,28 @@ func TestAssetNFTFreeze(t *testing.T) {
 	recipient1 := chain.GenAccount()
 	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{},
-			&assetnfttypes.MsgFreeze{},
-			&assetnfttypes.MsgUnfreeze{},
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
-
-	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
-			&nft.MsgSend{},
-			&nft.MsgSend{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+					&nft.MsgSend{},
+					&assetnfttypes.MsgFreeze{},
+					&assetnfttypes.MsgUnfreeze{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+			},
+		}, {
+			Acc: recipient1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+				},
+			},
 		},
 	})
 
@@ -1595,20 +1613,42 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
+	recipient2 := chain.GenAccount()
 	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{},
-			&assetnfttypes.MsgAddToWhitelist{},
-			&nft.MsgSend{},
-			&assetnfttypes.MsgAddToWhitelist{},
-			&assetnfttypes.MsgRemoveFromWhitelist{},
-			&assetnfttypes.MsgAddToWhitelist{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+					&nft.MsgSend{},
+					&assetnfttypes.MsgAddToWhitelist{},
+					&nft.MsgSend{},
+					&assetnfttypes.MsgAddToWhitelist{},
+					&assetnfttypes.MsgRemoveFromWhitelist{},
+					&assetnfttypes.MsgAddToWhitelist{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+				},
+			},
+		}, {
+			Acc: recipient2,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+				},
+			},
 		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	// issue new NFT class
@@ -1705,20 +1745,6 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.NoError(err)
 
 	// send from whitelisted recipient to non-whitelisted recipient2 (send must fail)
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
-			&nft.MsgSend{},
-		},
-	})
-	recipient2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
-			&nft.MsgSend{},
-		},
-	})
-
 	sendMsg = &nft.MsgSend{
 		Sender:   recipient.String(),
 		ClassId:  classID,
@@ -1851,13 +1877,24 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	grantee := chain.GenAccount()
 	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&authztypes.MsgGrant{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: granter,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+					&authztypes.MsgGrant{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+			},
+		}, {
+			Acc: grantee,
+			Options: integration.BalancesOptions{
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount.
+					Add(sdkmath.NewInt(20_000)),
+			},
 		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	// issue new NFT class
@@ -1904,11 +1941,6 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{freezeMsg})
 
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount.
-			Add(sdkmath.NewInt(20_000)),
-	})
-
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
@@ -1935,23 +1967,45 @@ func TestAssetNFTClassWhitelist(t *testing.T) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
+	recipient2 := chain.GenAccount()
 	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&assetnfttypes.MsgMint{},
-			&assetnfttypes.MsgAddToClassWhitelist{},
-			&assetnfttypes.MsgAddToClassWhitelist{},
-			&assetnfttypes.MsgAddToClassWhitelist{},
-			&assetnfttypes.MsgAddToClassWhitelist{},
-			&assetnfttypes.MsgRemoveFromClassWhitelist{},
-			&nft.MsgSend{},
-			&nft.MsgSend{},
-			&nft.MsgSend{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+					&assetnfttypes.MsgMint{},
+					&assetnfttypes.MsgAddToClassWhitelist{},
+					&assetnfttypes.MsgAddToClassWhitelist{},
+					&assetnfttypes.MsgAddToClassWhitelist{},
+					&assetnfttypes.MsgAddToClassWhitelist{},
+					&assetnfttypes.MsgRemoveFromClassWhitelist{},
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+				},
+			},
+		}, {
+			Acc: recipient2,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&nft.MsgSend{},
+					&nft.MsgSend{},
+				},
+			},
 		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	// issue new NFT class
@@ -2087,20 +2141,6 @@ func TestAssetNFTClassWhitelist(t *testing.T) {
 	requireT.NoError(err)
 
 	// send from whitelisted recipient to non-whitelisted recipient2 (send must fail)
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
-			&nft.MsgSend{},
-		},
-	})
-	recipient2 := chain.GenAccount()
-	chain.FundAccountWithOptions(ctx, t, recipient2, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
-			&nft.MsgSend{},
-		},
-	})
-
 	sendMsg = &nft.MsgSend{
 		Sender:   recipient.String(),
 		ClassId:  classID,
@@ -2227,18 +2267,24 @@ func TestAssetNFTSoulbound(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{},
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
-
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+					&nft.MsgSend{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&nft.MsgSend{},
+				},
+			},
 		},
 	})
 
@@ -2312,18 +2358,24 @@ func TestAssetNFTSoulbound_SendInsideMint(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
-			&nft.MsgSend{},
-		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
-	})
-
-	chain.FundAccountWithOptions(ctx, t, recipient, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&nft.MsgSend{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+					&nft.MsgSend{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
+			},
+		}, {
+			Acc: recipient,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&nft.MsgSend{},
+				},
+			},
 		},
 	})
 
@@ -2386,17 +2438,23 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 	nftClient := nft.NewQueryClient(chain.ClientContext)
 	authzClient := authztypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, granter, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetnfttypes.MsgIssueClass{},
-			&assetnfttypes.MsgMint{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: granter,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+				},
+				Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount.
+					Add(sdkmath.NewInt(20_000)), // added 20k for the grant msg
+			},
+		}, {
+			Acc: grantee,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1).Add(sdkmath.NewInt(40_000)),
+			},
 		},
-		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount.
-			Add(sdkmath.NewInt(20_000)), // added 20k for the grant msg
-	})
-
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1),
 	})
 
 	// issue new NFT class
@@ -2432,10 +2490,6 @@ func TestAssetNFTSendAuthorization(t *testing.T) {
 		Receiver: recipient.String(),
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{sendMsg})
-
-	chain.FundAccountWithOptions(ctx, t, grantee, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(40_000),
-	})
 
 	_, err = client.BroadcastTx(
 		ctx,

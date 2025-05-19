@@ -107,13 +107,20 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	coreumToGaiaSender := coreumChain.GenAccount()
 
 	// Fund accounts
-	coreumChain.FundAccountWithOptions(ctx, t, coreumToCoreumSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+	coreumChain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: coreumToCoreumSender,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{&banktypes.MsgSend{}},
+			},
+		}, {
+			Acc: coreumToGaiaSender,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
+			},
+		},
 	})
 
-	coreumChain.FundAccountWithOptions(ctx, t, coreumToGaiaSender, integration.BalancesOptions{
-		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
-	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integration.FundedAccount{
 		Address: gaiaAccount1,
 		Amount:  sendToCoreumCoin.Add(gaiaChain.NewCoin(sdkmath.NewInt(1000000))), // coin to send + coin for the fee

@@ -669,11 +669,18 @@ func TestWASMContractUpgrade(t *testing.T) {
 
 	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1_000_000),
-	})
-	chain.FundAccountWithOptions(ctx, t, noneAdmin, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(500_000),
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1_000_000),
+			},
+		}, {
+			Acc: noneAdmin,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(500_000),
+			},
+		},
 	})
 
 	// instantiateWASMContract the contract and set the initial counter state.
@@ -752,15 +759,23 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	admin := chain.GenAccount()
 	newAdmin := chain.GenAccount()
 
-	requireT := require.New(t)
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(1_000_000),
-	})
-	chain.FundAccountWithOptions(ctx, t, newAdmin, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&wasmtypes.MsgClearAdmin{},
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(1_000_000),
+			},
+		}, {
+			Acc: newAdmin,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&wasmtypes.MsgClearAdmin{},
+				},
+			},
 		},
 	})
+
+	requireT := require.New(t)
 
 	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 
@@ -1156,9 +1171,22 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	recipient2 := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(4_000_000)),
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+					Add(sdkmath.NewInt(4_000_000)),
+			},
+		}, {
+			Acc: recipient1,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgTransferAdmin{},
+				},
+			},
+		},
 	})
 
 	clientCtx := chain.ClientContext
@@ -1492,12 +1520,6 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		Account: contractAddr,
 		Denom:   denom,
 	}
-
-	chain.FundAccountWithOptions(ctx, t, recipient1, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			transferAdminMsg,
-		},
-	})
 
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1968,8 +1990,21 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	mintRecipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(4_000_000),
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(4_000_000),
+			},
+		}, {
+			Acc: mintRecipient,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgUpdateData{},
+				},
+			},
+		},
 	})
 
 	clientCtx := chain.ClientContext
@@ -2199,11 +2234,6 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			},
 		},
 	}
-	chain.FundAccountWithOptions(ctx, t, mintRecipient, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			msgUpdateData,
-		},
-	})
 
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2556,8 +2586,25 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 	mintRecipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Amount: sdkmath.NewInt(4_000_000),
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Amount: sdkmath.NewInt(4_000_000),
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgIssueClass{},
+					&assetnfttypes.MsgMint{},
+				},
+			},
+		}, {
+			Acc: mintRecipient,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetnfttypes.MsgUpdateData{},
+				},
+			},
+		},
 	})
 
 	clientCtx := chain.ClientContext
@@ -3257,12 +3304,6 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 		Data:   nil,
 	}
 
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			issueMsg,
-		},
-	})
-
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
@@ -3294,12 +3335,6 @@ func TestWASMNonFungibleTokenInContractLegacy(t *testing.T) {
 		ClassID:   classIDDynamic,
 		Data:      dataD,
 	}
-
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			mintMsg,
-		},
-	})
 
 	txRes, err := client.BroadcastTx(
 		ctx,
@@ -3653,12 +3688,27 @@ func TestWASMDEXInContract(t *testing.T) {
 	issuer := chain.GenAccount()
 
 	requireT := require.New(t)
-	chain.FundAccountWithOptions(ctx, t, admin, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&banktypes.MsgSend{},
+
+	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
+		{
+			Acc: admin,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+				},
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
+					Add(sdkmath.NewInt(1_000_000)),
+			},
+		}, {
+			Acc: issuer,
+			Options: integration.BalancesOptions{
+				Messages: []sdk.Msg{
+					&assetfttypes.MsgIssue{},
+					&banktypes.MsgSend{},
+				},
+				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+			},
 		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
-			Add(sdkmath.NewInt(1_000_000)),
 	})
 
 	clientCtx := chain.ClientContext
@@ -3666,14 +3716,6 @@ func TestWASMDEXInContract(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	dexParms := chain.QueryDEXParams(ctx, t)
-
-	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&banktypes.MsgSend{},
-		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
-	})
 
 	// Issue a normal fungible token
 	issueMsg := &assetfttypes.MsgIssue{
