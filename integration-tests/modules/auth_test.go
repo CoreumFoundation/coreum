@@ -331,7 +331,7 @@ func TestGasEstimation(t *testing.T) {
 			},
 			simulateUnsigned: true,
 			expectedGas: func(txBytes []byte) uint64 {
-				signatureCostDifference := uint64(1610)
+				signatureCostDifference := uint64(1830)
 				bytesCost := uint64(len(txBytes)) * authParams.Params.TxSizeCostPerByte
 				expectedGas := dgc.FixedGas + deterministicgas.BankSendPerCoinGas + bytesCost - signatureCostDifference
 				return expectedGas
