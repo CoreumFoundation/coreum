@@ -61,7 +61,6 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
 	cloud.google.com/go/monitoring v1.21.2 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
-	github.com/CoreumFoundation/crust v0.0.0-20250517130213-2f1a1d58aebc // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
 	github.com/DataDog/zstd v1.5.6 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0 // indirect
