@@ -250,7 +250,7 @@ func TestGasEstimation(t *testing.T) {
 
 	admin := chain.GenAccount()
 	singlesigAddress := chain.GenAccount()
-	singlesigUnimportedAddress := generateUnimportedAccount(chain)
+	singlesigUnimportedAddress := generateUnimportedAccount(t, chain)
 
 	multisigPublicKey1, _, err := chain.GenMultisigAccount(3, 2)
 	require.NoError(t, err)
@@ -324,7 +324,7 @@ func TestGasEstimation(t *testing.T) {
 			},
 		},
 		{
-			name:        "singlesig_unimported_bank_send_unsigned",
+			name:        "singlesig_no_pub_key_bank_send_unsigned",
 			fromAddress: singlesigUnimportedAddress,
 			msgs: []sdk.Msg{
 				&banktypes.MsgSend{
@@ -757,7 +757,8 @@ func signTxWithMultipleSignatures(
 	return txBuilder.GetTx()
 }
 
-func generateUnimportedAccount(chain integration.CoreumChain) sdk.AccAddress {
+func generateUnimportedAccount(t *testing.T, chain integration.CoreumChain) sdk.AccAddress {
+	t.Helper()
 	keyInfo, _, err := keyring.NewInMemory(chain.EncodingConfig.Codec).NewMnemonic(
 		uuid.New().String(),
 		keyring.English,
@@ -766,11 +767,11 @@ func generateUnimportedAccount(chain integration.CoreumChain) sdk.AccAddress {
 		hd.Secp256k1,
 	)
 	if err != nil {
-		panic(err)
+		require.NoError(t, err)
 	}
 	address, err := keyInfo.GetAddress()
 	if err != nil {
-		panic(err)
+		require.NoError(t, err)
 	}
 	return address
 }
