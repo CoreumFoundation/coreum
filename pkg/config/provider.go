@@ -112,6 +112,14 @@ func (dcp DynamicConfigProvider) clone() DynamicConfigProvider {
 	return dcp
 }
 
+// StaticConfigProvider provides configuration based on genesis JSON.
+type StaticConfigProvider struct {
+	content       []byte
+	genesisDoc    *tmtypes.GenesisDoc
+	denom         string
+	addressPrefix string
+}
+
 // NewStaticConfigProvider creates new StaticConfigProvider.
 func NewStaticConfigProvider(content []byte) StaticConfigProvider {
 	genesisDoc, err := tmtypes.GenesisDocFromJSON(content)
@@ -142,14 +150,6 @@ func NewStaticConfigProvider(content []byte) StaticConfigProvider {
 	}
 
 	return provider
-}
-
-// StaticConfigProvider provides configuration based on genesis JSON.
-type StaticConfigProvider struct {
-	content       []byte
-	genesisDoc    *tmtypes.GenesisDoc
-	denom         string
-	addressPrefix string
 }
 
 // GetChainID returns chain ID.

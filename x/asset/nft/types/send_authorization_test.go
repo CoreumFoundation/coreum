@@ -87,8 +87,8 @@ func TestFindAndRemoveNFT(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			a := NewSendAuthorization(tc.nfts)
 			found := a.findAndRemoveNFT(tc.classID, tc.nftID)
-			assert.EqualValues(t, tc.found, found)
-			assert.EqualValues(t, tc.expectedNfts, a.Nfts)
+			assert.Equal(t, tc.found, found)
+			assert.Equal(t, tc.expectedNfts, a.Nfts)
 		})
 	}
 }

@@ -89,6 +89,14 @@ type AppModule struct {
 	paramsKeeper types.ParamsKeeper
 }
 
+// NewAppModule creates a new AppModule object.
+func NewAppModule(keeper keeper.Keeper, paramsKeeper types.ParamsKeeper) AppModule {
+	return AppModule{
+		keeper:       keeper,
+		paramsKeeper: paramsKeeper,
+	}
+}
+
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
@@ -97,14 +105,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	m := keeper.NewMigrator(am.keeper, am.paramsKeeper)
 	if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
 		panic(errors.Errorf("can't register module %s migrations, err: %s", types.ModuleName, err))
-	}
-}
-
-// NewAppModule creates a new AppModule object.
-func NewAppModule(keeper keeper.Keeper, paramsKeeper types.ParamsKeeper) AppModule {
-	return AppModule{
-		keeper:       keeper,
-		paramsKeeper: paramsKeeper,
 	}
 }
 

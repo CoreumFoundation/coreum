@@ -45,7 +45,7 @@ func Test_computeQuantityStep(t *testing.T) {
 		)
 		t.Run(name, func(t *testing.T) {
 			actual, _ := ComputeQuantityStep(big.NewInt(tt.args.baseURA), tt.args.quantityStepExponent)
-			assert.EqualValues(t, tt.want, actual, "want: %v actual: %v", tt.want, actual)
+			assert.Equal(t, tt.want, actual, "want: %v actual: %v", tt.want, actual)
 		})
 	}
 }

@@ -96,11 +96,11 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	})
 
 	gasExpected := chain.GasLimitForMultiMsgTx(&banktypes.MsgSend{}, &banktypes.MsgSend{})
-	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)
+	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	txf := chain.ChainContext.TxFactory().WithGas(gasExpected)
 	result, err := client.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
 	require.NoError(t, err)
-	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
+	require.Equal(t, gasExpected, uint64(result.GasUsed))
 }
 
 // TestBankSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more

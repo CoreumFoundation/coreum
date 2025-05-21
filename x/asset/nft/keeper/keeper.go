@@ -480,22 +480,6 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 	return k.SetBurnt(ctx, classID, id)
 }
 
-func (k Keeper) checkBurnable(
-	ctx sdk.Context, owner sdk.AccAddress, ndfd types.ClassDefinition, classID, nftID string,
-) error {
-	frozen, err := k.IsFrozen(ctx, classID, nftID)
-	if err != nil && !errors.Is(err, types.ErrFeatureDisabled) {
-		return err
-	}
-
-	// non issuer is not allowed to burn frozen NFT, but the issuer can
-	if frozen && owner.String() != ndfd.Issuer {
-		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "frozen token cannot be burnt")
-	}
-
-	return nil
-}
-
 // IsBurnt return whether a non-fungible token is burnt or not.
 func (k Keeper) IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error) {
 	key, err := types.CreateBurningKey(classID, nftID)
@@ -892,40 +876,6 @@ func isDataDynamicItemUpdateAllowed(
 		}
 	}
 	return false, nil
-}
-
-func (k Keeper) isClassWhitelisted(ctx sdk.Context, classID string, account sdk.AccAddress) (bool, error) {
-	if !k.nftKeeper.HasClass(ctx, classID) {
-		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft class with classID:%s not found", classID)
-	}
-
-	classKey, err := types.CreateClassWhitelistingKey(classID, account)
-	if err != nil {
-		return false, err
-	}
-
-	val, err := k.storeService.OpenKVStore(ctx).Get(classKey)
-	if err != nil {
-		return false, err
-	}
-	return bytes.Equal(val, types.StoreTrue), nil
-}
-
-func (k Keeper) isTokenWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error) {
-	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
-		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
-	}
-
-	key, err := types.CreateWhitelistingKey(classID, nftID, account)
-	if err != nil {
-		return false, err
-	}
-
-	val, err := k.storeService.OpenKVStore(ctx).Get(key)
-	if err != nil {
-		return false, err
-	}
-	return bytes.Equal(val, types.StoreTrue), nil
 }
 
 // GetWhitelistedAccountsForNFT returns all whitelisted accounts for all NFTs.
@@ -1430,4 +1380,54 @@ func (k Keeper) addToWhitelistOrRemoveFromWhitelist(
 	}
 
 	return nil
+}
+
+func (k Keeper) checkBurnable(
+	ctx sdk.Context, owner sdk.AccAddress, ndfd types.ClassDefinition, classID, nftID string,
+) error {
+	frozen, err := k.IsFrozen(ctx, classID, nftID)
+	if err != nil && !errors.Is(err, types.ErrFeatureDisabled) {
+		return err
+	}
+
+	// non issuer is not allowed to burn frozen NFT, but the issuer can
+	if frozen && owner.String() != ndfd.Issuer {
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "frozen token cannot be burnt")
+	}
+
+	return nil
+}
+
+func (k Keeper) isClassWhitelisted(ctx sdk.Context, classID string, account sdk.AccAddress) (bool, error) {
+	if !k.nftKeeper.HasClass(ctx, classID) {
+		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft class with classID:%s not found", classID)
+	}
+
+	classKey, err := types.CreateClassWhitelistingKey(classID, account)
+	if err != nil {
+		return false, err
+	}
+
+	val, err := k.storeService.OpenKVStore(ctx).Get(classKey)
+	if err != nil {
+		return false, err
+	}
+	return bytes.Equal(val, types.StoreTrue), nil
+}
+
+func (k Keeper) isTokenWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error) {
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	key, err := types.CreateWhitelistingKey(classID, nftID, account)
+	if err != nil {
+		return false, err
+	}
+
+	val, err := k.storeService.OpenKVStore(ctx).Get(key)
+	if err != nil {
+		return false, err
+	}
+	return bytes.Equal(val, types.StoreTrue), nil
 }

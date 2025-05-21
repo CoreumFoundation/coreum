@@ -24,7 +24,7 @@ func TestGRPCQuerier(t *testing.T) {
 	t.Cleanup(cancel)
 
 	testApp := simapp.New()
-	sdkCtx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+	sdkCtx := testApp.NewContextLegacy(false, tmproto.Header{
 		Time:    time.Now(),
 		AppHash: []byte("some-hash"),
 	})
@@ -50,7 +50,7 @@ func TestGRPCQuerier(t *testing.T) {
 	eg, _ := errgroup.WithContext(ctx)
 	for range 1000 {
 		// rebuild the ctx
-		routineSDKCtx := testApp.BaseApp.NewContext(false)
+		routineSDKCtx := testApp.NewContext(false)
 		eg.Go(func() error {
 			wasmGrpcReq := &wasmvmtypes.GrpcQuery{
 				Data: wasmGrpcData,
