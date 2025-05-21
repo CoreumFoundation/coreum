@@ -4407,9 +4407,8 @@ func TestKeeper_MatchOrders_DirectAndInvertedOB(t *testing.T) {
 	}
 }
 
-func TestKeeper_MatchOrders_Other(t *testing.T) {
+func TestKeeper_MatchOrders_IOCMatching(t *testing.T) {
 	tests := []tst{
-		// ******************** IOC matching ********************
 		{
 			name: "no_match_limit_sell_time_in_force_ioc",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
@@ -4560,14 +4559,26 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom2, 3_768_750)),
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 10_050_000), sdk.NewInt64Coin(testSet.denom2, 6_281_250)),
+					testSet.acc1.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(testSet.denom2, 3_768_750),
+					),
+					testSet.acc2.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(testSet.denom1, 10_050_000),
+						sdk.NewInt64Coin(testSet.denom2, 6_281_250),
+					),
 				}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
-		// ******************** FOK matching ********************
-
+func TestKeeper_MatchOrders_FOKMatching(t *testing.T) {
+	tests := []tst{
 		{
 			name: "no_match_limit_sell_time_in_force_fok",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
@@ -4721,8 +4732,14 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 30_000), sdk.NewInt64Coin(testSet.denom2, 3_768_750)),
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 10_050_000), sdk.NewInt64Coin(testSet.denom2, 6_281_250)),
+					testSet.acc1.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(testSet.denom1, 30_000),
+						sdk.NewInt64Coin(testSet.denom2, 3_768_750),
+					),
+					testSet.acc2.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(testSet.denom1, 10_050_000),
+						sdk.NewInt64Coin(testSet.denom2, 6_281_250),
+					),
 				}
 			},
 		},
@@ -4785,15 +4802,28 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 			},
 			wantAvailableBalances: func(testSet TestSet) map[string]sdk.Coins {
 				return map[string]sdk.Coins{
-					testSet.acc1.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 300), sdk.NewInt64Coin(testSet.denom2, 37_500)),
+					testSet.acc1.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(testSet.denom1, 300),
+						sdk.NewInt64Coin(testSet.denom2, 37_500),
+					),
 					// expected result + not used amount
-					testSet.acc2.String(): sdk.NewCoins(sdk.NewInt64Coin(testSet.denom1, 100_000), sdk.NewInt64Coin(testSet.denom2, 63_000)),
+					testSet.acc2.String(): sdk.NewCoins(
+						sdk.NewInt64Coin(testSet.denom1, 100_000),
+						sdk.NewInt64Coin(testSet.denom2, 63_000),
+					),
 				}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
 
-		// ******************** Whitelisting ********************
-
+func TestKeeper_MatchOrders_Whitelisting(t *testing.T) {
+	tests := []tst{
 		{
 			name: "no_match_whitelisting_limit_directOB_buy_sell",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
@@ -5092,11 +5122,10 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 10_010_000),
-						// FIXME
 						// total balance is 4380000 where:
 						// - 3900000 = 0.39*10000000 - executed
-						// - 400000 = ceil(0.39*1010000) - locked
-						// - 80000 = 4380000-3900000-400000 - available
+						// - 393900 = ceil(0.39*1010000) - locked
+						// - 86100 = 4380000-3900000-393900 - available
 						sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 86_100),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
@@ -5175,11 +5204,9 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 						Quantity:    sdkmath.NewInt(100_000_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
-						// FIXME:
-						// 10000 - 1000
+						// 100000000 - 10010000
 						RemainingBaseQuantity: sdkmath.NewInt(89_990_000),
-						// FIXME:
-						// 10000 - 1000
+						// 100000000 - 10010000
 						RemainingSpendableBalance: sdkmath.NewInt(89_990_000),
 					},
 				}
@@ -6238,8 +6265,7 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 						BaseDenom:  testSet.ftDenomWhitelisting1,
 						QuoteDenom: testSet.ftDenomWhitelisting2,
 						Price:      lo.ToPtr(types.MustNewPriceFromString("376e-5")),
-						// FIXME:
-						// can't fill since 11100 * 376e-5 ~= 41.736
+						// can't fill since 1110000 * 376e-5 ~= 4173.6
 						Quantity:    sdkmath.NewInt(1_110_000),
 						Side:        types.SIDE_SELL,
 						TimeInForce: types.TIME_IN_FORCE_GTC,
@@ -6278,10 +6304,12 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 				return map[string]sdk.Coins{
 					testSet.acc1.String(): sdk.NewCoins(
 						testSet.orderReserve,
-						sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 10_000), sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 4_136),
+						sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 10_000),
+						sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 4_136),
 					),
 					testSet.acc2.String(): sdk.NewCoins(
-						sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 1_100_000), sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 10_995_864),
+						sdk.NewInt64Coin(testSet.ftDenomWhitelisting1, 1_100_000),
+						sdk.NewInt64Coin(testSet.ftDenomWhitelisting2, 10_995_864),
 					),
 				}
 			},
@@ -6291,6 +6319,16 @@ func TestKeeper_MatchOrders_Other(t *testing.T) {
 				}
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.run(t)
+		})
+	}
+}
+
+func TestKeeper_MatchOrders_Others(t *testing.T) {
+	tests := []tst{
 		{
 			name: "match_limit_invertedOB_multiple_maker_buy_taker_buy_close_taker_with_same_price_fifo_priority",
 			balances: func(testSet TestSet) map[string]sdk.Coins {
