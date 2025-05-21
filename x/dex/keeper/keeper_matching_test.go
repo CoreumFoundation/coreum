@@ -52,7 +52,7 @@ type tst struct {
 func (tt tst) run(t *testing.T) {
 	logger := log.NewTestLogger(t)
 	testApp := simapp.New(simapp.WithCustomLogger(logger))
-	sdkCtx := testApp.BaseApp.NewContext(false)
+	sdkCtx := testApp.NewContext(false)
 
 	testSet := genTestSet(t, sdkCtx, testApp)
 	t.Logf(

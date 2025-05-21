@@ -19,7 +19,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	testApp := simapp.New()
 
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	keeper := testApp.DelayKeeper
 
 	msg := &assetfttypes.DelayedTokenUpgradeV1{

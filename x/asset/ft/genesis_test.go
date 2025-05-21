@@ -24,7 +24,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	testApp := simapp.New()
 
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
@@ -166,13 +166,13 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	params, err := ftKeeper.GetParams(ctx)
 	requireT.NoError(err)
-	assertT.EqualValues(types.DefaultParams(), params)
+	assertT.Equal(types.DefaultParams(), params)
 
 	// token definitions
 	for _, definition := range tokens {
 		storedToken, err := ftKeeper.GetToken(ctx, definition.Denom)
 		requireT.NoError(err)
-		assertT.EqualValues(definition, storedToken)
+		assertT.Equal(definition, storedToken)
 	}
 
 	// frozen balances
@@ -181,7 +181,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		requireT.NoError(err)
 		coins, _, err := ftKeeper.GetFrozenBalances(ctx, address, nil)
 		requireT.NoError(err)
-		assertT.EqualValues(balance.Coins.String(), coins.String())
+		assertT.Equal(balance.Coins.String(), coins.String())
 	}
 
 	// whitelisted balances
@@ -190,7 +190,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		requireT.NoError(err)
 		coins, _, err := ftKeeper.GetWhitelistedBalances(ctx, address, nil)
 		requireT.NoError(err)
-		assertT.EqualValues(balance.Coins.String(), coins.String())
+		assertT.Equal(balance.Coins.String(), coins.String())
 	}
 
 	// DEX locked balances
@@ -199,7 +199,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		requireT.NoError(err)
 		coins, _, err := ftKeeper.GetDEXLockedBalances(ctx, address, nil)
 		requireT.NoError(err)
-		assertT.EqualValues(balance.Coins.String(), coins.String())
+		assertT.Equal(balance.Coins.String(), coins.String())
 	}
 
 	// DEX expected to receive balances
@@ -208,20 +208,20 @@ func TestInitAndExportGenesis(t *testing.T) {
 		requireT.NoError(err)
 		coins, _, err := ftKeeper.GetDEXExpectedToReceiveBalances(ctx, address, nil)
 		requireT.NoError(err)
-		assertT.EqualValues(balance.Coins.String(), coins.String())
+		assertT.Equal(balance.Coins.String(), coins.String())
 	}
 
 	// DEX locked balances
 	for _, settings := range dexSettings {
 		storedSettings, err := ftKeeper.GetDEXSettings(ctx, settings.Denom)
 		requireT.NoError(err)
-		assertT.EqualValues(settings.DEXSettings, storedSettings)
+		assertT.Equal(settings.DEXSettings, storedSettings)
 	}
 
 	// check that export is equal import
 	exportedGenState := ft.ExportGenesis(ctx, ftKeeper)
 
-	assertT.EqualValues(genState.Params, exportedGenState.Params)
+	assertT.Equal(genState.Params, exportedGenState.Params)
 	assertT.ElementsMatch(genState.Tokens, exportedGenState.Tokens)
 	assertT.ElementsMatch(genState.PendingTokenUpgrades, exportedGenState.PendingTokenUpgrades)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)

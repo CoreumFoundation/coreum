@@ -48,7 +48,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 
 	classID, err := nftKeeper.IssueClass(ctx, settings)
 	requireT.NoError(err)
-	requireT.EqualValues(strings.ToLower(settings.Symbol)+"-"+addr.String(), classID)
+	requireT.Equal(strings.ToLower(settings.Symbol)+"-"+addr.String(), classID)
 
 	nativeNFTClass, found := testApp.NFTKeeper.GetClass(ctx, classID)
 	requireT.True(found)
@@ -130,7 +130,7 @@ func TestKeeper_GetClasses(t *testing.T) {
 	// get all classes without the issuer
 	classes, _, err := nftKeeper.GetClasses(ctx, nil, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	requireT.NoError(err)
-	requireT.Equal(len(allSettings), len(classes))
+	requireT.Len(classes, len(allSettings))
 	sort.Slice(classes, func(i, j int) bool {
 		return classes[i].Symbol < classes[j].Symbol
 	})
@@ -176,7 +176,7 @@ func TestKeeper_Mint(t *testing.T) {
 
 	classID, err := nftKeeper.IssueClass(ctx, classSettings)
 	requireT.NoError(err)
-	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+	requireT.Equal(classSettings.Symbol+"-"+addr.String(), classID)
 
 	settings := types.MintSettings{
 		Sender:    addr,
@@ -539,7 +539,7 @@ func TestKeeper_MintWithRecipient(t *testing.T) {
 
 	classID, err := nftKeeper.IssueClass(ctx, classSettings)
 	requireT.NoError(err)
-	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+	requireT.Equal(classSettings.Symbol+"-"+addr.String(), classID)
 
 	settings := types.MintSettings{
 		Sender:    addr,
@@ -605,7 +605,7 @@ func TestKeeper_MintWithRecipientAndWhitelisting(t *testing.T) {
 
 	classID, err := nftKeeper.IssueClass(ctx, classSettings)
 	requireT.NoError(err)
-	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+	requireT.Equal(classSettings.Symbol+"-"+addr.String(), classID)
 
 	settings := types.MintSettings{
 		Sender:    addr,
@@ -798,7 +798,7 @@ func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
 
 	classID, err := nftKeeper.IssueClass(ctx, classSettings)
 	requireT.NoError(err)
-	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+	requireT.Equal(classSettings.Symbol+"-"+addr.String(), classID)
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
@@ -834,7 +834,7 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 
 	classID, err := nftKeeper.IssueClass(ctx, classSettings)
 	requireT.NoError(err)
-	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+	requireT.Equal(classSettings.Symbol+"-"+addr.String(), classID)
 
 	requireT.NoError(err)
 	settings := types.MintSettings{
@@ -1213,7 +1213,7 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 	// create class
 	mintedClassID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
 	requireT.NoError(err)
-	requireT.EqualValues(classID, mintedClassID)
+	requireT.Equal(classID, mintedClassID)
 
 	// try whitelist account, it should fail because nft is not present
 	err = assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient)
@@ -1743,11 +1743,11 @@ func assertWhitelisting(
 ) {
 	isWhitelisted, err := k.IsWhitelisted(ctx, classID, nftID, account)
 	require.NoError(t, err)
-	require.EqualValues(t, expectedWhitelisting, isWhitelisted)
+	require.Equal(t, expectedWhitelisting, isWhitelisted)
 }
 
 func assertFrozen(t *testing.T, ctx sdk.Context, k keeper.Keeper, classID, nftID string, expected bool) {
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
 	require.NoError(t, err)
-	require.EqualValues(t, expected, frozen)
+	require.Equal(t, expected, frozen)
 }

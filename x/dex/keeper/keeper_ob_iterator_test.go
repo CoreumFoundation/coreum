@@ -225,7 +225,7 @@ func TestKeeper_SaveOrderAndReadWithOrderBookIterator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testApp := simapp.New()
-			sdkCtx := testApp.BaseApp.NewContext(false)
+			sdkCtx := testApp.NewContext(false)
 			testSet := genTestSet(t, sdkCtx, testApp)
 
 			_, err := testApp.EndBlocker(sdkCtx)

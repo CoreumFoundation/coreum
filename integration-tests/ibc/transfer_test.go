@@ -73,7 +73,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 		gaiaChain.TxFactoryAuto(),
 		gaiaRecipient,
 		expectedGaiaRecipientBalance,
-		coreumChain.Chain.ChainContext,
+		coreumChain.ChainContext,
 		coreumSender,
 	)
 	requireT.NoError(err)
@@ -133,7 +133,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 		gaiaChain.TxFactoryAuto(),
 		gaiaAccount1,
 		sendToCoreumCoin,
-		coreumChain.Chain.ChainContext,
+		coreumChain.ChainContext,
 		coreumToCoreumSender,
 	)
 	requireT.NoError(err)

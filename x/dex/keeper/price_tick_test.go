@@ -156,7 +156,7 @@ func Test_computePriceTick(t *testing.T) {
 		)
 		t.Run(name, func(t *testing.T) {
 			actual, _ := ComputePriceTick(big.NewInt(tt.args.baseURA), big.NewInt(tt.args.quoteURA), tt.args.priceTickExponent)
-			assert.EqualValues(t, tt.want, actual, "want: %v actual: %v", tt.want, actual)
+			assert.Equal(t, tt.want, actual, "want: %v actual: %v", tt.want, actual)
 		})
 	}
 }

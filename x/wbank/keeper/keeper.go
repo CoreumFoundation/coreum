@@ -125,24 +125,6 @@ func (k BaseKeeperWrapper) DelegateCoinsFromAccountToModule(
 	return k.BaseKeeper.DelegateCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
 }
 
-func (k BaseKeeperWrapper) beforeDelegateCoins(ctx sdk.Context, senderAddr sdk.AccAddress, amt sdk.Coins) error {
-	for _, coin := range amt {
-		balance := k.BaseKeeper.GetBalance(ctx, senderAddr, coin.Denom)
-
-		spendableBalance, err := balance.SafeSub(k.ftProvider.GetDEXLockedBalance(ctx, senderAddr, coin.Denom))
-		if err != nil {
-			return err
-		}
-
-		if spendableBalance.IsLT(coin) {
-			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
-				"account %s does not have enough %s tokens to delegate", senderAddr.String(), coin.Denom,
-			)
-		}
-	}
-	return nil
-}
-
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
 //
 //nolint:contextcheck // this is correct context passing.
@@ -183,7 +165,7 @@ func (k BaseKeeperWrapper) SpendableBalances(
 		return nil, sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid address %s", req.Address)
 	}
 
-	balancesRes, err := k.BaseKeeper.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+	balancesRes, err := k.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address:    req.Address,
 		Pagination: req.Pagination,
 	})
@@ -216,7 +198,7 @@ func (k BaseKeeperWrapper) SpendableBalanceByDenom(
 		return nil, sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid address %s", req.Address)
 	}
 
-	balanceRes, err := k.BaseKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+	balanceRes, err := k.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: req.Address,
 		Denom:   req.Denom,
 	})
@@ -240,4 +222,22 @@ func (k BaseKeeperWrapper) SpendableBalanceByDenom(
 
 func (k BaseKeeperWrapper) isSmartContract(ctx sdk.Context, addr sdk.AccAddress) bool {
 	return wasm.IsSmartContract(ctx, addr, k.wasmKeeper)
+}
+
+func (k BaseKeeperWrapper) beforeDelegateCoins(ctx sdk.Context, senderAddr sdk.AccAddress, amt sdk.Coins) error {
+	for _, coin := range amt {
+		balance := k.GetBalance(ctx, senderAddr, coin.Denom)
+
+		spendableBalance, err := balance.SafeSub(k.ftProvider.GetDEXLockedBalance(ctx, senderAddr, coin.Denom))
+		if err != nil {
+			return err
+		}
+
+		if spendableBalance.IsLT(coin) {
+			return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
+				"account %s does not have enough %s tokens to delegate", senderAddr.String(), coin.Denom,
+			)
+		}
+	}
+	return nil
 }

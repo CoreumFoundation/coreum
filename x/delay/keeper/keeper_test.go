@@ -19,7 +19,7 @@ type dummyExecutionMessage struct {
 	Value string
 }
 
-//nolint:revive,stylecheck // underscore is required
+//nolint:revive,staticcheck // underscore is required
 func (di *dummyExecutionMessage) XXX_MessageName() string {
 	return "test.DummyExecutionMessage"
 }

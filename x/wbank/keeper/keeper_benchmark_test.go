@@ -85,7 +85,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	b.Run("test-single-get-supply", func(b *testing.B) {
 		for range b.N {
 			supply := bankKeeper.GetSupply(sdkContext, singleCoinDenom)
-			assert.EqualValues(b, coin.String(), supply.String())
+			assert.Equal(b, coin.String(), supply.String())
 		}
 	})
 
@@ -102,7 +102,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 		for range b.N {
 			denom := denoms[b.N%len(denoms)]
 			supply := bankKeeper.GetSupply(sdkContext, denom)
-			assert.EqualValues(b, mintValue, supply.Amount, "denom: %s", supply.Denom)
+			assert.Equal(b, mintValue, supply.Amount, "denom: %s", supply.Denom)
 		}
 	})
 }

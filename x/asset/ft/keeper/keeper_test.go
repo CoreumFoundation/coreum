@@ -40,7 +40,7 @@ func TestKeeper_Issue(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	stakingKeeper := testApp.StakingKeeper
@@ -172,7 +172,7 @@ func TestKeeper_Issue_ZeroPrecision(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -235,7 +235,7 @@ func TestKeeper_Issue_EqualDisplayAndBaseDenom(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	stakingKeeper := testApp.StakingKeeper
 	ftKeeper := testApp.AssetFTKeeper
@@ -271,7 +271,7 @@ func TestKeeper_Issue_EqualDisplayAndBaseDenom(t *testing.T) {
 func TestKeeper_Issue_ValidateSymbol(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 
 	unacceptableSymbols := []string{
@@ -334,7 +334,7 @@ func TestKeeper_Issue_ValidateSymbol(t *testing.T) {
 func TestKeeper_Issue_ValidateSubunit(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 
 	unacceptableSubunits := []string{
@@ -396,7 +396,7 @@ func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -424,7 +424,7 @@ func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	stakingKeeper := testApp.StakingKeeper
 	ftKeeper := testApp.AssetFTKeeper
@@ -456,7 +456,7 @@ func TestKeeper_Issue_WithDEXSettings(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -504,7 +504,7 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -557,29 +557,29 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.NoError(err)
 
 	balance := bankKeeper.GetBalance(ctx, addr, mintableDenom)
-	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(877)), balance)
+	requireT.Equal(sdk.NewCoin(mintableDenom, sdkmath.NewInt(877)), balance)
 
 	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(877), totalSupply.Supply.AmountOf(mintableDenom))
+	requireT.Equal(sdkmath.NewInt(877), totalSupply.Supply.AmountOf(mintableDenom))
 
 	// mint to another account
 	err = ftKeeper.Mint(ctx, addr, randomAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
 	requireT.NoError(err)
 
 	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
-	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)), balance)
+	requireT.Equal(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)), balance)
 
 	totalSupply, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(977), totalSupply.Supply.AmountOf(mintableDenom))
+	requireT.Equal(sdkmath.NewInt(977), totalSupply.Supply.AmountOf(mintableDenom))
 }
 
 func TestKeeper_Burn(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -645,11 +645,11 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 
 	balance := bankKeeper.GetBalance(ctx, issuer, burnableDenom)
-	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(477)), balance)
+	requireT.Equal(sdk.NewCoin(burnableDenom, sdkmath.NewInt(477)), balance)
 
 	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(577), totalSupply.Supply.AmountOf(burnableDenom))
+	requireT.Equal(sdkmath.NewInt(577), totalSupply.Supply.AmountOf(burnableDenom))
 
 	// try to freeze the issuer (issuer can't be frozen)
 	err = ftKeeper.Freeze(ctx, issuer, issuer, sdk.NewCoin(burnableDenom, sdkmath.NewInt(600)))
@@ -683,7 +683,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -762,7 +762,7 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -929,7 +929,7 @@ func TestKeeper_SendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1008,7 +1008,7 @@ func TestKeeper_BurnRateAndSendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1074,7 +1074,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1143,21 +1143,21 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	requireT.NoError(err)
 	frozenBalance, err := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(110)), frozenBalance)
+	assertT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(110)), frozenBalance)
 
 	// try to unfreeze more than frozen balance
 	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(130)))
 	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(110)), frozenBalance)
+	assertT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(110)), frozenBalance)
 
 	// set frozen balance back to zero
 	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(110)))
 	requireT.NoError(err)
 	frozenBalance, err = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(0)).String(), frozenBalance.String())
+	assertT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(0)).String(), frozenBalance.String())
 
 	// freeze, query frozen
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdkmath.NewInt(40)))
@@ -1171,7 +1171,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	requireT.NoError(err)
 	assertT.Len(allBalances, 1)
 	assertT.EqualValues(1, pageRes.GetTotal())
-	assertT.EqualValues(recipient.String(), allBalances[0].Address)
+	assertT.Equal(recipient.String(), allBalances[0].Address)
 	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(40))).String(), allBalances[0].Coins.String())
 
 	// increase frozen and query
@@ -1253,7 +1253,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1367,7 +1367,7 @@ func TestKeeper_Clawback(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1477,7 +1477,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1557,7 +1557,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.NoError(err)
 	assertT.Len(allBalances, 1)
 	assertT.EqualValues(1, pageRes.GetTotal())
-	assertT.EqualValues(recipient.String(), allBalances[0].Address)
+	assertT.Equal(recipient.String(), allBalances[0].Address)
 	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))).String(), allBalances[0].Coins.String())
 
 	coinsToSend = sdk.NewCoins(
@@ -1597,7 +1597,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1711,7 +1711,7 @@ func TestKeeper_IBC(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1773,7 +1773,7 @@ func TestKeeper_AllInOne(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -1844,7 +1844,7 @@ func TestKeeper_GetIssuerTokens(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 	ftKeeper := testApp.AssetFTKeeper
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -1912,7 +1912,7 @@ func TestKeeper_TransferAdmin(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 
@@ -1963,7 +1963,7 @@ func TestKeeper_TransferAdmin_Mint(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2029,11 +2029,11 @@ func TestKeeper_TransferAdmin_Mint(t *testing.T) {
 	requireT.NoError(err)
 
 	balance := bankKeeper.GetBalance(ctx, adminAddr, mintableDenom)
-	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)).String(), balance.String())
+	requireT.Equal(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)).String(), balance.String())
 
 	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(877), totalSupply.Supply.AmountOf(mintableDenom))
+	requireT.Equal(sdkmath.NewInt(877), totalSupply.Supply.AmountOf(mintableDenom))
 
 	// mint to another account as original issuer
 	err = ftKeeper.Mint(ctx, originalIssuerAddr, randomAddr, sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)))
@@ -2044,18 +2044,18 @@ func TestKeeper_TransferAdmin_Mint(t *testing.T) {
 	requireT.NoError(err)
 
 	balance = bankKeeper.GetBalance(ctx, randomAddr, mintableDenom)
-	requireT.EqualValues(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)), balance)
+	requireT.Equal(sdk.NewCoin(mintableDenom, sdkmath.NewInt(100)), balance)
 
 	totalSupply, err = bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(977), totalSupply.Supply.AmountOf(mintableDenom))
+	requireT.Equal(sdkmath.NewInt(977), totalSupply.Supply.AmountOf(mintableDenom))
 }
 
 func TestKeeper_TransferAdmin_Burn(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2146,11 +2146,11 @@ func TestKeeper_TransferAdmin_Burn(t *testing.T) {
 	requireT.NoError(err)
 
 	balance := bankKeeper.GetBalance(ctx, admin, burnableDenom)
-	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(477)), balance)
+	requireT.Equal(sdk.NewCoin(burnableDenom, sdkmath.NewInt(477)), balance)
 
 	totalSupply, err := bankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdkmath.NewInt(677), totalSupply.Supply.AmountOf(burnableDenom))
+	requireT.Equal(sdkmath.NewInt(677), totalSupply.Supply.AmountOf(burnableDenom))
 
 	// try to freeze the original issuer
 	err = ftKeeper.Freeze(ctx, originalIssuer, admin, sdk.NewCoin(burnableDenom, sdkmath.NewInt(600)))
@@ -2172,7 +2172,7 @@ func TestKeeper_TransferAdmin_FreezeUnfreeze(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2216,7 +2216,7 @@ func TestKeeper_TransferAdmin_FreezeUnfreeze(t *testing.T) {
 	requireT.NoError(err)
 	assertT.Len(allBalances, 1)
 	assertT.EqualValues(1, pageRes.GetTotal())
-	assertT.EqualValues(recipient.String(), allBalances[0].Address)
+	assertT.Equal(recipient.String(), allBalances[0].Address)
 	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(40))).String(), allBalances[0].Coins.String())
 
 	// try to unfreeze from issuer address which is non admin anymore
@@ -2243,7 +2243,7 @@ func TestKeeper_TransferAdmin_GlobalFreezeUnfreeze(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2389,7 +2389,7 @@ func TestKeeper_TransferAdmin_Clawback(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2510,7 +2510,7 @@ func TestKeeper_TransferAdmin_Whitelist(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2616,8 +2616,8 @@ func TestKeeper_TransferAdmin_Whitelist(t *testing.T) {
 		slices.Reverse(allBalances)
 	}
 
-	assertT.EqualValues(recipient.String(), allBalances[0].Address)
-	assertT.EqualValues(issuer.String(), allBalances[1].Address)
+	assertT.Equal(recipient.String(), allBalances[0].Address)
+	assertT.Equal(issuer.String(), allBalances[1].Address)
 	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))).String(), allBalances[0].Coins.String())
 
 	coinsToSend = sdk.NewCoins(
@@ -2657,7 +2657,7 @@ func TestKeeper_TransferAdmin_IBC(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2741,7 +2741,7 @@ func TestKeeper_TransferAdmin_AllInOne(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
@@ -2832,7 +2832,7 @@ func TestKeeper_ClearAdmin(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContextLegacy(false, tmproto.Header{})
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
 
 	bankKeeper := testApp.BankKeeper
 	ftKeeper := testApp.AssetFTKeeper
