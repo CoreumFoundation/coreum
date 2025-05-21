@@ -10,15 +10,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v6/integration-tests"
@@ -250,7 +248,7 @@ func TestGasEstimation(t *testing.T) {
 
 	admin := chain.GenAccount()
 	singlesigAddress := chain.GenAccount()
-	singlesigUnimportedAddress := generateUnimportedAccount(t, chain)
+	singlesigUnimportedAddress := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	multisigPublicKey1, _, err := chain.GenMultisigAccount(3, 2)
 	require.NoError(t, err)
@@ -755,23 +753,4 @@ func signTxWithMultipleSignatures(
 	requireT.NoError(txBuilder.SetSignatures(sigs...))
 
 	return txBuilder.GetTx()
-}
-
-func generateUnimportedAccount(t *testing.T, chain integration.CoreumChain) sdk.AccAddress {
-	t.Helper()
-	keyInfo, _, err := keyring.NewInMemory(chain.EncodingConfig.Codec).NewMnemonic(
-		uuid.New().String(),
-		keyring.English,
-		sdk.GetConfig().GetFullBIP44Path(),
-		"",
-		hd.Secp256k1,
-	)
-	if err != nil {
-		require.NoError(t, err)
-	}
-	address, err := keyInfo.GetAddress()
-	if err != nil {
-		require.NoError(t, err)
-	}
-	return address
 }
