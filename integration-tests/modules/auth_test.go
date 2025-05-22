@@ -10,6 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -246,6 +247,7 @@ func TestGasEstimation(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	singlesigAddress := chain.GenAccount()
+	singlesigUnimportedAddress := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	multisigPublicKey1, _, err := chain.GenMultisigAccount(3, 2)
 	require.NoError(t, err)
@@ -261,6 +263,7 @@ func TestGasEstimation(t *testing.T) {
 
 	// For accounts to exist on chain we need to fund them at least with min amount (1ucore).
 	chain.FundAccountWithOptions(ctx, t, singlesigAddress, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
+	chain.FundAccountWithOptions(ctx, t, singlesigUnimportedAddress, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
 	chain.FundAccountWithOptions(ctx, t, multisigAddress1, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
 	chain.FundAccountWithOptions(ctx, t, multisigAddress2, integration.BalancesOptions{Amount: sdkmath.NewInt(1)})
 
@@ -282,6 +285,38 @@ func TestGasEstimation(t *testing.T) {
 					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
 				},
 			},
+			// single signature no extra bytes.
+			expectedGas: func(txBytes []byte) uint64 {
+				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
+			},
+		},
+		{
+			name:        "singlesig_bank_send_unsigned",
+			fromAddress: singlesigAddress,
+			msgs: []sdk.Msg{
+				&banktypes.MsgSend{
+					FromAddress: singlesigAddress.String(),
+					ToAddress:   singlesigAddress.String(),
+					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+				},
+			},
+			simulateUnsigned: true,
+			// single signature no extra bytes.
+			expectedGas: func(txBytes []byte) uint64 {
+				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
+			},
+		},
+		{
+			name:        "singlesig_no_pub_key_bank_send_unsigned",
+			fromAddress: singlesigUnimportedAddress,
+			msgs: []sdk.Msg{
+				&banktypes.MsgSend{
+					FromAddress: singlesigUnimportedAddress.String(),
+					ToAddress:   singlesigUnimportedAddress.String(),
+					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+				},
+			},
+			simulateUnsigned: true,
 			// single signature no extra bytes.
 			expectedGas: func(txBytes []byte) uint64 {
 				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
@@ -331,7 +366,7 @@ func TestGasEstimation(t *testing.T) {
 			},
 			simulateUnsigned: true,
 			expectedGas: func(txBytes []byte) uint64 {
-				signatureCostDifference := uint64(1610)
+				signatureCostDifference := uint64(1830)
 				bytesCost := uint64(len(txBytes)) * authParams.Params.TxSizeCostPerByte
 				expectedGas := dgc.FixedGas + deterministicgas.BankSendPerCoinGas + bytesCost - signatureCostDifference
 				return expectedGas
