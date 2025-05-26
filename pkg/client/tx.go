@@ -20,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
-	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
@@ -194,7 +193,17 @@ func BuildTxForSimulation(
 		}
 	} else {
 		// For unsigned simulation, signatureData doesn't matter. It should just not be nil
-		signatureData = multisigtypes.NewMultisig(4)
+		threshold := 4
+		Signatures := make([]signing.SignatureData, 0, threshold)
+		for range threshold {
+			Signatures = append(Signatures, &signing.SingleSignatureData{
+				SignMode: txf.SignMode(),
+			})
+		}
+		signatureData = &signing.MultiSignatureData{
+			BitArray:   types.NewCompactBitArray(threshold),
+			Signatures: Signatures,
+		}
 	}
 
 	signature := signing.SignatureV2{
@@ -479,6 +488,19 @@ func prepareFactory(ctx context.Context, clientCtx Context, txf tx.Factory) (tx.
 		txf = txf.
 			WithAccountNumber(acc.GetAccountNumber()).
 			WithSequence(acc.GetSequence())
+	}
+
+	switch clientCtx.SignModeStr() {
+	case flags.SignModeDirect:
+		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
+	case flags.SignModeLegacyAminoJSON:
+		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_TEXTUAL)
+	case flags.SignModeDirectAux:
+		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_DIRECT_AUX)
+	case flags.SignModeTextual:
+		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
+	case flags.SignModeEIP191:
+		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_EIP_191)
 	}
 
 	return txf, nil
