@@ -1,9 +1,9 @@
 name: ci
 on:
   push:
-    branches: [ master ]
+    branches: [ release-v5 ]
   pull_request:
-    branches: [ master ]
+    branches: [ release-v5 ]
   workflow_dispatch:
 
 concurrency:
