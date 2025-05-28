@@ -877,7 +877,9 @@ func TestLimitOrdersMatchingWithAssetFTFreeze(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 
-	issuer, denom1 := genAccountAndIssueFT(ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
+	issuer, denom1 := genAccountAndIssueFT(
+		ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing,
+	)
 	acc2, denom2 := genAccountAndIssueFT(ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6))
 
 	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
@@ -1079,7 +1081,9 @@ func TestLimitOrdersMatchingWithAssetFTGloballyFreeze(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 
-	issuer, denom1 := genAccountAndIssueFT(ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
+	issuer, denom1 := genAccountAndIssueFT(
+		ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing,
+	)
 	acc2, denom2 := genAccountAndIssueFT(ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6))
 
 	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
@@ -1929,7 +1933,9 @@ func TestLimitOrdersMatchingWithAssetFTWhitelist(t *testing.T) {
 
 	acc1 := chain.GenAccount()
 
-	issuer, denom1 := genAccountAndIssueFT(ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_whitelisting)
+	issuer, denom1 := genAccountAndIssueFT(
+		ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_whitelisting,
+	)
 	acc2, denom2 := genAccountAndIssueFT(ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6))
 
 	chain.FundAccountsWithOptions(ctx, t, []integration.AccWithBalancesOptions{
@@ -2821,7 +2827,9 @@ func TestTradeByAdmin(t *testing.T) {
 	})
 
 	acc1, denom1 := genAccountAndIssueFT(ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6))
-	acc2, denom2 := genAccountAndIssueFT(ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing)
+	acc2, denom2 := genAccountAndIssueFT(
+		ctx, t, chain, 10_000_000, sdkmath.NewIntWithDecimal(1, 6), assetfttypes.Feature_freezing,
+	)
 
 	msgSend := &banktypes.MsgSend{
 		FromAddress: acc2.String(),
@@ -2938,6 +2946,7 @@ func issueFT(
 	return assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 }
 
+//nolint:unparam // using constant values here will make this function less flexible.
 func genAccountAndIssueFT(
 	ctx context.Context,
 	t *testing.T,
