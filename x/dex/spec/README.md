@@ -345,4 +345,3 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> CoreumResult<ContractError
 
 - Acts as the main function that handles incoming messages.
 - Delegates to specific helper functions based on the message type.
-
