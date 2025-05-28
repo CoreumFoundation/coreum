@@ -44,6 +44,15 @@ type Factory = tx.Factory
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 var Sign = tx.Sign
 
+// signModeFromStr maps string representations of sign modes to their corresponding signing.SignMode constants.
+var signModeFromStr = map[string]signing.SignMode{
+	flags.SignModeDirect:          signing.SignMode_SIGN_MODE_DIRECT,
+	flags.SignModeLegacyAminoJSON: signing.SignMode_SIGN_MODE_TEXTUAL,
+	flags.SignModeDirectAux:       signing.SignMode_SIGN_MODE_DIRECT_AUX,
+	flags.SignModeTextual:         signing.SignMode_SIGN_MODE_LEGACY_AMINO_JSON,
+	flags.SignModeEIP191:          signing.SignMode_SIGN_MODE_EIP_191,
+}
+
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
 // NOTE: copied from the link below and made some changes.
@@ -490,17 +499,8 @@ func prepareFactory(ctx context.Context, clientCtx Context, txf tx.Factory) (tx.
 			WithSequence(acc.GetSequence())
 	}
 
-	switch clientCtx.SignModeStr() {
-	case flags.SignModeDirect:
-		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
-	case flags.SignModeLegacyAminoJSON:
-		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_TEXTUAL)
-	case flags.SignModeDirectAux:
-		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_DIRECT_AUX)
-	case flags.SignModeTextual:
-		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-	case flags.SignModeEIP191:
-		txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_EIP_191)
+	if signMode, ok := signModeFromStr[clientCtx.SignModeStr()]; ok {
+		txf = txf.WithSignMode(signMode)
 	}
 
 	return txf, nil
