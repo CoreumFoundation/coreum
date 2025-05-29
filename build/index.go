@@ -72,6 +72,10 @@ var Commands = map[string]types.Command{
 		Fn:          coreum.RunIntegrationTestsUpgrade(true),
 		Description: "Runs all upgrade integration tests including unsafe",
 	},
+	"integration-tests-unsafe/export": {
+		Fn:          coreum.RunIntegrationTestsExport(false),
+		Description: "Runs all the integration tests including unsafe",
+	},
 	"lint":           {Fn: coreum.Lint, Description: "Lints code"},
 	"release":        {Fn: coreum.ReleaseCored, Description: "Releases cored binary"},
 	"release/images": {Fn: coreum.ReleaseCoredImage, Description: "Releases cored docker images"},

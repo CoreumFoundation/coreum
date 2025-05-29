@@ -71,4 +71,7 @@ integration-tests-ibc:
 .PHONY: integration-tests-upgrade
 integration-tests-upgrade:
 	$(BUILDER) integration-tests-unsafe/upgrade
- 
+
+.PHONY: integration-tests-export
+integration-tests-export:
+	$(BUILDER) integration-tests-unsafe/export
