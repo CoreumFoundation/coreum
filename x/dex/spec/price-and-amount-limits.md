@@ -127,7 +127,7 @@ It appears that Base Quantity Step is highly correlated with asset price ranges.
 
 | Avg Price       | Base Quantity Step | Markets     |
 | --------------- | ------------------ | ----------- |
-| <0.1$           | 1                  | PEPE        |
+| `<`0.1$         | 1                  | PEPE        |
 | 0.1 - 1$        | 0.1                | TRX, PEOPLE |
 | 1 - 10$         | 0.01               | TON         |
 | 10 - 100$       | 0.01               | ATOM        |
