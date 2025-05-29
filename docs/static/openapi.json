@@ -12169,7 +12169,7 @@
         "proposer": {
           "type": "string",
           "description": "Since: cosmos-sdk 0.47",
-          "title": "proposer is the address of the proposal sumbitter"
+          "title": "proposer is the address of the proposal submitter"
         },
         "expedited": {
           "type": "boolean",
@@ -12251,7 +12251,7 @@
         },
         "params": {
           "$ref": "#/definitions/cosmos.gov.v1.Params",
-          "description": "params defines all the paramaters of x/gov module.\n\nSince: cosmos-sdk 0.47"
+          "description": "params defines all the parameters of x/gov module.\n\nSince: cosmos-sdk 0.47"
         }
       },
       "description": "QueryParamsResponse is the response type for the Query/Params RPC method."
@@ -14091,7 +14091,7 @@
             "type": "string",
             "format": "uint64"
           },
-          "title": "list of unbonding ids, each uniquely identifing an unbonding of this validator"
+          "title": "list of unbonding ids, each uniquely identifying an unbonding of this validator"
         }
       },
       "description": "Validator defines a validator, together with the total amount of the\nValidator's bond shares and their exchange rate to coins. Slashing results in\na decrease in the exchange rate, allowing correct calculation of future\nundelegations without iterating over delegators. When coins are delegated to\nthis validator, the validator is credited with a delegation whose number of\nbond shares is based on the amount of coins delegated divided by the current\nexchange rate. Voting power can be calculated as total bonded shares\nmultiplied by exchange rate."
