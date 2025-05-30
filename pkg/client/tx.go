@@ -20,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
-	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
@@ -44,6 +43,15 @@ type Factory = tx.Factory
 // An error is returned upon failure.
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 var Sign = tx.Sign
+
+// signModeFromStr maps string representations of sign modes to their corresponding signing.SignMode constants.
+var signModeFromStr = map[string]signing.SignMode{
+	flags.SignModeDirect:          signing.SignMode_SIGN_MODE_DIRECT,
+	flags.SignModeLegacyAminoJSON: signing.SignMode_SIGN_MODE_TEXTUAL,
+	flags.SignModeDirectAux:       signing.SignMode_SIGN_MODE_DIRECT_AUX,
+	flags.SignModeTextual:         signing.SignMode_SIGN_MODE_LEGACY_AMINO_JSON,
+	flags.SignModeEIP191:          signing.SignMode_SIGN_MODE_EIP_191,
+}
 
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
@@ -194,7 +202,17 @@ func BuildTxForSimulation(
 		}
 	} else {
 		// For unsigned simulation, signatureData doesn't matter. It should just not be nil
-		signatureData = multisigtypes.NewMultisig(4)
+		threshold := 4
+		Signatures := make([]signing.SignatureData, 0, threshold)
+		for range threshold {
+			Signatures = append(Signatures, &signing.SingleSignatureData{
+				SignMode: txf.SignMode(),
+			})
+		}
+		signatureData = &signing.MultiSignatureData{
+			BitArray:   types.NewCompactBitArray(threshold),
+			Signatures: Signatures,
+		}
 	}
 
 	signature := signing.SignatureV2{
@@ -479,6 +497,10 @@ func prepareFactory(ctx context.Context, clientCtx Context, txf tx.Factory) (tx.
 		txf = txf.
 			WithAccountNumber(acc.GetAccountNumber()).
 			WithSequence(acc.GetSequence())
+	}
+
+	if signMode, ok := signModeFromStr[clientCtx.SignModeStr()]; ok {
+		txf = txf.WithSignMode(signMode)
 	}
 
 	return txf, nil
