@@ -28,7 +28,11 @@ type GRPCQuerier struct {
 
 // NewGRPCQuerier returns a new instance of GRPCQuerier.
 func NewGRPCQuerier(gRPCQueryRouter *baseapp.GRPCQueryRouter, codec codec.Codec) *GRPCQuerier {
-	acceptedQueries := newModuleQuerySafeAllowList()
+	acceptedQueries, err := newModuleQuerySafeAllowList()
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil
+	}
 	// "/cosmos.nft.v1beta1.Query/Owner" is not marked as module_query_safe in cosmos, but we need it
 	acceptedQueries["/cosmos.nft.v1beta1.Query/Owner"] = func() gogoproto.Message {
 		return &nfttypes.QueryOwnerResponse{}
@@ -75,10 +79,10 @@ func (q *GRPCQuerier) Query(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (go
 
 // newModuleQuerySafeAllowList returns a map of all query paths labeled with module_query_safe in the proto files to
 // their response proto.
-func newModuleQuerySafeAllowList() map[string]func() gogoproto.Message {
+func newModuleQuerySafeAllowList() (map[string]func() gogoproto.Message, error) {
 	fds, err := gogoproto.MergedGlobalFileDescriptors()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	// create the files using 'AllowUnresolvable' to avoid
 	// unnecessary panic: https://github.com/cosmos/ibc-go/issues/6435
@@ -86,7 +90,7 @@ func newModuleQuerySafeAllowList() map[string]func() gogoproto.Message {
 		AllowUnresolvable: true,
 	}.NewFiles(fds)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	allowList := make(map[string]func() gogoproto.Message)
@@ -120,5 +124,5 @@ func newModuleQuerySafeAllowList() map[string]func() gogoproto.Message {
 		return true
 	})
 
-	return allowList
+	return allowList, nil
 }
