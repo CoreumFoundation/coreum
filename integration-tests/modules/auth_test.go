@@ -311,17 +311,18 @@ func TestGasEstimation(t *testing.T) {
 				for _, signMode := range singModeOptions {
 					simulateUnsigned := sign == "without_signature"
 					var fromAddress sdk.AccAddress
-					if signer == "singlesig" {
+					switch {
+					case signer == "singlesig":
 						fromAddress = singlesigUnimportedAddress
 						if pubKey == "with_pubkey" {
 							fromAddress = singlesigAddress
 						}
-					} else if signer == "multisig_6_7" {
+					case signer == "multisig_6_7":
 						fromAddress = multisigUnimportedAddress
 						if pubKey == "with_pubkey" {
 							fromAddress = multisigAddress
 						}
-					} else {
+					default:
 						continue
 					}
 
