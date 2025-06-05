@@ -2,20 +2,30 @@
 package simapp
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
+	pruningtypes "cosmossdk.io/store/pruning/types"
 	storetypes "cosmossdk.io/store/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/json"
+	cmjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -23,9 +33,8 @@ import (
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v6/app"
 	"github.com/CoreumFoundation/coreum/v6/pkg/config"
@@ -108,7 +117,7 @@ func New(options ...Option) *App {
 		panic(fmt.Sprintf("can't generate genesis state with wallet, err: %s", err))
 	}
 
-	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
+	stateBytes, err := cmjson.MarshalIndent(genesisState, "", " ")
 	if err != nil {
 		panic(errors.Errorf("can't Marshal genesisState: %s", err))
 	}
@@ -125,6 +134,46 @@ func New(options ...Option) *App {
 	simApp := &App{*coreApp}
 
 	return simApp
+}
+
+func NewWithGenesis(genesisBytes []byte, options ...Option) (App, string, map[string]json.RawMessage, *abci.RequestInitChain, *abci.ResponseInitChain) {
+	homeDir := tempDir()
+
+	settings := Settings{
+		db:     dbm.NewMemDB(),
+		logger: log.NewNopLogger(),
+	}
+
+	for _, option := range options {
+		settings = option(settings)
+	}
+
+	initChainReq, appState, networkConfig, err := convertExportedGenesisToInitChain(genesisBytes)
+	if err != nil {
+		panic(errors.Errorf("can't convert genesis bytes to init chain: %s", err))
+	}
+
+	sdkConfigOnce.Do(func() {
+		app.ChosenNetwork = networkConfig
+		// networkConfig.SetSDKConfig()
+	})
+
+	coreApp := app.New(
+		settings.logger,
+		settings.db,
+		nil,
+		true,
+		simtestutil.NewAppOptionsWithFlagHome(homeDir),
+		baseapp.SetChainID(initChainReq.ChainId),
+		baseapp.SetPruning(pruningtypes.NewPruningOptions(pruningtypes.PruningNothing)),
+	)
+
+	initChainRes, err := coreApp.InitChain(initChainReq)
+	if err != nil {
+		panic(errors.Errorf("can't init chain: %s", err))
+	}
+
+	return App{*coreApp}, homeDir, appState, initChainReq, initChainRes
 }
 
 // BeginNextBlock begins new SimApp block and returns the ctx of the new block.
@@ -292,4 +341,199 @@ func tempDir() string {
 // CopyContextWithMultiStore returns a sdk.Context with a copied MultiStore.
 func CopyContextWithMultiStore(sdkCtx sdk.Context) sdk.Context {
 	return sdkCtx.WithMultiStore(sdkCtx.MultiStore().CacheWrap().(storetypes.MultiStore))
+}
+
+func convertExportedGenesisToInitChain(jsonBytes []byte) (*abci.RequestInitChain, map[string]json.RawMessage, config.NetworkConfig, error) {
+	var export struct {
+		InitialHeight int64                      `json:"initial_height"`
+		GenesisTime   string                     `json:"genesis_time"`
+		ChainID       string                     `json:"chain_id"`
+		AppState      map[string]json.RawMessage `json:"app_state"`
+		Consensus     struct {
+			Params struct {
+				Block struct {
+					MaxBytes string `json:"max_bytes"`
+					MaxGas   string `json:"max_gas"`
+				} `json:"block"`
+				Evidence struct {
+					MaxAgeNumBlocks string `json:"max_age_num_blocks"`
+					MaxAgeDuration  string `json:"max_age_duration"`
+					MaxBytes        string `json:"max_bytes"`
+				} `json:"evidence"`
+				Validator struct {
+					PubKeyTypes []string `json:"pub_key_types"`
+				} `json:"validator"`
+				Version struct {
+					App string `json:"app"`
+				} `json:"version"`
+				ABCI struct {
+					VoteExtensionsEnableHeight string `json:"vote_extensions_enable_height"`
+				} `json:"abci"`
+			} `json:"params"`
+			Validators []struct {
+				Address string `json:"address"`
+				PubKey  struct {
+					Type  string `json:"type"`
+					Value string `json:"value"`
+				} `json:"pub_key"`
+				Power string `json:"power"`
+				Name  string `json:"name"`
+			} `json:"validators"`
+		} `json:"consensus"`
+	}
+	if err := json.Unmarshal(jsonBytes, &export); err != nil {
+		return nil, nil, config.NetworkConfig{}, err
+	}
+
+	// Marshal app_state to bytes
+	appStateBytes, err := json.Marshal(export.AppState)
+	if err != nil {
+		return nil, nil, config.NetworkConfig{}, err
+	}
+
+	// Parse genesis_time
+	genesisTime, err := time.Parse(time.RFC3339Nano, export.GenesisTime)
+	if err != nil {
+		return nil, nil, config.NetworkConfig{}, err
+	}
+
+	// Parse bank balances
+	var bankState struct {
+		Balances []banktypes.Balance `json:"balances"`
+	}
+	if err := json.Unmarshal(export.AppState["bank"], &bankState); err != nil {
+		return nil, nil, config.NetworkConfig{}, err
+	}
+
+	// Parse gov params
+	var govState struct {
+		Params struct {
+			MinDeposit []struct {
+				Denom  string `json:"denom"`
+				Amount string `json:"amount"`
+			} `json:"min_deposit"`
+			ExpeditedMinDeposit []struct {
+				Denom  string `json:"denom"`
+				Amount string `json:"amount"`
+			} `json:"expedited_min_deposit"`
+			VotingPeriod          string `json:"voting_period"`
+			ExpeditedVotingPeriod string `json:"expedited_voting_period"`
+		} `json:"params"`
+	}
+	if err := json.Unmarshal(export.AppState["gov"], &govState); err != nil {
+		return nil, nil, config.NetworkConfig{}, err
+	}
+
+	// Convert deposits
+	minDeposit := sdk.NewCoins()
+	for _, d := range govState.Params.MinDeposit {
+		amt, _ := sdkmath.NewIntFromString(d.Amount)
+		minDeposit = minDeposit.Add(sdk.NewCoin(d.Denom, amt))
+	}
+	expeditedMinDeposit := sdk.NewCoins()
+	for _, d := range govState.Params.ExpeditedMinDeposit {
+		amt, _ := sdkmath.NewIntFromString(d.Amount)
+		expeditedMinDeposit = expeditedMinDeposit.Add(sdk.NewCoin(d.Denom, amt))
+	}
+
+	// Parse voting periods
+	votingPeriod, _ := time.ParseDuration(govState.Params.VotingPeriod)
+	expeditedVotingPeriod, _ := time.ParseDuration(govState.Params.ExpeditedVotingPeriod)
+
+	// Parse customparams
+	var customParamsState struct {
+		StakingParams struct {
+			MinSelfDelegation string `json:"min_self_delegation"`
+		} `json:"staking_params"`
+	}
+	if err := json.Unmarshal(export.AppState["customparams"], &customParamsState); err != nil {
+		return nil, nil, config.NetworkConfig{}, err
+	}
+	minSelfDelegation, ok := sdkmath.NewIntFromString(customParamsState.StakingParams.MinSelfDelegation)
+	if !ok {
+		return nil, nil, config.NetworkConfig{}, fmt.Errorf("invalid min_self_delegation: %s", customParamsState.StakingParams.MinSelfDelegation)
+	}
+
+	// Prepare config
+	configuration := config.NetworkConfig{
+		Provider: config.DynamicConfigProvider{
+			GenesisInitConfig: config.GenesisInitConfig{
+				ChainID:       constant.ChainID(export.ChainID),
+				GenesisTime:   genesisTime,
+				Denom:         constant.DenomDev,         // Or parse from JSON if needed
+				AddressPrefix: constant.AddressPrefixDev, // Or parse from JSON if needed
+				GovConfig: config.GenesisInitGovConfig{
+					MinDeposit:            minDeposit,
+					ExpeditedMinDeposit:   expeditedMinDeposit,
+					VotingPeriod:          votingPeriod,
+					ExpeditedVotingPeriod: expeditedVotingPeriod,
+				},
+				CustomParamsConfig: config.GenesisInitCustomParamsConfig{
+					MinSelfDelegation: minSelfDelegation,
+				},
+				BankBalances: bankState.Balances,
+			},
+		},
+		NodeConfig: config.NodeConfig{},
+	}
+
+	// Build ConsensusParams
+	consensusParams := &tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{
+			MaxBytes: mustParseInt64(export.Consensus.Params.Block.MaxBytes),
+			MaxGas:   mustParseInt64(export.Consensus.Params.Block.MaxGas),
+		},
+		Evidence: &tmproto.EvidenceParams{
+			MaxAgeNumBlocks: mustParseInt64(export.Consensus.Params.Evidence.MaxAgeNumBlocks),
+			MaxAgeDuration:  mustParseDuration(export.Consensus.Params.Evidence.MaxAgeDuration),
+			MaxBytes:        mustParseInt64(export.Consensus.Params.Evidence.MaxBytes),
+		},
+		Validator: &tmproto.ValidatorParams{
+			PubKeyTypes: export.Consensus.Params.Validator.PubKeyTypes,
+		},
+		Version: &tmproto.VersionParams{
+			App: mustParseUint64(export.Consensus.Params.Version.App),
+		},
+		Abci: &tmproto.ABCIParams{
+			VoteExtensionsEnableHeight: mustParseInt64(export.Consensus.Params.ABCI.VoteExtensionsEnableHeight),
+		},
+	}
+
+	// Build Validators
+	var validators []abci.ValidatorUpdate
+	for _, v := range export.Consensus.Validators {
+		pubKey, err := base64.StdEncoding.DecodeString(v.PubKey.Value)
+		if err != nil {
+			return nil, nil, config.NetworkConfig{}, err
+		}
+		validators = append(validators, abci.ValidatorUpdate{
+			PubKey: crypto.PublicKey{
+				Sum: &crypto.PublicKey_Ed25519{Ed25519: pubKey},
+			},
+			Power: mustParseInt64(v.Power),
+		})
+	}
+
+	return &abci.RequestInitChain{
+		Time:            genesisTime,
+		ChainId:         export.ChainID,
+		ConsensusParams: consensusParams,
+		Validators:      validators,
+		AppStateBytes:   appStateBytes,
+		InitialHeight:   export.InitialHeight,
+	}, export.AppState, configuration, nil
+}
+
+// Helper functions
+func mustParseInt64(s string) int64 {
+	v, _ := strconv.ParseInt(s, 10, 64)
+	return v
+}
+func mustParseUint64(s string) uint64 {
+	v, _ := strconv.ParseUint(s, 10, 64)
+	return v
+}
+func mustParseDuration(s string) time.Duration {
+	v, _ := time.ParseDuration(s + "ns")
+	return v
 }

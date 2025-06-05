@@ -22,7 +22,7 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v6 v6.0.0-20250421142245-52bdcb2a0560
-	github.com/CoreumFoundation/crust v0.0.0-20250517130213-2f1a1d58aebc
+	github.com/CoreumFoundation/crust v0.0.0-20250603175518-1488f30952c2
 	github.com/CoreumFoundation/crust/znet v0.0.0-20250517130213-2f1a1d58aebc
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1

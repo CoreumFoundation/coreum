@@ -23,6 +23,7 @@ const (
 	TestModules = "modules"
 	TestUpgrade = "upgrade"
 	TestStress  = "stress"
+	TestExport  = "export"
 )
 
 // Test run unit tests in coreum repo.
@@ -100,6 +101,19 @@ func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 	}
 }
 
+func RunIntegrationTestsExport(runUnsafe bool) types.CommandFunc {
+	return func(ctx context.Context, deps types.DepsFunc) error {
+		deps(CompileModulesSmartContracts, CompileLegacyModulesSmartContracts, CompileAssetExtensionSmartContracts,
+			CompileDEXSmartContracts, BuildCoredLocally, BuildCoredDockerImage)
+
+		znetConfig := defaultZNetConfig()
+		znetConfig.Profiles = []string{apps.ProfileDevNet}
+		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-export"
+
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestExport)
+	}
+}
+
 // TestFuzz run fuzz tests in coreum repo.
 func TestFuzz(ctx context.Context, deps types.DepsFunc) error {
 	deps(CompileAllSmartContracts)
@@ -130,10 +144,27 @@ func runIntegrationTests(
 		return err
 	}
 
+	// err := znet.ExportCored(ctx, znetConfig)
+	// if err != nil {
+	// 	return err
+	// }
+
+	absRootDir, err := filepath.Abs(znetConfig.RootDir)
+	if err != nil {
+		return err
+	}
+
+	spec := infra.NewSpec(znetConfig)
+	config := znet.NewConfig(znetConfig, spec)
+
 	for _, testDir := range testDirs {
 		if err := golang.RunTests(ctx, deps, golang.TestConfig{
 			PackagePath: filepath.Join(integrationTestsDir, testDir),
 			Flags:       flags,
+			Envs: []string{
+				fmt.Sprintf("CORED_BIN_PATH=%s", filepath.Join(absRootDir, "bin")),
+				fmt.Sprintf("ZNET_HOME_DIR=%s", config.HomeDir),
+			},
 		}); err != nil {
 			return err
 		}

@@ -241,6 +241,8 @@ github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a h1
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
 github.com/CoreumFoundation/crust v0.0.0-20250517130213-2f1a1d58aebc h1:hZ5O7tmGEjWhxMxU5Ofu3aW9uJJIY16y61lwxuAgp3A=
 github.com/CoreumFoundation/crust v0.0.0-20250517130213-2f1a1d58aebc/go.mod h1:nTVhm7aaOrQSWIswfIdDrxV4BNI2vgwFSPaO+0G+cgM=
+github.com/CoreumFoundation/crust v0.0.0-20250603175518-1488f30952c2 h1:mwtzQf5R0n0fukjQ7h6Rwi43FQGpfBKKT23ZsLGVsQo=
+github.com/CoreumFoundation/crust v0.0.0-20250603175518-1488f30952c2/go.mod h1:nTVhm7aaOrQSWIswfIdDrxV4BNI2vgwFSPaO+0G+cgM=
 github.com/CoreumFoundation/crust/znet v0.0.0-20250517130213-2f1a1d58aebc h1:apEr45SsfQSWs3pwbS+iQDvKnWDhG5HUEev2w4eS67g=
 github.com/CoreumFoundation/crust/znet v0.0.0-20250517130213-2f1a1d58aebc/go.mod h1:mGXKXTmOMlK0EPDZXkyo9h5xWiGgDKBbi3EVN5hY1dU=
 github.com/CosmWasm/wasmd v0.54.0 h1:/txsBehV1xnAi46H1xwuuY6D4NySujBy+wa5+ryItS8=
