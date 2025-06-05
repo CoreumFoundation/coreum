@@ -236,6 +236,11 @@ func (c Context) BroadcastMode() string {
 	return c.clientCtx.BroadcastMode
 }
 
+// SignModeStr returns configured tx sign mode.
+func (c Context) SignModeStr() string {
+	return c.clientCtx.SignModeStr
+}
+
 // RPCClient returns RPC client.
 func (c Context) RPCClient() client.CometRPC {
 	return c.clientCtx.Client
