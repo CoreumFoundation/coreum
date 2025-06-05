@@ -59,13 +59,34 @@ All the information provided at the time of issuance is immutable and cannot be 
 
 The way that denom is created is that the user provides a name for their subunit, and the denom for the token, which is
 the main identifier of the token, will be created by joining the subunit and the issuer address separated with a dash (
-subunit-address). The user also provides the symbol and precision which will only be used for display purposes and will
+`{subunit}-{address}`). The user also provides the symbol and precision which will only be used for display purposes and will
 be stored in bank module's metadata field.
 
 For example to represent Bitcoin on Coreum, one could choose satoshi as subunit, BTC as Symbol and 8 as precision. It
 means that if the issuer address is core1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 then the denom will
 be `satoshi-core1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8` and since we have chosen BTC as symbol and 8 as precision, it
-will follow that (1 BTC = 10^8 `satoshi-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8`)
+will follow that (1 BTC = 10^8 `satoshi-core1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8`)
+
+#### How to Choose Subunit and Precision?
+
+Choosing the right subunit and precision is critical for ensuring smooth trading on the DEX. Here's a simple rule of thumb:
+
+- The value of **1 subunit** should be **less than or equal to $0.01 USD** if you want the asset to be tradable as a **base unit** without restrictions.
+- The value of **1 subunit** should be **less than or equal to $0.000001 USD (10^-6)** if you want the asset to be tradable as a **quote unit** without restrictions.
+
+These are recommended values intended to prevent trading limitations. Choosing a larger subunit won’t necessarily block trading, but it can introduce constraints and reduce usability—such as limited precision in price or amount inputs.
+
+To future-proof your asset—especially if its price increases significantly—it's safer to choose a **smaller subunit** rather than a larger one.
+
+**Example: Coreum Subunit Choice**
+
+Let's assume the market price of **COREUM** is **$0.10 USD**. Based on the trading rules:
+
+- To be tradable as a **base unit**, 1 subunit should be worth **≤ $0.01 USD**, which means the subunit should be **≤ 0.1 COREUM**.
+- To be tradable as a **quote unit**, 1 subunit should be worth **≤ $0.000001 USD**, which means the subunit should be **≤ 0.00001 COREUM**.
+
+To satisfy both conditions, we chose `ucore` as the subunit and set the precision to 6 for COREUM.
+That means `1 COREUM = 10^6 ucore`, and at a price of $0.10, `1 ucore = $0.0000001 USD` (10^-7), making it safely below both thresholds.
 
 ### Transferring admin
 
