@@ -1217,7 +1217,7 @@ func New(
 	// annotations are correct.
 	protoFiles, err := proto.MergedRegistry()
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err.Error())
 	}
 	err = msgservice.ValidateProtoAnnotations(protoFiles)
 	if err != nil {
