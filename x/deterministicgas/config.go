@@ -22,13 +22,12 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/hashicorp/go-metrics"
 	"github.com/samber/lo"
 
@@ -329,22 +328,10 @@ func DefaultConfig() Config {
 			&ibcchanneltypes.MsgChannelOpenConfirm{},
 			&ibcchanneltypes.MsgChannelCloseInit{},
 			&ibcchanneltypes.MsgChannelCloseConfirm{},
-			&ibcchanneltypes.MsgChannelUpgradeAck{},
-			&ibcchanneltypes.MsgChannelUpgradeCancel{},
-			&ibcchanneltypes.MsgChannelUpgradeConfirm{},
-			&ibcchanneltypes.MsgChannelUpgradeInit{},
-			&ibcchanneltypes.MsgChannelUpgradeOpen{},
-			&ibcchanneltypes.MsgChannelUpgradeTimeout{},
-			&ibcchanneltypes.MsgChannelUpgradeTry{},
-			&ibcchanneltypes.MsgPruneAcknowledgements{},
 			&ibcchanneltypes.MsgRecvPacket{},
 			&ibcchanneltypes.MsgTimeout{},
 			&ibcchanneltypes.MsgTimeoutOnClose{},
 			&ibcchanneltypes.MsgAcknowledgement{},
-			&ibcchanneltypes.MsgUpdateParams{},
-
-			// ibc/fee
-			&ibcfeetypes.PacketFee{},
 
 			// ibc/ica
 			&icacontrollertypes.MsgSendTx{},

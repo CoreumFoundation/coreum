@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"time"
 
 	"cosmossdk.io/core/address"
 	storetypes "cosmossdk.io/store/types"
@@ -56,4 +57,22 @@ func (iak InfiniteAccountKeeper) GetModuleAddress(moduleName string) sdk.AccAddr
 // AddressCodec returns the AddressCodec.
 func (iak InfiniteAccountKeeper) AddressCodec() address.Codec {
 	return iak.ak.AddressCodec()
+}
+
+// UnorderedTransactionsEnabled indicates whether unordered transactions are allowed in the InfiniteAccountKeeper.
+func (iak InfiniteAccountKeeper) UnorderedTransactionsEnabled() bool {
+	//TODO implement me
+	return false
+}
+
+// RemoveExpiredUnorderedNonces removes nonces that have expired based on the current context.
+func (iak InfiniteAccountKeeper) RemoveExpiredUnorderedNonces(ctx sdk.Context) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+// TryAddUnorderedNonce attempts to add a new unordered nonce for the sender, ensuring validity based on the timestamp.
+func (iak InfiniteAccountKeeper) TryAddUnorderedNonce(ctx sdk.Context, sender []byte, timestamp time.Time) error {
+	//TODO implement me
+	panic("implement me")
 }
