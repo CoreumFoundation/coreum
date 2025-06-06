@@ -38,6 +38,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	ignoredMsgURLs := []deterministicgas.MsgURL{
 		// Not-integrated modules:
 		// IBC:
+		"/ibc.core.channel.v2.MsgRecvPacket",
 
 		// ibc.applications.fee
 		"/ibc.applications.fee.v1.MsgRegisterPayee",
