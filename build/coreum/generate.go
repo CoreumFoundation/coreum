@@ -12,7 +12,7 @@ import (
 
 const (
 	cosmosSDKModule    = "github.com/cosmos/cosmos-sdk"
-	cosmosIBCModule    = "github.com/cosmos/ibc-go/v8"
+	cosmosIBCModule    = "github.com/cosmos/ibc-go/v10"
 	cosmosProtoModule  = "github.com/cosmos/cosmos-proto"
 	cosmWASMModule     = "github.com/CosmWasm/wasmd"
 	gogoProtobufModule = "github.com/cosmos/gogoproto"

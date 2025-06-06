@@ -10,7 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
