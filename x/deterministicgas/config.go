@@ -1,6 +1,7 @@
 package deterministicgas
 
 import (
+	protocolpoolv1 "cosmossdk.io/api/cosmos/protocolpool/v1"
 	storetypes "cosmossdk.io/store/types"
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	feegranttypes "cosmossdk.io/x/feegrant"
@@ -26,8 +27,10 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcv2clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcv2channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	"github.com/hashicorp/go-metrics"
 	"github.com/samber/lo"
 
@@ -309,6 +312,7 @@ func DefaultConfig() Config {
 			&ibcclienttypes.MsgCreateClient{},
 			&ibcclienttypes.MsgUpdateClient{},
 			&ibcclienttypes.MsgUpgradeClient{},
+			&ibcclienttypes.MsgDeleteClientCreator{},
 			&ibcclienttypes.MsgSubmitMisbehaviour{}, //nolint // TODO remove legacy message
 			&ibcclienttypes.MsgUpdateParams{},
 			&ibcclienttypes.MsgIBCSoftwareUpgrade{},
@@ -332,6 +336,10 @@ func DefaultConfig() Config {
 			&ibcchanneltypes.MsgTimeout{},
 			&ibcchanneltypes.MsgTimeoutOnClose{},
 			&ibcchanneltypes.MsgAcknowledgement{},
+			&ibcv2channeltypes.MsgSendPacket{},
+			&ibcv2channeltypes.MsgRecvPacket{},
+			&ibcv2channeltypes.MsgTimeout{},
+			&ibcv2channeltypes.MsgAcknowledgement{},
 
 			// ibc/ica
 			&icacontrollertypes.MsgSendTx{},
@@ -339,6 +347,16 @@ func DefaultConfig() Config {
 			&icahosttypes.MsgModuleQuerySafe{},
 			&icacontrollertypes.MsgUpdateParams{},
 			&ibctransfertypes.MsgUpdateParams{},
+
+			&ibcv2clienttypes.MsgRegisterCounterparty{},
+			&ibcv2clienttypes.MsgUpdateClientConfig{},
+
+			// protocol pool
+			&protocolpoolv1.MsgCreateContinuousFund{},
+			&protocolpoolv1.MsgCancelContinuousFund{},
+			&protocolpoolv1.MsgCommunityPoolSpend{},
+			&protocolpoolv1.MsgFundCommunityPool{},
+			&protocolpoolv1.MsgUpdateParams{},
 		},
 	)
 

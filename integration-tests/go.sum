@@ -835,8 +835,6 @@ github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10 v10.1.0 h1:e
 github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10 v10.1.0/go.mod h1:S4ZQwf5/LhpOi8JXSAese/6QQDk87nTdicJPlZ5q9UQ=
 github.com/cosmos/ibc-apps/modules/ibc-hooks/v8 v8.0.0-20240626224216-94190a9816cc h1:6cdr91BRCuR799DZrATxRt/QQHhA4VIVXO9YRShW8fA=
 github.com/cosmos/ibc-apps/modules/ibc-hooks/v8 v8.0.0-20240626224216-94190a9816cc/go.mod h1:9+Z14xz3Y+5uEn5i1CvLcDN1aTthEhYUdI7pphySkY8=
-github.com/cosmos/ibc-go/modules/capability v1.0.1 h1:ibwhrpJ3SftEEZRxCRkH0fQZ9svjthrX2+oXdZvzgGI=
-github.com/cosmos/ibc-go/modules/capability v1.0.1/go.mod h1:rquyOV262nGJplkumH+/LeYs04P3eV8oB7ZM4Ygqk4E=
 github.com/cosmos/ibc-go/v10 v10.2.0 h1:wlk/zqz2O0WRyE6UConoR1ci2HSW02P9ywamZCh5/N4=
 github.com/cosmos/ibc-go/v10 v10.2.0/go.mod h1:ijeyJ1FDvXoc5w+rlhpMntjhZ558EF02SBFjroW1hPo=
 github.com/cosmos/ics23/go v0.11.0 h1:jk5skjT0TqX5e5QJbEnwXIS2yI2vnmLOgpQPeM5RtnU=

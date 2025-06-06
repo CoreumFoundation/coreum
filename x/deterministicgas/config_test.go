@@ -36,20 +36,6 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor nondeterministic.
 	ignoredMsgURLs := []deterministicgas.MsgURL{
-		// Not-integrated modules:
-		// IBC:
-		"/ibc.core.channel.v2.MsgSendPacket",
-		"/ibc.core.channel.v2.MsgRecvPacket",
-		"/ibc.core.channel.v2.MsgAcknowledgement",
-		"/ibc.core.channel.v2.MsgTimeout",
-
-		// ibc.applications.fee
-		"/ibc.applications.fee.v1.MsgRegisterPayee",
-		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayee",
-		"/ibc.applications.fee.v1.MsgPayPacketFee",
-		"/ibc.applications.fee.v1.MsgPayPacketFeeAsync",
-		"/ibc.applications.fee.v1.PacketFe",
-
 		// Internal cosmos protos:
 		"/testpb.TestMsg",
 		"/testpb.MsgCreateDog",
@@ -111,10 +97,10 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic and extension types accidentally,
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 85, nondeterministicMsgCount)
+	assert.Equal(t, 87, nondeterministicMsgCount)
 	assert.Equal(t, 68, deterministicMsgCount)
 	assert.Equal(t, 12, extensionMsgCount)
-	assert.Equal(t, 141, nonExtensionMsgCount)
+	assert.Equal(t, 143, nonExtensionMsgCount)
 }
 
 func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
