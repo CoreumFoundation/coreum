@@ -260,7 +260,6 @@ and the formula for them is
 | `/cosmwasm.wasm.v1.MsgUpdateContractLabel`                             |
 | `/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig`                         |
 | `/cosmwasm.wasm.v1.MsgUpdateParams`                                    |
-| `/ibc.applications.fee.v1.PacketFee`                                   |
 | `/ibc.applications.interchain_accounts.controller.v1.MsgSendTx`        |
 | `/ibc.applications.interchain_accounts.controller.v1.MsgUpdateParams`  |
 | `/ibc.applications.interchain_accounts.host.v1.MsgModuleQuerySafe`     |
@@ -273,18 +272,9 @@ and the formula for them is
 | `/ibc.core.channel.v1.MsgChannelOpenConfirm`                           |
 | `/ibc.core.channel.v1.MsgChannelOpenInit`                              |
 | `/ibc.core.channel.v1.MsgChannelOpenTry`                               |
-| `/ibc.core.channel.v1.MsgChannelUpgradeAck`                            |
-| `/ibc.core.channel.v1.MsgChannelUpgradeCancel`                         |
-| `/ibc.core.channel.v1.MsgChannelUpgradeConfirm`                        |
-| `/ibc.core.channel.v1.MsgChannelUpgradeInit`                           |
-| `/ibc.core.channel.v1.MsgChannelUpgradeOpen`                           |
-| `/ibc.core.channel.v1.MsgChannelUpgradeTimeout`                        |
-| `/ibc.core.channel.v1.MsgChannelUpgradeTry`                            |
-| `/ibc.core.channel.v1.MsgPruneAcknowledgements`                        |
 | `/ibc.core.channel.v1.MsgRecvPacket`                                   |
 | `/ibc.core.channel.v1.MsgTimeout`                                      |
 | `/ibc.core.channel.v1.MsgTimeoutOnClose`                               |
-| `/ibc.core.channel.v1.MsgUpdateParams`                                 |
 | `/ibc.core.client.v1.MsgCreateClient`                                  |
 | `/ibc.core.client.v1.MsgIBCSoftwareUpgrade`                            |
 | `/ibc.core.client.v1.MsgRecoverClient`                                 |

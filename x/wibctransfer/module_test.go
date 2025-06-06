@@ -63,5 +63,5 @@ func TestAppModuleOriginalTransfer_RegisterServices(t *testing.T) {
 	configurator := newConfiguratorMock()
 	transferModule.RegisterServices(configurator)
 	require.Equal(t, []uint64{2, 3, 4, 5}, configurator.capturedMigrationVersions)
-	require.Equal(t, uint64(5), transferModule.ConsensusVersion())
+	require.Equal(t, uint64(6), transferModule.ConsensusVersion())
 }
