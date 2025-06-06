@@ -5,12 +5,17 @@ package modules
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
+	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -250,13 +255,20 @@ func TestGasEstimation(t *testing.T) {
 	singlesigAddress := chain.GenAccount()
 	singlesigUnimportedAddress := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	multisigPublicKey1, _, err := chain.GenMultisigAccount(3, 2)
+	multisigPublicKey, _, err := chain.GenMultisigAccount(7, 6)
 	require.NoError(t, err)
-	multisigAddress1 := sdk.AccAddress(multisigPublicKey1.Address())
+	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 
-	multisigPublicKey2, _, err := chain.GenMultisigAccount(7, 6)
-	require.NoError(t, err)
-	multisigAddress2 := sdk.AccAddress(multisigPublicKey2.Address())
+	multisigUnimportedPublicKey := sdkmultisig.NewLegacyAminoPubKey(6, []cryptotypes.PubKey{
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+	})
+	multisigUnimportedAddress := sdk.AccAddress(multisigUnimportedPublicKey.Address())
 
 	dgc := deterministicgas.DefaultConfig()
 	authParams, err := authtypes.NewQueryClient(chain.ClientContext).Params(ctx, &authtypes.QueryParamsRequest{})
@@ -274,142 +286,98 @@ func TestGasEstimation(t *testing.T) {
 			Acc:     singlesigUnimportedAddress,
 			Options: integration.BalancesOptions{Amount: sdkmath.NewInt(1)},
 		}, {
-			Acc:     multisigAddress1,
+			Acc:     multisigAddress,
 			Options: integration.BalancesOptions{Amount: sdkmath.NewInt(1)},
 		}, {
-			Acc:     multisigAddress2,
+			Acc:     multisigUnimportedAddress,
 			Options: integration.BalancesOptions{Amount: sdkmath.NewInt(1)},
 		},
 	})
 
-	// For deterministic messages we are able to assert that gas estimation is equal to exact number.
-	testsDeterm := []struct {
-		name             string
-		fromAddress      sdk.AccAddress
-		msgs             []sdk.Msg
-		simulateUnsigned bool
-		expectedGas      func(txBytes []byte) uint64
-	}{
-		{
-			name:        "singlesig_bank_send",
-			fromAddress: singlesigAddress,
-			msgs: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: singlesigAddress.String(),
-					ToAddress:   singlesigAddress.String(),
-					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-				},
-			},
-			// single signature no extra bytes.
-			expectedGas: func(txBytes []byte) uint64 {
-				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
-			},
-		},
-		{
-			name:        "singlesig_bank_send_unsigned",
-			fromAddress: singlesigAddress,
-			msgs: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: singlesigAddress.String(),
-					ToAddress:   singlesigAddress.String(),
-					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-				},
-			},
-			simulateUnsigned: true,
-			// single signature no extra bytes.
-			expectedGas: func(txBytes []byte) uint64 {
-				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
-			},
-		},
-		{
-			name:        "singlesig_no_pub_key_bank_send_unsigned",
-			fromAddress: singlesigUnimportedAddress,
-			msgs: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: singlesigUnimportedAddress.String(),
-					ToAddress:   singlesigUnimportedAddress.String(),
-					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-				},
-			},
-			simulateUnsigned: true,
-			// single signature no extra bytes.
-			expectedGas: func(txBytes []byte) uint64 {
-				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
-			},
-		},
-		{
-			name:        "multisig_2_3_bank_send",
-			fromAddress: multisigAddress1,
-			msgs: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: multisigAddress1.String(),
-					ToAddress:   multisigAddress1.String(),
-					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-				},
-			},
-			// single signature no extra bytes.
-			expectedGas: func(txBytes []byte) uint64 {
-				return dgc.FixedGas + deterministicgas.BankSendPerCoinGas
-			},
-		},
-		{
-			name:        "multisig_6_7_bank_send",
-			fromAddress: multisigAddress2,
-			msgs: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: multisigAddress2.String(),
-					ToAddress:   multisigAddress2.String(),
-					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-				},
-			},
-			expectedGas: func(txBytes []byte) uint64 {
-				signatureCost := uint64(3790)
-				bytesCost := uint64(len(txBytes)) * authParams.Params.TxSizeCostPerByte
-				expectedGas := dgc.FixedGas + deterministicgas.BankSendPerCoinGas + bytesCost + signatureCost
-				return expectedGas
-			},
-		},
-		{
-			name:        "multisig_6_7_bank_send_unsigned",
-			fromAddress: multisigAddress2,
-			msgs: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: multisigAddress2.String(),
-					ToAddress:   multisigAddress2.String(),
-					Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
-				},
-			},
-			simulateUnsigned: true,
-			expectedGas: func(txBytes []byte) uint64 {
-				signatureCostDifference := uint64(1830)
-				bytesCost := uint64(len(txBytes)) * authParams.Params.TxSizeCostPerByte
-				expectedGas := dgc.FixedGas + deterministicgas.BankSendPerCoinGas + bytesCost - signatureCostDifference
-				return expectedGas
-			},
-		},
+	signerOptions := []string{"singlesig", "multisig_6_7"}
+	signOptions := []string{"with_signature", "without_signature"}
+	pubKeyOptions := []string{"with_pubkey", "without_pubkey"}
+	singModeOptions := []string{
+		flags.SignModeDirect,
+		flags.SignModeLegacyAminoJSON,
+		flags.SignModeDirectAux,
+		flags.SignModeTextual,
+		flags.SignModeEIP191,
 	}
-	for _, tt := range testsDeterm {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 
-			txBytes, err := client.BuildTxForSimulation(
-				ctx,
-				chain.ClientContext.WithFromAddress(tt.fromAddress).WithUnsignedSimulation(tt.simulateUnsigned),
-				chain.TxFactory(),
-				tt.msgs...,
-			)
-			require.NoError(t, err)
+	for _, signer := range signerOptions {
+		for _, sign := range signOptions {
+			for _, pubKey := range pubKeyOptions {
+				for _, signMode := range singModeOptions {
+					simulateUnsigned := sign == "without_signature"
+					var fromAddress sdk.AccAddress
+					switch signer {
+					case "singlesig":
+						fromAddress = singlesigUnimportedAddress
+						if pubKey == "with_pubkey" {
+							fromAddress = singlesigAddress
+						}
+					case "multisig_6_7":
+						fromAddress = multisigUnimportedAddress
+						if pubKey == "with_pubkey" {
+							fromAddress = multisigAddress
+						}
+					default:
+						continue
+					}
 
-			_, estimatedGas, err := client.CalculateGas(
-				ctx,
-				chain.ClientContext.WithFromAddress(tt.fromAddress).WithUnsignedSimulation(tt.simulateUnsigned),
-				chain.TxFactory(),
-				tt.msgs...,
-			)
-			require.NoError(t, err)
+					if pubKey == "without_pubkey" && sign == "with_signature" {
+						continue
+					}
+					msg := &banktypes.MsgSend{
+						FromAddress: fromAddress.String(),
+						ToAddress:   fromAddress.String(),
+						Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+					}
+					testName := fmt.Sprintf(
+						"%s_bank_send_%s_%s_%s",
+						signer, sign, pubKey, strings.ReplaceAll(signMode, "-", "_"),
+					)
 
-			require.Equal(t, int(tt.expectedGas(txBytes)), int(estimatedGas))
-		})
+					t.Run(testName, func(t *testing.T) {
+						t.Parallel()
+
+						clientCtx := chain.ClientContext.
+							WithFromAddress(fromAddress).
+							WithUnsignedSimulation(simulateUnsigned).
+							WithSignModeStr(signMode)
+
+						txBytes, err := client.BuildTxForSimulation(
+							ctx,
+							clientCtx,
+							chain.TxFactory(),
+							msg,
+						)
+						require.NoError(t, err)
+
+						signCost := uint64(0)
+
+						if signer == "multisig_6_7" && sign == "with_signature" {
+							bytesCost := uint64(len(txBytes)) * authParams.Params.TxSizeCostPerByte
+							signatureCost := uint64(3790)
+							signCost = bytesCost + signatureCost
+						}
+
+						expectedGas := dgc.FixedGas + deterministicgas.BankSendPerCoinGas + signCost
+
+						_, estimatedGas, err := client.CalculateGas(
+							ctx,
+							clientCtx,
+							chain.TxFactory(),
+							msg,
+						)
+						require.NoError(t, err)
+
+						require.Equal(t, int(expectedGas), int(estimatedGas))
+					})
+				}
+			}
+		}
 	}
 
 	// For non-deterministic messages we need to deploy a contract.
@@ -454,11 +422,11 @@ func TestGasEstimation(t *testing.T) {
 			},
 		},
 		{
-			name:        "multisig_2_3_wasm_execute_contract",
-			fromAddress: multisigAddress1,
+			name:        "multisig_6_7_wasm_execute_contract",
+			fromAddress: multisigAddress,
 			msgs: []sdk.Msg{
 				&wasmtypes.MsgExecuteContract{
-					Sender:   multisigAddress1.String(),
+					Sender:   multisigAddress.String(),
 					Contract: contractAddr,
 					Msg:      wasmtypes.RawContractMessage(wasmPayload),
 					Funds:    sdk.Coins{},
