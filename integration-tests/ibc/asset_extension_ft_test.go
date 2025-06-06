@@ -614,7 +614,7 @@ func TestExtensionIBCAssetFTTimedOutTransfer(t *testing.T) {
 		)
 		switch {
 		case err == nil:
-		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrTimeoutElapsed.Error()):
 			return retry.Retryable(err)
 		default:
 			requireT.NoError(err)
@@ -1338,7 +1338,7 @@ func TestExtensionIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		)
 		switch {
 		case err == nil:
-		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrTimeoutElapsed.Error()):
 			return retry.Retryable(err)
 		default:
 			requireT.NoError(err)
@@ -1653,7 +1653,7 @@ func TestExtensionIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T)
 		)
 		switch {
 		case err == nil:
-		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrTimeoutElapsed.Error()):
 			return retry.Retryable(err)
 		default:
 			requireT.NoError(err)
