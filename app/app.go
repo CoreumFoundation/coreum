@@ -738,9 +738,11 @@ func New(
 
 	// callbacks wraps the transfer stack as its base app, and uses PacketForwardKeeper as the ICS4Wrapper
 	// i.e. packet-forward-middleware is higher on the stack and sits between callbacks and the ibc channel keeper
-	// Since this is the lowest level middleware of the transfer stack, it should be the first entrypoint for transfer keeper's
-	// WriteAcknowledgement.
-	// cbStack := ibccallbacks.NewIBCMiddleware(ibcTransferStack, app.PacketForwardKeeper, wasmStackIBCHandler, maxCallbackGas)
+	// Since this is the lowest level middleware of the transfer stack, it should be the first entrypoint for
+	// transfer keeper's WriteAcknowledgement.
+	// cbStack := ibccallbacks.NewIBCMiddleware(
+	// 	ibcTransferStack, app.PacketForwardKeeper, wasmStackIBCHandler, maxCallbackGas,
+	// )
 
 	ibcTransferStack = packetforward.NewIBCMiddleware(
 		ibcTransferStack,
