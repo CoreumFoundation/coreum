@@ -15,12 +15,13 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibctmlightclienttypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibctmlightclienttypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -305,18 +306,16 @@ func (c ChainContext) GetLatestConsensusHeight(
 		return ibcclienttypes.Height{}, err
 	}
 
-	clientHeight, ok := clientState.GetLatestHeight().(ibcclienttypes.Height)
-	if !ok {
-		return ibcclienttypes.Height{},
-			sdkerrors.Wrapf(
-				cosmoserrors.ErrInvalidHeight,
-				"invalid height type. expected type: %T, got: %T",
-				ibcclienttypes.Height{},
-				clientHeight,
-			)
+	if clientState.ClientType() != exported.Tendermint {
+		return ibcclienttypes.Height{}, sdkerrors.Wrapf(
+			cosmoserrors.ErrInvalidType,
+			"invalid client statw type. expected type: %s, got: %s",
+			exported.Tendermint,
+			clientState.ClientType(),
+		)
 	}
 
-	return clientHeight, nil
+	return clientState.(*tendermint.ClientState).LatestHeight, nil
 }
 
 // AwaitForIBCClientAndConnectionIDs returns the clientID and channel for the peer chain.

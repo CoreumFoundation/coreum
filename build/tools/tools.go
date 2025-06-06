@@ -191,15 +191,16 @@ var Tools = []tools.Tool{
 	// https://github.com/informalsystems/hermes/releases
 	tools.BinaryTool{
 		Name:    Hermes,
-		Version: "v1.10.4",
+		Version: "v1.13.1",
 		Sources: tools.Sources{
 			tools.TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.4/hermes-v1.10.4-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:84e1bbee9b786b09702128039606ef3ee6bfe552c03c818cb290b6d893eeed9d",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.13.1/hermes-v1.13.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:effd6b5d698f9e3d78a4e064a407a44987ac941f3faa10411a34e72506b3aa28",
 			},
 			tools.TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.4/hermes-v1.10.4-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:b6403036be9c21d4636973749f8f5f116e52430bf3e88ef1c5e08be290c6f2a0",
+				// TODO: Change it when hermes CI/CD bug is fixed
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.13.1/hermes-v1.13.1-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:effd6b5d698f9e3d78a4e064a407a44987ac941f3faa10411a34e72506b3aa28",
 			},
 		},
 		Binaries: map[string]string{

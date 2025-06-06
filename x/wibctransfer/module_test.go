@@ -5,8 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/gogoproto/grpc"
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	"github.com/stretchr/testify/require"
 	googlegrpc "google.golang.org/grpc"
 )

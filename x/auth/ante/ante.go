@@ -14,8 +14,8 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	ibcante "github.com/cosmos/ibc-go/v8/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	authkeeper "github.com/CoreumFoundation/coreum/v6/x/auth/keeper"
 	"github.com/CoreumFoundation/coreum/v6/x/deterministicgas"
