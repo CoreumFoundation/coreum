@@ -20,8 +20,10 @@ import (
 	ibcinterchainaccountshosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcv2clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcv2channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	protobuf "github.com/golang/protobuf/proto" //nolint:staticcheck // We need this dependency to convert protos to be able to read their options
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -50,14 +52,19 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}):       {},
 		sdk.MsgTypeURL(&ibcclienttypes.MsgDeleteClientCreator{}): {},
 		//nolint:staticcheck // it is here so the list is complete.
-		sdk.MsgTypeURL(&ibcclienttypes.MsgSubmitMisbehaviour{}): {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgIBCSoftwareUpgrade{}): {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgRecoverClient{}):      {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateParams{}):       {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgSubmitMisbehaviour{}):     {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgIBCSoftwareUpgrade{}):     {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgRecoverClient{}):          {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateParams{}):           {},
+		sdk.MsgTypeURL(&ibcv2clienttypes.MsgRegisterCounterparty{}): {},
+		sdk.MsgTypeURL(&ibcv2clienttypes.MsgUpdateClientConfig{}):   {},
 
 		// protocol pool
 		sdk.MsgTypeURL(&protocolpoolv1.MsgCreateContinuousFund{}): {},
 		sdk.MsgTypeURL(&protocolpoolv1.MsgCancelContinuousFund{}): {},
+		sdk.MsgTypeURL(&protocolpoolv1.MsgCommunityPoolSpend{}):   {},
+		sdk.MsgTypeURL(&protocolpoolv1.MsgFundCommunityPool{}):    {},
+		sdk.MsgTypeURL(&protocolpoolv1.MsgUpdateParams{}):         {},
 
 		// ibc/apps/transfer
 		sdk.MsgTypeURL(&ibctransfertypes.MsgUpdateParams{}): {},
@@ -80,6 +87,10 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&ibcchanneltypes.MsgTimeout{}):             {},
 		sdk.MsgTypeURL(&ibcchanneltypes.MsgTimeoutOnClose{}):      {},
 		sdk.MsgTypeURL(&ibcchanneltypes.MsgAcknowledgement{}):     {},
+		sdk.MsgTypeURL(&ibcv2channeltypes.MsgSendPacket{}):        {},
+		sdk.MsgTypeURL(&ibcv2channeltypes.MsgRecvPacket{}):        {},
+		sdk.MsgTypeURL(&ibcv2channeltypes.MsgTimeout{}):           {},
+		sdk.MsgTypeURL(&ibcv2channeltypes.MsgAcknowledgement{}):   {},
 
 		// ibc/applications/interchain_accounts/controller
 		sdk.MsgTypeURL(&ibcinterchainaccountscontrollertypes.MsgRegisterInterchainAccount{}): {},
