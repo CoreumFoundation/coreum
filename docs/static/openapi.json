@@ -8072,6 +8072,38 @@
         ]
       }
     },
+    "/ibc/apps/transfer/v1/denoms/{denom}/total_escrow": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesTotalEscrowForDenom",
+        "parameters": [
+          {
+            "name": "denom",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryTotalEscrowForDenomResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "TotalEscrowForDenom returns the total amount of tokens in escrow based on the denom.",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/ibc/apps/transfer/v1/denoms/{hash}": {
       "get": {
         "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesDenom",
@@ -8123,38 +8155,6 @@
           }
         },
         "summary": "Params queries all parameters of the ibc-transfer module.",
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/ibc/apps/transfer/v1/total_escrow/{denom}": {
-      "get": {
-        "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesTotalEscrowForDenom",
-        "parameters": [
-          {
-            "name": "denom",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "pattern": ".+"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryTotalEscrowForDenomResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/google.rpc.Status"
-            }
-          }
-        },
-        "summary": "TotalEscrowForDenom returns the total amount of tokens in escrow based on the denom.",
         "tags": [
           "Query"
         ]
@@ -15008,7 +15008,7 @@
           "type": "string"
         }
       },
-      "title": "Hop defines a port ID, channel ID pair specifying a unique \"hop\" in a trace"
+      "description": "Hop defines a port ID, channel ID pair specifying where tokens must be forwarded\nnext in a multihop transfer."
     },
     "ibc.applications.transfer.v1.Params": {
       "type": "object",
