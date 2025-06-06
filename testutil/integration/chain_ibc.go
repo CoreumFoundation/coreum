@@ -21,7 +21,6 @@ import (
 	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibctmlightclienttypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -315,7 +314,7 @@ func (c ChainContext) GetLatestConsensusHeight(
 		)
 	}
 
-	return clientState.(*tendermint.ClientState).LatestHeight, nil
+	return clientState.(*ibctmlightclienttypes.ClientState).LatestHeight, nil
 }
 
 // AwaitForIBCClientAndConnectionIDs returns the clientID and channel for the peer chain.

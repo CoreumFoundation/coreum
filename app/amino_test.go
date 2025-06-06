@@ -7,6 +7,7 @@ import (
 
 	"cosmossdk.io/api/amino"
 	msgv1 "cosmossdk.io/api/cosmos/msg/v1"
+	protocolpoolv1 "cosmossdk.io/api/cosmos/protocolpool/v1"
 	"cosmossdk.io/x/feegrant"
 	"cosmossdk.io/x/nft"
 	sdktestdatatypes "github.com/cosmos/cosmos-sdk/testutil/testdata"
@@ -44,14 +45,18 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&govtypesv1.MsgCancelProposal{}): {},
 
 		// ibc/core/client
-		sdk.MsgTypeURL(&ibcclienttypes.MsgCreateClient{}):  {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateClient{}):  {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}): {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgCreateClient{}):        {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateClient{}):        {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}):       {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgDeleteClientCreator{}): {},
 		//nolint:staticcheck // it is here so the list is complete.
 		sdk.MsgTypeURL(&ibcclienttypes.MsgSubmitMisbehaviour{}): {},
 		sdk.MsgTypeURL(&ibcclienttypes.MsgIBCSoftwareUpgrade{}): {},
 		sdk.MsgTypeURL(&ibcclienttypes.MsgRecoverClient{}):      {},
 		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateParams{}):       {},
+
+		// protocol pool
+		sdk.MsgTypeURL(&protocolpoolv1.MsgCancelContinuousFund{}): {},
 
 		// ibc/apps/transfer
 		sdk.MsgTypeURL(&ibctransfertypes.MsgUpdateParams{}): {},
