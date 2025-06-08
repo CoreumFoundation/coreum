@@ -250,7 +250,6 @@ func initRootCmd(
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
-	//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 	crisis.AddModuleInitFlags(startCmd)
 	wasm.AddModuleInitFlags(startCmd)
 }
@@ -411,7 +410,7 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 				parentWriter: originalOutput,
 			}
 			clientCtx.Output = writer
-			cmd.SetOutput(writer) //nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
+			cmd.SetOut(writer)
 			if err := client.SetCmdClientContext(cmd, clientCtx); err != nil {
 				return errors.WithStack(err)
 			}

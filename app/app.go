@@ -242,9 +242,9 @@ type App struct {
 	MintKeeper     mintkeeper.Keeper
 	DistrKeeper    distrkeeper.Keeper
 	GovKeeper      govkeeper.Keeper
-	CrisisKeeper   *crisiskeeper.Keeper //nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
+	CrisisKeeper   *crisiskeeper.Keeper
 	UpgradeKeeper  *upgradekeeper.Keeper
-	ParamsKeeper   paramskeeper.Keeper //nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
+	ParamsKeeper   paramskeeper.Keeper
 	// IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	IBCKeeper              *ibckeeper.Keeper
 	PacketForwardKeeper    *packetforwardkeeper.Keeper
@@ -482,7 +482,6 @@ func New(
 	)
 
 	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
-	//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 	app.CrisisKeeper = crisiskeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[crisistypes.StoreKey]),
@@ -789,7 +788,7 @@ func New(
 	ibcRouter := ibcporttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, ibcTransferStack).
 		// TODO: I guess this needs CosmosSDK v0.53
-		// AddRoute(proposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
+		//AddRoute(proposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(wasmtypes.ModuleName, ibcWasmStack)
@@ -815,7 +814,6 @@ func New(
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
-	//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	assetFTModule := assetft.NewAppModule(
@@ -879,7 +877,7 @@ func New(
 		wstakingModule,
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		params.NewAppModule(app.ParamsKeeper), //nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
+		params.NewAppModule(app.ParamsKeeper),
 		wasm.NewAppModule(
 			appCodec,
 			&app.WasmKeeper,
@@ -906,7 +904,6 @@ func New(
 		// ibctm.NewAppModule(wasmLightClientModule),
 
 		// always be last to make sure that it checks for all invariants and not only part of them
-		//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 	)
 
@@ -1046,7 +1043,6 @@ func New(
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
 
-	//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 
 	app.configurator = module.NewConfigurator(
@@ -1400,14 +1396,11 @@ func (app *App) AutoCliOpts() autocli.AppOptions {
 }
 
 // initParamsKeeper init params keeper and its subspaces.
-//
-//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 func initParamsKeeper(
 	appCodec codec.BinaryCodec,
 	legacyAmino *codec.LegacyAmino,
 	key, tkey storetypes.StoreKey,
 ) paramskeeper.Keeper {
-	//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	// TODO(v6): Remove after ibc is migrated to the param management system.

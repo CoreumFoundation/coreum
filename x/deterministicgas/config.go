@@ -352,11 +352,8 @@ func DefaultConfig() Config {
 			&ibcv2clienttypes.MsgUpdateClientConfig{},
 
 			// protocol pool
-			&protocolpoolv1.MsgCreateContinuousFund{},
-			&protocolpoolv1.MsgCancelContinuousFund{},
 			&protocolpoolv1.MsgCommunityPoolSpend{},
 			&protocolpoolv1.MsgFundCommunityPool{},
-			&protocolpoolv1.MsgUpdateParams{},
 		},
 	)
 

@@ -238,11 +238,8 @@ and the formula for them is
 | `/cosmos.group.v1.MsgSubmitProposal`                                   |
 | `/cosmos.group.v1.MsgVote`                                             |
 | `/cosmos.mint.v1beta1.MsgUpdateParams`                                 |
-| `/cosmos.protocolpool.v1.MsgCancelContinuousFund`                      |
 | `/cosmos.protocolpool.v1.MsgCommunityPoolSpend`                        |
-| `/cosmos.protocolpool.v1.MsgCreateContinuousFund`                      |
 | `/cosmos.protocolpool.v1.MsgFundCommunityPool`                         |
-| `/cosmos.protocolpool.v1.MsgUpdateParams`                              |
 | `/cosmos.slashing.v1beta1.MsgUpdateParams`                             |
 | `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           |
 | `/cosmos.staking.v1beta1.MsgUpdateParams`                              |
