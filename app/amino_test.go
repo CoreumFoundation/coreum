@@ -7,7 +7,6 @@ import (
 
 	"cosmossdk.io/api/amino"
 	msgv1 "cosmossdk.io/api/cosmos/msg/v1"
-	protocolpoolv1 "cosmossdk.io/api/cosmos/protocolpool/v1"
 	"cosmossdk.io/x/feegrant"
 	"cosmossdk.io/x/nft"
 	sdktestdatatypes "github.com/cosmos/cosmos-sdk/testutil/testdata"
@@ -58,9 +57,6 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateParams{}):           {},
 		sdk.MsgTypeURL(&ibcv2clienttypes.MsgRegisterCounterparty{}): {},
 		sdk.MsgTypeURL(&ibcv2clienttypes.MsgUpdateClientConfig{}):   {},
-
-		// protocol pool
-		sdk.MsgTypeURL(&protocolpoolv1.MsgFundCommunityPool{}): {},
 
 		// ibc/apps/transfer
 		sdk.MsgTypeURL(&ibctransfertypes.MsgUpdateParams{}): {},
