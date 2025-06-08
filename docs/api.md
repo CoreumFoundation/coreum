@@ -553,19 +553,6 @@
     - [DecProto](#cosmos.base.v1beta1.DecProto)
     - [IntProto](#cosmos.base.v1beta1.IntProto)
   
-- [cosmos/benchmark/module/v1/module.proto](#cosmos/benchmark/module/v1/module.proto)
-    - [GeneratorParams](#cosmos.benchmark.module.v1.GeneratorParams)
-    - [Module](#cosmos.benchmark.module.v1.Module)
-  
-- [cosmos/benchmark/v1/benchmark.proto](#cosmos/benchmark/v1/benchmark.proto)
-    - [Op](#cosmos.benchmark.v1.Op)
-  
-- [cosmos/benchmark/v1/tx.proto](#cosmos/benchmark/v1/tx.proto)
-    - [MsgLoadTest](#cosmos.benchmark.v1.MsgLoadTest)
-    - [MsgLoadTestResponse](#cosmos.benchmark.v1.MsgLoadTestResponse)
-  
-    - [Msg](#cosmos.benchmark.v1.Msg)
-  
 - [cosmos/circuit/module/v1/module.proto](#cosmos/circuit/module/v1/module.proto)
     - [Module](#cosmos.circuit.module.v1.Module)
   
@@ -610,21 +597,6 @@
     - [MsgUpdateParamsResponse](#cosmos.consensus.v1.MsgUpdateParamsResponse)
   
     - [Msg](#cosmos.consensus.v1.Msg)
-  
-- [cosmos/counter/module/v1/module.proto](#cosmos/counter/module/v1/module.proto)
-    - [Module](#cosmos.counter.module.v1.Module)
-  
-- [cosmos/counter/v1/query.proto](#cosmos/counter/v1/query.proto)
-    - [QueryGetCountRequest](#cosmos.counter.v1.QueryGetCountRequest)
-    - [QueryGetCountResponse](#cosmos.counter.v1.QueryGetCountResponse)
-  
-    - [Query](#cosmos.counter.v1.Query)
-  
-- [cosmos/counter/v1/tx.proto](#cosmos/counter/v1/tx.proto)
-    - [MsgIncreaseCountResponse](#cosmos.counter.v1.MsgIncreaseCountResponse)
-    - [MsgIncreaseCounter](#cosmos.counter.v1.MsgIncreaseCounter)
-  
-    - [Msg](#cosmos.counter.v1.Msg)
   
 - [cosmos/crisis/module/v1/module.proto](#cosmos/crisis/module/v1/module.proto)
     - [Module](#cosmos.crisis.module.v1.Module)
@@ -737,25 +709,6 @@
     - [MsgWithdrawValidatorCommissionResponse](#cosmos.distribution.v1beta1.MsgWithdrawValidatorCommissionResponse)
   
     - [Msg](#cosmos.distribution.v1beta1.Msg)
-  
-- [cosmos/epochs/module/v1/module.proto](#cosmos/epochs/module/v1/module.proto)
-    - [Module](#cosmos.epochs.module.v1.Module)
-  
-- [cosmos/epochs/v1beta1/events.proto](#cosmos/epochs/v1beta1/events.proto)
-    - [EventEpochEnd](#cosmos.epochs.v1beta1.EventEpochEnd)
-    - [EventEpochStart](#cosmos.epochs.v1beta1.EventEpochStart)
-  
-- [cosmos/epochs/v1beta1/genesis.proto](#cosmos/epochs/v1beta1/genesis.proto)
-    - [EpochInfo](#cosmos.epochs.v1beta1.EpochInfo)
-    - [GenesisState](#cosmos.epochs.v1beta1.GenesisState)
-  
-- [cosmos/epochs/v1beta1/query.proto](#cosmos/epochs/v1beta1/query.proto)
-    - [QueryCurrentEpochRequest](#cosmos.epochs.v1beta1.QueryCurrentEpochRequest)
-    - [QueryCurrentEpochResponse](#cosmos.epochs.v1beta1.QueryCurrentEpochResponse)
-    - [QueryEpochInfosRequest](#cosmos.epochs.v1beta1.QueryEpochInfosRequest)
-    - [QueryEpochInfosResponse](#cosmos.epochs.v1beta1.QueryEpochInfosResponse)
-  
-    - [Query](#cosmos.epochs.v1beta1.Query)
   
 - [cosmos/evidence/module/v1/module.proto](#cosmos/evidence/module/v1/module.proto)
     - [Module](#cosmos.evidence.module.v1.Module)
@@ -1102,6 +1055,37 @@
   
     - [Msg](#cosmos.nft.v1beta1.Msg)
   
+- [cosmos/orm/module/v1alpha1/module.proto](#cosmos/orm/module/v1alpha1/module.proto)
+    - [Module](#cosmos.orm.module.v1alpha1.Module)
+  
+- [cosmos/orm/query/v1alpha1/query.proto](#cosmos/orm/query/v1alpha1/query.proto)
+    - [GetRequest](#cosmos.orm.query.v1alpha1.GetRequest)
+    - [GetResponse](#cosmos.orm.query.v1alpha1.GetResponse)
+    - [IndexValue](#cosmos.orm.query.v1alpha1.IndexValue)
+    - [ListRequest](#cosmos.orm.query.v1alpha1.ListRequest)
+    - [ListRequest.Prefix](#cosmos.orm.query.v1alpha1.ListRequest.Prefix)
+    - [ListRequest.Range](#cosmos.orm.query.v1alpha1.ListRequest.Range)
+    - [ListResponse](#cosmos.orm.query.v1alpha1.ListResponse)
+  
+    - [Query](#cosmos.orm.query.v1alpha1.Query)
+  
+- [cosmos/orm/v1/orm.proto](#cosmos/orm/v1/orm.proto)
+    - [PrimaryKeyDescriptor](#cosmos.orm.v1.PrimaryKeyDescriptor)
+    - [SecondaryIndexDescriptor](#cosmos.orm.v1.SecondaryIndexDescriptor)
+    - [SingletonDescriptor](#cosmos.orm.v1.SingletonDescriptor)
+    - [TableDescriptor](#cosmos.orm.v1.TableDescriptor)
+  
+    - [File-level Extensions](#cosmos/orm/v1/orm.proto-extensions)
+    - [File-level Extensions](#cosmos/orm/v1/orm.proto-extensions)
+  
+- [cosmos/orm/v1alpha1/schema.proto](#cosmos/orm/v1alpha1/schema.proto)
+    - [ModuleSchemaDescriptor](#cosmos.orm.v1alpha1.ModuleSchemaDescriptor)
+    - [ModuleSchemaDescriptor.FileEntry](#cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry)
+  
+    - [StorageType](#cosmos.orm.v1alpha1.StorageType)
+  
+    - [File-level Extensions](#cosmos/orm/v1alpha1/schema.proto-extensions)
+  
 - [cosmos/params/module/v1/module.proto](#cosmos/params/module/v1/module.proto)
     - [Module](#cosmos.params.module.v1.Module)
   
@@ -1117,42 +1101,6 @@
     - [Subspace](#cosmos.params.v1beta1.Subspace)
   
     - [Query](#cosmos.params.v1beta1.Query)
-  
-- [cosmos/protocolpool/module/v1/module.proto](#cosmos/protocolpool/module/v1/module.proto)
-    - [Module](#cosmos.protocolpool.module.v1.Module)
-  
-- [cosmos/protocolpool/v1/genesis.proto](#cosmos/protocolpool/v1/genesis.proto)
-    - [GenesisState](#cosmos.protocolpool.v1.GenesisState)
-  
-- [cosmos/protocolpool/v1/query.proto](#cosmos/protocolpool/v1/query.proto)
-    - [QueryCommunityPoolRequest](#cosmos.protocolpool.v1.QueryCommunityPoolRequest)
-    - [QueryCommunityPoolResponse](#cosmos.protocolpool.v1.QueryCommunityPoolResponse)
-    - [QueryContinuousFundRequest](#cosmos.protocolpool.v1.QueryContinuousFundRequest)
-    - [QueryContinuousFundResponse](#cosmos.protocolpool.v1.QueryContinuousFundResponse)
-    - [QueryContinuousFundsRequest](#cosmos.protocolpool.v1.QueryContinuousFundsRequest)
-    - [QueryContinuousFundsResponse](#cosmos.protocolpool.v1.QueryContinuousFundsResponse)
-    - [QueryParamsRequest](#cosmos.protocolpool.v1.QueryParamsRequest)
-    - [QueryParamsResponse](#cosmos.protocolpool.v1.QueryParamsResponse)
-  
-    - [Query](#cosmos.protocolpool.v1.Query)
-  
-- [cosmos/protocolpool/v1/tx.proto](#cosmos/protocolpool/v1/tx.proto)
-    - [MsgCancelContinuousFund](#cosmos.protocolpool.v1.MsgCancelContinuousFund)
-    - [MsgCancelContinuousFundResponse](#cosmos.protocolpool.v1.MsgCancelContinuousFundResponse)
-    - [MsgCommunityPoolSpend](#cosmos.protocolpool.v1.MsgCommunityPoolSpend)
-    - [MsgCommunityPoolSpendResponse](#cosmos.protocolpool.v1.MsgCommunityPoolSpendResponse)
-    - [MsgCreateContinuousFund](#cosmos.protocolpool.v1.MsgCreateContinuousFund)
-    - [MsgCreateContinuousFundResponse](#cosmos.protocolpool.v1.MsgCreateContinuousFundResponse)
-    - [MsgFundCommunityPool](#cosmos.protocolpool.v1.MsgFundCommunityPool)
-    - [MsgFundCommunityPoolResponse](#cosmos.protocolpool.v1.MsgFundCommunityPoolResponse)
-    - [MsgUpdateParams](#cosmos.protocolpool.v1.MsgUpdateParams)
-    - [MsgUpdateParamsResponse](#cosmos.protocolpool.v1.MsgUpdateParamsResponse)
-  
-    - [Msg](#cosmos.protocolpool.v1.Msg)
-  
-- [cosmos/protocolpool/v1/types.proto](#cosmos/protocolpool/v1/types.proto)
-    - [ContinuousFund](#cosmos.protocolpool.v1.ContinuousFund)
-    - [Params](#cosmos.protocolpool.v1.Params)
   
 - [cosmos/query/v1/query.proto](#cosmos/query/v1/query.proto)
     - [File-level Extensions](#cosmos/query/v1/query.proto-extensions)
@@ -5730,11 +5678,9 @@ Module is the config object for the runtime module.
 | `init_genesis` | [string](#string) | repeated |  `init_genesis specifies the module names of init genesis functions to call in the order in which they should be called. If this is left empty no init genesis function will be registered.`  |
 | `export_genesis` | [string](#string) | repeated |  `export_genesis specifies the order in which to export module genesis data. If this is left empty, the init_genesis order will be used for export genesis if it is specified.`  |
 | `override_store_keys` | [StoreKeyConfig](#cosmos.app.runtime.v1alpha1.StoreKeyConfig) | repeated |  `override_store_keys is an optional list of overrides for the module store keys to be used in keeper construction.`  |
-| `skip_store_keys` | [string](#string) | repeated |  `skip_store_keys is an optional list of store keys to skip when constructing the module's keeper. This is useful when a module does not have a store key. NOTE: the provided environment variable will have a fake store service.`  |
-| `order_migrations` | [string](#string) | repeated |  `order_migrations defines the order in which module migrations are performed. If this is left empty, it uses the default migration order. https://pkg.go.dev/github.com/cosmos/cosmos-sdk/types/module#DefaultMigrationsOrder`  |
+| `order_migrations` | [string](#string) | repeated |  `order_migrations defines the order in which module migrations are performed. If this is left empty, it uses the default migration order. https://pkg.go.dev/github.com/cosmos/cosmos-sdk@v0.47.0-alpha2/types/module#DefaultMigrationsOrder`  |
 | `precommiters` | [string](#string) | repeated |  `precommiters specifies the module names of the precommiters to call in the order in which they should be called. If this is left empty no precommit function will be registered.`  |
 | `prepare_check_staters` | [string](#string) | repeated |  `prepare_check_staters specifies the module names of the prepare_check_staters to call in the order in which they should be called. If this is left empty no preparecheckstate function will be registered.`  |
-| `pre_blockers` | [string](#string) | repeated |  `pre_blockers specifies the module names of pre blockers to call in the order in which they should be called. If this is left empty no pre blocker will be registered.`  |
 
 
 
@@ -5965,7 +5911,7 @@ QueryConfigRequest is the Query/Config request type.
 ### QueryConfigResponse
 
 ```
-QueryConfigResponse is the Query/Config response type.
+QueryConfigRequest is the Query/Config response type.
 ```
 
 
@@ -6024,7 +5970,6 @@ Module is the config object for the auth module.
 | `bech32_prefix` | [string](#string) |  |  `bech32_prefix is the bech32 account prefix for the app.`  |
 | `module_account_permissions` | [ModuleAccountPermission](#cosmos.auth.module.v1.ModuleAccountPermission) | repeated |  `module_account_permissions are module account permissions.`  |
 | `authority` | [string](#string) |  |  `authority defines the custom module authority. If not set, defaults to the governance module.`  |
-| `enable_unordered_transactions` | [bool](#bool) |  |  `enable_unordered_transactions determines whether unordered transactions should be supported or not. When true, unordered transactions will be validated and processed. When false, unordered transactions will be rejected.`  |
 
 
 
@@ -6118,6 +6063,8 @@ ModuleAccount defines an account for modules that holds coins on a pool.
 
 ```
 ModuleCredential represents a unclaimable pubkey for base accounts controlled by modules.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -6213,6 +6160,8 @@ GenesisState defines the auth module's genesis state.
 
 ```
 AddressBytesToStringRequest is the request type for AddressString rpc method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -6232,6 +6181,8 @@ AddressBytesToStringRequest is the request type for AddressString rpc method.
 
 ```
 AddressBytesToStringResponse is the response type for AddressString rpc method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -6251,6 +6202,8 @@ AddressBytesToStringResponse is the response type for AddressString rpc method.
 
 ```
 AddressStringToBytesRequest is the request type for AccountBytes rpc method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -6270,6 +6223,8 @@ AddressStringToBytesRequest is the request type for AccountBytes rpc method.
 
 ```
 AddressStringToBytesResponse is the response type for AddressBytes rpc method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -6289,6 +6244,8 @@ AddressStringToBytesResponse is the response type for AddressBytes rpc method.
 
 ```
 Bech32PrefixRequest is the request type for Bech32Prefix rpc method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -6303,6 +6260,8 @@ Bech32PrefixRequest is the request type for Bech32Prefix rpc method.
 
 ```
 Bech32PrefixResponse is the response type for Bech32Prefix rpc method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -6322,6 +6281,8 @@ Bech32PrefixResponse is the response type for Bech32Prefix rpc method.
 
 ```
 QueryAccountAddressByIDRequest is the request type for AccountAddressByID rpc method
+
+Since: cosmos-sdk 0.46.2
 ```
 
 
@@ -6329,7 +6290,7 @@ QueryAccountAddressByIDRequest is the request type for AccountAddressByID rpc me
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `id` | [int64](#int64) |  | **Deprecated.**  `Deprecated, use account_id instead  id is the account number of the address to be queried. This field should have been an uint64 (like all account numbers), and will be updated to uint64 in a future version of the auth query.`  |
-| `account_id` | [uint64](#uint64) |  |  `account_id is the account number of the address to be queried.`  |
+| `account_id` | [uint64](#uint64) |  |  `account_id is the account number of the address to be queried.  Since: cosmos-sdk 0.47`  |
 
 
 
@@ -6342,6 +6303,8 @@ QueryAccountAddressByIDRequest is the request type for AccountAddressByID rpc me
 
 ```
 QueryAccountAddressByIDResponse is the response type for AccountAddressByID rpc method
+
+Since: cosmos-sdk 0.46.2
 ```
 
 
@@ -6361,6 +6324,8 @@ QueryAccountAddressByIDResponse is the response type for AccountAddressByID rpc 
 
 ```
 QueryAccountInfoRequest is the Query/AccountInfo request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -6380,6 +6345,8 @@ QueryAccountInfoRequest is the Query/AccountInfo request type.
 
 ```
 QueryAccountInfoResponse is the Query/AccountInfo response type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -6437,6 +6404,8 @@ QueryAccountResponse is the response type for the Query/Account RPC method.
 
 ```
 QueryAccountsRequest is the request type for the Query/Accounts RPC method.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -6456,6 +6425,8 @@ QueryAccountsRequest is the request type for the Query/Accounts RPC method.
 
 ```
 QueryAccountsResponse is the response type for the Query/Accounts RPC method.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -6514,6 +6485,8 @@ QueryModuleAccountByNameResponse is the response type for the Query/ModuleAccoun
 
 ```
 QueryModuleAccountsRequest is the request type for the Query/ModuleAccounts RPC method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -6528,6 +6501,8 @@ QueryModuleAccountsRequest is the request type for the Query/ModuleAccounts RPC 
 
 ```
 QueryModuleAccountsResponse is the response type for the Query/ModuleAccounts RPC method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -6591,16 +6566,16 @@ Query defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Accounts` | [QueryAccountsRequest](#cosmos.auth.v1beta1.QueryAccountsRequest) | [QueryAccountsResponse](#cosmos.auth.v1beta1.QueryAccountsResponse) | `Accounts returns all the existing accounts.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.` | GET|/cosmos/auth/v1beta1/accounts |
+| `Accounts` | [QueryAccountsRequest](#cosmos.auth.v1beta1.QueryAccountsRequest) | [QueryAccountsResponse](#cosmos.auth.v1beta1.QueryAccountsResponse) | `Accounts returns all the existing accounts.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.  Since: cosmos-sdk 0.43` | GET|/cosmos/auth/v1beta1/accounts |
 | `Account` | [QueryAccountRequest](#cosmos.auth.v1beta1.QueryAccountRequest) | [QueryAccountResponse](#cosmos.auth.v1beta1.QueryAccountResponse) | `Account returns account details based on address.` | GET|/cosmos/auth/v1beta1/accounts/{address} |
-| `AccountAddressByID` | [QueryAccountAddressByIDRequest](#cosmos.auth.v1beta1.QueryAccountAddressByIDRequest) | [QueryAccountAddressByIDResponse](#cosmos.auth.v1beta1.QueryAccountAddressByIDResponse) | `AccountAddressByID returns account address based on account number.` | GET|/cosmos/auth/v1beta1/address_by_id/{id} |
+| `AccountAddressByID` | [QueryAccountAddressByIDRequest](#cosmos.auth.v1beta1.QueryAccountAddressByIDRequest) | [QueryAccountAddressByIDResponse](#cosmos.auth.v1beta1.QueryAccountAddressByIDResponse) | `AccountAddressByID returns account address based on account number.  Since: cosmos-sdk 0.46.2` | GET|/cosmos/auth/v1beta1/address_by_id/{id} |
 | `Params` | [QueryParamsRequest](#cosmos.auth.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#cosmos.auth.v1beta1.QueryParamsResponse) | `Params queries all parameters.` | GET|/cosmos/auth/v1beta1/params |
-| `ModuleAccounts` | [QueryModuleAccountsRequest](#cosmos.auth.v1beta1.QueryModuleAccountsRequest) | [QueryModuleAccountsResponse](#cosmos.auth.v1beta1.QueryModuleAccountsResponse) | `ModuleAccounts returns all the existing module accounts.` | GET|/cosmos/auth/v1beta1/module_accounts |
+| `ModuleAccounts` | [QueryModuleAccountsRequest](#cosmos.auth.v1beta1.QueryModuleAccountsRequest) | [QueryModuleAccountsResponse](#cosmos.auth.v1beta1.QueryModuleAccountsResponse) | `ModuleAccounts returns all the existing module accounts.  Since: cosmos-sdk 0.46` | GET|/cosmos/auth/v1beta1/module_accounts |
 | `ModuleAccountByName` | [QueryModuleAccountByNameRequest](#cosmos.auth.v1beta1.QueryModuleAccountByNameRequest) | [QueryModuleAccountByNameResponse](#cosmos.auth.v1beta1.QueryModuleAccountByNameResponse) | `ModuleAccountByName returns the module account info by module name` | GET|/cosmos/auth/v1beta1/module_accounts/{name} |
-| `Bech32Prefix` | [Bech32PrefixRequest](#cosmos.auth.v1beta1.Bech32PrefixRequest) | [Bech32PrefixResponse](#cosmos.auth.v1beta1.Bech32PrefixResponse) | `Bech32Prefix queries bech32Prefix` | GET|/cosmos/auth/v1beta1/bech32 |
-| `AddressBytesToString` | [AddressBytesToStringRequest](#cosmos.auth.v1beta1.AddressBytesToStringRequest) | [AddressBytesToStringResponse](#cosmos.auth.v1beta1.AddressBytesToStringResponse) | `AddressBytesToString converts Account Address bytes to string` | GET|/cosmos/auth/v1beta1/bech32/{address_bytes} |
-| `AddressStringToBytes` | [AddressStringToBytesRequest](#cosmos.auth.v1beta1.AddressStringToBytesRequest) | [AddressStringToBytesResponse](#cosmos.auth.v1beta1.AddressStringToBytesResponse) | `AddressStringToBytes converts Address string to bytes` | GET|/cosmos/auth/v1beta1/bech32/{address_string} |
-| `AccountInfo` | [QueryAccountInfoRequest](#cosmos.auth.v1beta1.QueryAccountInfoRequest) | [QueryAccountInfoResponse](#cosmos.auth.v1beta1.QueryAccountInfoResponse) | `AccountInfo queries account info which is common to all account types.` | GET|/cosmos/auth/v1beta1/account_info/{address} |
+| `Bech32Prefix` | [Bech32PrefixRequest](#cosmos.auth.v1beta1.Bech32PrefixRequest) | [Bech32PrefixResponse](#cosmos.auth.v1beta1.Bech32PrefixResponse) | `Bech32Prefix queries bech32Prefix  Since: cosmos-sdk 0.46` | GET|/cosmos/auth/v1beta1/bech32 |
+| `AddressBytesToString` | [AddressBytesToStringRequest](#cosmos.auth.v1beta1.AddressBytesToStringRequest) | [AddressBytesToStringResponse](#cosmos.auth.v1beta1.AddressBytesToStringResponse) | `AddressBytesToString converts Account Address bytes to string  Since: cosmos-sdk 0.46` | GET|/cosmos/auth/v1beta1/bech32/{address_bytes} |
+| `AddressStringToBytes` | [AddressStringToBytesRequest](#cosmos.auth.v1beta1.AddressStringToBytesRequest) | [AddressStringToBytesResponse](#cosmos.auth.v1beta1.AddressStringToBytesResponse) | `AddressStringToBytes converts Address string to bytes  Since: cosmos-sdk 0.46` | GET|/cosmos/auth/v1beta1/bech32/{address_string} |
+| `AccountInfo` | [QueryAccountInfoRequest](#cosmos.auth.v1beta1.QueryAccountInfoRequest) | [QueryAccountInfoResponse](#cosmos.auth.v1beta1.QueryAccountInfoResponse) | `AccountInfo queries account info which is common to all account types.  Since: cosmos-sdk 0.47` | GET|/cosmos/auth/v1beta1/account_info/{address} |
 
  <!-- end services -->
 
@@ -6619,6 +6594,8 @@ Query defines the gRPC querier service.
 
 ```
 MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -6640,6 +6617,8 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 ```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -6665,7 +6644,7 @@ Msg defines the x/auth Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.auth.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.auth.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a (governance) operation for updating the x/auth module parameters. The authority defaults to the x/gov module account.` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.auth.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.auth.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a (governance) operation for updating the x/auth module parameters. The authority defaults to the x/gov module account.  Since: cosmos-sdk 0.47` |  |
 
  <!-- end services -->
 
@@ -6705,6 +6684,10 @@ Module is the config object of the authz module.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/authz/v1beta1/authz.proto
+
+```
+Since: cosmos-sdk 0.43
+```
 
 
 
@@ -6805,6 +6788,10 @@ GrantQueueItem contains the list of TypeURL of a sdk.Msg.
 
 ## cosmos/authz/v1beta1/event.proto
 
+```
+Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.authz.v1beta1.EventGrant"></a>
@@ -6863,6 +6850,10 @@ EventRevoke is emitted on Msg/Revoke
 
 ## cosmos/authz/v1beta1/genesis.proto
 
+```
+Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.authz.v1beta1.GenesisState"></a>
@@ -6897,6 +6888,10 @@ GenesisState defines the authz module's genesis state.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/authz/v1beta1/query.proto
+
+```
+Since: cosmos-sdk 0.43
+```
 
 
 
@@ -7040,8 +7035,8 @@ Query defines the gRPC querier service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Grants` | [QueryGrantsRequest](#cosmos.authz.v1beta1.QueryGrantsRequest) | [QueryGrantsResponse](#cosmos.authz.v1beta1.QueryGrantsResponse) | `Returns list of Authorization, granted to the grantee by the granter.` | GET|/cosmos/authz/v1beta1/grants |
-| `GranterGrants` | [QueryGranterGrantsRequest](#cosmos.authz.v1beta1.QueryGranterGrantsRequest) | [QueryGranterGrantsResponse](#cosmos.authz.v1beta1.QueryGranterGrantsResponse) | `GranterGrants returns list of GrantAuthorization, granted by granter.` | GET|/cosmos/authz/v1beta1/grants/granter/{granter} |
-| `GranteeGrants` | [QueryGranteeGrantsRequest](#cosmos.authz.v1beta1.QueryGranteeGrantsRequest) | [QueryGranteeGrantsResponse](#cosmos.authz.v1beta1.QueryGranteeGrantsResponse) | `GranteeGrants returns a list of GrantAuthorization by grantee.` | GET|/cosmos/authz/v1beta1/grants/grantee/{grantee} |
+| `GranterGrants` | [QueryGranterGrantsRequest](#cosmos.authz.v1beta1.QueryGranterGrantsRequest) | [QueryGranterGrantsResponse](#cosmos.authz.v1beta1.QueryGranterGrantsResponse) | `GranterGrants returns list of GrantAuthorization, granted by granter.  Since: cosmos-sdk 0.46` | GET|/cosmos/authz/v1beta1/grants/granter/{granter} |
+| `GranteeGrants` | [QueryGranteeGrantsRequest](#cosmos.authz.v1beta1.QueryGranteeGrantsRequest) | [QueryGranteeGrantsResponse](#cosmos.authz.v1beta1.QueryGranteeGrantsResponse) | `GranteeGrants returns a list of GrantAuthorization by grantee.  Since: cosmos-sdk 0.46` | GET|/cosmos/authz/v1beta1/grants/grantee/{grantee} |
 
  <!-- end services -->
 
@@ -7051,6 +7046,10 @@ Query defines the gRPC querier service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/authz/v1beta1/tx.proto
+
+```
+Since: cosmos-sdk 0.43
+```
 
 
 
@@ -7260,8 +7259,7 @@ PositionalArgDescriptor describes a positional argument.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `proto_field` | [string](#string) |  |  `proto_field specifies the proto field to use as the positional arg. Any fields used as positional args will not have a flag generated.`  |
-| `varargs` | [bool](#bool) |  |  `varargs makes a positional parameter a varargs parameter. This can only be applied to last positional parameter and the proto_field must a repeated field. Note: It is mutually exclusive with optional.`  |
-| `optional` | [bool](#bool) |  |  `optional makes the last positional parameter optional. Note: It is mutually exclusive with varargs.`  |
+| `varargs` | [bool](#bool) |  |  `varargs makes a positional parameter a varargs parameter. This can only be applied to last positional parameter and the proto_field must a repeated field.`  |
 
 
 
@@ -7293,7 +7291,6 @@ rpc methods.
 | `flag_options` | [RpcCommandOptions.FlagOptionsEntry](#cosmos.autocli.v1.RpcCommandOptions.FlagOptionsEntry) | repeated |  `flag_options are options for flags generated from rpc request fields. By default all request fields are configured as flags. They can also be configured as positional args instead using positional_args.`  |
 | `positional_args` | [PositionalArgDescriptor](#cosmos.autocli.v1.PositionalArgDescriptor) | repeated |  `positional_args specifies positional arguments for the command.`  |
 | `skip` | [bool](#bool) |  |  `skip specifies whether to skip this rpc method when generating commands.`  |
-| `gov_proposal` | [bool](#bool) |  |  `gov_proposal specifies whether autocli should generate a gov proposal transaction for this rpc method. Normally autocli generates a transaction containing the message and broadcast it. However, when true, autocli generates a proposal transaction containing the message and broadcast it. This option is ineffective for query commands.`  |
 
 
 
@@ -7331,8 +7328,6 @@ ServiceCommandDescriptor describes a CLI command based on a protobuf service.
 | `service` | [string](#string) |  |  `service is the fully qualified name of the protobuf service to build the command from. It can be left empty if sub_commands are used instead which may be the case if a module provides multiple tx and/or query services.`  |
 | `rpc_command_options` | [RpcCommandOptions](#cosmos.autocli.v1.RpcCommandOptions) | repeated |  `rpc_command_options are options for commands generated from rpc methods. If no options are specified for a given rpc method on the service, a command will be generated for that method with the default options.`  |
 | `sub_commands` | [ServiceCommandDescriptor.SubCommandsEntry](#cosmos.autocli.v1.ServiceCommandDescriptor.SubCommandsEntry) | repeated |  `sub_commands is a map of optional sub-commands for this command based on different protobuf services. The map key is used as the name of the sub-command.`  |
-| `enhance_custom_command` | [bool](#bool) |  |  `enhance_custom_commands specifies whether to skip the service when generating commands, if a custom command already exists, or enhance the existing command. If set to true, the custom command will be enhanced with the services from gRPC. otherwise when a custom command exists, no commands will be generated for the service.`  |
-| `short` | [string](#string) |  |  `short is an optional parameter used to override the short description of the auto generated command.`  |
 
 
 
@@ -7495,6 +7490,8 @@ Module is the config object of the bank module.
 ```
 SendAuthorization allows the grantee to spend up to spend_limit coins from
 the granter's account.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -7502,7 +7499,7 @@ the granter's account.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `spend_limit` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |    |
-| `allow_list` | [string](#string) | repeated |  `allow_list specifies an optional list of addresses to whom the grantee can send tokens on behalf of the granter. If omitted, any recipient is allowed.`  |
+| `allow_list` | [string](#string) | repeated |  `allow_list specifies an optional list of addresses to whom the grantee can send tokens on behalf of the granter. If omitted, any recipient is allowed.  Since: cosmos-sdk 0.47`  |
 
 
 
@@ -7584,10 +7581,10 @@ a basic token.
 | `denom_units` | [DenomUnit](#cosmos.bank.v1beta1.DenomUnit) | repeated |  `denom_units represents the list of DenomUnit's for a given coin`  |
 | `base` | [string](#string) |  |  `base represents the base denom (should be the DenomUnit with exponent = 0).`  |
 | `display` | [string](#string) |  |  `display indicates the suggested denom that should be displayed in clients.`  |
-| `name` | [string](#string) |  |  `name defines the name of the token (eg: Cosmos Atom)`  |
-| `symbol` | [string](#string) |  |  `symbol is the token symbol usually shown on exchanges (eg: ATOM). This can be the same as the display.`  |
-| `uri` | [string](#string) |  |  `URI to a document (on or off-chain) that contains additional information. Optional.`  |
-| `uri_hash` | [string](#string) |  |  `URIHash is a sha256 hash of a document pointed by URI. It's used to verify that the document didn't change. Optional.`  |
+| `name` | [string](#string) |  |  `name defines the name of the token (eg: Cosmos Atom)  Since: cosmos-sdk 0.43`  |
+| `symbol` | [string](#string) |  |  `symbol is the token symbol usually shown on exchanges (eg: ATOM). This can be the same as the display.  Since: cosmos-sdk 0.43`  |
+| `uri` | [string](#string) |  |  `URI to a document (on or off-chain) that contains additional information. Optional.  Since: cosmos-sdk 0.46`  |
+| `uri_hash` | [string](#string) |  |  `URIHash is a sha256 hash of a document pointed by URI. It's used to verify that the document didn't change. Optional.  Since: cosmos-sdk 0.46`  |
 
 
 
@@ -7729,7 +7726,7 @@ GenesisState defines the bank module's genesis state.
 | `balances` | [Balance](#cosmos.bank.v1beta1.Balance) | repeated |  `balances is an array containing the balances of all the accounts.`  |
 | `supply` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `supply represents the total supply. If it is left empty, then supply will be calculated based on the provided balances. Otherwise, it will be used to validate that the sum of the balances equals this amount.`  |
 | `denom_metadata` | [Metadata](#cosmos.bank.v1beta1.Metadata) | repeated |  `denom_metadata defines the metadata of the different coins.`  |
-| `send_enabled` | [SendEnabled](#cosmos.bank.v1beta1.SendEnabled) | repeated |  `send_enabled defines the denoms where send is enabled or disabled.`  |
+| `send_enabled` | [SendEnabled](#cosmos.bank.v1beta1.SendEnabled) | repeated |  `send_enabled defines the denoms where send is enabled or disabled.  Since: cosmos-sdk 0.47`  |
 
 
 
@@ -7760,6 +7757,8 @@ GenesisState defines the bank module's genesis state.
 DenomOwner defines structure representing an account that owns or holds a
 particular denominated token. It contains the account address and account
 balance of the denominated token.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -7788,7 +7787,7 @@ QueryBalanceRequest is the request type for the Query/AllBalances RPC method.
 | ----- | ---- | ----- | ----------- |
 | `address` | [string](#string) |  |  `address is the address to query balances for.`  |
 | `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  |  `pagination defines an optional pagination for the request.`  |
-| `resolve_denom` | [bool](#bool) |  |  `resolve_denom is the flag to resolve the denom into a human-readable form from the metadata.`  |
+| `resolve_denom` | [bool](#bool) |  |  `resolve_denom is the flag to resolve the denom into a human-readable form from the metadata.  Since: cosmos-sdk 0.50`  |
 
 
 
@@ -7942,6 +7941,8 @@ method.
 QueryDenomOwnersByQueryRequest defines the request type for the DenomOwnersByQuery RPC query,
 which queries for a paginated set of all account holders of a particular
 denomination.
+
+Since: cosmos-sdk 0.50.3
 ```
 
 
@@ -7962,6 +7963,8 @@ denomination.
 
 ```
 QueryDenomOwnersByQueryResponse defines the RPC response of a DenomOwnersByQuery RPC query.
+
+Since: cosmos-sdk 0.50.3
 ```
 
 
@@ -8004,6 +8007,8 @@ denomination.
 
 ```
 QueryDenomOwnersResponse defines the RPC response of a DenomOwners RPC query.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -8097,6 +8102,8 @@ QueryParamsResponse defines the response type for querying x/bank parameters.
 
 ```
 QuerySendEnabledRequest defines the RPC request for looking up SendEnabled entries.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -8117,6 +8124,8 @@ QuerySendEnabledRequest defines the RPC request for looking up SendEnabled entri
 
 ```
 QuerySendEnabledResponse defines the RPC response of a SendEnable query.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -8138,6 +8147,8 @@ QuerySendEnabledResponse defines the RPC response of a SendEnable query.
 ```
 QuerySpendableBalanceByDenomRequest defines the gRPC request structure for
 querying an account's spendable balance for a specific denom.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -8159,6 +8170,8 @@ querying an account's spendable balance for a specific denom.
 ```
 QuerySpendableBalanceByDenomResponse defines the gRPC response structure for
 querying an account's spendable balance for a specific denom.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -8179,6 +8192,8 @@ querying an account's spendable balance for a specific denom.
 ```
 QuerySpendableBalancesRequest defines the gRPC request structure for querying
 an account's spendable balances.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -8200,6 +8215,8 @@ an account's spendable balances.
 ```
 QuerySpendableBalancesResponse defines the gRPC response structure for querying
 an account's spendable balances.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -8265,7 +8282,7 @@ method.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  |  `pagination defines an optional pagination for the request.`  |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  |  `pagination defines an optional pagination for the request.  Since: cosmos-sdk 0.43`  |
 
 
 
@@ -8286,7 +8303,7 @@ method
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `supply` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `supply is the supply of the coins`  |
-| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  |  `pagination defines the pagination in the response.`  |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  |  `pagination defines the pagination in the response.  Since: cosmos-sdk 0.43`  |
 
 
 
@@ -8312,17 +8329,17 @@ Query defines the gRPC querier service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Balance` | [QueryBalanceRequest](#cosmos.bank.v1beta1.QueryBalanceRequest) | [QueryBalanceResponse](#cosmos.bank.v1beta1.QueryBalanceResponse) | `Balance queries the balance of a single coin for a single account.` | GET|/cosmos/bank/v1beta1/balances/{address}/by_denom |
 | `AllBalances` | [QueryAllBalancesRequest](#cosmos.bank.v1beta1.QueryAllBalancesRequest) | [QueryAllBalancesResponse](#cosmos.bank.v1beta1.QueryAllBalancesResponse) | `AllBalances queries the balance of all coins for a single account.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.` | GET|/cosmos/bank/v1beta1/balances/{address} |
-| `SpendableBalances` | [QuerySpendableBalancesRequest](#cosmos.bank.v1beta1.QuerySpendableBalancesRequest) | [QuerySpendableBalancesResponse](#cosmos.bank.v1beta1.QuerySpendableBalancesResponse) | `SpendableBalances queries the spendable balance of all coins for a single account.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.` | GET|/cosmos/bank/v1beta1/spendable_balances/{address} |
-| `SpendableBalanceByDenom` | [QuerySpendableBalanceByDenomRequest](#cosmos.bank.v1beta1.QuerySpendableBalanceByDenomRequest) | [QuerySpendableBalanceByDenomResponse](#cosmos.bank.v1beta1.QuerySpendableBalanceByDenomResponse) | `SpendableBalanceByDenom queries the spendable balance of a single denom for a single account.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.` | GET|/cosmos/bank/v1beta1/spendable_balances/{address}/by_denom |
+| `SpendableBalances` | [QuerySpendableBalancesRequest](#cosmos.bank.v1beta1.QuerySpendableBalancesRequest) | [QuerySpendableBalancesResponse](#cosmos.bank.v1beta1.QuerySpendableBalancesResponse) | `SpendableBalances queries the spendable balance of all coins for a single account.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.  Since: cosmos-sdk 0.46` | GET|/cosmos/bank/v1beta1/spendable_balances/{address} |
+| `SpendableBalanceByDenom` | [QuerySpendableBalanceByDenomRequest](#cosmos.bank.v1beta1.QuerySpendableBalanceByDenomRequest) | [QuerySpendableBalanceByDenomResponse](#cosmos.bank.v1beta1.QuerySpendableBalanceByDenomResponse) | `SpendableBalanceByDenom queries the spendable balance of a single denom for a single account.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.  Since: cosmos-sdk 0.47` | GET|/cosmos/bank/v1beta1/spendable_balances/{address}/by_denom |
 | `TotalSupply` | [QueryTotalSupplyRequest](#cosmos.bank.v1beta1.QueryTotalSupplyRequest) | [QueryTotalSupplyResponse](#cosmos.bank.v1beta1.QueryTotalSupplyResponse) | `TotalSupply queries the total supply of all coins.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.` | GET|/cosmos/bank/v1beta1/supply |
 | `SupplyOf` | [QuerySupplyOfRequest](#cosmos.bank.v1beta1.QuerySupplyOfRequest) | [QuerySupplyOfResponse](#cosmos.bank.v1beta1.QuerySupplyOfResponse) | `SupplyOf queries the supply of a single coin.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.` | GET|/cosmos/bank/v1beta1/supply/by_denom |
 | `Params` | [QueryParamsRequest](#cosmos.bank.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#cosmos.bank.v1beta1.QueryParamsResponse) | `Params queries the parameters of x/bank module.` | GET|/cosmos/bank/v1beta1/params |
-| `DenomsMetadata` | [QueryDenomsMetadataRequest](#cosmos.bank.v1beta1.QueryDenomsMetadataRequest) | [QueryDenomsMetadataResponse](#cosmos.bank.v1beta1.QueryDenomsMetadataResponse) | `DenomsMetadata queries the client metadata for all registered coin denominations.` | GET|/cosmos/bank/v1beta1/denoms_metadata |
-| `DenomMetadata` | [QueryDenomMetadataRequest](#cosmos.bank.v1beta1.QueryDenomMetadataRequest) | [QueryDenomMetadataResponse](#cosmos.bank.v1beta1.QueryDenomMetadataResponse) | `DenomMetadata queries the client metadata of a given coin denomination.` | GET|/cosmos/bank/v1beta1/denoms_metadata/{denom=**} |
+| `DenomMetadata` | [QueryDenomMetadataRequest](#cosmos.bank.v1beta1.QueryDenomMetadataRequest) | [QueryDenomMetadataResponse](#cosmos.bank.v1beta1.QueryDenomMetadataResponse) | `DenomMetadata queries the client metadata of a given coin denomination.` | GET|/cosmos/bank/v1beta1/denoms_metadata/{denom} |
 | `DenomMetadataByQueryString` | [QueryDenomMetadataByQueryStringRequest](#cosmos.bank.v1beta1.QueryDenomMetadataByQueryStringRequest) | [QueryDenomMetadataByQueryStringResponse](#cosmos.bank.v1beta1.QueryDenomMetadataByQueryStringResponse) | `DenomMetadataByQueryString queries the client metadata of a given coin denomination.` | GET|/cosmos/bank/v1beta1/denoms_metadata_by_query_string |
-| `DenomOwners` | [QueryDenomOwnersRequest](#cosmos.bank.v1beta1.QueryDenomOwnersRequest) | [QueryDenomOwnersResponse](#cosmos.bank.v1beta1.QueryDenomOwnersResponse) | `DenomOwners queries for all account addresses that own a particular token denomination.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.` | GET|/cosmos/bank/v1beta1/denom_owners/{denom=**} |
-| `DenomOwnersByQuery` | [QueryDenomOwnersByQueryRequest](#cosmos.bank.v1beta1.QueryDenomOwnersByQueryRequest) | [QueryDenomOwnersByQueryResponse](#cosmos.bank.v1beta1.QueryDenomOwnersByQueryResponse) | `DenomOwnersByQuery queries for all account addresses that own a particular token denomination.` | GET|/cosmos/bank/v1beta1/denom_owners_by_query |
-| `SendEnabled` | [QuerySendEnabledRequest](#cosmos.bank.v1beta1.QuerySendEnabledRequest) | [QuerySendEnabledResponse](#cosmos.bank.v1beta1.QuerySendEnabledResponse) | `SendEnabled queries for SendEnabled entries.  This query only returns denominations that have specific SendEnabled settings. Any denomination that does not have a specific setting will use the default params.default_send_enabled, and will not be returned by this query.` | GET|/cosmos/bank/v1beta1/send_enabled |
+| `DenomsMetadata` | [QueryDenomsMetadataRequest](#cosmos.bank.v1beta1.QueryDenomsMetadataRequest) | [QueryDenomsMetadataResponse](#cosmos.bank.v1beta1.QueryDenomsMetadataResponse) | `DenomsMetadata queries the client metadata for all registered coin denominations.` | GET|/cosmos/bank/v1beta1/denoms_metadata |
+| `DenomOwners` | [QueryDenomOwnersRequest](#cosmos.bank.v1beta1.QueryDenomOwnersRequest) | [QueryDenomOwnersResponse](#cosmos.bank.v1beta1.QueryDenomOwnersResponse) | `DenomOwners queries for all account addresses that own a particular token denomination.  When called from another module, this query might consume a high amount of gas if the pagination field is incorrectly set.  Since: cosmos-sdk 0.46` | GET|/cosmos/bank/v1beta1/denom_owners/{denom} |
+| `DenomOwnersByQuery` | [QueryDenomOwnersByQueryRequest](#cosmos.bank.v1beta1.QueryDenomOwnersByQueryRequest) | [QueryDenomOwnersByQueryResponse](#cosmos.bank.v1beta1.QueryDenomOwnersByQueryResponse) | `DenomOwnersByQuery queries for all account addresses that own a particular token denomination.  Since: cosmos-sdk 0.50.3` | GET|/cosmos/bank/v1beta1/denom_owners_by_query |
+| `SendEnabled` | [QuerySendEnabledRequest](#cosmos.bank.v1beta1.QuerySendEnabledRequest) | [QuerySendEnabledResponse](#cosmos.bank.v1beta1.QuerySendEnabledResponse) | `SendEnabled queries for SendEnabled entries.  This query only returns denominations that have specific SendEnabled settings. Any denomination that does not have a specific setting will use the default params.default_send_enabled, and will not be returned by this query.  Since: cosmos-sdk 0.47` | GET|/cosmos/bank/v1beta1/send_enabled |
 
  <!-- end services -->
 
@@ -8414,6 +8431,8 @@ MsgSetSendEnabled is the Msg/SetSendEnabled request type.
 Only entries to add/update/delete need to be included.
 Existing SendEnabled entries that are not included in this
 message are left unchanged.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -8435,6 +8454,8 @@ message are left unchanged.
 
 ```
 MsgSetSendEnabledResponse defines the Msg/SetSendEnabled response type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -8449,6 +8470,8 @@ MsgSetSendEnabledResponse defines the Msg/SetSendEnabled response type.
 
 ```
 MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -8470,6 +8493,8 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 ```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -8497,8 +8522,8 @@ Msg defines the bank Msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Send` | [MsgSend](#cosmos.bank.v1beta1.MsgSend) | [MsgSendResponse](#cosmos.bank.v1beta1.MsgSendResponse) | `Send defines a method for sending coins from one account to another account.` |  |
 | `MultiSend` | [MsgMultiSend](#cosmos.bank.v1beta1.MsgMultiSend) | [MsgMultiSendResponse](#cosmos.bank.v1beta1.MsgMultiSendResponse) | `MultiSend defines a method for sending coins from some accounts to other accounts.` |  |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.bank.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.bank.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/bank module parameters. The authority is defined in the keeper.` |  |
-| `SetSendEnabled` | [MsgSetSendEnabled](#cosmos.bank.v1beta1.MsgSetSendEnabled) | [MsgSetSendEnabledResponse](#cosmos.bank.v1beta1.MsgSetSendEnabledResponse) | `SetSendEnabled is a governance operation for setting the SendEnabled flag on any number of Denoms. Only the entries to add or update should be included. Entries that already exist in the store, but that aren't included in this message, will be left unchanged.` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.bank.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.bank.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/bank module parameters. The authority is defined in the keeper.  Since: cosmos-sdk 0.47` |  |
+| `SetSendEnabled` | [MsgSetSendEnabled](#cosmos.bank.v1beta1.MsgSetSendEnabled) | [MsgSetSendEnabledResponse](#cosmos.bank.v1beta1.MsgSetSendEnabledResponse) | `SetSendEnabled is a governance operation for setting the SendEnabled flag on any number of Denoms. Only the entries to add or update should be included. Entries that already exist in the store, but that aren't included in this message, will be left unchanged.  Since: cosmos-sdk 0.47` |  |
 
  <!-- end services -->
 
@@ -8609,7 +8634,7 @@ Result is the union of ResponseFormat and ResponseCheckTx.
 | `data` | [bytes](#bytes) |  | **Deprecated.**  `Data is any data returned from message or handler execution. It MUST be length prefixed in order to separate data from multiple message executions. Deprecated. This field is still populated, but prefer msg_response instead because it also contains the Msg response typeURL.`  |
 | `log` | [string](#string) |  |  `Log contains the log information from message or handler execution.`  |
 | `events` | [tendermint.abci.Event](#tendermint.abci.Event) | repeated |  `Events contains a slice of Event objects that were emitted during message or handler execution.`  |
-| `msg_responses` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `msg_responses contains the Msg handler responses type packed in Anys.`  |
+| `msg_responses` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `msg_responses contains the Msg handler responses type packed in Anys.  Since: cosmos-sdk 0.46`  |
 
 
 
@@ -8720,7 +8745,7 @@ for each message.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `data` | [MsgData](#cosmos.base.abci.v1beta1.MsgData) | repeated | **Deprecated.**  `data field is deprecated and not populated.`  |
-| `msg_responses` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `msg_responses contains the Msg handler responses packed into Anys.`  |
+| `msg_responses` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `msg_responses contains the Msg handler responses packed into Anys.  Since: cosmos-sdk 0.46`  |
 
 
 
@@ -8752,7 +8777,7 @@ tags are stringified and the log is JSON decoded.
 | `gas_used` | [int64](#int64) |  |  `Amount of gas consumed by transaction.`  |
 | `tx` | [google.protobuf.Any](#google.protobuf.Any) |  |  `The request transaction bytes.`  |
 | `timestamp` | [string](#string) |  |  `Time of the previous block. For heights > 1, it's the weighted median of the timestamps of the valid votes in the block.LastCommit. For height == 1, it's genesis time.`  |
-| `events` | [tendermint.abci.Event](#tendermint.abci.Event) | repeated |  `Events defines all the events emitted by processing a transaction. Note, these events include those emitted by processing all the messages and those emitted from the ante. Whereas Logs contains the events, with additional metadata, emitted only by processing the messages.`  |
+| `events` | [tendermint.abci.Event](#tendermint.abci.Event) | repeated |  `Events defines all the events emitted by processing a transaction. Note, these events include those emitted by processing all the messages and those emitted from the ante. Whereas Logs contains the events, with additional metadata, emitted only by processing the messages.  Since: cosmos-sdk 0.42.11, 0.44.5, 0.45`  |
 
 
 
@@ -8901,7 +8926,7 @@ pagination. Ex:
 | `offset` | [uint64](#uint64) |  |  `offset is a numeric offset that can be used when key is unavailable. It is less efficient than using key. Only one of offset or key should be set.`  |
 | `limit` | [uint64](#uint64) |  |  `limit is the total number of results to be returned in the result page. If left empty it will default to a value to be set by each app.`  |
 | `count_total` | [bool](#bool) |  |  `count_total is set to true  to indicate that the result set should include a count of the total number of items available for pagination in UIs. count_total is only respected when offset is used. It is ignored when key is set.`  |
-| `reverse` | [bool](#bool) |  |  `reverse is set to true if results are to be returned in the descending order.`  |
+| `reverse` | [bool](#bool) |  |  `reverse is set to true if results are to be returned in the descending order.  Since: cosmos-sdk 0.43`  |
 
 
 
@@ -9051,6 +9076,10 @@ ReflectionService defines a service for interface reflection.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/base/reflection/v2alpha1/reflection.proto
+
+```
+Since: cosmos-sdk 0.43
+```
 
 
 
@@ -9660,7 +9689,7 @@ GetBlockByHeightResponse is the response type for the Query/GetBlockByHeight RPC
 | ----- | ---- | ----- | ----------- |
 | `block_id` | [tendermint.types.BlockID](#tendermint.types.BlockID) |  |    |
 | `block` | [tendermint.types.Block](#tendermint.types.Block) |  |  `Deprecated: please use sdk_block instead`  |
-| `sdk_block` | [Block](#cosmos.base.tendermint.v1beta1.Block) |  |    |
+| `sdk_block` | [Block](#cosmos.base.tendermint.v1beta1.Block) |  |  `Since: cosmos-sdk 0.47`  |
 
 
 
@@ -9695,7 +9724,7 @@ GetLatestBlockResponse is the response type for the Query/GetLatestBlock RPC met
 | ----- | ---- | ----- | ----------- |
 | `block_id` | [tendermint.types.BlockID](#tendermint.types.BlockID) |  |    |
 | `block` | [tendermint.types.Block](#tendermint.types.Block) |  |  `Deprecated: please use sdk_block instead`  |
-| `sdk_block` | [Block](#cosmos.base.tendermint.v1beta1.Block) |  |    |
+| `sdk_block` | [Block](#cosmos.base.tendermint.v1beta1.Block) |  |  `Since: cosmos-sdk 0.47`  |
 
 
 
@@ -9958,7 +9987,7 @@ VersionInfo is the type for the GetNodeInfoResponse message.
 | `build_tags` | [string](#string) |  |    |
 | `go_version` | [string](#string) |  |    |
 | `build_deps` | [Module](#cosmos.base.tendermint.v1beta1.Module) | repeated |    |
-| `cosmos_sdk_version` | [string](#string) |  |    |
+| `cosmos_sdk_version` | [string](#string) |  |  `Since: cosmos-sdk 0.43`  |
 
 
 
@@ -9988,7 +10017,7 @@ Service defines the gRPC querier service for tendermint queries.
 | `GetBlockByHeight` | [GetBlockByHeightRequest](#cosmos.base.tendermint.v1beta1.GetBlockByHeightRequest) | [GetBlockByHeightResponse](#cosmos.base.tendermint.v1beta1.GetBlockByHeightResponse) | `GetBlockByHeight queries block for given height.` | GET|/cosmos/base/tendermint/v1beta1/blocks/{height} |
 | `GetLatestValidatorSet` | [GetLatestValidatorSetRequest](#cosmos.base.tendermint.v1beta1.GetLatestValidatorSetRequest) | [GetLatestValidatorSetResponse](#cosmos.base.tendermint.v1beta1.GetLatestValidatorSetResponse) | `GetLatestValidatorSet queries latest validator-set.` | GET|/cosmos/base/tendermint/v1beta1/validatorsets/latest |
 | `GetValidatorSetByHeight` | [GetValidatorSetByHeightRequest](#cosmos.base.tendermint.v1beta1.GetValidatorSetByHeightRequest) | [GetValidatorSetByHeightResponse](#cosmos.base.tendermint.v1beta1.GetValidatorSetByHeightResponse) | `GetValidatorSetByHeight queries validator-set at a given height.` | GET|/cosmos/base/tendermint/v1beta1/validatorsets/{height} |
-| `ABCIQuery` | [ABCIQueryRequest](#cosmos.base.tendermint.v1beta1.ABCIQueryRequest) | [ABCIQueryResponse](#cosmos.base.tendermint.v1beta1.ABCIQueryResponse) | `ABCIQuery defines a query handler that supports ABCI queries directly to the application, bypassing Tendermint completely. The ABCI query must contain a valid and supported path, including app, custom, p2p, and store.` | GET|/cosmos/base/tendermint/v1beta1/abci_query |
+| `ABCIQuery` | [ABCIQueryRequest](#cosmos.base.tendermint.v1beta1.ABCIQueryRequest) | [ABCIQueryResponse](#cosmos.base.tendermint.v1beta1.ABCIQueryResponse) | `ABCIQuery defines a query handler that supports ABCI queries directly to the application, bypassing Tendermint completely. The ABCI query must contain a valid and supported path, including app, custom, p2p, and store.  Since: cosmos-sdk 0.46` | GET|/cosmos/base/tendermint/v1beta1/abci_query |
 
  <!-- end services -->
 
@@ -10162,181 +10191,6 @@ Deprecated: Prefer to use math.Int directly. It supports binary Marshal and Unma
  <!-- end enums -->
 
  <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/benchmark/module/v1/module.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/benchmark/module/v1/module.proto
-
-
-
-<a name="cosmos.benchmark.module.v1.GeneratorParams"></a>
-
-### GeneratorParams
-
-```
-GenesisParams defines the genesis parameters for the benchmark module.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `seed` | [uint64](#uint64) |  |  `seed is the seed for the random number generator.`  |
-| `bucket_count` | [uint64](#uint64) |  |  `bucket_count is the number of store keys to uniformly distribute genesis_count keys across.`  |
-| `key_mean` | [uint64](#uint64) |  |  `key_mean is the mean size (in normal distribution) of keys in each bucket.`  |
-| `key_std_dev` | [uint64](#uint64) |  |  `key_std_dev is the standard deviation of key sizes in each bucket.`  |
-| `value_mean` | [uint64](#uint64) |  |  `value_mean is the mean size (in normal distribution) of values in each bucket.`  |
-| `value_std_dev` | [uint64](#uint64) |  |  `value_std_dev is the standard deviation of value sizes in each bucket.`  |
-| `genesis_count` | [uint64](#uint64) |  |  `genesis_count is the number of keys to insert in the store, distributed across all buckets.`  |
-| `insert_weight` | [float](#float) |  |  `insert_weight is the weight of insert operations.`  |
-| `update_weight` | [float](#float) |  |  `update_weight is the weight of update operations.`  |
-| `get_weight` | [float](#float) |  |  `get_weight is the weight of get operations.`  |
-| `delete_weight` | [float](#float) |  |  `delete_weight is the weight of delete operations.`  |
-
-
-
-
-
-
-<a name="cosmos.benchmark.module.v1.Module"></a>
-
-### Module
-
-```
-Module is the config object of the benchmark module.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `genesis_params` | [GeneratorParams](#cosmos.benchmark.module.v1.GeneratorParams) |  |    |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/benchmark/v1/benchmark.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/benchmark/v1/benchmark.proto
-
-
-
-<a name="cosmos.benchmark.v1.Op"></a>
-
-### Op
-
-```
-Op is a message describing a benchmark operation.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `seed` | [uint64](#uint64) |  |    |
-| `actor` | [string](#string) |  |    |
-| `key_length` | [uint64](#uint64) |  |    |
-| `value_length` | [uint64](#uint64) |  |    |
-| `iterations` | [uint32](#uint32) |  |    |
-| `delete` | [bool](#bool) |  |    |
-| `exists` | [bool](#bool) |  |    |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/benchmark/v1/tx.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/benchmark/v1/tx.proto
-
-
-
-<a name="cosmos.benchmark.v1.MsgLoadTest"></a>
-
-### MsgLoadTest
-
-```
-MsgLoadTestOps defines a message containing a sequence of load test operations.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `caller` | [bytes](#bytes) |  |    |
-| `ops` | [Op](#cosmos.benchmark.v1.Op) | repeated |    |
-
-
-
-
-
-
-<a name="cosmos.benchmark.v1.MsgLoadTestResponse"></a>
-
-### MsgLoadTestResponse
-
-```
-MsgLoadTestResponse defines a message containing the results of a load test operation.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `total_time` | [uint64](#uint64) |  |    |
-| `total_errors` | [uint64](#uint64) |  |    |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="cosmos.benchmark.v1.Msg"></a>
-
-### Msg
-
-```
-Msg defines the benchmark Msg service.
-```
-
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `LoadTest` | [MsgLoadTest](#cosmos.benchmark.v1.MsgLoadTest) | [MsgLoadTestResponse](#cosmos.benchmark.v1.MsgLoadTestResponse) | `LoadTest defines a method for executing a sequence of load test operations.` |  |
 
  <!-- end services -->
 
@@ -10805,6 +10659,10 @@ Module is the config object of the consensus module.
 
 ## cosmos/consensus/v1/query.proto
 
+```
+Since: cosmos-sdk 0.47
+```
+
 
 
 <a name="cosmos.consensus.v1.QueryParamsRequest"></a>
@@ -10868,6 +10726,10 @@ Query defines the gRPC querier service.
 
 ## cosmos/consensus/v1/tx.proto
 
+```
+Since: cosmos-sdk 0.47
+```
+
 
 
 <a name="cosmos.consensus.v1.MsgUpdateParams"></a>
@@ -10886,7 +10748,7 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 | `block` | [tendermint.types.BlockParams](#tendermint.types.BlockParams) |  |  `params defines the x/consensus parameters to update. VersionsParams is not included in this Msg because it is tracked separarately in x/upgrade.  NOTE: All parameters must be supplied.`  |
 | `evidence` | [tendermint.types.EvidenceParams](#tendermint.types.EvidenceParams) |  |    |
 | `validator` | [tendermint.types.ValidatorParams](#tendermint.types.ValidatorParams) |  |    |
-| `abci` | [tendermint.types.ABCIParams](#tendermint.types.ABCIParams) |  |    |
+| `abci` | [tendermint.types.ABCIParams](#tendermint.types.ABCIParams) |  |  `Since: cosmos-sdk 0.50`  |
 
 
 
@@ -10925,174 +10787,7 @@ Msg defines the consensus Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.consensus.v1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.consensus.v1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/consensus module parameters. The authority is defined in the keeper.` |  |
-
- <!-- end services -->
-
-
-
-<a name="cosmos/counter/module/v1/module.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/counter/module/v1/module.proto
-
-
-
-<a name="cosmos.counter.module.v1.Module"></a>
-
-### Module
-
-```
-Module is the config object of the counter module.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  |  `authority defines the custom module authority. If not set, defaults to the governance module.`  |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/counter/v1/query.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/counter/v1/query.proto
-
-
-
-<a name="cosmos.counter.v1.QueryGetCountRequest"></a>
-
-### QueryGetCountRequest
-
-```
-QueryGetCountRequest defines the request type for querying x/mock count.
-```
-
-
-
-
-
-
-
-<a name="cosmos.counter.v1.QueryGetCountResponse"></a>
-
-### QueryGetCountResponse
-
-```
-QueryGetCountResponse defines the response type for querying x/mock count.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `total_count` | [int64](#int64) |  |    |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="cosmos.counter.v1.Query"></a>
-
-### Query
-
-```
-Query defines the gRPC querier service.
-```
-
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `GetCount` | [QueryGetCountRequest](#cosmos.counter.v1.QueryGetCountRequest) | [QueryGetCountResponse](#cosmos.counter.v1.QueryGetCountResponse) | `GetCount queries the parameters of x/Counter module.` |  |
-
- <!-- end services -->
-
-
-
-<a name="cosmos/counter/v1/tx.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/counter/v1/tx.proto
-
-
-
-<a name="cosmos.counter.v1.MsgIncreaseCountResponse"></a>
-
-### MsgIncreaseCountResponse
-
-```
-MsgIncreaseCountResponse is the Msg/Counter response type.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `new_count` | [int64](#int64) |  |  `new_count is the number of times the counter was incremented.`  |
-
-
-
-
-
-
-<a name="cosmos.counter.v1.MsgIncreaseCounter"></a>
-
-### MsgIncreaseCounter
-
-```
-MsgIncreaseCounter defines a count Msg service counter.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `signer` | [string](#string) |  |  `signer is the address that controls the module (defaults to x/gov unless overwritten).`  |
-| `count` | [int64](#int64) |  |  `count is the number of times to increment the counter.`  |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="cosmos.counter.v1.Msg"></a>
-
-### Msg
-
-```
-Msg defines the counter Msg service.
-```
-
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `IncreaseCount` | [MsgIncreaseCounter](#cosmos.counter.v1.MsgIncreaseCounter) | [MsgIncreaseCountResponse](#cosmos.counter.v1.MsgIncreaseCountResponse) | `IncreaseCount increments the counter by the specified amount.` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.consensus.v1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.consensus.v1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/consensus module parameters. The authority is defined in the keeper.  Since: cosmos-sdk 0.47` |  |
 
  <!-- end services -->
 
@@ -11182,6 +10877,8 @@ GenesisState defines the crisis module's genesis state.
 
 ```
 MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -11203,6 +10900,8 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 ```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -11264,7 +10963,7 @@ Msg defines the bank Msg service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `VerifyInvariant` | [MsgVerifyInvariant](#cosmos.crisis.v1beta1.MsgVerifyInvariant) | [MsgVerifyInvariantResponse](#cosmos.crisis.v1beta1.MsgVerifyInvariantResponse) | `VerifyInvariant defines a method to verify a particular invariant.` |  |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.crisis.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.crisis.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/crisis module parameters. The authority is defined in the keeper.` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.crisis.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.crisis.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/crisis module parameters. The authority is defined in the keeper.  Since: cosmos-sdk 0.47` |  |
 
  <!-- end services -->
 
@@ -11334,6 +11033,10 @@ then you must create a new proto message and follow ADR-28 for Address construct
 
 ## cosmos/crypto/hd/v1/hd.proto
 
+```
+Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.crypto.hd.v1.BIP44Params"></a>
@@ -11372,6 +11075,10 @@ BIP44Params is used as path field in ledger item in Record.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/crypto/keyring/v1/record.proto
+
+```
+Since: cosmos-sdk 0.46
+```
 
 
 
@@ -11635,6 +11342,10 @@ This prefix is followed with the x-coordinate.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/crypto/secp256r1/keys.proto
+
+```
+Since: cosmos-sdk 0.43
+```
 
 
 
@@ -12632,7 +12343,7 @@ Query defines the gRPC querier service for distribution module.
 | `DelegationTotalRewards` | [QueryDelegationTotalRewardsRequest](#cosmos.distribution.v1beta1.QueryDelegationTotalRewardsRequest) | [QueryDelegationTotalRewardsResponse](#cosmos.distribution.v1beta1.QueryDelegationTotalRewardsResponse) | `DelegationTotalRewards queries the total rewards accrued by each validator.` | GET|/cosmos/distribution/v1beta1/delegators/{delegator_address}/rewards |
 | `DelegatorValidators` | [QueryDelegatorValidatorsRequest](#cosmos.distribution.v1beta1.QueryDelegatorValidatorsRequest) | [QueryDelegatorValidatorsResponse](#cosmos.distribution.v1beta1.QueryDelegatorValidatorsResponse) | `DelegatorValidators queries the validators of a delegator.` | GET|/cosmos/distribution/v1beta1/delegators/{delegator_address}/validators |
 | `DelegatorWithdrawAddress` | [QueryDelegatorWithdrawAddressRequest](#cosmos.distribution.v1beta1.QueryDelegatorWithdrawAddressRequest) | [QueryDelegatorWithdrawAddressResponse](#cosmos.distribution.v1beta1.QueryDelegatorWithdrawAddressResponse) | `DelegatorWithdrawAddress queries withdraw address of a delegator.` | GET|/cosmos/distribution/v1beta1/delegators/{delegator_address}/withdraw_address |
-| `CommunityPool` | [QueryCommunityPoolRequest](#cosmos.distribution.v1beta1.QueryCommunityPoolRequest) | [QueryCommunityPoolResponse](#cosmos.distribution.v1beta1.QueryCommunityPoolResponse) | `CommunityPool queries the community pool coins.  WARNING: This query will fail if an external community pool is used.` | GET|/cosmos/distribution/v1beta1/community_pool |
+| `CommunityPool` | [QueryCommunityPoolRequest](#cosmos.distribution.v1beta1.QueryCommunityPoolRequest) | [QueryCommunityPoolResponse](#cosmos.distribution.v1beta1.QueryCommunityPoolResponse) | `CommunityPool queries the community pool coins.` | GET|/cosmos/distribution/v1beta1/community_pool |
 
  <!-- end services -->
 
@@ -12653,6 +12364,8 @@ Query defines the gRPC querier service for distribution module.
 MsgCommunityPoolSpend defines a message for sending tokens from the community
 pool to another account. This message is typically executed via a governance
 proposal with the governance module being the executing authority.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -12675,6 +12388,8 @@ proposal with the governance module being the executing authority.
 ```
 MsgCommunityPoolSpendResponse defines the response to executing a
 MsgCommunityPoolSpend message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -12690,6 +12405,8 @@ MsgCommunityPoolSpend message.
 ```
 DepositValidatorRewardsPool defines the request structure to provide
 additional rewards to delegators from a specific validator.
+
+Since: cosmos-sdk 0.50
 ```
 
 
@@ -12712,6 +12429,8 @@ additional rewards to delegators from a specific validator.
 ```
 MsgDepositValidatorRewardsPoolResponse defines the response to executing a
 MsgDepositValidatorRewardsPool message.
+
+Since: cosmos-sdk 0.50
 ```
 
 
@@ -12797,6 +12516,8 @@ type.
 
 ```
 MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -12818,6 +12539,8 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 ```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -12860,7 +12583,7 @@ response type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |    |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `Since: cosmos-sdk 0.46`  |
 
 
 
@@ -12900,7 +12623,7 @@ Msg/WithdrawValidatorCommission response type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |    |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `Since: cosmos-sdk 0.46`  |
 
 
 
@@ -12927,262 +12650,10 @@ Msg defines the distribution Msg service.
 | `SetWithdrawAddress` | [MsgSetWithdrawAddress](#cosmos.distribution.v1beta1.MsgSetWithdrawAddress) | [MsgSetWithdrawAddressResponse](#cosmos.distribution.v1beta1.MsgSetWithdrawAddressResponse) | `SetWithdrawAddress defines a method to change the withdraw address for a delegator (or validator self-delegation).` |  |
 | `WithdrawDelegatorReward` | [MsgWithdrawDelegatorReward](#cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward) | [MsgWithdrawDelegatorRewardResponse](#cosmos.distribution.v1beta1.MsgWithdrawDelegatorRewardResponse) | `WithdrawDelegatorReward defines a method to withdraw rewards of delegator from a single validator.` |  |
 | `WithdrawValidatorCommission` | [MsgWithdrawValidatorCommission](#cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission) | [MsgWithdrawValidatorCommissionResponse](#cosmos.distribution.v1beta1.MsgWithdrawValidatorCommissionResponse) | `WithdrawValidatorCommission defines a method to withdraw the full commission to the validator address.` |  |
-| `FundCommunityPool` | [MsgFundCommunityPool](#cosmos.distribution.v1beta1.MsgFundCommunityPool) | [MsgFundCommunityPoolResponse](#cosmos.distribution.v1beta1.MsgFundCommunityPoolResponse) | `FundCommunityPool defines a method to allow an account to directly fund the community pool.  WARNING: This method will fail if an external community pool is used.` |  |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.distribution.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.distribution.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/distribution module parameters. The authority is defined in the keeper.` |  |
-| `CommunityPoolSpend` | [MsgCommunityPoolSpend](#cosmos.distribution.v1beta1.MsgCommunityPoolSpend) | [MsgCommunityPoolSpendResponse](#cosmos.distribution.v1beta1.MsgCommunityPoolSpendResponse) | `CommunityPoolSpend defines a governance operation for sending tokens from the community pool in the x/distribution module to another account, which could be the governance module itself. The authority is defined in the keeper.  WARNING: This method will fail if an external community pool is used.` |  |
-| `DepositValidatorRewardsPool` | [MsgDepositValidatorRewardsPool](#cosmos.distribution.v1beta1.MsgDepositValidatorRewardsPool) | [MsgDepositValidatorRewardsPoolResponse](#cosmos.distribution.v1beta1.MsgDepositValidatorRewardsPoolResponse) | `DepositValidatorRewardsPool defines a method to provide additional rewards to delegators to a specific validator.` |  |
-
- <!-- end services -->
-
-
-
-<a name="cosmos/epochs/module/v1/module.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/epochs/module/v1/module.proto
-
-
-
-<a name="cosmos.epochs.module.v1.Module"></a>
-
-### Module
-
-```
-Module is the config object of the epochs module.
-```
-
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/epochs/v1beta1/events.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/epochs/v1beta1/events.proto
-
-
-
-<a name="cosmos.epochs.v1beta1.EventEpochEnd"></a>
-
-### EventEpochEnd
-
-```
-EventEpochEnd is an event emitted when an epoch end.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `epoch_number` | [int64](#int64) |  |    |
-
-
-
-
-
-
-<a name="cosmos.epochs.v1beta1.EventEpochStart"></a>
-
-### EventEpochStart
-
-```
-EventEpochStart is an event emitted when an epoch start.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `epoch_number` | [int64](#int64) |  |    |
-| `epoch_start_time` | [int64](#int64) |  |    |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/epochs/v1beta1/genesis.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/epochs/v1beta1/genesis.proto
-
-
-
-<a name="cosmos.epochs.v1beta1.EpochInfo"></a>
-
-### EpochInfo
-
-```
-EpochInfo is a struct that describes the data going into
-a timer defined by the x/epochs module.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `identifier` | [string](#string) |  |  `identifier is a unique reference to this particular timer.`  |
-| `start_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `start_time is the time at which the timer first ever ticks. If start_time is in the future, the epoch will not begin until the start time.`  |
-| `duration` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  `duration is the time in between epoch ticks. In order for intended behavior to be met, duration should be greater than the chains expected block time. Duration must be non-zero.`  |
-| `current_epoch` | [int64](#int64) |  |  `current_epoch is the current epoch number, or in other words, how many times has the timer 'ticked'. The first tick (current_epoch=1) is defined as the first block whose blocktime is greater than the EpochInfo start_time.`  |
-| `current_epoch_start_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `current_epoch_start_time describes the start time of the current timer interval. The interval is (current_epoch_start_time, current_epoch_start_time + duration] When the timer ticks, this is set to current_epoch_start_time = last_epoch_start_time + duration only one timer tick for a given identifier can occur per block.  NOTE! The current_epoch_start_time may diverge significantly from the wall-clock time the epoch began at. Wall-clock time of epoch start may be >> current_epoch_start_time. Suppose current_epoch_start_time = 10, duration = 5. Suppose the chain goes offline at t=14, and comes back online at t=30, and produces blocks at every successive time. (t=31, 32, etc.) * The t=30 block will start the epoch for (10, 15] * The t=31 block will start the epoch for (15, 20] * The t=32 block will start the epoch for (20, 25] * The t=33 block will start the epoch for (25, 30] * The t=34 block will start the epoch for (30, 35] * The **t=36** block will start the epoch for (35, 40]`  |
-| `epoch_counting_started` | [bool](#bool) |  |  `epoch_counting_started is a boolean, that indicates whether this epoch timer has began yet.`  |
-| `current_epoch_start_height` | [int64](#int64) |  |  `current_epoch_start_height is the block height at which the current epoch started. (The block height at which the timer last ticked)`  |
-
-
-
-
-
-
-<a name="cosmos.epochs.v1beta1.GenesisState"></a>
-
-### GenesisState
-
-```
-GenesisState defines the epochs module's genesis state.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `epochs` | [EpochInfo](#cosmos.epochs.v1beta1.EpochInfo) | repeated |    |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/epochs/v1beta1/query.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/epochs/v1beta1/query.proto
-
-
-
-<a name="cosmos.epochs.v1beta1.QueryCurrentEpochRequest"></a>
-
-### QueryCurrentEpochRequest
-
-```
-QueryCurrentEpochRequest defines the gRPC request structure for
-querying an epoch by its identifier.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `identifier` | [string](#string) |  |    |
-
-
-
-
-
-
-<a name="cosmos.epochs.v1beta1.QueryCurrentEpochResponse"></a>
-
-### QueryCurrentEpochResponse
-
-```
-QueryCurrentEpochResponse defines the gRPC response structure for
-querying an epoch by its identifier.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `current_epoch` | [int64](#int64) |  |    |
-
-
-
-
-
-
-<a name="cosmos.epochs.v1beta1.QueryEpochInfosRequest"></a>
-
-### QueryEpochInfosRequest
-
-```
-QueryEpochInfosRequest defines the gRPC request structure for
-querying all epoch info.
-```
-
-
-
-
-
-
-
-<a name="cosmos.epochs.v1beta1.QueryEpochInfosResponse"></a>
-
-### QueryEpochInfosResponse
-
-```
-QueryEpochInfosRequest defines the gRPC response structure for
-querying all epoch info.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `epochs` | [EpochInfo](#cosmos.epochs.v1beta1.EpochInfo) | repeated |    |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="cosmos.epochs.v1beta1.Query"></a>
-
-### Query
-
-```
-Query defines the gRPC querier service.
-```
-
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `EpochInfos` | [QueryEpochInfosRequest](#cosmos.epochs.v1beta1.QueryEpochInfosRequest) | [QueryEpochInfosResponse](#cosmos.epochs.v1beta1.QueryEpochInfosResponse) | `EpochInfos provide running epochInfos` | GET|/cosmos/epochs/v1beta1/epochs |
-| `CurrentEpoch` | [QueryCurrentEpochRequest](#cosmos.epochs.v1beta1.QueryCurrentEpochRequest) | [QueryCurrentEpochResponse](#cosmos.epochs.v1beta1.QueryCurrentEpochResponse) | `CurrentEpoch provide current epoch of specified identifier` | GET|/cosmos/epochs/v1beta1/current_epoch |
+| `FundCommunityPool` | [MsgFundCommunityPool](#cosmos.distribution.v1beta1.MsgFundCommunityPool) | [MsgFundCommunityPoolResponse](#cosmos.distribution.v1beta1.MsgFundCommunityPoolResponse) | `FundCommunityPool defines a method to allow an account to directly fund the community pool.` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.distribution.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.distribution.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/distribution module parameters. The authority is defined in the keeper.  Since: cosmos-sdk 0.47` |  |
+| `CommunityPoolSpend` | [MsgCommunityPoolSpend](#cosmos.distribution.v1beta1.MsgCommunityPoolSpend) | [MsgCommunityPoolSpendResponse](#cosmos.distribution.v1beta1.MsgCommunityPoolSpendResponse) | `CommunityPoolSpend defines a governance operation for sending tokens from the community pool in the x/distribution module to another account, which could be the governance module itself. The authority is defined in the keeper.  Since: cosmos-sdk 0.47` |  |
+| `DepositValidatorRewardsPool` | [MsgDepositValidatorRewardsPool](#cosmos.distribution.v1beta1.MsgDepositValidatorRewardsPool) | [MsgDepositValidatorRewardsPoolResponse](#cosmos.distribution.v1beta1.MsgDepositValidatorRewardsPoolResponse) | `DepositValidatorRewardsPool defines a method to provide additional rewards to delegators to a specific validator.  Since: cosmos-sdk 0.50` |  |
 
  <!-- end services -->
 
@@ -13353,7 +12824,7 @@ QueryEvidenceRequest is the request type for the Query/Evidence RPC method.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `evidence_hash` | [bytes](#bytes) |  | **Deprecated.**  `evidence_hash defines the hash of the requested evidence. Deprecated: Use hash, a HEX encoded string, instead.`  |
-| `hash` | [string](#string) |  |  `hash defines the evidence hash of the requested evidence.`  |
+| `hash` | [string](#string) |  |  `hash defines the evidence hash of the requested evidence.  Since: cosmos-sdk 0.47`  |
 
 
 
@@ -13508,6 +12979,10 @@ Module is the config object of the feegrant module.
 
 ## cosmos/feegrant/v1beta1/feegrant.proto
 
+```
+Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.feegrant.v1beta1.AllowedMsgAllowance"></a>
@@ -13610,6 +13085,10 @@ as well as a limit per time period.
 
 ## cosmos/feegrant/v1beta1/genesis.proto
 
+```
+Since: cosmos-sdk 0.43
+```
+
 
 
 <a name="cosmos.feegrant.v1beta1.GenesisState"></a>
@@ -13644,6 +13123,10 @@ GenesisState contains a set of fee allowances, persisted from the store
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/feegrant/v1beta1/query.proto
+
+```
+Since: cosmos-sdk 0.43
+```
 
 
 
@@ -13692,6 +13175,8 @@ QueryAllowanceResponse is the response type for the Query/Allowance RPC method.
 
 ```
 QueryAllowancesByGranterRequest is the request type for the Query/AllowancesByGranter RPC method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -13712,6 +13197,8 @@ QueryAllowancesByGranterRequest is the request type for the Query/AllowancesByGr
 
 ```
 QueryAllowancesByGranterResponse is the response type for the Query/AllowancesByGranter RPC method.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -13785,7 +13272,7 @@ Query defines the gRPC querier service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Allowance` | [QueryAllowanceRequest](#cosmos.feegrant.v1beta1.QueryAllowanceRequest) | [QueryAllowanceResponse](#cosmos.feegrant.v1beta1.QueryAllowanceResponse) | `Allowance returns granted allwance to the grantee by the granter.` | GET|/cosmos/feegrant/v1beta1/allowance/{granter}/{grantee} |
 | `Allowances` | [QueryAllowancesRequest](#cosmos.feegrant.v1beta1.QueryAllowancesRequest) | [QueryAllowancesResponse](#cosmos.feegrant.v1beta1.QueryAllowancesResponse) | `Allowances returns all the grants for the given grantee address.` | GET|/cosmos/feegrant/v1beta1/allowances/{grantee} |
-| `AllowancesByGranter` | [QueryAllowancesByGranterRequest](#cosmos.feegrant.v1beta1.QueryAllowancesByGranterRequest) | [QueryAllowancesByGranterResponse](#cosmos.feegrant.v1beta1.QueryAllowancesByGranterResponse) | `AllowancesByGranter returns all the grants given by an address` | GET|/cosmos/feegrant/v1beta1/issued/{granter} |
+| `AllowancesByGranter` | [QueryAllowancesByGranterRequest](#cosmos.feegrant.v1beta1.QueryAllowancesByGranterRequest) | [QueryAllowancesByGranterResponse](#cosmos.feegrant.v1beta1.QueryAllowancesByGranterResponse) | `AllowancesByGranter returns all the grants given by an address  Since: cosmos-sdk 0.46` | GET|/cosmos/feegrant/v1beta1/issued/{granter} |
 
  <!-- end services -->
 
@@ -13795,6 +13282,10 @@ Query defines the gRPC querier service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/feegrant/v1beta1/tx.proto
+
+```
+Since: cosmos-sdk 0.43
+```
 
 
 
@@ -13840,6 +13331,8 @@ MsgGrantAllowanceResponse defines the Msg/GrantAllowanceResponse response type.
 
 ```
 MsgPruneAllowances prunes expired fee allowances.
+
+Since cosmos-sdk 0.50
 ```
 
 
@@ -13859,6 +13352,8 @@ MsgPruneAllowances prunes expired fee allowances.
 
 ```
 MsgPruneAllowancesResponse defines the Msg/PruneAllowancesResponse response type.
+
+Since cosmos-sdk 0.50
 ```
 
 
@@ -13920,7 +13415,7 @@ Msg defines the feegrant msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `GrantAllowance` | [MsgGrantAllowance](#cosmos.feegrant.v1beta1.MsgGrantAllowance) | [MsgGrantAllowanceResponse](#cosmos.feegrant.v1beta1.MsgGrantAllowanceResponse) | `GrantAllowance grants fee allowance to the grantee on the granter's account with the provided expiration time.` |  |
 | `RevokeAllowance` | [MsgRevokeAllowance](#cosmos.feegrant.v1beta1.MsgRevokeAllowance) | [MsgRevokeAllowanceResponse](#cosmos.feegrant.v1beta1.MsgRevokeAllowanceResponse) | `RevokeAllowance revokes any fee allowance of granter's account that has been granted to the grantee.` |  |
-| `PruneAllowances` | [MsgPruneAllowances](#cosmos.feegrant.v1beta1.MsgPruneAllowances) | [MsgPruneAllowancesResponse](#cosmos.feegrant.v1beta1.MsgPruneAllowancesResponse) | `PruneAllowances prunes expired fee allowances, currently up to 75 at a time.` |  |
+| `PruneAllowances` | [MsgPruneAllowances](#cosmos.feegrant.v1beta1.MsgPruneAllowances) | [MsgPruneAllowancesResponse](#cosmos.feegrant.v1beta1.MsgPruneAllowancesResponse) | `PruneAllowances prunes expired fee allowances, currently up to 75 at a time.  Since cosmos-sdk 0.50` |  |
 
  <!-- end services -->
 
@@ -14032,6 +13527,10 @@ Module is the config object of the gov module.
 
 ## cosmos/gov/v1/genesis.proto
 
+```
+Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.gov.v1.GenesisState"></a>
@@ -14053,8 +13552,8 @@ GenesisState defines the gov module's genesis state.
 | `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. deposit_params defines all the paramaters of related to deposit.`  |
 | `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. voting_params defines all the paramaters of related to voting.`  |
 | `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. tally_params defines all the paramaters of related to tally.`  |
-| `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the paramaters of x/gov module.`  |
-| `constitution` | [string](#string) |  |  `The constitution allows builders to lay a foundation and define purpose. This is an immutable string set in genesis. There are no amendments, to go outside of scope, just fork. constitution is an immutable string in genesis for a chain builder to lay out their vision, ideas and ideals.`  |
+| `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the paramaters of x/gov module.  Since: cosmos-sdk 0.47`  |
+| `constitution` | [string](#string) |  |  `The constitution allows builders to lay a foundation and define purpose. This is an immutable string set in genesis. There are no amendments, to go outside of scope, just fork. constitution is an immutable string in genesis for a chain builder to lay out their vision, ideas and ideals.  Since: cosmos-sdk 0.50`  |
 
 
 
@@ -14074,6 +13573,10 @@ GenesisState defines the gov module's genesis state.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/gov/v1/gov.proto
+
+```
+Since: cosmos-sdk 0.46
+```
 
 
 
@@ -14125,6 +13628,8 @@ DepositParams defines the params for deposits on governance proposals.
 
 ```
 Params defines the parameters for the x/gov module.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -14138,15 +13643,15 @@ Params defines the parameters for the x/gov module.
 | `threshold` | [string](#string) |  |  `Minimum proportion of Yes votes for proposal to pass. Default value: 0.5.`  |
 | `veto_threshold` | [string](#string) |  |  `Minimum value of Veto votes to Total votes ratio for proposal to be  vetoed. Default value: 1/3.`  |
 | `min_initial_deposit_ratio` | [string](#string) |  |  `The ratio representing the proportion of the deposit value that must be paid at proposal submission.`  |
-| `proposal_cancel_ratio` | [string](#string) |  |  `The cancel ratio which will not be returned back to the depositors when a proposal is cancelled.`  |
-| `proposal_cancel_dest` | [string](#string) |  |  `The address which will receive (proposal_cancel_ratio * deposit) proposal deposits. If empty, the (proposal_cancel_ratio * deposit) proposal deposits will be burned.`  |
-| `expedited_voting_period` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  `Duration of the voting period of an expedited proposal.`  |
-| `expedited_threshold` | [string](#string) |  |  `Minimum proportion of Yes votes for proposal to pass. Default value: 0.67.`  |
+| `proposal_cancel_ratio` | [string](#string) |  |  `The cancel ratio which will not be returned back to the depositors when a proposal is cancelled.  Since: cosmos-sdk 0.50`  |
+| `proposal_cancel_dest` | [string](#string) |  |  `The address which will receive (proposal_cancel_ratio * deposit) proposal deposits. If empty, the (proposal_cancel_ratio * deposit) proposal deposits will be burned.  Since: cosmos-sdk 0.50`  |
+| `expedited_voting_period` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  `Duration of the voting period of an expedited proposal.  Since: cosmos-sdk 0.50`  |
+| `expedited_threshold` | [string](#string) |  |  `Minimum proportion of Yes votes for proposal to pass. Default value: 0.67.  Since: cosmos-sdk 0.50`  |
 | `expedited_min_deposit` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `Minimum expedited deposit for a proposal to enter voting period.`  |
 | `burn_vote_quorum` | [bool](#bool) |  |  `burn deposits if a proposal does not meet quorum`  |
 | `burn_proposal_deposit_prevote` | [bool](#bool) |  |  `burn deposits if the proposal does not enter voting period`  |
 | `burn_vote_veto` | [bool](#bool) |  |  `burn deposits if quorum with vote type no_veto is met`  |
-| `min_deposit_ratio` | [string](#string) |  |  `The ratio representing the proportion of the deposit value minimum that must be met when making a deposit. Default value: 0.01. Meaning that for a chain with a min_deposit of 100stake, a deposit of 1stake would be required.`  |
+| `min_deposit_ratio` | [string](#string) |  |  `The ratio representing the proportion of the deposit value minimum that must be met when making a deposit. Default value: 0.01. Meaning that for a chain with a min_deposit of 100stake, a deposit of 1stake would be required.  Since: cosmos-sdk 0.50`  |
 
 
 
@@ -14175,11 +13680,11 @@ Proposal defines the core field members of a governance proposal.
 | `voting_start_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `voting_start_time is the starting time to vote on a proposal.`  |
 | `voting_end_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `voting_end_time is the end time of voting on a proposal.`  |
 | `metadata` | [string](#string) |  |  `metadata is any arbitrary metadata attached to the proposal. the recommended format of the metadata is to be found here: https://docs.cosmos.network/v0.47/modules/gov#proposal-3`  |
-| `title` | [string](#string) |  |  `title is the title of the proposal`  |
-| `summary` | [string](#string) |  |  `summary is a short summary of the proposal`  |
-| `proposer` | [string](#string) |  |  `proposer is the address of the proposal sumbitter`  |
-| `expedited` | [bool](#bool) |  |  `expedited defines if the proposal is expedited`  |
-| `failed_reason` | [string](#string) |  |  `failed_reason defines the reason why the proposal failed`  |
+| `title` | [string](#string) |  |  `title is the title of the proposal  Since: cosmos-sdk 0.47`  |
+| `summary` | [string](#string) |  |  `summary is a short summary of the proposal  Since: cosmos-sdk 0.47`  |
+| `proposer` | [string](#string) |  |  `proposer is the address of the proposal sumbitter  Since: cosmos-sdk 0.47`  |
+| `expedited` | [bool](#bool) |  |  `expedited defines if the proposal is expedited  Since: cosmos-sdk 0.50`  |
+| `failed_reason` | [string](#string) |  |  `failed_reason defines the reason why the proposal failed  Since: cosmos-sdk 0.50`  |
 
 
 
@@ -14346,6 +13851,10 @@ VoteOption enumerates the valid vote options for a given governance proposal.
 
 ## cosmos/gov/v1/query.proto
 
+```
+Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.gov.v1.QueryConstitutionRequest"></a>
@@ -14494,7 +14003,7 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 | `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. voting_params defines the parameters related to voting.`  |
 | `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. deposit_params defines the parameters related to deposit.`  |
 | `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. tally_params defines the parameters related to tally.`  |
-| `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the paramaters of x/gov module.`  |
+| `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the paramaters of x/gov module.  Since: cosmos-sdk 0.47`  |
 
 
 
@@ -14735,6 +14244,10 @@ Query defines the gRPC querier service for gov module
 
 ## cosmos/gov/v1/tx.proto
 
+```
+Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.gov.v1.MsgCancelProposal"></a>
@@ -14743,6 +14256,8 @@ Query defines the gRPC querier service for gov module
 
 ```
 MsgCancelProposal is the Msg/CancelProposal request type.
+
+Since: cosmos-sdk 0.50
 ```
 
 
@@ -14764,6 +14279,8 @@ MsgCancelProposal is the Msg/CancelProposal request type.
 ```
 MsgCancelProposalResponse defines the response structure for executing a
 MsgCancelProposal message.
+
+Since: cosmos-sdk 0.50
 ```
 
 
@@ -14866,9 +14383,9 @@ proposal Content.
 | `initial_deposit` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `initial_deposit is the deposit value that must be paid at proposal submission.`  |
 | `proposer` | [string](#string) |  |  `proposer is the account address of the proposer.`  |
 | `metadata` | [string](#string) |  |  `metadata is any arbitrary metadata attached to the proposal.`  |
-| `title` | [string](#string) |  |  `title is the title of the proposal.`  |
-| `summary` | [string](#string) |  |  `summary is the summary of the proposal`  |
-| `expedited` | [bool](#bool) |  |  `expedited defines if the proposal is expedited or not`  |
+| `title` | [string](#string) |  |  `title is the title of the proposal.  Since: cosmos-sdk 0.47`  |
+| `summary` | [string](#string) |  |  `summary is the summary of the proposal  Since: cosmos-sdk 0.47`  |
+| `expedited` | [bool](#bool) |  |  `expedited defines if the proposal is expedited or not  Since: cosmos-sdk 0.50`  |
 
 
 
@@ -14900,6 +14417,8 @@ MsgSubmitProposalResponse defines the Msg/SubmitProposal response type.
 
 ```
 MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -14921,6 +14440,8 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 ```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -15023,8 +14544,8 @@ Msg defines the gov Msg service.
 | `Vote` | [MsgVote](#cosmos.gov.v1.MsgVote) | [MsgVoteResponse](#cosmos.gov.v1.MsgVoteResponse) | `Vote defines a method to add a vote on a specific proposal.` |  |
 | `VoteWeighted` | [MsgVoteWeighted](#cosmos.gov.v1.MsgVoteWeighted) | [MsgVoteWeightedResponse](#cosmos.gov.v1.MsgVoteWeightedResponse) | `VoteWeighted defines a method to add a weighted vote on a specific proposal.` |  |
 | `Deposit` | [MsgDeposit](#cosmos.gov.v1.MsgDeposit) | [MsgDepositResponse](#cosmos.gov.v1.MsgDepositResponse) | `Deposit defines a method to add deposit on a specific proposal.` |  |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.gov.v1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.gov.v1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/gov module parameters. The authority is defined in the keeper.` |  |
-| `CancelProposal` | [MsgCancelProposal](#cosmos.gov.v1.MsgCancelProposal) | [MsgCancelProposalResponse](#cosmos.gov.v1.MsgCancelProposalResponse) | `CancelProposal defines a method to cancel governance proposal` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.gov.v1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.gov.v1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/gov module parameters. The authority is defined in the keeper.  Since: cosmos-sdk 0.47` |  |
+| `CancelProposal` | [MsgCancelProposal](#cosmos.gov.v1.MsgCancelProposal) | [MsgCancelProposalResponse](#cosmos.gov.v1.MsgCancelProposalResponse) | `CancelProposal defines a method to cancel governance proposal  Since: cosmos-sdk 0.50` |  |
 
  <!-- end services -->
 
@@ -15227,7 +14748,7 @@ A Vote consists of a proposal ID, the voter, and the vote option.
 | `proposal_id` | [uint64](#uint64) |  |  `proposal_id defines the unique id of the proposal.`  |
 | `voter` | [string](#string) |  |  `voter is the voter address of the proposal.`  |
 | `option` | [VoteOption](#cosmos.gov.v1beta1.VoteOption) |  | **Deprecated.**  `Deprecated: Prefer to use options instead. This field is set in queries if and only if len(options) == 1 and that option has weight 1. In all other cases, this field will default to VOTE_OPTION_UNSPECIFIED.`  |
-| `options` | [WeightedVoteOption](#cosmos.gov.v1beta1.WeightedVoteOption) | repeated |  `options is the weighted vote options.`  |
+| `options` | [WeightedVoteOption](#cosmos.gov.v1beta1.WeightedVoteOption) | repeated |  `options is the weighted vote options.  Since: cosmos-sdk 0.43`  |
 
 
 
@@ -15259,6 +14780,8 @@ VotingParams defines the params for voting on governance proposals.
 
 ```
 WeightedVoteOption defines a unit of vote for vote split.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -15801,6 +15324,8 @@ MsgVoteResponse defines the Msg/Vote response type.
 
 ```
 MsgVoteWeighted defines a message to cast a vote.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -15822,6 +15347,8 @@ MsgVoteWeighted defines a message to cast a vote.
 
 ```
 MsgVoteWeightedResponse defines the Msg/VoteWeighted response type.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -15849,7 +15376,7 @@ Msg defines the gov Msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `SubmitProposal` | [MsgSubmitProposal](#cosmos.gov.v1beta1.MsgSubmitProposal) | [MsgSubmitProposalResponse](#cosmos.gov.v1beta1.MsgSubmitProposalResponse) | `SubmitProposal defines a method to create new proposal given a content.` |  |
 | `Vote` | [MsgVote](#cosmos.gov.v1beta1.MsgVote) | [MsgVoteResponse](#cosmos.gov.v1beta1.MsgVoteResponse) | `Vote defines a method to add a vote on a specific proposal.` |  |
-| `VoteWeighted` | [MsgVoteWeighted](#cosmos.gov.v1beta1.MsgVoteWeighted) | [MsgVoteWeightedResponse](#cosmos.gov.v1beta1.MsgVoteWeightedResponse) | `VoteWeighted defines a method to add a weighted vote on a specific proposal.` |  |
+| `VoteWeighted` | [MsgVoteWeighted](#cosmos.gov.v1beta1.MsgVoteWeighted) | [MsgVoteWeightedResponse](#cosmos.gov.v1beta1.MsgVoteWeightedResponse) | `VoteWeighted defines a method to add a weighted vote on a specific proposal.  Since: cosmos-sdk 0.43` |  |
 | `Deposit` | [MsgDeposit](#cosmos.gov.v1beta1.MsgDeposit) | [MsgDepositResponse](#cosmos.gov.v1beta1.MsgDepositResponse) | `Deposit defines a method to add deposit on a specific proposal.` |  |
 
  <!-- end services -->
@@ -15896,6 +15423,10 @@ Module is the config object of the group module.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/group/v1/events.proto
+
+```
+Since: cosmos-sdk 0.46
+```
 
 
 
@@ -16128,6 +15659,10 @@ EventWithdrawProposal is an event emitted when a proposal is withdrawn.
 
 ## cosmos/group/v1/genesis.proto
 
+```
+Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.group.v1.GenesisState"></a>
@@ -16169,6 +15704,10 @@ GenesisState defines the group module's genesis state.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/group/v1/query.proto
+
+```
+Since: cosmos-sdk 0.46
+```
 
 
 
@@ -16454,6 +15993,8 @@ QueryGroupsByMemberResponse is the Query/GroupsByMember response type.
 
 ```
 QueryGroupsRequest is the Query/Groups request type.
+
+Since: cosmos-sdk 0.47.1
 ```
 
 
@@ -16473,6 +16014,8 @@ QueryGroupsRequest is the Query/Groups request type.
 
 ```
 QueryGroupsResponse is the Query/Groups response type.
+
+Since: cosmos-sdk 0.47.1
 ```
 
 
@@ -16752,7 +16295,7 @@ Query is the cosmos.group.v1 Query service.
 | `VotesByVoter` | [QueryVotesByVoterRequest](#cosmos.group.v1.QueryVotesByVoterRequest) | [QueryVotesByVoterResponse](#cosmos.group.v1.QueryVotesByVoterResponse) | `VotesByVoter queries a vote by voter.` | GET|/cosmos/group/v1/votes_by_voter/{voter} |
 | `GroupsByMember` | [QueryGroupsByMemberRequest](#cosmos.group.v1.QueryGroupsByMemberRequest) | [QueryGroupsByMemberResponse](#cosmos.group.v1.QueryGroupsByMemberResponse) | `GroupsByMember queries groups by member address.` | GET|/cosmos/group/v1/groups_by_member/{address} |
 | `TallyResult` | [QueryTallyResultRequest](#cosmos.group.v1.QueryTallyResultRequest) | [QueryTallyResultResponse](#cosmos.group.v1.QueryTallyResultResponse) | `TallyResult returns the tally result of a proposal. If the proposal is still in voting period, then this query computes the current tally state, which might not be final. On the other hand, if the proposal is final, then it simply returns the final_tally_result state stored in the proposal itself.` | GET|/cosmos/group/v1/proposals/{proposal_id}/tally |
-| `Groups` | [QueryGroupsRequest](#cosmos.group.v1.QueryGroupsRequest) | [QueryGroupsResponse](#cosmos.group.v1.QueryGroupsResponse) | `Groups queries all groups in state.` | GET|/cosmos/group/v1/groups |
+| `Groups` | [QueryGroupsRequest](#cosmos.group.v1.QueryGroupsRequest) | [QueryGroupsResponse](#cosmos.group.v1.QueryGroupsResponse) | `Groups queries all groups in state.  Since: cosmos-sdk 0.47.1` | GET|/cosmos/group/v1/groups |
 
  <!-- end services -->
 
@@ -16762,6 +16305,10 @@ Query is the cosmos.group.v1 Query service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmos/group/v1/tx.proto
+
+```
+Since: cosmos-sdk 0.46
+```
 
 
 
@@ -16980,8 +16527,8 @@ MsgSubmitProposal is the Msg/SubmitProposal request type.
 | `metadata` | [string](#string) |  |  `metadata is any arbitrary metadata attached to the proposal.`  |
 | `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `messages is a list of sdk.Msgs that will be executed if the proposal passes.`  |
 | `exec` | [Exec](#cosmos.group.v1.Exec) |  |  `exec defines the mode of execution of the proposal, whether it should be executed immediately on creation or not. If so, proposers signatures are considered as Yes votes.`  |
-| `title` | [string](#string) |  |  `title is the title of the proposal.`  |
-| `summary` | [string](#string) |  |  `summary is the summary of the proposal.`  |
+| `title` | [string](#string) |  |  `title is the title of the proposal.  Since: cosmos-sdk 0.47`  |
+| `summary` | [string](#string) |  |  `summary is the summary of the proposal.  Since: cosmos-sdk 0.47`  |
 
 
 
@@ -17346,6 +16893,10 @@ Msg is the cosmos.group.v1 Msg service.
 
 ## cosmos/group/v1/types.proto
 
+```
+Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.group.v1.DecisionPolicyWindows"></a>
@@ -17535,8 +17086,8 @@ passes as well as some optional metadata associated with the proposal.
 | `voting_period_end` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `voting_period_end is the timestamp before which voting must be done. Unless a successful MsgExec is called before (to execute a proposal whose tally is successful before the voting period ends), tallying will be done at this point, and the final_tally_resultand status fields will be accordingly updated.`  |
 | `executor_result` | [ProposalExecutorResult](#cosmos.group.v1.ProposalExecutorResult) |  |  `executor_result is the final result of the proposal execution. Initial value is NotRun.`  |
 | `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `messages is a list of sdk.Msgs that will be executed if the proposal passes.`  |
-| `title` | [string](#string) |  |  `title is the title of the proposal`  |
-| `summary` | [string](#string) |  |  `summary is a short summary of the proposal`  |
+| `title` | [string](#string) |  |  `title is the title of the proposal  Since: cosmos-sdk 0.47`  |
+| `summary` | [string](#string) |  |  `summary is a short summary of the proposal  Since: cosmos-sdk 0.47`  |
 
 
 
@@ -17961,6 +17512,8 @@ Query provides defines the gRPC querier service.
 
 ```
 MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -17982,6 +17535,8 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 ```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -18007,7 +17562,7 @@ Msg defines the x/mint Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.mint.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.mint.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/mint module parameters. The authority is defaults to the x/gov module account.` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.mint.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.mint.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/mint module parameters. The authority is defaults to the x/gov module account.  Since: cosmos-sdk 0.47` |  |
 
  <!-- end services -->
 
@@ -18667,6 +18222,406 @@ Msg defines the nft Msg service.
 
 
 
+<a name="cosmos/orm/module/v1alpha1/module.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmos/orm/module/v1alpha1/module.proto
+
+
+
+<a name="cosmos.orm.module.v1alpha1.Module"></a>
+
+### Module
+
+```
+Module defines the ORM module which adds providers to the app container for
+ORM ModuleDB's and in the future will automatically register query
+services for modules that use the ORM.
+```
+
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="cosmos/orm/query/v1alpha1/query.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmos/orm/query/v1alpha1/query.proto
+
+
+
+<a name="cosmos.orm.query.v1alpha1.GetRequest"></a>
+
+### GetRequest
+
+```
+GetRequest is the Query/Get request type.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `message_name` | [string](#string) |  |  `message_name is the fully-qualified message name of the ORM table being queried.`  |
+| `index` | [string](#string) |  |  `index is the index fields expression used in orm definitions. If it is empty, the table's primary key is assumed. If it is non-empty, it must refer to an unique index.`  |
+| `values` | [IndexValue](#cosmos.orm.query.v1alpha1.IndexValue) | repeated |  `values are the values of the fields corresponding to the requested index. There must be as many values provided as there are fields in the index and these values must correspond to the index field types.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.query.v1alpha1.GetResponse"></a>
+
+### GetResponse
+
+```
+GetResponse is the Query/Get response type.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `result` | [google.protobuf.Any](#google.protobuf.Any) |  |  `result is the result of the get query. If no value is found, the gRPC status code NOT_FOUND will be returned.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.query.v1alpha1.IndexValue"></a>
+
+### IndexValue
+
+```
+IndexValue represents the value of a field in an ORM index expression.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `uint` | [uint64](#uint64) |  |  `uint specifies a value for an uint32, fixed32, uint64, or fixed64 index field.`  |
+| `int` | [int64](#int64) |  |  `int64 specifies a value for an int32, sfixed32, int64, or sfixed64 index field.`  |
+| `str` | [string](#string) |  |  `str specifies a value for a string index field.`  |
+| `bytes` | [bytes](#bytes) |  |  `bytes specifies a value for a bytes index field.`  |
+| `enum` | [string](#string) |  |  `enum specifies a value for an enum index field.`  |
+| `bool` | [bool](#bool) |  |  `bool specifies a value for a bool index field.`  |
+| `timestamp` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `timestamp specifies a value for a timestamp index field.`  |
+| `duration` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  `duration specifies a value for a duration index field.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.query.v1alpha1.ListRequest"></a>
+
+### ListRequest
+
+```
+ListRequest is the Query/List request type.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `message_name` | [string](#string) |  |  `message_name is the fully-qualified message name of the ORM table being queried.`  |
+| `index` | [string](#string) |  |  `index is the index fields expression used in orm definitions. If it is empty, the table's primary key is assumed.`  |
+| `prefix` | [ListRequest.Prefix](#cosmos.orm.query.v1alpha1.ListRequest.Prefix) |  |  `prefix defines a prefix query.`  |
+| `range` | [ListRequest.Range](#cosmos.orm.query.v1alpha1.ListRequest.Range) |  |  `range defines a range query.`  |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  |  `pagination is the pagination request.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.query.v1alpha1.ListRequest.Prefix"></a>
+
+### ListRequest.Prefix
+
+```
+Prefix specifies the arguments to a prefix query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `values` | [IndexValue](#cosmos.orm.query.v1alpha1.IndexValue) | repeated |  `values specifies the index values for the prefix query. It is valid to special a partial prefix with fewer values than the number of fields in the index.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.query.v1alpha1.ListRequest.Range"></a>
+
+### ListRequest.Range
+
+```
+Range specifies the arguments to a range query.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `start` | [IndexValue](#cosmos.orm.query.v1alpha1.IndexValue) | repeated |  `start specifies the starting index values for the range query. It is valid to provide fewer values than the number of fields in the index.`  |
+| `end` | [IndexValue](#cosmos.orm.query.v1alpha1.IndexValue) | repeated |  `end specifies the inclusive ending index values for the range query. It is valid to provide fewer values than the number of fields in the index.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.query.v1alpha1.ListResponse"></a>
+
+### ListResponse
+
+```
+ListResponse is the Query/List response type.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `results` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `results are the results of the query.`  |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  |  `pagination is the pagination response.`  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="cosmos.orm.query.v1alpha1.Query"></a>
+
+### Query
+
+```
+Query is a generic gRPC service for querying ORM data.
+```
+
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Get` | [GetRequest](#cosmos.orm.query.v1alpha1.GetRequest) | [GetResponse](#cosmos.orm.query.v1alpha1.GetResponse) | `Get queries an ORM table against an unique index.` |  |
+| `List` | [ListRequest](#cosmos.orm.query.v1alpha1.ListRequest) | [ListResponse](#cosmos.orm.query.v1alpha1.ListResponse) | `List queries an ORM table against an index.` |  |
+
+ <!-- end services -->
+
+
+
+<a name="cosmos/orm/v1/orm.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmos/orm/v1/orm.proto
+
+
+
+<a name="cosmos.orm.v1.PrimaryKeyDescriptor"></a>
+
+### PrimaryKeyDescriptor
+
+```
+PrimaryKeyDescriptor describes a table primary key.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `fields` | [string](#string) |  |  `fields is a comma-separated list of fields in the primary key. Spaces are not allowed. Supported field types, their encodings, and any applicable constraints are described below.   - uint32 are encoded as 2,3,4 or 5 bytes using a compact encoding that     is suitable for sorted iteration (not varint encoding). This type is     well-suited for small integers.   - uint64 are encoded as 2,4,6 or 9 bytes using a compact encoding that     is suitable for sorted iteration (not varint encoding). This type is     well-suited for small integers such as auto-incrementing sequences.   - fixed32, fixed64 are encoded as big-endian fixed width bytes and support   sorted iteration. These types are well-suited for encoding fixed with   decimals as integers.   - string's are encoded as raw bytes in terminal key segments and null-terminated   in non-terminal segments. Null characters are thus forbidden in strings.   string fields support sorted iteration.   - bytes are encoded as raw bytes in terminal segments and length-prefixed   with a 32-bit unsigned varint in non-terminal segments.   - int32, sint32, int64, sint64, sfixed32, sfixed64 are encoded as fixed width bytes with   an encoding that enables sorted iteration.   - google.protobuf.Timestamp is encoded such that values with only seconds occupy 6 bytes,   values including nanos occupy 9 bytes, and nil values occupy 1 byte. When iterating, nil   values will always be ordered last. Seconds and nanos values must conform to the officially   specified ranges of 0001-01-01T00:00:00Z to 9999-12-31T23:59:59Z and 0 to 999,999,999 respectively.   - google.protobuf.Duration is encoded as 12 bytes using an encoding that enables sorted iteration.   - enum fields are encoded using varint encoding and do not support sorted   iteration.   - bool fields are encoded as a single byte 0 or 1.  All other fields types are unsupported in keys including repeated and oneof fields.  Primary keys are prefixed by the varint encoded table id and the byte 0x0 plus any additional prefix specified by the schema.`  |
+| `auto_increment` | [bool](#bool) |  |  `auto_increment specifies that the primary key is generated by an auto-incrementing integer. If this is set to true fields must only contain one field of that is of type uint64.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.v1.SecondaryIndexDescriptor"></a>
+
+### SecondaryIndexDescriptor
+
+```
+PrimaryKeyDescriptor describes a table secondary index.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `fields` | [string](#string) |  |  `fields is a comma-separated list of fields in the index. The supported field types are the same as those for PrimaryKeyDescriptor.fields. Index keys are prefixed by the varint encoded table id and the varint encoded index id plus any additional prefix specified by the schema.  In addition the field segments, non-unique index keys are suffixed with any additional primary key fields not present in the index fields so that the primary key can be reconstructed. Unique indexes instead of being suffixed store the remaining primary key fields in the value..`  |
+| `id` | [uint32](#uint32) |  |  `id is a non-zero integer ID that must be unique within the indexes for this table and less than 32768. It may be deprecated in the future when this can be auto-generated.`  |
+| `unique` | [bool](#bool) |  |  `unique specifies that this an unique index.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.v1.SingletonDescriptor"></a>
+
+### SingletonDescriptor
+
+```
+TableDescriptor describes an ORM singleton table which has at most one instance.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [uint32](#uint32) |  |  `id is a non-zero integer ID that must be unique within the tables and singletons in this file. It may be deprecated in the future when this can be auto-generated.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.v1.TableDescriptor"></a>
+
+### TableDescriptor
+
+```
+TableDescriptor describes an ORM table.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `primary_key` | [PrimaryKeyDescriptor](#cosmos.orm.v1.PrimaryKeyDescriptor) |  |  `primary_key defines the primary key for the table.`  |
+| `index` | [SecondaryIndexDescriptor](#cosmos.orm.v1.SecondaryIndexDescriptor) | repeated |  `index defines one or more secondary indexes.`  |
+| `id` | [uint32](#uint32) |  |  `id is a non-zero integer ID that must be unique within the tables and singletons in this file. It may be deprecated in the future when this can be auto-generated.`  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+
+<a name="cosmos/orm/v1/orm.proto-extensions"></a>
+
+### File-level Extensions
+| Extension | Type | Base | Number | Description |
+| --------- | ---- | ---- | ------ | ----------- |
+| `singleton` | SingletonDescriptor | .google.protobuf.MessageOptions | 104503791 | `singleton specifies that this message will be used as an ORM singleton. It cannot be used together with the table option.`  |
+| `table` | TableDescriptor | .google.protobuf.MessageOptions | 104503790 | `table specifies that this message will be used as an ORM table. It cannot be used together with the singleton option.`  |
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="cosmos/orm/v1alpha1/schema.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmos/orm/v1alpha1/schema.proto
+
+
+
+<a name="cosmos.orm.v1alpha1.ModuleSchemaDescriptor"></a>
+
+### ModuleSchemaDescriptor
+
+```
+ModuleSchemaDescriptor describe's a module's ORM schema.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `schema_file` | [ModuleSchemaDescriptor.FileEntry](#cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry) | repeated |    |
+| `prefix` | [bytes](#bytes) |  |  `prefix is an optional prefix that precedes all keys in this module's store.`  |
+
+
+
+
+
+
+<a name="cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry"></a>
+
+### ModuleSchemaDescriptor.FileEntry
+
+```
+FileEntry describes an ORM file used in a module.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [uint32](#uint32) |  |  `id is a prefix that will be varint encoded and prepended to all the table keys specified in the file's tables.`  |
+| `proto_file_name` | [string](#string) |  |  `proto_file_name is the name of a file .proto in that contains table definitions. The .proto file must be in a package that the module has referenced using cosmos.app.v1.ModuleDescriptor.use_package.`  |
+| `storage_type` | [StorageType](#cosmos.orm.v1alpha1.StorageType) |  |  `storage_type optionally indicates the type of storage this file's tables should used. If it is left unspecified, the default KV-storage of the app will be used.`  |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="cosmos.orm.v1alpha1.StorageType"></a>
+
+### StorageType
+
+```
+StorageType
+```
+
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STORAGE_TYPE_DEFAULT_UNSPECIFIED | 0 | `STORAGE_TYPE_DEFAULT_UNSPECIFIED indicates the persistent storage where all data is stored in the regular Merkle-tree backed KV-store.` |
+| STORAGE_TYPE_MEMORY | 1 | `STORAGE_TYPE_MEMORY indicates in-memory storage that will be reloaded every time an app restarts. Tables with this type of storage will by default be ignored when importing and exporting a module's state from JSON.` |
+| STORAGE_TYPE_TRANSIENT | 2 | `STORAGE_TYPE_TRANSIENT indicates transient storage that is reset at the end of every block. Tables with this type of storage will by default be ignored when importing and exporting a module's state from JSON.` |
+
+
+ <!-- end enums -->
+
+
+<a name="cosmos/orm/v1alpha1/schema.proto-extensions"></a>
+
+### File-level Extensions
+| Extension | Type | Base | Number | Description |
+| --------- | ---- | ---- | ------ | ----------- |
+| `module_schema` | ModuleSchemaDescriptor | .google.protobuf.MessageOptions | 104503792 | `module_schema is used to define the ORM schema for an app module. All module config messages that use module_schema must also declare themselves as app module config messages using the cosmos.app.v1.is_module option.`  |
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
 <a name="cosmos/params/module/v1/module.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -18809,6 +18764,8 @@ QueryParamsResponse is response type for the Query/Params RPC method.
 ```
 QuerySubspacesRequest defines a request type for querying for all registered
 subspaces and all keys for a subspace.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -18824,6 +18781,8 @@ subspaces and all keys for a subspace.
 ```
 QuerySubspacesResponse defines the response types for querying for all
 registered subspaces and all keys for a subspace.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -18844,6 +18803,8 @@ registered subspaces and all keys for a subspace.
 ```
 Subspace defines a parameter subspace name and all the keys that exist for
 the subspace.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -18876,532 +18837,7 @@ Query defines the gRPC querier service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Params` | [QueryParamsRequest](#cosmos.params.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#cosmos.params.v1beta1.QueryParamsResponse) | `Params queries a specific parameter of a module, given its subspace and key.` | GET|/cosmos/params/v1beta1/params |
-| `Subspaces` | [QuerySubspacesRequest](#cosmos.params.v1beta1.QuerySubspacesRequest) | [QuerySubspacesResponse](#cosmos.params.v1beta1.QuerySubspacesResponse) | `Subspaces queries for all registered subspaces and all keys for a subspace.` | GET|/cosmos/params/v1beta1/subspaces |
-
- <!-- end services -->
-
-
-
-<a name="cosmos/protocolpool/module/v1/module.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/protocolpool/module/v1/module.proto
-
-
-
-<a name="cosmos.protocolpool.module.v1.Module"></a>
-
-### Module
-
-```
-Module is the config object of the consensus module.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  |  `authority defines the custom module authority. If not set, defaults to the governance module.`  |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/protocolpool/v1/genesis.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/protocolpool/v1/genesis.proto
-
-
-
-<a name="cosmos.protocolpool.v1.GenesisState"></a>
-
-### GenesisState
-
-```
-GenesisState defines the protocolpool module's genesis state.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `continuous_funds` | [ContinuousFund](#cosmos.protocolpool.v1.ContinuousFund) | repeated |  `ContinuousFunds defines the continuous funds at genesis.`  |
-| `params` | [Params](#cosmos.protocolpool.v1.Params) |  |  `Params defines the parameters of this module, currently only contains the denoms that will be used for continuous fund distributions.`  |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="cosmos/protocolpool/v1/query.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/protocolpool/v1/query.proto
-
-
-
-<a name="cosmos.protocolpool.v1.QueryCommunityPoolRequest"></a>
-
-### QueryCommunityPoolRequest
-
-```
-QueryCommunityPoolRequest is the request type for the Query/CommunityPool RPC
-method.
-```
-
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.QueryCommunityPoolResponse"></a>
-
-### QueryCommunityPoolResponse
-
-```
-QueryCommunityPoolResponse is the response type for the Query/CommunityPool
-RPC method.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `pool` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  `pool defines community pool's coins.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.QueryContinuousFundRequest"></a>
-
-### QueryContinuousFundRequest
-
-```
-QueryContinuousFundRequest is the request type for the Query/ContinuousFund
-RPC method.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `recipient` | [string](#string) |  |  `recipient is the recipient address to query unclaimed budget amount for.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.QueryContinuousFundResponse"></a>
-
-### QueryContinuousFundResponse
-
-```
-QueryUnclaimedBudgetResponse is the response type for the Query/ContinuousFund
-RPC method.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `continuous_fund` | [ContinuousFund](#cosmos.protocolpool.v1.ContinuousFund) |  |  `ContinuousFunds is the given continuous fund returned in the query.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.QueryContinuousFundsRequest"></a>
-
-### QueryContinuousFundsRequest
-
-```
-QueryContinuousFundRequest is the request type for the Query/ContinuousFunds
-RPC method.
-```
-
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.QueryContinuousFundsResponse"></a>
-
-### QueryContinuousFundsResponse
-
-```
-QueryUnclaimedBudgetResponse is the response type for the Query/ContinuousFunds
-RPC method.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `continuous_funds` | [ContinuousFund](#cosmos.protocolpool.v1.ContinuousFund) | repeated |  `ContinuousFunds defines all continuous funds in state.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.QueryParamsRequest"></a>
-
-### QueryParamsRequest
-
-```
-QueryParamsRequest is the response type for the Query/Params RPC method.
-```
-
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.QueryParamsResponse"></a>
-
-### QueryParamsResponse
-
-```
-QueryParamsResponse is the response type for the Query/Params RPC method.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `params` | [Params](#cosmos.protocolpool.v1.Params) |  |    |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="cosmos.protocolpool.v1.Query"></a>
-
-### Query
-
-```
-Query defines the gRPC querier service for community pool module.
-```
-
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `CommunityPool` | [QueryCommunityPoolRequest](#cosmos.protocolpool.v1.QueryCommunityPoolRequest) | [QueryCommunityPoolResponse](#cosmos.protocolpool.v1.QueryCommunityPoolResponse) | `CommunityPool queries the community pool coins.` | GET|/cosmos/protocolpool/v1/community_pool |
-| `ContinuousFund` | [QueryContinuousFundRequest](#cosmos.protocolpool.v1.QueryContinuousFundRequest) | [QueryContinuousFundResponse](#cosmos.protocolpool.v1.QueryContinuousFundResponse) | `ContinuousFund queries a continuous fund by the recipient is is associated with.` | GET|/cosmos/protocolpool/v1/continuous_funds/{recipient} |
-| `ContinuousFunds` | [QueryContinuousFundsRequest](#cosmos.protocolpool.v1.QueryContinuousFundsRequest) | [QueryContinuousFundsResponse](#cosmos.protocolpool.v1.QueryContinuousFundsResponse) | `ContinuousFunds queries all continuous funds in the store.` | GET|/cosmos/protocolpool/v1/continuous_funds |
-| `Params` | [QueryParamsRequest](#cosmos.protocolpool.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmos.protocolpool.v1.QueryParamsResponse) | `Params returns the total set of x/protocolpool parameters.` | GET|/cosmos/protocolpool/v1/params |
-
- <!-- end services -->
-
-
-
-<a name="cosmos/protocolpool/v1/tx.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/protocolpool/v1/tx.proto
-
-
-
-<a name="cosmos.protocolpool.v1.MsgCancelContinuousFund"></a>
-
-### MsgCancelContinuousFund
-
-```
-MsgCancelContinuousFund defines a message to cancel continuous funds for a specific recipient.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  |  `Authority is the account address of authority.`  |
-| `recipient` | [string](#string) |  |  `Recipient is the account address string of the recipient whose funds are to be cancelled.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgCancelContinuousFundResponse"></a>
-
-### MsgCancelContinuousFundResponse
-
-```
-MsgCancelContinuousFundResponse defines the response to executing a
-MsgCancelContinuousFund message.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `canceled_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `CanceledTime is the canceled time.`  |
-| `canceled_height` | [uint64](#uint64) |  |  `CanceledHeight defines the canceled block height.`  |
-| `recipient` | [string](#string) |  |  `Recipient is the account address string of the recipient whose funds are cancelled.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgCommunityPoolSpend"></a>
-
-### MsgCommunityPoolSpend
-
-```
-MsgCommunityPoolSpend defines a message for sending tokens from the community
-pool to another account. This message is typically executed via a governance
-proposal with the governance module being the executing authority.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  |  `Authority is the address that controls the module (defaults to x/gov unless overwritten).`  |
-| `recipient` | [string](#string) |  |    |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |    |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgCommunityPoolSpendResponse"></a>
-
-### MsgCommunityPoolSpendResponse
-
-```
-MsgCommunityPoolSpendResponse defines the response to executing a
-MsgCommunityPoolSpend message.
-```
-
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgCreateContinuousFund"></a>
-
-### MsgCreateContinuousFund
-
-```
-MsgCreateContinuousFund defines a message for adding continuous funds.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  |  `Authority is the address that controls the module (defaults to x/gov unless overwritten).`  |
-| `recipient` | [string](#string) |  |  `Recipient address of the account receiving funds.`  |
-| `percentage` | [string](#string) |  |  `Percentage is the percentage of funds to be allocated from Community pool.`  |
-| `expiry` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `Optional, if expiry is set, removes the state object when expired.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgCreateContinuousFundResponse"></a>
-
-### MsgCreateContinuousFundResponse
-
-```
-MsgCreateContinuousFundResponse defines the response to executing a
-MsgCreateContinuousFund message.
-```
-
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgFundCommunityPool"></a>
-
-### MsgFundCommunityPool
-
-```
-MsgFundCommunityPool allows an account to directly
-fund the community pool.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `depositor` | [string](#string) |  |    |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |    |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgFundCommunityPoolResponse"></a>
-
-### MsgFundCommunityPoolResponse
-
-```
-MsgFundCommunityPoolResponse defines the Msg/FundCommunityPool response type.
-```
-
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgUpdateParams"></a>
-
-### MsgUpdateParams
-
-```
-MsgUpdateParams is the Msg/UpdateParams request type.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  |  `authority is the address that controls the module (defaults to x/gov unless overwritten).`  |
-| `params` | [Params](#cosmos.protocolpool.v1.Params) |  |  `params defines the x/protocolpool parameters to update.  NOTE: All parameters must be supplied.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.MsgUpdateParamsResponse"></a>
-
-### MsgUpdateParamsResponse
-
-```
-MsgUpdateParamsResponse defines the response structure for executing a
-MsgUpdateParams message.
-```
-
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="cosmos.protocolpool.v1.Msg"></a>
-
-### Msg
-
-```
-Msg defines the pool Msg service.
-```
-
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `FundCommunityPool` | [MsgFundCommunityPool](#cosmos.protocolpool.v1.MsgFundCommunityPool) | [MsgFundCommunityPoolResponse](#cosmos.protocolpool.v1.MsgFundCommunityPoolResponse) | `FundCommunityPool defines a method to allow an account to directly fund the community pool.` |  |
-| `CommunityPoolSpend` | [MsgCommunityPoolSpend](#cosmos.protocolpool.v1.MsgCommunityPoolSpend) | [MsgCommunityPoolSpendResponse](#cosmos.protocolpool.v1.MsgCommunityPoolSpendResponse) | `CommunityPoolSpend defines a governance operation for sending tokens from the community pool in the x/protocolpool module to another account, which could be the governance module itself. The authority is defined in the keeper.` |  |
-| `CreateContinuousFund` | [MsgCreateContinuousFund](#cosmos.protocolpool.v1.MsgCreateContinuousFund) | [MsgCreateContinuousFundResponse](#cosmos.protocolpool.v1.MsgCreateContinuousFundResponse) | `CreateContinuousFund defines a method to distribute a percentage of funds to an address continuously. This ContinuousFund can be indefinite or run until a given expiry time. Funds come from validator block rewards from x/distribution, but may also come from any user who funds the ProtocolPoolEscrow module account directly through x/bank.` |  |
-| `CancelContinuousFund` | [MsgCancelContinuousFund](#cosmos.protocolpool.v1.MsgCancelContinuousFund) | [MsgCancelContinuousFundResponse](#cosmos.protocolpool.v1.MsgCancelContinuousFundResponse) | `CancelContinuousFund defines a method for cancelling continuous fund.` |  |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.protocolpool.v1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.protocolpool.v1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/protocolpool module parameters. The authority is defined in the keeper.` |  |
-
- <!-- end services -->
-
-
-
-<a name="cosmos/protocolpool/v1/types.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/protocolpool/v1/types.proto
-
-
-
-<a name="cosmos.protocolpool.v1.ContinuousFund"></a>
-
-### ContinuousFund
-
-```
-ContinuousFund defines the fields of continuous fund proposal.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `recipient` | [string](#string) |  |  `Recipient is the address string of the account receiving funds.`  |
-| `percentage` | [string](#string) |  |  `Percentage is the percentage of funds to be allocated from Community pool.`  |
-| `expiry` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `Optional, if expiry is set, removes the state object when expired.`  |
-
-
-
-
-
-
-<a name="cosmos.protocolpool.v1.Params"></a>
-
-### Params
-
-```
-Params defines the parameters for the protocolpool module.
-```
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `enabled_distribution_denoms` | [string](#string) | repeated |  `EnabledDistributionDenoms lists the denoms that are allowed to be distributed. This is to avoid spending time distributing undesired tokens to continuous funds and budgets.`  |
-| `distribution_frequency` | [uint64](#uint64) |  |  `DistributionFrequency is the frequency (in terms of blocks) that funds are distributed out from the x/protocolpool module.`  |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
+| `Subspaces` | [QuerySubspacesRequest](#cosmos.params.v1beta1.QuerySubspacesRequest) | [QuerySubspacesResponse](#cosmos.params.v1beta1.QuerySubspacesResponse) | `Subspaces queries for all registered subspaces and all keys for a subspace.  Since: cosmos-sdk 0.46` | GET|/cosmos/params/v1beta1/subspaces |
 
  <!-- end services -->
 
@@ -19884,6 +19320,8 @@ MsgUnjailResponse defines the Msg/Unjail response type
 
 ```
 MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -19905,6 +19343,8 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 ```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -19931,7 +19371,7 @@ Msg defines the slashing Msg service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Unjail` | [MsgUnjail](#cosmos.slashing.v1beta1.MsgUnjail) | [MsgUnjailResponse](#cosmos.slashing.v1beta1.MsgUnjailResponse) | `Unjail defines a method for unjailing a jailed validator, thus returning them into the bonded validator set, so they can begin receiving provisions and rewards again.` |  |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.slashing.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.slashing.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/slashing module parameters. The authority defaults to the x/gov module account.` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.slashing.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.slashing.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines a governance operation for updating the x/slashing module parameters. The authority defaults to the x/gov module account.  Since: cosmos-sdk 0.47` |  |
 
  <!-- end services -->
 
@@ -19988,6 +19428,8 @@ Module is the config object of the staking module.
 
 ```
 StakeAuthorization defines authorization for delegate/undelegate/redelegate.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -20031,6 +19473,8 @@ Validators defines list of validator addresses.
 
 ```
 AuthorizationType defines the type of staking module authorization type
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -21169,7 +20613,7 @@ multiplied by exchange rate.
 | `unbonding_height` | [int64](#int64) |  |  `unbonding_height defines, if unbonding, the height at which this validator has begun unbonding.`  |
 | `unbonding_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `unbonding_time defines, if unbonding, the min time for the validator to complete unbonding.`  |
 | `commission` | [Commission](#cosmos.staking.v1beta1.Commission) |  |  `commission defines the commission parameters.`  |
-| `min_self_delegation` | [string](#string) |  |  `min_self_delegation is the validator's self declared minimum self delegation.`  |
+| `min_self_delegation` | [string](#string) |  |  `min_self_delegation is the validator's self declared minimum self delegation.  Since: cosmos-sdk 0.46`  |
 | `unbonding_on_hold_ref_count` | [int64](#int64) |  |  `strictly positive if this validator's unbonding has been stopped by external modules`  |
 | `unbonding_ids` | [uint64](#uint64) | repeated |  `list of unbonding ids, each uniquely identifing an unbonding of this validator`  |
 
@@ -21299,6 +20743,8 @@ MsgBeginRedelegateResponse defines the Msg/BeginRedelegate response type.
 
 ```
 MsgCancelUnbondingDelegation defines the SDK message for performing a cancel unbonding delegation for delegator
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -21321,6 +20767,8 @@ MsgCancelUnbondingDelegation defines the SDK message for performing a cancel unb
 
 ```
 MsgCancelUnbondingDelegationResponse
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -21475,7 +20923,7 @@ MsgUndelegateResponse defines the Msg/Undelegate response type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `completion_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |    |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  `amount returns the amount of undelegated coins`  |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  `amount returns the amount of undelegated coins  Since: cosmos-sdk 0.50`  |
 
 
 
@@ -21488,6 +20936,8 @@ MsgUndelegateResponse defines the Msg/Undelegate response type.
 
 ```
 MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -21509,6 +20959,8 @@ MsgUpdateParams is the Msg/UpdateParams request type.
 ```
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -21539,8 +20991,8 @@ Msg defines the staking Msg service.
 | `Delegate` | [MsgDelegate](#cosmos.staking.v1beta1.MsgDelegate) | [MsgDelegateResponse](#cosmos.staking.v1beta1.MsgDelegateResponse) | `Delegate defines a method for performing a delegation of coins from a delegator to a validator.` |  |
 | `BeginRedelegate` | [MsgBeginRedelegate](#cosmos.staking.v1beta1.MsgBeginRedelegate) | [MsgBeginRedelegateResponse](#cosmos.staking.v1beta1.MsgBeginRedelegateResponse) | `BeginRedelegate defines a method for performing a redelegation of coins from a delegator and source validator to a destination validator.` |  |
 | `Undelegate` | [MsgUndelegate](#cosmos.staking.v1beta1.MsgUndelegate) | [MsgUndelegateResponse](#cosmos.staking.v1beta1.MsgUndelegateResponse) | `Undelegate defines a method for performing an undelegation from a delegate and a validator.` |  |
-| `CancelUnbondingDelegation` | [MsgCancelUnbondingDelegation](#cosmos.staking.v1beta1.MsgCancelUnbondingDelegation) | [MsgCancelUnbondingDelegationResponse](#cosmos.staking.v1beta1.MsgCancelUnbondingDelegationResponse) | `CancelUnbondingDelegation defines a method for performing canceling the unbonding delegation and delegate back to previous validator.` |  |
-| `UpdateParams` | [MsgUpdateParams](#cosmos.staking.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.staking.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines an operation for updating the x/staking module parameters.` |  |
+| `CancelUnbondingDelegation` | [MsgCancelUnbondingDelegation](#cosmos.staking.v1beta1.MsgCancelUnbondingDelegation) | [MsgCancelUnbondingDelegationResponse](#cosmos.staking.v1beta1.MsgCancelUnbondingDelegationResponse) | `CancelUnbondingDelegation defines a method for performing canceling the unbonding delegation and delegate back to previous validator.  Since: cosmos-sdk 0.46` |  |
+| `UpdateParams` | [MsgUpdateParams](#cosmos.staking.v1beta1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmos.staking.v1beta1.MsgUpdateParamsResponse) | `UpdateParams defines an operation for updating the x/staking module parameters. Since: cosmos-sdk 0.47` |  |
 
  <!-- end services -->
 
@@ -21656,6 +21108,8 @@ Snapshot contains Tendermint state sync snapshot info.
 
 ```
 SnapshotExtensionMeta contains metadata about an external snapshotter.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -21676,6 +21130,8 @@ SnapshotExtensionMeta contains metadata about an external snapshotter.
 
 ```
 SnapshotExtensionPayload contains payloads of an external snapshotter.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -21695,6 +21151,8 @@ SnapshotExtensionPayload contains payloads of an external snapshotter.
 
 ```
 SnapshotIAVLItem is an exported IAVL node.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -21717,6 +21175,8 @@ SnapshotIAVLItem is an exported IAVL node.
 
 ```
 SnapshotItem is an item contained in a rootmulti.Store snapshot.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -21739,6 +21199,8 @@ SnapshotItem is an item contained in a rootmulti.Store snapshot.
 
 ```
 SnapshotStoreItem contains metadata about a snapshotted store.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -21978,6 +21440,8 @@ the file streamer dump them into files together with the state changes.
 StoreKVPair is a KVStore KVPair used for listening to state changes (Sets and Deletes)
 It optionally includes the StoreKey for the originating KVStore and a Boolean flag to distinguish between Sets and
 Deletes
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -22241,6 +21705,8 @@ Service.BroadcastTx method.
 ```
 GetBlockWithTxsRequest is the request type for the Service.GetBlockWithTxs
 RPC method.
+
+Since: cosmos-sdk 0.45.2
 ```
 
 
@@ -22262,6 +21728,8 @@ RPC method.
 ```
 GetBlockWithTxsResponse is the response type for the Service.GetBlockWithTxs
 method.
+
+Since: cosmos-sdk 0.45.2
 ```
 
 
@@ -22336,7 +21804,7 @@ RPC method.
 | `order_by` | [OrderBy](#cosmos.tx.v1beta1.OrderBy) |  |    |
 | `page` | [uint64](#uint64) |  |  `page is the page number to query, starts at 1. If not provided, will default to first page.`  |
 | `limit` | [uint64](#uint64) |  |  `limit is the total number of results to be returned in the result page. If left empty it will default to a value to be set by each app.`  |
-| `query` | [string](#string) |  |  `query defines the transaction event query that is proxied to Tendermint's TxSearch RPC method. The query must be valid.`  |
+| `query` | [string](#string) |  |  `query defines the transaction event query that is proxied to Tendermint's TxSearch RPC method. The query must be valid.  Since cosmos-sdk 0.50`  |
 
 
 
@@ -22380,7 +21848,7 @@ RPC method.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `tx` | [Tx](#cosmos.tx.v1beta1.Tx) |  | **Deprecated.**  `tx is the transaction to simulate. Deprecated. Send raw tx bytes instead.`  |
-| `tx_bytes` | [bytes](#bytes) |  |  `tx_bytes is the raw transaction.`  |
+| `tx_bytes` | [bytes](#bytes) |  |  `tx_bytes is the raw transaction.  Since: cosmos-sdk 0.43`  |
 
 
 
@@ -22415,6 +21883,8 @@ Service.SimulateRPC method.
 ```
 TxDecodeAminoRequest is the request type for the Service.TxDecodeAmino
 RPC method.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -22435,6 +21905,8 @@ RPC method.
 ```
 TxDecodeAminoResponse is the response type for the Service.TxDecodeAmino
 RPC method.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -22455,6 +21927,8 @@ RPC method.
 ```
 TxDecodeRequest is the request type for the Service.TxDecode
 RPC method.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -22475,6 +21949,8 @@ RPC method.
 ```
 TxDecodeResponse is the response type for the
 Service.TxDecode method.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -22495,6 +21971,8 @@ Service.TxDecode method.
 ```
 TxEncodeAminoRequest is the request type for the Service.TxEncodeAmino
 RPC method.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -22515,6 +21993,8 @@ RPC method.
 ```
 TxEncodeAminoResponse is the response type for the Service.TxEncodeAmino
 RPC method.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -22535,6 +22015,8 @@ RPC method.
 ```
 TxEncodeRequest is the request type for the Service.TxEncode
 RPC method.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -22555,6 +22037,8 @@ RPC method.
 ```
 TxEncodeResponse is the response type for the
 Service.TxEncode method.
+
+Since: cosmos-sdk 0.47
 ```
 
 
@@ -22627,11 +22111,11 @@ Service defines a gRPC service for interacting with transactions.
 | `GetTx` | [GetTxRequest](#cosmos.tx.v1beta1.GetTxRequest) | [GetTxResponse](#cosmos.tx.v1beta1.GetTxResponse) | `GetTx fetches a tx by hash.` | GET|/cosmos/tx/v1beta1/txs/{hash} |
 | `BroadcastTx` | [BroadcastTxRequest](#cosmos.tx.v1beta1.BroadcastTxRequest) | [BroadcastTxResponse](#cosmos.tx.v1beta1.BroadcastTxResponse) | `BroadcastTx broadcast transaction.` | POST|/cosmos/tx/v1beta1/txs |
 | `GetTxsEvent` | [GetTxsEventRequest](#cosmos.tx.v1beta1.GetTxsEventRequest) | [GetTxsEventResponse](#cosmos.tx.v1beta1.GetTxsEventResponse) | `GetTxsEvent fetches txs by event.` | GET|/cosmos/tx/v1beta1/txs |
-| `GetBlockWithTxs` | [GetBlockWithTxsRequest](#cosmos.tx.v1beta1.GetBlockWithTxsRequest) | [GetBlockWithTxsResponse](#cosmos.tx.v1beta1.GetBlockWithTxsResponse) | `GetBlockWithTxs fetches a block with decoded txs.` | GET|/cosmos/tx/v1beta1/txs/block/{height} |
-| `TxDecode` | [TxDecodeRequest](#cosmos.tx.v1beta1.TxDecodeRequest) | [TxDecodeResponse](#cosmos.tx.v1beta1.TxDecodeResponse) | `TxDecode decodes the transaction.` | POST|/cosmos/tx/v1beta1/decode |
-| `TxEncode` | [TxEncodeRequest](#cosmos.tx.v1beta1.TxEncodeRequest) | [TxEncodeResponse](#cosmos.tx.v1beta1.TxEncodeResponse) | `TxEncode encodes the transaction.` | POST|/cosmos/tx/v1beta1/encode |
-| `TxEncodeAmino` | [TxEncodeAminoRequest](#cosmos.tx.v1beta1.TxEncodeAminoRequest) | [TxEncodeAminoResponse](#cosmos.tx.v1beta1.TxEncodeAminoResponse) | `TxEncodeAmino encodes an Amino transaction from JSON to encoded bytes.` | POST|/cosmos/tx/v1beta1/encode/amino |
-| `TxDecodeAmino` | [TxDecodeAminoRequest](#cosmos.tx.v1beta1.TxDecodeAminoRequest) | [TxDecodeAminoResponse](#cosmos.tx.v1beta1.TxDecodeAminoResponse) | `TxDecodeAmino decodes an Amino transaction from encoded bytes to JSON.` | POST|/cosmos/tx/v1beta1/decode/amino |
+| `GetBlockWithTxs` | [GetBlockWithTxsRequest](#cosmos.tx.v1beta1.GetBlockWithTxsRequest) | [GetBlockWithTxsResponse](#cosmos.tx.v1beta1.GetBlockWithTxsResponse) | `GetBlockWithTxs fetches a block with decoded txs.  Since: cosmos-sdk 0.45.2` | GET|/cosmos/tx/v1beta1/txs/block/{height} |
+| `TxDecode` | [TxDecodeRequest](#cosmos.tx.v1beta1.TxDecodeRequest) | [TxDecodeResponse](#cosmos.tx.v1beta1.TxDecodeResponse) | `TxDecode decodes the transaction.  Since: cosmos-sdk 0.47` | POST|/cosmos/tx/v1beta1/decode |
+| `TxEncode` | [TxEncodeRequest](#cosmos.tx.v1beta1.TxEncodeRequest) | [TxEncodeResponse](#cosmos.tx.v1beta1.TxEncodeResponse) | `TxEncode encodes the transaction.  Since: cosmos-sdk 0.47` | POST|/cosmos/tx/v1beta1/encode |
+| `TxEncodeAmino` | [TxEncodeAminoRequest](#cosmos.tx.v1beta1.TxEncodeAminoRequest) | [TxEncodeAminoResponse](#cosmos.tx.v1beta1.TxEncodeAminoResponse) | `TxEncodeAmino encodes an Amino transaction from JSON to encoded bytes.  Since: cosmos-sdk 0.47` | POST|/cosmos/tx/v1beta1/encode/amino |
+| `TxDecodeAmino` | [TxDecodeAminoRequest](#cosmos.tx.v1beta1.TxDecodeAminoRequest) | [TxDecodeAminoResponse](#cosmos.tx.v1beta1.TxDecodeAminoResponse) | `TxDecodeAmino decodes an Amino transaction from encoded bytes to JSON.  Since: cosmos-sdk 0.47` | POST|/cosmos/tx/v1beta1/decode/amino |
 
  <!-- end services -->
 
@@ -22659,7 +22143,7 @@ transaction.
 | ----- | ---- | ----- | ----------- |
 | `signer_infos` | [SignerInfo](#cosmos.tx.v1beta1.SignerInfo) | repeated |  `signer_infos defines the signing modes for the required signers. The number and order of elements must match the required signers from TxBody's messages. The first element is the primary signer and the one which pays the fee.`  |
 | `fee` | [Fee](#cosmos.tx.v1beta1.Fee) |  |  `Fee is the fee and gas limit for the transaction. The first signer is the primary signer and the one which pays the fee. The fee can be calculated based on the cost of evaluating the body and doing signature verification of the signers. This can be estimated via simulation.`  |
-| `tip` | [Tip](#cosmos.tx.v1beta1.Tip) |  | **Deprecated.**  `Tip is the optional tip used for transactions fees paid in another denom.  This field is ignored if the chain didn't enable tips, i.e. didn't add the TipDecorator in its posthandler.`  |
+| `tip` | [Tip](#cosmos.tx.v1beta1.Tip) |  | **Deprecated.**  `Tip is the optional tip used for transactions fees paid in another denom.  This field is ignored if the chain didn't enable tips, i.e. didn't add the TipDecorator in its posthandler.  Since: cosmos-sdk 0.46`  |
 
 
 
@@ -22675,6 +22159,8 @@ AuxSignerData is the intermediary format that an auxiliary signer (e.g. a
 tipper) builds and sends to the fee payer (who will build and broadcast the
 actual tx). AuxSignerData is not a valid tx in itself, and will be rejected
 by the node if sent directly as-is.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -22805,6 +22291,8 @@ SignDoc is the type used for generating sign bytes for SIGN_MODE_DIRECT.
 ```
 SignDocDirectAux is the type used for generating sign bytes for
 SIGN_MODE_DIRECT_AUX.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -22851,6 +22339,8 @@ signer.
 
 ```
 Tip is the tip used for meta-transactions.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -22900,9 +22390,7 @@ TxBody is the body of a transaction that all signers sign over.
 | ----- | ---- | ----- | ----------- |
 | `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `messages is a list of messages to be executed. The required signers of those messages define the number and order of elements in AuthInfo's signer_infos and Tx's signatures. Each required signer address is added to the list only the first time it occurs. By convention, the first required signer (usually from the first message) is referred to as the primary signer and pays the fee for the whole transaction.`  |
 | `memo` | [string](#string) |  |  `memo is any arbitrary note/comment to be added to the transaction. WARNING: in clients, any publicly exposed text should not be called memo, but should be called note instead (see https://github.com/cosmos/cosmos-sdk/issues/9122).`  |
-| `timeout_height` | [uint64](#uint64) |  |  `timeout_height is the block height after which this transaction will not be processed by the chain.`  |
-| `unordered` | [bool](#bool) |  |  `unordered, when set to true, indicates that the transaction signer(s) intend for the transaction to be evaluated and executed in an un-ordered fashion. Specifically, the account's nonce will NOT be checked or incremented, which allows for fire-and-forget as well as concurrent transaction execution.  Note, when set to true, the existing 'timeout_timestamp' value must be set and will be used to correspond to a timestamp in which the transaction is deemed valid.  When true, the sequence value MUST be 0, and any transaction with unordered=true and a non-zero sequence value will be rejected. External services that make assumptions about sequence values may need to be updated because of this.`  |
-| `timeout_timestamp` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  `timeout_timestamp is the block time after which this transaction will not be processed by the chain.  Note, if unordered=true this value MUST be set and will act as a short-lived TTL in which the transaction is deemed valid and kept in memory to prevent duplicates.`  |
+| `timeout_height` | [uint64](#uint64) |  |  `timeout is the block height after which this transaction will not be processed by the chain`  |
 | `extension_options` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `extension_options are arbitrary options that can be added by chains when the default options are not sufficient. If any of these are present and can't be handled, the transaction will be rejected`  |
 | `non_critical_extension_options` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  `extension_options are arbitrary options that can be added by chains when the default options are not sufficient. If any of these are present and can't be handled, they will be ignored`  |
 
@@ -23033,6 +22521,8 @@ method.
 
 ```
 QueryAuthorityRequest is the request type for Query/Authority
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23047,6 +22537,8 @@ QueryAuthorityRequest is the request type for Query/Authority
 
 ```
 QueryAuthorityResponse is the response type for Query/Authority
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23102,6 +22594,8 @@ method.
 ```
 QueryModuleVersionsRequest is the request type for the Query/ModuleVersions
 RPC method.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -23122,6 +22616,8 @@ RPC method.
 ```
 QueryModuleVersionsResponse is the response type for the Query/ModuleVersions
 RPC method.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -23168,7 +22664,7 @@ RPC method.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `upgraded_consensus_state` | [bytes](#bytes) |  |    |
+| `upgraded_consensus_state` | [bytes](#bytes) |  |  `Since: cosmos-sdk 0.43`  |
 
 
 
@@ -23195,8 +22691,8 @@ Query defines the gRPC upgrade querier service.
 | `CurrentPlan` | [QueryCurrentPlanRequest](#cosmos.upgrade.v1beta1.QueryCurrentPlanRequest) | [QueryCurrentPlanResponse](#cosmos.upgrade.v1beta1.QueryCurrentPlanResponse) | `CurrentPlan queries the current upgrade plan.` | GET|/cosmos/upgrade/v1beta1/current_plan |
 | `AppliedPlan` | [QueryAppliedPlanRequest](#cosmos.upgrade.v1beta1.QueryAppliedPlanRequest) | [QueryAppliedPlanResponse](#cosmos.upgrade.v1beta1.QueryAppliedPlanResponse) | `AppliedPlan queries a previously applied upgrade plan by its name.` | GET|/cosmos/upgrade/v1beta1/applied_plan/{name} |
 | `UpgradedConsensusState` | [QueryUpgradedConsensusStateRequest](#cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateRequest) | [QueryUpgradedConsensusStateResponse](#cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateResponse) | `UpgradedConsensusState queries the consensus state that will serve as a trusted kernel for the next version of this chain. It will only be stored at the last height of this chain. UpgradedConsensusState RPC not supported with legacy querier This rpc is deprecated now that IBC has its own replacement (https://github.com/cosmos/ibc-go/blob/2c880a22e9f9cc75f62b527ca94aa75ce1106001/proto/ibc/core/client/v1/query.proto#L54)` | GET|/cosmos/upgrade/v1beta1/upgraded_consensus_state/{last_height} |
-| `ModuleVersions` | [QueryModuleVersionsRequest](#cosmos.upgrade.v1beta1.QueryModuleVersionsRequest) | [QueryModuleVersionsResponse](#cosmos.upgrade.v1beta1.QueryModuleVersionsResponse) | `ModuleVersions queries the list of module versions from state.` | GET|/cosmos/upgrade/v1beta1/module_versions |
-| `Authority` | [QueryAuthorityRequest](#cosmos.upgrade.v1beta1.QueryAuthorityRequest) | [QueryAuthorityResponse](#cosmos.upgrade.v1beta1.QueryAuthorityResponse) | `Returns the account with authority to conduct upgrades` | GET|/cosmos/upgrade/v1beta1/authority |
+| `ModuleVersions` | [QueryModuleVersionsRequest](#cosmos.upgrade.v1beta1.QueryModuleVersionsRequest) | [QueryModuleVersionsResponse](#cosmos.upgrade.v1beta1.QueryModuleVersionsResponse) | `ModuleVersions queries the list of module versions from state.  Since: cosmos-sdk 0.43` | GET|/cosmos/upgrade/v1beta1/module_versions |
+| `Authority` | [QueryAuthorityRequest](#cosmos.upgrade.v1beta1.QueryAuthorityRequest) | [QueryAuthorityResponse](#cosmos.upgrade.v1beta1.QueryAuthorityResponse) | `Returns the account with authority to conduct upgrades  Since: cosmos-sdk 0.46` | GET|/cosmos/upgrade/v1beta1/authority |
 
  <!-- end services -->
 
@@ -23207,6 +22703,10 @@ Query defines the gRPC upgrade querier service.
 
 ## cosmos/upgrade/v1beta1/tx.proto
 
+```
+Since: cosmos-sdk 0.46
+```
+
 
 
 <a name="cosmos.upgrade.v1beta1.MsgCancelUpgrade"></a>
@@ -23215,6 +22715,8 @@ Query defines the gRPC upgrade querier service.
 
 ```
 MsgCancelUpgrade is the Msg/CancelUpgrade request type.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23234,6 +22736,8 @@ MsgCancelUpgrade is the Msg/CancelUpgrade request type.
 
 ```
 MsgCancelUpgradeResponse is the Msg/CancelUpgrade response type.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23248,6 +22752,8 @@ MsgCancelUpgradeResponse is the Msg/CancelUpgrade response type.
 
 ```
 MsgSoftwareUpgrade is the Msg/SoftwareUpgrade request type.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23268,6 +22774,8 @@ MsgSoftwareUpgrade is the Msg/SoftwareUpgrade request type.
 
 ```
 MsgSoftwareUpgradeResponse is the Msg/SoftwareUpgrade response type.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23293,8 +22801,8 @@ Msg defines the upgrade Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `SoftwareUpgrade` | [MsgSoftwareUpgrade](#cosmos.upgrade.v1beta1.MsgSoftwareUpgrade) | [MsgSoftwareUpgradeResponse](#cosmos.upgrade.v1beta1.MsgSoftwareUpgradeResponse) | `SoftwareUpgrade is a governance operation for initiating a software upgrade.` |  |
-| `CancelUpgrade` | [MsgCancelUpgrade](#cosmos.upgrade.v1beta1.MsgCancelUpgrade) | [MsgCancelUpgradeResponse](#cosmos.upgrade.v1beta1.MsgCancelUpgradeResponse) | `CancelUpgrade is a governance operation for cancelling a previously approved software upgrade.` |  |
+| `SoftwareUpgrade` | [MsgSoftwareUpgrade](#cosmos.upgrade.v1beta1.MsgSoftwareUpgrade) | [MsgSoftwareUpgradeResponse](#cosmos.upgrade.v1beta1.MsgSoftwareUpgradeResponse) | `SoftwareUpgrade is a governance operation for initiating a software upgrade.  Since: cosmos-sdk 0.46` |  |
+| `CancelUpgrade` | [MsgCancelUpgrade](#cosmos.upgrade.v1beta1.MsgCancelUpgrade) | [MsgCancelUpgradeResponse](#cosmos.upgrade.v1beta1.MsgCancelUpgradeResponse) | `CancelUpgrade is a governance operation for cancelling a previously approved software upgrade.  Since: cosmos-sdk 0.46` |  |
 
  <!-- end services -->
 
@@ -23336,6 +22844,8 @@ proposals, see MsgCancelUpgrade.
 
 ```
 ModuleVersion specifies a module and its consensus version.
+
+Since: cosmos-sdk 0.43
 ```
 
 
@@ -23450,6 +22960,8 @@ Module is the config object of the vesting module.
 ```
 MsgCreateVestingAccount defines a message that enables creating a vesting
 account.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23473,6 +22985,8 @@ account.
 ```
 MsgCreateVestingAccountResponse defines the Msg/CreatePeriodicVestingAccount
 response type.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23488,6 +23002,8 @@ response type.
 ```
 MsgCreatePermanentLockedAccount defines a message that enables creating a permanent
 locked account.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23509,6 +23025,8 @@ locked account.
 
 ```
 MsgCreatePermanentLockedAccountResponse defines the Msg/CreatePermanentLockedAccount response type.
+
+Since: cosmos-sdk 0.46
 ```
 
 
@@ -23573,8 +23091,8 @@ Msg defines the bank Msg service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `CreateVestingAccount` | [MsgCreateVestingAccount](#cosmos.vesting.v1beta1.MsgCreateVestingAccount) | [MsgCreateVestingAccountResponse](#cosmos.vesting.v1beta1.MsgCreateVestingAccountResponse) | `CreateVestingAccount defines a method that enables creating a vesting account.` |  |
-| `CreatePermanentLockedAccount` | [MsgCreatePermanentLockedAccount](#cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount) | [MsgCreatePermanentLockedAccountResponse](#cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccountResponse) | `CreatePermanentLockedAccount defines a method that enables creating a permanent locked account.` |  |
-| `CreatePeriodicVestingAccount` | [MsgCreatePeriodicVestingAccount](#cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount) | [MsgCreatePeriodicVestingAccountResponse](#cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccountResponse) | `CreatePeriodicVestingAccount defines a method that enables creating a periodic vesting account.` |  |
+| `CreatePermanentLockedAccount` | [MsgCreatePermanentLockedAccount](#cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount) | [MsgCreatePermanentLockedAccountResponse](#cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccountResponse) | `CreatePermanentLockedAccount defines a method that enables creating a permanent locked account.  Since: cosmos-sdk 0.46` |  |
+| `CreatePeriodicVestingAccount` | [MsgCreatePeriodicVestingAccount](#cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount) | [MsgCreatePeriodicVestingAccountResponse](#cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccountResponse) | `CreatePeriodicVestingAccount defines a method that enables creating a periodic vesting account.  Since: cosmos-sdk 0.46` |  |
 
  <!-- end services -->
 
@@ -23703,6 +23221,8 @@ periodically vests by unlocking coins during each specified period.
 PermanentLockedAccount implements the VestingAccount interface. It does
 not ever release coins, locking them indefinitely. Coins in this account can
 still be used for delegating and for governance votes even while locked.
+
+Since: cosmos-sdk 0.43
 ```
 
 

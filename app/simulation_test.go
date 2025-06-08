@@ -29,7 +29,6 @@ func init() {
 //	`go test ./app -run TestFullAppSimulation -v -Enabled=true \
 //		-Verbose=true -NumBlocks=100 -BlockSize=200 -Commit=true -Period=5`.
 func TestFullAppSimulation(t *testing.T) {
-	//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 	if !clientcli.FlagEnabledValue {
 		t.Skip()
 		return
@@ -43,7 +42,7 @@ func TestFullAppSimulation(t *testing.T) {
 		"goleveldb-app-sim",
 		"Simulation",
 		clientcli.FlagVerboseValue,
-		clientcli.FlagEnabledValue, //nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
+		clientcli.FlagEnabledValue,
 	)
 	require.NoError(t, err, "simulation setup failed")
 
@@ -62,7 +61,6 @@ func TestFullAppSimulation(t *testing.T) {
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
 	appOptions[flags.FlagHome] = dir // ensure a unique folder
-	//nolint:staticcheck // TODO: remove after actually upgrading to cosmos v0.53
 	appOptions[server.FlagInvCheckPeriod] = clientcli.FlagPeriodValue
 
 	simApp := app.New(
