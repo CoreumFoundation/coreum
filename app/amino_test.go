@@ -60,8 +60,7 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&ibcv2clienttypes.MsgUpdateClientConfig{}):   {},
 
 		// protocol pool
-		sdk.MsgTypeURL(&protocolpoolv1.MsgCommunityPoolSpend{}): {},
-		sdk.MsgTypeURL(&protocolpoolv1.MsgFundCommunityPool{}):  {},
+		sdk.MsgTypeURL(&protocolpoolv1.MsgFundCommunityPool{}): {},
 
 		// ibc/apps/transfer
 		sdk.MsgTypeURL(&ibctransfertypes.MsgUpdateParams{}): {},
