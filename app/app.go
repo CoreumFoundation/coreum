@@ -787,7 +787,7 @@ func New(
 	ibcRouter := ibcporttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, ibcTransferStack).
 		// TODO: I guess this needs CosmosSDK v0.53
-		//AddRoute(proposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
+		// AddRoute(proposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(wasmtypes.ModuleName, ibcWasmStack)
