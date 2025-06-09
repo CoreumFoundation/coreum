@@ -23,6 +23,7 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
+	ibclightclienttypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -306,6 +307,11 @@ func DefaultConfig() Config {
 			&wasmtypes.MsgUpdateContractLabel{},
 			&wasmtypes.MsgRemoveCodeUploadParamsAddresses{},
 			&wasmtypes.MsgAddCodeUploadParamsAddresses{},
+
+			// ibc/lightclients
+			&ibclightclienttypes.MsgStoreCode{},
+			&ibclightclienttypes.MsgRemoveChecksum{},
+			&ibclightclienttypes.MsgMigrateContract{},
 
 			// ibc/core/client
 			&ibcclienttypes.MsgCreateClient{},

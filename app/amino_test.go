@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	ibclightclienttypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
 	ibcinterchainaccountscontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
 	ibcinterchainaccountshosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -57,6 +58,11 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateParams{}):           {},
 		sdk.MsgTypeURL(&ibcv2clienttypes.MsgRegisterCounterparty{}): {},
 		sdk.MsgTypeURL(&ibcv2clienttypes.MsgUpdateClientConfig{}):   {},
+
+		// ibc/lightclients
+		sdk.MsgTypeURL(&ibclightclienttypes.MsgStoreCode{}):       {},
+		sdk.MsgTypeURL(&ibclightclienttypes.MsgRemoveChecksum{}):  {},
+		sdk.MsgTypeURL(&ibclightclienttypes.MsgMigrateContract{}): {},
 
 		// ibc/apps/transfer
 		sdk.MsgTypeURL(&ibctransfertypes.MsgUpdateParams{}): {},

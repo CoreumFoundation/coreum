@@ -296,6 +296,9 @@ and the formula for them is
 | `/ibc.core.connection.v1.MsgConnectionOpenInit`                        |
 | `/ibc.core.connection.v1.MsgConnectionOpenTry`                         |
 | `/ibc.core.connection.v1.MsgUpdateParams`                              |
+| `/ibc.lightclients.wasm.v1.MsgMigrateContract`                         |
+| `/ibc.lightclients.wasm.v1.MsgRemoveChecksum`                          |
+| `/ibc.lightclients.wasm.v1.MsgStoreCode`                               |
 
 [//]: # (GENERATED DOC.)
 [//]: # (DO NOT EDIT MANUALLY!!!)

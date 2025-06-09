@@ -97,10 +97,10 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic and extension types accidentally,
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 82, nondeterministicMsgCount)
+	assert.Equal(t, 85, nondeterministicMsgCount)
 	assert.Equal(t, 68, deterministicMsgCount)
 	assert.Equal(t, 12, extensionMsgCount)
-	assert.Equal(t, 138, nonExtensionMsgCount)
+	assert.Equal(t, 141, nonExtensionMsgCount)
 }
 
 func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {

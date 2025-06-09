@@ -327,7 +327,7 @@ func New(
 		distrtypes.StoreKey, slashingtypes.StoreKey, govtypes.StoreKey,
 		paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, consensusparamtypes.StoreKey,
-		wasmtypes.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey,
+		wasmtypes.StoreKey, ibcwasmtypes.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey,
 		assetnfttypes.StoreKey, nftkeeper.StoreKey, ibcexported.StoreKey,
 		ibctransfertypes.StoreKey, packetforwardtypes.StoreKey,
 		icahosttypes.StoreKey, icacontrollertypes.StoreKey, delaytypes.StoreKey,
@@ -547,9 +547,12 @@ func New(
 
 	wasmLightClientQuerier := ibcwasmkeeper.QueryPlugins{
 		// Custom: MyCustomQueryPlugin(),
-		// `myAcceptList` is a `[]string` containing the list of gRPC query paths that the chain wants to allow for the `08-wasm` module to query.
-		// These queries must be registered in the chain's gRPC query router, be deterministic, and track their gas usage.
-		// The `AcceptListStargateQuerier` function will return a query plugin that will only allow queries for the paths in the `myAcceptList`.
+		// `myAcceptList` is a `[]string` containing the list of gRPC query paths that the chain wants to allow for
+		// the `08-wasm` module to query.
+		// These queries must be registered in the chain's gRPC query router, be deterministic, and track
+		// their gas usage.
+		// The `AcceptListStargateQuerier` function will return a query plugin that will only allow queries for
+		// the paths in the `myAcceptList`.
 		// The query responses are encoded in protobuf unlike the implementation in `x/wasm`.
 		Stargate: ibcwasmkeeper.AcceptListStargateQuerier([]string{
 			"/ibc.core.client.v1.Query/ClientState",
@@ -562,7 +565,13 @@ func New(
 	dataDir := filepath.Join(homePath, "data")
 
 	var memCacheSizeMB uint32 = 100
-	lc08, err := wasmvm.NewVM(filepath.Join(dataDir, "08-light-client"), wasmkeeper.BuiltInCapabilities(), 32, false, memCacheSizeMB)
+	lc08, err := wasmvm.NewVM(
+		filepath.Join(dataDir, "08-light-client"),
+		wasmkeeper.BuiltInCapabilities(),
+		32,
+		false,
+		memCacheSizeMB,
+	)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create VM for 08 light client: %s", err))
 	}
