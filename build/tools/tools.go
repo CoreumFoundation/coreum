@@ -192,7 +192,7 @@ var Tools = []tools.Tool{
 			},
 			tools.TargetPlatformLinuxARM64InDocker: {
 				// TODO: Change it when hermes CI/CD bug is fixed
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.13.1/hermes-v1.13.1-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.13.1/hermes-v1.13.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:effd6b5d698f9e3d78a4e064a407a44987ac941f3faa10411a34e72506b3aa28",
 			},
 		},
