@@ -89,6 +89,7 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v1.2.4 // indirect
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.1.1 // indirect
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.14.0 // indirect
 	github.com/danieljoos/wincred v1.2.1 // indirect
@@ -120,7 +121,7 @@ require (
 	github.com/golang/glog v1.2.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
+	github.com/golang/snappy v0.0.5-0.20231225225746-43d5d4cd4e0e // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -147,6 +148,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
+	github.com/herumi/bls-eth-go-binary v1.31.0 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/huandu/skiplist v1.2.1 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
@@ -165,8 +167,11 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/minio/highwayhash v1.0.3 // indirect
+	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
@@ -180,6 +185,10 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/prysmaticlabs/fastssz v0.0.0-20241008181541-518c4ce73516 // indirect
+	github.com/prysmaticlabs/go-bitfield v0.0.0-20240328144219-a1caa50c3a1e // indirect
+	github.com/prysmaticlabs/gohashtree v0.0.4-beta.0.20240624100937-73632381301b // indirect
+	github.com/prysmaticlabs/prysm/v5 v5.3.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/rs/cors v1.11.1 // indirect
