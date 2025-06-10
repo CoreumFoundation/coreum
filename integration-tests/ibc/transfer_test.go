@@ -10,6 +10,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -307,8 +308,7 @@ func TestRejectedTransfer(t *testing.T) {
 
 	// Bank module rejects transfers targeting some module accounts. We use this feature to test that
 	// this type of IBC transfer is rejected by the receiving chain.
-	//authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
-	moduleAddress := sdk.AccAddress("non-existing-address")
+	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
@@ -322,7 +322,7 @@ func TestRejectedTransfer(t *testing.T) {
 		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(1000000)),
 	})
 
-	_, err := coreumChain.ExecuteIBCTransfer(
+	res, err := coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
 		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
@@ -332,6 +332,7 @@ func TestRejectedTransfer(t *testing.T) {
 		moduleAddress,
 	)
 	requireT.NoError(err)
+	t.Logf("IBC response: %v", res.Events)
 
 	// funds should be returned to coreum
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendToGaiaCoin))
