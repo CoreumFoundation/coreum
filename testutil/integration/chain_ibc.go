@@ -308,7 +308,7 @@ func (c ChainContext) GetLatestConsensusHeight(
 	if clientState.ClientType() != exported.Tendermint {
 		return ibcclienttypes.Height{}, sdkerrors.Wrapf(
 			cosmoserrors.ErrInvalidType,
-			"invalid client statw type. expected type: %s, got: %s",
+			"invalid client state type. expected type: %s, got: %s",
 			exported.Tendermint,
 			clientState.ClientType(),
 		)
