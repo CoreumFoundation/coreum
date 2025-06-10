@@ -10,7 +10,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -308,7 +307,8 @@ func TestRejectedTransfer(t *testing.T) {
 
 	// Bank module rejects transfers targeting some module accounts. We use this feature to test that
 	// this type of IBC transfer is rejected by the receiving chain.
-	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
+	//authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
+	moduleAddress := sdk.AccAddress("non-existing-address")
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
