@@ -30,8 +30,8 @@ require (
 	cosmossdk.io/x/tx v0.13.7
 	cosmossdk.io/x/upgrade v0.1.4
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
-	github.com/CosmWasm/wasmd v0.54.0
-	github.com/CosmWasm/wasmvm/v2 v2.2.2
+	github.com/CosmWasm/wasmd v0.54.1
+	github.com/CosmWasm/wasmvm/v2 v2.2.4
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/cosmos-sdk v0.50.13
@@ -69,7 +69,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/bits-and-blooms/bitset v1.13.0 // indirect
+	github.com/bits-and-blooms/bitset v1.17.0 // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
@@ -127,7 +127,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.17.0 // indirect
-	golang.org/x/time v0.8.0 // indirect
+	golang.org/x/time v0.9.0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
 
@@ -251,7 +251,7 @@ require (
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	nhooyr.io/websocket v1.8.11 // indirect
+	nhooyr.io/websocket v1.8.17 // indirect
 	pgregory.net/rapid v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
