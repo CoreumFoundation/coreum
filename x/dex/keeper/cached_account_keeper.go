@@ -26,7 +26,7 @@ func newCachedAccountKeeper(
 	}
 }
 
-func (cachedAccKeeper cachedAccountKeeper) getAccountAddress(
+func (cachedAccKeeper cachedAccountKeeper) getAccountAddressNoCache(
 	ctx sdk.Context,
 	accNumber uint64,
 ) (sdk.AccAddress, error) {
@@ -46,14 +46,14 @@ func (cachedAccKeeper cachedAccountKeeper) getAccountAddress(
 	return acc, nil
 }
 
-func (cachedAccKeeper cachedAccountKeeper) getAccountAddressWithCache(ctx sdk.Context, accNumber uint64) (
+func (cachedAccKeeper cachedAccountKeeper) GetAccountAddress(ctx sdk.Context, accNumber uint64) (
 	sdk.AccAddress,
 	error,
 ) {
 	addr, ok := cachedAccKeeper.cache[accNumber]
 	if !ok {
 		var err error
-		addr, err = cachedAccKeeper.getAccountAddress(ctx, accNumber)
+		addr, err = cachedAccKeeper.getAccountAddressNoCache(ctx, accNumber)
 		if err != nil {
 			return nil, err
 		}

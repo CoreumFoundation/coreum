@@ -1,22 +1,14 @@
-package keeper
+package matchingengine
 
 import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
-	matchingengine "github.com/CoreumFoundation/coreum/v6/x/dex/matching-engine"
 	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
-
-// RecordToAddress maps an account address to an order book record.
-type RecordToAddress struct {
-	Address sdk.AccAddress
-	Record  *types.OrderBookRecord
-}
 
 // MatchingResult holds the result of a matching operation.
 type MatchingResult struct {
@@ -26,13 +18,15 @@ type MatchingResult struct {
 	MakerOrderReducedEvents []types.EventOrderReduced
 	RecordsToRemove         []RecordToAddress
 	RecordToUpdate          *types.OrderBookRecord
+	TakerIsFilled           bool
+	TakerRecord             types.OrderBookRecord
 }
 
 // NewMatchingResult creates a new instance of MatchingResult.
-func NewMatchingResult(order types.Order) (*MatchingResult, error) {
+func NewMatchingResult(order types.Order) (MatchingResult, error) {
 	takerAddress, err := sdk.AccAddressFromBech32(order.Creator)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
+		return MatchingResult{}, sdkerrors.Wrapf(types.ErrInvalidInput, "invalid address: %s", order.Creator)
 	}
 
 	var orderStrPrice *string
@@ -40,7 +34,7 @@ func NewMatchingResult(order types.Order) (*MatchingResult, error) {
 		orderStrPrice = lo.ToPtr(order.Price.String())
 	}
 
-	return &MatchingResult{
+	return MatchingResult{
 		TakerAddress: takerAddress,
 		FTActions: assetfttypes.NewDEXActions(
 			assetfttypes.DEXOrder{
@@ -190,48 +184,4 @@ func (mr *MatchingResult) updateMakerSendEvents(
 			break
 		}
 	}
-}
-
-func (k Keeper) applyMatchingResult(ctx sdk.Context, mr matchingengine.MatchingResult) error {
-	// if matched passed but no changes are applied return
-	if mr.FTActions.CreatorExpectedToSpend.IsNil() {
-		return nil
-	}
-
-	for _, item := range mr.RecordsToRemove {
-		if err := k.removeOrderByRecord(ctx, item.Address, *item.Record); err != nil {
-			return err
-		}
-	}
-
-	if mr.RecordToUpdate != nil {
-		if err := k.saveOrderBookRecord(ctx, *mr.RecordToUpdate); err != nil {
-			return err
-		}
-	}
-
-	if err := k.publishMatchingEvents(ctx, mr); err != nil {
-		return err
-	}
-
-	// the call to smart contract is the last call here to avoid reentrancy vulnerability.
-	return k.assetFTKeeper.DEXExecuteActions(ctx, mr.FTActions)
-}
-
-func (k Keeper) publishMatchingEvents(
-	ctx sdk.Context,
-	mr matchingengine.MatchingResult,
-) error {
-	events := mr.MakerOrderReducedEvents
-	if !mr.TakerOrderReducedEvent.SentCoin.IsZero() {
-		events = append(events, mr.TakerOrderReducedEvent)
-	}
-
-	for _, evt := range events {
-		if err := ctx.EventManager().EmitTypedEvent(&evt); err != nil {
-			return sdkerrors.Wrapf(cosmoserrors.ErrIO, "failed to emit event EventOrderReduced: %s", err)
-		}
-	}
-
-	return nil
 }

@@ -287,13 +287,13 @@ func (k Keeper) GetAccountsOrders(
 			}
 
 			var acc sdk.AccAddress
-			acc, err = cachedAccKeeper.getAccountAddressWithCache(ctx, accNumber)
+			acc, err = cachedAccKeeper.GetAccountAddress(ctx, accNumber)
 			if err != nil {
 				return nil, err
 			}
 
 			orderSequence := record.Value
-			orderData, err := k.getOrderData(ctx, orderSequence)
+			orderData, err := k.GetOrderData(ctx, orderSequence)
 			if err != nil {
 				return nil, err
 			}
@@ -787,7 +787,7 @@ func (k Keeper) removeOrderByRecord(
 		return err
 	}
 
-	orderData, err := k.getOrderData(ctx, record.OrderSequence)
+	orderData, err := k.GetOrderData(ctx, record.OrderSequence)
 	if err != nil {
 		return err
 	}
@@ -836,7 +836,7 @@ func (k Keeper) saveOrderBookData(ctx sdk.Context, orderBookID uint32, data type
 }
 
 func (k Keeper) cancelOrderBySequence(ctx sdk.Context, acc sdk.AccAddress, orderSequence uint64) error {
-	orderData, err := k.getOrderData(ctx, orderSequence)
+	orderData, err := k.GetOrderData(ctx, orderSequence)
 	if err != nil {
 		return err
 	}
@@ -918,7 +918,7 @@ func (k Keeper) getOrderWithRecordByAddressAndID(
 		return types.Order{}, types.OrderBookRecord{}, err
 	}
 
-	orderData, err := k.getOrderData(ctx, orderSequence)
+	orderData, err := k.GetOrderData(ctx, orderSequence)
 	if err != nil {
 		return types.Order{}, types.OrderBookRecord{}, err
 	}
@@ -1010,7 +1010,7 @@ func (k Keeper) getPaginatedOrders(
 		// builder
 		func(_ []byte, record *gogotypes.UInt64Value) (*types.Order, error) {
 			orderSequence := record.Value
-			orderData, err := k.getOrderData(ctx, orderSequence)
+			orderData, err := k.GetOrderData(ctx, orderSequence)
 			if err != nil {
 				return nil, err
 			}
@@ -1129,12 +1129,12 @@ func (k Keeper) getPaginatedOrderBookOrders(
 			}
 
 			var acc sdk.AccAddress
-			acc, err = cachedAccKeeper.getAccountAddressWithCache(ctx, record.AccountNumber)
+			acc, err = cachedAccKeeper.GetAccountAddress(ctx, record.AccountNumber)
 			if err != nil {
 				return nil, err
 			}
 
-			orderData, err := k.getOrderData(ctx, orderSequence)
+			orderData, err := k.GetOrderData(ctx, orderSequence)
 			if err != nil {
 				return nil, err
 			}
@@ -1191,7 +1191,7 @@ func (k Keeper) removeOrderData(ctx sdk.Context, orderSequence uint64) error {
 	return k.storeService.OpenKVStore(ctx).Delete(types.CreateOrderKey(orderSequence))
 }
 
-func (k Keeper) getOrderData(ctx sdk.Context, orderSequence uint64) (types.OrderData, error) {
+func (k Keeper) GetOrderData(ctx sdk.Context, orderSequence uint64) (types.OrderData, error) {
 	var val types.OrderData
 	if err := k.getDataFromStore(ctx, types.CreateOrderKey(orderSequence), &val); err != nil {
 		return types.OrderData{}, sdkerrors.Wrapf(err, "failed to get order data, orderSequence: %d", orderSequence)
