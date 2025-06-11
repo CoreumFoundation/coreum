@@ -56,6 +56,7 @@ func (me MatchingEngine) MatchOrder(
 	}
 
 	mr.TakerIsFilled = takerIsFilled
+	mr.TakerRecord = takerRecord
 
 	return mr, nil
 }

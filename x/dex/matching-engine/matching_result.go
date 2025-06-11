@@ -19,6 +19,7 @@ type MatchingResult struct {
 	RecordsToRemove         []RecordToAddress
 	RecordToUpdate          *types.OrderBookRecord
 	TakerIsFilled           bool
+	TakerRecord             types.OrderBookRecord
 }
 
 // NewMatchingResult creates a new instance of MatchingResult.

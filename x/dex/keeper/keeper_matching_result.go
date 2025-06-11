@@ -8,6 +8,7 @@ import (
 	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
+	matchingengine "github.com/CoreumFoundation/coreum/v6/x/dex/matching-engine"
 	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
 )
 
@@ -191,7 +192,7 @@ func (mr *MatchingResult) updateMakerSendEvents(
 	}
 }
 
-func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
+func (k Keeper) applyMatchingResult(ctx sdk.Context, mr matchingengine.MatchingResult) error {
 	// if matched passed but no changes are applied return
 	if mr.FTActions.CreatorExpectedToSpend.IsNil() {
 		return nil
@@ -219,7 +220,7 @@ func (k Keeper) applyMatchingResult(ctx sdk.Context, mr *MatchingResult) error {
 
 func (k Keeper) publishMatchingEvents(
 	ctx sdk.Context,
-	mr *MatchingResult,
+	mr matchingengine.MatchingResult,
 ) error {
 	events := mr.MakerOrderReducedEvents
 	if !mr.TakerOrderReducedEvent.SentCoin.IsZero() {
