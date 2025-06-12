@@ -17,7 +17,7 @@ require (
 	cosmossdk.io/math v1.5.3
 	cosmossdk.io/x/feegrant v0.1.1
 	cosmossdk.io/x/nft v0.1.1
-	cosmossdk.io/x/upgrade v0.2.0
+	cosmossdk.io/x/upgrade v0.1.4
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v6 v6.0.0-20241002100003-2dcad94c2fbc
 	github.com/CosmWasm/wasmd v0.55.0
@@ -104,6 +104,7 @@ require (
 	github.com/emicklei/dot v1.6.4 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
+	github.com/ethereum/go-ethereum v1.15.10 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
@@ -120,6 +121,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.2.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.5-0.20231225225746-43d5d4cd4e0e // indirect
 	github.com/google/btree v1.1.3 // indirect
@@ -196,6 +198,7 @@ require (
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
 	github.com/shamaton/msgpack/v2 v2.2.2 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
@@ -204,8 +207,10 @@ require (
 	github.com/spf13/viper v1.20.1 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/supranational/blst v0.3.14 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
+	github.com/thomaso-mirodin/intmath v0.0.0-20160323211736-5dc6d854e46e // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ulikunitz/xz v0.5.12 // indirect
