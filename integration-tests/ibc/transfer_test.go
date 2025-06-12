@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -228,7 +228,7 @@ func TestTimedOutTransfer(t *testing.T) {
 		)
 		switch {
 		case err == nil:
-		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrTimeoutElapsed.Error()):
 			return retry.Retryable(err)
 		default:
 			requireT.NoError(err)
@@ -322,7 +322,7 @@ func TestRejectedTransfer(t *testing.T) {
 		Amount:  gaiaChain.NewCoin(sdkmath.NewIntFromUint64(1000000)),
 	})
 
-	_, err := coreumChain.ExecuteIBCTransfer(
+	res, err := coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
 		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{})),
@@ -332,6 +332,7 @@ func TestRejectedTransfer(t *testing.T) {
 		moduleAddress,
 	)
 	requireT.NoError(err)
+	t.Logf("IBC response: %v", res.Events)
 
 	// funds should be returned to coreum
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendToGaiaCoin))

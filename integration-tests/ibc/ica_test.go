@@ -12,8 +12,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	"github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -55,6 +56,7 @@ func TestICADeterministicGas(t *testing.T) {
 	msgRegisterInterchainAccountOnHost := icacontrollertypes.MsgRegisterInterchainAccount{
 		ConnectionId: controllerToHostConnectionID,
 		Owner:        chains.Coreum.MustConvertToBech32Address(controllerCaller),
+		Ordering:     types.UNORDERED,
 	}
 	txRes, err := chains.Coreum.BroadcastTxWithSigner(
 		ctx,
@@ -96,6 +98,7 @@ func testICAIntegration(
 	msgRegisterInterchainAccount := icacontrollertypes.MsgRegisterInterchainAccount{
 		ConnectionId: controllerToHostConnectionID,
 		Owner:        controllerChain.MustConvertToBech32Address(controllerAcc),
+		Ordering:     types.UNORDERED,
 	}
 	_, err := controllerChain.BroadcastTxWithSigner(
 		ctx,

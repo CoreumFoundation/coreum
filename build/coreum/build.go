@@ -71,16 +71,16 @@ func BuildCoredInDocker(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildGaiaDockerImage builds docker image of the gaia.
 func BuildGaiaDockerImage(ctx context.Context, deps types.DepsFunc) error {
-	if err := crusttools.Ensure(ctx, coreumtools.Gaia, crusttools.TargetPlatformLinuxLocalArchInDocker); err != nil {
+	if err := crusttools.Ensure(ctx, coreumtools.Gaia, crusttools.TargetPlatformLinuxAMD64InDocker); err != nil {
 		return err
 	}
 
 	gaiaLocalPath := filepath.Join(
-		"bin", ".cache", gaiaBinaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String(),
+		"bin", ".cache", gaiaBinaryName, crusttools.TargetPlatformLinuxAMD64InDocker.String(),
 	)
 	if err := crusttools.CopyToolBinaries(
 		coreumtools.Gaia,
-		crusttools.TargetPlatformLinuxLocalArchInDocker,
+		crusttools.TargetPlatformLinuxAMD64InDocker,
 		gaiaLocalPath,
 		gaiaBinaryPath,
 	); err != nil {
@@ -96,25 +96,26 @@ func BuildGaiaDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		ContextDir: gaiaLocalPath,
-		ImageName:  gaiaBinaryName,
-		Dockerfile: dockerfile,
-		Versions:   []string{config.ZNetVersion},
+		ContextDir:      gaiaLocalPath,
+		ImageName:       gaiaBinaryName,
+		TargetPlatforms: []crusttools.TargetPlatform{crusttools.TargetPlatformLinuxAMD64InDocker},
+		Dockerfile:      dockerfile,
+		Versions:        []string{config.ZNetVersion},
 	})
 }
 
 // BuildHermesDockerImage builds docker image of the ibc relayer.
 func BuildHermesDockerImage(ctx context.Context, deps types.DepsFunc) error {
-	if err := crusttools.Ensure(ctx, coreumtools.Hermes, crusttools.TargetPlatformLinuxLocalArchInDocker); err != nil {
+	if err := crusttools.Ensure(ctx, coreumtools.Hermes, crusttools.TargetPlatformLinuxAMD64InDocker); err != nil {
 		return err
 	}
 
 	hermesLocalPath := filepath.Join(
-		"bin", ".cache", hermesBinaryName, crusttools.TargetPlatformLinuxLocalArchInDocker.String(),
+		"bin", ".cache", hermesBinaryName, crusttools.TargetPlatformLinuxAMD64InDocker.String(),
 	)
 	if err := crusttools.CopyToolBinaries(
 		coreumtools.Hermes,
-		crusttools.TargetPlatformLinuxLocalArchInDocker,
+		crusttools.TargetPlatformLinuxAMD64InDocker,
 		hermesLocalPath,
 		hermesBinaryPath,
 	); err != nil {
@@ -131,10 +132,11 @@ func BuildHermesDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		ContextDir: hermesLocalPath,
-		ImageName:  hermesBinaryName,
-		Dockerfile: dockerfile,
-		Versions:   []string{config.ZNetVersion},
+		ContextDir:      hermesLocalPath,
+		ImageName:       hermesBinaryName,
+		TargetPlatforms: []crusttools.TargetPlatform{crusttools.TargetPlatformLinuxAMD64InDocker},
+		Dockerfile:      dockerfile,
+		Versions:        []string{config.ZNetVersion},
 	})
 }
 

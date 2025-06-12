@@ -7872,7 +7872,7 @@
     },
     "/ibc/apps/interchain_accounts/controller/v1/owners/{owner}/connections/{connection_id}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesApps27InterchainAccountsControllerTypesInterchainAccount",
+        "operationId": "GithubComCosmosIbcGoV10ModulesApps27InterchainAccountsControllerTypesInterchainAccount",
         "parameters": [
           {
             "name": "owner",
@@ -7909,7 +7909,7 @@
     },
     "/ibc/apps/interchain_accounts/controller/v1/params": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesApps27InterchainAccountsControllerTypesParams",
+        "operationId": "GithubComCosmosIbcGoV10ModulesApps27InterchainAccountsControllerTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -7932,7 +7932,7 @@
     },
     "/ibc/apps/interchain_accounts/host/v1/params": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesApps27InterchainAccountsHostTypesParams",
+        "operationId": "GithubComCosmosIbcGoV10ModulesApps27InterchainAccountsHostTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -7955,7 +7955,7 @@
     },
     "/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesAppsTransferTypesEscrowAddress",
+        "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesEscrowAddress",
         "parameters": [
           {
             "name": "channel_id",
@@ -7994,7 +7994,7 @@
     },
     "/ibc/apps/transfer/v1/denom_hashes/{trace}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesAppsTransferTypesDenomHash",
+        "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesDenomHash",
         "parameters": [
           {
             "name": "trace",
@@ -8025,9 +8025,9 @@
         ]
       }
     },
-    "/ibc/apps/transfer/v1/denom_traces": {
+    "/ibc/apps/transfer/v1/denoms": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesAppsTransferTypesDenomTraces",
+        "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesDenoms",
         "parameters": [
           {
             "name": "pagination.key",
@@ -8072,7 +8072,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryDenomTracesResponse"
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryDenomsResponse"
             }
           },
           "default": {
@@ -8082,40 +8082,7 @@
             }
           }
         },
-        "summary": "DenomTraces queries all denomination traces.",
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/ibc/apps/transfer/v1/denom_traces/{hash}": {
-      "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesAppsTransferTypesDenomTrace",
-        "parameters": [
-          {
-            "name": "hash",
-            "description": "hash (in hex format) or denom (full denom with ibc prefix) of the denomination trace information.",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "pattern": ".+"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryDenomTraceResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/google.rpc.Status"
-            }
-          }
-        },
-        "summary": "DenomTrace queries a denomination trace information.",
+        "summary": "Denoms queries all denominations",
         "tags": [
           "Query"
         ]
@@ -8123,7 +8090,7 @@
     },
     "/ibc/apps/transfer/v1/denoms/{denom}/total_escrow": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesAppsTransferTypesTotalEscrowForDenom",
+        "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesTotalEscrowForDenom",
         "parameters": [
           {
             "name": "denom",
@@ -8153,9 +8120,42 @@
         ]
       }
     },
+    "/ibc/apps/transfer/v1/denoms/{hash}": {
+      "get": {
+        "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesDenom",
+        "parameters": [
+          {
+            "name": "hash",
+            "description": "hash (in hex format) or denom (full denom with ibc prefix) of the on chain denomination.",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ibc.applications.transfer.v1.QueryDenomResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "summary": "Denom queries a denomination",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/ibc/apps/transfer/v1/params": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesAppsTransferTypesParams",
+        "operationId": "GithubComCosmosIbcGoV10ModulesAppsTransferTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -8178,7 +8178,7 @@
     },
     "/ibc/core/channel/v1/channels": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesChannels",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesChannels",
         "parameters": [
           {
             "name": "pagination.key",
@@ -8241,7 +8241,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesChannel",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesChannel",
         "parameters": [
           {
             "name": "channel_id",
@@ -8280,7 +8280,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/client_state": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesChannelClientState",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesChannelClientState",
         "parameters": [
           {
             "name": "channel_id",
@@ -8319,7 +8319,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/consensus_state/revision/{revision_number}/height/{revision_height}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesChannelConsensusState",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesChannelConsensusState",
         "parameters": [
           {
             "name": "channel_id",
@@ -8374,7 +8374,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/next_sequence": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesNextSequenceReceive",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesNextSequenceReceive",
         "parameters": [
           {
             "name": "channel_id",
@@ -8413,7 +8413,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/next_sequence_send": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesNextSequenceSend",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesNextSequenceSend",
         "parameters": [
           {
             "name": "channel_id",
@@ -8452,7 +8452,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/packet_acknowledgements": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesPacketAcknowledgements",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesPacketAcknowledgements",
         "parameters": [
           {
             "name": "channel_id",
@@ -8541,7 +8541,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/packet_acks/{sequence}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesPacketAcknowledgement",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesPacketAcknowledgement",
         "parameters": [
           {
             "name": "channel_id",
@@ -8588,7 +8588,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/packet_commitments": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesPacketCommitments",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesPacketCommitments",
         "parameters": [
           {
             "name": "channel_id",
@@ -8665,7 +8665,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/packet_commitments/{packet_ack_sequences}/unreceived_acks": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesUnreceivedAcks",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesUnreceivedAcks",
         "parameters": [
           {
             "name": "channel_id",
@@ -8717,7 +8717,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/packet_commitments/{packet_commitment_sequences}/unreceived_packets": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesUnreceivedPackets",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesUnreceivedPackets",
         "parameters": [
           {
             "name": "channel_id",
@@ -8769,7 +8769,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/packet_commitments/{sequence}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesPacketCommitment",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesPacketCommitment",
         "parameters": [
           {
             "name": "channel_id",
@@ -8816,7 +8816,7 @@
     },
     "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/packet_receipts/{sequence}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesPacketReceipt",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesPacketReceipt",
         "parameters": [
           {
             "name": "channel_id",
@@ -8861,83 +8861,9 @@
         ]
       }
     },
-    "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/upgrade": {
-      "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesUpgrade",
-        "parameters": [
-          {
-            "name": "channel_id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "port_id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ibc.core.channel.v1.QueryUpgradeResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/google.rpc.Status"
-            }
-          }
-        },
-        "summary": "Upgrade returns the upgrade for a given port and channel id.",
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/upgrade_error": {
-      "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesUpgradeError",
-        "parameters": [
-          {
-            "name": "channel_id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "port_id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ibc.core.channel.v1.QueryUpgradeErrorResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/google.rpc.Status"
-            }
-          }
-        },
-        "summary": "UpgradeError returns the error receipt if the upgrade handshake failed.",
-        "tags": [
-          "Query"
-        ]
-      }
-    },
     "/ibc/core/channel/v1/connections/{connection}/channels": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesConnectionChannels",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore04ChannelTypesConnectionChannels",
         "parameters": [
           {
             "name": "connection",
@@ -9005,14 +8931,23 @@
         ]
       }
     },
-    "/ibc/core/channel/v1/params": {
+    "/ibc/core/client/v1/client_creator/{client_id}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore04ChannelTypesChannelParams",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesClientCreator",
+        "parameters": [
+          {
+            "name": "client_id",
+            "description": "client unique identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/ibc.core.channel.v1.QueryChannelParamsResponse"
+              "$ref": "#/definitions/ibc.core.client.v1.QueryClientCreatorResponse"
             }
           },
           "default": {
@@ -9022,7 +8957,7 @@
             }
           }
         },
-        "summary": "ChannelParams queries all parameters of the ibc channel submodule.",
+        "summary": "ClientCreator queries the creator of a given client.",
         "tags": [
           "Query"
         ]
@@ -9030,7 +8965,7 @@
     },
     "/ibc/core/client/v1/client_states": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesClientStates",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesClientStates",
         "parameters": [
           {
             "name": "pagination.key",
@@ -9093,7 +9028,7 @@
     },
     "/ibc/core/client/v1/client_states/{client_id}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesClientState",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesClientState",
         "parameters": [
           {
             "name": "client_id",
@@ -9125,7 +9060,7 @@
     },
     "/ibc/core/client/v1/client_status/{client_id}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesClientStatus",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesClientStatus",
         "parameters": [
           {
             "name": "client_id",
@@ -9157,7 +9092,7 @@
     },
     "/ibc/core/client/v1/consensus_states/{client_id}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesConsensusStates",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesConsensusStates",
         "parameters": [
           {
             "name": "client_id",
@@ -9227,7 +9162,7 @@
     },
     "/ibc/core/client/v1/consensus_states/{client_id}/heights": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesConsensusStateHeights",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesConsensusStateHeights",
         "parameters": [
           {
             "name": "client_id",
@@ -9297,7 +9232,7 @@
     },
     "/ibc/core/client/v1/consensus_states/{client_id}/revision/{revision_number}/height/{revision_height}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesConsensusState",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesConsensusState",
         "parameters": [
           {
             "name": "client_id",
@@ -9324,7 +9259,7 @@
           },
           {
             "name": "latest_height",
-            "description": "latest_height overrrides the height field and queries the latest stored\nConsensusState",
+            "description": "latest_height overrides the height field and queries the latest stored\nConsensusState",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -9352,7 +9287,7 @@
     },
     "/ibc/core/client/v1/params": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesClientParams",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesClientParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -9375,7 +9310,7 @@
     },
     "/ibc/core/client/v1/upgraded_client_states": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesUpgradedClientState",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesUpgradedClientState",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -9398,7 +9333,7 @@
     },
     "/ibc/core/client/v1/upgraded_consensus_states": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesUpgradedConsensusState",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesUpgradedConsensusState",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -9421,7 +9356,7 @@
     },
     "/ibc/core/client/v1/verify_membership": {
       "post": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore02ClientTypesVerifyMembership",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore02ClientTypesVerifyMembership",
         "parameters": [
           {
             "name": "body",
@@ -9454,7 +9389,7 @@
     },
     "/ibc/core/connection/v1/client_connections/{client_id}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore03ConnectionTypesClientConnections",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore03ConnectionTypesClientConnections",
         "parameters": [
           {
             "name": "client_id",
@@ -9486,7 +9421,7 @@
     },
     "/ibc/core/connection/v1/connections": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore03ConnectionTypesConnections",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore03ConnectionTypesConnections",
         "parameters": [
           {
             "name": "pagination.key",
@@ -9549,7 +9484,7 @@
     },
     "/ibc/core/connection/v1/connections/{connection_id}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore03ConnectionTypesConnection",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore03ConnectionTypesConnection",
         "parameters": [
           {
             "name": "connection_id",
@@ -9581,7 +9516,7 @@
     },
     "/ibc/core/connection/v1/connections/{connection_id}/client_state": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore03ConnectionTypesConnectionClientState",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore03ConnectionTypesConnectionClientState",
         "parameters": [
           {
             "name": "connection_id",
@@ -9613,7 +9548,7 @@
     },
     "/ibc/core/connection/v1/connections/{connection_id}/consensus_state/revision/{revision_number}/height/{revision_height}": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore03ConnectionTypesConnectionConsensusState",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore03ConnectionTypesConnectionConsensusState",
         "parameters": [
           {
             "name": "connection_id",
@@ -9659,7 +9594,7 @@
     },
     "/ibc/core/connection/v1/params": {
       "get": {
-        "operationId": "GithubComCosmosIbcGoV8ModulesCore03ConnectionTypesConnectionParams",
+        "operationId": "GithubComCosmosIbcGoV10ModulesCore03ConnectionTypesConnectionParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -15066,19 +15001,35 @@
       },
       "description": "QueryParamsResponse is the response type for the Query/Params RPC method."
     },
-    "ibc.applications.transfer.v1.DenomTrace": {
+    "ibc.applications.transfer.v1.Denom": {
       "type": "object",
       "properties": {
-        "path": {
+        "base": {
           "type": "string",
-          "description": "path defines the chain of port/channel identifiers used for tracing the\nsource of the fungible token."
+          "title": "the base token denomination"
         },
-        "base_denom": {
-          "type": "string",
-          "description": "base denomination of the relayed fungible token."
+        "trace": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ibc.applications.transfer.v1.Hop"
+          },
+          "title": "the trace of the token"
         }
       },
-      "description": "DenomTrace contains the base denomination for ICS20 fungible tokens and the\nsource tracing information path."
+      "description": "Denom holds the base denom of a Token and a trace of the chains it was sent through."
+    },
+    "ibc.applications.transfer.v1.Hop": {
+      "type": "object",
+      "properties": {
+        "port_id": {
+          "type": "string"
+        },
+        "channel_id": {
+          "type": "string"
+        }
+      },
+      "description": "Hop defines a port ID, channel ID pair specifying where tokens must be forwarded\nnext in a multihop transfer."
     },
     "ibc.applications.transfer.v1.Params": {
       "type": "object",
@@ -15104,33 +15055,33 @@
       },
       "description": "QueryDenomHashResponse is the response type for the Query/DenomHash RPC\nmethod."
     },
-    "ibc.applications.transfer.v1.QueryDenomTraceResponse": {
+    "ibc.applications.transfer.v1.QueryDenomResponse": {
       "type": "object",
       "properties": {
-        "denom_trace": {
-          "$ref": "#/definitions/ibc.applications.transfer.v1.DenomTrace",
-          "description": "denom_trace returns the requested denomination trace information."
+        "denom": {
+          "$ref": "#/definitions/ibc.applications.transfer.v1.Denom",
+          "description": "denom returns the requested denomination."
         }
       },
-      "description": "QueryDenomTraceResponse is the response type for the Query/DenomTrace RPC\nmethod."
+      "description": "QueryDenomResponse is the response type for the Query/Denom RPC\nmethod."
     },
-    "ibc.applications.transfer.v1.QueryDenomTracesResponse": {
+    "ibc.applications.transfer.v1.QueryDenomsResponse": {
       "type": "object",
       "properties": {
-        "denom_traces": {
+        "denoms": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ibc.applications.transfer.v1.DenomTrace"
+            "$ref": "#/definitions/ibc.applications.transfer.v1.Denom"
           },
-          "description": "denom_traces returns all denominations trace information."
+          "description": "denoms returns all denominations."
         },
         "pagination": {
           "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse",
           "description": "pagination defines the pagination in the response."
         }
       },
-      "description": "QueryConnectionsResponse is the response type for the Query/DenomTraces RPC\nmethod."
+      "description": "QueryDenomsResponse is the response type for the Query/Denoms RPC\nmethod."
     },
     "ibc.applications.transfer.v1.QueryEscrowAddressResponse": {
       "type": "object",
@@ -15186,11 +15137,6 @@
         "version": {
           "type": "string",
           "title": "opaque channel version, which is agreed upon during the handshake"
-        },
-        "upgrade_sequence": {
-          "type": "string",
-          "format": "uint64",
-          "title": "upgrade sequence indicates the latest upgrade attempt performed by this channel\nthe value of 0 indicates the channel has never been upgraded"
         }
       },
       "description": "Channel defines pipeline for exactly-once packet delivery between specific\nmodules on separate blockchains, which has at least one end capable of\nsending packets and one end capable of receiving packets."
@@ -15208,21 +15154,6 @@
         }
       },
       "title": "Counterparty defines a channel end counterparty"
-    },
-    "ibc.core.channel.v1.ErrorReceipt": {
-      "type": "object",
-      "properties": {
-        "sequence": {
-          "type": "string",
-          "format": "uint64",
-          "title": "the channel upgrade sequence"
-        },
-        "message": {
-          "type": "string",
-          "title": "the error message detailing the cause of failure"
-        }
-      },
-      "description": "ErrorReceipt defines a type which encapsulates the upgrade sequence and error associated with the\nupgrade handshake failure. When a channel upgrade handshake is aborted both chains are expected to increment to the\nnext sequence."
     },
     "ibc.core.channel.v1.IdentifiedChannel": {
       "type": "object",
@@ -15257,11 +15188,6 @@
         "channel_id": {
           "type": "string",
           "title": "channel identifier"
-        },
-        "upgrade_sequence": {
-          "type": "string",
-          "format": "uint64",
-          "title": "upgrade sequence indicates the latest upgrade attempt performed by this channel\nthe value of 0 indicates the channel has never been upgraded"
         }
       },
       "description": "IdentifiedChannel defines a channel with additional port and channel\nidentifier fields."
@@ -15300,16 +15226,6 @@
         }
       },
       "description": "PacketState defines the generic type necessary to retrieve and store\npacket commitments, acknowledgements, and receipts.\nCaller is responsible for knowing the context necessary to interpret this\nstate as a commitment, acknowledgement, or a receipt."
-    },
-    "ibc.core.channel.v1.Params": {
-      "type": "object",
-      "properties": {
-        "upgrade_timeout": {
-          "$ref": "#/definitions/ibc.core.channel.v1.Timeout",
-          "description": "the relative timeout after which channel upgrades will time out."
-        }
-      },
-      "description": "Params defines the set of IBC channel parameters."
     },
     "ibc.core.channel.v1.QueryChannelClientStateResponse": {
       "type": "object",
@@ -15352,16 +15268,6 @@
         }
       },
       "title": "QueryChannelClientStateResponse is the Response type for the\nQuery/QueryChannelClientState RPC method"
-    },
-    "ibc.core.channel.v1.QueryChannelParamsResponse": {
-      "type": "object",
-      "properties": {
-        "params": {
-          "$ref": "#/definitions/ibc.core.channel.v1.Params",
-          "description": "params defines the parameters of the module."
-        }
-      },
-      "description": "QueryChannelParamsResponse is the response type for the Query/ChannelParams RPC method."
     },
     "ibc.core.channel.v1.QueryChannelResponse": {
       "type": "object",
@@ -15603,42 +15509,6 @@
       },
       "title": "QueryUnreceivedPacketsResponse is the response type for the\nQuery/UnreceivedPacketCommitments RPC method"
     },
-    "ibc.core.channel.v1.QueryUpgradeErrorResponse": {
-      "type": "object",
-      "properties": {
-        "error_receipt": {
-          "$ref": "#/definitions/ibc.core.channel.v1.ErrorReceipt"
-        },
-        "proof": {
-          "type": "string",
-          "format": "byte",
-          "title": "merkle proof of existence"
-        },
-        "proof_height": {
-          "$ref": "#/definitions/ibc.core.client.v1.Height",
-          "title": "height at which the proof was retrieved"
-        }
-      },
-      "title": "QueryUpgradeErrorResponse is the response type for the Query/QueryUpgradeError RPC method"
-    },
-    "ibc.core.channel.v1.QueryUpgradeResponse": {
-      "type": "object",
-      "properties": {
-        "upgrade": {
-          "$ref": "#/definitions/ibc.core.channel.v1.Upgrade"
-        },
-        "proof": {
-          "type": "string",
-          "format": "byte",
-          "title": "merkle proof of existence"
-        },
-        "proof_height": {
-          "$ref": "#/definitions/ibc.core.client.v1.Height",
-          "title": "height at which the proof was retrieved"
-        }
-      },
-      "title": "QueryUpgradeResponse is the response type for the QueryUpgradeResponse RPC method"
-    },
     "ibc.core.channel.v1.State": {
       "type": "string",
       "enum": [
@@ -15646,61 +15516,10 @@
         "STATE_INIT",
         "STATE_TRYOPEN",
         "STATE_OPEN",
-        "STATE_CLOSED",
-        "STATE_FLUSHING",
-        "STATE_FLUSHCOMPLETE"
+        "STATE_CLOSED"
       ],
       "default": "STATE_UNINITIALIZED_UNSPECIFIED",
-      "description": "State defines if a channel is in one of the following states:\nCLOSED, INIT, TRYOPEN, OPEN, FLUSHING, FLUSHCOMPLETE or UNINITIALIZED.\n\n - STATE_UNINITIALIZED_UNSPECIFIED: Default State\n - STATE_INIT: A channel has just started the opening handshake.\n - STATE_TRYOPEN: A channel has acknowledged the handshake step on the counterparty chain.\n - STATE_OPEN: A channel has completed the handshake. Open channels are\nready to send and receive packets.\n - STATE_CLOSED: A channel has been closed and can no longer be used to send or receive\npackets.\n - STATE_FLUSHING: A channel has just accepted the upgrade handshake attempt and is flushing in-flight packets.\n - STATE_FLUSHCOMPLETE: A channel has just completed flushing any in-flight packets."
-    },
-    "ibc.core.channel.v1.Timeout": {
-      "type": "object",
-      "properties": {
-        "height": {
-          "$ref": "#/definitions/ibc.core.client.v1.Height",
-          "title": "block height after which the packet or upgrade times out"
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "uint64",
-          "title": "block timestamp (in nanoseconds) after which the packet or upgrade times out"
-        }
-      },
-      "description": "Timeout defines an execution deadline structure for 04-channel handlers.\nThis includes packet lifecycle handlers as well as the upgrade handshake handlers.\nA valid Timeout contains either one or both of a timestamp and block height (sequence)."
-    },
-    "ibc.core.channel.v1.Upgrade": {
-      "type": "object",
-      "properties": {
-        "fields": {
-          "$ref": "#/definitions/ibc.core.channel.v1.UpgradeFields"
-        },
-        "timeout": {
-          "$ref": "#/definitions/ibc.core.channel.v1.Timeout"
-        },
-        "next_sequence_send": {
-          "type": "string",
-          "format": "uint64"
-        }
-      },
-      "description": "Upgrade is a verifiable type which contains the relevant information\nfor an attempted upgrade. It provides the proposed changes to the channel\nend, the timeout for this upgrade attempt and the next packet sequence\nwhich allows the counterparty to efficiently know the highest sequence it has received.\nThe next sequence send is used for pruning and upgrading from unordered to ordered channels."
-    },
-    "ibc.core.channel.v1.UpgradeFields": {
-      "type": "object",
-      "properties": {
-        "ordering": {
-          "$ref": "#/definitions/ibc.core.channel.v1.Order"
-        },
-        "connection_hops": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "version": {
-          "type": "string"
-        }
-      },
-      "description": "UpgradeFields are the fields in a channel end which may be changed\nduring a channel upgrade."
+      "description": "State defines if a channel is in one of the following states:\nCLOSED, INIT, TRYOPEN, OPEN, or UNINITIALIZED.\n\n - STATE_UNINITIALIZED_UNSPECIFIED: Default State\n - STATE_INIT: A channel has just started the opening handshake.\n - STATE_TRYOPEN: A channel has acknowledged the handshake step on the counterparty chain.\n - STATE_OPEN: A channel has completed the handshake. Open channels are\nready to send and receive packets.\n - STATE_CLOSED: A channel has been closed and can no longer be used to send or receive\npackets."
     },
     "ibc.core.client.v1.ConsensusStateWithHeight": {
       "type": "object",
@@ -15730,7 +15549,7 @@
           "title": "the height within the given revision"
         }
       },
-      "description": "Normally the RevisionHeight is incremented at each height while keeping\nRevisionNumber the same. However some consensus algorithms may choose to\nreset the height in certain conditions e.g. hard forks, state-machine\nbreaking changes In these cases, the RevisionNumber is incremented so that\nheight continues to be monitonically increasing even as the RevisionHeight\ngets reset",
+      "description": "Normally the RevisionHeight is incremented at each height while keeping\nRevisionNumber the same. However some consensus algorithms may choose to\nreset the height in certain conditions e.g. hard forks, state-machine\nbreaking changes In these cases, the RevisionNumber is incremented so that\nheight continues to be monitonically increasing even as the RevisionHeight\ngets reset\n\nPlease note that json tags for generated Go code are overridden to explicitly exclude the omitempty jsontag.\nThis enforces the Go json marshaller to always emit zero values for both revision_number and revision_height.",
       "title": "Height is a monotonically increasing data type\nthat can be compared against another Height for the purposes of updating and\nfreezing clients"
     },
     "ibc.core.client.v1.IdentifiedClientState": {
@@ -15759,6 +15578,16 @@
         }
       },
       "description": "Params defines the set of IBC light client parameters."
+    },
+    "ibc.core.client.v1.QueryClientCreatorResponse": {
+      "type": "object",
+      "properties": {
+        "creator": {
+          "type": "string",
+          "title": "creator of the client"
+        }
+      },
+      "description": "QueryClientCreatorResponse is the response type for the Query/ClientCreator RPC\nmethod."
     },
     "ibc.core.client.v1.QueryClientParamsResponse": {
       "type": "object",
@@ -15907,10 +15736,6 @@
           "$ref": "#/definitions/ibc.core.client.v1.Height",
           "description": "the height of the commitment root at which the proof is verified."
         },
-        "merkle_path": {
-          "$ref": "#/definitions/ibc.core.commitment.v1.MerklePath",
-          "description": "the commitment key path."
-        },
         "value": {
           "type": "string",
           "format": "byte",
@@ -15925,6 +15750,10 @@
           "type": "string",
           "format": "uint64",
           "title": "optional block delay"
+        },
+        "merkle_path": {
+          "$ref": "#/definitions/ibc.core.commitment.v2.MerklePath",
+          "description": "the commitment key path."
         }
       },
       "title": "QueryVerifyMembershipRequest is the request type for the Query/VerifyMembership RPC method"
@@ -15939,18 +15768,6 @@
       },
       "title": "QueryVerifyMembershipResponse is the response type for the Query/VerifyMembership RPC method"
     },
-    "ibc.core.commitment.v1.MerklePath": {
-      "type": "object",
-      "properties": {
-        "key_path": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "title": "MerklePath is the path used to verify commitment proofs, which can be an\narbitrary structured object (defined by a commitment type).\nMerklePath is represented from root-to-leaf"
-    },
     "ibc.core.commitment.v1.MerklePrefix": {
       "type": "object",
       "properties": {
@@ -15960,6 +15777,19 @@
         }
       },
       "title": "MerklePrefix is merkle path prefixed to the key.\nThe constructed key from the Path and the key will be append(Path.KeyPath,\nappend(Path.KeyPrefix, key...))"
+    },
+    "ibc.core.commitment.v2.MerklePath": {
+      "type": "object",
+      "properties": {
+        "key_path": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "byte"
+          }
+        }
+      },
+      "description": "MerklePath is the path used to verify commitment proofs, which can be an\narbitrary structured object (defined by a commitment type).\nICS-23 verification supports membership proofs for nested merkle trees.\nThe ICS-24 standard provable keys MUST be stored in the lowest level tree with an optional prefix.\nThe IC24 provable tree may then be stored in a higher level tree(s) that hash up to the root hash\nstored in the consensus state of the client.\nEach element of the path represents the key of a merkle tree from the root to the leaf.\nThe elements of the path before the final element must be the path to the tree that contains\nthe ICS24 provable store. Thus, it should remain constant for all ICS24 proofs.\nThe final element of the path is the key of the leaf in the ICS24 provable store,\nThus IBC core will append the ICS24 path to the final element of the MerklePath\nstored in the counterparty to create the full path to the leaf for proof verification.\nExamples:\nCosmos SDK:\nThe Cosmos SDK commits to a multi-tree where each store is an IAVL tree and all store hashes\nare hashed in a simple merkle tree to get the final root hash. Thus, the MerklePath in the counterparty\nMerklePrefix has the following structure: [\"ibc\", \"\"]\nThe core IBC handler will append the ICS24 path to the final element of the MerklePath\nlike so: [\"ibc\", \"{packetCommitmentPath}\"] which will then be used for final verification.\nEthereum:\nThe Ethereum client commits to a single Patricia merkle trie. The ICS24 provable store is managed\nby the smart contract state. Each smart contract has a specific prefix reserved within the global trie.\nThus the MerklePath in the counterparty is the prefix to the smart contract state in the global trie.\nSince there is only one tree in the commitment structure of ethereum the MerklePath in the counterparty\nMerklePrefix has the following structure: [\"IBCCoreContractAddressStoragePrefix\"]\nThe core IBC handler will append the ICS24 path to the final element of the MerklePath\nlike so: [\"IBCCoreContractAddressStoragePrefix{packetCommitmentPath}\"] which will then be used for final\nverification. Thus the MerklePath in the counterparty MerklePrefix is the nested key path from the root hash of the\nconsensus state down to the ICS24 provable store. The IBC handler retrieves the counterparty key path to the ICS24\nprovable store from the MerklePath and appends the ICS24 path to get the final key path to the value being verified\nby the client against the root hash in the client's consensus state."
     },
     "ibc.core.connection.v1.ConnectionEnd": {
       "type": "object",
@@ -16197,7 +16027,7 @@
           "title": "list of features compatible with the specified identifier"
         }
       },
-      "description": "Version defines the versioning scheme used to negotiate the IBC verison in\nthe connection handshake."
+      "description": "Version defines the versioning scheme used to negotiate the IBC version in\nthe connection handshake."
     },
     "tendermint.abci.Event": {
       "type": "object",

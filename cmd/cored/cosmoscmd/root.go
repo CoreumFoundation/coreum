@@ -410,7 +410,7 @@ func installAwaitBroadcastModeWrapper(cmd *cobra.Command) {
 				parentWriter: originalOutput,
 			}
 			clientCtx.Output = writer
-			cmd.SetOutput(writer)
+			cmd.SetOut(writer)
 			if err := client.SetCmdClientContext(cmd, clientCtx); err != nil {
 				return errors.WithStack(err)
 			}

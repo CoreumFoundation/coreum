@@ -15,13 +15,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	ibcinterchainaccountscontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	ibcinterchainaccountshosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibclightclienttypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
+	ibcinterchainaccountscontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
+	ibcinterchainaccountshosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcv2clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcv2channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	protobuf "github.com/golang/protobuf/proto" //nolint:staticcheck // We need this dependency to convert protos to be able to read their options
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -45,14 +47,22 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&govtypesv1.MsgCancelProposal{}): {},
 
 		// ibc/core/client
-		sdk.MsgTypeURL(&ibcclienttypes.MsgCreateClient{}):  {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateClient{}):  {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}): {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgCreateClient{}):        {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateClient{}):        {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpgradeClient{}):       {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgDeleteClientCreator{}): {},
 		//nolint:staticcheck // it is here so the list is complete.
-		sdk.MsgTypeURL(&ibcclienttypes.MsgSubmitMisbehaviour{}): {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgIBCSoftwareUpgrade{}): {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgRecoverClient{}):      {},
-		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateParams{}):       {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgSubmitMisbehaviour{}):     {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgIBCSoftwareUpgrade{}):     {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgRecoverClient{}):          {},
+		sdk.MsgTypeURL(&ibcclienttypes.MsgUpdateParams{}):           {},
+		sdk.MsgTypeURL(&ibcv2clienttypes.MsgRegisterCounterparty{}): {},
+		sdk.MsgTypeURL(&ibcv2clienttypes.MsgUpdateClientConfig{}):   {},
+
+		// ibc/lightclients
+		sdk.MsgTypeURL(&ibclightclienttypes.MsgStoreCode{}):       {},
+		sdk.MsgTypeURL(&ibclightclienttypes.MsgRemoveChecksum{}):  {},
+		sdk.MsgTypeURL(&ibclightclienttypes.MsgMigrateContract{}): {},
 
 		// ibc/apps/transfer
 		sdk.MsgTypeURL(&ibctransfertypes.MsgUpdateParams{}): {},
@@ -65,25 +75,20 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		sdk.MsgTypeURL(&ibcconnectiontypes.MsgUpdateParams{}):          {},
 
 		// ibc/core/channel
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelOpenInit{}):       {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelOpenTry{}):        {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelOpenAck{}):        {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelOpenConfirm{}):    {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelCloseInit{}):      {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelCloseConfirm{}):   {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgRecvPacket{}):            {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgTimeout{}):               {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgTimeoutOnClose{}):        {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgAcknowledgement{}):       {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelUpgradeAck{}):     {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelUpgradeCancel{}):  {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelUpgradeConfirm{}): {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelUpgradeInit{}):    {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelUpgradeOpen{}):    {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelUpgradeTimeout{}): {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelUpgradeTry{}):     {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgPruneAcknowledgements{}): {},
-		sdk.MsgTypeURL(&ibcchanneltypes.MsgUpdateParams{}):          {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelOpenInit{}):     {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelOpenTry{}):      {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelOpenAck{}):      {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelOpenConfirm{}):  {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelCloseInit{}):    {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgChannelCloseConfirm{}): {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgRecvPacket{}):          {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgTimeout{}):             {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgTimeoutOnClose{}):      {},
+		sdk.MsgTypeURL(&ibcchanneltypes.MsgAcknowledgement{}):     {},
+		sdk.MsgTypeURL(&ibcv2channeltypes.MsgSendPacket{}):        {},
+		sdk.MsgTypeURL(&ibcv2channeltypes.MsgRecvPacket{}):        {},
+		sdk.MsgTypeURL(&ibcv2channeltypes.MsgTimeout{}):           {},
+		sdk.MsgTypeURL(&ibcv2channeltypes.MsgAcknowledgement{}):   {},
 
 		// ibc/applications/interchain_accounts/controller
 		sdk.MsgTypeURL(&ibcinterchainaccountscontrollertypes.MsgRegisterInterchainAccount{}): {},
@@ -93,9 +98,6 @@ func TestLegacyAmino_ExpectedMessages(t *testing.T) {
 		// ibc/applications/interchain_accounts/host
 		sdk.MsgTypeURL(&ibcinterchainaccountshosttypes.MsgModuleQuerySafe{}): {},
 		sdk.MsgTypeURL(&ibcinterchainaccountshosttypes.MsgUpdateParams{}):    {},
-
-		// ibc/applications/fee
-		sdk.MsgTypeURL(&ibcfeetypes.PacketFee{}): {},
 
 		// internal cosmos
 		sdk.MsgTypeURL(&sdktestdatatypes.MsgCreateDog{}): {},

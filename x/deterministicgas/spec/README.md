@@ -238,6 +238,8 @@ and the formula for them is
 | `/cosmos.group.v1.MsgSubmitProposal`                                   |
 | `/cosmos.group.v1.MsgVote`                                             |
 | `/cosmos.mint.v1beta1.MsgUpdateParams`                                 |
+| `/cosmos.protocolpool.v1.MsgCommunityPoolSpend`                        |
+| `/cosmos.protocolpool.v1.MsgFundCommunityPool`                         |
 | `/cosmos.slashing.v1beta1.MsgUpdateParams`                             |
 | `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           |
 | `/cosmos.staking.v1beta1.MsgUpdateParams`                              |
@@ -260,7 +262,6 @@ and the formula for them is
 | `/cosmwasm.wasm.v1.MsgUpdateContractLabel`                             |
 | `/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig`                         |
 | `/cosmwasm.wasm.v1.MsgUpdateParams`                                    |
-| `/ibc.applications.fee.v1.PacketFee`                                   |
 | `/ibc.applications.interchain_accounts.controller.v1.MsgSendTx`        |
 | `/ibc.applications.interchain_accounts.controller.v1.MsgUpdateParams`  |
 | `/ibc.applications.interchain_accounts.host.v1.MsgModuleQuerySafe`     |
@@ -273,30 +274,31 @@ and the formula for them is
 | `/ibc.core.channel.v1.MsgChannelOpenConfirm`                           |
 | `/ibc.core.channel.v1.MsgChannelOpenInit`                              |
 | `/ibc.core.channel.v1.MsgChannelOpenTry`                               |
-| `/ibc.core.channel.v1.MsgChannelUpgradeAck`                            |
-| `/ibc.core.channel.v1.MsgChannelUpgradeCancel`                         |
-| `/ibc.core.channel.v1.MsgChannelUpgradeConfirm`                        |
-| `/ibc.core.channel.v1.MsgChannelUpgradeInit`                           |
-| `/ibc.core.channel.v1.MsgChannelUpgradeOpen`                           |
-| `/ibc.core.channel.v1.MsgChannelUpgradeTimeout`                        |
-| `/ibc.core.channel.v1.MsgChannelUpgradeTry`                            |
-| `/ibc.core.channel.v1.MsgPruneAcknowledgements`                        |
 | `/ibc.core.channel.v1.MsgRecvPacket`                                   |
 | `/ibc.core.channel.v1.MsgTimeout`                                      |
 | `/ibc.core.channel.v1.MsgTimeoutOnClose`                               |
-| `/ibc.core.channel.v1.MsgUpdateParams`                                 |
+| `/ibc.core.channel.v2.MsgAcknowledgement`                              |
+| `/ibc.core.channel.v2.MsgRecvPacket`                                   |
+| `/ibc.core.channel.v2.MsgSendPacket`                                   |
+| `/ibc.core.channel.v2.MsgTimeout`                                      |
 | `/ibc.core.client.v1.MsgCreateClient`                                  |
+| `/ibc.core.client.v1.MsgDeleteClientCreator`                           |
 | `/ibc.core.client.v1.MsgIBCSoftwareUpgrade`                            |
 | `/ibc.core.client.v1.MsgRecoverClient`                                 |
 | `/ibc.core.client.v1.MsgSubmitMisbehaviour`                            |
 | `/ibc.core.client.v1.MsgUpdateClient`                                  |
 | `/ibc.core.client.v1.MsgUpdateParams`                                  |
 | `/ibc.core.client.v1.MsgUpgradeClient`                                 |
+| `/ibc.core.client.v2.MsgRegisterCounterparty`                          |
+| `/ibc.core.client.v2.MsgUpdateClientConfig`                            |
 | `/ibc.core.connection.v1.MsgConnectionOpenAck`                         |
 | `/ibc.core.connection.v1.MsgConnectionOpenConfirm`                     |
 | `/ibc.core.connection.v1.MsgConnectionOpenInit`                        |
 | `/ibc.core.connection.v1.MsgConnectionOpenTry`                         |
 | `/ibc.core.connection.v1.MsgUpdateParams`                              |
+| `/ibc.lightclients.wasm.v1.MsgMigrateContract`                         |
+| `/ibc.lightclients.wasm.v1.MsgRemoveChecksum`                          |
+| `/ibc.lightclients.wasm.v1.MsgStoreCode`                               |
 
 [//]: # (GENERATED DOC.)
 [//]: # (DO NOT EDIT MANUALLY!!!)

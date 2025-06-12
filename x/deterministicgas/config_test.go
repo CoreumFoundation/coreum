@@ -36,16 +36,6 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor nondeterministic.
 	ignoredMsgURLs := []deterministicgas.MsgURL{
-		// Not-integrated modules:
-		// IBC:
-
-		// ibc.applications.fee
-		"/ibc.applications.fee.v1.MsgRegisterPayee",
-		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayee",
-		"/ibc.applications.fee.v1.MsgPayPacketFee",
-		"/ibc.applications.fee.v1.MsgPayPacketFeeAsync",
-		"/ibc.applications.fee.v1.PacketFe",
-
 		// Internal cosmos protos:
 		"/testpb.TestMsg",
 		"/testpb.MsgCreateDog",

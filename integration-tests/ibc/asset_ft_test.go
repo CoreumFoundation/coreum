@@ -13,8 +13,8 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -1105,7 +1105,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 		)
 		switch {
 		case err == nil:
-		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrTimeoutElapsed.Error()):
 			return retry.Retryable(err)
 		default:
 			requireT.NoError(err)
@@ -1574,7 +1574,7 @@ func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		)
 		switch {
 		case err == nil:
-		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrTimeoutElapsed.Error()):
 			return retry.Retryable(err)
 		default:
 			requireT.NoError(err)
@@ -1844,7 +1844,7 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 		)
 		switch {
 		case err == nil:
-		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrTimeoutElapsed.Error()):
 			return retry.Retryable(err)
 		default:
 			requireT.NoError(err)

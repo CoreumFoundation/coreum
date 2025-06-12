@@ -126,41 +126,34 @@ var Tools = []tools.Tool{
 	// Before upgrading verify in go.mod that they use the same version of IBC
 	tools.BinaryTool{
 		Name:    Gaia,
-		Version: "v19.2.0",
+		Version: "v24.0.0",
 		Sources: tools.Sources{
 			tools.TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-linux-amd64",
-				Hash: "sha256:11d0386fc201bc61436bc6b869b0d90b5d5689af64415af9f1b4ba5134c83a6a",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v24.0.0/gaiad-v24.0.0-linux-amd64",
+				Hash: "sha256:9c50ed3188d4f7519bfa5a06b8a8311b8ac480e86cbba57722cd62b9c3baeb3a",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v19.2.0-linux-amd64",
-				},
-			},
-			tools.TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-linux-arm64",
-				Hash: "sha256:4cbe5268ffcbba532e0c1c27e8dbdf61c17c4039a312145e70dc7306e1572c2f",
-				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v19.2.0-linux-arm64",
+					"bin/gaiad": "gaiad-v24.0.0-linux-amd64",
 				},
 			},
 			tools.TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-linux-amd64",
-				Hash: "sha256:11d0386fc201bc61436bc6b869b0d90b5d5689af64415af9f1b4ba5134c83a6a",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v24.0.0/gaiad-v24.0.0-linux-amd64",
+				Hash: "sha256:9c50ed3188d4f7519bfa5a06b8a8311b8ac480e86cbba57722cd62b9c3baeb3a",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v19.2.0-linux-amd64",
+					"bin/gaiad": "gaiad-v24.0.0-linux-amd64",
 				},
 			},
 			tools.TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-darwin-amd64",
-				Hash: "sha256:2f22df14dc6c92d62388b2a15e86fcc30e5c49347568b15a30e4d3f02eb0ab36",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v24.0.0/gaiad-v24.0.0-darwin-amd64",
+				Hash: "sha256:e1273a56fbb9f75b0b50a6a386e9c1172c9c38c57813c99974d9b2e1c02571fa",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v19.2.0-darwin-amd64",
+					"bin/gaiad": "gaiad-v24.0.0-darwin-amd64",
 				},
 			},
 			tools.TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-darwin-arm64",
-				Hash: "sha256:57b01ad515baefc9a594dc667070c1533669410ec68bcb621e9b1d46c8d21324",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v24.0.0/gaiad-v24.0.0-darwin-arm64",
+				Hash: "sha256:d92ecc2a873b1e49bc7bb4dd712d91c0be8fa3ac71d93cdd91bd5df8267356f0",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v19.2.0-darwin-arm64",
+					"bin/gaiad": "gaiad-v24.0.0-darwin-arm64",
 				},
 			},
 		},
@@ -191,15 +184,16 @@ var Tools = []tools.Tool{
 	// https://github.com/informalsystems/hermes/releases
 	tools.BinaryTool{
 		Name:    Hermes,
-		Version: "v1.10.4",
+		Version: "v1.13.1",
 		Sources: tools.Sources{
 			tools.TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.4/hermes-v1.10.4-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:84e1bbee9b786b09702128039606ef3ee6bfe552c03c818cb290b6d893eeed9d",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.13.1/hermes-v1.13.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:effd6b5d698f9e3d78a4e064a407a44987ac941f3faa10411a34e72506b3aa28",
 			},
 			tools.TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.4/hermes-v1.10.4-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:b6403036be9c21d4636973749f8f5f116e52430bf3e88ef1c5e08be290c6f2a0",
+				// TODO: Change it when hermes CI/CD bug is fixed
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.13.1/hermes-v1.13.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:effd6b5d698f9e3d78a4e064a407a44987ac941f3faa10411a34e72506b3aa28",
 			},
 		},
 		Binaries: map[string]string{
