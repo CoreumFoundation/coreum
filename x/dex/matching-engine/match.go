@@ -35,11 +35,11 @@ func (me MatchingEngine) MatchOrder(
 		return MatchingResult{}, err
 	}
 
-	takerRecord := convertOrderToOrderRecord(accNumber, orderBookID, takerOrder, initialRemainingBalance)
+	takerRecord := convertOrderToOrderBookRecord(accNumber, orderBookID, takerOrder, initialRemainingBalance)
 
 	takerIsFilled := false
 	for {
-		makerRecord, matches, err := me.obs.Next()
+		makerRecord, matches, err := me.obq.Next()
 		if err != nil {
 			return MatchingResult{}, err
 		}

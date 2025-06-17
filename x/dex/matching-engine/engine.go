@@ -10,7 +10,7 @@ import (
 
 // MatchingEngine takes an incoming order and returns a MatchingResult.
 type MatchingEngine struct {
-	obs       OrderBookQueue
+	obq       OrderBookQueue
 	dexKeeper DEXKeeper
 	ak        AccountKeeper
 	logger    log.Logger
@@ -18,13 +18,13 @@ type MatchingEngine struct {
 
 // NewMatchingEngine returns a new instance of MatchingEngine.
 func NewMatchingEngine(
-	obs OrderBookQueue,
+	obq OrderBookQueue,
 	ak AccountKeeper,
 	logger log.Logger,
 	dexKeeper DEXKeeper,
 ) MatchingEngine {
 	return MatchingEngine{
-		obs:       obs,
+		obq:       obq,
 		ak:        ak,
 		logger:    logger,
 		dexKeeper: dexKeeper,
@@ -37,7 +37,7 @@ type RecordToAddress struct {
 	Record  *types.OrderBookRecord
 }
 
-func convertOrderToOrderRecord(
+func convertOrderToOrderBookRecord(
 	accNumber uint64,
 	orderBookID uint32,
 	order types.Order,
