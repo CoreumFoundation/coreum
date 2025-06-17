@@ -208,6 +208,7 @@ func (me MatchingEngine) getMakerLockedAndExpectedToReceiveCoins(
 	lockedCoins := sdk.NewCoins(
 		sdk.NewCoin(makerSpendsDenom, makerRecord.RemainingSpendableBalance),
 	)
+	// TODO(milad): move GetOrderData out of the matching engine.
 	recordToCloseOrderData, err := me.dexKeeper.GetOrderData(ctx, makerRecord.OrderSequence)
 	if err != nil {
 		return nil, sdk.Coin{}, err
