@@ -35,8 +35,8 @@ type AssetFTKeeper interface {
 
 // DelayKeeper defines methods required from the delay keeper.
 type DelayKeeper interface {
-	ExecuteAfterBlock(ctx sdk.Context, id string, data proto.Message, height uint64) error
-	ExecuteAfter(ctx sdk.Context, id string, data proto.Message, time time.Time) error
+	ExecuteAfterBlock(ctx sdk.Context, id string, data proto.Message, height uint64, skipDuplicate bool) error
+	ExecuteAfter(ctx sdk.Context, id string, data proto.Message, time time.Time, skipDuplicate bool) error
 	RemoveExecuteAtBlock(ctx sdk.Context, id string, height uint64) error
 	RemoveExecuteAfter(ctx sdk.Context, id string, time time.Time) error
 }
