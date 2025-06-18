@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/log"
-	sdkmath "cosmossdk.io/math"
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	storetypes "cosmossdk.io/store/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -33,7 +32,6 @@ import (
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	"github.com/CoreumFoundation/coreum/v6/app"
@@ -148,15 +146,10 @@ func NewWithGenesis(genesisBytes []byte, options ...Option) (App, string, map[st
 		settings = option(settings)
 	}
 
-	initChainReq, appState, networkConfig, err := convertExportedGenesisToInitChain(genesisBytes)
+	initChainReq, appState, err := convertExportedGenesisToInitChain(genesisBytes)
 	if err != nil {
 		panic(errors.Errorf("can't convert genesis bytes to init chain: %s", err))
 	}
-
-	sdkConfigOnce.Do(func() {
-		app.ChosenNetwork = networkConfig
-		// networkConfig.SetSDKConfig()
-	})
 
 	coreApp := app.New(
 		settings.logger,
@@ -343,7 +336,7 @@ func CopyContextWithMultiStore(sdkCtx sdk.Context) sdk.Context {
 	return sdkCtx.WithMultiStore(sdkCtx.MultiStore().CacheWrap().(storetypes.MultiStore))
 }
 
-func convertExportedGenesisToInitChain(jsonBytes []byte) (*abci.RequestInitChain, map[string]json.RawMessage, config.NetworkConfig, error) {
+func convertExportedGenesisToInitChain(jsonBytes []byte) (*abci.RequestInitChain, map[string]json.RawMessage, error) {
 	var export struct {
 		InitialHeight int64                      `json:"initial_height"`
 		GenesisTime   string                     `json:"genesis_time"`
@@ -382,99 +375,19 @@ func convertExportedGenesisToInitChain(jsonBytes []byte) (*abci.RequestInitChain
 		} `json:"consensus"`
 	}
 	if err := json.Unmarshal(jsonBytes, &export); err != nil {
-		return nil, nil, config.NetworkConfig{}, err
+		return nil, nil, err
 	}
 
 	// Marshal app_state to bytes
 	appStateBytes, err := json.Marshal(export.AppState)
 	if err != nil {
-		return nil, nil, config.NetworkConfig{}, err
+		return nil, nil, err
 	}
 
 	// Parse genesis_time
 	genesisTime, err := time.Parse(time.RFC3339Nano, export.GenesisTime)
 	if err != nil {
-		return nil, nil, config.NetworkConfig{}, err
-	}
-
-	// Parse bank balances
-	var bankState struct {
-		Balances []banktypes.Balance `json:"balances"`
-	}
-	if err := json.Unmarshal(export.AppState["bank"], &bankState); err != nil {
-		return nil, nil, config.NetworkConfig{}, err
-	}
-
-	// Parse gov params
-	var govState struct {
-		Params struct {
-			MinDeposit []struct {
-				Denom  string `json:"denom"`
-				Amount string `json:"amount"`
-			} `json:"min_deposit"`
-			ExpeditedMinDeposit []struct {
-				Denom  string `json:"denom"`
-				Amount string `json:"amount"`
-			} `json:"expedited_min_deposit"`
-			VotingPeriod          string `json:"voting_period"`
-			ExpeditedVotingPeriod string `json:"expedited_voting_period"`
-		} `json:"params"`
-	}
-	if err := json.Unmarshal(export.AppState["gov"], &govState); err != nil {
-		return nil, nil, config.NetworkConfig{}, err
-	}
-
-	// Convert deposits
-	minDeposit := sdk.NewCoins()
-	for _, d := range govState.Params.MinDeposit {
-		amt, _ := sdkmath.NewIntFromString(d.Amount)
-		minDeposit = minDeposit.Add(sdk.NewCoin(d.Denom, amt))
-	}
-	expeditedMinDeposit := sdk.NewCoins()
-	for _, d := range govState.Params.ExpeditedMinDeposit {
-		amt, _ := sdkmath.NewIntFromString(d.Amount)
-		expeditedMinDeposit = expeditedMinDeposit.Add(sdk.NewCoin(d.Denom, amt))
-	}
-
-	// Parse voting periods
-	votingPeriod, _ := time.ParseDuration(govState.Params.VotingPeriod)
-	expeditedVotingPeriod, _ := time.ParseDuration(govState.Params.ExpeditedVotingPeriod)
-
-	// Parse customparams
-	var customParamsState struct {
-		StakingParams struct {
-			MinSelfDelegation string `json:"min_self_delegation"`
-		} `json:"staking_params"`
-	}
-	if err := json.Unmarshal(export.AppState["customparams"], &customParamsState); err != nil {
-		return nil, nil, config.NetworkConfig{}, err
-	}
-	minSelfDelegation, ok := sdkmath.NewIntFromString(customParamsState.StakingParams.MinSelfDelegation)
-	if !ok {
-		return nil, nil, config.NetworkConfig{}, fmt.Errorf("invalid min_self_delegation: %s", customParamsState.StakingParams.MinSelfDelegation)
-	}
-
-	// Prepare config
-	configuration := config.NetworkConfig{
-		Provider: config.DynamicConfigProvider{
-			GenesisInitConfig: config.GenesisInitConfig{
-				ChainID:       constant.ChainID(export.ChainID),
-				GenesisTime:   genesisTime,
-				Denom:         constant.DenomDev,         // Or parse from JSON if needed
-				AddressPrefix: constant.AddressPrefixDev, // Or parse from JSON if needed
-				GovConfig: config.GenesisInitGovConfig{
-					MinDeposit:            minDeposit,
-					ExpeditedMinDeposit:   expeditedMinDeposit,
-					VotingPeriod:          votingPeriod,
-					ExpeditedVotingPeriod: expeditedVotingPeriod,
-				},
-				CustomParamsConfig: config.GenesisInitCustomParamsConfig{
-					MinSelfDelegation: minSelfDelegation,
-				},
-				BankBalances: bankState.Balances,
-			},
-		},
-		NodeConfig: config.NodeConfig{},
+		return nil, nil, err
 	}
 
 	// Build ConsensusParams
@@ -504,7 +417,7 @@ func convertExportedGenesisToInitChain(jsonBytes []byte) (*abci.RequestInitChain
 	for _, v := range export.Consensus.Validators {
 		pubKey, err := base64.StdEncoding.DecodeString(v.PubKey.Value)
 		if err != nil {
-			return nil, nil, config.NetworkConfig{}, err
+			return nil, nil, err
 		}
 		validators = append(validators, abci.ValidatorUpdate{
 			PubKey: crypto.PublicKey{
@@ -521,7 +434,7 @@ func convertExportedGenesisToInitChain(jsonBytes []byte) (*abci.RequestInitChain
 		Validators:      validators,
 		AppStateBytes:   appStateBytes,
 		InitialHeight:   export.InitialHeight,
-	}, export.AppState, configuration, nil
+	}, export.AppState, nil
 }
 
 // Helper functions

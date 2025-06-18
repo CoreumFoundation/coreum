@@ -52,10 +52,10 @@ func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 			CompileDEXSmartContracts, BuildCoredLocally, BuildCoredDockerImage)
 
 		znetConfig := defaultZNetConfig()
-		znetConfig.Profiles = []string{apps.Profile3Cored}
+		znetConfig.Profiles = []string{apps.ProfileDevNet}
 		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-modules"
 
-		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestModules)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestModules, TestExport)
 	}
 }
 
@@ -65,10 +65,10 @@ func RunIntegrationTestsStress(runUnsafe bool) types.CommandFunc {
 		deps(BuildCoredLocally, BuildCoredDockerImage)
 
 		znetConfig := defaultZNetConfig()
-		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileDEX}
+		znetConfig.Profiles = []string{apps.ProfileDevNet, apps.ProfileDEX}
 		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-stress"
 
-		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestStress)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestStress, TestExport)
 	}
 }
 
@@ -80,9 +80,9 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 			BuildHermesDockerImage)
 
 		znetConfig := defaultZNetConfig()
-		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
+		znetConfig.Profiles = []string{apps.ProfileDevNet, apps.ProfileIBC}
 
-		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestIBC)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestIBC, TestExport)
 	}
 }
 
@@ -98,19 +98,6 @@ func RunIntegrationTestsUpgrade(runUnsafe bool) types.CommandFunc {
 		znetConfig.CoredVersion = "v5.0.0"
 
 		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestUpgrade, TestIBC, TestModules)
-	}
-}
-
-func RunIntegrationTestsExport(runUnsafe bool) types.CommandFunc {
-	return func(ctx context.Context, deps types.DepsFunc) error {
-		deps(CompileModulesSmartContracts, CompileLegacyModulesSmartContracts, CompileAssetExtensionSmartContracts,
-			CompileDEXSmartContracts, BuildCoredLocally, BuildCoredDockerImage)
-
-		znetConfig := defaultZNetConfig()
-		znetConfig.Profiles = []string{apps.ProfileDevNet}
-		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-export"
-
-		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestExport)
 	}
 }
 
@@ -133,6 +120,7 @@ func runIntegrationTests(
 		fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
 		"-timeout=1h",
 	}
+
 	if runUnsafe {
 		flags = append(flags, "--run-unsafe")
 	}
@@ -144,27 +132,28 @@ func runIntegrationTests(
 		return err
 	}
 
-	// err := znet.ExportCored(ctx, znetConfig)
-	// if err != nil {
-	// 	return err
-	// }
-
-	absRootDir, err := filepath.Abs(znetConfig.RootDir)
-	if err != nil {
-		return err
-	}
-
-	spec := infra.NewSpec(znetConfig)
-	config := znet.NewConfig(znetConfig, spec)
-
 	for _, testDir := range testDirs {
+		var envs []string
+		if testDir == TestExport {
+			config := znet.NewConfig(znetConfig, infra.NewSpec(znetConfig))
+			absRootDir, err := filepath.Abs(znetConfig.RootDir)
+			if err != nil {
+				return err
+			}
+
+			envs = []string{
+				fmt.Sprintf("CORED_BIN_PATH=%s", filepath.Join(absRootDir, "bin")),
+				fmt.Sprintf("ZNET_HOME_DIR=%s", config.HomeDir),
+			}
+			if err := znet.Stop(ctx, znetConfig); err != nil {
+				return err
+			}
+		}
+
 		if err := golang.RunTests(ctx, deps, golang.TestConfig{
 			PackagePath: filepath.Join(integrationTestsDir, testDir),
 			Flags:       flags,
-			Envs: []string{
-				fmt.Sprintf("CORED_BIN_PATH=%s", filepath.Join(absRootDir, "bin")),
-				fmt.Sprintf("ZNET_HOME_DIR=%s", config.HomeDir),
-			},
+			Envs:        envs,
 		}); err != nil {
 			return err
 		}
