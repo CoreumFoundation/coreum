@@ -5355,6 +5355,8 @@ GenesisState defines the module's genesis state.
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#coreum.feemodel.v1.Params) |  |  `params defines all the parameters of the module.`  |
 | `min_gas_price` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  `min_gas_price is the current minimum gas price required by the chain.`  |
+| `short_ema_gas` | [int64](#int64) |  |  `short_ema_gas is the current short EMA gas value.`  |
+| `long_ema_gas` | [int64](#int64) |  |  `long_ema_gas is the current long EMA gas value.`  |
 
 
 

@@ -39,12 +39,13 @@ func (k Keeper) delayGoodTilCancellation(
 	goodTil types.GoodTil,
 	orderSequence uint64,
 	creator sdk.AccAddress,
+	skipDuplicate bool,
 ) error {
 	if goodTil.GoodTilBlockHeight > 0 {
-		return k.delayGoodTilBlockHeightCancellation(ctx, goodTil.GoodTilBlockHeight, orderSequence, creator)
+		return k.delayGoodTilBlockHeightCancellation(ctx, goodTil.GoodTilBlockHeight, orderSequence, creator, skipDuplicate)
 	}
 	if goodTil.GoodTilBlockTime != nil {
-		return k.delayGoodTilBlockTimeCancellation(ctx, *goodTil.GoodTilBlockTime, orderSequence, creator)
+		return k.delayGoodTilBlockTimeCancellation(ctx, *goodTil.GoodTilBlockTime, orderSequence, creator, skipDuplicate)
 	}
 
 	return nil
@@ -55,6 +56,7 @@ func (k Keeper) delayGoodTilBlockHeightCancellation(
 	height uint64,
 	orderSequence uint64,
 	creator sdk.AccAddress,
+	skipDuplicate bool,
 ) error {
 	k.logger(ctx).Debug(
 		"Delaying good til height cancellation.",
@@ -70,6 +72,7 @@ func (k Keeper) delayGoodTilBlockHeightCancellation(
 			OrderSequence: orderSequence,
 		},
 		height,
+		skipDuplicate,
 	); err != nil {
 		return sdkerrors.Wrap(err, "failed to create good til height delayed cancellation")
 	}
@@ -82,6 +85,7 @@ func (k Keeper) delayGoodTilBlockTimeCancellation(
 	time time.Time,
 	orderSequence uint64,
 	creator sdk.AccAddress,
+	skipDuplicate bool,
 ) error {
 	k.logger(ctx).Debug(
 		"Delaying good til time cancellation.",
@@ -97,6 +101,7 @@ func (k Keeper) delayGoodTilBlockTimeCancellation(
 			OrderSequence: orderSequence,
 		},
 		time,
+		skipDuplicate,
 	); err != nil {
 		return sdkerrors.Wrap(err, "failed to create good til time delayed cancellation")
 	}

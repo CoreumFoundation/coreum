@@ -95,14 +95,14 @@ func TestTimeExecution(t *testing.T) {
 	requireT.NoError(testApp.DelayKeeper.DelayExecution(ctx, "delayed-id-1", delayed2, 2*time.Second))
 
 	// two items intentionally executed at the same time
-	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-3", delayed3, ctx.BlockTime().Add(3*time.Second)))
-	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-4", delayed4, ctx.BlockTime().Add(3*time.Second)))
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-3", delayed3, ctx.BlockTime().Add(3*time.Second), false))
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-4", delayed4, ctx.BlockTime().Add(3*time.Second), false))
 	// save and remove
-	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-5", delayed4, ctx.BlockTime().Add(3*time.Second)))
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfter(ctx, "delayed-id-5", delayed4, ctx.BlockTime().Add(3*time.Second), false))
 	requireT.NoError(testApp.DelayKeeper.RemoveExecuteAfter(ctx, "delayed-id-5", ctx.BlockTime().Add(3*time.Second)))
 
 	requireT.Error(testApp.DelayKeeper.StoreDelayedExecution(
-		ctx, "delayed-id-4", delayed1, time.Date(1969, 12, 31, 23, 59, 59, 0, time.UTC),
+		ctx, "delayed-id-4", delayed1, time.Date(1969, 12, 31, 23, 59, 59, 0, time.UTC), false,
 	))
 
 	delayedItems, err := testApp.DelayKeeper.ExportDelayedItems(ctx)
@@ -202,14 +202,14 @@ func TestBlockExecution(t *testing.T) {
 			return nil
 		}))
 
-	requireT.NoError(testApp.DelayKeeper.ExecuteAfterBlock(ctx, "id-1", blockExec1, 30))
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfterBlock(ctx, "id-1", blockExec1, 30, false))
 	// same id and height fails
-	requireT.Error(testApp.DelayKeeper.ExecuteAfterBlock(ctx, "id-1", blockExec1, 30))
+	requireT.Error(testApp.DelayKeeper.ExecuteAfterBlock(ctx, "id-1", blockExec1, 30, false))
 	// same id but different height succeeds
-	requireT.NoError(testApp.DelayKeeper.ExecuteAfterBlock(ctx, "id-2", blockExec2, 32))
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfterBlock(ctx, "id-2", blockExec2, 32, false))
 
 	// same height different ID the `blockExec3` should not be executed
-	requireT.NoError(testApp.DelayKeeper.ExecuteAfterBlock(ctx, "id-3", blockExec3, 31))
+	requireT.NoError(testApp.DelayKeeper.ExecuteAfterBlock(ctx, "id-3", blockExec3, 31, false))
 	requireT.NoError(testApp.DelayKeeper.RemoveExecuteAtBlock(ctx, "id-3", 31))
 
 	blockItems, err := testApp.DelayKeeper.ExportBlockItems(ctx)
