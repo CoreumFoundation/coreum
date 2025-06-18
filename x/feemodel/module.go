@@ -147,6 +147,12 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 	if err := am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice); err != nil {
 		panic(err)
 	}
+	if err := am.keeper.SetShortEMAGas(ctx, genesis.ShortEmaGas); err != nil {
+		panic(err)
+	}
+	if err := am.keeper.SetLongEMAGas(ctx, genesis.LongEmaGas); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the fee
@@ -159,6 +165,8 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 	return cdc.MustMarshalJSON(&types.GenesisState{
 		Params:      params,
 		MinGasPrice: am.keeper.GetMinGasPrice(ctx),
+		ShortEmaGas: am.keeper.GetShortEMAGas(ctx),
+		LongEmaGas:  am.keeper.GetLongEMAGas(ctx),
 	})
 }
 

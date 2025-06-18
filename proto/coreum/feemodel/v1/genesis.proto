@@ -17,4 +17,10 @@ message GenesisState {
 
   // min_gas_price is the current minimum gas price required by the chain.
   cosmos.base.v1beta1.DecCoin min_gas_price = 2 [(gogoproto.nullable) = false];
+
+  // short_ema_gas is the current short EMA gas value.
+  int64 short_ema_gas = 3;
+
+  // long_ema_gas is the current long EMA gas value.
+  int64 long_ema_gas = 4;
 }
