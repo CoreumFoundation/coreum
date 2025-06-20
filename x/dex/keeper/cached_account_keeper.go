@@ -15,6 +15,23 @@ type cachedAccountKeeper struct {
 	cache map[uint64]sdk.AccAddress
 }
 
+func (cachedAccKeeper cachedAccountKeeper) GetAccountAddress(ctx sdk.Context, accNumber uint64) (
+	sdk.AccAddress,
+	error,
+) {
+	addr, ok := cachedAccKeeper.cache[accNumber]
+	if !ok {
+		var err error
+		addr, err = cachedAccKeeper.getAccountAddressNoCache(ctx, accNumber)
+		if err != nil {
+			return nil, err
+		}
+		cachedAccKeeper.cache[accNumber] = addr
+	}
+
+	return addr, nil
+}
+
 func newCachedAccountKeeper(
 	accountKeeper types.AccountKeeper,
 	accountQueryServer types.AccountQueryServer,
@@ -26,7 +43,7 @@ func newCachedAccountKeeper(
 	}
 }
 
-func (cachedAccKeeper cachedAccountKeeper) getAccountAddress(
+func (cachedAccKeeper cachedAccountKeeper) getAccountAddressNoCache(
 	ctx sdk.Context,
 	accNumber uint64,
 ) (sdk.AccAddress, error) {
@@ -44,21 +61,4 @@ func (cachedAccKeeper cachedAccountKeeper) getAccountAddress(
 	}
 
 	return acc, nil
-}
-
-func (cachedAccKeeper cachedAccountKeeper) getAccountAddressWithCache(ctx sdk.Context, accNumber uint64) (
-	sdk.AccAddress,
-	error,
-) {
-	addr, ok := cachedAccKeeper.cache[accNumber]
-	if !ok {
-		var err error
-		addr, err = cachedAccKeeper.getAccountAddress(ctx, accNumber)
-		if err != nil {
-			return nil, err
-		}
-		cachedAccKeeper.cache[accNumber] = addr
-	}
-
-	return addr, nil
 }
