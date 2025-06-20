@@ -479,6 +479,15 @@ func (k Keeper) ImportReservedOrderIDs(
 	return nil
 }
 
+// GetOrderData returns order data by order sequence.
+func (k Keeper) GetOrderData(ctx sdk.Context, orderSequence uint64) (types.OrderData, error) {
+	var val types.OrderData
+	if err := k.getDataFromStore(ctx, types.CreateOrderKey(orderSequence), &val); err != nil {
+		return types.OrderData{}, sdkerrors.Wrapf(err, "failed to get order data, orderSequence: %d", orderSequence)
+	}
+	return val, nil
+}
+
 func (k Keeper) validateOrder(ctx sdk.Context, params types.Params, order types.Order) error {
 	if err := order.Validate(); err != nil {
 		return err
@@ -1189,14 +1198,6 @@ func (k Keeper) saveOrderData(ctx sdk.Context, orderSequence uint64, data types.
 
 func (k Keeper) removeOrderData(ctx sdk.Context, orderSequence uint64) error {
 	return k.storeService.OpenKVStore(ctx).Delete(types.CreateOrderKey(orderSequence))
-}
-
-func (k Keeper) GetOrderData(ctx sdk.Context, orderSequence uint64) (types.OrderData, error) {
-	var val types.OrderData
-	if err := k.getDataFromStore(ctx, types.CreateOrderKey(orderSequence), &val); err != nil {
-		return types.OrderData{}, sdkerrors.Wrapf(err, "failed to get order data, orderSequence: %d", orderSequence)
-	}
-	return val, nil
 }
 
 func (k Keeper) saveOrderIDToSequence(ctx sdk.Context, accNumber uint64, orderID string, orderSequence uint64) error {

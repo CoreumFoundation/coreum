@@ -10,6 +10,7 @@ import (
 )
 
 // RecordToAddress maps an account address to an order book record.
+// TODO: RecordToAddress could potentially be replaced by matchingengine.RecordToAddress.
 type RecordToAddress struct {
 	Address sdk.AccAddress
 	Record  *types.OrderBookRecord
