@@ -14,7 +14,7 @@ jobs:
       - name: Dispatch to docs repo
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.DOCS_TRIGGER_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           repository: CoreumFoundation/docs-next
           event-type: update-docs
           client-payload: '{"source_repo": "${{ github.repository }}", "ref": "${{ github.ref }}"}'
