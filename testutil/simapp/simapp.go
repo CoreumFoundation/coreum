@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"sync"
-	"testing"
 	"time"
 
 	"cosmossdk.io/log"
@@ -30,6 +29,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v6/app"
 	"github.com/CoreumFoundation/coreum/v6/pkg/config"
 	"github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v6/testutil/bdd"
 )
 
 const appHash = "sim-app-hash"
@@ -266,7 +266,7 @@ func (s *App) GenTx(
 
 // MintAndSendCoin mints coin to the mint module and sends them to the recipient.
 func (s *App) MintAndSendCoin(
-	t *testing.T,
+	t bdd.TestingT,
 	sdkCtx sdk.Context,
 	recipient sdk.AccAddress,
 	coins sdk.Coins,

@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	cbig "github.com/CoreumFoundation/coreum/v6/pkg/math/big"
+	"github.com/CoreumFoundation/coreum/v6/testutil/bdd"
 	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
@@ -147,6 +148,7 @@ func (tt tst) run(t *testing.T) {
 	expectedToReceiveBalances = removeEmptyBalances(expectedToReceiveBalances)
 
 	wantAvailableBalances := tt.wantAvailableBalances(testSet)
+
 	require.True(
 		t,
 		reflect.DeepEqual(wantAvailableBalances, availableBalances),
@@ -704,6 +706,7 @@ func TestKeeper_MatchOrders_DirectOBLimitMatching(t *testing.T) {
 			},
 		},
 
+		// TODO: Not implemented in BDD tests
 		// TODO(v6): Revise this behavior.
 		// we can possibly create an order, but it seems to violate quote quantity step rule.
 		// {
@@ -6604,7 +6607,7 @@ func removeEmptyBalances(balances map[string]sdk.Coins) map[string]sdk.Coins {
 }
 
 func fillReserveAndOrderSequence(
-	t *testing.T,
+	t bdd.TestingT,
 	sdkCtx sdk.Context,
 	testApp *simapp.App,
 	orders []types.Order,
@@ -6626,7 +6629,7 @@ func fillReserveAndOrderSequence(
 }
 
 func assertOrderPlacementResult(
-	t *testing.T,
+	t bdd.TestingT,
 	sdkCtx sdk.Context,
 	testApp *simapp.App,
 	availableBalancesBefore map[string]sdkmath.Int,
@@ -6666,7 +6669,7 @@ func assertOrderPlacementResult(
 	}
 }
 
-func assertPlacementEvents(t *testing.T, order types.Order, events OrderPlacementEvents) {
+func assertPlacementEvents(t bdd.TestingT, order types.Order, events OrderPlacementEvents) {
 	require.Positive(t, events.OrderPlaced.Sequence)
 	require.Equal(t, types.EventOrderPlaced{
 		Creator:  order.Creator,
@@ -6717,7 +6720,7 @@ func assertPlacementEvents(t *testing.T, order types.Order, events OrderPlacemen
 }
 
 func assetOrderSentReceivedAmounts(
-	t *testing.T,
+	t bdd.TestingT,
 	sdkCtx sdk.Context,
 	testApp *simapp.App,
 	availableBalancesBefore map[string]sdkmath.Int,
@@ -6801,7 +6804,7 @@ func assetOrderSentReceivedAmounts(
 	return orderSentAmt, orderReceivedAmt
 }
 
-func assertExecutionPrice(t *testing.T, order types.Order, spendAmt, receiveAmt sdkmath.Int) {
+func assertExecutionPrice(t bdd.TestingT, order types.Order, spendAmt, receiveAmt sdkmath.Int) {
 	orderPriceRat := order.Price.Rat()
 	var executionPriceRat *big.Rat
 	if order.Side == types.SIDE_BUY {
@@ -6831,7 +6834,7 @@ func assertExecutionPrice(t *testing.T, order types.Order, spendAmt, receiveAmt 
 	)
 }
 
-func assertFilledQuantity(t *testing.T, order types.Order, sent, receiveAmt sdkmath.Int) {
+func assertFilledQuantity(t bdd.TestingT, order types.Order, sent, receiveAmt sdkmath.Int) {
 	var filledQuantity sdkmath.Int
 	if order.Side == types.SIDE_BUY {
 		filledQuantity = receiveAmt
@@ -6864,11 +6867,13 @@ func getAvailableBalances(sdkCtx sdk.Context, testApp *simapp.App, acc sdk.AccAd
 }
 
 func cancelAllOrdersAndAssertState(
-	t *testing.T,
+	t bdd.TestingT,
 	sdkCtx sdk.Context,
 	testApp *simapp.App,
 ) {
-	t.Helper()
+	if h, ok := t.(bdd.THelper); ok {
+		h.Helper()
+	}
 
 	orders, _, err := testApp.DEXKeeper.GetAccountsOrders(sdkCtx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	require.NoError(t, err)

@@ -20,6 +20,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/v6/testutil/bdd"
 	"github.com/CoreumFoundation/coreum/v6/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v6/x/dex/types"
@@ -43,7 +44,7 @@ func (o OrderPlacementEvents) getOrderReduced(acc, id string) (types.EventOrderR
 }
 
 func readOrderEvents(
-	t *testing.T,
+	t bdd.TestingT,
 	sdkCtx sdk.Context,
 ) OrderPlacementEvents {
 	events := OrderPlacementEvents{
@@ -1224,7 +1225,7 @@ func TestKeeper_IssueTokenWithDifferentIssueFeeThanBoundDenom(t *testing.T) {
 }
 
 func getSorterOrderBookOrders(
-	t *testing.T,
+	t bdd.TestingT,
 	testApp *simapp.App,
 	sdkCtx sdk.Context,
 	orderBookID uint32,
@@ -1249,7 +1250,7 @@ func getSorterOrderBookOrders(
 }
 
 func getSorterOrderBookRecords(
-	t *testing.T,
+	t bdd.TestingT,
 	testApp *simapp.App,
 	sdkCtx sdk.Context,
 	orderBookID uint32,
