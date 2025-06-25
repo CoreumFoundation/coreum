@@ -1,0 +1,20 @@
+name: Trigger Docs Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.md'
+
+jobs:
+  notify-docs-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch to docs repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: CoreumFoundation/docs-next
+          event-type: update-docs
+          client-payload: '{"source_repo": "${{ github.repository }}", "ref": "${{ github.ref }}"}'
