@@ -8,7 +8,7 @@
 - [coreum/asset/ft/v1/authz.proto](#coreum/asset/ft/v1/authz.proto)
     - [BurnAuthorization](#coreum.asset.ft.v1.BurnAuthorization)
     - [MintAuthorization](#coreum.asset.ft.v1.MintAuthorization)
-  
+
 - [coreum/asset/ft/v1/event.proto](#coreum/asset/ft/v1/event.proto)
     - [EventAdminCleared](#coreum.asset.ft.v1.EventAdminCleared)
     - [EventAdminTransferred](#coreum.asset.ft.v1.EventAdminTransferred)
@@ -19,16 +19,16 @@
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
     - [EventWhitelistedAmountChanged](#coreum.asset.ft.v1.EventWhitelistedAmountChanged)
-  
+
 - [coreum/asset/ft/v1/genesis.proto](#coreum/asset/ft/v1/genesis.proto)
     - [Balance](#coreum.asset.ft.v1.Balance)
     - [DEXSettingsWithDenom](#coreum.asset.ft.v1.DEXSettingsWithDenom)
     - [GenesisState](#coreum.asset.ft.v1.GenesisState)
     - [PendingTokenUpgrade](#coreum.asset.ft.v1.PendingTokenUpgrade)
-  
+
 - [coreum/asset/ft/v1/params.proto](#coreum/asset/ft/v1/params.proto)
     - [Params](#coreum.asset.ft.v1.Params)
-  
+
 - [coreum/asset/ft/v1/query.proto](#coreum/asset/ft/v1/query.proto)
     - [QueryBalanceRequest](#coreum.asset.ft.v1.QueryBalanceRequest)
     - [QueryBalanceResponse](#coreum.asset.ft.v1.QueryBalanceResponse)
@@ -50,9 +50,9 @@
     - [QueryWhitelistedBalanceResponse](#coreum.asset.ft.v1.QueryWhitelistedBalanceResponse)
     - [QueryWhitelistedBalancesRequest](#coreum.asset.ft.v1.QueryWhitelistedBalancesRequest)
     - [QueryWhitelistedBalancesResponse](#coreum.asset.ft.v1.QueryWhitelistedBalancesResponse)
-  
+
     - [Query](#coreum.asset.ft.v1.Query)
-  
+
 - [coreum/asset/ft/v1/token.proto](#coreum/asset/ft/v1/token.proto)
     - [DEXSettings](#coreum.asset.ft.v1.DEXSettings)
     - [Definition](#coreum.asset.ft.v1.Definition)
@@ -60,9 +60,9 @@
     - [Token](#coreum.asset.ft.v1.Token)
     - [TokenUpgradeStatuses](#coreum.asset.ft.v1.TokenUpgradeStatuses)
     - [TokenUpgradeV1Status](#coreum.asset.ft.v1.TokenUpgradeV1Status)
-  
+
     - [Feature](#coreum.asset.ft.v1.Feature)
-  
+
 - [coreum/asset/ft/v1/tx.proto](#coreum/asset/ft/v1/tx.proto)
     - [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse)
     - [ExtensionIssueSettings](#coreum.asset.ft.v1.ExtensionIssueSettings)
@@ -81,13 +81,13 @@
     - [MsgUpdateDEXUnifiedRefAmount](#coreum.asset.ft.v1.MsgUpdateDEXUnifiedRefAmount)
     - [MsgUpdateDEXWhitelistedDenoms](#coreum.asset.ft.v1.MsgUpdateDEXWhitelistedDenoms)
     - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
-  
+
     - [Msg](#coreum.asset.ft.v1.Msg)
-  
+
 - [coreum/asset/nft/v1/authz.proto](#coreum/asset/nft/v1/authz.proto)
     - [NFTIdentifier](#coreum.asset.nft.v1.NFTIdentifier)
     - [SendAuthorization](#coreum.asset.nft.v1.SendAuthorization)
-  
+
 - [coreum/asset/nft/v1/event.proto](#coreum/asset/nft/v1/event.proto)
     - [EventAddedToClassWhitelist](#coreum.asset.nft.v1.EventAddedToClassWhitelist)
     - [EventAddedToWhitelist](#coreum.asset.nft.v1.EventAddedToWhitelist)
@@ -98,7 +98,7 @@
     - [EventRemovedFromClassWhitelist](#coreum.asset.nft.v1.EventRemovedFromClassWhitelist)
     - [EventRemovedFromWhitelist](#coreum.asset.nft.v1.EventRemovedFromWhitelist)
     - [EventUnfrozen](#coreum.asset.nft.v1.EventUnfrozen)
-  
+
 - [coreum/asset/nft/v1/genesis.proto](#coreum/asset/nft/v1/genesis.proto)
     - [BurntNFT](#coreum.asset.nft.v1.BurntNFT)
     - [ClassFrozenAccounts](#coreum.asset.nft.v1.ClassFrozenAccounts)
@@ -106,16 +106,16 @@
     - [FrozenNFT](#coreum.asset.nft.v1.FrozenNFT)
     - [GenesisState](#coreum.asset.nft.v1.GenesisState)
     - [WhitelistedNFTAccounts](#coreum.asset.nft.v1.WhitelistedNFTAccounts)
-  
+
 - [coreum/asset/nft/v1/nft.proto](#coreum/asset/nft/v1/nft.proto)
     - [Class](#coreum.asset.nft.v1.Class)
     - [ClassDefinition](#coreum.asset.nft.v1.ClassDefinition)
-  
+
     - [ClassFeature](#coreum.asset.nft.v1.ClassFeature)
-  
+
 - [coreum/asset/nft/v1/params.proto](#coreum/asset/nft/v1/params.proto)
     - [Params](#coreum.asset.nft.v1.Params)
-  
+
 - [coreum/asset/nft/v1/query.proto](#coreum/asset/nft/v1/query.proto)
     - [QueryBurntNFTRequest](#coreum.asset.nft.v1.QueryBurntNFTRequest)
     - [QueryBurntNFTResponse](#coreum.asset.nft.v1.QueryBurntNFTResponse)
@@ -139,9 +139,9 @@
     - [QueryWhitelistedAccountsForNFTResponse](#coreum.asset.nft.v1.QueryWhitelistedAccountsForNFTResponse)
     - [QueryWhitelistedRequest](#coreum.asset.nft.v1.QueryWhitelistedRequest)
     - [QueryWhitelistedResponse](#coreum.asset.nft.v1.QueryWhitelistedResponse)
-  
+
     - [Query](#coreum.asset.nft.v1.Query)
-  
+
 - [coreum/asset/nft/v1/tx.proto](#coreum/asset/nft/v1/tx.proto)
     - [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse)
     - [MsgAddToClassWhitelist](#coreum.asset.nft.v1.MsgAddToClassWhitelist)
@@ -157,54 +157,54 @@
     - [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze)
     - [MsgUpdateData](#coreum.asset.nft.v1.MsgUpdateData)
     - [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams)
-  
+
     - [Msg](#coreum.asset.nft.v1.Msg)
-  
+
 - [coreum/asset/nft/v1/types.proto](#coreum/asset/nft/v1/types.proto)
     - [DataBytes](#coreum.asset.nft.v1.DataBytes)
     - [DataDynamic](#coreum.asset.nft.v1.DataDynamic)
     - [DataDynamicIndexedItem](#coreum.asset.nft.v1.DataDynamicIndexedItem)
     - [DataDynamicItem](#coreum.asset.nft.v1.DataDynamicItem)
-  
+
     - [DataEditor](#coreum.asset.nft.v1.DataEditor)
-  
+
 - [coreum/customparams/v1/genesis.proto](#coreum/customparams/v1/genesis.proto)
     - [GenesisState](#coreum.customparams.v1.GenesisState)
-  
+
 - [coreum/customparams/v1/params.proto](#coreum/customparams/v1/params.proto)
     - [StakingParams](#coreum.customparams.v1.StakingParams)
-  
+
 - [coreum/customparams/v1/query.proto](#coreum/customparams/v1/query.proto)
     - [QueryStakingParamsRequest](#coreum.customparams.v1.QueryStakingParamsRequest)
     - [QueryStakingParamsResponse](#coreum.customparams.v1.QueryStakingParamsResponse)
-  
+
     - [Query](#coreum.customparams.v1.Query)
-  
+
 - [coreum/customparams/v1/tx.proto](#coreum/customparams/v1/tx.proto)
     - [EmptyResponse](#coreum.customparams.v1.EmptyResponse)
     - [MsgUpdateStakingParams](#coreum.customparams.v1.MsgUpdateStakingParams)
-  
+
     - [Msg](#coreum.customparams.v1.Msg)
-  
+
 - [coreum/delay/v1/genesis.proto](#coreum/delay/v1/genesis.proto)
     - [BlockItem](#coreum.delay.v1.BlockItem)
     - [DelayedItem](#coreum.delay.v1.DelayedItem)
     - [GenesisState](#coreum.delay.v1.GenesisState)
-  
+
 - [coreum/deterministicgas/v1/event.proto](#coreum/deterministicgas/v1/event.proto)
     - [EventGas](#coreum.deterministicgas.v1.EventGas)
-  
+
 - [coreum/dex/v1/event.proto](#coreum/dex/v1/event.proto)
     - [EventOrderClosed](#coreum.dex.v1.EventOrderClosed)
     - [EventOrderCreated](#coreum.dex.v1.EventOrderCreated)
     - [EventOrderPlaced](#coreum.dex.v1.EventOrderPlaced)
     - [EventOrderReduced](#coreum.dex.v1.EventOrderReduced)
-  
+
 - [coreum/dex/v1/genesis.proto](#coreum/dex/v1/genesis.proto)
     - [AccountDenomOrdersCount](#coreum.dex.v1.AccountDenomOrdersCount)
     - [GenesisState](#coreum.dex.v1.GenesisState)
     - [OrderBookDataWithID](#coreum.dex.v1.OrderBookDataWithID)
-  
+
 - [coreum/dex/v1/order.proto](#coreum/dex/v1/order.proto)
     - [CancelGoodTil](#coreum.dex.v1.CancelGoodTil)
     - [GoodTil](#coreum.dex.v1.GoodTil)
@@ -212,14 +212,14 @@
     - [OrderBookData](#coreum.dex.v1.OrderBookData)
     - [OrderBookRecordData](#coreum.dex.v1.OrderBookRecordData)
     - [OrderData](#coreum.dex.v1.OrderData)
-  
+
     - [OrderType](#coreum.dex.v1.OrderType)
     - [Side](#coreum.dex.v1.Side)
     - [TimeInForce](#coreum.dex.v1.TimeInForce)
-  
+
 - [coreum/dex/v1/params.proto](#coreum/dex/v1/params.proto)
     - [Params](#coreum.dex.v1.Params)
-  
+
 - [coreum/dex/v1/query.proto](#coreum/dex/v1/query.proto)
     - [QueryAccountDenomOrdersCountRequest](#coreum.dex.v1.QueryAccountDenomOrdersCountRequest)
     - [QueryAccountDenomOrdersCountResponse](#coreum.dex.v1.QueryAccountDenomOrdersCountResponse)
@@ -235,25 +235,25 @@
     - [QueryOrdersResponse](#coreum.dex.v1.QueryOrdersResponse)
     - [QueryParamsRequest](#coreum.dex.v1.QueryParamsRequest)
     - [QueryParamsResponse](#coreum.dex.v1.QueryParamsResponse)
-  
+
     - [Query](#coreum.dex.v1.Query)
-  
+
 - [coreum/dex/v1/tx.proto](#coreum/dex/v1/tx.proto)
     - [EmptyResponse](#coreum.dex.v1.EmptyResponse)
     - [MsgCancelOrder](#coreum.dex.v1.MsgCancelOrder)
     - [MsgCancelOrdersByDenom](#coreum.dex.v1.MsgCancelOrdersByDenom)
     - [MsgPlaceOrder](#coreum.dex.v1.MsgPlaceOrder)
     - [MsgUpdateParams](#coreum.dex.v1.MsgUpdateParams)
-  
+
     - [Msg](#coreum.dex.v1.Msg)
-  
+
 - [coreum/feemodel/v1/genesis.proto](#coreum/feemodel/v1/genesis.proto)
     - [GenesisState](#coreum.feemodel.v1.GenesisState)
-  
+
 - [coreum/feemodel/v1/params.proto](#coreum/feemodel/v1/params.proto)
     - [ModelParams](#coreum.feemodel.v1.ModelParams)
     - [Params](#coreum.feemodel.v1.Params)
-  
+
 - [coreum/feemodel/v1/query.proto](#coreum/feemodel/v1/query.proto)
     - [QueryMinGasPriceRequest](#coreum.feemodel.v1.QueryMinGasPriceRequest)
     - [QueryMinGasPriceResponse](#coreum.feemodel.v1.QueryMinGasPriceResponse)
@@ -261,15 +261,15 @@
     - [QueryParamsResponse](#coreum.feemodel.v1.QueryParamsResponse)
     - [QueryRecommendedGasPriceRequest](#coreum.feemodel.v1.QueryRecommendedGasPriceRequest)
     - [QueryRecommendedGasPriceResponse](#coreum.feemodel.v1.QueryRecommendedGasPriceResponse)
-  
+
     - [Query](#coreum.feemodel.v1.Query)
-  
+
 - [coreum/feemodel/v1/tx.proto](#coreum/feemodel/v1/tx.proto)
     - [EmptyResponse](#coreum.feemodel.v1.EmptyResponse)
     - [MsgUpdateParams](#coreum.feemodel.v1.MsgUpdateParams)
-  
+
     - [Msg](#coreum.feemodel.v1.Msg)
-  
+
 - [amino/amino.proto](#amino/amino.proto)
     - [File-level Extensions](#amino/amino.proto-extensions)
     - [File-level Extensions](#amino/amino.proto-extensions)
@@ -277,42 +277,42 @@
     - [File-level Extensions](#amino/amino.proto-extensions)
     - [File-level Extensions](#amino/amino.proto-extensions)
     - [File-level Extensions](#amino/amino.proto-extensions)
-  
+
 - [cosmos/app/runtime/v1alpha1/module.proto](#cosmos/app/runtime/v1alpha1/module.proto)
     - [Module](#cosmos.app.runtime.v1alpha1.Module)
     - [StoreKeyConfig](#cosmos.app.runtime.v1alpha1.StoreKeyConfig)
-  
+
 - [cosmos/app/v1alpha1/config.proto](#cosmos/app/v1alpha1/config.proto)
     - [Config](#cosmos.app.v1alpha1.Config)
     - [GolangBinding](#cosmos.app.v1alpha1.GolangBinding)
     - [ModuleConfig](#cosmos.app.v1alpha1.ModuleConfig)
-  
+
 - [cosmos/app/v1alpha1/module.proto](#cosmos/app/v1alpha1/module.proto)
     - [MigrateFromInfo](#cosmos.app.v1alpha1.MigrateFromInfo)
     - [ModuleDescriptor](#cosmos.app.v1alpha1.ModuleDescriptor)
     - [PackageReference](#cosmos.app.v1alpha1.PackageReference)
-  
+
     - [File-level Extensions](#cosmos/app/v1alpha1/module.proto-extensions)
-  
+
 - [cosmos/app/v1alpha1/query.proto](#cosmos/app/v1alpha1/query.proto)
     - [QueryConfigRequest](#cosmos.app.v1alpha1.QueryConfigRequest)
     - [QueryConfigResponse](#cosmos.app.v1alpha1.QueryConfigResponse)
-  
+
     - [Query](#cosmos.app.v1alpha1.Query)
-  
+
 - [cosmos/auth/module/v1/module.proto](#cosmos/auth/module/v1/module.proto)
     - [Module](#cosmos.auth.module.v1.Module)
     - [ModuleAccountPermission](#cosmos.auth.module.v1.ModuleAccountPermission)
-  
+
 - [cosmos/auth/v1beta1/auth.proto](#cosmos/auth/v1beta1/auth.proto)
     - [BaseAccount](#cosmos.auth.v1beta1.BaseAccount)
     - [ModuleAccount](#cosmos.auth.v1beta1.ModuleAccount)
     - [ModuleCredential](#cosmos.auth.v1beta1.ModuleCredential)
     - [Params](#cosmos.auth.v1beta1.Params)
-  
+
 - [cosmos/auth/v1beta1/genesis.proto](#cosmos/auth/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.auth.v1beta1.GenesisState)
-  
+
 - [cosmos/auth/v1beta1/query.proto](#cosmos/auth/v1beta1/query.proto)
     - [AddressBytesToStringRequest](#cosmos.auth.v1beta1.AddressBytesToStringRequest)
     - [AddressBytesToStringResponse](#cosmos.auth.v1beta1.AddressBytesToStringResponse)
@@ -334,31 +334,31 @@
     - [QueryModuleAccountsResponse](#cosmos.auth.v1beta1.QueryModuleAccountsResponse)
     - [QueryParamsRequest](#cosmos.auth.v1beta1.QueryParamsRequest)
     - [QueryParamsResponse](#cosmos.auth.v1beta1.QueryParamsResponse)
-  
+
     - [Query](#cosmos.auth.v1beta1.Query)
-  
+
 - [cosmos/auth/v1beta1/tx.proto](#cosmos/auth/v1beta1/tx.proto)
     - [MsgUpdateParams](#cosmos.auth.v1beta1.MsgUpdateParams)
     - [MsgUpdateParamsResponse](#cosmos.auth.v1beta1.MsgUpdateParamsResponse)
-  
+
     - [Msg](#cosmos.auth.v1beta1.Msg)
-  
+
 - [cosmos/authz/module/v1/module.proto](#cosmos/authz/module/v1/module.proto)
     - [Module](#cosmos.authz.module.v1.Module)
-  
+
 - [cosmos/authz/v1beta1/authz.proto](#cosmos/authz/v1beta1/authz.proto)
     - [GenericAuthorization](#cosmos.authz.v1beta1.GenericAuthorization)
     - [Grant](#cosmos.authz.v1beta1.Grant)
     - [GrantAuthorization](#cosmos.authz.v1beta1.GrantAuthorization)
     - [GrantQueueItem](#cosmos.authz.v1beta1.GrantQueueItem)
-  
+
 - [cosmos/authz/v1beta1/event.proto](#cosmos/authz/v1beta1/event.proto)
     - [EventGrant](#cosmos.authz.v1beta1.EventGrant)
     - [EventRevoke](#cosmos.authz.v1beta1.EventRevoke)
-  
+
 - [cosmos/authz/v1beta1/genesis.proto](#cosmos/authz/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.authz.v1beta1.GenesisState)
-  
+
 - [cosmos/authz/v1beta1/query.proto](#cosmos/authz/v1beta1/query.proto)
     - [QueryGranteeGrantsRequest](#cosmos.authz.v1beta1.QueryGranteeGrantsRequest)
     - [QueryGranteeGrantsResponse](#cosmos.authz.v1beta1.QueryGranteeGrantsResponse)
@@ -366,9 +366,9 @@
     - [QueryGranterGrantsResponse](#cosmos.authz.v1beta1.QueryGranterGrantsResponse)
     - [QueryGrantsRequest](#cosmos.authz.v1beta1.QueryGrantsRequest)
     - [QueryGrantsResponse](#cosmos.authz.v1beta1.QueryGrantsResponse)
-  
+
     - [Query](#cosmos.authz.v1beta1.Query)
-  
+
 - [cosmos/authz/v1beta1/tx.proto](#cosmos/authz/v1beta1/tx.proto)
     - [MsgExec](#cosmos.authz.v1beta1.MsgExec)
     - [MsgExecResponse](#cosmos.authz.v1beta1.MsgExecResponse)
@@ -376,9 +376,9 @@
     - [MsgGrantResponse](#cosmos.authz.v1beta1.MsgGrantResponse)
     - [MsgRevoke](#cosmos.authz.v1beta1.MsgRevoke)
     - [MsgRevokeResponse](#cosmos.authz.v1beta1.MsgRevokeResponse)
-  
+
     - [Msg](#cosmos.authz.v1beta1.Msg)
-  
+
 - [cosmos/autocli/v1/options.proto](#cosmos/autocli/v1/options.proto)
     - [FlagOptions](#cosmos.autocli.v1.FlagOptions)
     - [ModuleOptions](#cosmos.autocli.v1.ModuleOptions)
@@ -387,20 +387,20 @@
     - [RpcCommandOptions.FlagOptionsEntry](#cosmos.autocli.v1.RpcCommandOptions.FlagOptionsEntry)
     - [ServiceCommandDescriptor](#cosmos.autocli.v1.ServiceCommandDescriptor)
     - [ServiceCommandDescriptor.SubCommandsEntry](#cosmos.autocli.v1.ServiceCommandDescriptor.SubCommandsEntry)
-  
+
 - [cosmos/autocli/v1/query.proto](#cosmos/autocli/v1/query.proto)
     - [AppOptionsRequest](#cosmos.autocli.v1.AppOptionsRequest)
     - [AppOptionsResponse](#cosmos.autocli.v1.AppOptionsResponse)
     - [AppOptionsResponse.ModuleOptionsEntry](#cosmos.autocli.v1.AppOptionsResponse.ModuleOptionsEntry)
-  
+
     - [Query](#cosmos.autocli.v1.Query)
-  
+
 - [cosmos/bank/module/v1/module.proto](#cosmos/bank/module/v1/module.proto)
     - [Module](#cosmos.bank.module.v1.Module)
-  
+
 - [cosmos/bank/v1beta1/authz.proto](#cosmos/bank/v1beta1/authz.proto)
     - [SendAuthorization](#cosmos.bank.v1beta1.SendAuthorization)
-  
+
 - [cosmos/bank/v1beta1/bank.proto](#cosmos/bank/v1beta1/bank.proto)
     - [DenomUnit](#cosmos.bank.v1beta1.DenomUnit)
     - [Input](#cosmos.bank.v1beta1.Input)
@@ -409,11 +409,11 @@
     - [Params](#cosmos.bank.v1beta1.Params)
     - [SendEnabled](#cosmos.bank.v1beta1.SendEnabled)
     - [Supply](#cosmos.bank.v1beta1.Supply)
-  
+
 - [cosmos/bank/v1beta1/genesis.proto](#cosmos/bank/v1beta1/genesis.proto)
     - [Balance](#cosmos.bank.v1beta1.Balance)
     - [GenesisState](#cosmos.bank.v1beta1.GenesisState)
-  
+
 - [cosmos/bank/v1beta1/query.proto](#cosmos/bank/v1beta1/query.proto)
     - [DenomOwner](#cosmos.bank.v1beta1.DenomOwner)
     - [QueryAllBalancesRequest](#cosmos.bank.v1beta1.QueryAllBalancesRequest)
@@ -442,9 +442,9 @@
     - [QuerySupplyOfResponse](#cosmos.bank.v1beta1.QuerySupplyOfResponse)
     - [QueryTotalSupplyRequest](#cosmos.bank.v1beta1.QueryTotalSupplyRequest)
     - [QueryTotalSupplyResponse](#cosmos.bank.v1beta1.QueryTotalSupplyResponse)
-  
+
     - [Query](#cosmos.bank.v1beta1.Query)
-  
+
 - [cosmos/bank/v1beta1/tx.proto](#cosmos/bank/v1beta1/tx.proto)
     - [MsgMultiSend](#cosmos.bank.v1beta1.MsgMultiSend)
     - [MsgMultiSendResponse](#cosmos.bank.v1beta1.MsgMultiSendResponse)
@@ -454,9 +454,9 @@
     - [MsgSetSendEnabledResponse](#cosmos.bank.v1beta1.MsgSetSendEnabledResponse)
     - [MsgUpdateParams](#cosmos.bank.v1beta1.MsgUpdateParams)
     - [MsgUpdateParamsResponse](#cosmos.bank.v1beta1.MsgUpdateParamsResponse)
-  
+
     - [Msg](#cosmos.bank.v1beta1.Msg)
-  
+
 - [cosmos/base/abci/v1beta1/abci.proto](#cosmos/base/abci/v1beta1/abci.proto)
     - [ABCIMessageLog](#cosmos.base.abci.v1beta1.ABCIMessageLog)
     - [Attribute](#cosmos.base.abci.v1beta1.Attribute)
@@ -469,27 +469,27 @@
     - [StringEvent](#cosmos.base.abci.v1beta1.StringEvent)
     - [TxMsgData](#cosmos.base.abci.v1beta1.TxMsgData)
     - [TxResponse](#cosmos.base.abci.v1beta1.TxResponse)
-  
+
 - [cosmos/base/node/v1beta1/query.proto](#cosmos/base/node/v1beta1/query.proto)
     - [ConfigRequest](#cosmos.base.node.v1beta1.ConfigRequest)
     - [ConfigResponse](#cosmos.base.node.v1beta1.ConfigResponse)
     - [StatusRequest](#cosmos.base.node.v1beta1.StatusRequest)
     - [StatusResponse](#cosmos.base.node.v1beta1.StatusResponse)
-  
+
     - [Service](#cosmos.base.node.v1beta1.Service)
-  
+
 - [cosmos/base/query/v1beta1/pagination.proto](#cosmos/base/query/v1beta1/pagination.proto)
     - [PageRequest](#cosmos.base.query.v1beta1.PageRequest)
     - [PageResponse](#cosmos.base.query.v1beta1.PageResponse)
-  
+
 - [cosmos/base/reflection/v1beta1/reflection.proto](#cosmos/base/reflection/v1beta1/reflection.proto)
     - [ListAllInterfacesRequest](#cosmos.base.reflection.v1beta1.ListAllInterfacesRequest)
     - [ListAllInterfacesResponse](#cosmos.base.reflection.v1beta1.ListAllInterfacesResponse)
     - [ListImplementationsRequest](#cosmos.base.reflection.v1beta1.ListImplementationsRequest)
     - [ListImplementationsResponse](#cosmos.base.reflection.v1beta1.ListImplementationsResponse)
-  
+
     - [ReflectionService](#cosmos.base.reflection.v1beta1.ReflectionService)
-  
+
 - [cosmos/base/reflection/v2alpha1/reflection.proto](#cosmos/base/reflection/v2alpha1/reflection.proto)
     - [AppDescriptor](#cosmos.base.reflection.v2alpha1.AppDescriptor)
     - [AuthnDescriptor](#cosmos.base.reflection.v2alpha1.AuthnDescriptor)
@@ -517,9 +517,9 @@
     - [QueryServicesDescriptor](#cosmos.base.reflection.v2alpha1.QueryServicesDescriptor)
     - [SigningModeDescriptor](#cosmos.base.reflection.v2alpha1.SigningModeDescriptor)
     - [TxDescriptor](#cosmos.base.reflection.v2alpha1.TxDescriptor)
-  
+
     - [ReflectionService](#cosmos.base.reflection.v2alpha1.ReflectionService)
-  
+
 - [cosmos/base/tendermint/v1beta1/query.proto](#cosmos/base/tendermint/v1beta1/query.proto)
     - [ABCIQueryRequest](#cosmos.base.tendermint.v1beta1.ABCIQueryRequest)
     - [ABCIQueryResponse](#cosmos.base.tendermint.v1beta1.ABCIQueryResponse)
@@ -540,22 +540,22 @@
     - [ProofOps](#cosmos.base.tendermint.v1beta1.ProofOps)
     - [Validator](#cosmos.base.tendermint.v1beta1.Validator)
     - [VersionInfo](#cosmos.base.tendermint.v1beta1.VersionInfo)
-  
+
     - [Service](#cosmos.base.tendermint.v1beta1.Service)
-  
+
 - [cosmos/base/tendermint/v1beta1/types.proto](#cosmos/base/tendermint/v1beta1/types.proto)
     - [Block](#cosmos.base.tendermint.v1beta1.Block)
     - [Header](#cosmos.base.tendermint.v1beta1.Header)
-  
+
 - [cosmos/base/v1beta1/coin.proto](#cosmos/base/v1beta1/coin.proto)
     - [Coin](#cosmos.base.v1beta1.Coin)
     - [DecCoin](#cosmos.base.v1beta1.DecCoin)
     - [DecProto](#cosmos.base.v1beta1.DecProto)
     - [IntProto](#cosmos.base.v1beta1.IntProto)
-  
+
 - [cosmos/circuit/module/v1/module.proto](#cosmos/circuit/module/v1/module.proto)
     - [Module](#cosmos.circuit.module.v1.Module)
-  
+
 - [cosmos/circuit/v1/query.proto](#cosmos/circuit/v1/query.proto)
     - [AccountResponse](#cosmos.circuit.v1.AccountResponse)
     - [AccountsResponse](#cosmos.circuit.v1.AccountsResponse)
@@ -563,9 +563,9 @@
     - [QueryAccountRequest](#cosmos.circuit.v1.QueryAccountRequest)
     - [QueryAccountsRequest](#cosmos.circuit.v1.QueryAccountsRequest)
     - [QueryDisabledListRequest](#cosmos.circuit.v1.QueryDisabledListRequest)
-  
+
     - [Query](#cosmos.circuit.v1.Query)
-  
+
 - [cosmos/circuit/v1/tx.proto](#cosmos/circuit/v1/tx.proto)
     - [MsgAuthorizeCircuitBreaker](#cosmos.circuit.v1.MsgAuthorizeCircuitBreaker)
     - [MsgAuthorizeCircuitBreakerResponse](#cosmos.circuit.v1.MsgAuthorizeCircuitBreakerResponse)
@@ -573,77 +573,77 @@
     - [MsgResetCircuitBreakerResponse](#cosmos.circuit.v1.MsgResetCircuitBreakerResponse)
     - [MsgTripCircuitBreaker](#cosmos.circuit.v1.MsgTripCircuitBreaker)
     - [MsgTripCircuitBreakerResponse](#cosmos.circuit.v1.MsgTripCircuitBreakerResponse)
-  
+
     - [Msg](#cosmos.circuit.v1.Msg)
-  
+
 - [cosmos/circuit/v1/types.proto](#cosmos/circuit/v1/types.proto)
     - [GenesisAccountPermissions](#cosmos.circuit.v1.GenesisAccountPermissions)
     - [GenesisState](#cosmos.circuit.v1.GenesisState)
     - [Permissions](#cosmos.circuit.v1.Permissions)
-  
+
     - [Permissions.Level](#cosmos.circuit.v1.Permissions.Level)
-  
+
 - [cosmos/consensus/module/v1/module.proto](#cosmos/consensus/module/v1/module.proto)
     - [Module](#cosmos.consensus.module.v1.Module)
-  
+
 - [cosmos/consensus/v1/query.proto](#cosmos/consensus/v1/query.proto)
     - [QueryParamsRequest](#cosmos.consensus.v1.QueryParamsRequest)
     - [QueryParamsResponse](#cosmos.consensus.v1.QueryParamsResponse)
-  
+
     - [Query](#cosmos.consensus.v1.Query)
-  
+
 - [cosmos/consensus/v1/tx.proto](#cosmos/consensus/v1/tx.proto)
     - [MsgUpdateParams](#cosmos.consensus.v1.MsgUpdateParams)
     - [MsgUpdateParamsResponse](#cosmos.consensus.v1.MsgUpdateParamsResponse)
-  
+
     - [Msg](#cosmos.consensus.v1.Msg)
-  
+
 - [cosmos/crisis/module/v1/module.proto](#cosmos/crisis/module/v1/module.proto)
     - [Module](#cosmos.crisis.module.v1.Module)
-  
+
 - [cosmos/crisis/v1beta1/genesis.proto](#cosmos/crisis/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.crisis.v1beta1.GenesisState)
-  
+
 - [cosmos/crisis/v1beta1/tx.proto](#cosmos/crisis/v1beta1/tx.proto)
     - [MsgUpdateParams](#cosmos.crisis.v1beta1.MsgUpdateParams)
     - [MsgUpdateParamsResponse](#cosmos.crisis.v1beta1.MsgUpdateParamsResponse)
     - [MsgVerifyInvariant](#cosmos.crisis.v1beta1.MsgVerifyInvariant)
     - [MsgVerifyInvariantResponse](#cosmos.crisis.v1beta1.MsgVerifyInvariantResponse)
-  
+
     - [Msg](#cosmos.crisis.v1beta1.Msg)
-  
+
 - [cosmos/crypto/ed25519/keys.proto](#cosmos/crypto/ed25519/keys.proto)
     - [PrivKey](#cosmos.crypto.ed25519.PrivKey)
     - [PubKey](#cosmos.crypto.ed25519.PubKey)
-  
+
 - [cosmos/crypto/hd/v1/hd.proto](#cosmos/crypto/hd/v1/hd.proto)
     - [BIP44Params](#cosmos.crypto.hd.v1.BIP44Params)
-  
+
 - [cosmos/crypto/keyring/v1/record.proto](#cosmos/crypto/keyring/v1/record.proto)
     - [Record](#cosmos.crypto.keyring.v1.Record)
     - [Record.Ledger](#cosmos.crypto.keyring.v1.Record.Ledger)
     - [Record.Local](#cosmos.crypto.keyring.v1.Record.Local)
     - [Record.Multi](#cosmos.crypto.keyring.v1.Record.Multi)
     - [Record.Offline](#cosmos.crypto.keyring.v1.Record.Offline)
-  
+
 - [cosmos/crypto/multisig/keys.proto](#cosmos/crypto/multisig/keys.proto)
     - [LegacyAminoPubKey](#cosmos.crypto.multisig.LegacyAminoPubKey)
-  
+
 - [cosmos/crypto/multisig/v1beta1/multisig.proto](#cosmos/crypto/multisig/v1beta1/multisig.proto)
     - [CompactBitArray](#cosmos.crypto.multisig.v1beta1.CompactBitArray)
     - [MultiSignature](#cosmos.crypto.multisig.v1beta1.MultiSignature)
-  
+
 - [cosmos/crypto/secp256k1/keys.proto](#cosmos/crypto/secp256k1/keys.proto)
     - [PrivKey](#cosmos.crypto.secp256k1.PrivKey)
     - [PubKey](#cosmos.crypto.secp256k1.PubKey)
-  
+
 - [cosmos/crypto/secp256r1/keys.proto](#cosmos/crypto/secp256r1/keys.proto)
     - [PrivKey](#cosmos.crypto.secp256r1.PrivKey)
     - [PubKey](#cosmos.crypto.secp256r1.PubKey)
-  
+
 - [cosmos/distribution/module/v1/module.proto](#cosmos/distribution/module/v1/module.proto)
     - [Module](#cosmos.distribution.module.v1.Module)
-  
+
 - [cosmos/distribution/v1beta1/distribution.proto](#cosmos/distribution/v1beta1/distribution.proto)
     - [CommunityPoolSpendProposal](#cosmos.distribution.v1beta1.CommunityPoolSpendProposal)
     - [CommunityPoolSpendProposalWithDeposit](#cosmos.distribution.v1beta1.CommunityPoolSpendProposalWithDeposit)
@@ -657,7 +657,7 @@
     - [ValidatorOutstandingRewards](#cosmos.distribution.v1beta1.ValidatorOutstandingRewards)
     - [ValidatorSlashEvent](#cosmos.distribution.v1beta1.ValidatorSlashEvent)
     - [ValidatorSlashEvents](#cosmos.distribution.v1beta1.ValidatorSlashEvents)
-  
+
 - [cosmos/distribution/v1beta1/genesis.proto](#cosmos/distribution/v1beta1/genesis.proto)
     - [DelegatorStartingInfoRecord](#cosmos.distribution.v1beta1.DelegatorStartingInfoRecord)
     - [DelegatorWithdrawInfo](#cosmos.distribution.v1beta1.DelegatorWithdrawInfo)
@@ -667,7 +667,7 @@
     - [ValidatorHistoricalRewardsRecord](#cosmos.distribution.v1beta1.ValidatorHistoricalRewardsRecord)
     - [ValidatorOutstandingRewardsRecord](#cosmos.distribution.v1beta1.ValidatorOutstandingRewardsRecord)
     - [ValidatorSlashEventRecord](#cosmos.distribution.v1beta1.ValidatorSlashEventRecord)
-  
+
 - [cosmos/distribution/v1beta1/query.proto](#cosmos/distribution/v1beta1/query.proto)
     - [QueryCommunityPoolRequest](#cosmos.distribution.v1beta1.QueryCommunityPoolRequest)
     - [QueryCommunityPoolResponse](#cosmos.distribution.v1beta1.QueryCommunityPoolResponse)
@@ -689,9 +689,9 @@
     - [QueryValidatorOutstandingRewardsResponse](#cosmos.distribution.v1beta1.QueryValidatorOutstandingRewardsResponse)
     - [QueryValidatorSlashesRequest](#cosmos.distribution.v1beta1.QueryValidatorSlashesRequest)
     - [QueryValidatorSlashesResponse](#cosmos.distribution.v1beta1.QueryValidatorSlashesResponse)
-  
+
     - [Query](#cosmos.distribution.v1beta1.Query)
-  
+
 - [cosmos/distribution/v1beta1/tx.proto](#cosmos/distribution/v1beta1/tx.proto)
     - [MsgCommunityPoolSpend](#cosmos.distribution.v1beta1.MsgCommunityPoolSpend)
     - [MsgCommunityPoolSpendResponse](#cosmos.distribution.v1beta1.MsgCommunityPoolSpendResponse)
@@ -707,44 +707,44 @@
     - [MsgWithdrawDelegatorRewardResponse](#cosmos.distribution.v1beta1.MsgWithdrawDelegatorRewardResponse)
     - [MsgWithdrawValidatorCommission](#cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission)
     - [MsgWithdrawValidatorCommissionResponse](#cosmos.distribution.v1beta1.MsgWithdrawValidatorCommissionResponse)
-  
+
     - [Msg](#cosmos.distribution.v1beta1.Msg)
-  
+
 - [cosmos/evidence/module/v1/module.proto](#cosmos/evidence/module/v1/module.proto)
     - [Module](#cosmos.evidence.module.v1.Module)
-  
+
 - [cosmos/evidence/v1beta1/evidence.proto](#cosmos/evidence/v1beta1/evidence.proto)
     - [Equivocation](#cosmos.evidence.v1beta1.Equivocation)
-  
+
 - [cosmos/evidence/v1beta1/genesis.proto](#cosmos/evidence/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.evidence.v1beta1.GenesisState)
-  
+
 - [cosmos/evidence/v1beta1/query.proto](#cosmos/evidence/v1beta1/query.proto)
     - [QueryAllEvidenceRequest](#cosmos.evidence.v1beta1.QueryAllEvidenceRequest)
     - [QueryAllEvidenceResponse](#cosmos.evidence.v1beta1.QueryAllEvidenceResponse)
     - [QueryEvidenceRequest](#cosmos.evidence.v1beta1.QueryEvidenceRequest)
     - [QueryEvidenceResponse](#cosmos.evidence.v1beta1.QueryEvidenceResponse)
-  
+
     - [Query](#cosmos.evidence.v1beta1.Query)
-  
+
 - [cosmos/evidence/v1beta1/tx.proto](#cosmos/evidence/v1beta1/tx.proto)
     - [MsgSubmitEvidence](#cosmos.evidence.v1beta1.MsgSubmitEvidence)
     - [MsgSubmitEvidenceResponse](#cosmos.evidence.v1beta1.MsgSubmitEvidenceResponse)
-  
+
     - [Msg](#cosmos.evidence.v1beta1.Msg)
-  
+
 - [cosmos/feegrant/module/v1/module.proto](#cosmos/feegrant/module/v1/module.proto)
     - [Module](#cosmos.feegrant.module.v1.Module)
-  
+
 - [cosmos/feegrant/v1beta1/feegrant.proto](#cosmos/feegrant/v1beta1/feegrant.proto)
     - [AllowedMsgAllowance](#cosmos.feegrant.v1beta1.AllowedMsgAllowance)
     - [BasicAllowance](#cosmos.feegrant.v1beta1.BasicAllowance)
     - [Grant](#cosmos.feegrant.v1beta1.Grant)
     - [PeriodicAllowance](#cosmos.feegrant.v1beta1.PeriodicAllowance)
-  
+
 - [cosmos/feegrant/v1beta1/genesis.proto](#cosmos/feegrant/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.feegrant.v1beta1.GenesisState)
-  
+
 - [cosmos/feegrant/v1beta1/query.proto](#cosmos/feegrant/v1beta1/query.proto)
     - [QueryAllowanceRequest](#cosmos.feegrant.v1beta1.QueryAllowanceRequest)
     - [QueryAllowanceResponse](#cosmos.feegrant.v1beta1.QueryAllowanceResponse)
@@ -752,9 +752,9 @@
     - [QueryAllowancesByGranterResponse](#cosmos.feegrant.v1beta1.QueryAllowancesByGranterResponse)
     - [QueryAllowancesRequest](#cosmos.feegrant.v1beta1.QueryAllowancesRequest)
     - [QueryAllowancesResponse](#cosmos.feegrant.v1beta1.QueryAllowancesResponse)
-  
+
     - [Query](#cosmos.feegrant.v1beta1.Query)
-  
+
 - [cosmos/feegrant/v1beta1/tx.proto](#cosmos/feegrant/v1beta1/tx.proto)
     - [MsgGrantAllowance](#cosmos.feegrant.v1beta1.MsgGrantAllowance)
     - [MsgGrantAllowanceResponse](#cosmos.feegrant.v1beta1.MsgGrantAllowanceResponse)
@@ -762,21 +762,21 @@
     - [MsgPruneAllowancesResponse](#cosmos.feegrant.v1beta1.MsgPruneAllowancesResponse)
     - [MsgRevokeAllowance](#cosmos.feegrant.v1beta1.MsgRevokeAllowance)
     - [MsgRevokeAllowanceResponse](#cosmos.feegrant.v1beta1.MsgRevokeAllowanceResponse)
-  
+
     - [Msg](#cosmos.feegrant.v1beta1.Msg)
-  
+
 - [cosmos/genutil/module/v1/module.proto](#cosmos/genutil/module/v1/module.proto)
     - [Module](#cosmos.genutil.module.v1.Module)
-  
+
 - [cosmos/genutil/v1beta1/genesis.proto](#cosmos/genutil/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.genutil.v1beta1.GenesisState)
-  
+
 - [cosmos/gov/module/v1/module.proto](#cosmos/gov/module/v1/module.proto)
     - [Module](#cosmos.gov.module.v1.Module)
-  
+
 - [cosmos/gov/v1/genesis.proto](#cosmos/gov/v1/genesis.proto)
     - [GenesisState](#cosmos.gov.v1.GenesisState)
-  
+
 - [cosmos/gov/v1/gov.proto](#cosmos/gov/v1/gov.proto)
     - [Deposit](#cosmos.gov.v1.Deposit)
     - [DepositParams](#cosmos.gov.v1.DepositParams)
@@ -787,10 +787,10 @@
     - [Vote](#cosmos.gov.v1.Vote)
     - [VotingParams](#cosmos.gov.v1.VotingParams)
     - [WeightedVoteOption](#cosmos.gov.v1.WeightedVoteOption)
-  
+
     - [ProposalStatus](#cosmos.gov.v1.ProposalStatus)
     - [VoteOption](#cosmos.gov.v1.VoteOption)
-  
+
 - [cosmos/gov/v1/query.proto](#cosmos/gov/v1/query.proto)
     - [QueryConstitutionRequest](#cosmos.gov.v1.QueryConstitutionRequest)
     - [QueryConstitutionResponse](#cosmos.gov.v1.QueryConstitutionResponse)
@@ -810,9 +810,9 @@
     - [QueryVoteResponse](#cosmos.gov.v1.QueryVoteResponse)
     - [QueryVotesRequest](#cosmos.gov.v1.QueryVotesRequest)
     - [QueryVotesResponse](#cosmos.gov.v1.QueryVotesResponse)
-  
+
     - [Query](#cosmos.gov.v1.Query)
-  
+
 - [cosmos/gov/v1/tx.proto](#cosmos/gov/v1/tx.proto)
     - [MsgCancelProposal](#cosmos.gov.v1.MsgCancelProposal)
     - [MsgCancelProposalResponse](#cosmos.gov.v1.MsgCancelProposalResponse)
@@ -828,12 +828,12 @@
     - [MsgVoteResponse](#cosmos.gov.v1.MsgVoteResponse)
     - [MsgVoteWeighted](#cosmos.gov.v1.MsgVoteWeighted)
     - [MsgVoteWeightedResponse](#cosmos.gov.v1.MsgVoteWeightedResponse)
-  
+
     - [Msg](#cosmos.gov.v1.Msg)
-  
+
 - [cosmos/gov/v1beta1/genesis.proto](#cosmos/gov/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.gov.v1beta1.GenesisState)
-  
+
 - [cosmos/gov/v1beta1/gov.proto](#cosmos/gov/v1beta1/gov.proto)
     - [Deposit](#cosmos.gov.v1beta1.Deposit)
     - [DepositParams](#cosmos.gov.v1beta1.DepositParams)
@@ -844,10 +844,10 @@
     - [Vote](#cosmos.gov.v1beta1.Vote)
     - [VotingParams](#cosmos.gov.v1beta1.VotingParams)
     - [WeightedVoteOption](#cosmos.gov.v1beta1.WeightedVoteOption)
-  
+
     - [ProposalStatus](#cosmos.gov.v1beta1.ProposalStatus)
     - [VoteOption](#cosmos.gov.v1beta1.VoteOption)
-  
+
 - [cosmos/gov/v1beta1/query.proto](#cosmos/gov/v1beta1/query.proto)
     - [QueryDepositRequest](#cosmos.gov.v1beta1.QueryDepositRequest)
     - [QueryDepositResponse](#cosmos.gov.v1beta1.QueryDepositResponse)
@@ -865,9 +865,9 @@
     - [QueryVoteResponse](#cosmos.gov.v1beta1.QueryVoteResponse)
     - [QueryVotesRequest](#cosmos.gov.v1beta1.QueryVotesRequest)
     - [QueryVotesResponse](#cosmos.gov.v1beta1.QueryVotesResponse)
-  
+
     - [Query](#cosmos.gov.v1beta1.Query)
-  
+
 - [cosmos/gov/v1beta1/tx.proto](#cosmos/gov/v1beta1/tx.proto)
     - [MsgDeposit](#cosmos.gov.v1beta1.MsgDeposit)
     - [MsgDepositResponse](#cosmos.gov.v1beta1.MsgDepositResponse)
@@ -877,12 +877,12 @@
     - [MsgVoteResponse](#cosmos.gov.v1beta1.MsgVoteResponse)
     - [MsgVoteWeighted](#cosmos.gov.v1beta1.MsgVoteWeighted)
     - [MsgVoteWeightedResponse](#cosmos.gov.v1beta1.MsgVoteWeightedResponse)
-  
+
     - [Msg](#cosmos.gov.v1beta1.Msg)
-  
+
 - [cosmos/group/module/v1/module.proto](#cosmos/group/module/v1/module.proto)
     - [Module](#cosmos.group.module.v1.Module)
-  
+
 - [cosmos/group/v1/events.proto](#cosmos/group/v1/events.proto)
     - [EventCreateGroup](#cosmos.group.v1.EventCreateGroup)
     - [EventCreateGroupPolicy](#cosmos.group.v1.EventCreateGroupPolicy)
@@ -895,10 +895,10 @@
     - [EventUpdateGroupPolicy](#cosmos.group.v1.EventUpdateGroupPolicy)
     - [EventVote](#cosmos.group.v1.EventVote)
     - [EventWithdrawProposal](#cosmos.group.v1.EventWithdrawProposal)
-  
+
 - [cosmos/group/v1/genesis.proto](#cosmos/group/v1/genesis.proto)
     - [GenesisState](#cosmos.group.v1.GenesisState)
-  
+
 - [cosmos/group/v1/query.proto](#cosmos/group/v1/query.proto)
     - [QueryGroupInfoRequest](#cosmos.group.v1.QueryGroupInfoRequest)
     - [QueryGroupInfoResponse](#cosmos.group.v1.QueryGroupInfoResponse)
@@ -928,9 +928,9 @@
     - [QueryVotesByProposalResponse](#cosmos.group.v1.QueryVotesByProposalResponse)
     - [QueryVotesByVoterRequest](#cosmos.group.v1.QueryVotesByVoterRequest)
     - [QueryVotesByVoterResponse](#cosmos.group.v1.QueryVotesByVoterResponse)
-  
+
     - [Query](#cosmos.group.v1.Query)
-  
+
 - [cosmos/group/v1/tx.proto](#cosmos/group/v1/tx.proto)
     - [MsgCreateGroup](#cosmos.group.v1.MsgCreateGroup)
     - [MsgCreateGroupPolicy](#cosmos.group.v1.MsgCreateGroupPolicy)
@@ -960,11 +960,11 @@
     - [MsgVoteResponse](#cosmos.group.v1.MsgVoteResponse)
     - [MsgWithdrawProposal](#cosmos.group.v1.MsgWithdrawProposal)
     - [MsgWithdrawProposalResponse](#cosmos.group.v1.MsgWithdrawProposalResponse)
-  
+
     - [Exec](#cosmos.group.v1.Exec)
-  
+
     - [Msg](#cosmos.group.v1.Msg)
-  
+
 - [cosmos/group/v1/types.proto](#cosmos/group/v1/types.proto)
     - [DecisionPolicyWindows](#cosmos.group.v1.DecisionPolicyWindows)
     - [GroupInfo](#cosmos.group.v1.GroupInfo)
@@ -977,21 +977,21 @@
     - [TallyResult](#cosmos.group.v1.TallyResult)
     - [ThresholdDecisionPolicy](#cosmos.group.v1.ThresholdDecisionPolicy)
     - [Vote](#cosmos.group.v1.Vote)
-  
+
     - [ProposalExecutorResult](#cosmos.group.v1.ProposalExecutorResult)
     - [ProposalStatus](#cosmos.group.v1.ProposalStatus)
     - [VoteOption](#cosmos.group.v1.VoteOption)
-  
+
 - [cosmos/mint/module/v1/module.proto](#cosmos/mint/module/v1/module.proto)
     - [Module](#cosmos.mint.module.v1.Module)
-  
+
 - [cosmos/mint/v1beta1/genesis.proto](#cosmos/mint/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.mint.v1beta1.GenesisState)
-  
+
 - [cosmos/mint/v1beta1/mint.proto](#cosmos/mint/v1beta1/mint.proto)
     - [Minter](#cosmos.mint.v1beta1.Minter)
     - [Params](#cosmos.mint.v1beta1.Params)
-  
+
 - [cosmos/mint/v1beta1/query.proto](#cosmos/mint/v1beta1/query.proto)
     - [QueryAnnualProvisionsRequest](#cosmos.mint.v1beta1.QueryAnnualProvisionsRequest)
     - [QueryAnnualProvisionsResponse](#cosmos.mint.v1beta1.QueryAnnualProvisionsResponse)
@@ -999,38 +999,38 @@
     - [QueryInflationResponse](#cosmos.mint.v1beta1.QueryInflationResponse)
     - [QueryParamsRequest](#cosmos.mint.v1beta1.QueryParamsRequest)
     - [QueryParamsResponse](#cosmos.mint.v1beta1.QueryParamsResponse)
-  
+
     - [Query](#cosmos.mint.v1beta1.Query)
-  
+
 - [cosmos/mint/v1beta1/tx.proto](#cosmos/mint/v1beta1/tx.proto)
     - [MsgUpdateParams](#cosmos.mint.v1beta1.MsgUpdateParams)
     - [MsgUpdateParamsResponse](#cosmos.mint.v1beta1.MsgUpdateParamsResponse)
-  
+
     - [Msg](#cosmos.mint.v1beta1.Msg)
-  
+
 - [cosmos/msg/textual/v1/textual.proto](#cosmos/msg/textual/v1/textual.proto)
     - [File-level Extensions](#cosmos/msg/textual/v1/textual.proto-extensions)
-  
+
 - [cosmos/msg/v1/msg.proto](#cosmos/msg/v1/msg.proto)
     - [File-level Extensions](#cosmos/msg/v1/msg.proto-extensions)
     - [File-level Extensions](#cosmos/msg/v1/msg.proto-extensions)
-  
+
 - [cosmos/nft/module/v1/module.proto](#cosmos/nft/module/v1/module.proto)
     - [Module](#cosmos.nft.module.v1.Module)
-  
+
 - [cosmos/nft/v1beta1/event.proto](#cosmos/nft/v1beta1/event.proto)
     - [EventBurn](#cosmos.nft.v1beta1.EventBurn)
     - [EventMint](#cosmos.nft.v1beta1.EventMint)
     - [EventSend](#cosmos.nft.v1beta1.EventSend)
-  
+
 - [cosmos/nft/v1beta1/genesis.proto](#cosmos/nft/v1beta1/genesis.proto)
     - [Entry](#cosmos.nft.v1beta1.Entry)
     - [GenesisState](#cosmos.nft.v1beta1.GenesisState)
-  
+
 - [cosmos/nft/v1beta1/nft.proto](#cosmos/nft/v1beta1/nft.proto)
     - [Class](#cosmos.nft.v1beta1.Class)
     - [NFT](#cosmos.nft.v1beta1.NFT)
-  
+
 - [cosmos/nft/v1beta1/query.proto](#cosmos/nft/v1beta1/query.proto)
     - [QueryBalanceRequest](#cosmos.nft.v1beta1.QueryBalanceRequest)
     - [QueryBalanceResponse](#cosmos.nft.v1beta1.QueryBalanceResponse)
@@ -1046,18 +1046,18 @@
     - [QueryOwnerResponse](#cosmos.nft.v1beta1.QueryOwnerResponse)
     - [QuerySupplyRequest](#cosmos.nft.v1beta1.QuerySupplyRequest)
     - [QuerySupplyResponse](#cosmos.nft.v1beta1.QuerySupplyResponse)
-  
+
     - [Query](#cosmos.nft.v1beta1.Query)
-  
+
 - [cosmos/nft/v1beta1/tx.proto](#cosmos/nft/v1beta1/tx.proto)
     - [MsgSend](#cosmos.nft.v1beta1.MsgSend)
     - [MsgSendResponse](#cosmos.nft.v1beta1.MsgSendResponse)
-  
+
     - [Msg](#cosmos.nft.v1beta1.Msg)
-  
+
 - [cosmos/orm/module/v1alpha1/module.proto](#cosmos/orm/module/v1alpha1/module.proto)
     - [Module](#cosmos.orm.module.v1alpha1.Module)
-  
+
 - [cosmos/orm/query/v1alpha1/query.proto](#cosmos/orm/query/v1alpha1/query.proto)
     - [GetRequest](#cosmos.orm.query.v1alpha1.GetRequest)
     - [GetResponse](#cosmos.orm.query.v1alpha1.GetResponse)
@@ -1066,60 +1066,60 @@
     - [ListRequest.Prefix](#cosmos.orm.query.v1alpha1.ListRequest.Prefix)
     - [ListRequest.Range](#cosmos.orm.query.v1alpha1.ListRequest.Range)
     - [ListResponse](#cosmos.orm.query.v1alpha1.ListResponse)
-  
+
     - [Query](#cosmos.orm.query.v1alpha1.Query)
-  
+
 - [cosmos/orm/v1/orm.proto](#cosmos/orm/v1/orm.proto)
     - [PrimaryKeyDescriptor](#cosmos.orm.v1.PrimaryKeyDescriptor)
     - [SecondaryIndexDescriptor](#cosmos.orm.v1.SecondaryIndexDescriptor)
     - [SingletonDescriptor](#cosmos.orm.v1.SingletonDescriptor)
     - [TableDescriptor](#cosmos.orm.v1.TableDescriptor)
-  
+
     - [File-level Extensions](#cosmos/orm/v1/orm.proto-extensions)
     - [File-level Extensions](#cosmos/orm/v1/orm.proto-extensions)
-  
+
 - [cosmos/orm/v1alpha1/schema.proto](#cosmos/orm/v1alpha1/schema.proto)
     - [ModuleSchemaDescriptor](#cosmos.orm.v1alpha1.ModuleSchemaDescriptor)
     - [ModuleSchemaDescriptor.FileEntry](#cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry)
-  
+
     - [StorageType](#cosmos.orm.v1alpha1.StorageType)
-  
+
     - [File-level Extensions](#cosmos/orm/v1alpha1/schema.proto-extensions)
-  
+
 - [cosmos/params/module/v1/module.proto](#cosmos/params/module/v1/module.proto)
     - [Module](#cosmos.params.module.v1.Module)
-  
+
 - [cosmos/params/v1beta1/params.proto](#cosmos/params/v1beta1/params.proto)
     - [ParamChange](#cosmos.params.v1beta1.ParamChange)
     - [ParameterChangeProposal](#cosmos.params.v1beta1.ParameterChangeProposal)
-  
+
 - [cosmos/params/v1beta1/query.proto](#cosmos/params/v1beta1/query.proto)
     - [QueryParamsRequest](#cosmos.params.v1beta1.QueryParamsRequest)
     - [QueryParamsResponse](#cosmos.params.v1beta1.QueryParamsResponse)
     - [QuerySubspacesRequest](#cosmos.params.v1beta1.QuerySubspacesRequest)
     - [QuerySubspacesResponse](#cosmos.params.v1beta1.QuerySubspacesResponse)
     - [Subspace](#cosmos.params.v1beta1.Subspace)
-  
+
     - [Query](#cosmos.params.v1beta1.Query)
-  
+
 - [cosmos/query/v1/query.proto](#cosmos/query/v1/query.proto)
     - [File-level Extensions](#cosmos/query/v1/query.proto-extensions)
-  
+
 - [cosmos/reflection/v1/reflection.proto](#cosmos/reflection/v1/reflection.proto)
     - [FileDescriptorsRequest](#cosmos.reflection.v1.FileDescriptorsRequest)
     - [FileDescriptorsResponse](#cosmos.reflection.v1.FileDescriptorsResponse)
-  
+
     - [ReflectionService](#cosmos.reflection.v1.ReflectionService)
-  
+
 - [cosmos/slashing/module/v1/module.proto](#cosmos/slashing/module/v1/module.proto)
     - [Module](#cosmos.slashing.module.v1.Module)
-  
+
 - [cosmos/slashing/v1beta1/genesis.proto](#cosmos/slashing/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.slashing.v1beta1.GenesisState)
     - [MissedBlock](#cosmos.slashing.v1beta1.MissedBlock)
     - [SigningInfo](#cosmos.slashing.v1beta1.SigningInfo)
     - [ValidatorMissedBlocks](#cosmos.slashing.v1beta1.ValidatorMissedBlocks)
-  
+
 - [cosmos/slashing/v1beta1/query.proto](#cosmos/slashing/v1beta1/query.proto)
     - [QueryParamsRequest](#cosmos.slashing.v1beta1.QueryParamsRequest)
     - [QueryParamsResponse](#cosmos.slashing.v1beta1.QueryParamsResponse)
@@ -1127,34 +1127,34 @@
     - [QuerySigningInfoResponse](#cosmos.slashing.v1beta1.QuerySigningInfoResponse)
     - [QuerySigningInfosRequest](#cosmos.slashing.v1beta1.QuerySigningInfosRequest)
     - [QuerySigningInfosResponse](#cosmos.slashing.v1beta1.QuerySigningInfosResponse)
-  
+
     - [Query](#cosmos.slashing.v1beta1.Query)
-  
+
 - [cosmos/slashing/v1beta1/slashing.proto](#cosmos/slashing/v1beta1/slashing.proto)
     - [Params](#cosmos.slashing.v1beta1.Params)
     - [ValidatorSigningInfo](#cosmos.slashing.v1beta1.ValidatorSigningInfo)
-  
+
 - [cosmos/slashing/v1beta1/tx.proto](#cosmos/slashing/v1beta1/tx.proto)
     - [MsgUnjail](#cosmos.slashing.v1beta1.MsgUnjail)
     - [MsgUnjailResponse](#cosmos.slashing.v1beta1.MsgUnjailResponse)
     - [MsgUpdateParams](#cosmos.slashing.v1beta1.MsgUpdateParams)
     - [MsgUpdateParamsResponse](#cosmos.slashing.v1beta1.MsgUpdateParamsResponse)
-  
+
     - [Msg](#cosmos.slashing.v1beta1.Msg)
-  
+
 - [cosmos/staking/module/v1/module.proto](#cosmos/staking/module/v1/module.proto)
     - [Module](#cosmos.staking.module.v1.Module)
-  
+
 - [cosmos/staking/v1beta1/authz.proto](#cosmos/staking/v1beta1/authz.proto)
     - [StakeAuthorization](#cosmos.staking.v1beta1.StakeAuthorization)
     - [StakeAuthorization.Validators](#cosmos.staking.v1beta1.StakeAuthorization.Validators)
-  
+
     - [AuthorizationType](#cosmos.staking.v1beta1.AuthorizationType)
-  
+
 - [cosmos/staking/v1beta1/genesis.proto](#cosmos/staking/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.staking.v1beta1.GenesisState)
     - [LastValidatorPower](#cosmos.staking.v1beta1.LastValidatorPower)
-  
+
 - [cosmos/staking/v1beta1/query.proto](#cosmos/staking/v1beta1/query.proto)
     - [QueryDelegationRequest](#cosmos.staking.v1beta1.QueryDelegationRequest)
     - [QueryDelegationResponse](#cosmos.staking.v1beta1.QueryDelegationResponse)
@@ -1184,9 +1184,9 @@
     - [QueryValidatorUnbondingDelegationsResponse](#cosmos.staking.v1beta1.QueryValidatorUnbondingDelegationsResponse)
     - [QueryValidatorsRequest](#cosmos.staking.v1beta1.QueryValidatorsRequest)
     - [QueryValidatorsResponse](#cosmos.staking.v1beta1.QueryValidatorsResponse)
-  
+
     - [Query](#cosmos.staking.v1beta1.Query)
-  
+
 - [cosmos/staking/v1beta1/staking.proto](#cosmos/staking/v1beta1/staking.proto)
     - [Commission](#cosmos.staking.v1beta1.Commission)
     - [CommissionRates](#cosmos.staking.v1beta1.CommissionRates)
@@ -1209,10 +1209,10 @@
     - [ValAddresses](#cosmos.staking.v1beta1.ValAddresses)
     - [Validator](#cosmos.staking.v1beta1.Validator)
     - [ValidatorUpdates](#cosmos.staking.v1beta1.ValidatorUpdates)
-  
+
     - [BondStatus](#cosmos.staking.v1beta1.BondStatus)
     - [Infraction](#cosmos.staking.v1beta1.Infraction)
-  
+
 - [cosmos/staking/v1beta1/tx.proto](#cosmos/staking/v1beta1/tx.proto)
     - [MsgBeginRedelegate](#cosmos.staking.v1beta1.MsgBeginRedelegate)
     - [MsgBeginRedelegateResponse](#cosmos.staking.v1beta1.MsgBeginRedelegateResponse)
@@ -1228,13 +1228,13 @@
     - [MsgUndelegateResponse](#cosmos.staking.v1beta1.MsgUndelegateResponse)
     - [MsgUpdateParams](#cosmos.staking.v1beta1.MsgUpdateParams)
     - [MsgUpdateParamsResponse](#cosmos.staking.v1beta1.MsgUpdateParamsResponse)
-  
+
     - [Msg](#cosmos.staking.v1beta1.Msg)
-  
+
 - [cosmos/store/internal/kv/v1beta1/kv.proto](#cosmos/store/internal/kv/v1beta1/kv.proto)
     - [Pair](#cosmos.store.internal.kv.v1beta1.Pair)
     - [Pairs](#cosmos.store.internal.kv.v1beta1.Pairs)
-  
+
 - [cosmos/store/snapshots/v1/snapshot.proto](#cosmos/store/snapshots/v1/snapshot.proto)
     - [Metadata](#cosmos.store.snapshots.v1.Metadata)
     - [Snapshot](#cosmos.store.snapshots.v1.Snapshot)
@@ -1243,36 +1243,36 @@
     - [SnapshotIAVLItem](#cosmos.store.snapshots.v1.SnapshotIAVLItem)
     - [SnapshotItem](#cosmos.store.snapshots.v1.SnapshotItem)
     - [SnapshotStoreItem](#cosmos.store.snapshots.v1.SnapshotStoreItem)
-  
+
 - [cosmos/store/streaming/abci/grpc.proto](#cosmos/store/streaming/abci/grpc.proto)
     - [ListenCommitRequest](#cosmos.store.streaming.abci.ListenCommitRequest)
     - [ListenCommitResponse](#cosmos.store.streaming.abci.ListenCommitResponse)
     - [ListenFinalizeBlockRequest](#cosmos.store.streaming.abci.ListenFinalizeBlockRequest)
     - [ListenFinalizeBlockResponse](#cosmos.store.streaming.abci.ListenFinalizeBlockResponse)
-  
+
     - [ABCIListenerService](#cosmos.store.streaming.abci.ABCIListenerService)
-  
+
 - [cosmos/store/v1beta1/commit_info.proto](#cosmos/store/v1beta1/commit_info.proto)
     - [CommitID](#cosmos.store.v1beta1.CommitID)
     - [CommitInfo](#cosmos.store.v1beta1.CommitInfo)
     - [StoreInfo](#cosmos.store.v1beta1.StoreInfo)
-  
+
 - [cosmos/store/v1beta1/listening.proto](#cosmos/store/v1beta1/listening.proto)
     - [BlockMetadata](#cosmos.store.v1beta1.BlockMetadata)
     - [StoreKVPair](#cosmos.store.v1beta1.StoreKVPair)
-  
+
 - [cosmos/tx/config/v1/config.proto](#cosmos/tx/config/v1/config.proto)
     - [Config](#cosmos.tx.config.v1.Config)
-  
+
 - [cosmos/tx/signing/v1beta1/signing.proto](#cosmos/tx/signing/v1beta1/signing.proto)
     - [SignatureDescriptor](#cosmos.tx.signing.v1beta1.SignatureDescriptor)
     - [SignatureDescriptor.Data](#cosmos.tx.signing.v1beta1.SignatureDescriptor.Data)
     - [SignatureDescriptor.Data.Multi](#cosmos.tx.signing.v1beta1.SignatureDescriptor.Data.Multi)
     - [SignatureDescriptor.Data.Single](#cosmos.tx.signing.v1beta1.SignatureDescriptor.Data.Single)
     - [SignatureDescriptors](#cosmos.tx.signing.v1beta1.SignatureDescriptors)
-  
+
     - [SignMode](#cosmos.tx.signing.v1beta1.SignMode)
-  
+
 - [cosmos/tx/v1beta1/service.proto](#cosmos/tx/v1beta1/service.proto)
     - [BroadcastTxRequest](#cosmos.tx.v1beta1.BroadcastTxRequest)
     - [BroadcastTxResponse](#cosmos.tx.v1beta1.BroadcastTxResponse)
@@ -1292,12 +1292,12 @@
     - [TxEncodeAminoResponse](#cosmos.tx.v1beta1.TxEncodeAminoResponse)
     - [TxEncodeRequest](#cosmos.tx.v1beta1.TxEncodeRequest)
     - [TxEncodeResponse](#cosmos.tx.v1beta1.TxEncodeResponse)
-  
+
     - [BroadcastMode](#cosmos.tx.v1beta1.BroadcastMode)
     - [OrderBy](#cosmos.tx.v1beta1.OrderBy)
-  
+
     - [Service](#cosmos.tx.v1beta1.Service)
-  
+
 - [cosmos/tx/v1beta1/tx.proto](#cosmos/tx/v1beta1/tx.proto)
     - [AuthInfo](#cosmos.tx.v1beta1.AuthInfo)
     - [AuxSignerData](#cosmos.tx.v1beta1.AuxSignerData)
@@ -1312,10 +1312,10 @@
     - [Tx](#cosmos.tx.v1beta1.Tx)
     - [TxBody](#cosmos.tx.v1beta1.TxBody)
     - [TxRaw](#cosmos.tx.v1beta1.TxRaw)
-  
+
 - [cosmos/upgrade/module/v1/module.proto](#cosmos/upgrade/module/v1/module.proto)
     - [Module](#cosmos.upgrade.module.v1.Module)
-  
+
 - [cosmos/upgrade/v1beta1/query.proto](#cosmos/upgrade/v1beta1/query.proto)
     - [QueryAppliedPlanRequest](#cosmos.upgrade.v1beta1.QueryAppliedPlanRequest)
     - [QueryAppliedPlanResponse](#cosmos.upgrade.v1beta1.QueryAppliedPlanResponse)
@@ -1327,26 +1327,26 @@
     - [QueryModuleVersionsResponse](#cosmos.upgrade.v1beta1.QueryModuleVersionsResponse)
     - [QueryUpgradedConsensusStateRequest](#cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateRequest)
     - [QueryUpgradedConsensusStateResponse](#cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateResponse)
-  
+
     - [Query](#cosmos.upgrade.v1beta1.Query)
-  
+
 - [cosmos/upgrade/v1beta1/tx.proto](#cosmos/upgrade/v1beta1/tx.proto)
     - [MsgCancelUpgrade](#cosmos.upgrade.v1beta1.MsgCancelUpgrade)
     - [MsgCancelUpgradeResponse](#cosmos.upgrade.v1beta1.MsgCancelUpgradeResponse)
     - [MsgSoftwareUpgrade](#cosmos.upgrade.v1beta1.MsgSoftwareUpgrade)
     - [MsgSoftwareUpgradeResponse](#cosmos.upgrade.v1beta1.MsgSoftwareUpgradeResponse)
-  
+
     - [Msg](#cosmos.upgrade.v1beta1.Msg)
-  
+
 - [cosmos/upgrade/v1beta1/upgrade.proto](#cosmos/upgrade/v1beta1/upgrade.proto)
     - [CancelSoftwareUpgradeProposal](#cosmos.upgrade.v1beta1.CancelSoftwareUpgradeProposal)
     - [ModuleVersion](#cosmos.upgrade.v1beta1.ModuleVersion)
     - [Plan](#cosmos.upgrade.v1beta1.Plan)
     - [SoftwareUpgradeProposal](#cosmos.upgrade.v1beta1.SoftwareUpgradeProposal)
-  
+
 - [cosmos/vesting/module/v1/module.proto](#cosmos/vesting/module/v1/module.proto)
     - [Module](#cosmos.vesting.module.v1.Module)
-  
+
 - [cosmos/vesting/v1beta1/tx.proto](#cosmos/vesting/v1beta1/tx.proto)
     - [MsgCreatePeriodicVestingAccount](#cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount)
     - [MsgCreatePeriodicVestingAccountResponse](#cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccountResponse)
@@ -1354,9 +1354,9 @@
     - [MsgCreatePermanentLockedAccountResponse](#cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccountResponse)
     - [MsgCreateVestingAccount](#cosmos.vesting.v1beta1.MsgCreateVestingAccount)
     - [MsgCreateVestingAccountResponse](#cosmos.vesting.v1beta1.MsgCreateVestingAccountResponse)
-  
+
     - [Msg](#cosmos.vesting.v1beta1.Msg)
-  
+
 - [cosmos/vesting/v1beta1/vesting.proto](#cosmos/vesting/v1beta1/vesting.proto)
     - [BaseVestingAccount](#cosmos.vesting.v1beta1.BaseVestingAccount)
     - [ContinuousVestingAccount](#cosmos.vesting.v1beta1.ContinuousVestingAccount)
@@ -1364,7 +1364,7 @@
     - [Period](#cosmos.vesting.v1beta1.Period)
     - [PeriodicVestingAccount](#cosmos.vesting.v1beta1.PeriodicVestingAccount)
     - [PermanentLockedAccount](#cosmos.vesting.v1beta1.PermanentLockedAccount)
-  
+
 - [tendermint/abci/types.proto](#tendermint/abci/types.proto)
     - [CommitInfo](#tendermint.abci.CommitInfo)
     - [Event](#tendermint.abci.Event)
@@ -1413,44 +1413,44 @@
     - [Validator](#tendermint.abci.Validator)
     - [ValidatorUpdate](#tendermint.abci.ValidatorUpdate)
     - [VoteInfo](#tendermint.abci.VoteInfo)
-  
+
     - [CheckTxType](#tendermint.abci.CheckTxType)
     - [MisbehaviorType](#tendermint.abci.MisbehaviorType)
     - [ResponseApplySnapshotChunk.Result](#tendermint.abci.ResponseApplySnapshotChunk.Result)
     - [ResponseOfferSnapshot.Result](#tendermint.abci.ResponseOfferSnapshot.Result)
     - [ResponseProcessProposal.ProposalStatus](#tendermint.abci.ResponseProcessProposal.ProposalStatus)
     - [ResponseVerifyVoteExtension.VerifyStatus](#tendermint.abci.ResponseVerifyVoteExtension.VerifyStatus)
-  
+
     - [ABCI](#tendermint.abci.ABCI)
-  
+
 - [tendermint/crypto/keys.proto](#tendermint/crypto/keys.proto)
     - [PublicKey](#tendermint.crypto.PublicKey)
-  
+
 - [tendermint/crypto/proof.proto](#tendermint/crypto/proof.proto)
     - [DominoOp](#tendermint.crypto.DominoOp)
     - [Proof](#tendermint.crypto.Proof)
     - [ProofOp](#tendermint.crypto.ProofOp)
     - [ProofOps](#tendermint.crypto.ProofOps)
     - [ValueOp](#tendermint.crypto.ValueOp)
-  
+
 - [tendermint/libs/bits/types.proto](#tendermint/libs/bits/types.proto)
     - [BitArray](#tendermint.libs.bits.BitArray)
-  
+
 - [tendermint/p2p/types.proto](#tendermint/p2p/types.proto)
     - [DefaultNodeInfo](#tendermint.p2p.DefaultNodeInfo)
     - [DefaultNodeInfoOther](#tendermint.p2p.DefaultNodeInfoOther)
     - [NetAddress](#tendermint.p2p.NetAddress)
     - [ProtocolVersion](#tendermint.p2p.ProtocolVersion)
-  
+
 - [tendermint/types/block.proto](#tendermint/types/block.proto)
     - [Block](#tendermint.types.Block)
-  
+
 - [tendermint/types/evidence.proto](#tendermint/types/evidence.proto)
     - [DuplicateVoteEvidence](#tendermint.types.DuplicateVoteEvidence)
     - [Evidence](#tendermint.types.Evidence)
     - [EvidenceList](#tendermint.types.EvidenceList)
     - [LightClientAttackEvidence](#tendermint.types.LightClientAttackEvidence)
-  
+
 - [tendermint/types/params.proto](#tendermint/types/params.proto)
     - [ABCIParams](#tendermint.types.ABCIParams)
     - [BlockParams](#tendermint.types.BlockParams)
@@ -1459,7 +1459,7 @@
     - [HashedParams](#tendermint.types.HashedParams)
     - [ValidatorParams](#tendermint.types.ValidatorParams)
     - [VersionParams](#tendermint.types.VersionParams)
-  
+
 - [tendermint/types/types.proto](#tendermint/types/types.proto)
     - [BlockID](#tendermint.types.BlockID)
     - [BlockMeta](#tendermint.types.BlockMeta)
@@ -1476,20 +1476,20 @@
     - [SignedHeader](#tendermint.types.SignedHeader)
     - [TxProof](#tendermint.types.TxProof)
     - [Vote](#tendermint.types.Vote)
-  
+
     - [SignedMsgType](#tendermint.types.SignedMsgType)
-  
+
 - [tendermint/types/validator.proto](#tendermint/types/validator.proto)
     - [SimpleValidator](#tendermint.types.SimpleValidator)
     - [Validator](#tendermint.types.Validator)
     - [ValidatorSet](#tendermint.types.ValidatorSet)
-  
+
     - [BlockIDFlag](#tendermint.types.BlockIDFlag)
-  
+
 - [tendermint/version/types.proto](#tendermint/version/types.proto)
     - [App](#tendermint.version.App)
     - [Consensus](#tendermint.version.Consensus)
-  
+
 - [cosmwasm/wasm/v1/authz.proto](#cosmwasm/wasm/v1/authz.proto)
     - [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter)
     - [AcceptedMessagesFilter](#cosmwasm.wasm.v1.AcceptedMessagesFilter)
@@ -1502,19 +1502,19 @@
     - [MaxCallsLimit](#cosmwasm.wasm.v1.MaxCallsLimit)
     - [MaxFundsLimit](#cosmwasm.wasm.v1.MaxFundsLimit)
     - [StoreCodeAuthorization](#cosmwasm.wasm.v1.StoreCodeAuthorization)
-  
+
 - [cosmwasm/wasm/v1/genesis.proto](#cosmwasm/wasm/v1/genesis.proto)
     - [Code](#cosmwasm.wasm.v1.Code)
     - [Contract](#cosmwasm.wasm.v1.Contract)
     - [GenesisState](#cosmwasm.wasm.v1.GenesisState)
     - [Sequence](#cosmwasm.wasm.v1.Sequence)
-  
+
 - [cosmwasm/wasm/v1/ibc.proto](#cosmwasm/wasm/v1/ibc.proto)
     - [MsgIBCCloseChannel](#cosmwasm.wasm.v1.MsgIBCCloseChannel)
     - [MsgIBCSend](#cosmwasm.wasm.v1.MsgIBCSend)
     - [MsgIBCSendResponse](#cosmwasm.wasm.v1.MsgIBCSendResponse)
     - [MsgIBCWriteAcknowledgementResponse](#cosmwasm.wasm.v1.MsgIBCWriteAcknowledgementResponse)
-  
+
 - [cosmwasm/wasm/v1/proposal_legacy.proto](#cosmwasm/wasm/v1/proposal_legacy.proto)
     - [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate)
     - [ClearAdminProposal](#cosmwasm.wasm.v1.ClearAdminProposal)
@@ -1529,7 +1529,7 @@
     - [UnpinCodesProposal](#cosmwasm.wasm.v1.UnpinCodesProposal)
     - [UpdateAdminProposal](#cosmwasm.wasm.v1.UpdateAdminProposal)
     - [UpdateInstantiateConfigProposal](#cosmwasm.wasm.v1.UpdateInstantiateConfigProposal)
-  
+
 - [cosmwasm/wasm/v1/query.proto](#cosmwasm/wasm/v1/query.proto)
     - [CodeInfoResponse](#cosmwasm.wasm.v1.CodeInfoResponse)
     - [QueryAllContractStateRequest](#cosmwasm.wasm.v1.QueryAllContractStateRequest)
@@ -1560,9 +1560,9 @@
     - [QuerySmartContractStateResponse](#cosmwasm.wasm.v1.QuerySmartContractStateResponse)
     - [QueryWasmLimitsConfigRequest](#cosmwasm.wasm.v1.QueryWasmLimitsConfigRequest)
     - [QueryWasmLimitsConfigResponse](#cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse)
-  
+
     - [Query](#cosmwasm.wasm.v1.Query)
-  
+
 - [cosmwasm/wasm/v1/tx.proto](#cosmwasm/wasm/v1/tx.proto)
     - [MsgAddCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses)
     - [MsgAddCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddressesResponse)
@@ -1598,9 +1598,9 @@
     - [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse)
     - [MsgUpdateParams](#cosmwasm.wasm.v1.MsgUpdateParams)
     - [MsgUpdateParamsResponse](#cosmwasm.wasm.v1.MsgUpdateParamsResponse)
-  
+
     - [Msg](#cosmwasm.wasm.v1.Msg)
-  
+
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1.AccessConfig)
@@ -1610,10 +1610,10 @@
     - [ContractInfo](#cosmwasm.wasm.v1.ContractInfo)
     - [Model](#cosmwasm.wasm.v1.Model)
     - [Params](#cosmwasm.wasm.v1.Params)
-  
+
     - [AccessType](#cosmwasm.wasm.v1.AccessType)
     - [ContractCodeHistoryOperationType](#cosmwasm.wasm.v1.ContractCodeHistoryOperationType)
-  
+
 - [Scalar Value Types](#scalar-value-types)
 
 
@@ -6806,7 +6806,7 @@ EventGrant is emitted on Msg/Grant
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `msg_type_url` | [string](#string) |  |  `Msg type URL for which an autorization is granted`  |
+| `msg_type_url` | [string](#string) |  |  `Msg type URL for which an authorization is granted`  |
 | `granter` | [string](#string) |  |  `Granter account address`  |
 | `grantee` | [string](#string) |  |  `Grantee account address`  |
 
@@ -6827,7 +6827,7 @@ EventRevoke is emitted on Msg/Revoke
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `msg_type_url` | [string](#string) |  |  `Msg type URL for which an autorization is revoked`  |
+| `msg_type_url` | [string](#string) |  |  `Msg type URL for which an authorization is revoked`  |
 | `granter` | [string](#string) |  |  `Granter account address`  |
 | `grantee` | [string](#string) |  |  `Grantee account address`  |
 
@@ -9099,7 +9099,7 @@ AppDescriptor describes a cosmos-sdk based application
 | `chain` | [ChainDescriptor](#cosmos.base.reflection.v2alpha1.ChainDescriptor) |  |  `chain provides the chain descriptor`  |
 | `codec` | [CodecDescriptor](#cosmos.base.reflection.v2alpha1.CodecDescriptor) |  |  `codec provides metadata information regarding codec related types`  |
 | `configuration` | [ConfigurationDescriptor](#cosmos.base.reflection.v2alpha1.ConfigurationDescriptor) |  |  `configuration provides metadata information regarding the sdk.Config type`  |
-| `query_services` | [QueryServicesDescriptor](#cosmos.base.reflection.v2alpha1.QueryServicesDescriptor) |  |  `query_services provides metadata information regarding the available queriable endpoints`  |
+| `query_services` | [QueryServicesDescriptor](#cosmos.base.reflection.v2alpha1.QueryServicesDescriptor) |  |  `query_services provides metadata information regarding the available queryable endpoints`  |
 | `tx` | [TxDescriptor](#cosmos.base.reflection.v2alpha1.TxDescriptor) |  |  `tx provides metadata information regarding how to send transactions to the given application`  |
 
 
@@ -9511,7 +9511,7 @@ QueryServiceDescriptor describes a cosmos-sdk queryable service
 ### QueryServicesDescriptor
 
 ```
-QueryServicesDescriptor contains the list of cosmos-sdk queriable services
+QueryServicesDescriptor contains the list of cosmos-sdk queryable services
 ```
 
 
@@ -13549,10 +13549,10 @@ GenesisState defines the gov module's genesis state.
 | `deposits` | [Deposit](#cosmos.gov.v1.Deposit) | repeated |  `deposits defines all the deposits present at genesis.`  |
 | `votes` | [Vote](#cosmos.gov.v1.Vote) | repeated |  `votes defines all the votes present at genesis.`  |
 | `proposals` | [Proposal](#cosmos.gov.v1.Proposal) | repeated |  `proposals defines all the proposals present at genesis.`  |
-| `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. deposit_params defines all the paramaters of related to deposit.`  |
-| `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. voting_params defines all the paramaters of related to voting.`  |
-| `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. tally_params defines all the paramaters of related to tally.`  |
-| `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the paramaters of x/gov module.  Since: cosmos-sdk 0.47`  |
+| `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. deposit_params defines all the parameters of related to deposit.`  |
+| `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. voting_params defines all the parameters of related to voting.`  |
+| `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. tally_params defines all the parameters of related to tally.`  |
+| `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the parameters of x/gov module.  Since: cosmos-sdk 0.47`  |
 | `constitution` | [string](#string) |  |  `The constitution allows builders to lay a foundation and define purpose. This is an immutable string set in genesis. There are no amendments, to go outside of scope, just fork. constitution is an immutable string in genesis for a chain builder to lay out their vision, ideas and ideals.  Since: cosmos-sdk 0.50`  |
 
 
@@ -13682,7 +13682,7 @@ Proposal defines the core field members of a governance proposal.
 | `metadata` | [string](#string) |  |  `metadata is any arbitrary metadata attached to the proposal. the recommended format of the metadata is to be found here: https://docs.cosmos.network/v0.47/modules/gov#proposal-3`  |
 | `title` | [string](#string) |  |  `title is the title of the proposal  Since: cosmos-sdk 0.47`  |
 | `summary` | [string](#string) |  |  `summary is a short summary of the proposal  Since: cosmos-sdk 0.47`  |
-| `proposer` | [string](#string) |  |  `proposer is the address of the proposal sumbitter  Since: cosmos-sdk 0.47`  |
+| `proposer` | [string](#string) |  |  `proposer is the address of the proposal submitter  Since: cosmos-sdk 0.47`  |
 | `expedited` | [bool](#bool) |  |  `expedited defines if the proposal is expedited  Since: cosmos-sdk 0.50`  |
 | `failed_reason` | [string](#string) |  |  `failed_reason defines the reason why the proposal failed  Since: cosmos-sdk 0.50`  |
 
@@ -14003,7 +14003,7 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 | `voting_params` | [VotingParams](#cosmos.gov.v1.VotingParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. voting_params defines the parameters related to voting.`  |
 | `deposit_params` | [DepositParams](#cosmos.gov.v1.DepositParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. deposit_params defines the parameters related to deposit.`  |
 | `tally_params` | [TallyParams](#cosmos.gov.v1.TallyParams) |  | **Deprecated.**  `Deprecated: Prefer to use params instead. tally_params defines the parameters related to tally.`  |
-| `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the paramaters of x/gov module.  Since: cosmos-sdk 0.47`  |
+| `params` | [Params](#cosmos.gov.v1.Params) |  |  `params defines all the parameters of x/gov module.  Since: cosmos-sdk 0.47`  |
 
 
 
@@ -17584,7 +17584,7 @@ Msg defines the x/mint Msg service.
 ### File-level Extensions
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
-| `expert_custom_renderer` | string | .google.protobuf.MessageOptions | 11110009 | `expert_custom_renderer is an informative identifier to reference the algorithm used to generate the custom textual representation of the protobuf message where this annotation is applied. We recommend to use a short, versioned name as this identifier, e.g. "replace_with_username_v1". We also recommand providing a human-readable description as protobuf comments on this annotation, for example a short specification or a link to the relevant documentation.  Also see the section on Custom Message Renderers in ADR-050.`  |
+| `expert_custom_renderer` | string | .google.protobuf.MessageOptions | 11110009 | `expert_custom_renderer is an informative identifier to reference the algorithm used to generate the custom textual representation of the protobuf message where this annotation is applied. We recommend to use a short, versioned name as this identifier, e.g. "replace_with_username_v1". We also recommend providing a human-readable description as protobuf comments on this annotation, for example a short specification or a link to the relevant documentation.  Also see the section on Custom Message Renderers in ADR-050.`  |
 
  <!-- end HasExtensions -->
 
@@ -20615,7 +20615,7 @@ multiplied by exchange rate.
 | `commission` | [Commission](#cosmos.staking.v1beta1.Commission) |  |  `commission defines the commission parameters.`  |
 | `min_self_delegation` | [string](#string) |  |  `min_self_delegation is the validator's self declared minimum self delegation.  Since: cosmos-sdk 0.46`  |
 | `unbonding_on_hold_ref_count` | [int64](#int64) |  |  `strictly positive if this validator's unbonding has been stopped by external modules`  |
-| `unbonding_ids` | [uint64](#uint64) | repeated |  `list of unbonding ids, each uniquely identifing an unbonding of this validator`  |
+| `unbonding_ids` | [uint64](#uint64) | repeated |  `list of unbonding ids, each uniquely identifying an unbonding of this validator`  |
 
 
 
@@ -20668,7 +20668,7 @@ BondStatus is the status of a validator.
 ### Infraction
 
 ```
-Infraction indicates the infraction a validator commited.
+Infraction indicates the infraction a validator committed.
 ```
 
 
@@ -22304,7 +22304,7 @@ Since: cosmos-sdk 0.46
 | `chain_id` | [string](#string) |  |  `chain_id is the identifier of the chain this transaction targets. It prevents signed transactions from being used on another chain by an attacker.`  |
 | `account_number` | [uint64](#uint64) |  |  `account_number is the account number of the account in state.`  |
 | `sequence` | [uint64](#uint64) |  |  `sequence is the sequence number of the signing account.`  |
-| `tip` | [Tip](#cosmos.tx.v1beta1.Tip) |  | **Deprecated.**  `tips have been depreacted and should not be used`  |
+| `tip` | [Tip](#cosmos.tx.v1beta1.Tip) |  | **Deprecated.**  `tips have been deprecated and should not be used`  |
 
 
 
@@ -23867,8 +23867,8 @@ nondeterministic
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `events` | [Event](#tendermint.abci.Event) | repeated |  `set of block events emmitted as part of executing the block`  |
-| `tx_results` | [ExecTxResult](#tendermint.abci.ExecTxResult) | repeated |  `the result of executing each transaction including the events the particular transction emitted. This should match the order of the transactions delivered in the block itself`  |
+| `events` | [Event](#tendermint.abci.Event) | repeated |  `set of block events emitted as part of executing the block`  |
+| `tx_results` | [ExecTxResult](#tendermint.abci.ExecTxResult) | repeated |  `the result of executing each transaction including the events the particular transaction emitted. This should match the order of the transactions delivered in the block itself`  |
 | `validator_updates` | [ValidatorUpdate](#tendermint.abci.ValidatorUpdate) | repeated |  `a list of updates to the validator set. These will reflect the validator set at current height + 2.`  |
 | `consensus_param_updates` | [tendermint.types.ConsensusParams](#tendermint.types.ConsensusParams) |  |  `updates to the consensus params, if any.`  |
 | `app_hash` | [bytes](#bytes) |  |  `app_hash is the hash of the applications' state which is used to confirm that execution of the transactions was deterministic. It is up to the application to decide which algorithm to use.`  |
@@ -24335,7 +24335,7 @@ PublicKey defines the keys available for use with Validators
 
 ```
 ProofOp defines an operation used for calculating Merkle root
-The data could be arbitrary format, providing nessecary data
+The data could be arbitrary format, providing necessary data
 for example neighbouring node hash
 ```
 
