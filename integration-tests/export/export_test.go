@@ -7,6 +7,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 
 	"os"
 	"os/exec"
@@ -18,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	corestore "cosmossdk.io/core/store"
+	sdkstore "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	nftkeeper "cosmossdk.io/x/nft/keeper"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -74,11 +75,33 @@ var ignoredPrefixes = map[string][][]byte{
 	},
 }
 
+// TestExportGenesisModuleHashes tests the export of genesis and compares the module hashes
+// steps:
+// 1. Export genesis and application state from a full node.
+// 2. Initialize a new app with the exported genesis.
+// 3. Move both apps to the same height by finalizing a block.
+// 4. Compare the module hashes of both apps to ensure they match.
 func TestExportGenesisModuleHashes(t *testing.T) {
 	requireT := require.New(t)
 
 	chainId := string(constant.ChainIDDev)
 
+	// the chain is stopped and the genesis is exported from a full node
+	exportedApp, exportedGenesisBuf := exportGenesisAndApp(t, requireT, chainId)
+
+	// the exported genesis is used to initialize a new app to simulate new chain initialization
+	initiatedApp, _, _, initChainReq, _ := simapp.NewWithGenesis(exportedGenesisBuf.Bytes())
+
+	// sync heights of both apps stores
+	syncAppsHeights(t, requireT, exportedApp, &initiatedApp.App, initChainReq)
+
+	// check that the module hashes of both apps match
+	checkModuleStoreMismatches(t, requireT, exportedApp, &initiatedApp.App, initChainReq.InitialHeight)
+}
+
+// exportGenesisAndApp exports the genesis and application state from a full node
+// and returns the application instance and the exported genesis as a bytes buffer.
+func exportGenesisAndApp(t *testing.T, requireT *require.Assertions, chainId string) (*app.App, bytes.Buffer) {
 	coredBinDir := os.Getenv("CORED_BIN_DIR")
 	t.Logf("Cored binary directory: %s", coredBinDir)
 
@@ -94,16 +117,13 @@ func TestExportGenesisModuleHashes(t *testing.T) {
 
 	currentTs := time.Now().Unix()
 
+	// the home directory of the node is being copied to prevent resource unavailability
+	// because of internal locks on the database files
 	copiedNodeHome := filepath.Join(znetAppDir, fmt.Sprintf("%d-cored-05-full", currentTs))
-	// Only copy if the directory does not exist
+	// only copy if the directory does not exist
 	_, statErr := os.Stat(copiedNodeHome)
 	if os.IsNotExist(statErr) {
-		err := executeCommand(
-			t.Context(),
-			new(bytes.Buffer),
-			"cp",
-			[]string{"-a", fullNodeHome, copiedNodeHome},
-		)
+		err := copyDir(fullNodeHome, copiedNodeHome)
 		requireT.NoError(err, "failed to copy data directory")
 	} else {
 		requireT.NoError(statErr, "failed to stat copied data directory")
@@ -111,10 +131,11 @@ func TestExportGenesisModuleHashes(t *testing.T) {
 	}
 	copiedNodeChainHome := filepath.Join(copiedNodeHome, chainId)
 	copiedDBDir := filepath.Join(copiedNodeChainHome, "data")
-	// requireT.NoError(err, "failed to copy data directory")
 	nodeDb, err := dbm.NewDB("application", dbm.GoLevelDBBackend, copiedDBDir)
 	requireT.NoError(err, "failed to open node DB at %s", copiedDBDir)
 	t.Log("Copied node DB directory:", copiedDBDir)
+
+	// initialize the application with the copied home directory
 
 	network, err := config.NetworkConfigByChainID(constant.ChainID(chainId))
 	if err != nil {
@@ -123,7 +144,8 @@ func TestExportGenesisModuleHashes(t *testing.T) {
 	app.ChosenNetwork = network
 	network.SetSDKConfig()
 
-	nodeApp := app.New(logger, nodeDb, nil, false, simtestutil.AppOptionsMap{
+	// this is a temporary app equivalent to the actual running chain exported app
+	chainFullNodeApp := app.New(logger, nodeDb, nil, false, simtestutil.AppOptionsMap{
 		flags.FlagHome:            copiedNodeChainHome,
 		server.FlagInvCheckPeriod: time.Millisecond * 100,
 	})
@@ -134,7 +156,7 @@ func TestExportGenesisModuleHashes(t *testing.T) {
 
 	// Filter out ignored modules
 	var modulesToExport []string
-	for _, m := range nodeApp.ModuleManager.ModuleNames() {
+	for _, m := range chainFullNodeApp.ModuleManager.ModuleNames() {
 		if _, ignored := ignoredModuleNames[m]; !ignored {
 			modulesToExport = append(modulesToExport, m)
 		}
@@ -158,138 +180,61 @@ func TestExportGenesisModuleHashes(t *testing.T) {
 	requireT.NoError(err, "failed to write export JSON to file")
 	t.Logf("Wrote export JSON to %s", exportJSONPath)
 
-	newApp, _, _, initChainReq, _ := simapp.NewWithGenesis(exportBuf.Bytes())
+	return chainFullNodeApp, exportBuf
+}
 
-	// load the latest version from the node app
-	// the initial height is the height that need to gets finalized in the new app
+func syncAppsHeights(t *testing.T, requireT *require.Assertions, exportedApp *app.App, initiatedApp *app.App, initChainReq *abci.RequestInitChain) {
+	// load the latest version from the exported app
+	// the initial height is the height that need to gets finalized in the initiated app
 	nodeAppStateHeight := initChainReq.InitialHeight - 1
-	err = nodeApp.LoadVersion(nodeAppStateHeight)
-	requireT.NoError(err, "failed to load version %d from node app", nodeAppStateHeight)
+	err := exportedApp.LoadVersion(nodeAppStateHeight)
+	requireT.NoError(err, "failed to load version %d from exported app", nodeAppStateHeight)
 
-	// finalize new block for the node app
-	_, err = nodeApp.FinalizeBlock(&abci.RequestFinalizeBlock{
+	// finalize new block for the exported app
+	_, err = exportedApp.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height: initChainReq.InitialHeight,
 	})
 	require.NoError(t, err)
-	_, err = nodeApp.Commit()
+	_, err = exportedApp.Commit()
 	require.NoError(t, err)
 
-	// finalize new block for the new app
-	_, err = newApp.App.FinalizeBlock(&abci.RequestFinalizeBlock{
+	// finalize new block for the initiated app
+	_, err = initiatedApp.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height: initChainReq.InitialHeight,
 	})
 	require.NoError(t, err)
 
-	_, err = newApp.Commit()
+	_, err = initiatedApp.Commit()
 	require.NoError(t, err)
-
-	err = checkModuleStoreMismatches(t, nodeApp, &newApp.App, initChainReq.InitialHeight)
-	requireT.NoError(err, "failed to compare module stores between node app and new app")
 }
 
-func executeCommand(ctx context.Context, buf *bytes.Buffer, name string, args []string) error {
-	cmd := exec.CommandContext(ctx, name, args...)
-	cmd.Stdout = buf
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	return cmd.Run()
-}
-
-func compareKVStores(nodeStore, newStore corestore.KVStore, ignorePrefixes [][]byte) error {
-	// Build maps of key-value pairs for both stores
-	nodeMap := make(map[string][]byte)
-	iter1, err := nodeStore.Iterator(nil, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create iterator for node store: %w", err)
-	}
-	defer iter1.Close()
-	for ; iter1.Valid(); iter1.Next() {
-		nodeMap[string(iter1.Key())] = append([]byte(nil), iter1.Value()...)
-	}
-
-	newMap := make(map[string][]byte)
-	iter2, err := newStore.Iterator(nil, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create iterator for new store: %w", err)
-	}
-	defer iter2.Close()
-	for ; iter2.Valid(); iter2.Next() {
-		newMap[string(iter2.Key())] = append([]byte(nil), iter2.Value()...)
-	}
-
+func checkModuleStoreMismatches(t *testing.T, requireT *require.Assertions, nodeApp *app.App, newApp *app.App, height int64) {
 	var mismatches []string
 
-	// Check for keys in nodeMap not in newMap or with different values
-	for k, v := range nodeMap {
-		// Skip keys with any of the ignorePrefixes
-		ignored := false
-		for _, prefix := range ignorePrefixes {
-			if bytes.HasPrefix([]byte(k), prefix) {
-				ignored = true
-				break
-			}
-		}
-		if ignored {
-			continue
-		}
-
-		nv, ok := newMap[k]
-		if !ok {
-			mismatches = append(mismatches, fmt.Sprintf("key %q missing in new store", k))
-			continue
-		}
-		if !bytes.Equal(v, nv) {
-			mismatches = append(mismatches, fmt.Sprintf("value mismatch for key %q: %q vs %q", k, v, nv))
-		}
-	}
-
-	// Check for extra keys in newMap
-	for k := range newMap {
-		// Skip keys with any of the ignorePrefixes
-		ignored := false
-		for _, prefix := range ignorePrefixes {
-			if bytes.HasPrefix([]byte(k), prefix) {
-				ignored = true
-				break
-			}
-		}
-		if ignored {
-			continue
-		}
-
-		if _, ok := nodeMap[k]; !ok {
-			mismatches = append(mismatches, fmt.Sprintf("extra key %X in new store", []byte(k)))
-		}
-	}
-
-	if len(mismatches) > 0 {
-		return fmt.Errorf("KVStore mismatches:\n%s", strings.Join(mismatches, "\n"))
-	}
-	return nil
-}
-
-func checkModuleStoreMismatches(t *testing.T, nodeApp *app.App, newApp *app.App, height int64) error {
-	var mismatches []string
-
+	// ensure the app contexts are created for the specified height
 	nodeAppCtx := nodeApp.NewUncachedContext(false, cmtproto.Header{Height: height})
 	newAppCtx := newApp.NewUncachedContext(false, cmtproto.Header{Height: height})
 
 	for _, moduleName := range nodeApp.ModuleManager.ModuleNames() {
+		// skip the module if it is in the ignored list
 		if _, ok := ignoredModuleNames[moduleName]; ok {
 			continue
 		}
 
+		// auth module store name is different from its module name
+		// so we use a special case for it
 		storeName := moduleName
 		if moduleName == authtypes.StoreKey {
 			storeName = "acc"
 		}
 
-		var ignorePrefixes [][]byte
+		// list the prefixes to ignore for the module
+		var modulePrefixesToIgnore [][]byte
 		if prefixes, ok := ignoredPrefixes[moduleName]; ok {
-			ignorePrefixes = prefixes
+			modulePrefixesToIgnore = prefixes
 		}
 
-		var nodeAppKvStore, newAppKvStore corestore.KVStore
+		var nodeAppKvStore, newAppKvStore sdkstore.KVStore
 		// panic happens if the store is not registered in the app,
 		func() {
 			defer func() {
@@ -304,25 +249,170 @@ func checkModuleStoreMismatches(t *testing.T, nodeApp *app.App, newApp *app.App,
 		}()
 
 		if nodeAppKvStore == nil {
-			if newAppKvStore == nil {
-				// means that the module does not have a KVStore in both apps, so we skip the comparison
-				continue
-			} else {
-				// means that the module has a KVStore in the new app, but not in the node app
-				mismatches = append(mismatches, fmt.Sprintf("KVStore %s not found in node app", storeName))
-				continue
+			if newAppKvStore != nil {
+				// means that the module has a KVStore in the initiated app, but not in the exported app
+				mismatches = append(mismatches, fmt.Sprintf("KVStore %s not found in exported app", storeName))
 			}
+			// means that the module does not have a KVStore in both apps, so we skip the comparison
+			continue
 		}
 
-		err := compareKVStores(nodeAppKvStore, newAppKvStore, ignorePrefixes)
+		// compare the KVStores of the exported app and the initiated app
+		// and append any mismatches to the list
+		err := compareKVStores(nodeAppKvStore, newAppKvStore, modulePrefixesToIgnore)
 		if err != nil {
 			mismatches = append(mismatches, fmt.Sprintf("failed to compare %s KV stores: %v", storeName, err))
 		}
 	}
 
+	requireT.Equal(len(mismatches), 0, "KVStore mismatches:\n%s", strings.Join(mismatches, "\n"))
+}
+
+func compareKVStores(exportedAppStore, initiatedAppStore sdkstore.KVStore, ignorePrefixes [][]byte) error {
+	// build maps of key-value pairs for exported app store
+	exportedMap := make(map[string][]byte)
+	iter1, err := exportedAppStore.Iterator(nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create iterator for exported app store: %w", err)
+	}
+	defer iter1.Close()
+	for ; iter1.Valid(); iter1.Next() {
+		exportedMap[string(iter1.Key())] = append([]byte(nil), iter1.Value()...)
+	}
+
+	// build maps of key-value pairs for initiated app store
+	initiatedMap := make(map[string][]byte)
+	iter2, err := initiatedAppStore.Iterator(nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create iterator for initiated app store: %w", err)
+	}
+	defer iter2.Close()
+	for ; iter2.Valid(); iter2.Next() {
+		initiatedMap[string(iter2.Key())] = append([]byte(nil), iter2.Value()...)
+	}
+
+	var mismatches []string
+
+	// Check for keys in exportedMap not in initiatedMap or with different values
+	for k, v := range exportedMap {
+		// Skip keys with any of the ignorePrefixes
+		ignored := false
+		for _, prefix := range ignorePrefixes {
+			if bytes.HasPrefix([]byte(k), prefix) {
+				ignored = true
+				break
+			}
+		}
+		if ignored {
+			continue
+		}
+
+		// check if the key  exists in the initiated app store
+		// if the key is not found, append the mismatch to the list
+		nv, ok := initiatedMap[k]
+		if !ok {
+			mismatches = append(mismatches, fmt.Sprintf("key %q missing in initiated app store", k))
+			continue
+		}
+		// check if the value matches
+		// if the value is not equal, append the mismatch to the list
+		if !bytes.Equal(v, nv) {
+			mismatches = append(mismatches, fmt.Sprintf("value mismatch for key %q: %q vs %q", k, v, nv))
+		}
+	}
+
+	// Check for extra keys in initiated app store
+	for k := range initiatedMap {
+		// Skip keys with any of the ignorePrefixes
+		ignored := false
+		for _, prefix := range ignorePrefixes {
+			if bytes.HasPrefix([]byte(k), prefix) {
+				ignored = true
+				break
+			}
+		}
+		if ignored {
+			continue
+		}
+
+		// check if the key exists in the exported app store
+		// if the key is not found, append the mismatch to the list
+		if _, ok := exportedMap[k]; !ok {
+			mismatches = append(mismatches, fmt.Sprintf("extra key %X in new store", []byte(k)))
+		}
+	}
+
+	// If there are any mismatches, return an error with the details
 	if len(mismatches) > 0 {
 		return fmt.Errorf("KVStore mismatches:\n%s", strings.Join(mismatches, "\n"))
 	}
+	return nil
+}
+
+// copyDir recursively copies a directory tree from src to dst
+func copyDir(src, dst string) error {
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	// Create destination directory
+	if err := os.MkdirAll(dst, srcInfo.Mode()); err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		if entry.IsDir() {
+			// Recursively copy subdirectory
+			if err := copyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		} else {
+			// Copy file
+			if err := copyFile(srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
+}
+
+// copyFile copies a single file from src to dst
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	srcInfo, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	dstFile, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcInfo.Mode())
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
+}
+
+func executeCommand(ctx context.Context, buf *bytes.Buffer, name string, args []string) error {
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.Stdout = buf
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	return cmd.Run()
 }
