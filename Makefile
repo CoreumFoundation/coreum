@@ -71,4 +71,3 @@ integration-tests-ibc:
 .PHONY: integration-tests-upgrade
 integration-tests-upgrade:
 	$(BUILDER) integration-tests-unsafe/upgrade
- 
