@@ -73,13 +73,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Init DEX locked balances
 	for _, dexLockedBalance := range genState.DEXLockedBalances {
-		// TODO: investigate why two part denom validation is not working
-		// 1.To validate if bond denom
-		// 2.To validate if assetft denom
-		// 3.To validate if ibc denom
-		// if err := types.ValidateAssetCoins(dexLockedBalance.Coins); err != nil {
-		// 	panic(err)
-		// }
+		if err := types.ValidateAssetCoins(dexLockedBalance.Coins); err != nil {
+			panic(err)
+		}
 		address := sdk.MustAccAddressFromBech32(dexLockedBalance.Address)
 		k.SetDEXLockedBalances(ctx, address, dexLockedBalance.Coins)
 	}

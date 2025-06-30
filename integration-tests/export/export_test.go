@@ -265,7 +265,7 @@ func checkModuleStoreMismatches(t *testing.T, requireT *require.Assertions, node
 		}
 	}
 
-	requireT.Equal(len(mismatches), 0, "KVStore mismatches:\n%s", strings.Join(mismatches, "\n"))
+	requireT.Equal(0, len(mismatches), "KVStore mismatches:\n%s", strings.Join(mismatches, "\n"))
 }
 
 func compareKVStores(exportedAppStore, initiatedAppStore sdkstore.KVStore, ignorePrefixes [][]byte) error {
