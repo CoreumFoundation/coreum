@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	sdkstore "cosmossdk.io/core/store"
@@ -208,14 +209,14 @@ func syncAppsHeights(t *testing.T, requireT *require.Assertions, exportedApp *ap
 	require.NoError(t, err)
 }
 
-func checkModuleStoreMismatches(t *testing.T, requireT *require.Assertions, nodeApp *app.App, newApp *app.App, height int64) {
+func checkModuleStoreMismatches(t *testing.T, requireT *require.Assertions, exportedApp *app.App, initiatedApp *app.App, height int64) {
 	var mismatches []string
 
 	// ensure the app contexts are created for the specified height
-	nodeAppCtx := nodeApp.NewUncachedContext(false, cmtproto.Header{Height: height})
-	newAppCtx := newApp.NewUncachedContext(false, cmtproto.Header{Height: height})
+	exportedAppCtx := exportedApp.NewUncachedContext(false, cmtproto.Header{Height: height})
+	initiatedAppCtx := initiatedApp.NewUncachedContext(false, cmtproto.Header{Height: height})
 
-	for _, moduleName := range nodeApp.ModuleManager.ModuleNames() {
+	for _, moduleName := range exportedApp.ModuleManager.ModuleNames() {
 		// skip the module if it is in the ignored list
 		if _, ok := ignoredModuleNames[moduleName]; ok {
 			continue
@@ -242,10 +243,10 @@ func checkModuleStoreMismatches(t *testing.T, requireT *require.Assertions, node
 					t.Logf("Recovered from panic while opening KVStore for %s: %v", storeName, r)
 				}
 			}()
-			nodeAppKvStoreService := runtime.NewKVStoreService(nodeApp.GetKey(storeName))
-			nodeAppKvStore = nodeAppKvStoreService.OpenKVStore(nodeAppCtx)
-			newAppKvStoreService := runtime.NewKVStoreService(newApp.GetKey(storeName))
-			newAppKvStore = newAppKvStoreService.OpenKVStore(newAppCtx)
+			nodeAppKvStoreService := runtime.NewKVStoreService(exportedApp.GetKey(storeName))
+			nodeAppKvStore = nodeAppKvStoreService.OpenKVStore(exportedAppCtx)
+			newAppKvStoreService := runtime.NewKVStoreService(initiatedApp.GetKey(storeName))
+			newAppKvStore = newAppKvStoreService.OpenKVStore(initiatedAppCtx)
 		}()
 
 		if nodeAppKvStore == nil {
@@ -296,14 +297,9 @@ func compareKVStores(exportedAppStore, initiatedAppStore sdkstore.KVStore, ignor
 	// Check for keys in exportedMap not in initiatedMap or with different values
 	for k, v := range exportedMap {
 		// Skip keys with any of the ignorePrefixes
-		ignored := false
-		for _, prefix := range ignorePrefixes {
-			if bytes.HasPrefix([]byte(k), prefix) {
-				ignored = true
-				break
-			}
-		}
-		if ignored {
+		if lo.ContainsBy(ignorePrefixes, func(prefix []byte) bool {
+			return bytes.HasPrefix([]byte(k), prefix)
+		}) {
 			continue
 		}
 

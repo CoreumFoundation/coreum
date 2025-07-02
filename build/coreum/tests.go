@@ -134,6 +134,11 @@ func runIntegrationTests(
 
 	for _, testDir := range testDirs {
 		var envs []string
+		// the export tests needs to stop znet to export the genesis file
+		// and within the export test we need to access to the binary (to run export command),
+		// and full node home directory(full node is needed to be able to get the stores at certain height)
+		// so it is a special case and to prevent hardcoded path in the export test we set the environment variables
+		// TODO: investigate if we can avoid this environment variables.
 		if testDir == TestExport {
 			config := znet.NewConfig(znetConfig, infra.NewSpec(znetConfig))
 			absRootDir, err := filepath.Abs(znetConfig.RootDir)
