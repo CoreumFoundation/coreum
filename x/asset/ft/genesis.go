@@ -34,6 +34,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			Version:            token.Version,
 			URI:                token.URI,
 			URIHash:            token.URIHash,
+			Admin:              token.Admin,
+			ExtensionCWAddress: token.ExtensionCWAddress,
 		}
 
 		if err := k.SetDefinition(ctx, issuer, subunit, definition); err != nil {

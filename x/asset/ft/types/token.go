@@ -124,10 +124,14 @@ func ValidateSubunit(subunit string) error {
 
 // ValidateAssetCoin checks that the coin is a valid coin according to asset ft module restrictions.
 func ValidateAssetCoin(coin sdk.Coin) error {
-	if _, _, err := DeconstructDenom(coin.Denom); err != nil {
-		return err
+	if strings.Contains(coin.Denom, denomSeparator) {
+		// Handle asset FT denoms (subunit-issuer format)
+		if _, _, err := DeconstructDenom(coin.Denom); err != nil {
+			return err
+		}
 	}
 
+	// Handle other denoms using standard validation
 	return coin.Validate()
 }
 

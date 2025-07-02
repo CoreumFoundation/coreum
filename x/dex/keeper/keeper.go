@@ -383,7 +383,7 @@ func (k Keeper) SaveOrderWithOrderBookRecord(
 	order types.Order,
 	record types.OrderBookRecord,
 ) error {
-	return k.saveOrderWithOrderBookRecord(ctx, order, record)
+	return k.saveOrderWithOrderBookRecord(ctx, order, record, true)
 }
 
 // GetAccountDenomOrdersCount returns account's denom orders count.
@@ -457,7 +457,7 @@ func (k Keeper) ExportReserveOrderIDs(
 	defer iterator.Close()
 	keys := make([][]byte, 0)
 	for ; iterator.Valid(); iterator.Next() {
-		keys = append(keys, iterator.Value())
+		keys = append(keys, iterator.Key())
 	}
 	return keys, nil
 }
@@ -703,7 +703,7 @@ func (k Keeper) createOrder(
 	}
 
 	// the remaining quantity and balance will be taker from record
-	if err := k.saveOrderWithOrderBookRecord(ctx, order, record); err != nil {
+	if err := k.saveOrderWithOrderBookRecord(ctx, order, record, false); err != nil {
 		return err
 	}
 
@@ -724,6 +724,7 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 	ctx sdk.Context,
 	order types.Order,
 	record types.OrderBookRecord,
+	skipDuplicate bool,
 ) error {
 	// additional check to prevent in unexpected state
 	if order.Type != types.ORDER_TYPE_LIMIT {
@@ -756,6 +757,7 @@ func (k Keeper) saveOrderWithOrderBookRecord(
 			*order.GoodTil,
 			record.OrderSequence,
 			creator,
+			skipDuplicate,
 		); err != nil {
 			return err
 		}

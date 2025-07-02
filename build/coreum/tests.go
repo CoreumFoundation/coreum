@@ -23,6 +23,7 @@ const (
 	TestModules = "modules"
 	TestUpgrade = "upgrade"
 	TestStress  = "stress"
+	TestExport  = "export"
 )
 
 // Test run unit tests in coreum repo.
@@ -51,10 +52,10 @@ func RunIntegrationTestsModules(runUnsafe bool) types.CommandFunc {
 			CompileDEXSmartContracts, BuildCoredLocally, BuildCoredDockerImage)
 
 		znetConfig := defaultZNetConfig()
-		znetConfig.Profiles = []string{apps.Profile3Cored}
+		znetConfig.Profiles = []string{apps.ProfileDevNet}
 		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-modules"
 
-		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestModules)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestModules, TestExport)
 	}
 }
 
@@ -64,10 +65,10 @@ func RunIntegrationTestsStress(runUnsafe bool) types.CommandFunc {
 		deps(BuildCoredLocally, BuildCoredDockerImage)
 
 		znetConfig := defaultZNetConfig()
-		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileDEX}
+		znetConfig.Profiles = []string{apps.ProfileDevNet, apps.ProfileDEX}
 		znetConfig.CoverageOutputFile = "coverage/coreum-integration-tests-stress"
 
-		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestStress)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestStress, TestExport)
 	}
 }
 
@@ -79,9 +80,9 @@ func RunIntegrationTestsIBC(runUnsafe bool) types.CommandFunc {
 			BuildHermesDockerImage)
 
 		znetConfig := defaultZNetConfig()
-		znetConfig.Profiles = []string{apps.Profile3Cored, apps.ProfileIBC}
+		znetConfig.Profiles = []string{apps.ProfileDevNet, apps.ProfileIBC}
 
-		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestIBC)
+		return runIntegrationTests(ctx, deps, runUnsafe, znetConfig, TestIBC, TestExport)
 	}
 }
 
@@ -119,6 +120,7 @@ func runIntegrationTests(
 		fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
 		"-timeout=1h",
 	}
+
 	if runUnsafe {
 		flags = append(flags, "--run-unsafe")
 	}
@@ -131,9 +133,32 @@ func runIntegrationTests(
 	}
 
 	for _, testDir := range testDirs {
+		var envs []string
+		// the export tests needs to stop znet to export the genesis file
+		// and within the export test we need to access to the binary (to run export command),
+		// and full node home directory(full node is needed to be able to get the stores at certain height)
+		// so it is a special case and to prevent hardcoded path in the export test we set the environment variables
+		// TODO: investigate if we can avoid this environment variables.
+		if testDir == TestExport {
+			config := znet.NewConfig(znetConfig, infra.NewSpec(znetConfig))
+			absRootDir, err := filepath.Abs(znetConfig.RootDir)
+			if err != nil {
+				return err
+			}
+
+			envs = []string{
+				fmt.Sprintf("CORED_BIN_PATH=%s", filepath.Join(absRootDir, "bin")),
+				fmt.Sprintf("ZNET_HOME_DIR=%s", config.HomeDir),
+			}
+			if err := znet.Stop(ctx, znetConfig); err != nil {
+				return err
+			}
+		}
+
 		if err := golang.RunTests(ctx, deps, golang.TestConfig{
 			PackagePath: filepath.Join(integrationTestsDir, testDir),
 			Flags:       flags,
+			Envs:        envs,
 		}); err != nil {
 			return err
 		}

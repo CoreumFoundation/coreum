@@ -47,17 +47,17 @@ func (k Keeper) Router() types.Router {
 
 // DelayExecution stores an item to be executed in delay time.
 func (k Keeper) DelayExecution(ctx sdk.Context, id string, data proto.Message, delay time.Duration) error {
-	return k.StoreDelayedExecution(ctx, id, data, ctx.BlockTime().Add(delay))
+	return k.StoreDelayedExecution(ctx, id, data, ctx.BlockTime().Add(delay), false)
 }
 
 // ExecuteAfter stores an item to be executed after specified time.
-func (k Keeper) ExecuteAfter(ctx sdk.Context, id string, data proto.Message, time time.Time) error {
-	return k.StoreDelayedExecution(ctx, id, data, time)
+func (k Keeper) ExecuteAfter(ctx sdk.Context, id string, data proto.Message, time time.Time, skipDuplicate bool) error {
+	return k.StoreDelayedExecution(ctx, id, data, time, skipDuplicate)
 }
 
 // ExecuteAfterBlock stores an item to be executed after specified block.
-func (k Keeper) ExecuteAfterBlock(ctx sdk.Context, id string, data proto.Message, height uint64) error {
-	return k.StoreBlockExecution(ctx, id, data, height)
+func (k Keeper) ExecuteAfterBlock(ctx sdk.Context, id string, data proto.Message, height uint64, skipDuplicate bool) error {
+	return k.StoreBlockExecution(ctx, id, data, height, skipDuplicate)
 }
 
 // RemoveExecuteAtBlock removes an item to be executed at specified block.
@@ -81,7 +81,7 @@ func (k Keeper) RemoveExecuteAfter(ctx sdk.Context, id string, time time.Time) e
 }
 
 // StoreDelayedExecution stores delayed execution item using absolute time.
-func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Message, time time.Time) error {
+func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Message, time time.Time, skipDuplicate bool) error {
 	if !k.router.Has(data) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidData,
@@ -100,6 +100,9 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Mes
 		return err
 	}
 	if val {
+		if skipDuplicate {
+			return nil
+		}
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "delayed item is already stored under the key, id: %s", id)
 	}
 
@@ -116,7 +119,7 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data proto.Mes
 }
 
 // StoreBlockExecution stores block execution item using block height.
-func (k Keeper) StoreBlockExecution(ctx sdk.Context, id string, data proto.Message, height uint64) error {
+func (k Keeper) StoreBlockExecution(ctx sdk.Context, id string, data proto.Message, height uint64, skipDuplicate bool) error {
 	if !k.router.Has(data) {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidData,
@@ -136,6 +139,9 @@ func (k Keeper) StoreBlockExecution(ctx sdk.Context, id string, data proto.Messa
 		return err
 	}
 	if val {
+		if skipDuplicate {
+			return nil
+		}
 		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "block item is already stored under the key, id: %s", id)
 	}
 
@@ -201,7 +207,7 @@ func (k Keeper) ImportDelayedItems(ctx sdk.Context, items []types.DelayedItem) e
 			return sdkerrors.Wrapf(types.ErrInvalidData, "unpacking of execution message failed: %s", err.Error())
 		}
 
-		if err := k.StoreDelayedExecution(ctx, i.ID, data, i.ExecutionTime); err != nil {
+		if err := k.StoreDelayedExecution(ctx, i.ID, data, i.ExecutionTime, false); err != nil {
 			return err
 		}
 	}
@@ -281,7 +287,7 @@ func (k Keeper) ImportBlockItems(ctx sdk.Context, items []types.BlockItem) error
 			return sdkerrors.Wrapf(types.ErrInvalidData, "unpacking of execution message failed: %s", err.Error())
 		}
 
-		if err := k.StoreBlockExecution(ctx, i.ID, data, i.Height); err != nil {
+		if err := k.StoreBlockExecution(ctx, i.ID, data, i.Height, false); err != nil {
 			return err
 		}
 	}
