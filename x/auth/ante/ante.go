@@ -122,7 +122,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		authante.NewSetPubKeyDecorator(options.AccountKeeper),
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
-		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
+		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler, options.SigVerifyOptions...),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		deterministicgasante.NewAddBaseGasDecorator(infiniteAccountKeeper, options.DeterministicGasConfig),
 		authante.NewConsumeGasForTxSizeDecorator(infiniteAccountKeeper),

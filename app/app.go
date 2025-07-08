@@ -403,6 +403,7 @@ func New(
 		interfaceRegistry.SigningContext().AddressCodec(),
 		addressPrefix,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authkeeper.WithUnorderedTransactions(true),
 	)
 
 	app.AuthzKeeper = authzkeeper.NewKeeper(
@@ -944,6 +945,7 @@ func New(
 	// NOTE: upgrade module is required to be prioritized
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
+		authtypes.ModuleName,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -1123,6 +1125,11 @@ func New(
 				SignModeHandler: txConfig.SignModeHandler(),
 				FeegrantKeeper:  app.FeeGrantKeeper,
 				SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
+				SigVerifyOptions: []authante.SigVerificationDecoratorOption{
+					// change below as needed.
+					authante.WithUnorderedTxGasCost(authante.DefaultUnorderedTxGasCost),
+					authante.WithMaxUnorderedTxTimeoutDuration(authante.DefaultMaxTimeoutDuration),
+				},
 			},
 			DeterministicGasConfig: deterministicGasConfig,
 			IBCKeeper:              app.IBCKeeper,

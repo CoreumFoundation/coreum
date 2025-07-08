@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"time"
 
 	"cosmossdk.io/core/address"
 	storetypes "cosmossdk.io/store/types"
@@ -56,4 +57,22 @@ func (iak InfiniteAccountKeeper) GetModuleAddress(moduleName string) sdk.AccAddr
 // AddressCodec returns the AddressCodec.
 func (iak InfiniteAccountKeeper) AddressCodec() address.Codec {
 	return iak.ak.AddressCodec()
+}
+
+// RemoveExpiredUnorderedNonces removes all unordered nonces that have a timeout value before
+// the current block time.
+func (iak InfiniteAccountKeeper) RemoveExpiredUnorderedNonces(ctx sdk.Context) error {
+	ctx = sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter())
+	return iak.ak.RemoveExpiredUnorderedNonces(ctx)
+}
+
+// TryAddUnorderedNonce tries to add a new unordered nonce for the sender.
+// If the sender already has an entry with the provided timeout, an error is returned.
+func (iak InfiniteAccountKeeper) TryAddUnorderedNonce(ctx sdk.Context, sender []byte, timeout time.Time) error {
+	ctx = sdk.UnwrapSDKContext(ctx).WithGasMeter(storetypes.NewInfiniteGasMeter())
+	return iak.ak.TryAddUnorderedNonce(ctx, sender, timeout)
+}
+
+func (iak InfiniteAccountKeeper) UnorderedTransactionsEnabled() bool {
+	return iak.ak.UnorderedTransactionsEnabled()
 }
