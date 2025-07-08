@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -245,6 +247,72 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 			WithGas(chain.GasLimitByMsgs(msg)),
 		msg)
 	require.True(t, cosmoserrors.ErrWrongSequence.Is(err))
+}
+
+// TestUnorderedTransactions tests that unordered transactions are processed correctly.
+// It sends multiple transactions with the same sender and checks that they are processed in the same
+// block, even if they are sent in parallel.
+func TestUnorderedTransactions(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	sender := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, sender, integration.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   sdkmath.NewInt(1_000_000),
+	})
+
+	msg := &banktypes.MsgSend{
+		FromAddress: sender.String(),
+		ToAddress:   sender.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
+	}
+	sendGasLimit := chain.GasLimitByMsgs(msg)
+
+	latestBlock, err := chain.LatestBlockHeader(ctx)
+	require.NoError(t, err)
+
+	// get enough timeout timestamp to ensure that all transactions will go through
+	// without getting caught in the timeout timestamp error.
+	blockTimeout := latestBlock.Time.Add(2 * time.Second)
+
+	// Send multiple unordered transactions asynchronously
+	var wg sync.WaitGroup
+	var txResults []*sdk.TxResponse
+	for i := 1; i <= 5; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			txRes, err := client.BroadcastTx(ctx,
+				chain.ClientContext.WithFromAddress(sender),
+				chain.TxFactory().
+					WithUnordered(true).
+					// to prevent to caught in same timeout timestamp error
+					// we use different timeout timestamp for each transaction.
+					WithTimeoutTimestamp(blockTimeout.Add(time.Duration(i)*time.Nanosecond)).
+					WithGas(sendGasLimit),
+				msg)
+			require.NoError(t, err)
+			txResults = append(txResults, txRes)
+		}(i)
+	}
+	wg.Wait()
+
+	// Check all transaction heights are the same
+	for i, txRes := range txResults {
+		if i == 0 {
+			continue
+		}
+		require.Equal(t, txRes.Code, uint32(0), "Transaction %d should be successful, got code %d", i, txRes.Code)
+		require.Equal(t, txResults[0].Height, txRes.Height, "Transaction %d height %d should match first transaction height %d", i, txRes.Height, txResults[0].Height)
+	}
+
+	latestBlockNew, err := chain.LatestBlockHeader(ctx)
+	require.NoError(t, err)
+
+	require.Greater(t, latestBlockNew.Height, latestBlock.Height)
 }
 
 func TestGasEstimation(t *testing.T) {
