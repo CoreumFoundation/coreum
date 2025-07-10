@@ -1,0 +1,20 @@
+[default.extend-words]
+# app/docs/modules/coreum-dex/coreum-dex.mdx
+pn = "pn"
+
+# app/docs/tutorials/ISO20022/ISO20022-Client/ISO20022-Client.mdx
+BA = "BA"
+Othr = "Othr"
+Nd = "Nd"
+afe = "afe"
+Leafs = "Leafs"
+mke = "mke"
+vry = "vry"
+ABD = "ABD"
+
+[type.js]
+extend-glob = ["*.js"]
+check-file = false
+
+[files]
+extend-exclude = ["docs/api.md"]
