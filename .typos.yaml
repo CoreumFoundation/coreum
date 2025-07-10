@@ -17,4 +17,4 @@ extend-glob = ["*.js"]
 check-file = false
 
 [files]
-extend-exclude = ["docs/api.md"]
+extend-exclude = ["docs/api.md", "docs/static/openapi.json", "*.pb.go"]
