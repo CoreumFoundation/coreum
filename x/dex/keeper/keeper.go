@@ -579,7 +579,7 @@ func (k Keeper) getOrderBookIDByDenoms(ctx sdk.Context, baseDenom, quoteDenom st
 
 	orderBookID, err := k.getOrderBookIDByKey(ctx, orderBookIDKey)
 	if err != nil {
-		return 0, sdkerrors.Wrapf(err, "faild to get order book ID, baseDenom: %s, quoteDenom: %s", baseDenom, quoteDenom)
+		return 0, sdkerrors.Wrapf(err, "failed to get order book ID, baseDenom: %s, quoteDenom: %s", baseDenom, quoteDenom)
 	}
 
 	return orderBookID, nil
@@ -622,7 +622,7 @@ func (k Keeper) getOrGenOrderBookIDs(ctx sdk.Context, baseDenom, quoteDenom stri
 func (k Keeper) getOrderBookIDByKey(ctx sdk.Context, key []byte) (uint32, error) {
 	var val gogotypes.UInt32Value
 	if err := k.getDataFromStore(ctx, key, &val); err != nil {
-		return 0, sdkerrors.Wrapf(err, "faild to get order book ID by key %v", key)
+		return 0, sdkerrors.Wrapf(err, "failed to get order book ID by key %v", key)
 	}
 
 	return val.GetValue(), nil
@@ -985,7 +985,7 @@ func (k Keeper) getOrderBookRecord(
 		return types.OrderBookRecord{},
 			sdkerrors.Wrapf(
 				err,
-				"faild to get order book record, orderBookID: %d, side: %s, price: %s, orderSequence: %d",
+				"failed to get order book record, orderBookID: %d, side: %s, price: %s, orderSequence: %d",
 				orderBookID, side.String(), price.String(), orderSequence)
 	}
 	return types.OrderBookRecord{

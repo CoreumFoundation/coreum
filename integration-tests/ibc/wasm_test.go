@@ -228,7 +228,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	requireT.NoError(err)
 	coreumIBCPort := coreumContractInfoRes.IBCPortID
 	requireT.NotEmpty(coreumIBCPort)
-	t.Logf("Coreum contrac IBC port:%s", coreumIBCPort)
+	t.Logf("Coreum contract IBC port:%s", coreumIBCPort)
 
 	osmosisContractInfoRes, err := osmosisWasmClient.ContractInfo(ctx, &wasmtypes.QueryContractInfoRequest{
 		Address: osmosisContractAddr,
@@ -236,7 +236,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	requireT.NoError(err)
 	osmosisIBCPort := osmosisContractInfoRes.IBCPortID
 	requireT.NotEmpty(osmosisIBCPort)
-	t.Logf("Osmisis contrac IBC port:%s", osmosisIBCPort)
+	t.Logf("Osmisis contract IBC port:%s", osmosisIBCPort)
 
 	coreumIbcChannelClient := ibcchanneltypes.NewQueryClient(coreumChain.ClientContext)
 

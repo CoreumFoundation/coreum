@@ -172,7 +172,7 @@ func (k Keeper) applyCommissionAndBurnRate(
 }
 
 // invokeAssetExtensionExtensionTransferMethod calls the smart contract of the extension. This smart contract is
-// responsible to enforce any policies and do the final tranfer. The amount attached to the call
+// responsible to enforce any policies and do the final transfer. The amount attached to the call
 // is the send amount plus the burn and commission amount.
 func (k Keeper) invokeAssetExtensionExtensionTransferMethod(
 	ctx sdk.Context,

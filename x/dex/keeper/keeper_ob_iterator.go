@@ -56,7 +56,7 @@ func (i *OrderBookIterator) Close() error {
 	return i.iterator.Close()
 }
 
-// Next returns the order book record with the lowest price and lowest order sequence (for the same price) if read froms
+// Next returns the order book record with the lowest price and lowest order sequence (for the same price) if read forms
 // head, or order book record with the highest price and lowest order sequence (for the same price) if reads from tail.
 func (i *OrderBookIterator) Next() (types.OrderBookRecord, bool, error) {
 	if i.readFromTail {
