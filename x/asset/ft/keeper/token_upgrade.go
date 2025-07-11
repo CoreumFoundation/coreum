@@ -31,7 +31,7 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingToke
 	_, err := query.Paginate(store, &query.PageRequest{Limit: query.PaginationMaxLimit}, func(key, value []byte) error {
 		version, n := binary.Uvarint(value)
 		if n <= 0 {
-			return sdkerrors.Wrap(types.ErrInvalidState, "unmarshaling varint failed")
+			return sdkerrors.Wrap(types.ErrInvalidState, "unmarshalling varint failed")
 		}
 		versions = append(versions, types.PendingTokenUpgrade{
 			Denom:   string(key),

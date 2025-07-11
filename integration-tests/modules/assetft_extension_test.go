@@ -398,12 +398,12 @@ func TestAssetFTExtensionFreeze(t *testing.T) {
 				},
 				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.
 					Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
-					Add(sdkmath.NewInt(2 * 500_000)), // add 500k for each message with extenstion transfer
+					Add(sdkmath.NewInt(2 * 500_000)), // add 500k for each message with extension transfer
 			},
 		}, {
 			Acc: recipient,
 			Options: integration.BalancesOptions{
-				Amount: sdkmath.NewInt(6 * 500_000), // add 500k for each message with extenstion transfer
+				Amount: sdkmath.NewInt(6 * 500_000), // add 500k for each message with extension transfer
 			},
 		}, {
 			Acc: randomAddress,
@@ -560,12 +560,12 @@ func TestAssetFTExtensionBurn(t *testing.T) {
 				Messages: []sdk.Msg{},
 				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
 					Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
-					Add(sdkmath.NewInt(6 * 500_000)), // add 500k for each message with extenstion transfer
+					Add(sdkmath.NewInt(6 * 500_000)), // add 500k for each message with extension transfer
 			},
 		}, {
 			Acc: recipient,
 			Options: integration.BalancesOptions{
-				Amount: sdkmath.NewInt(2 * 500_000), // add 500k for each message with extenstion transfer
+				Amount: sdkmath.NewInt(2 * 500_000), // add 500k for each message with extension transfer
 			},
 		},
 	})
@@ -753,12 +753,12 @@ func TestAssetFTExtensionMint(t *testing.T) {
 			Options: integration.BalancesOptions{
 				Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(2).
 					Add(sdkmath.NewInt(1_000_000)).   // added 1 million for smart contract upload
-					Add(sdkmath.NewInt(7 * 500_000)), // add 500k for each message with extenstion transfer
+					Add(sdkmath.NewInt(7 * 500_000)), // add 500k for each message with extension transfer
 			},
 		}, {
 			Acc: randomAddress,
 			Options: integration.BalancesOptions{
-				Amount: sdkmath.NewInt(1 * 500_000), // add 500k for each message with extenstion transfer
+				Amount: sdkmath.NewInt(1 * 500_000), // add 500k for each message with extension transfer
 			},
 		}, {
 			Acc: admin,

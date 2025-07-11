@@ -151,7 +151,7 @@ func (s *App) BeginNextBlockAtTime(blockTime time.Time) (sdk.Context, sdk.BeginB
 	return ctx, beginBlock, err
 }
 
-// BeginNextBlockAtHeight begins new SimApp block and returns the ctx of the new block with given hight.
+// BeginNextBlockAtHeight begins new SimApp block and returns the ctx of the new block with given height.
 func (s *App) BeginNextBlockAtHeight(height int64) (sdk.Context, sdk.BeginBlock, error) {
 	header := tmproto.Header{
 		Height:  height,

@@ -257,7 +257,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 				// observed max: 0.671267795027995000
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
-				//nolint:testifylint // eplison does not apply here.
+				//nolint:testifylint // epsilon does not apply here.
 				assertT.EqualValues(
 					low.Amount.MustFloat64(),
 					model.CalculateGasPriceWithMaxDiscount().MustFloat64(),

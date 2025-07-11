@@ -58,7 +58,7 @@ func (c CoreumChain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	for _, msg := range msgs {
 		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
-			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
+			panic(errors.Errorf("unsupported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
 		totalGasRequired += msgGas + c.DeterministicGasConfig.FixedGas
 	}
@@ -73,7 +73,7 @@ func (c CoreumChain) GasLimitForMultiMsgTx(msgs ...sdk.Msg) uint64 {
 	for _, msg := range msgs {
 		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
-			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
+			panic(errors.Errorf("unsupported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
 		totalGasRequired += msgGas
 	}

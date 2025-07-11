@@ -286,7 +286,7 @@ type OBRecord struct {
 }
 
 // MaxBaseQuantityForPrice returns maximum base quantity order can execute for a given price.
-// Price is expected to be better or equal ot OBRecord.Price.
+// Price is expected to be better or equal to OBRecord.Price.
 func (obr OBRecord) MaxBaseQuantityForPrice(price *big.Rat) *big.Rat {
 	// For limit order we execute BaseQuantity fully.
 	if obr.IsLimit() {

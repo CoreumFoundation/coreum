@@ -1754,7 +1754,7 @@ func TestKeeper_MatchOrders_DirectOBMarketMatching(t *testing.T) {
 					),
 					testSet.acc2.String(): sdk.NewCoins(
 						sdk.NewInt64Coin(testSet.denom1, 100_000),
-						// Locked full balance and returned remainer: 3750 - 375 = 3375
+						// Locked full balance and returned remainder unmarshalling: 3750 - 375 = 3375
 						sdk.NewInt64Coin(testSet.denom2, 337_500),
 					),
 				}
