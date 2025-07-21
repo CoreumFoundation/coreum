@@ -117,6 +117,7 @@ import (
 	icahostkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/keeper"
 	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
 	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -760,6 +761,12 @@ func New(
 		wasmOpts...,
 	)
 
+	// initialize the gas limit for callbacks, recommended to be 10M for use with cosmwasm contracts
+	maxCallbackGas := uint64(10_000_000)
+
+	// the keepers for the callbacks middleware
+	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper)
+
 	// IBC transfer stack contains (from top to bottom):
 	// - wibctransfer
 	// - packetforward
@@ -767,7 +774,9 @@ func New(
 	// - ibctransfer
 	var ibcTransferStack ibcporttypes.IBCModule
 	ibcTransferStack = transfer.NewIBCModule(app.TransferKeeper.Keeper)
-	// ibcTransferStack = ibchooks.NewIBCMiddleware(ibcTransferStack, &app.HooksICS4Wrapper)
+	cbStack := ibccallbacks.NewIBCMiddleware(
+		ibcTransferStack, app.PacketForwardKeeper, wasmStackIBCHandler, maxCallbackGas,
+	)
 	ibcTransferStack = packetforward.NewIBCMiddleware(
 		ibcTransferStack,
 		app.PacketForwardKeeper,
@@ -775,20 +784,7 @@ func New(
 		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
 	)
 	ibcTransferStack = wibctransfer.NewPurposeMiddleware(ibcTransferStack)
-
-	// initialize the gas limit for callbacks, recommended to be 10M for use with cosmwasm contracts
-	maxCallbackGas := uint64(10_000_000)
-
-	// the keepers for the callbacks middleware
-	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper)
-
-	// callbacks wraps the transfer stack as its base app, and uses PacketForwardKeeper as the ICS4Wrapper
-	// i.e. packet-forward-middleware is higher on the stack and sits between callbacks and the ibc channel keeper
-	// Since this is the lowest level middleware of the transfer stack, it should be the first entrypoint for
-	// transfer keeper's WriteAcknowledgement.
-	// cbStack := ibccallbacks.NewIBCMiddleware(
-	// 	ibcTransferStack, app.PacketForwardKeeper, wasmStackIBCHandler, maxCallbackGas,
-	// )
+	app.TransferKeeper.Keeper.WithICS4Wrapper(cbStack)
 
 	// IBC v2 transfer stack
 	var ibcv2TransferStack ibcapi.IBCModule
