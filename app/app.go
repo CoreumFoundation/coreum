@@ -1185,6 +1185,7 @@ func New(
 		appupgradev6.New(
 			app.ModuleManager,
 			app.configurator,
+			app.BankKeeper,
 		),
 	}
 

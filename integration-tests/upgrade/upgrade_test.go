@@ -51,7 +51,9 @@ func TestUpgrade(t *testing.T) {
 }
 
 func upgradeV5ToV6(t *testing.T) {
-	tests := []upgradeTest{}
+	tests := []upgradeTest{
+		&denomSymbol{},
+	}
 
 	for _, test := range tests {
 		test.Before(t)
