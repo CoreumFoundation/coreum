@@ -22,7 +22,7 @@ require (
 	github.com/CoreumFoundation/coreum/v6 v6.0.0-20241002100003-2dcad94c2fbc
 	github.com/CosmWasm/wasmd v0.55.0
 	github.com/cometbft/cometbft v0.38.17
-	github.com/cosmos/cosmos-sdk v0.50.13
+	github.com/cosmos/cosmos-sdk v0.50.14
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10 v10.1.0
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v8 v8.0.0-20240626224216-94190a9816cc
