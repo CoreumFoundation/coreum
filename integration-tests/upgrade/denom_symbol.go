@@ -3,6 +3,7 @@
 package upgrade
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -25,13 +26,14 @@ func (d *denomSymbol) Before(t *testing.T) {
 		Denom: chain.ChainSettings.Denom,
 	})
 	requireT.NoError(err)
+	panic(fmt.Sprintf("%+v", denomMetadata))
 	switch chain.ChainSettings.ChainID {
 	case string(constant.ChainIDMain):
-		requireT.Equal(strings.ToUpper(constant.DenomMainDisplay), denomMetadata.Metadata.Symbol)
+		requireT.Equal(strings.ToUpper(constant.DenomMainDisplay), denomMetadata.Metadata.Display)
 	case string(constant.ChainIDTest):
-		requireT.Equal(strings.ToUpper(constant.DenomTestDisplay), denomMetadata.Metadata.Symbol)
+		requireT.Equal(strings.ToUpper(constant.DenomTestDisplay), denomMetadata.Metadata.Display)
 	case string(constant.ChainIDDev):
-		requireT.Equal(strings.ToUpper(constant.DenomDevDisplay), denomMetadata.Metadata.Symbol)
+		requireT.Equal(strings.ToUpper(constant.DenomDevDisplay), denomMetadata.Metadata.Display)
 	default:
 		requireT.FailNowf("unknown chain id: %s", chain.ChainSettings.ChainID)
 	}
@@ -48,11 +50,11 @@ func (d *denomSymbol) After(t *testing.T) {
 	requireT.NoError(err)
 	switch chain.ChainSettings.ChainID {
 	case string(constant.ChainIDMain):
-		requireT.Equal("TX", denomMetadata.Metadata.Symbol)
+		requireT.Equal("TX", denomMetadata.Metadata.Display)
 	case string(constant.ChainIDTest):
-		requireT.Equal("TESTTX", denomMetadata.Metadata.Symbol)
+		requireT.Equal("TESTTX", denomMetadata.Metadata.Display)
 	case string(constant.ChainIDDev):
-		requireT.Equal("DEVTX", denomMetadata.Metadata.Symbol)
+		requireT.Equal("DEVTX", denomMetadata.Metadata.Display)
 	default:
 		requireT.FailNowf("unknown chain id: %s", chain.ChainSettings.ChainID)
 	}

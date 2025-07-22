@@ -15,7 +15,9 @@ import (
 const Name = "v6"
 
 // New makes an upgrade handler for v6 upgrade.
-func New(mm *module.Manager, configurator module.Configurator, bankKeeper wbankkeeper.BaseKeeperWrapper) upgrade.Upgrade {
+func New(
+	mm *module.Manager, configurator module.Configurator, bankKeeper wbankkeeper.BaseKeeperWrapper,
+) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
 		StoreUpgrades: store.StoreUpgrades{
