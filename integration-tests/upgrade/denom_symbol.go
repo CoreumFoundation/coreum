@@ -34,10 +34,10 @@ func (d *denomSymbol) Before(t *testing.T) {
 	}
 
 	requireT.Equal(denomMetadata.Metadata.Description, fmt.Sprintf("%score coin", prefix))
-	requireT.Contains(denomMetadata.Metadata.DenomUnits, banktypes.DenomUnit{
+	requireT.Contains(denomMetadata.Metadata.DenomUnits, &banktypes.DenomUnit{
 		Denom: fmt.Sprintf("u%score", prefix),
 	})
-	requireT.Contains(denomMetadata.Metadata.DenomUnits, banktypes.DenomUnit{
+	requireT.Contains(denomMetadata.Metadata.DenomUnits, &banktypes.DenomUnit{
 		Denom:    fmt.Sprintf("%score", prefix),
 		Exponent: 6,
 	})
@@ -65,10 +65,10 @@ func (d *denomSymbol) After(t *testing.T) {
 	}
 
 	requireT.Equal(denomMetadata.Metadata.Description, fmt.Sprintf("%stx coin", prefix))
-	requireT.Contains(denomMetadata.Metadata.DenomUnits, banktypes.DenomUnit{
+	requireT.Contains(denomMetadata.Metadata.DenomUnits, &banktypes.DenomUnit{
 		Denom: fmt.Sprintf("u%stx", prefix),
 	})
-	requireT.Contains(denomMetadata.Metadata.DenomUnits, banktypes.DenomUnit{
+	requireT.Contains(denomMetadata.Metadata.DenomUnits, &banktypes.DenomUnit{
 		Denom:    fmt.Sprintf("%stx", prefix),
 		Exponent: 6,
 	})
