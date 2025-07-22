@@ -4,7 +4,6 @@ package upgrade
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -26,17 +25,26 @@ func (d *denomSymbol) Before(t *testing.T) {
 		Denom: chain.ChainSettings.Denom,
 	})
 	requireT.NoError(err)
-	panic(fmt.Sprintf("%+v", denomMetadata))
-	switch chain.ChainSettings.ChainID {
-	case string(constant.ChainIDMain):
-		requireT.Equal(strings.ToUpper(constant.DenomMainDisplay), denomMetadata.Metadata.Display)
-	case string(constant.ChainIDTest):
-		requireT.Equal(strings.ToUpper(constant.DenomTestDisplay), denomMetadata.Metadata.Display)
-	case string(constant.ChainIDDev):
-		requireT.Equal(strings.ToUpper(constant.DenomDevDisplay), denomMetadata.Metadata.Display)
-	default:
-		requireT.FailNowf("unknown chain id: %s", chain.ChainSettings.ChainID)
+
+	prefix := ""
+	if chain.ChainSettings.ChainID == string(constant.ChainIDTest) {
+		prefix = "test"
+	} else if chain.ChainSettings.ChainID == string(constant.ChainIDDev) {
+		prefix = "dev"
 	}
+
+	requireT.Equal(denomMetadata.Metadata.Description, fmt.Sprintf("%score coin", prefix))
+	requireT.Contains(denomMetadata.Metadata.DenomUnits, banktypes.DenomUnit{
+		Denom: fmt.Sprintf("u%score", prefix),
+	})
+	requireT.Contains(denomMetadata.Metadata.DenomUnits, banktypes.DenomUnit{
+		Denom:    fmt.Sprintf("%score", prefix),
+		Exponent: 6,
+	})
+	requireT.Equal(denomMetadata.Metadata.Base, fmt.Sprintf("u%score", prefix))
+	requireT.Equal(denomMetadata.Metadata.Display, fmt.Sprintf("%score", prefix))
+	requireT.Equal(denomMetadata.Metadata.Name, fmt.Sprintf("u%score", prefix))
+	requireT.Equal(denomMetadata.Metadata.Symbol, fmt.Sprintf("u%score", prefix))
 }
 
 func (d *denomSymbol) After(t *testing.T) {
@@ -48,14 +56,24 @@ func (d *denomSymbol) After(t *testing.T) {
 		Denom: chain.ChainSettings.Denom,
 	})
 	requireT.NoError(err)
-	switch chain.ChainSettings.ChainID {
-	case string(constant.ChainIDMain):
-		requireT.Equal("TX", denomMetadata.Metadata.Display)
-	case string(constant.ChainIDTest):
-		requireT.Equal("TESTTX", denomMetadata.Metadata.Display)
-	case string(constant.ChainIDDev):
-		requireT.Equal("DEVTX", denomMetadata.Metadata.Display)
-	default:
-		requireT.FailNowf("unknown chain id: %s", chain.ChainSettings.ChainID)
+
+	prefix := ""
+	if chain.ChainSettings.ChainID == string(constant.ChainIDTest) {
+		prefix = "test"
+	} else if chain.ChainSettings.ChainID == string(constant.ChainIDDev) {
+		prefix = "dev"
 	}
+
+	requireT.Equal(denomMetadata.Metadata.Description, fmt.Sprintf("%stx coin", prefix))
+	requireT.Contains(denomMetadata.Metadata.DenomUnits, banktypes.DenomUnit{
+		Denom: fmt.Sprintf("u%stx", prefix),
+	})
+	requireT.Contains(denomMetadata.Metadata.DenomUnits, banktypes.DenomUnit{
+		Denom:    fmt.Sprintf("%stx", prefix),
+		Exponent: 6,
+	})
+	requireT.Equal(denomMetadata.Metadata.Base, fmt.Sprintf("u%stx", prefix))
+	requireT.Equal(denomMetadata.Metadata.Display, fmt.Sprintf("%stx", prefix))
+	requireT.Equal(denomMetadata.Metadata.Name, fmt.Sprintf("u%stx", prefix))
+	requireT.Equal(denomMetadata.Metadata.Symbol, fmt.Sprintf("u%stx", prefix))
 }
