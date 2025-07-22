@@ -16,6 +16,7 @@ import (
 type denomSymbol struct {
 }
 
+//nolint:dupl
 func (d *denomSymbol) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
@@ -33,20 +34,21 @@ func (d *denomSymbol) Before(t *testing.T) {
 		prefix = "dev"
 	}
 
-	requireT.Equal(denomMetadata.Metadata.Description, fmt.Sprintf("%score coin", prefix))
+	requireT.Equal(prefix+"core coin", denomMetadata.Metadata.Description)
 	requireT.Contains(denomMetadata.Metadata.DenomUnits, &banktypes.DenomUnit{
 		Denom: fmt.Sprintf("u%score", prefix),
 	})
 	requireT.Contains(denomMetadata.Metadata.DenomUnits, &banktypes.DenomUnit{
-		Denom:    fmt.Sprintf("%score", prefix),
+		Denom:    prefix + "core",
 		Exponent: 6,
 	})
-	requireT.Equal(denomMetadata.Metadata.Base, fmt.Sprintf("u%score", prefix))
-	requireT.Equal(denomMetadata.Metadata.Display, fmt.Sprintf("%score", prefix))
-	requireT.Equal(denomMetadata.Metadata.Name, fmt.Sprintf("u%score", prefix))
-	requireT.Equal(denomMetadata.Metadata.Symbol, fmt.Sprintf("u%score", prefix))
+	requireT.Equal(fmt.Sprintf("u%score", prefix), denomMetadata.Metadata.Base)
+	requireT.Equal(prefix+"core", denomMetadata.Metadata.Display)
+	requireT.Equal(fmt.Sprintf("u%score", prefix), denomMetadata.Metadata.Name)
+	requireT.Equal(fmt.Sprintf("u%score", prefix), denomMetadata.Metadata.Symbol)
 }
 
+//nolint:dupl
 func (d *denomSymbol) After(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
@@ -64,16 +66,17 @@ func (d *denomSymbol) After(t *testing.T) {
 		prefix = "dev"
 	}
 
-	requireT.Equal(denomMetadata.Metadata.Description, fmt.Sprintf("%stx coin", prefix))
+	panic(fmt.Sprintf("%+v", denomMetadata.Metadata))
+	requireT.Equal(prefix+"tx coin", denomMetadata.Metadata.Description)
 	requireT.Contains(denomMetadata.Metadata.DenomUnits, &banktypes.DenomUnit{
 		Denom: fmt.Sprintf("u%stx", prefix),
 	})
 	requireT.Contains(denomMetadata.Metadata.DenomUnits, &banktypes.DenomUnit{
-		Denom:    fmt.Sprintf("%stx", prefix),
+		Denom:    prefix + "tx",
 		Exponent: 6,
 	})
-	requireT.Equal(denomMetadata.Metadata.Base, fmt.Sprintf("u%stx", prefix))
-	requireT.Equal(denomMetadata.Metadata.Display, fmt.Sprintf("%stx", prefix))
-	requireT.Equal(denomMetadata.Metadata.Name, fmt.Sprintf("u%stx", prefix))
-	requireT.Equal(denomMetadata.Metadata.Symbol, fmt.Sprintf("u%stx", prefix))
+	requireT.Equal(fmt.Sprintf("u%stx", prefix), denomMetadata.Metadata.Base)
+	requireT.Equal(prefix+"tx", denomMetadata.Metadata.Display)
+	requireT.Equal(fmt.Sprintf("u%stx", prefix), denomMetadata.Metadata.Name)
+	requireT.Equal(fmt.Sprintf("u%stx", prefix), denomMetadata.Metadata.Symbol)
 }
