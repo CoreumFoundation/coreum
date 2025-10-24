@@ -188,3 +188,181 @@ func TestBaseKeeperWrapper_SpendableBalanceByDenom(t *testing.T) {
 	balance = bankKeeper.GetBalance(ctx, recipient, nativeDenom)
 	requireT.Equal(coinToMindAndSend, balance)
 }
+
+func TestBaseKeeperWrapper_Burn(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
+
+	bankKeeper := testApp.BankKeeper
+
+	// Create a test account
+	account := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// Mint some native tokens for testing
+	nativeDenom := "ucore"
+	initialAmount := sdkmath.NewInt(1000000)
+	coinToMint := sdk.NewCoin(nativeDenom, initialAmount)
+	err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(coinToMint))
+	requireT.NoError(err)
+	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, account, sdk.NewCoins(coinToMint))
+	requireT.NoError(err)
+
+	// Get initial supply
+	supplyBefore := bankKeeper.GetSupply(ctx, nativeDenom)
+	requireT.Equal(initialAmount, supplyBefore.Amount)
+
+	// Burn half of the coins
+	burnAmount := sdkmath.NewInt(500000)
+	coinToBurn := sdk.NewCoin(nativeDenom, burnAmount)
+	
+	// Send coins to module first
+	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	requireT.NoError(err)
+
+	// Burn coins from module
+	err = bankKeeper.BurnCoins(ctx, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	requireT.NoError(err)
+
+	// Check balance decreased
+	balanceAfter := bankKeeper.GetBalance(ctx, account, nativeDenom)
+	expectedBalance := initialAmount.Sub(burnAmount)
+	requireT.Equal(expectedBalance, balanceAfter.Amount)
+
+	// Check supply decreased
+	supplyAfter := bankKeeper.GetSupply(ctx, nativeDenom)
+	expectedSupply := initialAmount.Sub(burnAmount)
+	requireT.Equal(expectedSupply, supplyAfter.Amount)
+}
+
+func TestBaseKeeperWrapper_BurnInsufficientFunds(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
+
+	bankKeeper := testApp.BankKeeper
+
+	// Create a test account with no funds
+	account := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// Try to burn more than available
+	nativeDenom := "ucore"
+	burnAmount := sdkmath.NewInt(1000000)
+	coinToBurn := sdk.NewCoin(nativeDenom, burnAmount)
+
+	// Should fail - insufficient funds
+	err := bankKeeper.SendCoinsFromAccountToModule(ctx, account, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	requireT.Error(err)
+}
+
+func TestBaseKeeperWrapper_BurnZeroAmount(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
+
+	bankKeeper := testApp.BankKeeper
+
+	// Create a test account
+	account := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// Mint some tokens
+	nativeDenom := "ucore"
+	initialAmount := sdkmath.NewInt(1000000)
+	coinToMint := sdk.NewCoin(nativeDenom, initialAmount)
+	err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(coinToMint))
+	requireT.NoError(err)
+	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, account, sdk.NewCoins(coinToMint))
+	requireT.NoError(err)
+
+	// Try to burn zero amount (should be invalid at message level)
+	burnAmount := sdkmath.NewInt(0)
+	coinToBurn := sdk.NewCoin(nativeDenom, burnAmount)
+
+	// Send to module
+	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	requireT.NoError(err)
+
+	// Burn coins
+	err = bankKeeper.BurnCoins(ctx, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	requireT.NoError(err)
+
+	// Balance should remain unchanged
+	balanceAfter := bankKeeper.GetBalance(ctx, account, nativeDenom)
+	requireT.Equal(initialAmount, balanceAfter.Amount)
+}
+
+func TestBaseKeeperWrapper_BurnMultipleDenoms(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.NewContextLegacy(false, tmproto.Header{})
+
+	bankKeeper := testApp.BankKeeper
+	ftKeeper := testApp.AssetFTKeeper
+
+	// Create account
+	account := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// Mint native tokens
+	nativeDenom := "ucore"
+	nativeAmount := sdkmath.NewInt(1000000)
+	nativeCoin := sdk.NewCoin(nativeDenom, nativeAmount)
+	err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(nativeCoin))
+	requireT.NoError(err)
+	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, account, sdk.NewCoins(nativeCoin))
+	requireT.NoError(err)
+
+	// Issue custom token
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "BURN",
+		Subunit:       "burn",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(2000000),
+		Features:      []types.Feature{types.Feature_burning},
+	}
+	customDenom, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	// Send custom tokens to account
+	customAmount := sdkmath.NewInt(500000)
+	customCoin := sdk.NewCoin(customDenom, customAmount)
+	err = bankKeeper.SendCoins(ctx, issuer, account, sdk.NewCoins(customCoin))
+	requireT.NoError(err)
+
+	// Get initial supplies
+	nativeSupplyBefore := bankKeeper.GetSupply(ctx, nativeDenom)
+	customSupplyBefore := bankKeeper.GetSupply(ctx, customDenom)
+
+	// Burn both denoms
+	nativeBurnAmount := sdkmath.NewInt(100000)
+	customBurnAmount := sdkmath.NewInt(200000)
+	coinsToBurn := sdk.NewCoins(
+		sdk.NewCoin(nativeDenom, nativeBurnAmount),
+		sdk.NewCoin(customDenom, customBurnAmount),
+	)
+
+	// Send to module
+	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, banktypes.ModuleName, coinsToBurn)
+	requireT.NoError(err)
+
+	// Burn coins
+	err = bankKeeper.BurnCoins(ctx, banktypes.ModuleName, coinsToBurn)
+	requireT.NoError(err)
+
+	// Check balances decreased
+	nativeBalanceAfter := bankKeeper.GetBalance(ctx, account, nativeDenom)
+	customBalanceAfter := bankKeeper.GetBalance(ctx, account, customDenom)
+	requireT.Equal(nativeAmount.Sub(nativeBurnAmount), nativeBalanceAfter.Amount)
+	requireT.Equal(customAmount.Sub(customBurnAmount), customBalanceAfter.Amount)
+
+	// Check supplies decreased
+	nativeSupplyAfter := bankKeeper.GetSupply(ctx, nativeDenom)
+	customSupplyAfter := bankKeeper.GetSupply(ctx, customDenom)
+	requireT.Equal(nativeSupplyBefore.Amount.Sub(nativeBurnAmount), nativeSupplyAfter.Amount)
+	requireT.Equal(customSupplyBefore.Amount.Sub(customBurnAmount), customSupplyAfter.Amount)
+}

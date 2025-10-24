@@ -120,3 +120,48 @@ func (k msgServer) MultiSend(ctx context.Context, msg *types.MsgMultiSend) (*typ
 
 	return &types.MsgMultiSendResponse{}, nil
 }
+
+// Burn burns coins from the sender's account, permanently reducing total supply.
+// This implements true token burning by removing coins from circulation.
+func (k msgServer) Burn(ctx context.Context, msg *types.MsgBurn) (*types.MsgBurnResponse, error) {
+	from, err := k.Keeper.ak.AddressCodec().StringToBytes(msg.FromAddress)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid from address: %s", err)
+	}
+
+	if !msg.Amount.IsValid() {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidCoins, msg.Amount.String())
+	}
+
+	if !msg.Amount.IsAllPositive() {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidCoins, msg.Amount.String())
+	}
+
+	if err := k.Keeper.IsSendEnabledCoins(ctx, msg.Amount...); err != nil {
+		return nil, err
+	}
+
+	// Send coins from account to module
+	if err := k.Keeper.SendCoinsFromAccountToModule(ctx, from, types.ModuleName, msg.Amount); err != nil {
+		return nil, err
+	}
+
+	// Burn coins from module account (reduces total supply)
+	if err := k.Keeper.BurnCoins(ctx, types.ModuleName, msg.Amount); err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		for _, a := range msg.Amount {
+			if a.Amount.IsInt64() {
+				telemetry.SetGaugeWithLabels(
+					[]string{"tx", "msg", "burn"},
+					float32(a.Amount.Int64()),
+					[]metrics.Label{telemetry.NewLabel("denom", a.Denom)},
+				)
+			}
+		}
+	}()
+
+	return &types.MsgBurnResponse{}, nil
+}
