@@ -216,13 +216,13 @@ func TestBaseKeeperWrapper_Burn(t *testing.T) {
 	// Burn half of the coins
 	burnAmount := sdkmath.NewInt(500000)
 	coinToBurn := sdk.NewCoin(nativeDenom, burnAmount)
-	
+
 	// Send coins to module first
-	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, minttypes.ModuleName, sdk.NewCoins(coinToBurn))
 	requireT.NoError(err)
 
 	// Burn coins from module
-	err = bankKeeper.BurnCoins(ctx, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	err = bankKeeper.BurnCoins(ctx, minttypes.ModuleName, sdk.NewCoins(coinToBurn))
 	requireT.NoError(err)
 
 	// Check balance decreased
@@ -253,7 +253,7 @@ func TestBaseKeeperWrapper_BurnInsufficientFunds(t *testing.T) {
 	coinToBurn := sdk.NewCoin(nativeDenom, burnAmount)
 
 	// Should fail - insufficient funds
-	err := bankKeeper.SendCoinsFromAccountToModule(ctx, account, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	err := bankKeeper.SendCoinsFromAccountToModule(ctx, account, minttypes.ModuleName, sdk.NewCoins(coinToBurn))
 	requireT.Error(err)
 }
 
@@ -282,11 +282,11 @@ func TestBaseKeeperWrapper_BurnZeroAmount(t *testing.T) {
 	coinToBurn := sdk.NewCoin(nativeDenom, burnAmount)
 
 	// Send to module
-	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, minttypes.ModuleName, sdk.NewCoins(coinToBurn))
 	requireT.NoError(err)
 
 	// Burn coins
-	err = bankKeeper.BurnCoins(ctx, banktypes.ModuleName, sdk.NewCoins(coinToBurn))
+	err = bankKeeper.BurnCoins(ctx, minttypes.ModuleName, sdk.NewCoins(coinToBurn))
 	requireT.NoError(err)
 
 	// Balance should remain unchanged
@@ -347,11 +347,11 @@ func TestBaseKeeperWrapper_BurnMultipleDenoms(t *testing.T) {
 	)
 
 	// Send to module
-	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, banktypes.ModuleName, coinsToBurn)
+	err = bankKeeper.SendCoinsFromAccountToModule(ctx, account, minttypes.ModuleName, coinsToBurn)
 	requireT.NoError(err)
 
 	// Burn coins
-	err = bankKeeper.BurnCoins(ctx, banktypes.ModuleName, coinsToBurn)
+	err = bankKeeper.BurnCoins(ctx, minttypes.ModuleName, coinsToBurn)
 	requireT.NoError(err)
 
 	// Check balances decreased

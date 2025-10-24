@@ -168,6 +168,12 @@
   
     - [DataEditor](#coreum.asset.nft.v1.DataEditor)
   
+- [coreum/bank/v1/tx.proto](#coreum/bank/v1/tx.proto)
+    - [MsgBurn](#coreum.bank.v1.MsgBurn)
+    - [MsgBurnResponse](#coreum.bank.v1.MsgBurnResponse)
+  
+    - [Msg](#coreum.bank.v1.Msg)
+  
 - [coreum/customparams/v1/genesis.proto](#coreum/customparams/v1/genesis.proto)
     - [GenesisState](#coreum.customparams.v1.GenesisState)
   
@@ -4158,6 +4164,70 @@ DataEditor defines possible data editors.
  <!-- end enums -->
 
  <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="coreum/bank/v1/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/bank/v1/tx.proto
+
+
+
+<a name="coreum.bank.v1.MsgBurn"></a>
+
+### MsgBurn
+
+```
+MsgBurn represents a message to burn coins from the sender's account.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `from_address` | [string](#string) |  |    |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |    |
+
+
+
+
+
+
+<a name="coreum.bank.v1.MsgBurnResponse"></a>
+
+### MsgBurnResponse
+
+```
+MsgBurnResponse defines the response for Msg/Burn.
+```
+
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="coreum.bank.v1.Msg"></a>
+
+### Msg
+
+```
+Msg defines the Msg service for the bank module extension.
+```
+
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Burn` | [MsgBurn](#coreum.bank.v1.MsgBurn) | [MsgBurnResponse](#coreum.bank.v1.MsgBurnResponse) | `Burn burns coins from the sender's account, permanently reducing total supply.` |  |
 
  <!-- end services -->
 

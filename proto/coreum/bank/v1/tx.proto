@@ -1,0 +1,36 @@
+syntax = "proto3";
+package coreum.bank.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/v6/x/wbank/types";
+option (gogoproto.goproto_getters_all) = false;
+
+// Msg defines the Msg service for the bank module extension.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // Burn burns coins from the sender's account, permanently reducing total supply.
+  rpc Burn(MsgBurn) returns (MsgBurnResponse);
+}
+
+// MsgBurn represents a message to burn coins from the sender's account.
+message MsgBurn {
+  option (cosmos.msg.v1.signer) = "from_address";
+  option (amino.name) = "coreum/MsgBurn";
+
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated cosmos.base.v1beta1.Coin amount = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// MsgBurnResponse defines the response for Msg/Burn.
+message MsgBurnResponse {}
+

@@ -20,6 +20,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v6/testutil/integration"
 	assetfttypes "github.com/CoreumFoundation/coreum/v6/x/asset/ft/types"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/v6/x/deterministicgas/types"
+	wbanktypes "github.com/CoreumFoundation/coreum/v6/x/wbank/types"
 )
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
@@ -35,7 +36,7 @@ func TestBankBurn(t *testing.T) {
 	// Fund account with tokens to burn
 	burnAmount := sdkmath.NewInt(1000000)
 	chain.FundAccountWithOptions(ctx, t, burner, integration.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgBurn{}},
+		Messages: []sdk.Msg{&wbanktypes.MsgBurn{}},
 		Amount:   burnAmount,
 	})
 
@@ -51,7 +52,7 @@ func TestBankBurn(t *testing.T) {
 
 	// Burn half of the tokens
 	toBurn := burnAmount.QuoRaw(2)
-	msg := &banktypes.MsgBurn{
+	msg := &wbanktypes.MsgBurn{
 		FromAddress: burner.String(),
 		Amount:      sdk.NewCoins(chain.NewCoin(toBurn)),
 	}
@@ -88,13 +89,13 @@ func TestBankBurnInsufficientFunds(t *testing.T) {
 	// Fund account with small amount
 	fundAmount := sdkmath.NewInt(1000)
 	chain.FundAccountWithOptions(ctx, t, burner, integration.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgBurn{}},
+		Messages: []sdk.Msg{&wbanktypes.MsgBurn{}},
 		Amount:   fundAmount,
 	})
 
 	// Try to burn more than available
 	toBurn := fundAmount.MulRaw(2)
-	msg := &banktypes.MsgBurn{
+	msg := &wbanktypes.MsgBurn{
 		FromAddress: burner.String(),
 		Amount:      sdk.NewCoins(chain.NewCoin(toBurn)),
 	}
@@ -121,12 +122,12 @@ func TestBankBurnZeroAmount(t *testing.T) {
 	// Fund account
 	fundAmount := sdkmath.NewInt(1000000)
 	chain.FundAccountWithOptions(ctx, t, burner, integration.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgBurn{}},
+		Messages: []sdk.Msg{&wbanktypes.MsgBurn{}},
 		Amount:   fundAmount,
 	})
 
 	// Try to burn zero amount (should fail at validation)
-	msg := &banktypes.MsgBurn{
+	msg := &wbanktypes.MsgBurn{
 		FromAddress: burner.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(chain.ChainSettings.Denom, sdkmath.ZeroInt())),
 	}
@@ -200,7 +201,7 @@ func TestBankBurnMultipleDenoms(t *testing.T) {
 	// Fund burner with native tokens
 	nativeAmount := sdkmath.NewInt(2000000)
 	chain.FundAccountWithOptions(ctx, t, burner, integration.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgBurn{}},
+		Messages: []sdk.Msg{&wbanktypes.MsgBurn{}},
 		Amount:   nativeAmount,
 	})
 
@@ -219,7 +220,7 @@ func TestBankBurnMultipleDenoms(t *testing.T) {
 	// Burn both denoms
 	nativeBurn := sdkmath.NewInt(500000)
 	customBurn := sdkmath.NewInt(200000)
-	burnMsg := &banktypes.MsgBurn{
+	burnMsg := &wbanktypes.MsgBurn{
 		FromAddress: burner.String(),
 		Amount: sdk.NewCoins(
 			sdk.NewCoin(chain.ChainSettings.Denom, nativeBurn),

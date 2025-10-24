@@ -9,6 +9,8 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/hashicorp/go-metrics"
+
+	wbanktypes "github.com/CoreumFoundation/coreum/v6/x/wbank/types"
 )
 
 type msgServer struct {
@@ -123,7 +125,7 @@ func (k msgServer) MultiSend(ctx context.Context, msg *types.MsgMultiSend) (*typ
 
 // Burn burns coins from the sender's account, permanently reducing total supply.
 // This implements true token burning by removing coins from circulation.
-func (k msgServer) Burn(ctx context.Context, msg *types.MsgBurn) (*types.MsgBurnResponse, error) {
+func (k msgServer) Burn(ctx context.Context, msg *wbanktypes.MsgBurn) (*wbanktypes.MsgBurnResponse, error) {
 	from, err := k.Keeper.ak.AddressCodec().StringToBytes(msg.FromAddress)
 	if err != nil {
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid from address: %s", err)
@@ -163,5 +165,5 @@ func (k msgServer) Burn(ctx context.Context, msg *types.MsgBurn) (*types.MsgBurn
 		}
 	}()
 
-	return &types.MsgBurnResponse{}, nil
+	return &wbanktypes.MsgBurnResponse{}, nil
 }
