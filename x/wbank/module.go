@@ -39,8 +39,9 @@ func NewAppModule(
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	// copied the bank's RegisterServices to replace with the keeper wrapper
-	banktypes.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	// Register bank messages via msgServer
+	msgServer := keeper.NewMsgServerImpl(am.keeper)
+	banktypes.RegisterMsgServer(cfg.MsgServer(), msgServer)
 	banktypes.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
 	m := bankkeeper.NewMigrator(am.keeper.BaseKeeper, am.legacySubspace)

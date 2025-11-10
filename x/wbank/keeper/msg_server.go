@@ -11,6 +11,11 @@ import (
 	"github.com/hashicorp/go-metrics"
 )
 
+// MsgServer implements the bank Msg service.
+type MsgServer interface {
+	types.MsgServer
+}
+
 type msgServer struct {
 	types.MsgServer
 	Keeper BaseKeeperWrapper
@@ -20,7 +25,7 @@ var _ types.MsgServer = msgServer{}
 
 // NewMsgServerImpl returns an implementation of the bank MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper BaseKeeperWrapper) types.MsgServer {
+func NewMsgServerImpl(keeper BaseKeeperWrapper) MsgServer {
 	return &msgServer{
 		MsgServer: bankkeeper.NewMsgServerImpl(keeper),
 		Keeper:    keeper,

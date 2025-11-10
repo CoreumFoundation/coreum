@@ -109,3 +109,15 @@ message EventDEXSettingsChanged {
   DEXSettings previous_settings = 1;
   DEXSettings new_settings = 2 [(gogoproto.nullable) = false];
 }
+
+// EventGovernanceDenomBurned is emitted when the governance/bond denom (core/testcore/devcore) is burned.
+// This event is distinct from regular AssetFT burn events to help indexers and dashboards
+// distinguish between governance token burns and user-defined token burns.
+message EventGovernanceDenomBurned {
+  string sender = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string denom = 3;
+}

@@ -454,8 +454,55 @@ func (k Keeper) Mint(ctx sdk.Context, sender, recipient sdk.AccAddress, coin sdk
 	return k.mintIfReceivable(ctx, def, coin.Amount, recipient)
 }
 
-// Burn burns fungible token.
+// Burn burns fungible tokens.
+//
+// For the bond denom (governance token: core/testcore/devcore), burning is permitted
+// without a token definition; AssetFT feature gates do not apply. The bond denom is
+// determined dynamically via stakingKeeper.BondDenom(ctx).
+//
+// For all other denoms, standard AssetFT burn logic applies: the token must have a
+// definition with Feature_burning enabled.
+//
+// IBC denoms (ibc/...) and arbitrary non-AssetFT denoms are rejected.
 func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "burn amount must be positive")
+	}
+
+	// Special-case: governance denom (core/testcore/devcore) — no definition exists.
+	// Always query bond denom dynamically; never hardcode.
+	stakingParams, err := k.stakingKeeper.GetParams(ctx)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get staking params")
+	}
+	bondDenom := stakingParams.BondDenom
+
+	if coin.Denom == bondDenom {
+		// Make sure funds are actually spendable (not vesting/locked/DEX-locked).
+		if err := k.validateCoinIsNotLockedByDEXAndBank(ctx, sender, coin); err != nil {
+			return err
+		}
+
+		// Reuse the same burn plumbing used by AssetFT (send to module -> bank burn).
+		if err := k.burn(ctx, sender, sdk.NewCoins(coin)); err != nil {
+			return err
+		}
+
+		// Emit a governance-specific burn event for indexers/dashboards to distinguish
+		// from AssetFT burns (bank.BurnCoins event is also emitted by the burn helper).
+		if err := ctx.EventManager().EmitTypedEvent(&types.EventGovernanceDenomBurned{
+			Sender: sender.String(),
+			Amount: coin.Amount,
+			Denom:  coin.Denom,
+		}); err != nil {
+			return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventGovernanceDenomBurned: %s", err)
+		}
+
+		return nil
+	}
+
+	// Regular AssetFT path (existing logic).
+	// This will fail for IBC denoms or random denoms with ErrTokenNotFound or ErrInvalidDenom.
 	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)

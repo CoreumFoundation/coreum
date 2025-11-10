@@ -17,6 +17,7 @@
     - [EventDEXLockedAmountChanged](#coreum.asset.ft.v1.EventDEXLockedAmountChanged)
     - [EventDEXSettingsChanged](#coreum.asset.ft.v1.EventDEXSettingsChanged)
     - [EventFrozenAmountChanged](#coreum.asset.ft.v1.EventFrozenAmountChanged)
+    - [EventGovernanceDenomBurned](#coreum.asset.ft.v1.EventGovernanceDenomBurned)
     - [EventIssued](#coreum.asset.ft.v1.EventIssued)
     - [EventWhitelistedAmountChanged](#coreum.asset.ft.v1.EventWhitelistedAmountChanged)
   
@@ -1795,6 +1796,29 @@ the granter's account.
 | `denom` | [string](#string) |  |    |
 | `previous_amount` | [string](#string) |  |    |
 | `current_amount` | [string](#string) |  |    |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.EventGovernanceDenomBurned"></a>
+
+### EventGovernanceDenomBurned
+
+```
+EventGovernanceDenomBurned is emitted when the governance/bond denom (core/testcore/devcore) is burned.
+This event is distinct from regular AssetFT burn events to help indexers and dashboards
+distinguish between governance token burns and user-defined token burns.
+```
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |    |
+| `amount` | [string](#string) |  |    |
+| `denom` | [string](#string) |  |    |
 
 
 

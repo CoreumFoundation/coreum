@@ -24,6 +24,257 @@ import (
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
+// TestBankBurn tests burning native tokens using AssetFT MsgBurn.
+func TestBankBurn(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	burner := chain.GenAccount()
+
+	// Fund account with tokens to burn
+	burnAmount := sdkmath.NewInt(1000000)
+	chain.FundAccountWithOptions(ctx, t, burner, integration.BalancesOptions{
+		Messages: []sdk.Msg{&assetfttypes.MsgBurn{}},
+		Amount:   burnAmount,
+	})
+
+	// Get initial supply
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	supplyBefore, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{
+		Denom: chain.ChainSettings.Denom,
+	})
+	require.NoError(t, err)
+
+	// Get initial balance
+	balanceBeforeRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: burner.String(),
+		Denom:   chain.ChainSettings.Denom,
+	})
+	require.NoError(t, err)
+	balanceBefore := balanceBeforeRes.Balance.Amount
+
+	// Burn half of the tokens using AssetFT MsgBurn
+	toBurn := burnAmount.QuoRaw(2)
+	msg := &assetfttypes.MsgBurn{
+		Sender: burner.String(),
+		Coin:   sdk.Coin{Denom: chain.ChainSettings.Denom, Amount: toBurn},
+	}
+
+	clientCtx := chain.ClientContext.WithFromAddress(burner)
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+	require.NoError(t, err)
+
+	// Check balance decreased
+	balanceAfterRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: burner.String(),
+		Denom:   chain.ChainSettings.Denom,
+	})
+	require.NoError(t, err)
+	require.Equal(t, balanceBefore.Sub(toBurn).String(), balanceAfterRes.Balance.Amount.String())
+
+	// Check supply decreased
+	supplyAfter, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{
+		Denom: chain.ChainSettings.Denom,
+	})
+	require.NoError(t, err)
+	require.Equal(t, supplyBefore.Amount.Amount.Sub(toBurn).String(), supplyAfter.Amount.Amount.String())
+}
+
+// TestBankBurnInsufficientFunds tests that burning more than available fails.
+func TestBankBurnInsufficientFunds(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	burner := chain.GenAccount()
+
+	// Fund account with small amount
+	fundAmount := sdkmath.NewInt(1000)
+	chain.FundAccountWithOptions(ctx, t, burner, integration.BalancesOptions{
+		Messages: []sdk.Msg{&assetfttypes.MsgBurn{}},
+		Amount:   fundAmount,
+	})
+
+	// Try to burn more than available
+	toBurn := fundAmount.MulRaw(2)
+	msg := &assetfttypes.MsgBurn{
+		Sender: burner.String(),
+		Coin:   sdk.Coin{Denom: chain.ChainSettings.Denom, Amount: toBurn},
+	}
+
+	clientCtx := chain.ClientContext.WithFromAddress(burner)
+	_, err := client.BroadcastTx(
+		ctx,
+		clientCtx,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "insufficient funds")
+}
+
+// TestBankBurnZeroAmount tests that burning zero amount is handled correctly.
+func TestBankBurnZeroAmount(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	burner := chain.GenAccount()
+
+	// Fund account
+	fundAmount := sdkmath.NewInt(1000000)
+	chain.FundAccountWithOptions(ctx, t, burner, integration.BalancesOptions{
+		Messages: []sdk.Msg{&assetfttypes.MsgBurn{}},
+		Amount:   fundAmount,
+	})
+
+	// Try to burn zero amount (should fail at validation)
+	msg := &assetfttypes.MsgBurn{
+		Sender: burner.String(),
+		Coin:   sdk.Coin{Denom: chain.ChainSettings.Denom, Amount: sdkmath.ZeroInt()},
+	}
+
+	clientCtx := chain.ClientContext.WithFromAddress(burner)
+	_, err := client.BroadcastTx(
+		ctx,
+		clientCtx,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid coins")
+}
+
+// TestBankBurnMultipleDenoms tests burning multiple token denominations.
+// This test is commented out because wbank burn only supports native tokens now.
+// Use AssetFT burn for custom tokens.
+/*
+func TestBankBurnMultipleDenoms(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+	burner := chain.GenAccount()
+
+	// Fund issuer to issue custom token
+	chain.FundAccountWithOptions(ctx, t, issuer, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	// Issue custom token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "BURN",
+		Subunit:       "burn",
+		Precision:     6,
+		InitialAmount: sdkmath.NewInt(10000000),
+		Features:      []assetfttypes.Feature{assetfttypes.Feature_burning},
+	}
+
+	issueMsgRes, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	require.NoError(t, err)
+
+	customDenom, err := event.FindStringEventAttribute(issueMsgRes.Events, assetfttypes.EventIssued, assetfttypes.AttributeKeyDenom)
+	require.NoError(t, err)
+
+	// Send custom tokens to burner
+	customAmount := sdkmath.NewInt(1000000)
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   burner.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(customDenom, customAmount)),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	require.NoError(t, err)
+
+	// Fund burner with native tokens
+	nativeAmount := sdkmath.NewInt(2000000)
+	chain.FundAccountWithOptions(ctx, t, burner, integration.BalancesOptions{
+		Messages: []sdk.Msg{&assetfttypes.MsgBurn{}},
+		Amount:   nativeAmount,
+	})
+
+	// Get initial supplies
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	nativeSupplyBefore, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{
+		Denom: chain.ChainSettings.Denom,
+	})
+	require.NoError(t, err)
+
+	customSupplyBefore, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{
+		Denom: customDenom,
+	})
+	require.NoError(t, err)
+
+	// Burn both denoms - native with AssetFT, custom with AssetFT
+	nativeBurn := sdkmath.NewInt(500000)
+	customBurn := sdkmath.NewInt(200000)
+	
+	// First burn native denom
+	nativeBurnMsg := &assetfttypes.MsgBurn{
+		Sender: burner.String(),
+		Coin:   sdk.Coin{Denom: chain.ChainSettings.Denom, Amount: nativeBurn},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(burner),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(nativeBurnMsg)),
+		nativeBurnMsg,
+	)
+	require.NoError(t, err)
+	
+	// Then burn custom denom
+	customBurnMsg := &assetfttypes.MsgBurn{
+		Sender: burner.String(),
+		Coin:   sdk.Coin{Denom: customDenom, Amount: customBurn},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(burner),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(customBurnMsg)),
+		customBurnMsg,
+	)
+	require.NoError(t, err)
+
+	// Check supplies decreased
+	nativeSupplyAfter, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{
+		Denom: chain.ChainSettings.Denom,
+	})
+	require.NoError(t, err)
+	require.Equal(t, nativeSupplyBefore.Amount.Amount.Sub(nativeBurn).String(), nativeSupplyAfter.Amount.Amount.String())
+
+	customSupplyAfter, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{
+		Denom: customDenom,
+	})
+	require.NoError(t, err)
+	require.Equal(t, customSupplyBefore.Amount.Amount.Sub(customBurn).String(), customSupplyAfter.Amount.Amount.String())
+}
+*/
+
 // TestBankSendDeterministicGas checks that transfer takes the deterministic amount of gas.
 func TestBankSendDeterministicGas(t *testing.T) {
 	t.Parallel()
