@@ -223,6 +223,44 @@ func TestMintBurn(t *testing.T) {
 	requireT.Equal(sdk.NewInt64Coin(denom, 777).String(), supplyRes.Amount.String())
 }
 
+func TestBurnGovernanceDenom(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	burner := testNetwork.Validators[0].Address
+
+	var balanceBeforeRes banktypes.QueryBalanceResponse
+	coreumclitestutil.ExecRootQueryCmd(
+		t,
+		ctx,
+		[]string{banktypes.ModuleName, "balance", burner.String(), testNetwork.Config.BondDenom},
+		&balanceBeforeRes,
+	)
+	balanceBefore := balanceBeforeRes.Balance.Amount
+
+	burnAmount := sdk.NewInt64Coin(testNetwork.Config.BondDenom, 1000000)
+	args := append([]string{burnAmount.String()}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxBurn(), args)
+	requireT.NoError(err)
+
+	var balanceAfterRes banktypes.QueryBalanceResponse
+	coreumclitestutil.ExecRootQueryCmd(
+		t,
+		ctx,
+		[]string{banktypes.ModuleName, "balance", burner.String(), testNetwork.Config.BondDenom},
+		&balanceAfterRes,
+	)
+	balanceDecrease := balanceBefore.Sub(balanceAfterRes.Balance.Amount)
+	requireT.True(
+		balanceDecrease.GTE(burnAmount.Amount),
+		"balance should decrease by at least burn amount, got %s, expected at least %s",
+		balanceDecrease,
+		burnAmount.Amount,
+	)
+	requireT.True(balanceAfterRes.Balance.Amount.LT(balanceBefore), "balance should decrease after burn")
+}
+
 func TestFreezeAndQueryFrozen(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)

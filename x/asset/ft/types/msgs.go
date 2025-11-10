@@ -160,9 +160,9 @@ func (m MsgBurn) ValidateBasic() error {
 		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructDenom(m.Coin.Denom); err != nil {
-		return err
-	}
+	// For MsgBurn, we allow both AssetFT denoms AND governance/bond denoms (e.g., udevcore).
+	// The keeper will validate whether the denom can actually be burned.
+	// Skip the DeconstructDenom check which only works for AssetFT format [subunit]-[issuer-address].
 
 	return m.Coin.Validate()
 }
