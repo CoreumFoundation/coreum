@@ -20,8 +20,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build binaries
         run: make release
-      - name: Build and publish images
-        run: make release-images
       - name: Check Tag
         id: check-tag
         run: |
