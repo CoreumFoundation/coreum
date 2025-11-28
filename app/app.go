@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -131,6 +132,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/CoreumFoundation/coreum/v5/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/v5/app/upgrade"
 	appupgradev5 "github.com/CoreumFoundation/coreum/v5/app/upgrade/v5"
@@ -1253,29 +1255,73 @@ func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.
 
 // BeginBlocker application updates every begin block.
 func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
-	if sdk.UnwrapSDKContext(ctx).ChainID() != "coreum-testnet-1" {
-		panic("this binary is only supported on coreum-testnet-1")
+	if err := app.applyTestnetHaltFixes(ctx); err != nil {
+		panic(errors.Wrapf(err, "BeginBlocker"))
 	}
+	return app.ModuleManager.BeginBlock(ctx)
+}
 
+// EndBlocker application updates every end block.
+func (app *App) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+	if err := app.applyTestnetHaltFixes(ctx); err != nil {
+		panic(errors.Wrapf(err, "EndBlocker"))
+	}
+	return app.ModuleManager.EndBlock(ctx)
+}
+
+func (app *App) applyTestnetHaltFixes(ctx sdk.Context) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if sdkCtx.ChainID() != "coreum-testnet-1" {
+		return errors.New("this binary is only supported on coreum-testnet-1")
+	}
+	if sdkCtx.BlockHeight() == 68784413 || sdkCtx.BlockHeight() == 68784414 {
+		err := app.fixBondDenom(ctx)
+		if err != nil {
+			return errors.Wrapf(err, "applyTestnetHaltFixes")
+		}
+		err = app.changeSlashingParams(ctx)
+		if err != nil {
+			return errors.Wrapf(err, "applyTestnetHaltFixes")
+		}
+	}
+	return nil
+}
+
+func (app *App) fixBondDenom(ctx sdk.Context) error {
 	stakingParams, err := app.StakingKeeper.GetParams(sdk.UnwrapSDKContext(ctx))
 	if err != nil {
-		panic(err)
+		return errors.Wrapf(err, "FixBondDenom")
 	}
 
 	if stakingParams.BondDenom != "utestcore" {
 		stakingParams.BondDenom = "utestcore"
 		err = app.StakingKeeper.SetParams(sdk.UnwrapSDKContext(ctx), stakingParams)
 		if err != nil {
-			panic(err)
+			return errors.Wrapf(err, "FixBondDenom")
 		}
 	}
 
-	return app.ModuleManager.BeginBlock(ctx)
+	return nil
 }
 
-// EndBlocker application updates every end block.
-func (app *App) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
-	return app.ModuleManager.EndBlock(ctx)
+func (app *App) changeSlashingParams(ctx sdk.Context) error {
+	slashingParams, err := app.SlashingKeeper.GetParams(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		return errors.Wrapf(err, "ChangeSlashingParams")
+	}
+
+	if slashingParams.SignedBlocksWindow != 34_000_000 {
+		slashingParams.SignedBlocksWindow = 34_000_000
+		slashingParams.MinSignedPerWindow = sdkmath.LegacyNewDecWithPrec(1, 8)
+		slashingParams.DowntimeJailDuration = 1 * time.Second
+
+		err = app.SlashingKeeper.SetParams(sdk.UnwrapSDKContext(ctx), slashingParams)
+		if err != nil {
+			return errors.Wrapf(err, "ChangeSlashingParams")
+		}
+	}
+
+	return nil
 }
 
 // Configurator returns the app Configurator.
