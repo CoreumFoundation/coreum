@@ -1558,13 +1558,14 @@ func TestAssetFTBurn_GovernanceDenom(t *testing.T) {
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
-	
+
 	user := chain.GenAccount()
 	bondDenom := chain.ChainSettings.Denom
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	// Fund account with governance denom
-	fundAmount := sdkmath.NewInt(5_000_000)
+	// Use large amount (1 million CORE = 10^12 ucore) to overshadow inflation
+	fundAmount := sdkmath.NewInt(2_000_000_000_000) // 2 million CORE for burn + fees
 	chain.FundAccountWithOptions(ctx, t, user, integration.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgBurn{},
@@ -1585,8 +1586,8 @@ func TestAssetFTBurn_GovernanceDenom(t *testing.T) {
 	requireT.NoError(err)
 	supplyBefore := supplyResBefore.GetAmount()
 
-	// Burn governance denom using AssetFT MsgBurn
-	burnAmount := sdkmath.NewInt(12345)
+	// Burn 1 million CORE (10^12 ucore) to overshadow inflation
+	burnAmount := sdkmath.NewInt(1_000_000_000_000)
 	burnMsg := &assetfttypes.MsgBurn{
 		Sender: user.String(),
 		Coin: sdk.Coin{
@@ -1618,18 +1619,23 @@ func TestAssetFTBurn_GovernanceDenom(t *testing.T) {
 		"account balance did not decrease by exact burn amount",
 	)
 
-	// CORRECTNESS CHECK 2: Total supply decreased by AT LEAST burn amount
-	// Supply can change due to fees, staking rewards, other parallel activity
+	// CORRECTNESS CHECK 2: Total supply decreased by burn amount (within 0.01% tolerance)
+	// Supply changes due to inflation, but burn amount is large enough to overshadow it
 	supplyResAfter, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: bondDenom})
 	requireT.NoError(err)
 	supplyAfter := supplyResAfter.GetAmount()
 
-	supplyDecrease := supplyBefore.Amount.Sub(supplyAfter.Amount)
-	assertT.True(
-		supplyDecrease.GTE(burnAmount),
-		"total supply should have decreased by at least burn amount (%s), but decreased by %s",
-		burnAmount,
-		supplyDecrease,
+	actualSupplyDecrease := supplyBefore.Amount.Sub(supplyAfter.Amount)
+	expectedSupplyDecrease := burnAmount
+
+	// Assert supply decrease is within 0.01% of expected (to account for inflation)
+	requireT.InEpsilon(
+		expectedSupplyDecrease.Int64(),
+		actualSupplyDecrease.Int64(),
+		0.0001,
+		"supply decrease should be within 0.01%% of burn amount, expected: %s, actual: %s",
+		expectedSupplyDecrease,
+		actualSupplyDecrease,
 	)
 }
 
