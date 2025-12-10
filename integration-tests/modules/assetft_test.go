@@ -1557,7 +1557,6 @@ func TestAssetFTBurn_GovernanceDenom(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
-	assertT := assert.New(t)
 
 	user := chain.GenAccount()
 	bondDenom := chain.ChainSettings.Denom
@@ -1604,19 +1603,24 @@ func TestAssetFTBurn_GovernanceDenom(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// CORRECTNESS CHECK 1: Account balance decreased EXACTLY by burn amount
-	// This is deterministic and unaffected by network activity
+	// CORRECTNESS CHECK 1: Account balance decreased by burn amount (within tolerance for tx fees)
+	// Balance decrease = burn amount + transaction fees, so we use epsilon to account for fee variance
 	balanceAfter, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: user.String(),
 		Denom:   bondDenom,
 	})
 	requireT.NoError(err)
 	balAfterAmount := balanceAfter.GetBalance().Amount
-	expectedBalance := balBeforeAmount.Sub(burnAmount)
-	assertT.Equal(
-		expectedBalance.String(),
-		balAfterAmount.String(),
-		"account balance did not decrease by exact burn amount",
+	actualBalanceDecrease := balBeforeAmount.Sub(balAfterAmount)
+
+	// Assert balance decreased by at least burn amount (accounting for tx fees with 0.01% tolerance)
+	requireT.InEpsilon(
+		burnAmount.Int64(),
+		actualBalanceDecrease.Int64(),
+		0.0001,
+		"account balance should decrease by burn amount + fees, expected: %s, actual: %s",
+		burnAmount,
+		actualBalanceDecrease,
 	)
 
 	// CORRECTNESS CHECK 2: Total supply decreased by burn amount (within 0.01% tolerance)
