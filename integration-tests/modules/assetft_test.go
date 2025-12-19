@@ -1550,6 +1550,99 @@ func TestAssetFTBurn(t *testing.T) {
 	assertT.Equal(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
 }
 
+// TestAssetFTBurn_GovernanceDenom tests burning the governance/bond denom (core/testcore/devcore).
+func TestAssetFTBurn_GovernanceDenom(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+
+	user := chain.GenAccount()
+	bondDenom := chain.ChainSettings.Denom
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	// Fund account with governance denom
+	// Use large amount (1 million CORE = 10^12 ucore) to overshadow inflation
+	fundAmount := sdkmath.NewInt(2_000_000_000_000) // 2 million CORE for burn + fees
+	chain.FundAccountWithOptions(ctx, t, user, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgBurn{},
+		},
+		Amount: fundAmount,
+	})
+
+	// Capture balance before burn
+	balanceBefore, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: user.String(),
+		Denom:   bondDenom,
+	})
+	requireT.NoError(err)
+	balBeforeAmount := balanceBefore.GetBalance().Amount
+
+	// Capture supply before burn
+	supplyResBefore, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: bondDenom})
+	requireT.NoError(err)
+	supplyBefore := supplyResBefore.GetAmount()
+
+	// Burn 1 million CORE (10^12 ucore) to overshadow inflation
+	burnAmount := sdkmath.NewInt(1_000_000_000_000)
+	burnMsg := &assetfttypes.MsgBurn{
+		Sender: user.String(),
+		Coin: sdk.Coin{
+			Denom:  bondDenom,
+			Amount: burnAmount,
+		},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(user),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	// CORRECTNESS CHECK 1: Account balance decreased by burn amount (within tolerance for tx fees)
+	// Balance decrease = burn amount + transaction fees, so we use epsilon to account for fee variance
+	balanceAfter, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: user.String(),
+		Denom:   bondDenom,
+	})
+	requireT.NoError(err)
+	balAfterAmount := balanceAfter.GetBalance().Amount
+	actualBalanceDecrease := balBeforeAmount.Sub(balAfterAmount)
+
+	// Assert balance decreased by at least burn amount (accounting for tx fees with 0.01% tolerance)
+	requireT.InEpsilon(
+		burnAmount.Int64(),
+		actualBalanceDecrease.Int64(),
+		0.0001,
+		"account balance should decrease by burn amount + fees, expected: %s, actual: %s",
+		burnAmount,
+		actualBalanceDecrease,
+	)
+
+	// CORRECTNESS CHECK 2: Total supply decreased by burn amount (within 0.01% tolerance)
+	// Supply changes due to inflation, but burn amount is large enough to overshadow it
+	supplyResAfter, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: bondDenom})
+	requireT.NoError(err)
+	supplyAfter := supplyResAfter.GetAmount()
+
+	actualSupplyDecrease := supplyBefore.Amount.Sub(supplyAfter.Amount)
+	expectedSupplyDecrease := burnAmount
+
+	// Assert supply decrease is within 0.01% of expected (to account for inflation)
+	requireT.InEpsilon(
+		expectedSupplyDecrease.Int64(),
+		actualSupplyDecrease.Int64(),
+		0.0001,
+		"supply decrease should be within 0.01%% of burn amount, expected: %s, actual: %s",
+		expectedSupplyDecrease,
+		actualSupplyDecrease,
+	)
+}
+
 // TestAssetFTBurnRate tests burn rate functionality of fungible tokens.
 func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
