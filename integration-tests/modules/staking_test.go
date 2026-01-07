@@ -536,3 +536,198 @@ func getBalance(ctx context.Context, t *testing.T, chain integration.CoreumChain
 
 	return *resp.Balance
 }
+
+// TestMaxUnbondingDelegationEntries verifies that the max_entries parameter limits
+// the number of concurrent unbonding delegations per delegator-validator pair.
+func TestMaxUnbondingDelegationEntries(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
+
+	// Get current max_entries parameter
+	stakingParams, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	maxEntries := int(stakingParams.Params.MaxEntries)
+
+	t.Logf("Current max_entries parameter: %d", maxEntries)
+
+	// Setup delegator with enough tokens for multiple small undelegations
+	delegator := chain.GenAccount()
+	// Each undelegation needs 1 token, plus we need gas for all operations
+	totalDelegationAmount := sdkmath.NewInt(int64(maxEntries + 10))
+
+	// Get validator staking amount
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	requireT.NoError(err)
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2))
+
+	// Create validator
+	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(
+		ctx, t, validatorStakingAmount, validatorStakingAmount,
+	)
+	requireT.NoError(err)
+	defer deactivateValidator()
+
+	// Fund delegator account with enough for delegation + gas for all undelegate operations
+	numMessages := maxEntries + 2 // max_entries + 1 extra attempt + initial delegate
+	chain.FundAccountWithOptions(ctx, t, delegator, integration.BalancesOptions{
+		Messages: []sdk.Msg{
+			&stakingtypes.MsgDelegate{},
+			&stakingtypes.MsgDelegate{}, // for second validator
+		},
+		// so we have enough for both validator delegations
+		Amount: totalDelegationAmount.Mul(sdkmath.NewInt(2)),
+	})
+
+	// Fund for all the undelegate messages
+	for i := 0; i < numMessages; i++ {
+		chain.FundAccountWithOptions(ctx, t, delegator, integration.BalancesOptions{
+			Messages: []sdk.Msg{
+				&stakingtypes.MsgUndelegate{},
+			},
+		})
+	}
+
+	// Delegate coins
+	delegateMsg := &stakingtypes.MsgDelegate{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validatorAddress.String(),
+		Amount:           chain.NewCoin(totalDelegationAmount),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
+		delegateMsg,
+	)
+	requireT.NoError(err)
+	t.Logf("Delegated %s tokens to validator", totalDelegationAmount.String())
+
+	// Verify delegation
+	delegationResp, err := stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: delegator.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(delegationResp.DelegationResponses, 1)
+	t.Logf("Current delegation: %s", delegationResp.DelegationResponses[0].Balance.Amount.String())
+
+	// Create max_entries unbonding delegations (should all succeed)
+	for i := 0; i < maxEntries; i++ {
+		undelegateMsg := &stakingtypes.MsgUndelegate{
+			DelegatorAddress: delegator.String(),
+			ValidatorAddress: validatorAddress.String(),
+			Amount:           chain.NewCoin(sdkmath.NewInt(1)),
+		}
+		_, err = client.BroadcastTx(
+			ctx,
+			chain.ClientContext.WithFromAddress(delegator),
+			chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
+			undelegateMsg,
+		)
+		requireT.NoError(err, "Unbonding delegation #%d should succeed", i+1)
+		t.Logf("Successfully created unbonding delegation entry %d/%d", i+1, maxEntries)
+	}
+
+	// Verify we have exactly max_entries unbonding delegations
+	unbondingDelegationResp, err := stakingClient.UnbondingDelegation(ctx, &stakingtypes.QueryUnbondingDelegationRequest{
+		DelegatorAddr: delegator.String(),
+		ValidatorAddr: validatorAddress.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(unbondingDelegationResp.Unbond.Entries, maxEntries,
+		"Should have exactly %d unbonding delegation entries", maxEntries)
+	t.Logf("Verified: delegator has %d unbonding delegation entries (at limit)", maxEntries)
+
+	// Try to create one more unbonding delegation (should fail)
+	undelegateMsg := &stakingtypes.MsgUndelegate{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validatorAddress.String(),
+		Amount:           chain.NewCoin(sdkmath.NewInt(1)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
+		undelegateMsg,
+	)
+
+	// This should fail with an error about too many unbonding delegation entries
+	assertT.Error(err, "Should not be able to create more than max_entries unbonding delegations")
+	assertT.Contains(err.Error(), "too many unbonding delegation entries",
+		"Error should mention 'too many unbonding delegation entries'")
+	t.Logf("Successfully verified max_entries limit is enforced: %v", err)
+
+	// Verify count is still at max_entries (failed attempt didn't create an entry)
+	unbondingDelegationResp, err = stakingClient.UnbondingDelegation(ctx, &stakingtypes.QueryUnbondingDelegationRequest{
+		DelegatorAddr: delegator.String(),
+		ValidatorAddr: validatorAddress.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(unbondingDelegationResp.Unbond.Entries, maxEntries,
+		"Should still have exactly %d unbonding delegation entries after failed attempt", maxEntries)
+
+	//Second part of the test: Here we try to delegate to an other validator, to check if the max_entries limit is per validator or per delegator
+
+	//Create a new validator
+	_, validatorAddress2, deactivateValidator2, err := chain.CreateValidator(
+		ctx, t, validatorStakingAmount, validatorStakingAmount,
+	)
+	requireT.NoError(err)
+	defer deactivateValidator2()
+
+	//Delegate to the new validator
+	delegateMsg = &stakingtypes.MsgDelegate{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validatorAddress2.String(),
+		Amount:           chain.NewCoin(totalDelegationAmount),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
+		delegateMsg,
+	)
+	requireT.NoError(err)
+	t.Logf("Delegated %s tokens to second validator", totalDelegationAmount.String())
+
+	//Verify the delegation
+	delegationResp, err = stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: delegator.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(delegationResp.DelegationResponses, 2)
+	// Note: the order of DelegationResponses is based on the lexicographic ordering of validator addresses,
+	// not the order in which delegations were created. Since validator addresses are randomly generated,
+	// the order appears random between test runs.
+	t.Logf("Current delegation %s", delegationResp.DelegationResponses[0].Balance.Amount.String())
+	t.Logf("Current delegation %s", delegationResp.DelegationResponses[1].Balance.Amount.String())
+
+	//Try to undelegate from the new validator
+	undelegateMsg = &stakingtypes.MsgUndelegate{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: validatorAddress2.String(),
+		Amount:           chain.NewCoin(totalDelegationAmount),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
+		undelegateMsg,
+	)
+	requireT.NoError(err)
+	t.Logf("Undelegated %s tokens from validator", totalDelegationAmount.String())
+
+	//Verify the undelegation
+	unbondingDelegationResp, err = stakingClient.UnbondingDelegation(ctx, &stakingtypes.QueryUnbondingDelegationRequest{
+		DelegatorAddr: delegator.String(),
+		ValidatorAddr: validatorAddress2.String(),
+	})
+	requireT.NoError(err)
+	requireT.Len(unbondingDelegationResp.Unbond.Entries, 1)
+}
