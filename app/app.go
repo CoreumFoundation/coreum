@@ -1253,23 +1253,6 @@ func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.
 
 // BeginBlocker application updates every begin block.
 func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
-	if sdk.UnwrapSDKContext(ctx).ChainID() != "coreum-testnet-1" {
-		panic("this binary is only supported on coreum-testnet-1")
-	}
-
-	stakingParams, err := app.StakingKeeper.GetParams(sdk.UnwrapSDKContext(ctx))
-	if err != nil {
-		panic(err)
-	}
-
-	if stakingParams.BondDenom != "utestcore" {
-		stakingParams.BondDenom = "utestcore"
-		err = app.StakingKeeper.SetParams(sdk.UnwrapSDKContext(ctx), stakingParams)
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	return app.ModuleManager.BeginBlock(ctx)
 }
 
