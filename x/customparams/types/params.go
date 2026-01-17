@@ -2,29 +2,35 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types" // <--- 1. ADD THIS IMPORT
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/pkg/errors"
 )
 
-// ParamStoreKeyMinSelfDelegation defines the param key for the min_self_delegation param.
-var ParamStoreKeyMinSelfDelegation = []byte("minselfdelegation")
+// 2. ADD THE NEW KEY HERE
+var (
+	ParamStoreKeyMinSelfDelegation = []byte("minselfdelegation")
+	ParamStoreKeyMinCommissionRate = []byte("mincommissionrate")
+)
 
 // StakingParamKeyTable returns the parameter key table.
 func StakingParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable().RegisterParamSet(&StakingParams{})
 }
 
-// DefaultStakingParams returns default staking parameters.
+// 3. UPDATE DEFAULT PARAMS HERE
 func DefaultStakingParams() StakingParams {
 	return StakingParams{
 		MinSelfDelegation: sdkmath.OneInt(),
+		MinCommissionRate: sdk.NewDecWithPrec(5, 2), // Sets default to 5%
 	}
 }
 
-// ParamSetPairs returns the parameter set pairs.
+// 4. REGISTER THE NEW PARAMETER HERE
 func (p *StakingParams) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamStoreKeyMinSelfDelegation, &p.MinSelfDelegation, validateMinSelfDelegation),
+		paramtypes.NewParamSetPair(ParamStoreKeyMinCommissionRate, &p.MinCommissionRate, validateMinCommissionRate),
 	}
 }
 
@@ -52,7 +58,7 @@ func validateMinSelfDelegation(i interface{}) error {
 	return nil
 }
 
-// Add this new function to enforce the 5% floor
+// validateMinCommissionRate enforces the 5% floor
 func validateMinCommissionRate(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
