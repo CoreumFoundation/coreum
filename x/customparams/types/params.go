@@ -30,7 +30,10 @@ func (p *StakingParams) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // ValidateBasic performs basic validation on staking parameters.
 func (p StakingParams) ValidateBasic() error {
-	return validateMinSelfDelegation(p.MinSelfDelegation)
+	if err := validateMinSelfDelegation(p.MinSelfDelegation); err != nil {
+		return err
+	}
+	return validateMinCommissionRate(p.MinCommissionRate)
 }
 
 func validateMinSelfDelegation(i interface{}) error {
@@ -44,6 +47,31 @@ func validateMinSelfDelegation(i interface{}) error {
 	}
 	if !v.IsPositive() {
 		return errors.Errorf("param min_self_delegation must be positive: %s", v)
+	}
+
+	return nil
+}
+
+// Add this new function to enforce the 5% floor
+func validateMinCommissionRate(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return errors.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNil() {
+		return errors.New("param min_commission_rate must be not nil")
+	}
+
+	// Define the 5% floor (0.05)
+	minAllowed := sdk.NewDecWithPrec(5, 2)
+
+	if v.LT(minAllowed) {
+		return errors.Errorf("param min_commission_rate cannot be lower than %s (5%%)", minAllowed)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return errors.New("param min_commission_rate cannot be greater than 1 (100%)")
 	}
 
 	return nil
