@@ -1,23 +1,2 @@
-syntax = "proto3";
-package coreum.customparams.v1;
 
-import "gogoproto/gogo.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v6/x/customparams/types";
-
-// StakingParams defines the set of additional staking params for the staking module wrapper.
-message StakingParams {
-  // min_self_delegation is the validators global self declared minimum for delegation.
-  string min_self_delegation = 1 [
-    (gogoproto.moretags) = "yaml:\"min_self_delegation\"",
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
-  ];
-
-  // min_commission_rate is the minimum commission rate required for validators.
-  string min_commission_rate = 2 [
-    (gogoproto.moretags) = "yaml:\"min_commission_rate\"",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec", 
-    (gogoproto.nullable) = false
-  ];
-}
